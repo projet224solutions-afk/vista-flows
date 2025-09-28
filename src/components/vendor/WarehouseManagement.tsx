@@ -32,9 +32,8 @@ export default function WarehouseManagement() {
   const [newWarehouse, setNewWarehouse] = useState({
     name: '',
     address: '',
-    latitude: '',
-    longitude: '',
-    capacity: ''
+    contact_person: '',
+    contact_phone: ''
   });
   const [transferData, setTransferData] = useState({
     product_id: '',
@@ -50,12 +49,9 @@ export default function WarehouseManagement() {
     try {
       const warehouseData = {
         name: newWarehouse.name,
-        location: {
-          address: newWarehouse.address,
-          latitude: newWarehouse.latitude ? parseFloat(newWarehouse.latitude) : undefined,
-          longitude: newWarehouse.longitude ? parseFloat(newWarehouse.longitude) : undefined,
-        },
-        capacity: newWarehouse.capacity ? parseFloat(newWarehouse.capacity) : undefined
+        address: newWarehouse.address,
+        contact_person: newWarehouse.contact_person,
+        contact_phone: newWarehouse.contact_phone
       };
 
       await createWarehouse(warehouseData);
@@ -64,7 +60,7 @@ export default function WarehouseManagement() {
         description: "L'entrepôt a été ajouté avec succès"
       });
       setIsCreateDialogOpen(false);
-      setNewWarehouse({ name: '', address: '', latitude: '', longitude: '', capacity: '' });
+      setNewWarehouse({ name: '', address: '', contact_person: '', contact_phone: '' });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -280,38 +276,23 @@ export default function WarehouseManagement() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="latitude">Latitude</Label>
+                      <Label htmlFor="contact_person">Personne de contact</Label>
                       <Input
-                        id="latitude"
-                        type="number"
-                        step="any"
-                        placeholder="9.5370"
-                        value={newWarehouse.latitude}
-                        onChange={(e) => setNewWarehouse(prev => ({ ...prev, latitude: e.target.value }))}
+                        id="contact_person"
+                        placeholder="Nom du responsable"
+                        value={newWarehouse.contact_person}
+                        onChange={(e) => setNewWarehouse(prev => ({ ...prev, contact_person: e.target.value }))}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="longitude">Longitude</Label>
+                      <Label htmlFor="contact_phone">Téléphone</Label>
                       <Input
-                        id="longitude"
-                        type="number"
-                        step="any"
-                        placeholder="-13.6785"
-                        value={newWarehouse.longitude}
-                        onChange={(e) => setNewWarehouse(prev => ({ ...prev, longitude: e.target.value }))}
+                        id="contact_phone"
+                        placeholder="+224 xxx xxx xxx"
+                        value={newWarehouse.contact_phone}
+                        onChange={(e) => setNewWarehouse(prev => ({ ...prev, contact_phone: e.target.value }))}
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="capacity">Capacité (optionnel)</Label>
-                    <Input
-                      id="capacity"
-                      type="number"
-                      placeholder="1000"
-                      value={newWarehouse.capacity}
-                      onChange={(e) => setNewWarehouse(prev => ({ ...prev, capacity: e.target.value }))}
-                    />
                   </div>
                 </div>
                 
@@ -342,17 +323,23 @@ export default function WarehouseManagement() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {warehouse.location?.address && (
+                {warehouse.address && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    {warehouse.location.address}
+                    {warehouse.address}
                   </div>
                 )}
                 
-                {warehouse.capacity && (
+                {warehouse.contact_person && (
                   <div className="flex items-center gap-2 text-sm">
                     <Package className="h-4 w-4" />
-                    Capacité: {warehouse.capacity}
+                    Contact: {warehouse.contact_person}
+                  </div>
+                )}
+
+                {warehouse.contact_phone && (
+                  <div className="text-sm text-muted-foreground">
+                    Tél: {warehouse.contact_phone}
                   </div>
                 )}
 

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 export interface Role {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   created_at: string;
 }
 
@@ -14,6 +14,7 @@ export interface Permission {
   role_id: string;
   action: string;
   allowed: boolean;
+  created_at: string;
 }
 
 export interface Agent {
@@ -40,9 +41,14 @@ export const useAgentManagement = () => {
         .from('roles')
         .select('*')
         .order('name');
-
+        
       if (error) throw error;
-      setRoles(data || []);
+      setRoles((data as any[])?.map(role => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        created_at: role.created_at
+      })) || []);
     } catch (err: any) {
       setError(err.message);
     }
@@ -55,7 +61,13 @@ export const useAgentManagement = () => {
         .select('*');
 
       if (error) throw error;
-      setPermissions(data || []);
+      setPermissions((data as any[])?.map(permission => ({
+        id: permission.id,
+        role_id: permission.role_id,
+        action: permission.action,
+        allowed: permission.allowed,
+        created_at: permission.created_at
+      })) || []);
     } catch (err: any) {
       setError(err.message);
     }
@@ -70,13 +82,26 @@ export const useAgentManagement = () => {
         .from('agents')
         .select(`
           *,
-          role:roles(*)
+          roles (*)
         `)
         .eq('seller_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAgents(data || []);
+      setAgents((data as any[])?.map(agent => ({
+        id: agent.id,
+        seller_id: agent.seller_id,
+        user_id: agent.user_id,
+        role_id: agent.role_id,
+        status: agent.status,
+        created_at: agent.created_at,
+        role: agent.roles ? {
+          id: agent.roles.id,
+          name: agent.roles.name,
+          description: agent.roles.description,
+          created_at: agent.roles.created_at
+        } : undefined
+      })) || []);
     } catch (err: any) {
       setError(err.message);
     } finally {

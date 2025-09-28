@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          id: string
+          role_id: string
+          seller_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_id: string
+          seller_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_id?: string
+          seller_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           call_type: string
@@ -897,6 +932,38 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          action: string
+          allowed: boolean
+          created_at: string
+          id: string
+          role_id: string
+        }
+        Insert: {
+          action: string
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          role_id: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          created_at?: string
+          id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_settings: {
         Row: {
           auto_print_receipt: boolean | null
@@ -1438,6 +1505,75 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          from_warehouse_id: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          to_warehouse_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_warehouse_id?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          to_warehouse_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_warehouse_id?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          to_warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_from_warehouse_id_fkey"
+            columns: ["from_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_to_warehouse_id_fkey"
+            columns: ["to_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
@@ -1879,6 +2015,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      warehouse_stocks: {
+        Row: {
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+          warehouse_id: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+          warehouse_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_stocks_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warehouses: {
         Row: {
