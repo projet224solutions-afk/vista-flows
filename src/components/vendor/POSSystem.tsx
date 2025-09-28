@@ -252,7 +252,7 @@ export function POSSystem() {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                {companyName}
+                {settings?.company_name || companyName}
               </h1>
               <p className="text-muted-foreground font-medium">Système Point de Vente Professionnel</p>
             </div>
@@ -269,11 +269,6 @@ export function POSSystem() {
                 </div>
               </div>
             </div>
-
-            <Button variant="outline" className="shadow-md">
-              <Settings className="h-4 w-4 mr-2" />
-              Paramètres
-            </Button>
             
             {/* Dialog des paramètres */}
             <Dialog>
@@ -373,12 +368,12 @@ export function POSSystem() {
                       />
                     </div>
                     
-                     <div className="bg-muted/30 p-3 rounded-lg">
-                       <div className="text-xs text-muted-foreground">
-                         <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
-                         <strong>Devise:</strong> {settings?.currency || 'FCFA'}
-                       </div>
-                     </div>
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <div className="text-xs text-muted-foreground">
+                        <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
+                        <strong>Devise:</strong> {settings?.currency || 'FCFA'}
+                      </div>
+                    </div>
                   </div>
                 )}
               </DialogContent>
@@ -448,45 +443,79 @@ export function POSSystem() {
             </CardContent>
           </Card>
 
-           {/* Grille de produits professionnelle */}
-           <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
-             <CardContent className="p-6 h-full">
-               <ScrollArea className="h-full">
-                 {productsLoading ? (
-                   <div className="flex items-center justify-center h-full">
-                     <div className="text-muted-foreground">Chargement des produits...</div>
-                   </div>
-                 ) : (
-                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredProducts.map(product => (
-                    <Card 
-                      key={product.id} 
-                      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-border/30 hover:border-primary/40 bg-gradient-to-br from-card via-card/95 to-card/90"
-                      onClick={() => addToCart(product)}
-                    >
-                      <CardContent className="p-4 text-center space-y-3">
-                        <div className="w-full h-32 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-lg flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300">
-                          <Smartphone className="h-14 w-14 text-muted-foreground/60 group-hover:text-primary/60 transition-colors" />
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
-                            {product.name}
-                          </h3>
-                          <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} FCFA</p>
+          {/* Grille de produits professionnelle */}
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
+            <CardContent className="p-6 h-full">
+              <ScrollArea className="h-full">
+                {productsLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">Chargement des produits...</div>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">Aucun produit trouvé</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredProducts.map(product => (
+                      <Card 
+                        key={product.id} 
+                        className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-border/30 hover:border-primary/40 bg-gradient-to-br from-card via-card/95 to-card/90"
+                        onClick={() => addToCart(product)}
+                      >
+                        <CardContent className="p-4 text-center space-y-3">
+                          <div className="w-full h-32 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-lg flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300">
+                            <Smartphone className="h-14 w-14 text-muted-foreground/60 group-hover:text-primary/60 transition-colors" />
+                          </div>
                           
-                          <Badge 
-                            variant={product.stock > 10 ? 'default' : 'destructive'} 
-                            className="mb-3 w-full justify-center"
-                          >
-                            Stock: {product.stock}
-                          </Badge>
-                          
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          <div>
+                            <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+                              {product.name}
+                            </h3>
+                            <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} FCFA</p>
+                            
+                            <Badge 
+                              variant={product.stock > 10 ? 'default' : 'destructive'} 
+                              className="mb-3 w-full justify-center"
+                            >
+                              Stock: {product.stock}
+                            </Badge>
+                            
+                            <div className="flex justify-between items-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
+                                }}
+                                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              
+                              <span className="font-mono font-bold text-lg px-2">
+                                {cart.find(item => item.id === product.id)?.quantity || 0}
+                              </span>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(product);
+                                }}
+                                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </ScrollArea>
             </CardContent>
           </Card>
@@ -498,347 +527,259 @@ export function POSSystem() {
           <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg">
             {/* En-tête du panier avec statistiques */}
             <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-border/30">
-              <div className="flex items-center justify-between mb-4">
+              <CardTitle className="flex items-center justify-between text-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-                    <ShoppingCart className="h-6 w-6 text-primary-foreground" />
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold">Panier</CardTitle>
-                    <p className="text-sm text-muted-foreground">{cart.length} article{cart.length > 1 ? 's' : ''}</p>
-                  </div>
+                  <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent font-bold">
+                    Panier ({cart.length})
+                  </span>
                 </div>
-                
-                {cart.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                      {cart.reduce((sum, item) => sum + item.quantity, 0)} unités
-                    </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearCart}
-                      className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions rapides du panier */}
-              <div className="grid grid-cols-3 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs h-8 bg-gradient-to-r from-background to-background/80"
-                  disabled={cart.length === 0}
-                >
-                  <User className="h-3 w-3 mr-1" />
-                  Client
+                <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs h-8 bg-gradient-to-r from-background to-background/80"
-                  disabled={cart.length === 0}
-                >
-                  <StickyNote className="h-3 w-3 mr-1" />
-                  Note
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs h-8 bg-gradient-to-r from-background to-background/80"
-                  disabled={cart.length === 0}
-                >
-                  <Receipt className="h-3 w-3 mr-1" />
-                  Ticket
-                </Button>
+              </CardTitle>
+              
+              {/* Statistiques rapides */}
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="bg-gradient-to-br from-primary/5 to-primary/2 rounded-lg p-2 text-center">
+                  <div className="text-xs text-muted-foreground">Articles</div>
+                  <div className="font-bold text-sm">{cart.reduce((sum, item) => sum + item.quantity, 0)}</div>
+                </div>
+                <div className="bg-gradient-to-br from-accent/5 to-accent/2 rounded-lg p-2 text-center">
+                  <div className="text-xs text-muted-foreground">Sous-total</div>
+                  <div className="font-bold text-sm">{subtotal.toLocaleString()}</div>
+                </div>
+                <div className="bg-gradient-to-br from-secondary/5 to-secondary/2 rounded-lg p-2 text-center">
+                  <div className="text-xs text-muted-foreground">TVA</div>
+                  <div className="font-bold text-sm">{tax.toLocaleString()}</div>
+                </div>
               </div>
             </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col p-6">
-              {cart.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-center">
-                  <div className="space-y-4 max-w-xs">
-                    <div className="w-24 h-24 mx-auto bg-gradient-to-br from-muted/40 to-muted/20 rounded-full flex items-center justify-center">
-                      <ShoppingCart className="h-12 w-12 text-muted-foreground/30" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2">Panier vide</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Sélectionnez des produits pour démarrer une nouvelle vente
-                      </p>
-                    </div>
-                    <div className="bg-muted/20 p-4 rounded-lg border border-dashed border-border/50">
-                      <p className="text-xs text-muted-foreground">
-                        💡 Astuce: Cliquez sur un produit pour l'ajouter automatiquement
-                      </p>
-                    </div>
+
+            <CardContent className="p-4 flex-1">
+              <ScrollArea className="h-96">
+                {cart.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                    <ShoppingBag className="h-16 w-16 text-muted-foreground/40 mb-4" />
+                    <p className="text-muted-foreground font-medium">Panier vide</p>
+                    <p className="text-sm text-muted-foreground/80">Ajoutez des produits pour commencer</p>
                   </div>
-                </div>
-              ) : (
-                <>
-                  {/* Liste des articles avec design premium */}
-                  <ScrollArea className="flex-1 -mx-6 px-6 mb-6">
-                    <div className="space-y-3">
-                      {cart.map((item, index) => (
-                        <Card 
-                          key={item.id} 
-                          className="group relative overflow-hidden border-2 border-border/30 hover:border-primary/40 bg-gradient-to-r from-card via-card/98 to-card/95 transition-all duration-300 hover:shadow-lg"
-                        >
-                          {/* Indicateur d'ordre */}
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/80 to-primary/60"></div>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map(item => (
+                      <Card key={item.id} className="bg-gradient-to-r from-background/80 to-background/60 border border-border/50 transition-all duration-200 hover:shadow-lg">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm line-clamp-2 mb-1">{item.name}</h4>
+                              <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} FCFA × {item.quantity}</p>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-muted-foreground hover:text-destructive ml-2 h-6 w-6 p-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                           
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-xs px-2 py-0">
-                                    #{index + 1}
-                                  </Badge>
-                                  <h4 className="font-bold text-sm truncate">{item.name}</h4>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <Euro className="h-3 w-3" />
-                                  <span>{item.price.toLocaleString()} FCFA / unité</span>
-                                </div>
-                              </div>
-                              
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center bg-muted/30 rounded-lg p-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => removeFromCart(item.id)}
-                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="mx-2 font-mono font-bold text-sm min-w-[2rem] text-center">{item.quantity}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => addToCart(item)}
+                                className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
+                              >
+                                <Plus className="h-3 w-3" />
                               </Button>
                             </div>
-                            
-                            {/* Contrôles quantité premium */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="h-8 w-8 p-0 bg-background/80 hover:bg-primary/10 hover:border-primary/30"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <div className="w-16 h-8 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-md flex items-center justify-center">
-                                  <span className="font-bold text-sm text-primary">{item.quantity}</span>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="h-8 w-8 p-0 bg-background/80 hover:bg-primary/10 hover:border-primary/30"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-primary">
-                                  {item.total.toLocaleString()} FCFA
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.quantity} × {item.price.toLocaleString()}
-                                </div>
-                              </div>
+                            <div className="font-bold text-primary text-right">
+                              {item.total.toLocaleString()} FCFA
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
 
-                  {/* Résumé financier professionnel */}
-                  <div className="space-y-4">
-                    {/* Calculs détaillés */}
-                    <Card className="border-border/50 bg-gradient-to-r from-muted/20 via-muted/10 to-transparent">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="flex items-center gap-2">
-                              <Calculator className="h-4 w-4 text-muted-foreground" />
-                              Sous-total ({cart.reduce((sum, item) => sum + item.quantity, 0)} articles)
-                            </span>
-                            <span className="font-semibold">{subtotal.toLocaleString()} {settings?.currency || 'FCFA'}</span>
-                          </div>
-                          
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              TVA ({(taxRate * 100).toFixed(1)}%)
-                            </span>
-                            <span className="font-semibold text-orange-600">{tax.toFixed(0)} {settings?.currency || 'FCFA'}</span>
-                          </div>
-                          
-                          <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
-                          
-                          <div className="flex justify-between items-center">
-                            <span className="text-lg font-bold flex items-center gap-2">
-                              <Euro className="h-5 w-5 text-primary" />
-                              TOTAL À PAYER
-                            </span>
-                            <span className="text-2xl font-black text-primary bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-2 rounded-lg">
-                              {total.toFixed(0)} {settings?.currency || 'FCFA'}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Actions de validation premium */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline"
-                        className="h-12 bg-gradient-to-r from-background to-background/80 border-2"
-                        disabled={cart.length === 0}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Aperçu
-                      </Button>
-                      
-                      <Button 
-                        onClick={validateOrder}
-                        className="h-12 bg-gradient-to-r from-primary via-primary/95 to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 text-base font-bold"
-                        disabled={cart.length === 0}
-                      >
-                        <CheckSquare className="h-5 w-5 mr-2" />
-                        Valider Commande
-                      </Button>
+            {/* Section totaux et paiement */}
+            {cart.length > 0 && (
+              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5 backdrop-blur-sm">
+                <div className="p-6 space-y-4">
+                  {/* Calculs détaillés */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Sous-total</span>
+                      <span className="font-mono">{subtotal.toLocaleString()} FCFA</span>
                     </div>
                     
-                    {/* Informations additionnelles */}
-                    <div className="bg-gradient-to-r from-muted/10 to-transparent p-3 rounded-lg border border-border/30">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Session: POS-{currentTime.getTime().toString().slice(-6)}</span>
-                        <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
-                      </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        TVA {taxEnabled && `(${(taxRate * 100).toFixed(1)}%)`}
+                        <Badge variant={taxEnabled ? 'default' : 'secondary'} className="text-xs px-1.5 py-0.5">
+                          {taxEnabled ? 'ON' : 'OFF'}
+                        </Badge>
+                      </span>
+                      <span className="font-mono">{tax.toLocaleString()} FCFA</span>
+                    </div>
+                    
+                    <Separator className="my-2" />
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold">TOTAL</span>
+                      <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} FCFA</span>
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
+
+                  {/* Sélection du mode de paiement */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Mode de paiement</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setPaymentMethod('cash')}
+                        className="text-xs"
+                      >
+                        <Euro className="h-3 w-3 mr-1" />
+                        Espèces
+                      </Button>
+                      <Button
+                        variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setPaymentMethod('card')}
+                        className="text-xs"
+                      >
+                        <CreditCard className="h-3 w-3 mr-1" />
+                        Carte
+                      </Button>
+                      <Button
+                        variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setPaymentMethod('mobile')}
+                        className="text-xs"
+                      >
+                        <Smartphone className="h-3 w-3 mr-1" />
+                        Mobile
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Saisie montant reçu pour espèces */}
+                  {paymentMethod === 'cash' && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Montant reçu</label>
+                      <Input
+                        type="number"
+                        value={receivedAmount}
+                        onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        className="mb-2"
+                      />
+                      {receivedAmount > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                            {change.toLocaleString()} FCFA
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bouton de validation */}
+                  <Button 
+                    onClick={validateOrder}
+                    className="w-full h-12 text-lg font-bold shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                    disabled={paymentMethod === 'cash' && receivedAmount < total}
+                  >
+                    <CheckSquare className="h-5 w-5 mr-2" />
+                    Valider la commande
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>
 
-      {/* Modal de résumé de commande */}
+      {/* Dialog de confirmation de commande */}
       <Dialog open={showOrderSummary} onOpenChange={setShowOrderSummary}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <Eye className="h-6 w-6 text-primary" />
-              Résumé de la Commande
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              Confirmation de commande
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Articles */}
-            <div className="space-y-3">
-              <h3 className="font-semibold">Articles commandés:</h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="space-y-4">
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <h3 className="font-semibold mb-3">Récapitulatif</h3>
+              <div className="space-y-2 text-sm">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.quantity} × {item.price.toLocaleString()} FCFA
-                      </p>
-                    </div>
-                    <p className="font-bold text-primary">{item.total.toLocaleString()} FCFA</p>
+                  <div key={item.id} className="flex justify-between">
+                    <span>{item.name} × {item.quantity}</span>
+                    <span>{item.total.toLocaleString()} FCFA</span>
                   </div>
                 ))}
               </div>
+              
+              <Separator className="my-3" />
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Sous-total</span>
+                  <span>{subtotal.toLocaleString()} FCFA</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
+                  <span>{tax.toLocaleString()} FCFA</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
+                  <span>TOTAL</span>
+                  <span className="text-primary">{total.toLocaleString()} FCFA</span>
+                </div>
+              </div>
             </div>
 
-            <Separator />
-
-            {/* Totaux */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Sous-total:</span>
-                <span>{subtotal.toLocaleString()} FCFA</span>
+            <div className="bg-muted/20 p-3 rounded-lg">
+              <div className="text-sm">
+                <strong>Mode de paiement:</strong> {
+                  paymentMethod === 'cash' ? 'Espèces' :
+                  paymentMethod === 'card' ? 'Carte bancaire' : 'Paiement mobile'
+                }
               </div>
-              <div className="flex justify-between text-sm">
-                <span>TVA (18%):</span>
-                <span>{tax.toFixed(0)} FCFA</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-primary">
-                <span>TOTAL À PAYER:</span>
-                <span>{total.toFixed(0)} FCFA</span>
-              </div>
-            </div>
-
-            {/* Paiement */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Mode de paiement:</label>
-                <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Espèces</SelectItem>
-                    <SelectItem value="card">Carte bancaire</SelectItem>
-                    <SelectItem value="mobile">Paiement mobile</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {paymentMethod === 'cash' && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Montant reçu:</label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      value={receivedAmount || ''}
-                      onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="flex-1"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setReceivedAmount(total)}
-                      className="whitespace-nowrap"
-                    >
-                      Montant exact
-                    </Button>
-                  </div>
-                  {receivedAmount > 0 && (
-                    <div className="mt-2 p-2 bg-muted/30 rounded">
-                      <p className="text-sm">
-                        Monnaie à rendre: <span className="font-bold text-primary">
-                          {change.toFixed(0)} FCFA
-                        </span>
-                      </p>
-                    </div>
-                  )}
+              {paymentMethod === 'cash' && receivedAmount > 0 && (
+                <div className="text-sm mt-1">
+                  <strong>Montant reçu:</strong> {receivedAmount.toLocaleString()} FCFA<br/>
+                  <strong>Rendu:</strong> {change.toLocaleString()} FCFA
                 </div>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowOrderSummary(false)}
-                className="flex-1"
-              >
-                Modifier
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowOrderSummary(false)} className="flex-1">
+                Annuler
               </Button>
-              <Button 
-                onClick={processPayment}
-                className="flex-1 bg-gradient-to-r from-primary to-primary/90"
-                disabled={paymentMethod === 'cash' && receivedAmount < total}
-              >
-                <CreditCard className="h-4 w-4 mr-2" />
-                Confirmer Paiement
+              <Button onClick={processPayment} className="flex-1">
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Confirmer
               </Button>
             </div>
           </div>

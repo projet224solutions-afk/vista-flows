@@ -825,6 +825,7 @@ export type Database = {
           currency: string
           id: string
           receipt_footer: string | null
+          tax_enabled: boolean
           tax_rate: number
           updated_at: string
           vendor_id: string
@@ -836,6 +837,7 @@ export type Database = {
           currency?: string
           id?: string
           receipt_footer?: string | null
+          tax_enabled?: boolean
           tax_rate?: number
           updated_at?: string
           vendor_id: string
@@ -847,6 +849,7 @@ export type Database = {
           currency?: string
           id?: string
           receipt_footer?: string | null
+          tax_enabled?: boolean
           tax_rate?: number
           updated_at?: string
           vendor_id?: string
