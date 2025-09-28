@@ -11,6 +11,7 @@ interface POSSettings {
   company_name: string;
   receipt_footer?: string;
   auto_print_receipt: boolean;
+  tax_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -52,7 +53,8 @@ export function usePOSSettings() {
             tax_rate: 0.18,
             currency: 'FCFA',
             company_name: 'Mon Commerce',
-            auto_print_receipt: false
+            auto_print_receipt: false,
+            tax_enabled: true
           })
           .select()
           .single();

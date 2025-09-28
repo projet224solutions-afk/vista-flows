@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
+import { useProducts } from '@/hooks/useSupabaseQuery';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Product {
   id: string;
@@ -61,16 +63,18 @@ interface Customer {
 
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
+  const { user } = useAuth();
+  const { data: productsData, loading: productsLoading } = useProducts(user?.id);
   
-  // États principaux
-  const [products] = useState<Product[]>([
-    { id: '1', name: 'Coca Cola 33cl', price: 1000, category: 'Boissons', stock: 50, barcode: '1234567890' },
-    { id: '2', name: 'Pain de Mie', price: 500, category: 'Boulangerie', stock: 30 },
-    { id: '3', name: 'Lait 1L', price: 800, category: 'Produits Laitiers', stock: 25 },
-    { id: '4', name: 'Riz 5kg', price: 3500, category: 'Céréales', stock: 20 },
-    { id: '5', name: 'Huile 1L', price: 1200, category: 'Condiments', stock: 40 },
-    { id: '6', name: 'Sucre 1kg', price: 900, category: 'Épicerie', stock: 35 }
-  ]);
+  // Transformer les données des produits pour le format POS
+  const products = productsData?.map(p => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    category: p.category_id || 'Divers',
+    stock: p.stock_quantity || 0,
+    barcode: p.barcode
+  })) || [];
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,8 +102,9 @@ export function POSSystem() {
 
   // Calculs automatiques avec TVA dynamique
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const taxRate = settings?.tax_rate || 0.18; // Utilise la TVA des paramètres ou 18% par défaut
-  const tax = subtotal * taxRate;
+  const taxRate = settings?.tax_rate || 0.18;
+  const taxEnabled = settings?.tax_enabled ?? true;
+  const tax = taxEnabled ? subtotal * taxRate : 0;
   const total = subtotal + tax;
   const change = receivedAmount - total;
 
@@ -302,21 +307,40 @@ export function POSSystem() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Taux de TVA ({(taxRate * 100).toFixed(1)}%)
+                      <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                        TVA
+                        <Badge variant={taxEnabled ? 'default' : 'secondary'} className="text-xs">
+                          {taxEnabled ? 'Activée' : 'Désactivée'}
+                        </Badge>
                       </label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={taxRate}
-                          onChange={(e) => updateSettings({ tax_rate: parseFloat(e.target.value) || 0 })}
-                          className="flex-1"
-                        />
-                        <span className="text-sm text-muted-foreground">%</span>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Button
+                          variant={taxEnabled ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => updateSettings({ tax_enabled: !taxEnabled })}
+                          className="flex items-center gap-2"
+                        >
+                          <Check className={`h-4 w-4 ${taxEnabled ? 'opacity-100' : 'opacity-0'}`} />
+                          {taxEnabled ? 'Activée' : 'Désactivée'}
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : '0%'}
+                        </span>
                       </div>
+                      {taxEnabled && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={taxRate}
+                            onChange={(e) => updateSettings({ tax_rate: parseFloat(e.target.value) || 0 })}
+                            className="flex-1"
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         Format décimal (ex: 0.18 pour 18%)
                       </p>
@@ -349,12 +373,12 @@ export function POSSystem() {
                       />
                     </div>
                     
-                    <div className="bg-muted/30 p-3 rounded-lg">
-                      <div className="text-xs text-muted-foreground">
-                        <strong>TVA appliquée:</strong> {(taxRate * 100).toFixed(1)}%<br/>
-                        <strong>Devise:</strong> {settings?.currency || 'FCFA'}
-                      </div>
-                    </div>
+                     <div className="bg-muted/30 p-3 rounded-lg">
+                       <div className="text-xs text-muted-foreground">
+                         <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
+                         <strong>Devise:</strong> {settings?.currency || 'FCFA'}
+                       </div>
+                     </div>
                   </div>
                 )}
               </DialogContent>
@@ -424,11 +448,16 @@ export function POSSystem() {
             </CardContent>
           </Card>
 
-          {/* Grille de produits professionnelle */}
-          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
-            <CardContent className="p-6 h-full">
-              <ScrollArea className="h-full">
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+           {/* Grille de produits professionnelle */}
+           <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
+             <CardContent className="p-6 h-full">
+               <ScrollArea className="h-full">
+                 {productsLoading ? (
+                   <div className="flex items-center justify-center h-full">
+                     <div className="text-muted-foreground">Chargement des produits...</div>
+                   </div>
+                 ) : (
+                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredProducts.map(product => (
                     <Card 
                       key={product.id} 
