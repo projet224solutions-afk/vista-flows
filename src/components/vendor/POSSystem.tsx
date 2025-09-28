@@ -299,7 +299,7 @@ export function POSSystem() {
       </div>
 
       {/* Section Panier et Paiement - Droite */}
-      <div className="w-full lg:w-48 xl:w-40 bg-card border-l flex flex-col">
+      <div className="w-full lg:w-52 xl:w-44 bg-card border-l flex flex-col">
         {/* En-tête du panier */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
