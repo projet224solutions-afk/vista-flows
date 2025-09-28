@@ -161,44 +161,44 @@ export default function VendeurDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-vendeur-accent via-background to-accent pb-20">
-      {/* Header Professionnel Style Odoo */}
-      <header className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-elegant">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-vendeur-gradient rounded-xl flex items-center justify-center shadow-glow">
-                  <Activity className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-vendeur-gradient bg-clip-text text-transparent">
-                    224SOLUTIONS Commerce Pro
-                  </h1>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <span className="w-2 h-2 bg-vendeur-secondary rounded-full"></span>
-                    {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
-                    {userInfo && (
-                      <span className="text-xs bg-primary/10 px-2 py-1 rounded-full font-mono">
-                        ID: {userInfo.custom_id}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-              {/* Informations Wallet dans l'en-tête */}
-              {wallet && !walletLoading && (
-                <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-vendeur" />
-                    <div className="text-sm">
-                      <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
-                      <div className="text-xs text-muted-foreground">Solde disponible</div>
-                    </div>
+      <div className="min-h-screen bg-gradient-to-br from-vendeur-accent via-background to-accent">
+        {/* Header Professionnel Style Odoo */}
+        <header className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-elegant">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-vendeur-gradient rounded-xl flex items-center justify-center shadow-glow">
+                    <Activity className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold bg-vendeur-gradient bg-clip-text text-transparent">
+                      224SOLUTIONS Commerce Pro
+                    </h1>
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-2 h-2 bg-vendeur-secondary rounded-full"></span>
+                      {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
+                      {userInfo && (
+                        <span className="text-xs bg-primary/10 px-2 py-1 rounded-full font-mono">
+                          ID: {userInfo.custom_id}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
+                {/* Informations Wallet dans l'en-tête */}
+                {wallet && !walletLoading && (
+                  <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-vendeur" />
+                      <div className="text-sm">
+                        <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
+                        <div className="text-xs text-muted-foreground">Solde disponible</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             <div className="flex items-center gap-3">
               <Button size="sm" variant="outline" className="hidden lg:flex hover:shadow-glow transition-all duration-300" onClick={() => {
                 // Focus on search inputs in active tab
@@ -312,53 +312,89 @@ export default function VendeurDashboard() {
       {/* Interface à onglets - Style Odoo Professionnel */}
       <div className="px-6 py-4">
         <Tabs defaultValue="pos" className="w-full">
-          <div className="flex overflow-x-auto scrollbar-hide mb-6">
-            <TabsList className="flex-shrink-0 bg-card/50 backdrop-blur-sm p-1 rounded-xl border">
-              <TabsTrigger value="pos" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+          <div className="flex overflow-x-auto scrollbar-hide mb-6 bg-card/80 p-2 rounded-xl border shadow-sm">
+            <TabsList className="flex-shrink-0 bg-transparent p-0 h-auto gap-2 w-full">
+              <TabsTrigger 
+                value="pos" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <CreditCard className="w-4 h-4 mr-2" />
                 POS Caisse
               </TabsTrigger>
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="dashboard" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Vue d'ensemble
               </TabsTrigger>
-              <TabsTrigger value="products" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="products" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <Package className="w-4 h-4 mr-2" />
                 Produits
               </TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="orders" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Commandes
               </TabsTrigger>
-              <TabsTrigger value="clients" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="clients" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Clients
               </TabsTrigger>
-              <TabsTrigger value="agents" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="agents" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <UserCheck className="w-4 h-4 mr-2" />
                 Agents & Permissions
               </TabsTrigger>
-              <TabsTrigger value="warehouses" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="warehouses" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <Warehouse className="w-4 h-4 mr-2" />
                 Entrepôts & Stocks
               </TabsTrigger>
-              <TabsTrigger value="payments" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="payments" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Paiements
               </TabsTrigger>
-              <TabsTrigger value="stock" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="stock" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <Package className="w-4 h-4 mr-2" />
                 Stock
               </TabsTrigger>
-              <TabsTrigger value="marketing" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="marketing" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <Megaphone className="w-4 h-4 mr-2" />
                 Marketing
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="analytics" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <PieChart className="w-4 h-4 mr-2" />
                 Analyses
               </TabsTrigger>
-              <TabsTrigger value="wallet" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+              <TabsTrigger 
+                value="wallet" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Wallet & Cartes
               </TabsTrigger>
