@@ -24,8 +24,8 @@ interface Order {
   shipping_amount: number;
   discount_amount: number;
   total_amount: number;
-  shipping_address: any;
-  billing_address?: any;
+  shipping_address: unknown;
+  billing_address?: unknown;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -133,7 +133,7 @@ export default function OrderManagement() {
       if (error) throw error;
 
       setOrders(ordersData || []);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les commandes.",
@@ -168,7 +168,7 @@ export default function OrderManagement() {
 
       setOrders(prev => prev.map(order => 
         order.id === orderId 
-          ? { ...order, status: newStatus as any, updated_at: new Date().toISOString() }
+          ? { ...order, status: newStatus as unknown, updated_at: new Date().toISOString() }
           : order
       ));
 
@@ -176,7 +176,7 @@ export default function OrderManagement() {
         title: "Statut mis à jour",
         description: `La commande a été marquée comme ${statusLabels[newStatus as keyof typeof statusLabels]}.`
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut de la commande.",

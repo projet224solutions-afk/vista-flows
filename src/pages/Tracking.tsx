@@ -6,6 +6,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import NavigationFooter from "@/components/NavigationFooter";
 
+interface TrackingResult {
+  success: boolean;
+  data?: {
+    id: string;
+    order_id: string;
+    status: string;
+    current_location: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+    estimated_delivery: string;
+    driver_info: {
+      name: string;
+      phone: string;
+      vehicle: string;
+    };
+    timeline: Array<{
+      timestamp: string;
+      status: string;
+      location: string;
+      description: string;
+    }>;
+  };
+  error?: string;
+}
+
 const trackingStatuses = {
   pending: {
     label: "En attente",
@@ -77,14 +104,14 @@ const mockTrackingData = {
 
 export default function Tracking() {
   const [trackingId, setTrackingId] = useState("");
-  const [trackingResult, setTrackingResult] = useState<any>(null);
+  const [trackingResult, setTrackingResult] = useState<TrackingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleTrack = async () => {
     if (!trackingId.trim()) return;
-    
+
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       const result = mockTrackingData[trackingId as keyof typeof mockTrackingData];
@@ -124,7 +151,7 @@ export default function Tracking() {
                 className="flex-1"
                 onKeyPress={(e) => e.key === 'Enter' && handleTrack()}
               />
-              <Button 
+              <Button
                 onClick={handleTrack}
                 disabled={!trackingId.trim() || isLoading}
                 className="bg-vendeur-primary hover:bg-vendeur-primary/90"
@@ -132,19 +159,19 @@ export default function Tracking() {
                 {isLoading ? "Recherche..." : "Suivre"}
               </Button>
             </div>
-            
+
             <div className="mt-4">
               <p className="text-sm text-muted-foreground mb-2">Exemples de numéros de suivi :</p>
               <div className="flex flex-wrap gap-2">
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="cursor-pointer hover:bg-accent"
                   onClick={() => setTrackingId("ORD-2024-000123")}
                 >
                   ORD-2024-000123
                 </Badge>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="cursor-pointer hover:bg-accent"
                   onClick={() => setTrackingId("DEL-2024-000456")}
                 >
@@ -200,7 +227,7 @@ export default function Tracking() {
               <div className="mb-6">
                 <h3 className="font-semibold mb-3">Articles commandés</h3>
                 <div className="space-y-2">
-                  {trackingResult.items.map((item: any, index: number) => (
+                  {trackingResult.items.map((item: unknown, index: number) => (
                     <div key={index} className="flex justify-between items-center p-3 bg-accent rounded-lg">
                       <div>
                         <p className="font-medium">{item.name}</p>
@@ -221,20 +248,18 @@ export default function Tracking() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {trackingResult.timeline.map((step: any, index: number) => {
+                {trackingResult.timeline.map((step: unknown, index: number) => {
                   const StepIcon = trackingStatuses[step.status as keyof typeof trackingStatuses].icon;
                   return (
                     <div key={index} className="flex items-start gap-4">
-                      <div className={`p-2 rounded-full ${
-                        step.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                      }`}>
+                      <div className={`p-2 rounded-full ${step.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                        }`}>
                         <StepIcon className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className={`font-medium ${
-                            step.completed ? 'text-foreground' : 'text-muted-foreground'
-                          }`}>
+                          <h4 className={`font-medium ${step.completed ? 'text-foreground' : 'text-muted-foreground'
+                            }`}>
                             {step.title}
                           </h4>
                           <span className="text-xs text-muted-foreground">

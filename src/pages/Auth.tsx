@@ -253,7 +253,7 @@ export default function Auth() {
         
         setError("Compte créé avec succès ! Vérifiez votre email pour activer votre compte.");
       }
-    } catch (error: any) {
+    } catch (error) {
       setError(error.message || "Une erreur s'est produite lors de l'authentification");
     } finally {
       setLoading(false);

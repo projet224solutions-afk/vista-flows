@@ -18,7 +18,7 @@ interface PaymentMethod {
   id: string;
   name: string;
   type: 'card' | 'mobile_money' | 'bank_transfer' | 'cash' | 'crypto';
-  icon: any;
+  icon: unknown;
   available: boolean;
   fees: string;
   processing_time: string;
@@ -175,7 +175,7 @@ export default function PaymentProcessor() {
       ];
 
       setTransactions(mockTransactions);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les transactions.",
@@ -225,7 +225,7 @@ export default function PaymentProcessor() {
         description: "Le traitement du paiement a été initié."
       });
 
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de traiter le paiement.",
@@ -261,7 +261,7 @@ export default function PaymentProcessor() {
         description: "Une nouvelle tentative de paiement a été initiée."
       });
 
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de relancer le paiement.",
@@ -283,7 +283,7 @@ export default function PaymentProcessor() {
         description: "Le remboursement a été traité avec succès."
       });
 
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de traiter le remboursement.",

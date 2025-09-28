@@ -52,7 +52,7 @@ export const useWarehouseManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWarehouses((data as any[])?.map(warehouse => ({
+      setWarehouses((data as unknown[])?.map(warehouse => ({
         id: warehouse.id,
         vendor_id: warehouse.vendor_id,
         name: warehouse.name,
@@ -62,7 +62,7 @@ export const useWarehouseManagement = () => {
         is_active: warehouse.is_active,
         created_at: warehouse.created_at
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -84,14 +84,14 @@ export const useWarehouseManagement = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setWarehouseStocks((data as any[])?.map(stock => ({
+      setWarehouseStocks((data as unknown[])?.map(stock => ({
         id: stock.id,
         warehouse_id: stock.warehouse_id,
         product_id: stock.product_id,
         quantity: stock.quantity,
         updated_at: stock.updated_at
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -107,7 +107,7 @@ export const useWarehouseManagement = () => {
         .limit(50);
 
       if (error) throw error;
-      setStockMovements((data as any[])?.map(movement => ({
+      setStockMovements((data as unknown[])?.map(movement => ({
         id: movement.id,
         product_id: movement.product_id,
         from_warehouse_id: movement.from_warehouse_id,
@@ -117,7 +117,7 @@ export const useWarehouseManagement = () => {
         created_at: movement.created_at,
         notes: movement.notes
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -143,7 +143,7 @@ export const useWarehouseManagement = () => {
       if (error) throw error;
       await fetchWarehouses(); // Refresh the list
       return data;
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -158,7 +158,7 @@ export const useWarehouseManagement = () => {
 
       if (error) throw error;
       await fetchWarehouses(); // Refresh the list
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -173,7 +173,7 @@ export const useWarehouseManagement = () => {
 
       if (error) throw error;
       await fetchWarehouses(); // Refresh the list
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -191,7 +191,7 @@ export const useWarehouseManagement = () => {
 
       if (error) throw error;
       await fetchWarehouseStocks(); // Refresh the stocks
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -227,7 +227,7 @@ export const useWarehouseManagement = () => {
           await supabase
             .from('warehouse_stocks')
             .update({ 
-              quantity: Math.max(0, (currentStock as any).quantity - movementData.quantity) 
+              quantity: Math.max(0, (currentStock as unknown).quantity - movementData.quantity) 
             })
             .eq('warehouse_id', movementData.from_warehouse_id)
             .eq('product_id', movementData.product_id);
@@ -250,7 +250,7 @@ export const useWarehouseManagement = () => {
       await fetchWarehouseStocks();
       await fetchStockMovements();
       return data;
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -296,7 +296,7 @@ export const useWarehouseManagement = () => {
       if (fromStock) {
         await supabase
           .from('warehouse_stocks')
-          .update({ quantity: (fromStock as any).quantity - quantity })
+          .update({ quantity: (fromStock as unknown).quantity - quantity })
           .eq('warehouse_id', fromWarehouseId)
           .eq('product_id', productId);
       }
@@ -304,7 +304,7 @@ export const useWarehouseManagement = () => {
       if (toStock) {
         await supabase
           .from('warehouse_stocks')
-          .update({ quantity: (toStock as any).quantity + quantity })
+          .update({ quantity: (toStock as unknown).quantity + quantity })
           .eq('warehouse_id', toWarehouseId)
           .eq('product_id', productId);
       } else {
@@ -318,7 +318,7 @@ export const useWarehouseManagement = () => {
       }
 
       await Promise.all([fetchWarehouseStocks(), fetchStockMovements()]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }

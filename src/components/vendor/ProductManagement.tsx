@@ -102,7 +102,7 @@ export default function ProductManagement() {
 
       setProducts(productsData || []);
       setCategories(categoriesData || []);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les données des produits.",
@@ -188,7 +188,7 @@ export default function ProductManagement() {
 
       setShowDialog(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: `Impossible de sauvegarder le produit: ${error.message}`,
@@ -253,7 +253,7 @@ export default function ProductManagement() {
         title: isActive ? "Produit désactivé" : "Produit activé",
         description: `Le produit a été ${isActive ? 'désactivé' : 'activé'} avec succès.`
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de modifier le statut du produit.",
@@ -526,7 +526,7 @@ export default function ProductManagement() {
                               title: "Produit supprimé",
                               description: "Le produit a été supprimé avec succès."
                             });
-                          } catch (error: any) {
+                          } catch (error) {
                             toast({
                               title: "Erreur",
                               description: "Impossible de supprimer le produit.",
@@ -624,7 +624,7 @@ export default function ProductManagement() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) => setStatusFilter(e.target.value as unknown)}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les produits</option>

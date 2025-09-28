@@ -57,7 +57,7 @@ export const useWallet = () => {
 
       if (error) throw error;
       setWallet(data);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       console.error('Error fetching wallet:', err);
     }
@@ -76,7 +76,7 @@ export const useWallet = () => {
 
       if (error) throw error;
       setVirtualCards(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching virtual cards:', err);
     }
   };
@@ -95,7 +95,7 @@ export const useWallet = () => {
 
       if (error) throw error;
       setTransactions(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching transactions:', err);
     }
   };
@@ -139,7 +139,7 @@ export const useWallet = () => {
       });
 
       return newCard;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur",
         description: "Impossible de créer la carte virtuelle",
@@ -184,7 +184,7 @@ export const useWallet = () => {
       });
 
       return data;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur",
         description: "Impossible de créer la transaction",
@@ -230,7 +230,7 @@ export const useWallet = () => {
       });
 
       return true;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur de rechargement",
         description: "Impossible de recharger le wallet",

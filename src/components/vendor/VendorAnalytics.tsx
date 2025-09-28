@@ -105,7 +105,7 @@ export default function VendorAnalytics() {
         categories: categoriesData
       });
 
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les données d'analyse.",
@@ -116,7 +116,7 @@ export default function VendorAnalytics() {
     }
   };
 
-  const processRevenueData = (orders: any[], range: string) => {
+  const processRevenueData = (orders: unknown[], range: string) => {
     const data: Record<string, number> = {};
     
     orders.forEach(order => {
@@ -131,7 +131,7 @@ export default function VendorAnalytics() {
     return Object.entries(data).map(([date, amount]) => ({ date, amount }));
   };
 
-  const processOrdersData = (orders: any[], range: string) => {
+  const processOrdersData = (orders: unknown[], range: string) => {
     const data: Record<string, number> = {};
     
     orders.forEach(order => {
@@ -146,11 +146,11 @@ export default function VendorAnalytics() {
     return Object.entries(data).map(([date, count]) => ({ date, count }));
   };
 
-  const processProductsData = (orders: any[]) => {
+  const processProductsData = (orders: unknown[]) => {
     const productData: Record<string, { sales: number, revenue: number }> = {};
     
     orders.forEach(order => {
-      order.order_items?.forEach((item: any) => {
+      order.order_items?.forEach((item: unknown) => {
         const productName = item.product?.name || 'Produit inconnu';
         if (!productData[productName]) {
           productData[productName] = { sales: 0, revenue: 0 };
@@ -166,7 +166,7 @@ export default function VendorAnalytics() {
       .slice(0, 10);
   };
 
-  const processCustomersData = (orders: any[], range: string) => {
+  const processCustomersData = (orders: unknown[], range: string) => {
     // Simulation des données clients nouveaux vs récurrents
     const data: Record<string, { new: number, returning: number }> = {};
     
@@ -202,11 +202,11 @@ export default function VendorAnalytics() {
     return Object.entries(data).map(([date, counts]) => ({ date, ...counts }));
   };
 
-  const processCategoriesData = (orders: any[]) => {
+  const processCategoriesData = (orders: unknown[]) => {
     const categoryData: Record<string, number> = {};
     
     orders.forEach(order => {
-      order.order_items?.forEach((item: any) => {
+      order.order_items?.forEach((item: unknown) => {
         const categoryId = item.product?.category_id || 'Autres';
         categoryData[categoryId] = (categoryData[categoryId] || 0) + item.total_price;
       });
@@ -243,7 +243,7 @@ export default function VendorAnalytics() {
         <div className="flex gap-2">
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
+            onChange={(e) => setDateRange(e.target.value as unknown)}
             className="px-3 py-2 border rounded-md"
           >
             <option value="7d">7 derniers jours</option>

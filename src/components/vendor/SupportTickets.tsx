@@ -46,28 +46,28 @@ export default function SupportTickets() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [resolution, setResolution] = useState('');
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || ticket.priority === filterPriority;
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
   const openTickets = tickets.filter(t => t.status === 'open');
   const urgentTickets = tickets.filter(t => t.priority === 'urgent');
   const inProgressTickets = tickets.filter(t => t.status === 'in_progress');
-  const resolvedToday = tickets.filter(t => 
-    t.status === 'resolved' && 
+  const resolvedToday = tickets.filter(t =>
+    t.status === 'resolved' &&
     new Date(t.created_at).toDateString() === new Date().toDateString()
   );
 
-  const handleStatusUpdate = async (ticketId: string, newStatus: any) => {
+  const handleStatusUpdate = async (ticketId: string, newStatus: unknown) => {
     try {
       await updateTicketStatus(ticketId, newStatus);
       toast({
@@ -240,11 +240,11 @@ export default function SupportTickets() {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2 ml-4">
                     {ticket.status === 'open' && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => handleStatusUpdate(ticket.id, 'in_progress')}
                       >
                         Prendre en charge
@@ -254,8 +254,8 @@ export default function SupportTickets() {
                       <>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => setSelectedTicket(ticket)}
                             >
@@ -292,8 +292,8 @@ export default function SupportTickets() {
                             </div>
                           </DialogContent>
                         </Dialog>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleStatusUpdate(ticket.id, 'waiting_customer')}
                         >
@@ -302,16 +302,16 @@ export default function SupportTickets() {
                       </>
                     )}
                     {ticket.status === 'waiting_customer' && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => handleStatusUpdate(ticket.id, 'in_progress')}
                       >
                         Reprendre
                       </Button>
                     )}
                     {ticket.status === 'resolved' && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => handleStatusUpdate(ticket.id, 'closed')}
                       >
@@ -320,7 +320,7 @@ export default function SupportTickets() {
                     )}
                   </div>
                 </div>
-                
+
                 {ticket.resolution && (
                   <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
                     <p className="text-sm"><strong>Solution:</strong> {ticket.resolution}</p>

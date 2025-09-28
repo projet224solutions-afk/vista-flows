@@ -40,7 +40,7 @@ export const useChat = () => {
   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
   const [currentCall, setCurrentCall] = useState<Call | null>(null);
   const [loading, setLoading] = useState(false);
-  const messagesSubscription = useRef<any>(null);
+  const messagesSubscription = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Récupérer les utilisateurs avec qui on a déjà chatté
   const fetchChatUsers = async () => {
@@ -61,19 +61,19 @@ export const useChat = () => {
       if (error) throw error;
 
       const users = new Map<string, ChatUser>();
-      
-      data?.forEach((msg: any) => {
-        const otherUser = msg.sender_id === user.id 
-          ? msg.profiles_recipient 
+
+      data?.forEach((msg: unknown) => {
+        const otherUser = msg.sender_id === user.id
+          ? msg.profiles_recipient
           : msg.profiles_sender;
-        
+
         if (otherUser && otherUser.id !== user.id) {
           users.set(otherUser.id, otherUser);
         }
       });
 
       setChatUsers(Array.from(users.values()));
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching chat users:', err);
     }
   };
@@ -96,7 +96,7 @@ export const useChat = () => {
 
       if (error) throw error;
       setMessages(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching messages:', err);
     } finally {
       setLoading(false);
@@ -133,7 +133,7 @@ export const useChat = () => {
 
       setMessages(prev => [...prev, data]);
       return data;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur",
         description: "Impossible d'envoyer le message",
@@ -163,14 +163,14 @@ export const useChat = () => {
       if (error) throw error;
 
       setCurrentCall(data);
-      
+
       toast({
         title: "Appel en cours",
         description: `Appel ${callType === 'video' ? 'vidéo' : 'audio'} en cours...`,
       });
 
       return data;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur",
         description: "Impossible d'initier l'appel",
@@ -195,7 +195,7 @@ export const useChat = () => {
         title: "Appel accepté",
         description: "L'appel a été accepté",
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error accepting call:', err);
     }
   };
@@ -205,7 +205,7 @@ export const useChat = () => {
     try {
       const { error } = await supabase
         .from('calls')
-        .update({ 
+        .update({
           status: 'rejected',
           ended_at: new Date().toISOString()
         })
@@ -213,7 +213,7 @@ export const useChat = () => {
 
       if (error) throw error;
       setCurrentCall(null);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error rejecting call:', err);
     }
   };
@@ -223,7 +223,7 @@ export const useChat = () => {
     try {
       const { error } = await supabase
         .from('calls')
-        .update({ 
+        .update({
           status: 'ended',
           ended_at: new Date().toISOString()
         })
@@ -231,7 +231,7 @@ export const useChat = () => {
 
       if (error) throw error;
       setCurrentCall(null);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error ending call:', err);
     }
   };
@@ -249,7 +249,7 @@ export const useChat = () => {
         .is('read_at', null);
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error marking messages as read:', err);
     }
   };

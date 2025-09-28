@@ -82,7 +82,7 @@ export default function InventoryManagement() {
 
       setInventory(inventoryData || []);
       setWarehouses(warehousesData || []);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les données d'inventaire.",
@@ -128,7 +128,7 @@ export default function InventoryManagement() {
         title: "Stock mis à jour",
         description: "La quantité a été mise à jour avec succès."
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le stock.",
@@ -247,7 +247,7 @@ export default function InventoryManagement() {
             </div>
             <select
               value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value as any)}
+              onChange={(e) => setStockFilter(e.target.value as unknown)}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les produits</option>

@@ -12,7 +12,7 @@ export interface EnhancedTransaction {
   currency: string;
   method: string;
   status: string;
-  metadata: any;
+  metadata: unknown;
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +38,7 @@ export const useEnhancedTransactions = () => {
 
       if (error) throw error;
       setTransactions(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur lors du chargement des transactions:', err);
       setError(err.message);
     } finally {
@@ -90,7 +90,7 @@ export const useEnhancedTransactions = () => {
       });
 
       return data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur transaction:', error);
       toast({
         title: "Erreur de transaction",
@@ -146,7 +146,7 @@ export const useEnhancedTransactions = () => {
       });
 
       return data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur transaction escrow:', error);
       toast({
         title: "Erreur de transaction",
@@ -208,7 +208,7 @@ export const useEnhancedTransactions = () => {
 
       if (error) throw error;
       setTransactions(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur lors de la recherche:', err);
       setError(err.message);
     } finally {

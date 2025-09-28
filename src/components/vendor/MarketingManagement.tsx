@@ -97,7 +97,7 @@ export default function MarketingManagement() {
 
       if (error) throw error;
       setCampaigns(data || []);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les campagnes.",
@@ -174,7 +174,7 @@ export default function MarketingManagement() {
         target_audience: '',
         content: ''
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de créer la campagne.",

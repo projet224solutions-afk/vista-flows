@@ -43,13 +43,13 @@ export const useAgentManagement = () => {
         .order('name');
         
       if (error) throw error;
-      setRoles((data as any[])?.map(role => ({
+      setRoles((data as unknown[])?.map(role => ({
         id: role.id,
         name: role.name,
         description: role.description,
         created_at: role.created_at
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -61,14 +61,14 @@ export const useAgentManagement = () => {
         .select('*');
 
       if (error) throw error;
-      setPermissions((data as any[])?.map(permission => ({
+      setPermissions((data as unknown[])?.map(permission => ({
         id: permission.id,
         role_id: permission.role_id,
         action: permission.action,
         allowed: permission.allowed,
         created_at: permission.created_at
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -88,7 +88,7 @@ export const useAgentManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAgents((data as any[])?.map(agent => ({
+      setAgents((data as unknown[])?.map(agent => ({
         id: agent.id,
         seller_id: agent.seller_id,
         user_id: agent.user_id,
@@ -102,7 +102,7 @@ export const useAgentManagement = () => {
           created_at: agent.roles.created_at
         } : undefined
       })) || []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -128,7 +128,7 @@ export const useAgentManagement = () => {
       if (error) throw error;
       await fetchAgents(); // Refresh the list
       return data;
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -143,7 +143,7 @@ export const useAgentManagement = () => {
 
       if (error) throw error;
       await fetchAgents(); // Refresh the list
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }
@@ -158,7 +158,7 @@ export const useAgentManagement = () => {
 
       if (error) throw error;
       await fetchAgents(); // Refresh the list
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       throw err;
     }

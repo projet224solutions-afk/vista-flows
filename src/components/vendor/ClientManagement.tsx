@@ -16,9 +16,9 @@ import {
 interface Client {
   id: string;
   user_id: string;
-  addresses?: any;
-  payment_methods?: any;
-  preferences?: any;
+  addresses?: unknown;
+  payment_methods?: unknown;
+  preferences?: unknown;
   created_at: string;
   profile?: {
     first_name?: string;
@@ -134,7 +134,7 @@ export default function ClientManagement() {
       });
 
       setClients(processedClients);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les données clients.",
@@ -303,7 +303,7 @@ export default function ClientManagement() {
             </div>
             <select
               value={clientTypeFilter}
-              onChange={(e) => setClientTypeFilter(e.target.value as any)}
+              onChange={(e) => setClientTypeFilter(e.target.value as unknown)}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les clients</option>

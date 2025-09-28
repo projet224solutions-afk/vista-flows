@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
@@ -32,7 +32,7 @@ export const useTracking = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
 
   // Récupérer les données de tracking
-  const fetchTrackingData = async (orderId?: string) => {
+  const fetchTrackingData = useCallback(async (orderId?: string) => {
     if (!user) return;
 
     try {
@@ -59,12 +59,12 @@ export const useTracking = () => {
 
       if (error) throw error;
       setTrackingData(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching tracking data:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Créer un nouveau point de tracking
   const createTrackingPoint = async (
@@ -94,7 +94,7 @@ export const useTracking = () => {
 
       setTrackingData(prev => [data, ...prev]);
       return data;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Erreur",
         description: "Impossible de créer le point de tracking",
@@ -114,7 +114,7 @@ export const useTracking = () => {
     notes?: string
   ) => {
     try {
-      const updateData: any = {
+      const updateData: unknown = {
         latitude,
         longitude,
         updated_at: new Date().toISOString()
@@ -131,16 +131,16 @@ export const useTracking = () => {
       if (error) throw error;
 
       // Mettre à jour l'état local
-      setTrackingData(prev => 
-        prev.map(tracking => 
-          tracking.id === trackingId 
+      setTrackingData(prev =>
+        prev.map(tracking =>
+          tracking.id === trackingId
             ? { ...tracking, ...updateData }
             : tracking
         )
       );
 
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating location:', err);
       return false;
     }
@@ -170,14 +170,14 @@ export const useTracking = () => {
         accuracy: position.coords.accuracy,
         timestamp: position.timestamp
       };
-      
+
       setCurrentLocation(locationUpdate);
       console.log('Location updated:', locationUpdate);
     };
 
     const errorCallback = (error: GeolocationPositionError) => {
       let message = "Erreur de géolocalisation";
-      
+
       switch (error.code) {
         case error.PERMISSION_DENIED:
           message = "Permission de géolocalisation refusée";
@@ -195,7 +195,7 @@ export const useTracking = () => {
         description: message,
         variant: "destructive",
       });
-      
+
       console.error('Geolocation error:', error);
       setIsTracking(false);
     };
@@ -208,7 +208,7 @@ export const useTracking = () => {
 
     setWatchId(id);
     setIsTracking(true);
-    
+
     toast({
       title: "Suivi activé",
       description: "Le suivi GPS a été activé",
@@ -221,10 +221,10 @@ export const useTracking = () => {
       navigator.geolocation.clearWatch(watchId);
       setWatchId(null);
     }
-    
+
     setIsTracking(false);
     setCurrentLocation(null);
-    
+
     toast({
       title: "Suivi désactivé",
       description: "Le suivi GPS a été désactivé",
@@ -272,17 +272,17 @@ export const useTracking = () => {
     const R = 6371; // Rayon de la Terre en km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   // Souscrire aux mises à jour de tracking en temps réel
   const subscribeToTracking = (orderId?: string) => {
-    let channel = supabase
+    const channel = supabase
       .channel('tracking-updates')
       .on(
         'postgres_changes',
@@ -295,9 +295,9 @@ export const useTracking = () => {
           if (payload.eventType === 'INSERT') {
             setTrackingData(prev => [payload.new as TrackingData, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            setTrackingData(prev => 
-              prev.map(tracking => 
-                tracking.id === payload.new.id 
+            setTrackingData(prev =>
+              prev.map(tracking =>
+                tracking.id === payload.new.id
                   ? payload.new as TrackingData
                   : tracking
               )
@@ -325,7 +325,7 @@ export const useTracking = () => {
     if (user) {
       fetchTrackingData();
     }
-  }, [user]);
+  }, [user, fetchTrackingData]);
 
   return {
     trackingData,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 
@@ -9,7 +9,7 @@ interface UseSupabaseQueryOptions {
 
 export const useSupabaseQuery = <T,>(
   queryFn: () => Promise<{ data: T | null; error: PostgrestError | null }>,
-  dependencies: any[] = [],
+  dependencies: unknown[] = [],
   options: UseSupabaseQueryOptions = {}
 ) => {
   const [data, setData] = useState<T | null>(null);
@@ -18,13 +18,13 @@ export const useSupabaseQuery = <T,>(
 
   const { enabled = true, refetchInterval } = options;
 
-  const executeQuery = async () => {
+  const executeQuery = useCallback(async () => {
     if (!enabled) return;
-    
+
     try {
       setLoading(true);
       const result = await queryFn();
-      
+
       if (result.error) {
         setError(result.error);
         setData(null);
@@ -38,11 +38,11 @@ export const useSupabaseQuery = <T,>(
     } finally {
       setLoading(false);
     }
-  };
+  }, [enabled, queryFn]);
 
   useEffect(() => {
     executeQuery();
-  }, [enabled, ...dependencies]);
+  }, [executeQuery, ...dependencies]);
 
   // Set up refetch interval if specified
   useEffect(() => {
@@ -53,7 +53,7 @@ export const useSupabaseQuery = <T,>(
     }, refetchInterval);
 
     return () => clearInterval(interval);
-  }, [refetchInterval, enabled, ...dependencies]);
+  }, [refetchInterval, enabled, executeQuery]);
 
   const refetch = () => {
     executeQuery();
@@ -167,13 +167,13 @@ export const useVendorStats = (vendorId: string) => {
           .from('orders')
           .select('id, status, created_at')
           .eq('vendor_id', vendorId),
-        
+
         supabase
           .from('products')
           .select('id, stock_quantity')
           .eq('vendor_id', vendorId)
           .eq('is_active', true),
-        
+
         supabase
           .from('orders')
           .select('total_amount, created_at')
@@ -182,29 +182,29 @@ export const useVendorStats = (vendorId: string) => {
       ]);
 
       if (ordersResult.error || productsResult.error || revenueResult.error) {
-        return { 
-          data: null, 
-          error: ordersResult.error || productsResult.error || revenueResult.error 
+        return {
+          data: null,
+          error: ordersResult.error || productsResult.error || revenueResult.error
         };
       }
 
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      
-      const todayOrders = ordersResult.data?.filter(order => 
+
+      const todayOrders = ordersResult.data?.filter(order =>
         new Date(order.created_at) >= startOfDay
       ).length || 0;
 
-      const totalRevenue = revenueResult.data?.reduce((sum, order) => 
+      const totalRevenue = revenueResult.data?.reduce((sum, order) =>
         sum + parseFloat(order.total_amount.toString()), 0
       ) || 0;
 
-      const todayRevenue = revenueResult.data?.filter(order => 
+      const todayRevenue = revenueResult.data?.filter(order =>
         new Date(order.created_at) >= startOfDay
       ).reduce((sum, order) => sum + parseFloat(order.total_amount.toString()), 0) || 0;
 
       const totalProducts = productsResult.data?.length || 0;
-      const lowStockProducts = productsResult.data?.filter(product => 
+      const lowStockProducts = productsResult.data?.filter(product =>
         product.stock_quantity <= 10
       ).length || 0;
 
