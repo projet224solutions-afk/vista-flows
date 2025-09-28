@@ -25,6 +25,7 @@ import OrderManagement from "@/components/vendor/OrderManagement";
 import ClientManagement from "@/components/vendor/ClientManagement";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import PaymentProcessor from "@/components/vendor/PaymentProcessor";
+import { POSSystem } from "@/components/vendor/POSSystem";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -256,6 +257,10 @@ export default function VendeurDashboard() {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Vue d'ensemble
               </TabsTrigger>
+              <TabsTrigger value="pos" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <CreditCard className="w-4 h-4 mr-2" />
+                POS Caisse
+              </TabsTrigger>
               <TabsTrigger value="products" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
                 <Package className="w-4 h-4 mr-2" />
                 Produits
@@ -287,7 +292,10 @@ export default function VendeurDashboard() {
             </TabsList>
           </div>
 
-          {/* Vue d'ensemble */}
+          {/* POS - Point de Vente */}
+          <TabsContent value="pos" className="space-y-6">
+            <POSSystem />
+          </TabsContent>
           <TabsContent value="dashboard" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Commandes récentes */}
@@ -383,6 +391,11 @@ export default function VendeurDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* POS - Point de Vente */}
+          <TabsContent value="pos" className="space-y-6">
+            <POSSystem />
           </TabsContent>
 
           {/* Gestion des produits */}

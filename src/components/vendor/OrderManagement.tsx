@@ -154,7 +154,7 @@ export default function OrderManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
     try {
       const { error } = await supabase
         .from('orders')
@@ -199,16 +199,16 @@ export default function OrderManagement() {
     
     if (order.status === 'confirmed') {
       actions.push(
-        <Button key="process" size="sm" onClick={() => updateOrderStatus(order.id, 'processing')}>
+        <Button key="process" size="sm" onClick={() => updateOrderStatus(order.id, 'preparing')}>
           <Package className="w-4 h-4 mr-1" />
           Préparer
         </Button>
       );
     }
     
-    if (order.status === 'processing') {
+    if (order.status === 'preparing') {
       actions.push(
-        <Button key="ship" size="sm" onClick={() => updateOrderStatus(order.id, 'shipped')}>
+        <Button key="ship" size="sm" onClick={() => updateOrderStatus(order.id, 'in_transit')}>
           <Truck className="w-4 h-4 mr-1" />
           Expédier
         </Button>
