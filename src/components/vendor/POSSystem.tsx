@@ -208,15 +208,15 @@ export function POSSystem() {
       <div className="flex-1 flex flex-col p-4 space-y-4">
         {/* Barre de recherche et filtres */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col lg:flex-row gap-4">
+          <CardContent className="p-6">
+            <div className="flex flex-col xl:flex-row gap-6">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
                   placeholder="Rechercher un produit ou scanner un code-barres..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 h-12 text-base"
                 />
               </div>
               
@@ -224,36 +224,36 @@ export function POSSystem() {
                 placeholder="Code-barres"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
-                className="lg:w-48"
+                className="xl:w-64 h-12 text-base"
               />
               
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
+                  size="lg"
                   onClick={() => setViewMode('grid')}
                 >
-                  <Grid3X3 className="h-4 w-4" />
+                  <Grid3X3 className="h-5 w-5" />
                 </Button>
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="sm"
+                  size="lg"
                   onClick={() => setViewMode('list')}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-5 w-5" />
                 </Button>
               </div>
             </div>
             
             {/* Catégories */}
-            <div className="flex gap-2 mt-4 flex-wrap">
+            <div className="flex gap-3 mt-6 flex-wrap">
               {categories.map(category => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? 'default' : 'outline'}
-                  size="sm"
+                  size="default"
                   onClick={() => setSelectedCategory(category)}
-                  className="text-xs"
+                  className="text-sm px-6"
                 >
                   {category === 'all' ? 'Tout' : category}
                 </Button>
@@ -264,31 +264,31 @@ export function POSSystem() {
 
         {/* Grille/Liste des produits */}
         <ScrollArea className="flex-1">
-          <div className={`grid gap-4 ${
+          <div className={`grid gap-4 p-2 ${
             viewMode === 'grid' 
-              ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' 
+              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7' 
               : 'grid-cols-1'
           }`}>
             {filteredProducts.map(product => (
               <Card 
                 key={product.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 hover:border-primary/50"
                 onClick={() => addToCart(product)}
               >
                 <CardContent className={`p-4 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
                   <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
-                    <div className={`w-full ${viewMode === 'grid' ? 'h-20' : 'h-12 w-12'} bg-muted rounded-md mb-2 flex items-center justify-center`}>
-                      <Smartphone className="h-6 w-6 text-muted-foreground" />
+                    <div className={`w-full ${viewMode === 'grid' ? 'h-24 mb-3' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
+                      <Smartphone className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium text-sm">{product.name}</h3>
-                    <p className="text-lg font-bold text-primary">{product.price} FCFA</p>
+                    <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
+                    <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
                     <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs">
                       Stock: {product.stock}
                     </Badge>
                   </div>
                   {viewMode === 'list' && (
-                    <Button size="sm">
-                      <Plus className="h-4 w-4" />
+                    <Button size="default" className="px-6">
+                      <Plus className="h-5 w-5" />
                     </Button>
                   )}
                 </CardContent>
