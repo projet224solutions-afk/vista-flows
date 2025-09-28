@@ -552,19 +552,19 @@ export function POSSystem() {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Section Produits - Gauche - RÉDUITE */}
-        <div className="flex-[4] flex flex-col p-2 space-y-3">
+        {/* Section Produits - Optimisée pour affichage complet */}
+        <div className="flex-[2] flex flex-col p-4 space-y-4">
           {/* Barre de recherche et filtres - SAISIE TEXTE INDÉPENDANTE DU PAVÉ NUMÉRIQUE */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col xl:flex-row gap-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Rechercher un produit par nom (utiliser le clavier)..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 h-12 text-base"
+                    className="pl-10 h-10 text-sm"
                     autoComplete="off"
                   />
                 </div>
@@ -573,37 +573,37 @@ export function POSSystem() {
                   placeholder="Scanner code-barres ici"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
-                  className="xl:w-64 h-12 text-base"
+                  className="lg:w-48 h-10 text-sm"
                   autoComplete="off"
                 />
                 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="lg"
+                    size="sm"
                     onClick={() => setViewMode('grid')}
                   >
-                    <Grid3X3 className="h-5 w-5" />
+                    <Grid3X3 className="h-4 w-4" />
                   </Button>
                   <Button
                     variant={viewMode === 'list' ? 'default' : 'outline'}
-                    size="lg"
+                    size="sm"
                     onClick={() => setViewMode('list')}
                   >
-                    <List className="h-5 w-5" />
+                    <List className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               
               {/* Catégories */}
-              <div className="flex gap-3 mt-6 flex-wrap">
+              <div className="flex gap-2 mt-4 flex-wrap">
                 {categories.map(category => (
                   <Button
                     key={category}
                     variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="default"
+                    size="sm"
                     onClick={() => setSelectedCategory(category)}
-                    className="text-sm px-6"
+                    className="text-xs px-4"
                   >
                     {category === 'all' ? 'Tout' : category}
                   </Button>
@@ -612,35 +612,24 @@ export function POSSystem() {
             </CardContent>
           </Card>
 
-          {/* Grille/Liste des produits */}
+          {/* Grille des produits - Format optimisé */}
           <ScrollArea className="flex-1">
-            <div className={`grid gap-6 p-4 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' 
-                : 'grid-cols-1'
-            }`}>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
               {filteredProducts.map(product => (
                 <Card 
                   key={product.id} 
-                  className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 hover:border-primary/50"
+                  className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/80"
                   onClick={() => addToCart(product)}
                 >
-                  <CardContent className={`p-6 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
-                    <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
-                      <div className={`w-full ${viewMode === 'grid' ? 'h-40 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
-                        <Smartphone className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                      <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
-                      <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
-                      <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs">
-                        Stock: {product.stock}
-                      </Badge>
+                  <CardContent className="p-4 text-center">
+                    <div className="w-full h-32 bg-gradient-to-br from-muted/50 to-muted rounded-lg flex items-center justify-center mb-3">
+                      <Smartphone className="h-12 w-12 text-muted-foreground/60" />
                     </div>
-                    {viewMode === 'list' && (
-                      <Button size="default" className="px-6">
-                        <Plus className="h-5 w-5" />
-                      </Button>
-                    )}
+                    <h3 className="font-semibold text-sm mb-2 line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+                    <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
+                    <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs w-full">
+                      Stock: {product.stock}
+                    </Badge>
                   </CardContent>
                 </Card>
               ))}
@@ -648,151 +637,71 @@ export function POSSystem() {
           </ScrollArea>
         </div>
 
-        {/* Section Panier et Paiement - Droite - ÉLARGIE */}
-        <div className="w-full lg:w-[480px] xl:w-[550px] bg-card border-l flex flex-col">
-          {/* En-tête du panier */}
-          <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-primary/10">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <ShoppingCart className="h-6 w-6 text-primary" />
-                </div>
-                Panier ({cart.length})
-              </h2>
-              <Button variant="outline" size="default" onClick={clearCart} className="hover:bg-destructive/10">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Vider
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-1 min-h-0">
-            {/* Articles du panier */}
-            <div className="flex-1 flex flex-col">
-              <ScrollArea className="flex-1 p-4">
-                {cart.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-12">
-                    <div className="p-6 bg-muted/20 rounded-2xl">
-                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                      <p className="text-lg font-medium">Panier vide</p>
-                      <p className="text-sm">Ajoutez des produits pour commencer</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {cart.map(item => (
-                      <div 
-                        key={item.id} 
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                          selectedCartItemId === item.id 
-                            ? 'border-primary bg-primary/5 shadow-lg' 
-                            : 'border-border bg-card hover:border-primary/30 hover:shadow-md'
-                        }`}
-                        onClick={() => selectCartItem(item.id)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-base mb-1">{item.name}</h4>
-                            <p className="text-primary font-bold text-lg">{item.price} FCFA</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateQuantity(item.id, item.quantity - 1);
-                                }}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <div className={`min-w-[3rem] text-center py-1 px-2 rounded-md font-bold text-lg ${
-                                selectedCartItemId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                              }`}>
-                                {selectedCartItemId === item.id && numericInput ? numericInput : item.quantity}
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateQuantity(item.id, item.quantity + 1);
-                                }}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-lg text-primary">{item.total} FCFA</p>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeFromCart(item.id);
-                                }}
-                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-
-            {/* Pavé numérique professionnel - UNIQUEMENT POUR LES NOMBRES (quantités, prix, calculs) */}
-            <div className="w-48 border-l bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-4 shadow-inner">
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full">
-                    <p className="text-xs font-bold tracking-wide">PAVÉ PRO</p>
+        {/* Section Panier et Paiement - Droite - Interface Professionnelle */}
+        <div className="w-full lg:w-[600px] xl:w-[650px] bg-card border-l flex flex-col">
+          {/* Pavé numérique horizontal professionnel EN HAUT */}
+          <Card className="m-4 mb-2 bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 shadow-inner border-2 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full shadow-lg">
+                    <p className="text-sm font-bold tracking-wide">PAVÉ NUMÉRIQUE PRO</p>
                   </div>
                   <Button
                     variant={calculatorMode ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleNumericInput('calc')}
-                    className="h-7 w-9 text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0"
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-md"
                   >
-                    🧮
+                    <Calculator className="h-4 w-4 mr-1" />
+                    Calc
                   </Button>
                 </div>
                 
-                {/* Indicateurs d'état */}
+                {/* Affichage central */}
+                <div className="flex-1 mx-4">
+                  <div className={`border-2 rounded-lg p-3 text-center font-mono text-lg min-h-[50px] flex items-center justify-center shadow-inner ${
+                    pendingCommand ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-card border-primary/30'
+                  }`}>
+                    {pendingCommand ? pendingCommand.value : 
+                     calculatorMode ? (calculator || '0') : (numericInput || '0')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Indicateurs d'état horizontaux */}
+              <div className="flex gap-2 mb-3 flex-wrap">
                 {selectedCartItemId && (
-                  <div className="bg-primary/20 rounded px-2 py-1 mb-1">
+                  <div className="bg-primary/20 rounded-full px-3 py-1">
                     <p className="text-xs text-primary font-medium">Article sélectionné</p>
                   </div>
                 )}
                 {calculatorMode && (
-                  <div className="bg-blue-100 rounded px-2 py-1 mb-1">
+                  <div className="bg-blue-100 rounded-full px-3 py-1">
                     <p className="text-xs text-blue-700 font-medium">Mode Calculatrice</p>
                   </div>
                 )}
                 {paymentAmount && !pendingCommand && (
-                  <div className="bg-green-100 rounded px-2 py-1 mb-1">
+                  <div className="bg-green-100 rounded-full px-3 py-1">
                     <p className="text-xs text-green-700 font-medium">Montant: {paymentAmount} FCFA</p>
                   </div>
                 )}
-                
-                {/* Commande en attente - NOUVELLE FONCTIONNALITÉ */}
-                {pendingCommand && (
-                  <div className="bg-yellow-100 border border-yellow-300 rounded px-2 py-2 mb-2">
-                    <p className="text-xs text-yellow-800 font-bold">⚠️ COMMANDE EN ATTENTE</p>
-                    <p className="text-xs text-yellow-700 mt-1">{pendingCommand.description}</p>
-                    <div className="flex gap-1 mt-1">
+              </div>
+
+              {/* Commande en attente */}
+              {pendingCommand && (
+                <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-800 font-bold">⚠️ COMMANDE EN ATTENTE</p>
+                      <p className="text-xs text-yellow-700">{pendingCommand.description}</p>
+                    </div>
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPendingCommand(null)}
-                        className="h-5 text-xs flex-1"
+                        className="text-xs"
                       >
                         Annuler
                       </Button>
@@ -800,68 +709,74 @@ export function POSSystem() {
                         variant="default"
                         size="sm"
                         onClick={() => handleNumericInput('enter')}
-                        className="h-5 text-xs flex-1 bg-green-600 hover:bg-green-700"
+                        className="text-xs bg-green-600 hover:bg-green-700"
                       >
                         VALIDER
                       </Button>
                     </div>
                   </div>
-                )}
-              </div>
-              
-              {/* Affichage */}
-              <div className="mb-3">
-                <div className={`border rounded p-2 text-center font-mono text-sm min-h-[32px] flex items-center justify-center ${
-                  pendingCommand ? 'bg-yellow-50 border-yellow-300' : 'bg-card'
-                }`}>
-                  {pendingCommand ? pendingCommand.value : 
-                   calculatorMode ? (calculator || '0') : (numericInput || '0')}
                 </div>
-              </div>
-              
-              {/* Boutons numériques */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
+              )}
+
+              {/* Boutons numériques en format rectangle horizontal */}
+              <div className="grid grid-cols-6 gap-2">
+                {/* Première ligne : 1-6 */}
+                {[1, 2, 3, 4, 5, 6].map(num => (
                   <Button
                     key={num}
                     variant="outline"
                     size="sm"
                     onClick={() => handleNumericInput(num.toString())}
                     disabled={!!pendingCommand}
-                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-800 dark:to-slate-900 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-700 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-700 dark:to-slate-800 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     {num}
                   </Button>
                 ))}
               </div>
-              
-              {/* Ligne du bas avec 0 et fonctions */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNumericInput('clear')}
-                  className="h-10 text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg">⌫</span>
-                    <span className="text-[8px]">EFFACER</span>
-                  </div>
-                </Button>
+
+              <div className="grid grid-cols-6 gap-2 mt-2">
+                {/* Deuxième ligne : 7-9, 0, Effacer, Entrée */}
+                {[7, 8, 9].map(num => (
+                  <Button
+                    key={num}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleNumericInput(num.toString())}
+                    disabled={!!pendingCommand}
+                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-700 dark:to-slate-800 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+                  >
+                    {num}
+                  </Button>
+                ))}
+                
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('0')}
                   disabled={!!pendingCommand}
-                  className="h-10 text-lg font-bold bg-gradient-to-r from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg"
+                  className="h-12 text-lg font-bold bg-gradient-to-r from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg"
                 >
                   0
                 </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNumericInput('clear')}
+                  className="h-12 text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg">⌫</span>
+                    <span className="text-[10px]">EFFACER</span>
+                  </div>
+                </Button>
+                
                 <Button
                   variant={pendingCommand ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleNumericInput('enter')}
-                  className={`h-10 text-xs font-bold shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 ${
+                  className={`h-12 text-sm font-bold shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 ${
                     pendingCommand 
                       ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white animate-pulse border-0' 
                       : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0'
@@ -869,19 +784,19 @@ export function POSSystem() {
                 >
                   <div className="flex flex-col items-center">
                     <span className="text-lg">✓</span>
-                    <span className="text-[8px]">{pendingCommand ? 'VALIDER' : 'OK'}</span>
+                    <span className="text-[10px]">{pendingCommand ? 'VALIDER' : 'OK'}</span>
                   </div>
                 </Button>
               </div>
-              
+
               {/* Opérateurs pour calculatrice */}
               {calculatorMode && !pendingCommand && (
-                <div className="grid grid-cols-4 gap-1 mt-2">
+                <div className="grid grid-cols-4 gap-2 mt-2">
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => handleNumericInput('+')}
-                    className="h-6 text-xs font-bold"
+                    className="h-8 text-sm font-bold"
                   >
                     +
                   </Button>
@@ -889,7 +804,7 @@ export function POSSystem() {
                     variant="secondary"
                     size="sm"
                     onClick={() => handleNumericInput('-')}
-                    className="h-6 text-xs font-bold"
+                    className="h-8 text-sm font-bold"
                   >
                     -
                   </Button>
@@ -897,7 +812,7 @@ export function POSSystem() {
                     variant="secondary"
                     size="sm"
                     onClick={() => handleNumericInput('*')}
-                    className="h-6 text-xs font-bold"
+                    className="h-8 text-sm font-bold"
                   >
                     ×
                   </Button>
@@ -905,16 +820,16 @@ export function POSSystem() {
                     variant="secondary"
                     size="sm"
                     onClick={() => handleNumericInput('/')}
-                    className="h-6 text-xs font-bold"
+                    className="h-8 text-sm font-bold"
                   >
                     ÷
                   </Button>
                 </div>
               )}
-              
+
               {/* Raccourcis rapides */}
               {!pendingCommand && (
-                <div className="mt-3 space-y-1">
+                <div className="mt-2 flex gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -926,17 +841,200 @@ export function POSSystem() {
                         description: `Paiement exact: ${total.toFixed(0)} FCFA`
                       });
                     }}
-                    className="w-full h-6 text-xs hover:bg-accent"
+                    className="flex-1 h-8 text-xs hover:bg-accent"
                   >
                     Total: {total.toFixed(0)}
                   </Button>
                   {paymentAmount && (
-                    <div className="text-xs text-center text-muted-foreground">
+                    <div className="text-xs text-center text-muted-foreground flex items-center">
                       Rendu: {(parseInt(paymentAmount) - total).toFixed(0)} FCFA
                     </div>
                   )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* En-tête du panier */}
+          <div className="px-4 pb-2 bg-gradient-to-r from-primary/5 to-primary/10 mx-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                </div>
+                Panier ({cart.length})
+              </h2>
+              <Button variant="outline" size="sm" onClick={clearCart} className="hover:bg-destructive/10">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Vider
+              </Button>
+            </div>
+          </div>
+
+          {/* Articles du panier */}
+          <div className="flex-1 flex flex-col px-4">
+            <ScrollArea className="flex-1">
+              {cart.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <div className="p-4 bg-muted/20 rounded-xl">
+                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-base font-medium">Panier vide</p>
+                    <p className="text-sm">Ajoutez des produits pour commencer</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 pb-4">
+                  {cart.map(item => (
+                    <div 
+                      key={item.id} 
+                      className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                        selectedCartItemId === item.id 
+                          ? 'border-primary bg-primary/5 shadow-md' 
+                          : 'border-border bg-card hover:border-primary/30 hover:shadow-sm'
+                      }`}
+                      onClick={() => selectCartItem(item.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-1">{item.name}</h4>
+                          <p className="text-primary font-bold text-base">{item.price} FCFA</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateQuantity(item.id, item.quantity - 1);
+                              }}
+                              className="h-7 w-7 p-0"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <div className={`min-w-[2.5rem] text-center py-1 px-2 rounded-md font-bold text-base ${
+                              selectedCartItemId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                            }`}>
+                              {selectedCartItemId === item.id && numericInput ? numericInput : item.quantity}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateQuantity(item.id, item.quantity + 1);
+                              }}
+                              className="h-7 w-7 p-0"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-base text-primary">{item.total} FCFA</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromCart(item.id);
+                              }}
+                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          {/* Section Paiement */}
+          {cart.length > 0 && (
+            <div className="p-4 border-t space-y-4">
+              {/* Résumé */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Sous-total:</span>
+                  <span>{subtotal.toFixed(0)} FCFA</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>TVA (18%):</span>
+                  <span>{tax.toFixed(0)} FCFA</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span className="text-primary">{total.toFixed(0)} FCFA</span>
+                </div>
+              </div>
+
+              {/* Méthodes de paiement */}
+              <div className="space-y-3">
+                <h3 className="font-medium">Mode de paiement</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    Espèces
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('card')}
+                  >
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    Carte
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </div>
+              </div>
+
+              {/* Montant reçu (pour espèces) */}
+              {paymentMethod === 'cash' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Montant reçu</label>
+                  <Input
+                    type="number"
+                    value={receivedAmount || ''}
+                    onChange={(e) => setReceivedAmount(Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  {receivedAmount > 0 && change >= 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Monnaie: <span className="font-bold text-foreground">{change.toFixed(0)} FCFA</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Boutons d'action */}
+              <div className="space-y-2">
+                <Button onClick={processPayment} className="w-full" size="lg">
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Finaliser la vente
+                </Button>
+                <Button variant="outline" onClick={printReceipt} className="w-full">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Imprimer reçu
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
             </div>
           </div>
 
