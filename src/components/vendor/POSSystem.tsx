@@ -358,6 +358,18 @@ export function POSSystem() {
                             Stock: {product.stock}
                           </Badge>
                           
+                          {/* Bouton Ajouter */}
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product);
+                            }}
+                            className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200"
+                            size="sm"
+                          >
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                            Ajouter
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -383,29 +395,6 @@ export function POSSystem() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
-              </div>
-              
-              {/* Section Ajouter produit */}
-              <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold">Ajouter des produits</h3>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                  {filteredProducts.slice(0, 6).map(product => (
-                    <Button
-                      key={product.id}
-                      onClick={() => addToCart(product)}
-                      variant="outline"
-                      size="sm"
-                      className="justify-start h-auto p-2 text-left"
-                      disabled={product.stock <= 0}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-medium truncate">{product.name}</div>
-                        <div className="text-xs text-muted-foreground">{product.price.toLocaleString()} FCFA</div>
-                      </div>
-                      <Plus className="h-3 w-3 ml-1 flex-shrink-0" />
-                    </Button>
-                  ))}
-                </div>
               </div>
             </CardHeader>
             
