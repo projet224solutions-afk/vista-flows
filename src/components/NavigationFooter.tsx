@@ -20,10 +20,7 @@ export default function NavigationFooter() {
     return null;
   }
 
-  // Navigation adaptée au rôle - seuls les clients voient la navigation marketplace
-  if (profile.role !== 'client' && profile.role !== 'admin') {
-    return null;
-  }
+  // Le footer s'affiche pour tous les rôles connectés
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
