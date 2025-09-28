@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import NavigationFooter from "@/components/NavigationFooter";
 import { useVendorStats } from "@/hooks/useVendorData";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
@@ -30,6 +31,7 @@ import { POSSystem } from "@/components/vendor/POSSystem";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
@@ -172,17 +174,40 @@ export default function VendeurDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button size="sm" variant="outline" className="hidden md:flex">
+              <Button size="sm" variant="outline" className="hidden md:flex" onClick={() => {
+                // Focus on search inputs in active tab
+                const activeSearchInput = document.querySelector('input[placeholder*="Rechercher"]') as HTMLInputElement;
+                activeSearchInput?.focus();
+              }}>
                 <Search className="w-4 h-4 mr-2" />
                 Recherche rapide
               </Button>
-              <Button size="sm" variant="outline" className="relative">
+              <Button size="sm" variant="outline" className="relative" onClick={() => {
+                // Show notifications/alerts
+                if (urgentAlerts.length > 0) {
+                  urgentAlerts.forEach(alert => {
+                    toast({
+                      title: "Alerte",
+                      description: alert.message,
+                      variant: alert.priority === 'high' ? 'destructive' : 'default'
+                    });
+                  });
+                }
+              }}>
                 <Bell className="w-4 h-4" />
                 {urgentAlerts.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs" />
                 )}
               </Button>
-              <Button size="sm" className="bg-vendeur-gradient hover:opacity-90">
+              <Button size="sm" className="bg-vendeur-gradient hover:opacity-90" onClick={() => {
+                // Switch to products tab and trigger new product dialog
+                const productsTab = document.querySelector('[value="products"]') as HTMLElement;
+                productsTab?.click();
+                setTimeout(() => {
+                  const addProductButton = document.querySelector('[data-testid="add-product-button"]') as HTMLElement;
+                  addProductButton?.click();
+                }, 100);
+              }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau
               </Button>

@@ -273,7 +273,11 @@ export default function ProductManagement() {
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-vendeur-gradient hover:opacity-90" onClick={() => resetForm()}>
+            <Button 
+              className="bg-vendeur-gradient hover:opacity-90" 
+              onClick={() => resetForm()}
+              data-testid="add-product-button"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Nouveau produit
             </Button>

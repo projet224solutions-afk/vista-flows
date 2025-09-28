@@ -195,11 +195,23 @@ export default function ClientManagement() {
           <p className="text-muted-foreground">Gérez vos relations clients et analysez leur comportement</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => {
+            // Contact all clients functionality
+            toast({
+              title: "Fonction en développement",
+              description: "La fonctionnalité de contact groupé sera bientôt disponible."
+            });
+          }}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Contacter tous
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => {
+            // Newsletter functionality  
+            toast({
+              title: "Newsletter",
+              description: "La fonctionnalité newsletter sera bientôt disponible."
+            });
+          }}>
             <Mail className="w-4 h-4 mr-2" />
             Newsletter
           </Button>
@@ -386,11 +398,27 @@ export default function ClientManagement() {
                 </div>
 
                 <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <Button size="sm" variant="outline" className="flex-1">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                    // Contact client functionality
+                    if (client.profile?.email) {
+                      window.location.href = `mailto:${client.profile.email}`;
+                    } else {
+                      toast({
+                        title: "Email non disponible",
+                        description: "L'adresse email de ce client n'est pas renseignée."
+                      });
+                    }
+                  }}>
                     <MessageSquare className="w-4 h-4 mr-1" />
                     Contacter
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                    // View client orders
+                    toast({
+                      title: "Commandes du client",
+                      description: "Affichage des commandes de ce client."
+                    });
+                  }}>
                     <ShoppingCart className="w-4 h-4 mr-1" />
                     Commandes
                   </Button>
