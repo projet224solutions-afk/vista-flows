@@ -266,7 +266,7 @@ export function POSSystem() {
         <ScrollArea className="flex-1">
           <div className={`grid gap-6 p-4 ${
             viewMode === 'grid' 
-              ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10' 
+              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' 
               : 'grid-cols-1'
           }`}>
             {filteredProducts.map(product => (
@@ -277,7 +277,7 @@ export function POSSystem() {
               >
                 <CardContent className={`p-6 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
                   <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
-                    <div className={`w-full ${viewMode === 'grid' ? 'h-32 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
+                    <div className={`w-full ${viewMode === 'grid' ? 'h-40 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
                       <Smartphone className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
