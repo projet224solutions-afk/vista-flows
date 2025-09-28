@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NavigationFooter from "@/components/NavigationFooter";
+import QuickFooter from "@/components/QuickFooter";
 import { Suspense, lazy } from "react";
 
 // Lazy loading des pages pour optimiser le bundle
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <NavigationFooter />
+            <QuickFooter />
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
