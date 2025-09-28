@@ -8,7 +8,8 @@ import {
   Package, TrendingUp, ShoppingCart, Star, Eye, Plus, Users, 
   BarChart3, CreditCard, Truck, MessageSquare, Megaphone,
   FileText, Settings, AlertTriangle, DollarSign, Target,
-  Calendar, Phone, Mail, Filter, Search, Download, Upload
+  Calendar, Phone, Mail, Filter, Search, Download, Upload,
+  Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,11 @@ import PaymentManagement from "@/components/vendor/PaymentManagement";
 import InventoryManagement from "@/components/vendor/InventoryManagement";
 import MarketingManagement from "@/components/vendor/MarketingManagement";
 import SupportTickets from "@/components/vendor/SupportTickets";
+import ProductManagement from "@/components/vendor/ProductManagement";
+import OrderManagement from "@/components/vendor/OrderManagement";
+import ClientManagement from "@/components/vendor/ClientManagement";
+import VendorAnalytics from "@/components/vendor/VendorAnalytics";
+import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -142,28 +148,43 @@ export default function VendeurDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-vendeur-accent via-background to-accent pb-20">
+      {/* Header Professionnel Style Odoo */}
+      <header className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-elegant">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Dashboard Vendeur Pro</h1>
-              <p className="text-muted-foreground">
-                Bienvenue {profile?.first_name || user?.email} !
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-vendeur-gradient rounded-lg flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-vendeur-gradient bg-clip-text text-transparent">
+                    Commerce Pro
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export
+            <div className="flex items-center gap-3">
+              <Button size="sm" variant="outline" className="hidden md:flex">
+                <Search className="w-4 h-4 mr-2" />
+                Recherche rapide
               </Button>
-              <Button size="sm">
+              <Button size="sm" variant="outline" className="relative">
+                <Bell className="w-4 h-4" />
+                {urgentAlerts.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs" />
+                )}
+              </Button>
+              <Button size="sm" className="bg-vendeur-gradient hover:opacity-90">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau
               </Button>
-              <Button variant="outline" onClick={handleSignOut}>
-                Se déconnecter
+              <Button size="sm" variant="ghost" onClick={handleSignOut}>
+                <MoreHorizontal className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -192,23 +213,32 @@ export default function VendeurDashboard() {
         </section>
       )}
 
-      {/* Statistiques principales */}
-      <section className="px-4 py-2">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Statistiques principales - Style Odoo */}
+      <section className="px-6 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {mainStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <p className={`text-xs ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                        {stat.change} vs mois dernier
-                      </p>
+              <Card key={index} className="relative overflow-hidden border-0 shadow-elegant hover:shadow-glow transition-all duration-300">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-transparent to-accent opacity-50" />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
+                      <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
+                      <div className="flex items-center gap-2">
+                        <div className={`flex items-center text-sm font-medium ${
+                          stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          <TrendingUp className="w-4 h-4 mr-1" />
+                          {stat.change}
+                        </div>
+                        <span className="text-xs text-muted-foreground">vs mois dernier</span>
+                      </div>
                     </div>
-                    <Icon className={`w-8 h-8 ${stat.color}`} />
+                    <div className={`p-3 rounded-xl bg-gradient-to-br from-accent to-secondary`}>
+                      <Icon className={`w-6 h-6 ${stat.color}`} />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -217,21 +247,45 @@ export default function VendeurDashboard() {
         </div>
       </section>
 
-      {/* Interface à onglets */}
-      <section className="px-4 py-4">
+      {/* Interface à onglets - Style Odoo Professionnel */}
+      <section className="px-6 py-4">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 lg:grid-cols-10">
-            <TabsTrigger value="dashboard">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-            <TabsTrigger value="products">Produits</TabsTrigger>
-            <TabsTrigger value="orders">Commandes</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
-            <TabsTrigger value="stock">Stock</TabsTrigger>
-            <TabsTrigger value="communication">Messages</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            <TabsTrigger value="analytics">Analyses</TabsTrigger>
-          </TabsList>
+          <div className="flex overflow-x-auto scrollbar-hide mb-6">
+            <TabsList className="flex-shrink-0 bg-card/50 backdrop-blur-sm p-1 rounded-xl border">
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Vue d'ensemble
+              </TabsTrigger>
+              <TabsTrigger value="products" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Package className="w-4 h-4 mr-2" />
+                Produits
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Commandes
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Users className="w-4 h-4 mr-2" />
+                Clients
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Paiements
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Package className="w-4 h-4 mr-2" />
+                Stock
+              </TabsTrigger>
+              <TabsTrigger value="marketing" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Megaphone className="w-4 h-4 mr-2" />
+                Marketing
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <PieChart className="w-4 h-4 mr-2" />
+                Analyses
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Vue d'ensemble */}
           <TabsContent value="dashboard" className="space-y-6">
@@ -331,76 +385,27 @@ export default function VendeurDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Gestion des clients */}
-          <TabsContent value="clients" className="space-y-6">
-            <ProspectManagement />
-          </TabsContent>
-
-          {/* Pipeline commercial */}
-          <TabsContent value="pipeline" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Pipeline commercial</h2>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Nouvelle opportunité
-              </Button>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Opportunités en cours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Pipeline commercial</h3>
-                  <p className="text-muted-foreground">
-                    Gérez vos opportunités commerciales dans l'onglet "Clients".
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* Gestion des produits */}
           <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des produits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Interface de gestion complète des produits, variantes, et catalogue.</p>
-                <div className="mt-4">
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter un produit
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProductManagement />
           </TabsContent>
 
           {/* Gestion des commandes */}
           <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des commandes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Suivi complet des commandes, devis, et facturation.</p>
-                <div className="mt-4">
-                  <Button variant="outline">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Voir toutes les commandes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <OrderManagement />
+          </TabsContent>
+
+          {/* Gestion des clients */}
+          <TabsContent value="clients" className="space-y-6">
+            <ClientManagement />
           </TabsContent>
 
           {/* Gestion des paiements */}
           <TabsContent value="payments">
-            <PaymentManagement />
+            <div className="space-y-6">
+              <PaymentManagement />
+              <PaymentProcessor />
+            </div>
           </TabsContent>
 
           {/* Gestion des stocks */}
@@ -420,24 +425,7 @@ export default function VendeurDashboard() {
 
           {/* Analyses & Rapports */}
           <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analyses & Rapports</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Statistiques détaillées, rapports, et analyses prédictives.</p>
-                <div className="mt-4 flex gap-2">
-                  <Button variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exporter données
-                  </Button>
-                  <Button variant="outline">
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Voir graphiques
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <VendorAnalytics />
           </TabsContent>
         </Tabs>
       </section>
