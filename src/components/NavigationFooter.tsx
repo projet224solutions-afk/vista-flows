@@ -15,8 +15,8 @@ export default function NavigationFooter() {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // Masquer la navigation pour les utilisateurs non connectés ou sur certaines pages
-  if (!profile || location.pathname === '/' || location.pathname === '/auth') {
+  // Masquer la navigation pour les utilisateurs non connectés ou sur la page d'accueil
+  if (!profile || location.pathname === '/') {
     return null;
   }
 
