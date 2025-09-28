@@ -13,9 +13,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   useRoleRedirect(); // Redirection automatique vers le dashboard approprié
 
   const interfaces = [
@@ -126,6 +128,11 @@ const Index = () => {
     }
   ];
 
+  // Filtrer les interfaces selon le rôle de l'utilisateur
+  const visibleInterfaces = profile?.role 
+    ? interfaces.filter(interface_ => interface_.roleType === profile.role)
+    : interfaces; // Si pas connecté, montrer toutes les interfaces
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -148,7 +155,7 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-          {interfaces.map((interface_, index) => (
+          {visibleInterfaces.map((interface_, index) => (
             <div 
               key={interface_.title} 
               className="animate-fade-in"
