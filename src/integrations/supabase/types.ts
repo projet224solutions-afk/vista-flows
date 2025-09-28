@@ -386,6 +386,48 @@ export type Database = {
           },
         ]
       }
+      enhanced_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          custom_id: string
+          id: string
+          metadata: Json | null
+          method: string
+          receiver_id: string
+          sender_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          custom_id?: string
+          id?: string
+          metadata?: Json | null
+          method?: string
+          receiver_id: string
+          sender_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          custom_id?: string
+          id?: string
+          metadata?: Json | null
+          method?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       escrows: {
         Row: {
           amount: number
@@ -2145,12 +2187,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_transaction_custom_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      process_wallet_transaction: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
