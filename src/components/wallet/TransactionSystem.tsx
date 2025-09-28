@@ -429,10 +429,10 @@ export const TransactionSystem = () => {
                                     <div>{getStatusBadge(transaction.status)}</div>
                                   </div>
                                 </div>
-                                {transaction.metadata?.description && (
+                                {(transaction.metadata as any)?.description && (
                                   <div>
                                     <Label>Description</Label>
-                                    <p>{transaction.metadata.description}</p>
+                                    <p>{(transaction.metadata as any)?.description}</p>
                                   </div>
                                 )}
                                 <div>

@@ -43,7 +43,7 @@ export const useAgentManagement = () => {
         .order('name');
         
       if (error) throw error;
-      setRoles((data as unknown[])?.map(role => ({
+      setRoles((data as any[])?.map((role: any) => ({
         id: role.id,
         name: role.name,
         description: role.description,
@@ -61,7 +61,7 @@ export const useAgentManagement = () => {
         .select('*');
 
       if (error) throw error;
-      setPermissions((data as unknown[])?.map(permission => ({
+      setPermissions((data as any[])?.map((permission: any) => ({
         id: permission.id,
         role_id: permission.role_id,
         action: permission.action,
@@ -88,20 +88,20 @@ export const useAgentManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAgents((data as unknown[])?.map(agent => ({
-        id: agent.id,
-        seller_id: agent.seller_id,
-        user_id: agent.user_id,
-        role_id: agent.role_id,
-        status: agent.status,
-        created_at: agent.created_at,
-        role: agent.roles ? {
-          id: agent.roles.id,
-          name: agent.roles.name,
-          description: agent.roles.description,
-          created_at: agent.roles.created_at
-        } : undefined
-      })) || []);
+        setAgents((data as any[])?.map((agent: any) => ({
+          id: agent.id,
+          seller_id: agent.seller_id,
+          user_id: agent.user_id,
+          role_id: agent.role_id,
+          status: agent.status,
+          created_at: agent.created_at,
+          role: agent.roles ? {
+            id: agent.roles.id,
+            name: agent.roles.name,
+            description: agent.roles.description,
+            created_at: agent.roles.created_at
+          } : undefined
+        })) || []);
     } catch (err) {
       setError(err.message);
     } finally {

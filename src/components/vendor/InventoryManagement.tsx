@@ -247,7 +247,7 @@ export default function InventoryManagement() {
             </div>
             <select
               value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value as unknown)}
+              onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les produits</option>

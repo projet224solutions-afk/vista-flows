@@ -40,6 +40,22 @@ const statusLabels = {
   closed: 'Fermé'
 };
 
+interface SupportTicket {
+  id: string;
+  customer_id: string;
+  vendor_id: string;
+  product_id?: string;
+  order_id?: string;
+  subject: string;
+  description?: string;
+  status: string;
+  priority: string;
+  assigned_to?: string;
+  resolution?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function SupportTickets() {
   const { tickets, loading, error, updateTicketStatus } = useSupportTickets();
   const { toast } = useToast();

@@ -52,7 +52,7 @@ export const useWarehouseManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWarehouses((data as unknown[])?.map(warehouse => ({
+      setWarehouses((data as any[])?.map((warehouse: any) => ({
         id: warehouse.id,
         vendor_id: warehouse.vendor_id,
         name: warehouse.name,

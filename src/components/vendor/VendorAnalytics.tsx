@@ -119,7 +119,7 @@ export default function VendorAnalytics() {
   const processRevenueData = (orders: unknown[], range: string) => {
     const data: Record<string, number> = {};
     
-    orders.forEach(order => {
+    orders.forEach((order: any) => {
       const date = new Date(order.created_at);
       const key = range === '7d' || range === '30d' 
         ? date.toLocaleDateString('fr-FR')

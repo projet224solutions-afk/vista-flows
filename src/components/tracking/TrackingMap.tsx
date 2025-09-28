@@ -169,7 +169,7 @@ export const TrackingMap = () => {
                       <div className="flex items-center gap-2 mb-2">
                         {getStatusIcon(tracking.status)}
                         <span className="font-medium">
-                          Commande #{(tracking as unknown).orders?.order_number || 'N/A'}
+                          Commande #{tracking.order_id || 'N/A'}
                         </span>
                         <Badge className={getStatusColor(tracking.status)}>
                           {getStatusLabel(tracking.status)}

@@ -624,7 +624,7 @@ export default function ProductManagement() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as unknown)}
+              onChange={(e) => setStatusFilter(e.target.value as "active" | "all" | "inactive")}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les produits</option>
