@@ -21,6 +21,7 @@ const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Composant de loading
@@ -94,21 +95,25 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/admin"
+              <Route 
+                path="/admin" 
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
                   </ProtectedRoute>
-                }
+                } 
               />
-              <Route
-                path="/client"
+              <Route 
+                path="/pdg" 
+                element={<PDGDashboard />}
+              />
+              <Route 
+                path="/client" 
                 element={
                   <ProtectedRoute allowedRoles={['client', 'admin']}>
                     <ClientDashboard />
                   </ProtectedRoute>
-                }
+                } 
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

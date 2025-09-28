@@ -1,14 +1,15 @@
 import { Header } from "@/components/Header";
 import { InterfaceCard } from "@/components/InterfaceCard";
 import { Button } from "@/components/ui/button";
-import { 
-  Store, 
-  Truck, 
-  Car, 
-  Shield, 
-  Ship, 
-  Crown, 
-  ShoppingBag 
+import { PDGAuthButton } from "@/components/PDGAuthButton";
+import {
+  Store,
+  Truck,
+  Car,
+  Shield,
+  Ship,
+  Crown,
+  ShoppingBag
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
@@ -129,26 +130,29 @@ const Index = () => {
   ];
 
   // Filtrer les interfaces selon le rôle de l'utilisateur
-  const visibleInterfaces = profile?.role 
+  const visibleInterfaces = profile?.role
     ? interfaces.filter(interface_ => interface_.roleType === profile.role)
     : interfaces; // Si pas connecté, montrer toutes les interfaces
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
+      {/* Bouton PDG sécurisé */}
+      <PDGAuthButton />
+
       <main className="container mx-auto px-6 py-12">
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-5xl font-bold text-foreground mb-6">
             Choisissez votre interface
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Plateforme e-commerce et logistique complète avec interfaces spécialisées 
+            Plateforme e-commerce et logistique complète avec interfaces spécialisées
             pour chaque rôle. Design ultra-moderne et fonctionnalités professionnelles.
           </p>
           <div className="mt-8 p-6 bg-elegant-gradient rounded-2xl border border-border/50">
             <p className="text-muted-foreground text-sm">
-              🚀 <strong>Version de démonstration</strong> - Connectez Supabase pour débloquer toutes les fonctionnalités backend : 
+              🚀 <strong>Version de démonstration</strong> - Connectez Supabase pour débloquer toutes les fonctionnalités backend :
               authentification, base de données, paiements, temps réel, analytics avancés.
             </p>
           </div>
@@ -156,8 +160,8 @@ const Index = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
           {visibleInterfaces.map((interface_, index) => (
-            <div 
-              key={interface_.title} 
+            <div
+              key={interface_.title}
               className="animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
@@ -189,12 +193,12 @@ const Index = () => {
                 <p className="text-muted-foreground">KPIs, rapports, tableaux de bord</p>
               </div>
             </div>
-            
+
             <div className="pt-6 border-t border-border/50">
               <p className="text-muted-foreground mb-4">
                 Nouveau sur la plateforme ?
               </p>
-              <Button 
+              <Button
                 onClick={() => navigate('/auth')}
                 size="lg"
                 className="shadow-elegant hover:shadow-glow transition-all duration-300"
@@ -205,7 +209,7 @@ const Index = () => {
           </div>
         </div>
       </main>
-      
+
       <NavigationFooter />
     </div>
   );

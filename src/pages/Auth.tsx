@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Globe, ShieldCheck, Info } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Globe, ShieldCheck, Info, Crown } from "lucide-react";
 import NavigationFooter from "@/components/NavigationFooter";
+import { PDGAuthButton } from "@/components/PDGAuthButton";
 import { z } from "zod";
 
 // Strict validation schemas
@@ -426,6 +427,11 @@ export default function Auth() {
               </div>
             </CardContent>
           </Card>
+        </div>
+        
+        {/* Bouton PDG discret */}
+        <div className="fixed bottom-24 right-4 z-50">
+          <PDGAuthButton />
         </div>
         
         <NavigationFooter />
