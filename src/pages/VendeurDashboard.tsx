@@ -9,7 +9,8 @@ import {
   BarChart3, CreditCard, Truck, MessageSquare, Megaphone,
   FileText, Settings, AlertTriangle, DollarSign, Target,
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
-  Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart
+  Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
+  Warehouse, UserCheck
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -28,6 +29,8 @@ import ClientManagement from "@/components/vendor/ClientManagement";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
+import AgentManagement from "@/components/vendor/AgentManagement";
+import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -159,35 +162,36 @@ export default function VendeurDashboard() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-vendeur-gradient rounded-lg flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-vendeur-gradient rounded-xl flex items-center justify-center shadow-glow">
+                  <Activity className="w-7 h-7 text-white" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-vendeur-gradient bg-clip-text text-transparent">
-                    Commerce Pro
+                    224SOLUTIONS Commerce Pro
                   </h1>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <span className="w-2 h-2 bg-vendeur-secondary rounded-full"></span>
                     {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
                   </p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button size="sm" variant="outline" className="hidden md:flex" onClick={() => {
+              <Button size="sm" variant="outline" className="hidden lg:flex hover:shadow-glow transition-all duration-300" onClick={() => {
                 // Focus on search inputs in active tab
                 const activeSearchInput = document.querySelector('input[placeholder*="Rechercher"]') as HTMLInputElement;
                 activeSearchInput?.focus();
               }}>
                 <Search className="w-4 h-4 mr-2" />
-                Recherche rapide
+                Recherche globale
               </Button>
-              <Button size="sm" variant="outline" className="relative" onClick={() => {
+              <Button size="sm" variant="outline" className="relative hover:shadow-glow transition-all duration-300" onClick={() => {
                 // Show notifications/alerts
                 if (urgentAlerts.length > 0) {
                   urgentAlerts.forEach(alert => {
                     toast({
-                      title: "Alerte",
+                      title: "Alerte Système",
                       description: alert.message,
                       variant: alert.priority === 'high' ? 'destructive' : 'default'
                     });
@@ -196,10 +200,12 @@ export default function VendeurDashboard() {
               }}>
                 <Bell className="w-4 h-4" />
                 {urgentAlerts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs" />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white font-bold animate-pulse">
+                    {urgentAlerts.length}
+                  </span>
                 )}
               </Button>
-              <Button size="sm" className="bg-vendeur-gradient hover:opacity-90" onClick={() => {
+              <Button size="sm" className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300" onClick={() => {
                 // Switch to products tab and trigger new product dialog
                 const productsTab = document.querySelector('[value="products"]') as HTMLElement;
                 productsTab?.click();
@@ -209,10 +215,10 @@ export default function VendeurDashboard() {
                 }, 100);
               }}>
                 <Plus className="w-4 h-4 mr-2" />
-                Nouveau
+                Nouveau Produit
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleSignOut}>
-                <MoreHorizontal className="w-4 h-4" />
+              <Button size="sm" variant="ghost" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -241,31 +247,37 @@ export default function VendeurDashboard() {
         </section>
       )}
 
-      {/* Statistiques principales - Style Odoo */}
+      {/* Statistiques principales - Style Odoo Professionnel */}
       <section className="px-6 py-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Performance en Temps Réel</h2>
+          <p className="text-sm text-muted-foreground">Indicateurs clés de performance de votre entreprise</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {mainStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="relative overflow-hidden border-0 shadow-elegant hover:shadow-glow transition-all duration-300">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-transparent to-accent opacity-50" />
+              <Card key={index} className="relative overflow-hidden border-0 shadow-elegant hover:shadow-glow transition-all duration-500 group cursor-pointer">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-vendeur-gradient opacity-5 rounded-full -translate-y-6 translate-x-6 group-hover:opacity-10 transition-opacity duration-300" />
                 <CardContent className="p-6 relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                      <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">{stat.label}</p>
+                      <p className="text-3xl font-bold text-foreground mb-3 group-hover:scale-105 transition-transform duration-300">{stat.value}</p>
                       <div className="flex items-center gap-2">
-                        <div className={`flex items-center text-sm font-medium ${
-                          stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                        <div className={`flex items-center text-sm font-semibold px-2 py-1 rounded-full ${
+                          stat.change.startsWith('+') 
+                            ? 'text-vendeur-secondary bg-vendeur-secondary/10' 
+                            : 'text-red-600 bg-red-50'
                         }`}>
-                          <TrendingUp className="w-4 h-4 mr-1" />
+                          <TrendingUp className="w-3 h-3 mr-1" />
                           {stat.change}
                         </div>
-                        <span className="text-xs text-muted-foreground">vs mois dernier</span>
+                        <span className="text-xs text-muted-foreground">vs période précédente</span>
                       </div>
                     </div>
-                    <div className={`p-3 rounded-xl bg-gradient-to-br from-accent to-secondary`}>
-                      <Icon className={`w-6 h-6 ${stat.color}`} />
+                    <div className="p-4 rounded-2xl bg-vendeur-gradient shadow-elegant group-hover:shadow-glow transition-all duration-300">
+                      <Icon className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -299,6 +311,14 @@ export default function VendeurDashboard() {
               <TabsTrigger value="clients" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
                 <Users className="w-4 h-4 mr-2" />
                 Clients
+              </TabsTrigger>
+              <TabsTrigger value="agents" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <UserCheck className="w-4 h-4 mr-2" />
+                Agents & Permissions
+              </TabsTrigger>
+              <TabsTrigger value="warehouses" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Warehouse className="w-4 h-4 mr-2" />
+                Entrepôts & Stocks
               </TabsTrigger>
               <TabsTrigger value="payments" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
                 <CreditCard className="w-4 h-4 mr-2" />
@@ -434,6 +454,16 @@ export default function VendeurDashboard() {
           {/* Gestion des clients */}
           <TabsContent value="clients" className="space-y-6">
             <ClientManagement />
+          </TabsContent>
+
+          {/* Agents & Permissions */}
+          <TabsContent value="agents" className="space-y-6">
+            <AgentManagement />
+          </TabsContent>
+
+          {/* Entrepôts & Stocks */}
+          <TabsContent value="warehouses" className="space-y-6">
+            <WarehouseManagement />
           </TabsContent>
 
           {/* Gestion des paiements */}

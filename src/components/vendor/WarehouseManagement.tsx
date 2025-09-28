@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Warehouse, Package, MapPin, Plus, ArrowRightLeft } from 'lucide-react';
+import { Warehouse, Package, MapPin, Plus, ArrowRightLeft, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
 import { useWarehouseManagement } from '@/hooks/useWarehouseManagement';
 import { useToast } from '@/hooks/use-toast';
 
@@ -115,68 +115,82 @@ export default function WarehouseManagement() {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-8">Chargement...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-4">
+        <div className="w-8 h-8 border-4 border-vendeur-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-muted-foreground">Chargement de la gestion des entrepôts...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto">
       {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="border-red-200 bg-red-50">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="font-medium">{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Warehouse className="h-6 w-6" />
-            Gestion des Entrepôts
-          </h1>
-          <p className="text-muted-foreground">
-            Gérez vos entrepôts et les stocks multi-sites
-          </p>
+      {/* Header Moderne */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-vendeur-gradient shadow-glow">
+              <Warehouse className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Gestion des Entrepôts</h1>
+              <p className="text-muted-foreground text-lg">
+                Gérez vos sites de stockage multi-entrepôts • {warehouses.length} entrepôt(s)
+              </p>
+            </div>
+          </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="hover:shadow-glow transition-all duration-300">
                 <ArrowRightLeft className="h-4 w-4 mr-2" />
                 Transférer Stock
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>Transférer du Stock</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5" />
+                  Transférer du Stock
+                </DialogTitle>
                 <DialogDescription>
-                  Déplacez du stock entre vos entrepôts
+                  Déplacez des produits entre vos différents entrepôts
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleTransferStock}>
+              <form onSubmit={handleTransferStock} className="space-y-4">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="product_id">ID Produit</Label>
+                    <Label htmlFor="product_id" className="text-sm font-medium">ID Produit *</Label>
                     <Input
                       id="product_id"
-                      placeholder="UUID du produit"
+                      placeholder="UUID du produit à transférer"
                       value={transferData.product_id}
                       onChange={(e) => setTransferData(prev => ({ ...prev, product_id: e.target.value }))}
+                      className="mt-1"
                       required
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="from_warehouse">Entrepôt source</Label>
+                      <Label htmlFor="from_warehouse" className="text-sm font-medium">Entrepôt source *</Label>
                       <select 
                         id="from_warehouse"
-                        className="w-full p-2 border rounded-md"
+                        className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
                         value={transferData.from_warehouse_id}
                         onChange={(e) => setTransferData(prev => ({ ...prev, from_warehouse_id: e.target.value }))}
                         required
                       >
-                        <option value="">Choisir...</option>
+                        <option value="">Sélectionner...</option>
                         {warehouses.map((warehouse) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
@@ -186,15 +200,15 @@ export default function WarehouseManagement() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="to_warehouse">Entrepôt destination</Label>
+                      <Label htmlFor="to_warehouse" className="text-sm font-medium">Entrepôt destination *</Label>
                       <select 
                         id="to_warehouse"
-                        className="w-full p-2 border rounded-md"
+                        className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
                         value={transferData.to_warehouse_id}
                         onChange={(e) => setTransferData(prev => ({ ...prev, to_warehouse_id: e.target.value }))}
                         required
                       >
-                        <option value="">Choisir...</option>
+                        <option value="">Sélectionner...</option>
                         {warehouses.map((warehouse) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
@@ -205,33 +219,38 @@ export default function WarehouseManagement() {
                   </div>
 
                   <div>
-                    <Label htmlFor="quantity">Quantité</Label>
+                    <Label htmlFor="quantity" className="text-sm font-medium">Quantité *</Label>
                     <Input
                       id="quantity"
                       type="number"
-                      placeholder="0"
+                      min="1"
+                      placeholder="Quantité à transférer"
                       value={transferData.quantity}
                       onChange={(e) => setTransferData(prev => ({ ...prev, quantity: e.target.value }))}
+                      className="mt-1"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="notes">Notes (optionnel)</Label>
+                    <Label htmlFor="notes" className="text-sm font-medium">Notes (optionnel)</Label>
                     <Textarea
                       id="notes"
-                      placeholder="Raison du transfert..."
+                      placeholder="Raison du transfert, instructions spéciales..."
                       value={transferData.notes}
                       onChange={(e) => setTransferData(prev => ({ ...prev, notes: e.target.value }))}
+                      className="mt-1 min-h-[80px]"
                     />
                   </div>
                 </div>
                 
-                <DialogFooter className="mt-4">
+                <DialogFooter className="mt-6">
                   <Button type="button" variant="outline" onClick={() => setIsTransferDialogOpen(false)}>
                     Annuler
                   </Button>
-                  <Button type="submit">Transférer</Button>
+                  <Button type="submit" className="bg-vendeur-gradient">
+                    Effectuer le Transfert
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -239,68 +258,77 @@ export default function WarehouseManagement() {
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300">
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvel Entrepôt
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>Créer un nouvel entrepôt</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Warehouse className="h-5 w-5" />
+                  Créer un nouvel entrepôt
+                </DialogTitle>
                 <DialogDescription>
-                  Ajoutez un nouveau site de stockage
+                  Ajoutez un nouveau site de stockage à votre réseau
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleCreateWarehouse}>
+              <form onSubmit={handleCreateWarehouse} className="space-y-4">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Nom de l'entrepôt</Label>
+                    <Label htmlFor="name" className="text-sm font-medium">Nom de l'entrepôt *</Label>
                     <Input
                       id="name"
-                      placeholder="Entrepôt Central Conakry"
+                      placeholder="Ex: Entrepôt Central Conakry"
                       value={newWarehouse.name}
                       onChange={(e) => setNewWarehouse(prev => ({ ...prev, name: e.target.value }))}
+                      className="mt-1"
                       required
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="address">Adresse</Label>
+                    <Label htmlFor="address" className="text-sm font-medium">Adresse complète</Label>
                     <Textarea
                       id="address"
-                      placeholder="Adresse complète de l'entrepôt"
+                      placeholder="Adresse complète avec ville, quartier..."
                       value={newWarehouse.address}
                       onChange={(e) => setNewWarehouse(prev => ({ ...prev, address: e.target.value }))}
+                      className="mt-1 min-h-[80px]"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="contact_person">Personne de contact</Label>
+                      <Label htmlFor="contact_person" className="text-sm font-medium">Responsable</Label>
                       <Input
                         id="contact_person"
                         placeholder="Nom du responsable"
                         value={newWarehouse.contact_person}
                         onChange={(e) => setNewWarehouse(prev => ({ ...prev, contact_person: e.target.value }))}
+                        className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="contact_phone">Téléphone</Label>
+                      <Label htmlFor="contact_phone" className="text-sm font-medium">Téléphone</Label>
                       <Input
                         id="contact_phone"
                         placeholder="+224 xxx xxx xxx"
                         value={newWarehouse.contact_phone}
                         onChange={(e) => setNewWarehouse(prev => ({ ...prev, contact_phone: e.target.value }))}
+                        className="mt-1"
                       />
                     </div>
                   </div>
                 </div>
                 
-                <DialogFooter className="mt-4">
+                <DialogFooter className="mt-6">
                   <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Annuler
                   </Button>
-                  <Button type="submit">Créer</Button>
+                  <Button type="submit" className="bg-vendeur-gradient">
+                    Créer l'Entrepôt
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -308,124 +336,217 @@ export default function WarehouseManagement() {
         </div>
       </div>
 
-      {/* Warehouses Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grille d'Entrepôts - Style Moderne */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {warehouses.map((warehouse) => (
-          <Card key={warehouse.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Warehouse className="h-5 w-5" />
-                {warehouse.name}
-              </CardTitle>
-              <CardDescription>
-                Créé le {new Date(warehouse.created_at).toLocaleDateString()}
-              </CardDescription>
+          <Card key={warehouse.id} className="border-0 shadow-elegant hover:shadow-glow transition-all duration-300 group cursor-pointer">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-vendeur-gradient shadow-glow group-hover:scale-105 transition-transform duration-300">
+                    <Warehouse className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg group-hover:text-vendeur-primary transition-colors duration-300">
+                      {warehouse.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Créé le {new Date(warehouse.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="bg-vendeur-accent/50 border-vendeur-primary/20">
+                  Actif
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {warehouse.address && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
+            <CardContent className="space-y-4">
+              {warehouse.address && (
+                <div className="flex items-start gap-3 p-3 bg-vendeur-accent/30 rounded-lg">
+                  <MapPin className="h-4 w-4 text-vendeur-primary mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-muted-foreground leading-relaxed">
                     {warehouse.address}
                   </div>
-                )}
-                
-                {warehouse.contact_person && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Package className="h-4 w-4" />
-                    Contact: {warehouse.contact_person}
-                  </div>
-                )}
-
-                {warehouse.contact_phone && (
-                  <div className="text-sm text-muted-foreground">
-                    Tél: {warehouse.contact_phone}
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleDeleteWarehouse(warehouse.id)}
-                  >
-                    Supprimer
-                  </Button>
                 </div>
+              )}
+              
+              {warehouse.contact_person && (
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <Package className="h-4 w-4 text-vendeur-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Responsable: {warehouse.contact_person}</p>
+                    {warehouse.contact_phone && (
+                      <p className="text-xs text-muted-foreground">Tél: {warehouse.contact_phone}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteWarehouse(warehouse.id);
+                  }}
+                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-300"
+                >
+                  Supprimer
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="flex-1 bg-vendeur-gradient hover:shadow-glow transition-all duration-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Ouvrir la gestion des stocks pour cet entrepôt
+                  }}
+                >
+                  Gérer Stocks
+                </Button>
               </div>
             </CardContent>
           </Card>
         ))}
 
         {warehouses.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Warehouse className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun entrepôt trouvé</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Commencez par créer votre premier entrepôt pour gérer vos stocks multi-sites
+          <Card className="col-span-full border-2 border-dashed border-vendeur-primary/20 bg-vendeur-accent/10">
+            <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-gradient flex items-center justify-center shadow-glow">
+                <Warehouse className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Aucun entrepôt configuré</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                Commencez par créer votre premier entrepôt pour gérer vos stocks de manière professionnelle
               </p>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Créer le Premier Entrepôt
+              </Button>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* Recent Stock Movements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5" />
-            Mouvements de Stock Récents
-          </CardTitle>
-          <CardDescription>
-            Historique des transferts et ajustements de stock
-          </CardDescription>
+      {/* Mouvements de Stock Récents - Style Moderne */}
+      <Card className="border-0 shadow-elegant">
+        <CardHeader className="bg-vendeur-accent/30 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-vendeur-primary" />
+                Mouvements de Stock Récents
+              </CardTitle>
+              <CardDescription className="text-base">
+                Historique des transferts et ajustements de stock entre entrepôts
+              </CardDescription>
+            </div>
+            {stockMovements.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-vendeur-accent/50 border-vendeur-primary/20">
+                  {stockMovements.length} mouvement(s)
+                </Badge>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="hover:shadow-glow transition-all duration-300"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Voir Rapport
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {stockMovements.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun mouvement de stock enregistré</p>
+            <div className="text-center py-16 px-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-accent/50 flex items-center justify-center">
+                <Package className="h-8 w-8 text-vendeur-primary opacity-50" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Aucun mouvement de stock</h3>
+              <p className="text-muted-foreground">
+                Les transferts et ajustements de stock s'afficheront ici
+              </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Produit ID</TableHead>
-                  <TableHead>Quantité</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stockMovements.slice(0, 10).map((movement) => (
-                  <TableRow key={movement.id}>
-                    <TableCell>
-                      <Badge variant={
-                        movement.movement_type === 'in' ? 'default' :
-                        movement.movement_type === 'out' ? 'destructive' :
-                        'secondary'
-                      }>
-                        {movement.movement_type === 'in' ? 'Entrée' :
-                         movement.movement_type === 'out' ? 'Sortie' :
-                         'Transfert'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {movement.product_id.substring(0, 8)}...
-                    </TableCell>
-                    <TableCell>{movement.quantity}</TableCell>
-                    <TableCell>
-                      {new Date(movement.created_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {movement.notes || '-'}
-                    </TableCell>
+            <div className="overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="font-semibold">Type de Mouvement</TableHead>
+                    <TableHead className="font-semibold">Produit</TableHead>
+                    <TableHead className="font-semibold">Quantité</TableHead>
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">Notes</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {stockMovements.slice(0, 10).map((movement) => (
+                    <TableRow key={movement.id} className="hover:bg-vendeur-accent/20 transition-colors duration-200">
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            movement.movement_type === 'in' ? 'default' :
+                            movement.movement_type === 'out' ? 'destructive' :
+                            'secondary'
+                          }
+                          className={
+                            movement.movement_type === 'in' ? 'bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20' :
+                            movement.movement_type === 'transfer' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                            ''
+                          }
+                        >
+                          {movement.movement_type === 'in' ? '📦 Entrée' :
+                           movement.movement_type === 'out' ? '📤 Sortie' :
+                           '🔄 Transfert'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-vendeur-gradient flex items-center justify-center">
+                            <Package className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="font-mono text-sm">
+                            {movement.product_id.substring(0, 8)}...
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{movement.quantity}</span>
+                          <TrendingUp className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(movement.created_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <p className="text-sm text-muted-foreground truncate">
+                            {movement.notes || 'Aucune note'}
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
