@@ -75,6 +75,12 @@ export function POSSystem() {
   const [calculatorMode, setCalculatorMode] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<{
+    type: 'quantity' | 'payment' | 'calculation';
+    value: string;
+    itemId?: string;
+    description: string;
+  } | null>(null);
   
   // États pour personnalisation
   const [companyName, setCompanyName] = useState('Mon Entreprise SARL');
@@ -144,6 +150,8 @@ export function POSSystem() {
       setNumericInput('');
       setCalculator('');
       setPaymentAmount('');
+      setPendingCommand(null);
+      setSelectedCartItemId(null);
       return;
     }
     
@@ -151,41 +159,91 @@ export function POSSystem() {
       setCalculatorMode(!calculatorMode);
       setNumericInput('');
       setCalculator('');
+      setPendingCommand(null);
       return;
     }
     
     if (input === 'enter') {
-      // Si un article est sélectionné, modifier sa quantité
+      // Valider la commande en attente
+      if (pendingCommand) {
+        switch (pendingCommand.type) {
+          case 'quantity':
+            if (pendingCommand.itemId && pendingCommand.value) {
+              const newQuantity = parseInt(pendingCommand.value);
+              if (newQuantity > 0) {
+                updateQuantity(pendingCommand.itemId, newQuantity);
+                toast.success(`Quantité mise à jour: ${newQuantity}`);
+              }
+            }
+            break;
+            
+          case 'payment':
+            if (pendingCommand.value) {
+              const amount = parseInt(pendingCommand.value);
+              setReceivedAmount(amount);
+              setPaymentAmount(pendingCommand.value);
+              toast.success(`Montant de paiement: ${amount} FCFA`);
+            }
+            break;
+            
+          case 'calculation':
+            if (pendingCommand.value) {
+              try {
+                const result = eval(pendingCommand.value);
+                setCalculator(result.toString());
+                setNumericInput(result.toString());
+                toast.success(`Résultat: ${result}`);
+              } catch (error) {
+                toast.error('Erreur de calcul');
+              }
+            }
+            break;
+        }
+        
+        // Réinitialiser après validation
+        setPendingCommand(null);
+        setSelectedCartItemId(null);
+        setNumericInput('');
+        setCalculator('');
+        return;
+      }
+      
+      // Si pas de commande en attente, traiter selon le contexte
       if (selectedCartItemId && numericInput) {
-        const newQuantity = parseInt(numericInput);
-        if (newQuantity > 0) {
-          updateQuantity(selectedCartItemId, newQuantity);
-          setNumericInput('');
-          setSelectedCartItemId(null);
-          toast.success('Quantité mise à jour');
+        const quantity = parseInt(numericInput);
+        if (quantity > 0) {
+          const item = cart.find(i => i.id === selectedCartItemId);
+          setPendingCommand({
+            type: 'quantity',
+            value: numericInput,
+            itemId: selectedCartItemId,
+            description: `Modifier quantité de "${item?.name}" à ${quantity}`
+          });
+          return;
         }
-        return;
       }
       
-      // Si en mode calculatrice, évaluer l'expression
       if (calculatorMode && calculator) {
-        try {
-          const result = eval(calculator);
-          setCalculator(result.toString());
-          setNumericInput(result.toString());
-          toast.success(`Résultat: ${result}`);
-        } catch (error) {
-          toast.error('Erreur de calcul');
-        }
+        setPendingCommand({
+          type: 'calculation',
+          value: calculator,
+          description: `Calculer: ${calculator}`
+        });
         return;
       }
       
-      // Si c'est un montant de paiement
-      if (numericInput && !selectedCartItemId) {
-        setPaymentAmount(numericInput);
-        toast.success(`Montant saisi: ${numericInput} FCFA`);
+      if (numericInput && !selectedCartItemId && !calculatorMode) {
+        const amount = parseInt(numericInput);
+        setPendingCommand({
+          type: 'payment',
+          value: numericInput,
+          description: `Paiement de ${amount} FCFA`
+        });
         return;
       }
+      
+      toast.info('Aucune action à valider');
+      return;
     }
     
     if (input === '+' || input === '-' || input === '*' || input === '/') {
@@ -210,6 +268,8 @@ export function POSSystem() {
   const selectCartItem = (itemId: string) => {
     setSelectedCartItemId(itemId);
     setNumericInput('');
+    setPendingCommand(null); // Réinitialiser la commande en attente
+    toast.info('Article sélectionné pour modification');
   };
 
   const removeFromCart = (productId: string) => {
@@ -700,27 +760,58 @@ export function POSSystem() {
                     🧮
                   </Button>
                 </div>
+                
+                {/* Indicateurs d'état */}
                 {selectedCartItemId && (
-                  <div className="bg-primary/20 rounded px-2 py-1">
+                  <div className="bg-primary/20 rounded px-2 py-1 mb-1">
                     <p className="text-xs text-primary font-medium">Article sélectionné</p>
                   </div>
                 )}
                 {calculatorMode && (
-                  <div className="bg-blue-100 rounded px-2 py-1 mt-1">
+                  <div className="bg-blue-100 rounded px-2 py-1 mb-1">
                     <p className="text-xs text-blue-700 font-medium">Mode Calculatrice</p>
                   </div>
                 )}
-                {paymentAmount && (
-                  <div className="bg-green-100 rounded px-2 py-1 mt-1">
+                {paymentAmount && !pendingCommand && (
+                  <div className="bg-green-100 rounded px-2 py-1 mb-1">
                     <p className="text-xs text-green-700 font-medium">Montant: {paymentAmount} FCFA</p>
+                  </div>
+                )}
+                
+                {/* Commande en attente - NOUVELLE FONCTIONNALITÉ */}
+                {pendingCommand && (
+                  <div className="bg-yellow-100 border border-yellow-300 rounded px-2 py-2 mb-2">
+                    <p className="text-xs text-yellow-800 font-bold">⚠️ COMMANDE EN ATTENTE</p>
+                    <p className="text-xs text-yellow-700 mt-1">{pendingCommand.description}</p>
+                    <div className="flex gap-1 mt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPendingCommand(null)}
+                        className="h-5 text-xs flex-1"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleNumericInput('enter')}
+                        className="h-5 text-xs flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        VALIDER
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
               
               {/* Affichage */}
               <div className="mb-3">
-                <div className="bg-card border rounded p-2 text-center font-mono text-sm min-h-[32px] flex items-center justify-center">
-                  {calculatorMode ? (calculator || '0') : (numericInput || '0')}
+                <div className={`border rounded p-2 text-center font-mono text-sm min-h-[32px] flex items-center justify-center ${
+                  pendingCommand ? 'bg-yellow-50 border-yellow-300' : 'bg-card'
+                }`}>
+                  {pendingCommand ? pendingCommand.value : 
+                   calculatorMode ? (calculator || '0') : (numericInput || '0')}
                 </div>
               </div>
               
@@ -732,7 +823,8 @@ export function POSSystem() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleNumericInput(num.toString())}
-                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground border-border/50"
+                    disabled={!!pendingCommand}
+                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground border-border/50 disabled:opacity-50"
                   >
                     {num}
                   </Button>
@@ -753,22 +845,27 @@ export function POSSystem() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('0')}
-                  className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground"
+                  disabled={!!pendingCommand}
+                  className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
                 >
                   0
                 </Button>
                 <Button
-                  variant="default"
+                  variant={pendingCommand ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleNumericInput('enter')}
-                  className="h-8 text-xs font-bold bg-primary hover:bg-primary/90"
+                  className={`h-8 text-xs font-bold ${
+                    pendingCommand 
+                      ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' 
+                      : 'bg-primary hover:bg-primary/90'
+                  }`}
                 >
-                  OK
+                  {pendingCommand ? 'VALIDER' : 'OK'}
                 </Button>
               </div>
               
               {/* Opérateurs pour calculatrice */}
-              {calculatorMode && (
+              {calculatorMode && !pendingCommand && (
                 <div className="grid grid-cols-4 gap-1 mt-2">
                   <Button
                     variant="secondary"
@@ -806,21 +903,30 @@ export function POSSystem() {
               )}
               
               {/* Raccourcis rapides */}
-              <div className="mt-3 space-y-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleNumericInput(total.toString())}
-                  className="w-full h-6 text-xs hover:bg-accent"
-                >
-                  Total: {total.toFixed(0)}
-                </Button>
-                {paymentAmount && (
-                  <div className="text-xs text-center text-muted-foreground">
-                    Rendu: {(parseInt(paymentAmount) - total).toFixed(0)} FCFA
-                  </div>
-                )}
-              </div>
+              {!pendingCommand && (
+                <div className="mt-3 space-y-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setNumericInput(total.toString());
+                      setPendingCommand({
+                        type: 'payment',
+                        value: total.toString(),
+                        description: `Paiement exact: ${total.toFixed(0)} FCFA`
+                      });
+                    }}
+                    className="w-full h-6 text-xs hover:bg-accent"
+                  >
+                    Total: {total.toFixed(0)}
+                  </Button>
+                  {paymentAmount && (
+                    <div className="text-xs text-center text-muted-foreground">
+                      Rendu: {(parseInt(paymentAmount) - total).toFixed(0)} FCFA
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
