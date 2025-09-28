@@ -288,152 +288,267 @@ export default function ProductManagement() {
                 {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nom du produit *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: iPhone 15 Pro"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                    placeholder="Ex: IPH15PRO"
-                  />
+            <div className="grid gap-6 py-4">
+              {/* Section Images */}
+              <div className="space-y-3">
+                <Label>Images du produit</Label>
+                <div className="border-2 border-dashed border-muted rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <Camera className="w-8 h-8 text-muted-foreground" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium">Glissez vos images ici</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG jusqu'à 10MB chacune</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm">
+                      Choisir des fichiers
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Description détaillée du produit..."
-                  rows={3}
-                />
-              </div>
+              {/* Informations de base */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground">INFORMATIONS DE BASE</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nom du produit *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ex: iPhone 15 Pro"
+                      className={!formData.name ? "border-red-300 focus:border-red-500" : ""}
+                    />
+                    {!formData.name && <p className="text-xs text-red-500">Le nom est obligatoire</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sku">Code SKU</Label>
+                    <Input
+                      id="sku"
+                      value={formData.sku}
+                      onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                      placeholder="Ex: IPH15PRO"
+                    />
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="price">Prix de vente * (FCFA)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    placeholder="0"
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Description détaillée du produit..."
+                    rows={3}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="compare_price">Prix comparatif (FCFA)</Label>
-                  <Input
-                    id="compare_price"
-                    type="number"
-                    value={formData.compare_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, compare_price: e.target.value }))}
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cost_price">Prix de revient (FCFA)</Label>
-                  <Input
-                    id="cost_price"
-                    type="number"
-                    value={formData.cost_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="stock_quantity">Stock initial</Label>
-                  <Input
-                    id="stock_quantity"
-                    type="number"
-                    value={formData.stock_quantity}
-                    onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="low_stock_threshold">Seuil stock bas</Label>
-                  <Input
-                    id="low_stock_threshold"
-                    type="number"
-                    value={formData.low_stock_threshold}
-                    onChange={(e) => setFormData(prev => ({ ...prev, low_stock_threshold: e.target.value }))}
-                    placeholder="10"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight">Poids (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.1"
-                    value={formData.weight}
-                    onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                    placeholder="0.0"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Catégorie</Label>
+                    <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une catégorie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="barcode">Code-barres</Label>
+                    <Input
+                      id="barcode"
+                      value={formData.barcode}
+                      onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                      placeholder="Code-barres"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Catégorie</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Prix et coûts */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground">PRIX ET COÛTS</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Prix de vente * (FCFA)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="0"
+                      className={!formData.price ? "border-red-300 focus:border-red-500" : ""}
+                    />
+                    {!formData.price && <p className="text-xs text-red-500">Le prix est obligatoire</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="compare_price">Prix comparatif (FCFA)</Label>
+                    <Input
+                      id="compare_price"
+                      type="number"
+                      min="0"
+                      value={formData.compare_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, compare_price: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cost_price">Prix de revient (FCFA)</Label>
+                    <Input
+                      id="cost_price"
+                      type="number"
+                      min="0"
+                      value={formData.cost_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="barcode">Code-barres</Label>
-                  <Input
-                    id="barcode"
-                    value={formData.barcode}
-                    onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                    placeholder="Code-barres"
-                  />
+                {formData.price && formData.compare_price && parseFloat(formData.price) > parseFloat(formData.compare_price) && (
+                  <p className="text-xs text-orange-500">⚠️ Le prix de vente est supérieur au prix comparatif</p>
+                )}
+              </div>
+
+              {/* Inventaire */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground">INVENTAIRE</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stock_quantity">Stock initial</Label>
+                    <Input
+                      id="stock_quantity"
+                      type="number"
+                      min="0"
+                      value={formData.stock_quantity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="low_stock_threshold">Seuil stock bas</Label>
+                    <Input
+                      id="low_stock_threshold"
+                      type="number"
+                      min="0"
+                      value={formData.low_stock_threshold}
+                      onChange={(e) => setFormData(prev => ({ ...prev, low_stock_threshold: e.target.value }))}
+                      placeholder="10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="weight">Poids (kg)</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={formData.weight}
+                      onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                      placeholder="0.0"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
-                <Input
-                  id="tags"
-                  value={formData.tags}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                  placeholder="Ex: électronique, smartphone, apple"
-                />
+              {/* Métadonnées */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground">MÉTADONNÉES</h4>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+                    <Input
+                      id="tags"
+                      value={formData.tags}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                      placeholder="Ex: électronique, smartphone, apple"
+                    />
+                    <p className="text-xs text-muted-foreground">Utilisez des virgules pour séparer les tags</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label htmlFor="is_active" className="font-medium">Statut du produit</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {formData.is_active ? 'Produit actif et visible dans la boutique' : 'Produit inactif et masqué'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="is_active"
+                        checked={formData.is_active}
+                        onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                        className="w-4 h-4 text-vendeur-primary"
+                      />
+                      <Label htmlFor="is_active" className="text-sm font-medium">
+                        {formData.is_active ? 'Actif' : 'Inactif'}
+                      </Label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={() => setShowDialog(false)}>
+              {/* Boutons d'action */}
+              <div className="flex justify-between pt-4 border-t">
+                <Button variant="outline" onClick={() => {
+                  setShowDialog(false);
+                  resetForm();
+                }}>
                   <X className="w-4 h-4 mr-2" />
                   Annuler
                 </Button>
-                <Button onClick={handleSaveProduct} disabled={!formData.name || !formData.price}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingProduct ? 'Mettre à jour' : 'Ajouter'}
-                </Button>
+                <div className="flex gap-2">
+                  {editingProduct && (
+                    <Button 
+                      variant="destructive" 
+                      onClick={async () => {
+                        if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+                          try {
+                            const { error } = await supabase
+                              .from('products')
+                              .delete()
+                              .eq('id', editingProduct.id);
+                            
+                            if (error) throw error;
+                            
+                            setProducts(prev => prev.filter(p => p.id !== editingProduct.id));
+                            setShowDialog(false);
+                            resetForm();
+                            
+                            toast({
+                              title: "Produit supprimé",
+                              description: "Le produit a été supprimé avec succès."
+                            });
+                          } catch (error: any) {
+                            toast({
+                              title: "Erreur",
+                              description: "Impossible de supprimer le produit.",
+                              variant: "destructive"
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Supprimer
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={handleSaveProduct} 
+                    disabled={!formData.name || !formData.price}
+                    className="bg-vendeur-gradient hover:opacity-90"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {editingProduct ? 'Mettre à jour' : 'Ajouter le produit'}
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
