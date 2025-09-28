@@ -107,6 +107,57 @@ export type Database = {
           },
         ]
       }
+      customer_credits: {
+        Row: {
+          created_at: string | null
+          credit_limit: number | null
+          current_balance: number | null
+          customer_id: string
+          id: string
+          is_blocked: boolean | null
+          payment_terms: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          customer_id: string
+          id?: string
+          is_blocked?: boolean | null
+          payment_terms?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credit_limit?: number | null
+          current_balance?: number | null
+          customer_id?: string
+          id?: string
+          is_blocked?: boolean | null
+          payment_terms?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_credits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_credits_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           addresses: Json | null
@@ -306,6 +357,67 @@ export type Database = {
           },
         ]
       }
+      interactions: {
+        Row: {
+          completed_date: string | null
+          content: string | null
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          prospect_id: string | null
+          scheduled_date: string | null
+          subject: string | null
+          type: string
+          vendor_id: string
+        }
+        Insert: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          prospect_id?: string | null
+          scheduled_date?: string | null
+          subject?: string | null
+          type: string
+          vendor_id: string
+        }
+        Update: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          prospect_id?: string | null
+          scheduled_date?: string | null
+          subject?: string | null
+          type?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interactions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interactions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       international_shipments: {
         Row: {
           actual_delivery_date: string | null
@@ -377,30 +489,42 @@ export type Database = {
       }
       inventory: {
         Row: {
+          expiry_date: string | null
           id: string
           last_updated: string | null
+          lot_number: string | null
+          minimum_stock: number | null
           product_id: string
           quantity: number
           reserved_quantity: number | null
           variant_id: string | null
+          warehouse_id: string | null
           warehouse_location: string | null
         }
         Insert: {
+          expiry_date?: string | null
           id?: string
           last_updated?: string | null
+          lot_number?: string | null
+          minimum_stock?: number | null
           product_id: string
           quantity?: number
           reserved_quantity?: number | null
           variant_id?: string | null
+          warehouse_id?: string | null
           warehouse_location?: string | null
         }
         Update: {
+          expiry_date?: string | null
           id?: string
           last_updated?: string | null
+          lot_number?: string | null
+          minimum_stock?: number | null
           product_id?: string
           quantity?: number
           reserved_quantity?: number | null
           variant_id?: string | null
+          warehouse_id?: string | null
           warehouse_location?: string | null
         }
         Relationships: [
@@ -416,6 +540,66 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          clicked_count: number | null
+          content: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          opened_count: number | null
+          scheduled_date: string | null
+          sent_count: number | null
+          status: string | null
+          target_audience: Json | null
+          type: string
+          vendor_id: string
+        }
+        Insert: {
+          clicked_count?: number | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          opened_count?: number | null
+          scheduled_date?: string | null
+          sent_count?: number | null
+          status?: string | null
+          target_audience?: Json | null
+          type: string
+          vendor_id: string
+        }
+        Update: {
+          clicked_count?: number | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          opened_count?: number | null
+          scheduled_date?: string | null
+          sent_count?: number | null
+          status?: string | null
+          target_audience?: Json | null
+          type?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -592,6 +776,47 @@ export type Database = {
           },
         ]
       }
+      payment_schedules: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string
+          id: string
+          order_id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_schedules_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           attributes: Json | null
@@ -759,6 +984,62 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          minimum_order_amount: number | null
+          usage_limit: number | null
+          used_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+          vendor_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          minimum_order_amount?: number | null
+          usage_limit?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+          vendor_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          minimum_order_amount?: number | null
+          usage_limit?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotions: {
         Row: {
           created_at: string | null
@@ -814,6 +1095,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "promotions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospects: {
+        Row: {
+          company: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          estimated_value: number | null
+          id: string
+          name: string
+          next_followup_date: string | null
+          notes: string | null
+          status: string | null
+          success_probability: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          company?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          estimated_value?: number | null
+          id?: string
+          name: string
+          next_followup_date?: string | null
+          notes?: string | null
+          status?: string | null
+          success_probability?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          company?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          estimated_value?: number | null
+          id?: string
+          name?: string
+          next_followup_date?: string | null
+          notes?: string | null
+          status?: string | null
+          success_probability?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -982,6 +1319,90 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          customer_id: string
+          description: string | null
+          id: string
+          order_id: string | null
+          priority: string | null
+          product_id: string | null
+          resolution: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          customer_id: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          product_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          customer_id?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          product_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "vendor_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicat_badges: {
         Row: {
           badge_number: string
@@ -1071,6 +1492,47 @@ export type Database = {
           },
         ]
       }
+      vendor_employees: {
+        Row: {
+          created_at: string | null
+          hired_date: string | null
+          id: string
+          is_active: boolean | null
+          permissions: Json | null
+          role: string
+          user_id: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hired_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          role: string
+          user_id: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hired_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          role?: string
+          user_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_employees_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string | null
@@ -1126,6 +1588,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouses: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          vendor_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          vendor_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
