@@ -7,6 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Home from "./pages/Home";
+import Marketplace from "./pages/Marketplace";
+import Tracking from "./pages/Tracking";
+import Profil from "./pages/Profil";
 import VendeurDashboard from "./pages/VendeurDashboard";
 import LivreurDashboard from "./pages/LivreurDashboard";
 import TaxiDashboard from "./pages/TaxiDashboard";
@@ -28,6 +32,14 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Main App Routes */}
+            <Route path="/home" element={<Home />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/tracking" element={<Tracking />} />
+            <Route path="/profil" element={<Profil />} />
+            
+            {/* Dashboard Routes */}
             <Route 
               path="/vendeur" 
               element={
