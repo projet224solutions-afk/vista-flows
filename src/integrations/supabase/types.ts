@@ -817,6 +817,42 @@ export type Database = {
           },
         ]
       }
+      pos_settings: {
+        Row: {
+          auto_print_receipt: boolean | null
+          company_name: string | null
+          created_at: string
+          currency: string
+          id: string
+          receipt_footer: string | null
+          tax_rate: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          auto_print_receipt?: boolean | null
+          company_name?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          receipt_footer?: string | null
+          tax_rate?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          auto_print_receipt?: boolean | null
+          company_name?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          receipt_footer?: string | null
+          tax_rate?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       product_variants: {
         Row: {
           attributes: Json | null
