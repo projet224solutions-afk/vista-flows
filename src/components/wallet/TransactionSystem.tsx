@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Send, ArrowRightLeft, DollarSign, Shield, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Transaction {
+interface P2PTransaction {
   id: string;
   sender_id: string;
   receiver_id: string;
@@ -23,8 +23,6 @@ interface Transaction {
   transaction_type: 'transfer' | 'payment' | 'request';
   created_at: string;
   completed_at?: string;
-  sender_name?: string;
-  receiver_name?: string;
 }
 
 export const TransactionSystem = () => {
@@ -37,7 +35,7 @@ export const TransactionSystem = () => {
   const [description, setDescription] = useState('');
   const [transactionType, setTransactionType] = useState<'transfer' | 'payment' | 'request'>('transfer');
   const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   // Récupérer les transactions
@@ -47,12 +45,8 @@ export const TransactionSystem = () => {
     setLoadingTransactions(true);
     try {
       const { data, error } = await supabase
-        .from('p2p_transactions')
-        .select(`
-          *,
-          sender:profiles!p2p_transactions_sender_id_fkey(first_name, last_name, email),
-          receiver:profiles!p2p_transactions_receiver_id_fkey(first_name, last_name, email)
-        `)
+        .from('p2p_transactions' as any)
+        .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -128,16 +122,18 @@ export const TransactionSystem = () => {
       }
 
       // Créer la transaction
+      const transactionData = {
+        sender_id: user.id,
+        receiver_id: receiverProfile.id,
+        amount: amountNum,
+        description: description.trim() || null,
+        status: transactionType === 'request' ? 'pending' : 'completed',
+        transaction_type: transactionType
+      };
+
       const { data: transaction, error: transactionError } = await supabase
-        .from('p2p_transactions')
-        .insert({
-          sender_id: user.id,
-          receiver_id: receiverProfile.id,
-          amount: amountNum,
-          description: description.trim() || null,
-          status: transactionType === 'request' ? 'pending' : 'completed',
-          transaction_type: transactionType
-        })
+        .from('p2p_transactions' as any)
+        .insert(transactionData)
         .select()
         .single();
 
@@ -153,11 +149,19 @@ export const TransactionSystem = () => {
 
         if (senderWalletError) throw senderWalletError;
 
-        // Créditer le wallet du destinataire
-        const { error: receiverWalletError } = await supabase.rpc('credit_wallet', {
-          receiver_user_id: receiverProfile.id,
-          credit_amount: amountNum
-        });
+        // Créditer le wallet du destinataire - récupérer d'abord son wallet
+        const { data: receiverWallet, error: getWalletError } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', receiverProfile.id)
+          .single();
+
+        if (getWalletError) throw getWalletError;
+
+        const { error: receiverWalletError } = await supabase
+          .from('wallets')
+          .update({ balance: receiverWallet.balance + amountNum })
+          .eq('user_id', receiverProfile.id);
 
         if (receiverWalletError) throw receiverWalletError;
       }
@@ -353,10 +357,10 @@ export const TransactionSystem = () => {
                     {getTransactionIcon(transaction.transaction_type, transaction.status)}
                     <div>
                       <div className="font-medium">
-                        {transaction.sender_id === user?.id ? 
-                          `Vers ${transaction.receiver_name || 'Utilisateur'}` : 
-                          `De ${transaction.sender_name || 'Utilisateur'}`
-                        }
+                      {transaction.sender_id === user?.id ? 
+                        `Vers ${transaction.receiver_email || 'Utilisateur'}` : 
+                        `De ${transaction.sender_email || 'Utilisateur'}`
+                      }
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {transaction.description || transaction.transaction_type}

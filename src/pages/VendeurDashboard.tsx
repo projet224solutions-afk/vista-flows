@@ -10,7 +10,7 @@ import {
   FileText, Settings, AlertTriangle, DollarSign, Target,
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
-  Warehouse, UserCheck
+  Warehouse, UserCheck, ArrowRightLeft, Send
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -32,8 +32,11 @@ import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import { WalletDashboard } from "@/components/wallet/WalletDashboard";
+import { TransactionSystem } from "@/components/wallet/TransactionSystem";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useWallet } from "@/hooks/useWallet";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -186,18 +189,18 @@ export default function VendeurDashboard() {
                     </p>
                   </div>
                 </div>
-                {/* Informations Wallet dans l'en-tête */}
-                {wallet && !walletLoading && (
-                  <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-vendeur" />
-                      <div className="text-sm">
-                        <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
-                        <div className="text-xs text-muted-foreground">Solde disponible</div>
-                      </div>
+              {/* Informations Wallet dans l'en-tête */}
+              {wallet && !walletLoading && (
+                <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-vendeur" />
+                    <div className="text-sm">
+                      <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
+                      <div className="text-xs text-muted-foreground">Solde disponible</div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
               </div>
             <div className="flex items-center gap-3">
               <Button size="sm" variant="outline" className="hidden lg:flex hover:shadow-glow transition-all duration-300" onClick={() => {
@@ -398,6 +401,13 @@ export default function VendeurDashboard() {
                 <CreditCard className="w-4 h-4 mr-2" />
                 Wallet & Cartes
               </TabsTrigger>
+              <TabsTrigger 
+                value="transactions" 
+                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              >
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Transactions P2P
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -555,7 +565,57 @@ export default function VendeurDashboard() {
           <TabsContent value="wallet">
             <WalletDashboard />
           </TabsContent>
+
+          {/* Transactions P2P */}
+          <TabsContent value="transactions">
+            <TransactionSystem />
+          </TabsContent>
         </Tabs>
+      </div>
+
+      {/* Bouton de transaction flottant - repositionné en bas et plus grand */}
+      <div className="fixed bottom-20 right-6 z-40">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              size="lg" 
+              className="bg-vendeur-gradient hover:shadow-glow text-white px-8 py-6 text-lg font-semibold rounded-full shadow-xl hover:scale-105 transition-all duration-300 min-w-[200px]"
+            >
+              <Send className="h-6 w-6 mr-3" />
+              Envoyer Argent
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Transaction Rapide</DialogTitle>
+              <DialogDescription>
+                Envoyez de l'argent rapidement à un autre utilisateur
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="quick-receiver">Email du destinataire</Label>
+                <Input
+                  id="quick-receiver"
+                  type="email"
+                  placeholder="email@exemple.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="quick-amount">Montant ({wallet?.currency || 'GNF'})</Label>
+                <Input
+                  id="quick-amount"
+                  type="number"
+                  placeholder="0"
+                />
+              </div>
+              <Button className="w-full bg-vendeur-gradient">
+                <Send className="h-4 w-4 mr-2" />
+                Envoyer Maintenant
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <NavigationFooter />

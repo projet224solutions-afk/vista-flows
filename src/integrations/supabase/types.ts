@@ -891,6 +891,45 @@ export type Database = {
           },
         ]
       }
+      p2p_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          receiver_id: string
+          sender_id: string
+          status: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          receiver_id: string
+          sender_id: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_schedules: {
         Row: {
           amount: number
@@ -2094,6 +2133,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      credit_wallet: {
+        Args: { credit_amount: number; receiver_user_id: string }
+        Returns: undefined
+      }
       generate_card_number: {
         Args: Record<PropertyKey, never>
         Returns: string
