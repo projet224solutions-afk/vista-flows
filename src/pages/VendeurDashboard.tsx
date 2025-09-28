@@ -16,7 +16,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import NavigationFooter from "@/components/NavigationFooter";
 import { useVendorStats } from "@/hooks/useVendorData";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
@@ -619,8 +618,6 @@ export default function VendeurDashboard() {
           </DialogContent>
         </Dialog>
       </div>
-
-      <NavigationFooter />
     </div>
   );
 }

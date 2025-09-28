@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Globe, ShieldCheck, Info, Crown } from "lucide-react";
-import NavigationFooter from "@/components/NavigationFooter";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import { z } from "zod";
 
@@ -433,8 +432,6 @@ export default function Auth() {
         <div className="fixed bottom-24 right-4 z-50">
           <PDGAuthButton />
         </div>
-        
-        <NavigationFooter />
       </div>
     );
   }
@@ -515,8 +512,6 @@ export default function Auth() {
           </Button>
         </div>
       </div>
-      
-      <NavigationFooter />
     </div>
   );
 }

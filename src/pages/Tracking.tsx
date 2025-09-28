@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import NavigationFooter from "@/components/NavigationFooter";
 
 interface TrackingResult {
   success: boolean;
@@ -294,8 +293,6 @@ export default function Tracking() {
           </Card>
         </section>
       )}
-
-      <NavigationFooter />
     </div>
   );
 }

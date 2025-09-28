@@ -4,7 +4,6 @@ import { Users, TrendingUp, ShoppingCart, Package, Star, Activity } from "lucide
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 
 export default function AdminDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -207,8 +206,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }

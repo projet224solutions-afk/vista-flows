@@ -41,5 +41,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     return null;
   }
 
-  return <>{children}</>;
+  // S'assurer qu'il y a assez d'espace pour le footer fixe
+  return (
+    <div className="min-h-screen pb-20">
+      {children}
+    </div>
+  );
 }

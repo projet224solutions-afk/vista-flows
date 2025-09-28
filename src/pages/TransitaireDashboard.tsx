@@ -4,7 +4,6 @@ import { Globe, Package, Plane, Ship, TrendingUp, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -211,8 +210,6 @@ export default function TransitaireDashboard() {
           </CardContent>
         </Card>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }

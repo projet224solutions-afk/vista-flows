@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import NavigationFooter from "@/components/NavigationFooter";
 import { useDeliveries } from "@/hooks/useSupabaseQuery";
 import { 
   MapPin, 
@@ -191,8 +190,6 @@ export default function LivreurDashboard() {
           </div>
         </Card>
       </div>
-      
-      <NavigationFooter />
     </div>
   );
 }

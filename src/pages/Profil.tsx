@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 
 const userTypes = {
   client: {
@@ -117,8 +116,6 @@ export default function Profil() {
             </CardContent>
           </Card>
         </section>
-
-        <NavigationFooter />
       </div>
     );
   }
@@ -269,8 +266,6 @@ export default function Profil() {
           Se déconnecter
         </Button>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
-import NavigationFooter from "@/components/NavigationFooter";
 
 const categories = [
   { id: 'all', label: 'Tout', count: 1250 },
@@ -225,8 +224,6 @@ export default function Marketplace() {
           ))}
         </div>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }
