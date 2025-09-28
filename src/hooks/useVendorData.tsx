@@ -89,8 +89,8 @@ export interface SupportTicket {
   product_id?: string;
   subject: string;
   description?: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed';
+  priority: string;
+  status: string;
   assigned_to?: string;
   resolution?: string;
   created_at: string;
@@ -471,7 +471,7 @@ export function useSupportTickets() {
     fetchTickets();
   }, [user]);
 
-  const updateTicketStatus = async (id: string, status: SupportTicket['status']) => {
+  const updateTicketStatus = async (id: string, status: string) => {
     try {
       const { data, error } = await supabase
         .from('support_tickets')

@@ -13,29 +13,79 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
+import { useVendorStats } from "@/hooks/useVendorData";
+import ProspectManagement from "@/components/vendor/ProspectManagement";
+import PaymentManagement from "@/components/vendor/PaymentManagement";
+import InventoryManagement from "@/components/vendor/InventoryManagement";
+import MarketingManagement from "@/components/vendor/MarketingManagement";
+import SupportTickets from "@/components/vendor/SupportTickets";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { stats, loading: statsLoading, error: statsError } = useVendorStats();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
-  // Données du tableau de bord
+  // Données du tableau de bord - utilise les données réelles si disponibles
   const mainStats = [
-    { label: "Chiffre d'affaires", value: "2.4M FCFA", change: "+12%", icon: DollarSign, color: "text-green-600" },
-    { label: "Commandes ce mois", value: "156", change: "+8%", icon: ShoppingCart, color: "text-blue-600" },
-    { label: "Clients actifs", value: "89", change: "+15%", icon: Users, color: "text-purple-600" },
-    { label: "Taux conversion", value: "3.2%", change: "+0.5%", icon: Target, color: "text-orange-600" }
+    { 
+      label: "Chiffre d'affaires", 
+      value: stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA", 
+      change: "+12%", 
+      icon: DollarSign, 
+      color: "text-green-600" 
+    },
+    { 
+      label: "Commandes ce mois", 
+      value: stats ? stats.orders_count.toString() : "156", 
+      change: "+8%", 
+      icon: ShoppingCart, 
+      color: "text-blue-600" 
+    },
+    { 
+      label: "Clients actifs", 
+      value: stats ? stats.customers_count.toString() : "89", 
+      change: "+15%", 
+      icon: Users, 
+      color: "text-purple-600" 
+    },
+    { 
+      label: "Taux conversion", 
+      value: "3.2%", 
+      change: "+0.5%", 
+      icon: Target, 
+      color: "text-orange-600" 
+    }
   ];
 
-  const urgentAlerts = [
-    { type: "stock", message: "5 produits en rupture de stock", priority: "high" },
-    { type: "payment", message: "3 paiements en retard", priority: "medium" },
-    { type: "order", message: "12 commandes à préparer", priority: "high" }
-  ];
+  const urgentAlerts = [];
+  if (stats) {
+    if (stats.low_stock_count > 0) {
+      urgentAlerts.push({
+        type: "stock",
+        message: `${stats.low_stock_count} produits en rupture de stock`,
+        priority: "high" as const
+      });
+    }
+    if (stats.overdue_payments > 0) {
+      urgentAlerts.push({
+        type: "payment",
+        message: `${stats.overdue_payments} paiements en retard`,
+        priority: "medium" as const
+      });
+    }
+    if (stats.orders_pending > 0) {
+      urgentAlerts.push({
+        type: "order",
+        message: `${stats.orders_pending} commandes à préparer`,
+        priority: "high" as const
+      });
+    }
+  }
 
   const recentOrders = [
     {
@@ -121,24 +171,26 @@ export default function VendeurDashboard() {
       </header>
 
       {/* Alertes urgentes */}
-      <section className="px-4 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {urgentAlerts.map((alert, index) => (
-            <Card key={index} className={`border-l-4 ${
-              alert.priority === 'high' ? 'border-l-red-500' : 'border-l-orange-500'
-            }`}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className={`w-5 h-5 ${
-                    alert.priority === 'high' ? 'text-red-500' : 'text-orange-500'
-                  }`} />
-                  <p className="text-sm font-medium">{alert.message}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {urgentAlerts.length > 0 && (
+        <section className="px-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {urgentAlerts.map((alert, index) => (
+              <Card key={index} className={`border-l-4 ${
+                alert.priority === 'high' ? 'border-l-red-500' : 'border-l-orange-500'
+              }`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className={`w-5 h-5 ${
+                      alert.priority === 'high' ? 'text-red-500' : 'text-orange-500'
+                    }`} />
+                    <p className="text-sm font-medium">{alert.message}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Statistiques principales */}
       <section className="px-4 py-2">
@@ -281,76 +333,7 @@ export default function VendeurDashboard() {
 
           {/* Gestion des clients */}
           <TabsContent value="clients" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Gestion des clients</h2>
-              <div className="flex gap-2">
-                <Input placeholder="Rechercher un client..." className="w-64" />
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nouveau client
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Clients VIP */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
-                    Clients VIP & Fidèles
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {clientsVIP.map((client, index) => (
-                      <div key={index} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium">{client.name}</h4>
-                          <Badge variant={client.status === 'VIP' ? 'default' : 'secondary'}>
-                            {client.status}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm text-muted-foreground">
-                          <span>{client.orders} commandes</span>
-                          <span>{client.total}</span>
-                          <span>Il y a {client.lastOrder}</span>
-                        </div>
-                        <div className="flex gap-2 mt-3">
-                          <Button size="sm" variant="outline">
-                            <Phone className="w-4 h-4 mr-1" />
-                            Appeler
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Mail className="w-4 h-4 mr-1" />
-                            Email
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Nouveaux prospects */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5" />
-                    Nouveaux prospects
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Gérez vos prospects et transformez-les en clients fidèles.
-                  </p>
-                  <Button className="w-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter un prospect
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+            <ProspectManagement />
           </TabsContent>
 
           {/* Pipeline commercial */}
@@ -368,29 +351,18 @@ export default function VendeurDashboard() {
                 <CardTitle>Opportunités en cours</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {prospects.map((prospect, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{prospect.name}</h4>
-                        <Badge variant="outline">{prospect.status}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{prospect.contact}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-green-600">{prospect.value}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{prospect.probability}%</span>
-                          <Progress value={prospect.probability} className="w-20" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-center py-8">
+                  <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Pipeline commercial</h3>
+                  <p className="text-muted-foreground">
+                    Gérez vos opportunités commerciales dans l'onglet "Clients".
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Autres onglets avec contenu simplifié */}
+          {/* Gestion des produits */}
           <TabsContent value="products">
             <Card>
               <CardHeader>
@@ -398,10 +370,17 @@ export default function VendeurDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">Interface de gestion complète des produits, variantes, et catalogue.</p>
+                <div className="mt-4">
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un produit
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Gestion des commandes */}
           <TabsContent value="orders">
             <Card>
               <CardHeader>
@@ -409,54 +388,37 @@ export default function VendeurDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">Suivi complet des commandes, devis, et facturation.</p>
+                <div className="mt-4">
+                  <Button variant="outline">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Voir toutes les commandes
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Gestion des paiements */}
           <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des paiements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Suivi des paiements, crédits clients, et comptabilité.</p>
-              </CardContent>
-            </Card>
+            <PaymentManagement />
           </TabsContent>
 
+          {/* Gestion des stocks */}
           <TabsContent value="stock">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des stocks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Inventaire, approvisionnement, et logistique.</p>
-              </CardContent>
-            </Card>
+            <InventoryManagement />
           </TabsContent>
 
+          {/* Communication client */}
           <TabsContent value="communication">
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication client</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Messagerie, tickets support, et service client.</p>
-              </CardContent>
-            </Card>
+            <SupportTickets />
           </TabsContent>
 
+          {/* Marketing & Promotions */}
           <TabsContent value="marketing">
-            <Card>
-              <CardHeader>
-                <CardTitle>Marketing & Promotions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Campagnes, promotions, et outils marketing.</p>
-              </CardContent>
-            </Card>
+            <MarketingManagement />
           </TabsContent>
 
+          {/* Analyses & Rapports */}
           <TabsContent value="analytics">
             <Card>
               <CardHeader>
@@ -464,6 +426,16 @@ export default function VendeurDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">Statistiques détaillées, rapports, et analyses prédictives.</p>
+                <div className="mt-4 flex gap-2">
+                  <Button variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exporter données
+                  </Button>
+                  <Button variant="outline">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Voir graphiques
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
