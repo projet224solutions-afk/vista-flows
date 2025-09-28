@@ -71,6 +71,9 @@ export function POSSystem() {
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [numericInput, setNumericInput] = useState('');
+  const [calculator, setCalculator] = useState('');
+  const [calculatorMode, setCalculatorMode] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
   
   // États pour personnalisation
@@ -136,23 +139,71 @@ export function POSSystem() {
     );
   };
 
-  const handleNumericInput = (digit: string) => {
-    if (digit === 'clear') {
+  const handleNumericInput = (input: string) => {
+    if (input === 'clear') {
       setNumericInput('');
+      setCalculator('');
+      setPaymentAmount('');
       return;
     }
-    if (digit === 'enter' && selectedCartItemId && numericInput) {
-      const newQuantity = parseInt(numericInput);
-      if (newQuantity > 0) {
-        updateQuantity(selectedCartItemId, newQuantity);
+    
+    if (input === 'calc') {
+      setCalculatorMode(!calculatorMode);
+      setNumericInput('');
+      setCalculator('');
+      return;
+    }
+    
+    if (input === 'enter') {
+      // Si un article est sélectionné, modifier sa quantité
+      if (selectedCartItemId && numericInput) {
+        const newQuantity = parseInt(numericInput);
+        if (newQuantity > 0) {
+          updateQuantity(selectedCartItemId, newQuantity);
+          setNumericInput('');
+          setSelectedCartItemId(null);
+          toast.success('Quantité mise à jour');
+        }
+        return;
+      }
+      
+      // Si en mode calculatrice, évaluer l'expression
+      if (calculatorMode && calculator) {
+        try {
+          const result = eval(calculator);
+          setCalculator(result.toString());
+          setNumericInput(result.toString());
+          toast.success(`Résultat: ${result}`);
+        } catch (error) {
+          toast.error('Erreur de calcul');
+        }
+        return;
+      }
+      
+      // Si c'est un montant de paiement
+      if (numericInput && !selectedCartItemId) {
+        setPaymentAmount(numericInput);
+        toast.success(`Montant saisi: ${numericInput} FCFA`);
+        return;
+      }
+    }
+    
+    if (input === '+' || input === '-' || input === '*' || input === '/') {
+      if (calculatorMode) {
+        setCalculator(prev => prev + input);
         setNumericInput('');
-        setSelectedCartItemId(null);
-        toast.success('Quantité mise à jour');
       }
       return;
     }
-    if (numericInput.length < 3) {
-      setNumericInput(prev => prev + digit);
+    
+    // Limiter la saisie
+    const currentInput = calculatorMode ? calculator : numericInput;
+    if (currentInput.length < 8) {
+      if (calculatorMode) {
+        setCalculator(prev => prev + input);
+      } else {
+        setNumericInput(prev => prev + input);
+      }
     }
   };
 
@@ -635,42 +686,74 @@ export function POSSystem() {
               </ScrollArea>
             </div>
 
-            {/* Pavé numérique */}
-            <div className="w-32 border-l bg-muted/20 p-3">
+            {/* Pavé numérique professionnel */}
+            <div className="w-40 border-l bg-gradient-to-b from-muted/10 to-muted/30 p-3">
               <div className="text-center mb-3">
-                <p className="text-xs font-medium text-muted-foreground">PAVÉ NUMÉRIQUE</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-foreground">PAVÉ</p>
+                  <Button
+                    variant={calculatorMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleNumericInput('calc')}
+                    className="h-6 w-8 text-xs"
+                  >
+                    🧮
+                  </Button>
+                </div>
                 {selectedCartItemId && (
-                  <p className="text-xs text-primary font-medium mt-1">Article sélectionné</p>
+                  <div className="bg-primary/20 rounded px-2 py-1">
+                    <p className="text-xs text-primary font-medium">Article sélectionné</p>
+                  </div>
+                )}
+                {calculatorMode && (
+                  <div className="bg-blue-100 rounded px-2 py-1 mt-1">
+                    <p className="text-xs text-blue-700 font-medium">Mode Calculatrice</p>
+                  </div>
+                )}
+                {paymentAmount && (
+                  <div className="bg-green-100 rounded px-2 py-1 mt-1">
+                    <p className="text-xs text-green-700 font-medium">Montant: {paymentAmount} FCFA</p>
+                  </div>
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-1">
+              
+              {/* Affichage */}
+              <div className="mb-3">
+                <div className="bg-card border rounded p-2 text-center font-mono text-sm min-h-[32px] flex items-center justify-center">
+                  {calculatorMode ? (calculator || '0') : (numericInput || '0')}
+                </div>
+              </div>
+              
+              {/* Boutons numériques */}
+              <div className="grid grid-cols-3 gap-1 mb-2">
                 {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
                   <Button
                     key={num}
                     variant="outline"
                     size="sm"
                     onClick={() => handleNumericInput(num.toString())}
-                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground"
-                    disabled={!selectedCartItemId}
+                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground border-border/50"
                   >
                     {num}
                   </Button>
                 ))}
+              </div>
+              
+              {/* Ligne du bas avec 0 et fonctions */}
+              <div className="grid grid-cols-3 gap-1 mb-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('clear')}
                   className="h-8 text-xs font-bold hover:bg-destructive hover:text-destructive-foreground"
-                  disabled={!selectedCartItemId}
                 >
-                  C
+                  CLR
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('0')}
                   className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground"
-                  disabled={!selectedCartItemId}
                 >
                   0
                 </Button>
@@ -678,16 +761,65 @@ export function POSSystem() {
                   variant="default"
                   size="sm"
                   onClick={() => handleNumericInput('enter')}
-                  className="h-8 text-xs font-bold"
-                  disabled={!selectedCartItemId || !numericInput}
+                  className="h-8 text-xs font-bold bg-primary hover:bg-primary/90"
                 >
-                  ✓
+                  OK
                 </Button>
               </div>
-              <div className="mt-2 text-center">
-                <div className="bg-card p-2 rounded border text-center font-mono text-sm">
-                  {numericInput || '0'}
+              
+              {/* Opérateurs pour calculatrice */}
+              {calculatorMode && (
+                <div className="grid grid-cols-4 gap-1 mt-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNumericInput('+')}
+                    className="h-6 text-xs font-bold"
+                  >
+                    +
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNumericInput('-')}
+                    className="h-6 text-xs font-bold"
+                  >
+                    -
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNumericInput('*')}
+                    className="h-6 text-xs font-bold"
+                  >
+                    ×
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNumericInput('/')}
+                    className="h-6 text-xs font-bold"
+                  >
+                    ÷
+                  </Button>
                 </div>
+              )}
+              
+              {/* Raccourcis rapides */}
+              <div className="mt-3 space-y-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleNumericInput(total.toString())}
+                  className="w-full h-6 text-xs hover:bg-accent"
+                >
+                  Total: {total.toFixed(0)}
+                </Button>
+                {paymentAmount && (
+                  <div className="text-xs text-center text-muted-foreground">
+                    Rendu: {(parseInt(paymentAmount) - total).toFixed(0)} FCFA
+                  </div>
+                )}
               </div>
             </div>
           </div>
