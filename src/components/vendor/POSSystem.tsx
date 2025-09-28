@@ -552,8 +552,8 @@ export function POSSystem() {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Section Produits - Gauche */}
-        <div className="flex-[6] flex flex-col p-2 space-y-3">
+        {/* Section Produits - Gauche - RÉDUITE */}
+        <div className="flex-[4] flex flex-col p-2 space-y-3">
           {/* Barre de recherche et filtres - SAISIE TEXTE INDÉPENDANTE DU PAVÉ NUMÉRIQUE */}
           <Card>
             <CardContent className="p-6">
@@ -648,8 +648,8 @@ export function POSSystem() {
           </ScrollArea>
         </div>
 
-        {/* Section Panier et Paiement - Droite */}
-        <div className="w-full lg:w-96 xl:w-[420px] bg-card border-l flex flex-col">
+        {/* Section Panier et Paiement - Droite - ÉLARGIE */}
+        <div className="w-full lg:w-[480px] xl:w-[550px] bg-card border-l flex flex-col">
           {/* En-tête du panier */}
           <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-primary/10">
             <div className="flex items-center justify-between">
@@ -749,15 +749,17 @@ export function POSSystem() {
             </div>
 
             {/* Pavé numérique professionnel - UNIQUEMENT POUR LES NOMBRES (quantités, prix, calculs) */}
-            <div className="w-40 border-l bg-gradient-to-b from-muted/10 to-muted/30 p-3">
-              <div className="text-center mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-foreground">PAVÉ</p>
+            <div className="w-48 border-l bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-4 shadow-inner">
+              <div className="text-center mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full">
+                    <p className="text-xs font-bold tracking-wide">PAVÉ PRO</p>
+                  </div>
                   <Button
                     variant={calculatorMode ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleNumericInput('calc')}
-                    className="h-6 w-8 text-xs"
+                    className="h-7 w-9 text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0"
                   >
                     🧮
                   </Button>
@@ -818,7 +820,7 @@ export function POSSystem() {
               </div>
               
               {/* Boutons numériques */}
-              <div className="grid grid-cols-3 gap-1 mb-2">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
                   <Button
                     key={num}
@@ -826,7 +828,7 @@ export function POSSystem() {
                     size="sm"
                     onClick={() => handleNumericInput(num.toString())}
                     disabled={!!pendingCommand}
-                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground border-border/50 disabled:opacity-50"
+                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-800 dark:to-slate-900 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-700 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     {num}
                   </Button>
@@ -834,21 +836,24 @@ export function POSSystem() {
               </div>
               
               {/* Ligne du bas avec 0 et fonctions */}
-              <div className="grid grid-cols-3 gap-1 mb-2">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('clear')}
-                  className="h-8 text-xs font-bold hover:bg-destructive hover:text-destructive-foreground"
+                  className="h-10 text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
                 >
-                  CLR
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg">⌫</span>
+                    <span className="text-[8px]">EFFACER</span>
+                  </div>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleNumericInput('0')}
                   disabled={!!pendingCommand}
-                  className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                  className="h-10 text-lg font-bold bg-gradient-to-r from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg"
                 >
                   0
                 </Button>
@@ -856,13 +861,16 @@ export function POSSystem() {
                   variant={pendingCommand ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleNumericInput('enter')}
-                  className={`h-8 text-xs font-bold ${
+                  className={`h-10 text-xs font-bold shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 ${
                     pendingCommand 
-                      ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' 
-                      : 'bg-primary hover:bg-primary/90'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white animate-pulse border-0' 
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0'
                   }`}
                 >
-                  {pendingCommand ? 'VALIDER' : 'OK'}
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg">✓</span>
+                    <span className="text-[8px]">{pendingCommand ? 'VALIDER' : 'OK'}</span>
+                  </div>
                 </Button>
               </div>
               
