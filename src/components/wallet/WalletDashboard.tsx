@@ -17,7 +17,7 @@ export const WalletDashboard = () => {
   const { wallet, virtualCards, transactions, loading, createVirtualCard, rechargeWallet } = useWallet();
   const { toast } = useToast();
   const [rechargeAmount, setRechargeAmount] = useState('');
-  const [rechargeMethod, setRechargeMethod] = useState('');
+  const [rechargeMethod, setRechargeMethod] = useState<'card' | 'escrow' | 'mobile_money' | 'mtn' | 'orange_money' | 'wallet' | 'wave' | ''>('');
   
   const getTransactionIcon = (type: string) => {
     return type.includes('Rechargement') ? <ArrowDownLeft className="h-4 w-4 text-green-500" /> : <ArrowUpRight className="h-4 w-4 text-red-500" />;
@@ -31,6 +31,12 @@ export const WalletDashboard = () => {
       cancelled: 'bg-gray-100 text-gray-800'
     };
     return colors[status as keyof typeof colors] || colors.pending;
+  };
+
+  const handleRechargeMethodChange = (value: string) => {
+    if (['card', 'escrow', 'mobile_money', 'mtn', 'orange_money', 'wallet', 'wave'].includes(value)) {
+      setRechargeMethod(value as 'card' | 'escrow' | 'mobile_money' | 'mtn' | 'orange_money' | 'wallet' | 'wave');
+    }
   };
 
   const handleRecharge = async () => {
@@ -122,7 +128,7 @@ export const WalletDashboard = () => {
                   </div>
                   <div>
                     <Label htmlFor="method">Méthode de paiement</Label>
-                    <Select value={rechargeMethod} onValueChange={setRechargeMethod}>
+                    <Select value={rechargeMethod} onValueChange={handleRechargeMethodChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Choisir une méthode" />
                       </SelectTrigger>
