@@ -2,12 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Users, AlertTriangle, CheckCircle, Activity, QrCode } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
 
 export default function SyndicatDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  useRoleRedirect(); // S'assurer que seuls les syndicats/admins accèdent à cette page
+  useRoleRedirect(); // S'assurer que seuls les syndicats/admins accèdent à cette page
 
   const handleSignOut = async () => {
     await signOut();

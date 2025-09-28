@@ -2,12 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Globe, Package, Plane, Ship, TrendingUp, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
+  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
 
   const handleSignOut = async () => {
     await signOut();

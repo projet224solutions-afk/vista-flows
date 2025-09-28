@@ -12,6 +12,7 @@ import {
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
 import { useVendorStats } from "@/hooks/useVendorData";
@@ -30,6 +31,7 @@ import { POSSystem } from "@/components/vendor/POSSystem";
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
 
   const handleSignOut = async () => {

@@ -2,12 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Heart, MapPin, User, Star, Package } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import NavigationFooter from "@/components/NavigationFooter";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  useRoleRedirect(); // S'assurer que seuls les clients/admins accèdent à cette page
 
   const handleSignOut = async () => {
     await signOut();

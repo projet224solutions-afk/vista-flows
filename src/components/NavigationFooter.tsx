@@ -1,6 +1,7 @@
 import { Home, ShoppingBag, MapPin, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigationItems = [
   { id: 'home', label: 'Accueil', icon: Home, path: '/home' },
@@ -12,6 +13,17 @@ const navigationItems = [
 export default function NavigationFooter() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile } = useAuth();
+
+  // Masquer la navigation pour les utilisateurs non connectés ou sur certaines pages
+  if (!profile || location.pathname === '/' || location.pathname === '/auth') {
+    return null;
+  }
+
+  // Navigation adaptée au rôle - seuls les clients voient la navigation marketplace
+  if (profile.role !== 'client' && profile.role !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
