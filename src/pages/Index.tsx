@@ -11,6 +11,7 @@ import {
   ShoppingBag 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import NavigationFooter from "@/components/NavigationFooter";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -195,6 +196,8 @@ const Index = () => {
           </div>
         </div>
       </main>
+      
+      <NavigationFooter />
     </div>
   );
 };
