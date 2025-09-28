@@ -35,6 +35,7 @@ import {
   Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePOSSettings } from '@/hooks/usePOSSettings';
 
 interface Product {
   id: string;
@@ -59,6 +60,8 @@ interface Customer {
 }
 
 export function POSSystem() {
+  const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
+  
   // États principaux
   const [products] = useState<Product[]>([
     { id: '1', name: 'Coca Cola 33cl', price: 1000, category: 'Boissons', stock: 50, barcode: '1234567890' },
@@ -93,9 +96,10 @@ export function POSSystem() {
     return matchesSearch && matchesCategory;
   });
 
-  // Calculs automatiques
+  // Calculs automatiques avec TVA dynamique
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const tax = subtotal * 0.18; // 18% TVA
+  const taxRate = settings?.tax_rate || 0.18; // Utilise la TVA des paramètres ou 18% par défaut
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
   const change = receivedAmount - total;
 
@@ -265,6 +269,96 @@ export function POSSystem() {
               <Settings className="h-4 w-4 mr-2" />
               Paramètres
             </Button>
+            
+            {/* Dialog des paramètres */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="shadow-md">
+                  <Settings className="h-4 w-4 mr-2" />
+                  TVA & Config
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-primary" />
+                    Paramètres POS
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {settingsLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-muted-foreground">Chargement...</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Nom de l'entreprise</label>
+                      <Input
+                        value={settings?.company_name || ''}
+                        onChange={(e) => updateSettings({ company_name: e.target.value })}
+                        placeholder="Nom de votre entreprise"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Taux de TVA ({(taxRate * 100).toFixed(1)}%)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={taxRate}
+                          onChange={(e) => updateSettings({ tax_rate: parseFloat(e.target.value) || 0 })}
+                          className="flex-1"
+                        />
+                        <span className="text-sm text-muted-foreground">%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Format décimal (ex: 0.18 pour 18%)
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Devise</label>
+                      <Select 
+                        value={settings?.currency || 'FCFA'} 
+                        onValueChange={(value) => updateSettings({ currency: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FCFA">FCFA</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Pied de page des reçus</label>
+                      <Textarea
+                        value={settings?.receipt_footer || ''}
+                        onChange={(e) => updateSettings({ receipt_footer: e.target.value })}
+                        placeholder="Merci de votre visite !"
+                        className="h-20"
+                      />
+                    </div>
+                    
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <div className="text-xs text-muted-foreground">
+                        <strong>TVA appliquée:</strong> {(taxRate * 100).toFixed(1)}%<br/>
+                        <strong>Devise:</strong> {settings?.currency || 'FCFA'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
@@ -543,15 +637,15 @@ export function POSSystem() {
                               <Calculator className="h-4 w-4 text-muted-foreground" />
                               Sous-total ({cart.reduce((sum, item) => sum + item.quantity, 0)} articles)
                             </span>
-                            <span className="font-semibold">{subtotal.toLocaleString()} FCFA</span>
+                            <span className="font-semibold">{subtotal.toLocaleString()} {settings?.currency || 'FCFA'}</span>
                           </div>
                           
                           <div className="flex justify-between items-center text-sm">
                             <span className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-muted-foreground" />
-                              TVA (18%)
+                              TVA ({(taxRate * 100).toFixed(1)}%)
                             </span>
-                            <span className="font-semibold text-orange-600">{tax.toFixed(0)} FCFA</span>
+                            <span className="font-semibold text-orange-600">{tax.toFixed(0)} {settings?.currency || 'FCFA'}</span>
                           </div>
                           
                           <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -562,7 +656,7 @@ export function POSSystem() {
                               TOTAL À PAYER
                             </span>
                             <span className="text-2xl font-black text-primary bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-2 rounded-lg">
-                              {total.toFixed(0)} FCFA
+                              {total.toFixed(0)} {settings?.currency || 'FCFA'}
                             </span>
                           </div>
                         </div>
