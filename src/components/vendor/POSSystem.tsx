@@ -639,225 +639,10 @@ export function POSSystem() {
 
         {/* Section Panier et Paiement - Droite - Interface Professionnelle */}
         <div className="w-full lg:w-[600px] xl:w-[650px] bg-card border-l flex flex-col">
-          {/* Pavé numérique horizontal professionnel EN HAUT */}
-          <Card className="m-4 mb-2 bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 shadow-inner border-2 border-primary/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full shadow-lg">
-                    <p className="text-sm font-bold tracking-wide">PAVÉ NUMÉRIQUE PRO</p>
-                  </div>
-                  <Button
-                    variant={calculatorMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleNumericInput('calc')}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-md"
-                  >
-                    <Calculator className="h-4 w-4 mr-1" />
-                    Calc
-                  </Button>
-                </div>
-                
-                {/* Affichage central */}
-                <div className="flex-1 mx-4">
-                  <div className={`border-2 rounded-lg p-3 text-center font-mono text-lg min-h-[50px] flex items-center justify-center shadow-inner ${
-                    pendingCommand ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-card border-primary/30'
-                  }`}>
-                    {pendingCommand ? pendingCommand.value : 
-                     calculatorMode ? (calculator || '0') : (numericInput || '0')}
-                  </div>
-                </div>
-              </div>
 
-              {/* Indicateurs d'état horizontaux */}
-              <div className="flex gap-2 mb-3 flex-wrap">
-                {selectedCartItemId && (
-                  <div className="bg-primary/20 rounded-full px-3 py-1">
-                    <p className="text-xs text-primary font-medium">Article sélectionné</p>
-                  </div>
-                )}
-                {calculatorMode && (
-                  <div className="bg-blue-100 rounded-full px-3 py-1">
-                    <p className="text-xs text-blue-700 font-medium">Mode Calculatrice</p>
-                  </div>
-                )}
-                {paymentAmount && !pendingCommand && (
-                  <div className="bg-green-100 rounded-full px-3 py-1">
-                    <p className="text-xs text-green-700 font-medium">Montant: {paymentAmount} FCFA</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Commande en attente */}
-              {pendingCommand && (
-                <div className="bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-yellow-800 font-bold">⚠️ COMMANDE EN ATTENTE</p>
-                      <p className="text-xs text-yellow-700">{pendingCommand.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPendingCommand(null)}
-                        className="text-xs"
-                      >
-                        Annuler
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleNumericInput('enter')}
-                        className="text-xs bg-green-600 hover:bg-green-700"
-                      >
-                        VALIDER
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Boutons numériques en format rectangle horizontal */}
-              <div className="grid grid-cols-6 gap-2">
-                {/* Première ligne : 1-6 */}
-                {[1, 2, 3, 4, 5, 6].map(num => (
-                  <Button
-                    key={num}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericInput(num.toString())}
-                    disabled={!!pendingCommand}
-                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-700 dark:to-slate-800 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
-                  >
-                    {num}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-6 gap-2 mt-2">
-                {/* Deuxième ligne : 7-9, 0, Effacer, Entrée */}
-                {[7, 8, 9].map(num => (
-                  <Button
-                    key={num}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericInput(num.toString())}
-                    disabled={!!pendingCommand}
-                    className="h-12 text-lg font-bold bg-gradient-to-r from-slate-100 to-slate-200 hover:from-blue-500 hover:to-blue-600 hover:text-white dark:from-slate-700 dark:to-slate-800 dark:hover:from-blue-600 dark:hover:to-blue-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
-                  >
-                    {num}
-                  </Button>
-                ))}
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNumericInput('0')}
-                  disabled={!!pendingCommand}
-                  className="h-12 text-lg font-bold bg-gradient-to-r from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 dark:from-slate-700 dark:to-slate-800 dark:hover:from-slate-600 dark:hover:to-slate-700 border-slate-300 dark:border-slate-600 disabled:opacity-50 shadow-md transition-all duration-200 hover:shadow-lg"
-                >
-                  0
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNumericInput('clear')}
-                  className="h-12 text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg">⌫</span>
-                    <span className="text-[10px]">EFFACER</span>
-                  </div>
-                </Button>
-                
-                <Button
-                  variant={pendingCommand ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleNumericInput('enter')}
-                  className={`h-12 text-sm font-bold shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                    pendingCommand 
-                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white animate-pulse border-0' 
-                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0'
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg">✓</span>
-                    <span className="text-[10px]">{pendingCommand ? 'VALIDER' : 'OK'}</span>
-                  </div>
-                </Button>
-              </div>
-
-              {/* Opérateurs pour calculatrice */}
-              {calculatorMode && !pendingCommand && (
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleNumericInput('+')}
-                    className="h-8 text-sm font-bold"
-                  >
-                    +
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleNumericInput('-')}
-                    className="h-8 text-sm font-bold"
-                  >
-                    -
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleNumericInput('*')}
-                    className="h-8 text-sm font-bold"
-                  >
-                    ×
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleNumericInput('/')}
-                    className="h-8 text-sm font-bold"
-                  >
-                    ÷
-                  </Button>
-                </div>
-              )}
-
-              {/* Raccourcis rapides */}
-              {!pendingCommand && (
-                <div className="mt-2 flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setNumericInput(total.toString());
-                      setPendingCommand({
-                        type: 'payment',
-                        value: total.toString(),
-                        description: `Paiement exact: ${total.toFixed(0)} FCFA`
-                      });
-                    }}
-                    className="flex-1 h-8 text-xs hover:bg-accent"
-                  >
-                    Total: {total.toFixed(0)}
-                  </Button>
-                  {paymentAmount && (
-                    <div className="text-xs text-center text-muted-foreground flex items-center">
-                      Rendu: {(parseInt(paymentAmount) - total).toFixed(0)} FCFA
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* En-tête du panier */}
+          {/* En-tête du panier avec pavé numérique compact */}
           <div className="px-4 pb-2 bg-gradient-to-r from-primary/5 to-primary/10 mx-4 rounded-lg">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <div className="p-2 bg-primary/10 rounded-xl">
                   <ShoppingCart className="h-5 w-5 text-primary" />
@@ -868,6 +653,174 @@ export function POSSystem() {
                 <Trash2 className="h-4 w-4 mr-2" />
                 Vider
               </Button>
+            </div>
+
+            {/* Pavé numérique compact */}
+            <div className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 rounded-lg p-3 border-2 border-primary/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    PAVÉ
+                  </div>
+                  <Button
+                    variant={calculatorMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleNumericInput('calc')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Calculator className="h-3 w-3 mr-1" />
+                    Calc
+                  </Button>
+                </div>
+                
+                {/* Affichage compact */}
+                <div className={`border rounded px-3 py-1 font-mono text-sm min-w-[80px] text-center ${
+                  pendingCommand ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-card border-primary/30'
+                }`}>
+                  {pendingCommand ? pendingCommand.value : 
+                   calculatorMode ? (calculator || '0') : (numericInput || '0')}
+                </div>
+              </div>
+
+              {/* Indicateurs d'état compacts */}
+              <div className="flex gap-1 mb-2 flex-wrap">
+                {selectedCartItemId && (
+                  <div className="bg-primary/20 rounded px-2 py-0.5">
+                    <p className="text-xs text-primary font-medium">Sélectionné</p>
+                  </div>
+                )}
+                {calculatorMode && (
+                  <div className="bg-blue-100 rounded px-2 py-0.5">
+                    <p className="text-xs text-blue-700 font-medium">Calc</p>
+                  </div>
+                )}
+                {paymentAmount && !pendingCommand && (
+                  <div className="bg-green-100 rounded px-2 py-0.5">
+                    <p className="text-xs text-green-700 font-medium">{paymentAmount} FCFA</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Commande en attente compacte */}
+              {pendingCommand && (
+                <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-yellow-800 font-bold">⚠️ {pendingCommand.description}</p>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPendingCommand(null)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        ✕
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleNumericInput('enter')}
+                        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
+                      >
+                        ✓
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Boutons numériques compacts en format 4x3 */}
+              <div className="grid grid-cols-4 gap-1">
+                {[1, 2, 3, 'clear'].map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleNumericInput(item === 'clear' ? 'clear' : item.toString())}
+                    disabled={item !== 'clear' && !!pendingCommand}
+                    className={`h-8 text-xs font-bold ${
+                      item === 'clear' 
+                        ? 'bg-red-500 hover:bg-red-600 text-white border-0' 
+                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
+                    }`}
+                  >
+                    {item === 'clear' ? '⌫' : item}
+                  </Button>
+                ))}
+                
+                {[4, 5, 6, '+'].map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleNumericInput(item.toString())}
+                    disabled={item !== '+' && !!pendingCommand}
+                    className={`h-8 text-xs font-bold ${
+                      item === '+' && calculatorMode 
+                        ? 'bg-secondary hover:bg-secondary/80' 
+                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
+                    }`}
+                  >
+                    {item}
+                  </Button>
+                ))}
+                
+                {[7, 8, 9, '-'].map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleNumericInput(item.toString())}
+                    disabled={item !== '-' && !!pendingCommand}
+                    className={`h-8 text-xs font-bold ${
+                      item === '-' && calculatorMode 
+                        ? 'bg-secondary hover:bg-secondary/80' 
+                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
+                    }`}
+                  >
+                    {item}
+                  </Button>
+                ))}
+                
+                {[0, 'enter', '*', '/'].map((item, index) => (
+                  <Button
+                    key={index}
+                    variant={item === 'enter' && pendingCommand ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleNumericInput(item === 'enter' ? 'enter' : item.toString())}
+                    disabled={!['enter', '*', '/'].includes(item.toString()) && !!pendingCommand}
+                    className={`h-8 text-xs font-bold ${
+                      item === 'enter' 
+                        ? pendingCommand 
+                          ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse border-0' 
+                          : 'bg-blue-500 hover:bg-blue-600 text-white border-0'
+                        : (['*', '/'].includes(item.toString()) && calculatorMode)
+                        ? 'bg-secondary hover:bg-secondary/80'
+                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
+                    }`}
+                  >
+                    {item === 'enter' ? '✓' : item === '*' ? '×' : item === '/' ? '÷' : item}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Raccourci total compact */}
+              {!pendingCommand && total > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setNumericInput(total.toString());
+                    setPendingCommand({
+                      type: 'payment',
+                      value: total.toString(),
+                      description: `Paiement exact: ${total.toFixed(0)} FCFA`
+                    });
+                  }}
+                  className="w-full h-6 text-xs mt-1"
+                >
+                  Total: {total.toFixed(0)} FCFA
+                </Button>
+              )}
             </div>
           </div>
 
