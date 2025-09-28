@@ -205,7 +205,7 @@ export function POSSystem() {
   return (
     <div className="flex h-screen bg-background">
       {/* Section Produits - Gauche */}
-      <div className="flex-[4] flex flex-col p-4 space-y-4">
+      <div className="flex-[6] flex flex-col p-2 space-y-3">
         {/* Barre de recherche et filtres */}
         <Card>
           <CardContent className="p-6">
@@ -264,9 +264,9 @@ export function POSSystem() {
 
         {/* Grille/Liste des produits */}
         <ScrollArea className="flex-1">
-          <div className={`grid gap-4 p-2 ${
+          <div className={`grid gap-6 p-4 ${
             viewMode === 'grid' 
-              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7' 
+              ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10' 
               : 'grid-cols-1'
           }`}>
             {filteredProducts.map(product => (
@@ -275,9 +275,9 @@ export function POSSystem() {
                 className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 hover:border-primary/50"
                 onClick={() => addToCart(product)}
               >
-                <CardContent className={`p-4 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
+                <CardContent className={`p-6 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
                   <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
-                    <div className={`w-full ${viewMode === 'grid' ? 'h-24 mb-3' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
+                    <div className={`w-full ${viewMode === 'grid' ? 'h-32 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
                       <Smartphone className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
@@ -299,7 +299,7 @@ export function POSSystem() {
       </div>
 
       {/* Section Panier et Paiement - Droite */}
-      <div className="w-full lg:w-64 xl:w-56 bg-card border-l flex flex-col">
+      <div className="w-full lg:w-56 xl:w-48 bg-card border-l flex flex-col">
         {/* En-tête du panier */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
