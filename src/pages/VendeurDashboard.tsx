@@ -574,43 +574,45 @@ export default function VendeurDashboard() {
       </div>
 
       {/* Bouton de transaction flottant - repositionné en bas et plus grand */}
-      <div className="fixed bottom-20 right-6 z-40">
+      <div className="fixed bottom-24 right-6 z-40">
         <Dialog>
           <DialogTrigger asChild>
             <Button 
               size="lg" 
-              className="bg-vendeur-gradient hover:shadow-glow text-white px-8 py-6 text-lg font-semibold rounded-full shadow-xl hover:scale-105 transition-all duration-300 min-w-[200px]"
+              className="bg-vendeur-gradient hover:shadow-glow text-white px-12 py-8 text-xl font-bold rounded-full shadow-2xl hover:scale-105 transition-all duration-300 min-w-[280px] min-h-[80px]"
             >
-              <Send className="h-6 w-6 mr-3" />
-              Envoyer Argent
+              <Send className="h-8 w-8 mr-4" />
+              ENVOYER ARGENT
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Transaction Rapide</DialogTitle>
-              <DialogDescription>
-                Envoyez de l'argent rapidement à un autre utilisateur
+              <DialogTitle className="text-xl font-bold text-vendeur">Transaction Rapide</DialogTitle>
+              <DialogDescription className="text-base">
+                Envoyez de l'argent instantanément à un autre utilisateur
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <Label htmlFor="quick-receiver">Email du destinataire</Label>
+                <Label htmlFor="quick-receiver" className="text-sm font-semibold">Email du destinataire</Label>
                 <Input
                   id="quick-receiver"
                   type="email"
                   placeholder="email@exemple.com"
+                  className="mt-2 h-12 text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="quick-amount">Montant ({wallet?.currency || 'GNF'})</Label>
+                <Label htmlFor="quick-amount" className="text-sm font-semibold">Montant ({wallet?.currency || 'GNF'})</Label>
                 <Input
                   id="quick-amount"
                   type="number"
                   placeholder="0"
+                  className="mt-2 h-12 text-base font-mono text-lg"
                 />
               </div>
-              <Button className="w-full bg-vendeur-gradient">
-                <Send className="h-4 w-4 mr-2" />
+              <Button className="w-full bg-vendeur-gradient h-14 text-lg font-semibold rounded-lg shadow-lg">
+                <Send className="h-6 w-6 mr-3" />
                 Envoyer Maintenant
               </Button>
             </div>

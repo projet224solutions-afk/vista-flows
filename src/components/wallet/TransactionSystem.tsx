@@ -1,293 +1,175 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/hooks/useAuth';
-import { useWallet } from '@/hooks/useWallet';
-import { useToast } from '@/hooks/use-toast';
-import { Send, ArrowRightLeft, DollarSign, Shield, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface P2PTransaction {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  amount: number;
-  description?: string;
-  status: 'pending' | 'completed' | 'cancelled' | 'failed';
-  transaction_type: 'transfer' | 'payment' | 'request';
-  created_at: string;
-  completed_at?: string;
-}
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Send, ArrowDownUp, Clock, CheckCircle, XCircle, Search, Filter, CreditCard, Shield, Smartphone, Wallet, Copy, Eye } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useEnhancedTransactions } from "@/hooks/useEnhancedTransactions";
+import { useAuth } from "@/hooks/useAuth";
 
 export const TransactionSystem = () => {
-  const { user } = useAuth();
-  const { wallet, refetch } = useWallet();
-  const { toast } = useToast();
-  
   const [receiverEmail, setReceiverEmail] = useState('');
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('GNF');
+  const [method, setMethod] = useState('wallet');
   const [description, setDescription] = useState('');
-  const [transactionType, setTransactionType] = useState<'transfer' | 'payment' | 'request'>('transfer');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [methodFilter, setMethodFilter] = useState('');
   const [loading, setLoading] = useState(false);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
-  // Récupérer les transactions
-  const fetchTransactions = async () => {
-    if (!user) return;
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { 
+    transactions, 
+    loading: transactionsLoading, 
+    createWalletTransaction, 
+    createEscrowTransaction,
+    searchTransactions,
+    refetch
+  } = useEnhancedTransactions();
 
-    setLoadingTransactions(true);
-    try {
-      const { data, error } = await supabase
-        .from('p2p_transactions' as any)
-        .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      setTransactions(data || []);
-    } catch (err: any) {
-      console.error('Error fetching transactions:', err);
-    } finally {
-      setLoadingTransactions(false);
-    }
-  };
-
-  // Envoyer une transaction
-  const sendTransaction = async () => {
-    if (!user || !wallet) return;
-
+  const handleSendMoney = async () => {
     if (!receiverEmail || !amount) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs requis",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
 
-    const amountNum = parseFloat(amount);
-    if (amountNum <= 0) {
-      toast({
-        title: "Erreur",
-        description: "Le montant doit être supérieur à 0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (transactionType === 'transfer' && amountNum > wallet.balance) {
-      toast({
-        title: "Solde insuffisant",
-        description: "Votre solde est insuffisant pour cette transaction",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
     try {
-      // Trouver l'utilisateur destinataire
-      const { data: receiverProfile, error: receiverError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('email', receiverEmail.trim())
-        .maybeSingle();
-
-      if (receiverError) throw receiverError;
+      setLoading(true);
       
-      if (!receiverProfile) {
-        toast({
-          title: "Utilisateur introuvable",
-          description: "Aucun utilisateur trouvé avec cette adresse email",
-          variant: "destructive",
-        });
-        return;
+      if (method === 'wallet') {
+        await createWalletTransaction(receiverEmail, parseFloat(amount), currency, description);
+      } else if (method === 'escrow') {
+        await createEscrowTransaction(receiverEmail, parseFloat(amount), currency, description);
       }
-
-      if (receiverProfile.id === user.id) {
-        toast({
-          title: "Erreur",
-          description: "Vous ne pouvez pas envoyer de l'argent à vous-même",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Créer la transaction
-      const transactionData = {
-        sender_id: user.id,
-        receiver_id: receiverProfile.id,
-        amount: amountNum,
-        description: description.trim() || null,
-        status: transactionType === 'request' ? 'pending' : 'completed',
-        transaction_type: transactionType
-      };
-
-      const { data: transaction, error: transactionError } = await supabase
-        .from('p2p_transactions' as any)
-        .insert(transactionData)
-        .select()
-        .single();
-
-      if (transactionError) throw transactionError;
-
-      // Si c'est un transfert direct, mettre à jour les wallets
-      if (transactionType === 'transfer') {
-        // Débiter le wallet de l'expéditeur
-        const { error: senderWalletError } = await supabase
-          .from('wallets')
-          .update({ balance: wallet.balance - amountNum })
-          .eq('user_id', user.id);
-
-        if (senderWalletError) throw senderWalletError;
-
-        // Créditer le wallet du destinataire - récupérer d'abord son wallet
-        const { data: receiverWallet, error: getWalletError } = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('user_id', receiverProfile.id)
-          .single();
-
-        if (getWalletError) throw getWalletError;
-
-        const { error: receiverWalletError } = await supabase
-          .from('wallets')
-          .update({ balance: receiverWallet.balance + amountNum })
-          .eq('user_id', receiverProfile.id);
-
-        if (receiverWalletError) throw receiverWalletError;
-      }
-
-      toast({
-        title: "Succès",
-        description: transactionType === 'request' 
-          ? `Demande de ${amountNum} ${wallet.currency} envoyée à ${receiverProfile.first_name}`
-          : `${amountNum} ${wallet.currency} envoyé à ${receiverProfile.first_name}`,
-      });
-
-      // Réinitialiser le formulaire
+      
+      // Reset form
       setReceiverEmail('');
       setAmount('');
       setDescription('');
-      
-      // Actualiser les données
-      refetch();
-      fetchTransactions();
-
-    } catch (err: any) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de traiter la transaction",
-        variant: "destructive",
-      });
-      console.error('Transaction error:', err);
+    } catch (error) {
+      // Error handled in hook
     } finally {
       setLoading(false);
     }
   };
 
-  const getTransactionIcon = (type: string, status: string) => {
-    if (status === 'pending') return <Clock className="h-4 w-4 text-yellow-500" />;
-    if (status === 'failed' || status === 'cancelled') return <XCircle className="h-4 w-4 text-red-500" />;
-    if (status === 'completed') return <CheckCircle className="h-4 w-4 text-green-500" />;
-    return <ArrowRightLeft className="h-4 w-4" />;
+  const handleSearch = () => {
+    const filters = {
+      status: statusFilter || undefined,
+      method: methodFilter || undefined,
+    };
+    searchTransactions(searchQuery, filters);
   };
 
   const getStatusBadge = (status: string) => {
-    const colors = {
-      completed: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-      cancelled: 'bg-gray-100 text-gray-800'
-    };
-    return colors[status as keyof typeof colors] || colors.pending;
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Terminé</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
+      case 'failed':
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
+      case 'refunded':
+        return <Badge className="bg-blue-100 text-blue-800">Remboursé</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
   };
 
-  React.useEffect(() => {
-    fetchTransactions();
-  }, [user]);
+  const getMethodIcon = (method: string) => {
+    switch (method) {
+      case 'wallet':
+        return <Wallet className="w-4 h-4" />;
+      case 'card':
+        return <CreditCard className="w-4 h-4" />;
+      case 'mobile_money':
+        return <Smartphone className="w-4 h-4" />;
+      case 'escrow':
+        return <Shield className="w-4 h-4" />;
+      default:
+        return <Send className="w-4 h-4" />;
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copié",
+      description: "ID de transaction copié dans le presse-papiers",
+    });
+  };
 
   return (
     <div className="space-y-6">
-      {/* Bouton de transaction principal */}
-      <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold mb-2">Transactions entre utilisateurs</h3>
-              <p className="text-primary-foreground/80">
-                Envoyez, recevez et demandez de l'argent facilement
-              </p>
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  size="lg" 
-                  variant="secondary" 
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 px-8 py-4 text-lg"
-                >
-                  <Send className="h-5 w-5 mr-2" />
-                  Nouvelle Transaction
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Nouvelle Transaction</DialogTitle>
-                  <DialogDescription>
-                    Envoyez de l'argent, effectuez un paiement ou faites une demande
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">Système de Transactions</h2>
+          <p className="text-muted-foreground">Envoyez et recevez de l'argent instantanément avec ID unique</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-vendeur/10 text-vendeur border-vendeur/20">
+            {transactions.length} transactions
+          </Badge>
+          <Button onClick={refetch} variant="outline" size="sm">
+            Actualiser
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="send" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="send" className="data-[state=active]:bg-vendeur data-[state=active]:text-white">
+            <Send className="w-4 h-4 mr-2" />
+            Envoyer
+          </TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-vendeur data-[state=active]:text-white">
+            <ArrowDownUp className="w-4 h-4 mr-2" />
+            Historique
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-vendeur data-[state=active]:text-white">
+            <Filter className="w-4 h-4 mr-2" />
+            Recherche
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="send" className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Send className="h-5 w-5 text-vendeur" />
+                  Envoyer de l'argent
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="receiver">Email du destinataire *</Label>
+                  <Input
+                    id="receiver"
+                    type="email"
+                    placeholder="destinataire@exemple.com"
+                    value={receiverEmail}
+                    onChange={(e) => setReceiverEmail(e.target.value)}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="type">Type de transaction</Label>
-                    <Select value={transactionType} onValueChange={(value: any) => setTransactionType(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir le type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="transfer">
-                          <div className="flex items-center gap-2">
-                            <Send className="h-4 w-4" />
-                            Transfert d'argent
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="payment">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4" />
-                            Paiement
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="request">
-                          <div className="flex items-center gap-2">
-                            <ArrowRightLeft className="h-4 w-4" />
-                            Demande d'argent
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="receiver">Email du destinataire</Label>
-                    <Input
-                      id="receiver"
-                      type="email"
-                      placeholder="email@exemple.com"
-                      value={receiverEmail}
-                      onChange={(e) => setReceiverEmail(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="amount">Montant ({wallet?.currency || 'GNF'})</Label>
+                    <Label htmlFor="amount">Montant *</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -296,108 +178,364 @@ export const TransactionSystem = () => {
                       onChange={(e) => setAmount(e.target.value)}
                     />
                   </div>
-                  
                   <div>
-                    <Label htmlFor="description">Description (optionnel)</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Motif de la transaction..."
-                      rows={3}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                    />
+                    <Label htmlFor="currency">Devise</Label>
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GNF">GNF (Franc Guinéen)</SelectItem>
+                        <SelectItem value="USD">USD (Dollar)</SelectItem>
+                        <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                        <SelectItem value="XOF">XOF (Franc CFA)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="method">Méthode de paiement</Label>
+                  <Select value={method} onValueChange={setMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="wallet">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="w-4 h-4" />
+                          Wallet Interne (instantané)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="escrow">
+                        <div className="flex items-center gap-2">
+                          <Shield className="w-4 h-4" />
+                          Escrow (sécurisé)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="card" disabled>
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Carte bancaire (bientôt)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="mobile_money" disabled>
+                        <div className="flex items-center gap-2">
+                          <Smartphone className="w-4 h-4" />
+                          Mobile Money (bientôt)
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description (optionnel)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Note ou référence pour cette transaction..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <Button 
+                  onClick={handleSendMoney}
+                  className="w-full bg-vendeur-gradient text-white"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {loading ? 'Transaction en cours...' : 'Envoyer Maintenant'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Méthodes de paiement disponibles</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <Wallet className="w-5 h-5 text-vendeur" />
+                    <div>
+                      <h4 className="font-medium">Wallet Interne</h4>
+                      <p className="text-sm text-muted-foreground">Transaction instantanée entre utilisateurs</p>
+                      <p className="text-xs text-vendeur">ID unique généré automatiquement</p>
+                    </div>
                   </div>
                   
-                  <Button 
-                    onClick={sendTransaction} 
-                    disabled={loading}
-                    className="w-full"
-                  >
-                    {loading ? 'Traitement...' : `${transactionType === 'request' ? 'Demander' : 'Envoyer'} ${amount || '0'} ${wallet?.currency || 'GNF'}`}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardContent>
-      </Card>
+                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium">Escrow Sécurisé</h4>
+                      <p className="text-sm text-muted-foreground">Fonds bloqués jusqu'à confirmation</p>
+                      <p className="text-xs text-blue-600">Protection automatique</p>
+                    </div>
+                  </div>
 
-      {/* Historique des transactions P2P */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5" />
-            Historique des transactions P2P
-          </CardTitle>
-          <CardDescription>
-            Vos transferts, paiements et demandes d'argent
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingTransactions ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-muted rounded-full"></div>
+                  <div className="flex items-center gap-3 p-3 border rounded-lg opacity-50">
+                    <CreditCard className="w-5 h-5 text-gray-400" />
                     <div>
-                      <div className="h-4 bg-muted rounded w-32 mb-1"></div>
-                      <div className="h-3 bg-muted rounded w-24"></div>
+                      <h4 className="font-medium">Carte Bancaire</h4>
+                      <p className="text-sm text-muted-foreground">Visa, Mastercard, etc.</p>
+                      <p className="text-xs text-gray-400">Bientôt disponible</p>
                     </div>
                   </div>
-                  <div className="h-6 bg-muted rounded w-20"></div>
-                </div>
-              ))}
-            </div>
-          ) : transactions.length > 0 ? (
-            <div className="space-y-3">
-              {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    {getTransactionIcon(transaction.transaction_type, transaction.status)}
+
+                  <div className="flex items-center gap-3 p-3 border rounded-lg opacity-50">
+                    <Smartphone className="w-5 h-5 text-gray-400" />
                     <div>
-                      <div className="font-medium">
-                      {transaction.sender_id === user?.id ? 
-                        `Vers ${transaction.receiver_email || 'Utilisateur'}` : 
-                        `De ${transaction.sender_email || 'Utilisateur'}`
-                      }
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {transaction.description || transaction.transaction_type}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(transaction.created_at).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
+                      <h4 className="font-medium">Mobile Money</h4>
+                      <p className="text-sm text-muted-foreground">Orange Money, MTN, Moov</p>
+                      <p className="text-xs text-gray-400">Intégration en cours</p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-medium ${
-                      transaction.sender_id === user?.id ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      {transaction.sender_id === user?.id ? '-' : '+'}
-                      {transaction.amount.toLocaleString()} {wallet?.currency || 'GNF'}
-                    </div>
-                    <Badge className={getStatusBadge(transaction.status)}>
-                      {transaction.status}
-                    </Badge>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <ArrowRightLeft className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Aucune transaction P2P pour le moment</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Historique des transactions</CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Rechercher par ID unique (ex: ABC1234)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleSearch} variant="outline">
+                  <Search className="w-4 h-4 mr-2" />
+                  Rechercher
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {transactionsLoading ? (
+                <div className="flex justify-center p-8">
+                  <Clock className="w-6 h-6 animate-spin" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID Unique</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Utilisateur</TableHead>
+                      <TableHead>Montant</TableHead>
+                      <TableHead>Méthode</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Date/Heure</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-mono">
+                          <div className="flex items-center gap-2">
+                            {transaction.custom_id}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(transaction.custom_id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {transaction.sender_id === user?.id ? (
+                            <Badge variant="outline" className="text-red-600">Envoyé</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-green-600">Reçu</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {transaction.sender_id === user?.id ? 'À' : 'De'} {
+                            transaction.sender_id === user?.id 
+                              ? transaction.receiver_id.substring(0, 8) + '...'
+                              : transaction.sender_id.substring(0, 8) + '...'
+                          }
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {transaction.sender_id === user?.id ? '-' : '+'}
+                          {transaction.amount.toLocaleString()} {transaction.currency}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {getMethodIcon(transaction.method)}
+                            <span className="capitalize">{transaction.method}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(transaction.status)}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(transaction.created_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="ghost">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Détails de la transaction</DialogTitle>
+                                <DialogDescription>
+                                  Transaction #{transaction.custom_id}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label>ID Unique</Label>
+                                    <p className="font-mono text-lg">{transaction.custom_id}</p>
+                                  </div>
+                                  <div>
+                                    <Label>Montant</Label>
+                                    <p className="font-semibold text-lg">{transaction.amount} {transaction.currency}</p>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label>Méthode</Label>
+                                    <div className="flex items-center gap-2">
+                                      {getMethodIcon(transaction.method)}
+                                      <span className="capitalize">{transaction.method}</span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <Label>Statut</Label>
+                                    <div>{getStatusBadge(transaction.status)}</div>
+                                  </div>
+                                </div>
+                                {transaction.metadata?.description && (
+                                  <div>
+                                    <Label>Description</Label>
+                                    <p>{transaction.metadata.description}</p>
+                                  </div>
+                                )}
+                                <div>
+                                  <Label>Date de création</Label>
+                                  <p>{new Date(transaction.created_at).toLocaleString('fr-FR')}</p>
+                                </div>
+                                <div>
+                                  <Label>Dernière mise à jour</Label>
+                                  <p>{new Date(transaction.updated_at).toLocaleString('fr-FR')}</p>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Recherche avancée et filtres
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Recherche par ID unique</Label>
+                  <Input
+                    placeholder="ABC1234"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Filtrer par statut</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tous les statuts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Tous les statuts</SelectItem>
+                      <SelectItem value="pending">En cours</SelectItem>
+                      <SelectItem value="completed">Terminé</SelectItem>
+                      <SelectItem value="failed">Échoué</SelectItem>
+                      <SelectItem value="refunded">Remboursé</SelectItem>
+                      <SelectItem value="cancelled">Annulé</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Filtrer par méthode</Label>
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Toutes les méthodes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Toutes les méthodes</SelectItem>
+                      <SelectItem value="wallet">Wallet Interne</SelectItem>
+                      <SelectItem value="escrow">Escrow</SelectItem>
+                      <SelectItem value="card">Carte Bancaire</SelectItem>
+                      <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button onClick={handleSearch} className="bg-vendeur-gradient">
+                <Search className="w-4 h-4 mr-2" />
+                Appliquer les filtres de recherche
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations sur le système</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-vendeur/5 rounded-lg border">
+                  <h4 className="font-semibold text-vendeur mb-2">Format des ID uniques</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Chaque transaction génère automatiquement un ID unique au format 3 lettres + 4 chiffres (ex: ABC1234)
+                  </p>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-2">Traçabilité complète</h4>
+                  <p className="text-sm text-blue-600">
+                    Toutes les transactions sont enregistrées avec timestamp, métadonnées et suivi complet
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
