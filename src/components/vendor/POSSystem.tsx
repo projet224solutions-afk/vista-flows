@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ShoppingCart, 
   Plus, 
@@ -18,7 +21,14 @@ import {
   Calculator,
   Smartphone,
   User,
-  CheckSquare
+  CheckSquare,
+  Settings,
+  Building,
+  Printer,
+  FileText,
+  Clock,
+  UserX,
+  StickyNote
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -201,244 +211,414 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Section Produits - Gauche */}
-      <div className="flex-[6] flex flex-col p-2 space-y-3">
-        {/* Barre de recherche et filtres */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col xl:flex-row gap-6">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un produit ou scanner un code-barres..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 text-base"
+    <div className="flex flex-col h-screen bg-background">
+      {/* En-tête d'entreprise professionnel */}
+      <div className="bg-card border-b border-border shadow-sm p-6">
+        <div className="flex items-center justify-between">
+          {/* Logo et nom d'entreprise */}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
+              <Building className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Mon Entreprise SARL</h1>
+              <p className="text-muted-foreground">Système de Point de Vente</p>
+            </div>
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="flex items-center gap-3">
+            {/* Bouton Bloc-note */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="default">
+                  <StickyNote className="h-4 w-4 mr-2" />
+                  Bloc-note
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bloc-note de caisse</DialogTitle>
+                </DialogHeader>
+                <Textarea 
+                  placeholder="Notez vos rappels, observations..."
+                  className="min-h-32"
                 />
-              </div>
-              
-              <Input
-                placeholder="Code-barres"
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                className="xl:w-64 h-12 text-base"
-              />
-              
-              <div className="flex gap-3">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="lg"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid3X3 className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'outline'}
-                  size="lg"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Catégories */}
-            <div className="flex gap-3 mt-6 flex-wrap">
-              {categories.map(category => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? 'default' : 'outline'}
-                  size="default"
-                  onClick={() => setSelectedCategory(category)}
-                  className="text-sm px-6"
-                >
-                  {category === 'all' ? 'Tout' : category}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Annuler</Button>
+                  <Button>Sauvegarder</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
-        {/* Grille/Liste des produits */}
-        <ScrollArea className="flex-1">
-          <div className={`grid gap-6 p-4 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' 
-              : 'grid-cols-1'
-          }`}>
-            {filteredProducts.map(product => (
-              <Card 
-                key={product.id} 
-                className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 hover:border-primary/50"
-                onClick={() => addToCart(product)}
-              >
-                <CardContent className={`p-6 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
-                  <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
-                    <div className={`w-full ${viewMode === 'grid' ? 'h-40 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
-                      <Smartphone className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
-                    <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
-                    <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs">
-                      Stock: {product.stock}
-                    </Badge>
+            {/* Bouton Dette */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="default">
+                  <UserX className="h-4 w-4 mr-2" />
+                  Dette
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gestion des dettes clients</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Client</label>
+                    <Input placeholder="Nom du client" />
                   </div>
-                  {viewMode === 'list' && (
-                    <Button size="default" className="px-6">
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Section Panier et Paiement - Droite */}
-      <div className="w-full lg:w-80 xl:w-72 bg-card border-l flex flex-col">
-        {/* En-tête du panier */}
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Panier ({cart.length})
-            </h2>
-            <Button variant="outline" size="sm" onClick={clearCart}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Articles du panier */}
-        <ScrollArea className="flex-1 p-4">
-          {cart.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Panier vide</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {cart.map(item => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.name}</h4>
-                    <p className="text-primary font-semibold">{item.price} FCFA</p>
+                  <div>
+                    <label className="text-sm font-medium">Montant de la dette</label>
+                    <Input type="number" placeholder="0" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
+                  <div>
+                    <label className="text-sm font-medium">Échéance</label>
+                    <Input type="date" />
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold">{item.total} FCFA</p>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeFromCart(item.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                  <div>
+                    <label className="text-sm font-medium">Note</label>
+                    <Textarea placeholder="Note sur la dette..." />
                   </div>
                 </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Annuler</Button>
+                  <Button>Enregistrer dette</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Bouton Paramètres */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="default">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Paramètres
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Paramètres POS</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  {/* Configuration Imprimante */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      <Printer className="h-4 w-4" />
+                      Configuration Imprimante
+                    </h3>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-sm font-medium">Imprimante principale</label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une imprimante" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="thermal1">Imprimante Thermique 1</SelectItem>
+                            <SelectItem value="thermal2">Imprimante Thermique 2</SelectItem>
+                            <SelectItem value="laser1">Imprimante Laser HP</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Format du reçu</label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Format" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="58mm">58mm (Thermique)</SelectItem>
+                            <SelectItem value="80mm">80mm (Standard)</SelectItem>
+                            <SelectItem value="a4">A4 (Laser)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configuration Entreprise */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Informations Entreprise
+                    </h3>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-sm font-medium">Nom de l'entreprise</label>
+                        <Input defaultValue="Mon Entreprise SARL" />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Adresse</label>
+                        <Textarea placeholder="Adresse complète..." />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Téléphone</label>
+                        <Input placeholder="+221 XX XXX XX XX" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Annuler</Button>
+                  <Button>Sauvegarder</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Horloge en temps réel */}
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground">
+                <Clock className="h-4 w-4 inline mr-1" />
+                {new Date().toLocaleTimeString('fr-FR')}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {new Date().toLocaleDateString('fr-FR')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Section Produits - Gauche */}
+        <div className="flex-[6] flex flex-col p-2 space-y-3">
+          {/* Barre de recherche et filtres */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col xl:flex-row gap-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher un produit ou scanner un code-barres..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 h-12 text-base"
+                  />
+                </div>
+                
+                <Input
+                  placeholder="Code-barres"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  className="xl:w-64 h-12 text-base"
+                />
+                
+                <div className="flex gap-3">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    size="lg"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid3X3 className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    size="lg"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <List className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Catégories */}
+              <div className="flex gap-3 mt-6 flex-wrap">
+                {categories.map(category => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    size="default"
+                    onClick={() => setSelectedCategory(category)}
+                    className="text-sm px-6"
+                  >
+                    {category === 'all' ? 'Tout' : category}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Grille/Liste des produits */}
+          <ScrollArea className="flex-1">
+            <div className={`grid gap-6 p-4 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' 
+                : 'grid-cols-1'
+            }`}>
+              {filteredProducts.map(product => (
+                <Card 
+                  key={product.id} 
+                  className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border-2 hover:border-primary/50"
+                  onClick={() => addToCart(product)}
+                >
+                  <CardContent className={`p-6 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
+                    <div className={`${viewMode === 'grid' ? 'text-center' : 'flex-1'}`}>
+                      <div className={`w-full ${viewMode === 'grid' ? 'h-40 mb-4' : 'h-16 w-16'} bg-muted rounded-lg flex items-center justify-center`}>
+                        <Smartphone className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
+                      <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
+                      <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs">
+                        Stock: {product.stock}
+                      </Badge>
+                    </div>
+                    {viewMode === 'list' && (
+                      <Button size="default" className="px-6">
+                        <Plus className="h-5 w-5" />
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        </div>
 
-        {/* Section Paiement */}
-        {cart.length > 0 && (
-          <div className="p-4 border-t space-y-4">
-            {/* Résumé */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Sous-total:</span>
-                <span>{subtotal.toFixed(0)} FCFA</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>TVA (18%):</span>
-                <span>{tax.toFixed(0)} FCFA</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total:</span>
-                <span className="text-primary">{total.toFixed(0)} FCFA</span>
-              </div>
-            </div>
-
-            {/* Méthodes de paiement */}
-            <div className="space-y-3">
-              <h3 className="font-medium">Mode de paiement</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPaymentMethod('cash')}
-                >
-                  Espèces
-                </Button>
-                <Button
-                  variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPaymentMethod('card')}
-                >
-                  <CreditCard className="h-4 w-4 mr-1" />
-                  Carte
-                </Button>
-                <Button
-                  variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPaymentMethod('mobile')}
-                >
-                  Mobile
-                </Button>
-              </div>
-            </div>
-
-            {/* Montant reçu (pour espèces) */}
-            {paymentMethod === 'cash' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Montant reçu</label>
-                <Input
-                  type="number"
-                  value={receivedAmount || ''}
-                  onChange={(e) => setReceivedAmount(Number(e.target.value))}
-                  placeholder="0"
-                />
-                {receivedAmount > 0 && change >= 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Monnaie: <span className="font-bold text-foreground">{change.toFixed(0)} FCFA</span>
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Boutons d'action */}
-            <div className="space-y-2">
-              <Button onClick={processPayment} className="w-full" size="lg">
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Finaliser la vente
-              </Button>
-              <Button variant="outline" onClick={printReceipt} className="w-full">
-                <Receipt className="h-4 w-4 mr-2" />
-                Imprimer reçu
+        {/* Section Panier et Paiement - Droite */}
+        <div className="w-full lg:w-80 xl:w-72 bg-card border-l flex flex-col">
+          {/* En-tête du panier */}
+          <div className="p-4 border-b">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Panier ({cart.length})
+              </h2>
+              <Button variant="outline" size="sm" onClick={clearCart}>
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
-        )}
+
+          {/* Articles du panier */}
+          <ScrollArea className="flex-1 p-4">
+            {cart.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Panier vide</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cart.map(item => (
+                  <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.name}</h4>
+                      <p className="text-primary font-semibold">{item.price} FCFA</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">{item.total} FCFA</p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeFromCart(item.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Section Paiement */}
+          {cart.length > 0 && (
+            <div className="p-4 border-t space-y-4">
+              {/* Résumé */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Sous-total:</span>
+                  <span>{subtotal.toFixed(0)} FCFA</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>TVA (18%):</span>
+                  <span>{tax.toFixed(0)} FCFA</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span className="text-primary">{total.toFixed(0)} FCFA</span>
+                </div>
+              </div>
+
+              {/* Méthodes de paiement */}
+              <div className="space-y-3">
+                <h3 className="font-medium">Mode de paiement</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    Espèces
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('card')}
+                  >
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    Carte
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('mobile')}
+                  >
+                    Mobile
+                  </Button>
+                </div>
+              </div>
+
+              {/* Montant reçu (pour espèces) */}
+              {paymentMethod === 'cash' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Montant reçu</label>
+                  <Input
+                    type="number"
+                    value={receivedAmount || ''}
+                    onChange={(e) => setReceivedAmount(Number(e.target.value))}
+                    placeholder="0"
+                  />
+                  {receivedAmount > 0 && change >= 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Monnaie: <span className="font-bold text-foreground">{change.toFixed(0)} FCFA</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Boutons d'action */}
+              <div className="space-y-2">
+                <Button onClick={processPayment} className="w-full" size="lg">
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Finaliser la vente
+                </Button>
+                <Button variant="outline" onClick={printReceipt} className="w-full">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Imprimer reçu
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
