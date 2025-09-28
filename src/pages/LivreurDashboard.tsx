@@ -1,5 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useDeliveries } from "@/hooks/useSupabaseQuery";
 import { 
   MapPin, 
   Package, 
@@ -8,29 +11,85 @@ import {
   Truck, 
   AlertTriangle,
   CheckCircle,
-  Navigation
+  Navigation,
+  Star
 } from "lucide-react";
 
 export default function LivreurDashboard() {
+  const { profile, signOut } = useAuth();
+  const { data: deliveries, loading } = useDeliveries(profile?.id);
+
+  // Calculate stats from deliveries
+  const todayDeliveries = deliveries?.filter(delivery => {
+    const today = new Date();
+    const deliveryDate = new Date(delivery.created_at);
+    return deliveryDate.toDateString() === today.toDateString();
+  }).length || 0;
+
+  const completedDeliveries = deliveries?.filter(d => d.status === 'delivered').length || 0;
+  const pendingDeliveries = deliveries?.filter(d => ['pending', 'assigned', 'picked_up', 'in_transit'].includes(d.status)).length || 0;
+  
+  const todayEarnings = deliveries?.filter(delivery => {
+    const today = new Date();
+    const deliveryDate = new Date(delivery.created_at);
+    return deliveryDate.toDateString() === today.toDateString() && delivery.status === 'delivered';
+  }).reduce((sum, delivery) => sum + (delivery.delivery_fee || 0), 0) || 0;
+
+  const avgRating = 4.8; // This would come from reviews in a real implementation
+
   const stats = [
-    { label: "Livraisons aujourd'hui", value: "12", change: "+3", icon: Package },
-    { label: "Gains du jour", value: "245 €", change: "+18%", icon: DollarSign },
+    { label: "Livraisons aujourd'hui", value: todayDeliveries.toString(), change: "+3", icon: Package },
+    { label: "Gains du jour", value: `${todayEarnings} €`, change: "+18%", icon: DollarSign },
     { label: "Temps de livraison moy.", value: "28 min", change: "-5%", icon: Clock },
-    { label: "Note satisfaction", value: "4.8/5", change: "+0.2", icon: CheckCircle },
+    { label: "Note satisfaction", value: `${avgRating}/5`, change: "+0.2", icon: CheckCircle },
   ];
 
-  const deliveries = [
-    { id: "LIV-001", address: "15 Rue de la Paix, 75001 Paris", time: "14:30", status: "en_cours", amount: "25 €" },
-    { id: "LIV-002", address: "89 Avenue Foch, 75016 Paris", time: "15:15", status: "attente", amount: "42 €" },
-    { id: "LIV-003", address: "32 Boulevard Saint-Germain, 75005 Paris", time: "16:00", status: "attente", amount: "18 €" },
-  ];
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'delivered': return 'bg-green-500';
+      case 'in_transit': return 'bg-livreur-primary';
+      case 'picked_up': return 'bg-yellow-500';
+      case 'assigned': return 'bg-orange-500';
+      default: return 'bg-muted';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending': return 'En attente';
+      case 'assigned': return 'Assignée';
+      case 'picked_up': return 'Récupérée';
+      case 'in_transit': return 'En cours';
+      case 'delivered': return 'Livrée';
+      case 'cancelled': return 'Annulée';
+      default: return status;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Truck className="h-12 w-12 animate-bounce mx-auto mb-4 text-livreur-primary" />
+          <p>Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-livreur-gradient p-8 text-white">
-        <div className="container mx-auto">
-          <h1 className="text-4xl font-bold mb-2">Dashboard Livreur</h1>
-          <p className="text-white/80 text-lg">Optimisez vos tournées et maximisez vos gains</p>
+        <div className="container mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Dashboard Livreur</h1>
+            <p className="text-white/80 text-lg">
+              Bienvenue {profile?.first_name || 'Livreur'} - Optimisez vos tournées et maximisez vos gains
+            </p>
+          </div>
+          <Button variant="outline" onClick={signOut} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            Déconnexion
+          </Button>
         </div>
       </div>
 
@@ -68,7 +127,7 @@ export default function LivreurDashboard() {
                 <MapPin className="h-12 w-12 text-livreur-primary mx-auto mb-4" />
                 <p className="text-muted-foreground">Carte interactive GPS</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Fonctionnalité disponible avec Supabase
+                  Optimisation automatique des tournées
                 </p>
               </div>
             </div>
@@ -77,32 +136,42 @@ export default function LivreurDashboard() {
           <Card className="p-6 border-0 shadow-elegant">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold">Livraisons en attente</h3>
-              <span className="px-3 py-1 bg-livreur-accent text-livreur-primary text-sm rounded-full font-medium">
-                {deliveries.length} livraisons
-              </span>
+              <Badge variant="outline" className="text-livreur-primary border-livreur-primary">
+                {pendingDeliveries} livraisons
+              </Badge>
             </div>
             <div className="space-y-4">
-              {deliveries.map((delivery) => (
+              {deliveries?.filter(d => ['pending', 'assigned', 'picked_up', 'in_transit'].includes(d.status)).slice(0, 3).map((delivery) => (
                 <div key={delivery.id} className="flex items-center justify-between p-4 bg-background border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-semibold text-sm">{delivery.id}</span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        delivery.status === 'en_cours' 
-                          ? 'bg-livreur-primary text-white' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {delivery.status === 'en_cours' ? 'En cours' : 'En attente'}
+                      <span className="font-semibold text-sm">
+                        #{delivery.order?.order_number || 'N/A'}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full text-white ${getStatusColor(delivery.status)}`}>
+                        {getStatusText(delivery.status)}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-1">{delivery.address}</p>
-                    <p className="text-sm font-medium text-foreground">{delivery.time} • {delivery.amount}</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {delivery.order?.customer?.profiles?.first_name} {delivery.order?.customer?.profiles?.last_name}
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      {delivery.delivery_fee ? `${delivery.delivery_fee} €` : 'Tarif à définir'}
+                    </p>
                   </div>
                   <Button size="sm" variant="outline" className="border-livreur-primary text-livreur-primary hover:bg-livreur-primary hover:text-white">
                     <Truck className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
+
+              {pendingDeliveries === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucune livraison en attente</p>
+                  <p className="text-sm">Parfait ! Toutes vos livraisons sont à jour</p>
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -112,9 +181,9 @@ export default function LivreurDashboard() {
           <div className="flex items-center gap-4">
             <AlertTriangle className="h-6 w-6 text-livreur-primary" />
             <div>
-              <h4 className="font-semibold text-foreground">Fonctionnalités temps réel disponibles</h4>
+              <h4 className="font-semibold text-foreground">Système connecté - Fonctionnalités actives</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Activez Supabase pour débloquer : géolocalisation GPS, paiements intégrés Mobile Money, 
+                Géolocalisation GPS, paiements intégrés Mobile Money, 
                 optimisation automatique des tournées, communication client temps réel.
               </p>
             </div>

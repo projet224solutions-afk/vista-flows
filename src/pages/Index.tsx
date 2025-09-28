@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { InterfaceCard } from "@/components/InterfaceCard";
+import { Button } from "@/components/ui/button";
 import { 
   Store, 
   Truck, 
@@ -160,7 +161,7 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-foreground mb-6">
               Fonctionnalités complètes avec Supabase
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm mb-8">
               <div className="space-y-2">
                 <h3 className="font-semibold text-vendeur-primary">Authentification</h3>
                 <p className="text-muted-foreground">Email, téléphone, biométrie</p>
@@ -177,6 +178,19 @@ const Index = () => {
                 <h3 className="font-semibold text-admin-secondary">Analytics</h3>
                 <p className="text-muted-foreground">KPIs, rapports, tableaux de bord</p>
               </div>
+            </div>
+            
+            <div className="pt-6 border-t border-border/50">
+              <p className="text-muted-foreground mb-4">
+                Nouveau sur la plateforme ?
+              </p>
+              <Button 
+                onClick={() => navigate('/auth')}
+                size="lg"
+                className="shadow-elegant hover:shadow-glow transition-all duration-300"
+              >
+                Créer un compte / Se connecter
+              </Button>
             </div>
           </div>
         </div>
