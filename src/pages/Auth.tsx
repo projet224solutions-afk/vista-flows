@@ -7,8 +7,36 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Globe, ShieldCheck } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Globe, ShieldCheck, Info } from "lucide-react";
 import NavigationFooter from "@/components/NavigationFooter";
+import { z } from "zod";
+
+// Strict validation schemas
+const loginSchema = z.object({
+  email: z.string()
+    .trim()
+    .email({ message: "Adresse email invalide" })
+    .max(255, { message: "L'email doit faire moins de 255 caractères" })
+    .min(1, { message: "L'email est requis" }),
+  password: z.string()
+    .min(6, { message: "Le mot de passe doit faire au moins 6 caractères" })
+    .max(128, { message: "Le mot de passe doit faire moins de 128 caractères" })
+    .regex(/^(?=.*[a-zA-Z])(?=.*\d)/, { message: "Le mot de passe doit contenir au moins une lettre et un chiffre" })
+});
+
+const signupSchema = loginSchema.extend({
+  firstName: z.string()
+    .trim()
+    .min(1, { message: "Le prénom est requis" })
+    .max(50, { message: "Le prénom doit faire moins de 50 caractères" })
+    .regex(/^[a-zA-ZÀ-ÿ\s-']+$/, { message: "Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes" }),
+  lastName: z.string()
+    .trim()
+    .min(1, { message: "Le nom est requis" })
+    .max(50, { message: "Le nom doit faire moins de 50 caractères" })
+    .regex(/^[a-zA-ZÀ-ÿ\s-']+$/, { message: "Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes" }),
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin'] as const)
+});
 
 type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin';
 
@@ -165,34 +193,68 @@ export default function Auth() {
     setError(null);
 
     try {
+      // Strict validation
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const validationResult = loginSchema.safeParse({
           email: formData.email,
-          password: formData.password,
+          password: formData.password
         });
         
-        if (error) throw error;
+        if (!validationResult.success) {
+          const errorMessage = validationResult.error.issues[0]?.message || "Données invalides";
+          throw new Error(errorMessage);
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({
+          email: validationResult.data.email,
+          password: validationResult.data.password,
+        });
+        
+        if (error) {
+          // Don't log sensitive authentication details
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error("Identifiants incorrects. Vérifiez votre email et mot de passe.");
+          }
+          throw error;
+        }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const validationResult = signupSchema.safeParse({
           email: formData.email,
           password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: formData.role
+        });
+        
+        if (!validationResult.success) {
+          const errorMessage = validationResult.error.issues[0]?.message || "Données invalides";
+          throw new Error(errorMessage);
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email: validationResult.data.email,
+          password: validationResult.data.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              first_name: formData.firstName,
-              last_name: formData.lastName,
-              role: formData.role
+              first_name: validationResult.data.firstName,
+              last_name: validationResult.data.lastName,
+              role: validationResult.data.role
             }
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes('User already registered')) {
+            throw new Error("Un compte avec cet email existe déjà. Utilisez la connexion.");
+          }
+          throw error;
+        }
         
-        // Show success message for signup
         setError("Compte créé avec succès ! Vérifiez votre email pour activer votre compte.");
       }
     } catch (error: any) {
-      setError(error.message || "Une erreur s'est produite");
+      setError(error.message || "Une erreur s'est produite lors de l'authentification");
     } finally {
       setLoading(false);
     }
@@ -266,6 +328,14 @@ export default function Auth() {
                 </Alert>
               )}
 
+              {/* Information notice */}
+              <Alert className="mb-6 border-blue-200 bg-blue-50">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Utilisez vos identifiants habituels.</strong> Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
+                </AlertDescription>
+              </Alert>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -289,7 +359,13 @@ export default function Auth() {
                     required
                     placeholder="••••••••"
                     minLength={6}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
                   />
+                  {!isLogin && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Le mot de passe doit contenir au moins 6 caractères, une lettre et un chiffre
+                    </p>
+                  )}
                 </div>
 
                 {!isLogin && (
