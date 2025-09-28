@@ -554,25 +554,27 @@ export function POSSystem() {
       <div className="flex flex-1 min-h-0">
         {/* Section Produits - Gauche */}
         <div className="flex-[6] flex flex-col p-2 space-y-3">
-          {/* Barre de recherche et filtres */}
+          {/* Barre de recherche et filtres - SAISIE TEXTE INDÉPENDANTE DU PAVÉ NUMÉRIQUE */}
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-col xl:flex-row gap-6">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher un produit ou scanner un code-barres..."
+                    placeholder="Rechercher un produit par nom (utiliser le clavier)..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-12 h-12 text-base"
+                    autoComplete="off"
                   />
                 </div>
                 
                 <Input
-                  placeholder="Code-barres"
+                  placeholder="Scanner code-barres ici"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   className="xl:w-64 h-12 text-base"
+                  autoComplete="off"
                 />
                 
                 <div className="flex gap-3">
@@ -746,7 +748,7 @@ export function POSSystem() {
               </ScrollArea>
             </div>
 
-            {/* Pavé numérique professionnel */}
+            {/* Pavé numérique professionnel - UNIQUEMENT POUR LES NOMBRES (quantités, prix, calculs) */}
             <div className="w-40 border-l bg-gradient-to-b from-muted/10 to-muted/30 p-3">
               <div className="text-center mb-3">
                 <div className="flex items-center justify-between mb-2">
