@@ -31,6 +31,9 @@ import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
+import { WalletDashboard } from "@/components/wallet/WalletDashboard";
+import { useUserInfo } from "@/hooks/useUserInfo";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -38,6 +41,8 @@ export default function VendeurDashboard() {
   const navigate = useNavigate();
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
+  const { userInfo, loading: userInfoLoading } = useUserInfo();
+  const { wallet, loading: walletLoading } = useWallet();
 
   const handleSignOut = async () => {
     await signOut();
@@ -173,9 +178,26 @@ export default function VendeurDashboard() {
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <span className="w-2 h-2 bg-vendeur-secondary rounded-full"></span>
                     {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
+                    {userInfo && (
+                      <span className="text-xs bg-primary/10 px-2 py-1 rounded-full font-mono">
+                        ID: {userInfo.custom_id}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
+              {/* Informations Wallet dans l'en-tête */}
+              {wallet && !walletLoading && (
+                <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-vendeur" />
+                    <div className="text-sm">
+                      <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
+                      <div className="text-xs text-muted-foreground">Solde disponible</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button size="sm" variant="outline" className="hidden lg:flex hover:shadow-glow transition-all duration-300" onClick={() => {
@@ -336,6 +358,10 @@ export default function VendeurDashboard() {
                 <PieChart className="w-4 h-4 mr-2" />
                 Analyses
               </TabsTrigger>
+              <TabsTrigger value="wallet" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Wallet & Cartes
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -487,6 +513,11 @@ export default function VendeurDashboard() {
           {/* Analyses & Rapports */}
           <TabsContent value="analytics">
             <VendorAnalytics />
+          </TabsContent>
+
+          {/* Wallet & Cartes Virtuelles */}
+          <TabsContent value="wallet">
+            <WalletDashboard />
           </TabsContent>
         </Tabs>
       </div>
