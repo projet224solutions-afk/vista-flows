@@ -70,6 +70,11 @@ export function POSSystem() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
+  
+  // États pour personnalisation
+  const [companyName, setCompanyName] = useState('Mon Entreprise SARL');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
   
@@ -199,6 +204,14 @@ export function POSSystem() {
     }
   };
 
+  // Mise à jour de l'horloge
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && barcodeInput) {
@@ -218,10 +231,14 @@ export function POSSystem() {
           {/* Logo et nom d'entreprise */}
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
-              <Building className="h-8 w-8 text-primary-foreground" />
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="w-12 h-12 object-contain" />
+              ) : (
+                <Building className="h-8 w-8 text-primary-foreground" />
+              )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Mon Entreprise SARL</h1>
+              <h1 className="text-2xl font-bold text-foreground">{companyName}</h1>
               <p className="text-muted-foreground">Système de Point de Vente</p>
             </div>
           </div>
@@ -265,8 +282,12 @@ export function POSSystem() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium">Client</label>
+                    <label className="text-sm font-medium">Nom</label>
                     <Input placeholder="Nom du client" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Nombre de prises</label>
+                    <Input type="number" placeholder="1" min="1" />
                   </div>
                   <div>
                     <label className="text-sm font-medium">Montant de la dette</label>
@@ -346,7 +367,19 @@ export function POSSystem() {
                     <div className="space-y-2">
                       <div>
                         <label className="text-sm font-medium">Nom de l'entreprise</label>
-                        <Input defaultValue="Mon Entreprise SARL" />
+                        <Input 
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Nom de votre entreprise"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Logo (URL de l'image)</label>
+                        <Input 
+                          value={companyLogo}
+                          onChange={(e) => setCompanyLogo(e.target.value)}
+                          placeholder="https://exemple.com/logo.png"
+                        />
                       </div>
                       <div>
                         <label className="text-sm font-medium">Adresse</label>
@@ -370,10 +403,10 @@ export function POSSystem() {
             <div className="text-right">
               <div className="text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 inline mr-1" />
-                {new Date().toLocaleTimeString('fr-FR')}
+                {currentTime.toLocaleTimeString('fr-FR')}
               </div>
               <div className="text-xs text-muted-foreground">
-                {new Date().toLocaleDateString('fr-FR')}
+                {currentTime.toLocaleDateString('fr-FR')}
               </div>
             </div>
           </div>
