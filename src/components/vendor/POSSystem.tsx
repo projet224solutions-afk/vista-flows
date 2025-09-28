@@ -49,9 +49,7 @@ export function POSSystem() {
     { id: '1', name: 'Coca Cola 33cl', price: 150, category: 'Boissons', stock: 50, barcode: '1234567890' },
     { id: '2', name: 'Pain de Mie', price: 500, category: 'Boulangerie', stock: 30 },
     { id: '3', name: 'Lait 1L', price: 800, category: 'Produits Laitiers', stock: 25 },
-    { id: '4', name: 'Riz 5kg', price: 3500, category: 'Céréales', stock: 20 },
-    { id: '5', name: 'Huile 1L', price: 1200, category: 'Condiments', stock: 15 },
-    { id: '6', name: 'Savon', price: 250, category: 'Hygiène', stock: 40 }
+    { id: '4', name: 'Riz 5kg', price: 3500, category: 'Céréales', stock: 20 }
   ]);
   
   const [cart, setCart] = useState<CartItem[]>([]);
