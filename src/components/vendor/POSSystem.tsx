@@ -70,6 +70,8 @@ export function POSSystem() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
+  const [numericInput, setNumericInput] = useState('');
+  const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
   
   // États pour personnalisation
   const [companyName, setCompanyName] = useState('Mon Entreprise SARL');
@@ -132,6 +134,31 @@ export function POSSystem() {
           : item
       )
     );
+  };
+
+  const handleNumericInput = (digit: string) => {
+    if (digit === 'clear') {
+      setNumericInput('');
+      return;
+    }
+    if (digit === 'enter' && selectedCartItemId && numericInput) {
+      const newQuantity = parseInt(numericInput);
+      if (newQuantity > 0) {
+        updateQuantity(selectedCartItemId, newQuantity);
+        setNumericInput('');
+        setSelectedCartItemId(null);
+        toast.success('Quantité mise à jour');
+      }
+      return;
+    }
+    if (numericInput.length < 3) {
+      setNumericInput(prev => prev + digit);
+    }
+  };
+
+  const selectCartItem = (itemId: string) => {
+    setSelectedCartItemId(itemId);
+    setNumericInput('');
   };
 
   const removeFromCart = (productId: string) => {
@@ -509,67 +536,161 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier et Paiement - Droite */}
-        <div className="w-full lg:w-80 xl:w-72 bg-card border-l flex flex-col">
+        <div className="w-full lg:w-96 xl:w-[420px] bg-card border-l flex flex-col">
           {/* En-tête du panier */}
-          <div className="p-4 border-b">
+          <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-primary/10">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
+              <h2 className="text-xl font-bold flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <ShoppingCart className="h-6 w-6 text-primary" />
+                </div>
                 Panier ({cart.length})
               </h2>
-              <Button variant="outline" size="sm" onClick={clearCart}>
-                <Trash2 className="h-4 w-4" />
+              <Button variant="outline" size="default" onClick={clearCart} className="hover:bg-destructive/10">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Vider
               </Button>
             </div>
           </div>
 
-          {/* Articles du panier */}
-          <ScrollArea className="flex-1 p-4">
-            {cart.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Panier vide</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cart.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{item.name}</h4>
-                      <p className="text-primary font-semibold">{item.price} FCFA</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{item.total} FCFA</p>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+          <div className="flex flex-1 min-h-0">
+            {/* Articles du panier */}
+            <div className="flex-1 flex flex-col">
+              <ScrollArea className="flex-1 p-4">
+                {cart.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-12">
+                    <div className="p-6 bg-muted/20 rounded-2xl">
+                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium">Panier vide</p>
+                      <p className="text-sm">Ajoutez des produits pour commencer</p>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map(item => (
+                      <div 
+                        key={item.id} 
+                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                          selectedCartItemId === item.id 
+                            ? 'border-primary bg-primary/5 shadow-lg' 
+                            : 'border-border bg-card hover:border-primary/30 hover:shadow-md'
+                        }`}
+                        onClick={() => selectCartItem(item.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-base mb-1">{item.name}</h4>
+                            <p className="text-primary font-bold text-lg">{item.price} FCFA</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateQuantity(item.id, item.quantity - 1);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <div className={`min-w-[3rem] text-center py-1 px-2 rounded-md font-bold text-lg ${
+                                selectedCartItemId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                              }`}>
+                                {selectedCartItemId === item.id && numericInput ? numericInput : item.quantity}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateQuantity(item.id, item.quantity + 1);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-lg text-primary">{item.total} FCFA</p>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFromCart(item.id);
+                                }}
+                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+
+            {/* Pavé numérique */}
+            <div className="w-32 border-l bg-muted/20 p-3">
+              <div className="text-center mb-3">
+                <p className="text-xs font-medium text-muted-foreground">PAVÉ NUMÉRIQUE</p>
+                {selectedCartItemId && (
+                  <p className="text-xs text-primary font-medium mt-1">Article sélectionné</p>
+                )}
               </div>
-            )}
-          </ScrollArea>
+              <div className="grid grid-cols-3 gap-1">
+                {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
+                  <Button
+                    key={num}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleNumericInput(num.toString())}
+                    className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground"
+                    disabled={!selectedCartItemId}
+                  >
+                    {num}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNumericInput('clear')}
+                  className="h-8 text-xs font-bold hover:bg-destructive hover:text-destructive-foreground"
+                  disabled={!selectedCartItemId}
+                >
+                  C
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNumericInput('0')}
+                  className="h-8 text-sm font-bold hover:bg-primary hover:text-primary-foreground"
+                  disabled={!selectedCartItemId}
+                >
+                  0
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleNumericInput('enter')}
+                  className="h-8 text-xs font-bold"
+                  disabled={!selectedCartItemId || !numericInput}
+                >
+                  ✓
+                </Button>
+              </div>
+              <div className="mt-2 text-center">
+                <div className="bg-card p-2 rounded border text-center font-mono text-sm">
+                  {numericInput || '0'}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Section Paiement */}
           {cart.length > 0 && (
