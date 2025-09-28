@@ -28,7 +28,11 @@ import {
   FileText,
   Clock,
   UserX,
-  StickyNote
+  StickyNote,
+  ShoppingBag,
+  Check,
+  Euro,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,11 +59,14 @@ interface Customer {
 }
 
 export function POSSystem() {
-  const [products, setProducts] = useState<Product[]>([
-    { id: '1', name: 'Coca Cola 33cl', price: 150, category: 'Boissons', stock: 50, barcode: '1234567890' },
+  // États principaux
+  const [products] = useState<Product[]>([
+    { id: '1', name: 'Coca Cola 33cl', price: 1000, category: 'Boissons', stock: 50, barcode: '1234567890' },
     { id: '2', name: 'Pain de Mie', price: 500, category: 'Boulangerie', stock: 30 },
     { id: '3', name: 'Lait 1L', price: 800, category: 'Produits Laitiers', stock: 25 },
-    { id: '4', name: 'Riz 5kg', price: 3500, category: 'Céréales', stock: 20 }
+    { id: '4', name: 'Riz 5kg', price: 3500, category: 'Céréales', stock: 20 },
+    { id: '5', name: 'Huile 1L', price: 1200, category: 'Condiments', stock: 40 },
+    { id: '6', name: 'Sucre 1kg', price: 900, category: 'Épicerie', stock: 35 }
   ]);
   
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -71,20 +78,10 @@ export function POSSystem() {
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [numericInput, setNumericInput] = useState('');
-  const [calculator, setCalculator] = useState('');
-  const [calculatorMode, setCalculatorMode] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
-  const [pendingCommand, setPendingCommand] = useState<{
-    type: 'quantity' | 'payment' | 'calculation';
-    value: string;
-    itemId?: string;
-    description: string;
-  } | null>(null);
+  const [showOrderSummary, setShowOrderSummary] = useState(false);
   
   // États pour personnalisation
-  const [companyName, setCompanyName] = useState('Mon Entreprise SARL');
-  const [companyLogo, setCompanyLogo] = useState('');
+  const [companyName] = useState('Vista Commerce Pro');
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
@@ -96,12 +93,14 @@ export function POSSystem() {
     return matchesSearch && matchesCategory;
   });
 
+  // Calculs automatiques
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const tax = subtotal * 0.18; // 18% TVA
   const total = subtotal + tax;
   const change = receivedAmount - total;
 
-  const addToCart = (product: Product) => {
+  // Fonction d'ajout au panier avec calcul automatique
+  const addToCart = (product: Product, quantity: number = 1) => {
     if (product.stock <= 0) {
       toast.error('Produit en rupture de stock');
       return;
@@ -110,20 +109,24 @@ export function POSSystem() {
     setCart(prev => {
       const existingItem = prev.find(item => item.id === product.id);
       if (existingItem) {
-        if (existingItem.quantity >= product.stock) {
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > product.stock) {
           toast.error('Stock insuffisant');
           return prev;
         }
         return prev.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price }
+            ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
             : item
         );
       }
-      return [...prev, { ...product, quantity: 1, total: product.price }];
+      return [...prev, { ...product, quantity, total: product.price * quantity }];
     });
+    
+    toast.success(`${product.name} ajouté au panier`);
   };
 
+  // Mise à jour de quantité avec recalcul automatique
   const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
@@ -145,190 +148,59 @@ export function POSSystem() {
     );
   };
 
-  const handleNumericInput = (input: string) => {
-    if (input === 'clear') {
-      setNumericInput('');
-      setCalculator('');
-      setPaymentAmount('');
-      setPendingCommand(null);
-      setSelectedCartItemId(null);
-      return;
-    }
-    
-    if (input === 'calc') {
-      setCalculatorMode(!calculatorMode);
-      setNumericInput('');
-      setCalculator('');
-      setPendingCommand(null);
-      return;
-    }
-    
-    if (input === 'enter') {
-      // Valider la commande en attente
-      if (pendingCommand) {
-        switch (pendingCommand.type) {
-          case 'quantity':
-            if (pendingCommand.itemId && pendingCommand.value) {
-              const newQuantity = parseInt(pendingCommand.value);
-              if (newQuantity > 0) {
-                updateQuantity(pendingCommand.itemId, newQuantity);
-                toast.success(`Quantité mise à jour: ${newQuantity}`);
-              }
-            }
-            break;
-            
-          case 'payment':
-            if (pendingCommand.value) {
-              const amount = parseInt(pendingCommand.value);
-              setReceivedAmount(amount);
-              setPaymentAmount(pendingCommand.value);
-              toast.success(`Montant de paiement: ${amount} FCFA`);
-            }
-            break;
-            
-          case 'calculation':
-            if (pendingCommand.value) {
-              try {
-                const result = eval(pendingCommand.value);
-                setCalculator(result.toString());
-                setNumericInput(result.toString());
-                toast.success(`Résultat: ${result}`);
-              } catch (error) {
-                toast.error('Erreur de calcul');
-              }
-            }
-            break;
-        }
-        
-        // Réinitialiser après validation
-        setPendingCommand(null);
-        setSelectedCartItemId(null);
-        setNumericInput('');
-        setCalculator('');
-        return;
-      }
-      
-      // Si pas de commande en attente, traiter selon le contexte
-      if (selectedCartItemId && numericInput) {
-        const quantity = parseInt(numericInput);
-        if (quantity > 0) {
-          const item = cart.find(i => i.id === selectedCartItemId);
-          setPendingCommand({
-            type: 'quantity',
-            value: numericInput,
-            itemId: selectedCartItemId,
-            description: `Modifier quantité de "${item?.name}" à ${quantity}`
-          });
-          return;
-        }
-      }
-      
-      if (calculatorMode && calculator) {
-        setPendingCommand({
-          type: 'calculation',
-          value: calculator,
-          description: `Calculer: ${calculator}`
-        });
-        return;
-      }
-      
-      if (numericInput && !selectedCartItemId && !calculatorMode) {
-        const amount = parseInt(numericInput);
-        setPendingCommand({
-          type: 'payment',
-          value: numericInput,
-          description: `Paiement de ${amount} FCFA`
-        });
-        return;
-      }
-      
-      toast.info('Aucune action à valider');
-      return;
-    }
-    
-    if (input === '+' || input === '-' || input === '*' || input === '/') {
-      if (calculatorMode) {
-        setCalculator(prev => prev + input);
-        setNumericInput('');
-      }
-      return;
-    }
-    
-    // Limiter la saisie
-    const currentInput = calculatorMode ? calculator : numericInput;
-    if (currentInput.length < 8) {
-      if (calculatorMode) {
-        setCalculator(prev => prev + input);
-      } else {
-        setNumericInput(prev => prev + input);
-      }
-    }
-  };
-
-  const selectCartItem = (itemId: string) => {
-    setSelectedCartItemId(itemId);
-    setNumericInput('');
-    setPendingCommand(null); // Réinitialiser la commande en attente
-    toast.info('Article sélectionné pour modification');
-  };
-
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.id !== productId));
+    toast.info('Article retiré du panier');
   };
 
   const clearCart = () => {
     setCart([]);
     setSelectedCustomer(null);
     setReceivedAmount(0);
+    toast.info('Panier vidé');
   };
 
-  const processPayment = () => {
+  // Fonctions du pavé numérique
+  const handleNumericInput = (input: string) => {
+    if (input === 'clear') {
+      setNumericInput('');
+      return;
+    }
+    
+    if (input === 'enter') {
+      if (numericInput) {
+        setReceivedAmount(parseFloat(numericInput));
+        toast.success(`Montant saisi: ${numericInput} FCFA`);
+        setNumericInput('');
+      }
+      return;
+    }
+    
+    setNumericInput(prev => prev + input);
+  };
+
+  // Validation de la commande
+  const validateOrder = () => {
     if (cart.length === 0) {
       toast.error('Panier vide');
       return;
     }
+    setShowOrderSummary(true);
+  };
 
+  const processPayment = () => {
     if (paymentMethod === 'cash' && receivedAmount < total) {
       toast.error('Montant insuffisant');
       return;
     }
 
-    // Simuler le traitement du paiement
-    toast.success('Paiement effectué avec succès');
-    
-    // Mettre à jour le stock
-    setProducts(prev =>
-      prev.map(product => {
-        const cartItem = cart.find(item => item.id === product.id);
-        return cartItem
-          ? { ...product, stock: product.stock - cartItem.quantity }
-          : product;
-      })
-    );
-
-    // Imprimer le reçu (simulation)
-    printReceipt();
+    toast.success('Paiement effectué avec succès!', {
+      description: `Commande de ${total.toFixed(0)} FCFA validée`
+    });
     
     clearCart();
-  };
-
-  const printReceipt = () => {
-    const receiptContent = `
-      REÇU DE VENTE
-      ${new Date().toLocaleString()}
-      
-      ${cart.map(item => `${item.name} x${item.quantity} - ${item.total} FCFA`).join('\n')}
-      
-      Sous-total: ${subtotal} FCFA
-      TVA (18%): ${tax.toFixed(0)} FCFA
-      TOTAL: ${total.toFixed(0)} FCFA
-      
-      ${paymentMethod === 'cash' ? `Reçu: ${receivedAmount} FCFA\nMonnaie: ${change.toFixed(0)} FCFA` : ''}
-      
-      Merci de votre visite !
-    `;
-    console.log(receiptContent);
-    toast.success('Reçu généré');
+    setShowOrderSummary(false);
+    setReceivedAmount(0);
   };
 
   const handleBarcodeSearch = (barcode: string) => {
@@ -336,7 +208,6 @@ export function POSSystem() {
     if (product) {
       addToCart(product);
       setBarcodeInput('');
-      toast.success(`${product.name} ajouté au panier`);
     } else {
       toast.error('Produit non trouvé');
     }
@@ -362,240 +233,87 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* En-tête d'entreprise professionnel */}
-      <div className="bg-card border-b border-border shadow-sm p-6">
-        <div className="flex items-center justify-between">
-          {/* Logo et nom d'entreprise */}
+    <div className="flex flex-col h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
+      {/* En-tête professionnel */}
+      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg">
+        <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
-              {companyLogo ? (
-                <img src={companyLogo} alt="Logo" className="w-12 h-12 object-contain" />
-              ) : (
-                <Building className="h-8 w-8 text-primary-foreground" />
-              )}
+            <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+              <Building className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{companyName}</h1>
-              <p className="text-muted-foreground">Système de Point de Vente</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                {companyName}
+              </h1>
+              <p className="text-muted-foreground font-medium">Système Point de Vente Professionnel</p>
             </div>
           </div>
 
-          {/* Boutons d'action */}
-          <div className="flex items-center gap-3">
-            {/* Bouton Bloc-note */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="default">
-                  <StickyNote className="h-4 w-4 mr-2" />
-                  Bloc-note
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Bloc-note de caisse</DialogTitle>
-                </DialogHeader>
-                <Textarea 
-                  placeholder="Notez vos rappels, observations..."
-                  className="min-h-32"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline">Annuler</Button>
-                  <Button>Sauvegarder</Button>
+          <div className="flex items-center gap-4">
+            {/* Statistiques temps réel */}
+            <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-md">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-primary" />
+                <div>
+                  <div className="font-mono font-bold">{currentTime.toLocaleTimeString('fr-FR')}</div>
+                  <div className="text-xs text-muted-foreground">{currentTime.toLocaleDateString('fr-FR')}</div>
                 </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Bouton Dette */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="default">
-                  <UserX className="h-4 w-4 mr-2" />
-                  Dette
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Gestion des dettes clients</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Nom</label>
-                    <Input placeholder="Nom du client" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Nombre de prises</label>
-                    <Input type="number" placeholder="1" min="1" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Montant de la dette</label>
-                    <Input type="number" placeholder="0" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Échéance</label>
-                    <Input type="date" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Note</label>
-                    <Textarea placeholder="Note sur la dette..." />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline">Annuler</Button>
-                  <Button>Enregistrer dette</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Bouton Paramètres */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="default">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Paramètres
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Paramètres POS</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6">
-                  {/* Configuration Imprimante */}
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      <Printer className="h-4 w-4" />
-                      Configuration Imprimante
-                    </h3>
-                    <div className="space-y-2">
-                      <div>
-                        <label className="text-sm font-medium">Imprimante principale</label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner une imprimante" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="thermal1">Imprimante Thermique 1</SelectItem>
-                            <SelectItem value="thermal2">Imprimante Thermique 2</SelectItem>
-                            <SelectItem value="laser1">Imprimante Laser HP</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Format du reçu</label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Format" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="58mm">58mm (Thermique)</SelectItem>
-                            <SelectItem value="80mm">80mm (Standard)</SelectItem>
-                            <SelectItem value="a4">A4 (Laser)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Configuration Entreprise */}
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      Informations Entreprise
-                    </h3>
-                    <div className="space-y-2">
-                      <div>
-                        <label className="text-sm font-medium">Nom de l'entreprise</label>
-                        <Input 
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          placeholder="Nom de votre entreprise"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Logo (URL de l'image)</label>
-                        <Input 
-                          value={companyLogo}
-                          onChange={(e) => setCompanyLogo(e.target.value)}
-                          placeholder="https://exemple.com/logo.png"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Adresse</label>
-                        <Textarea placeholder="Adresse complète..." />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Téléphone</label>
-                        <Input placeholder="+221 XX XXX XX XX" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline">Annuler</Button>
-                  <Button>Sauvegarder</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Horloge en temps réel */}
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 inline mr-1" />
-                {currentTime.toLocaleTimeString('fr-FR')}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {currentTime.toLocaleDateString('fr-FR')}
               </div>
             </div>
+
+            <Button variant="outline" className="shadow-md">
+              <Settings className="h-4 w-4 mr-2" />
+              Paramètres
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Section Produits - Optimisée pour affichage complet */}
-        <div className="flex-[2] flex flex-col p-4 space-y-4">
-          {/* Barre de recherche et filtres - SAISIE TEXTE INDÉPENDANTE DU PAVÉ NUMÉRIQUE */}
-          <Card>
-            <CardContent className="p-4">
+      <div className="flex flex-1 min-h-0 gap-4 p-4">
+        {/* Section Produits - Design moderne */}
+        <div className="flex-1 flex flex-col space-y-4">
+          {/* Barre de recherche améliorée */}
+          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
+            <CardContent className="p-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher un produit par nom (utiliser le clavier)..."
+                    placeholder="Rechercher un produit..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 text-sm"
-                    autoComplete="off"
+                    className="pl-11 h-12 text-base border-2 border-border/50 focus:border-primary/50 bg-background/80"
                   />
                 </div>
                 
                 <Input
-                  placeholder="Scanner code-barres ici"
+                  placeholder="Scanner code-barres"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
-                  className="lg:w-48 h-10 text-sm"
-                  autoComplete="off"
+                  className="lg:w-56 h-12 text-base border-2 border-border/50 focus:border-primary/50 bg-background/80"
                 />
                 
                 <div className="flex gap-2">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="sm"
+                    size="lg"
                     onClick={() => setViewMode('grid')}
+                    className="shadow-md"
                   >
-                    <Grid3X3 className="h-4 w-4" />
+                    <Grid3X3 className="h-5 w-5" />
                   </Button>
                   <Button
                     variant={viewMode === 'list' ? 'default' : 'outline'}
-                    size="sm"
+                    size="lg"
                     onClick={() => setViewMode('list')}
+                    className="shadow-md"
                   >
-                    <List className="h-4 w-4" />
+                    <List className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
               
-              {/* Catégories */}
+              {/* Filtres par catégorie */}
               <div className="flex gap-2 mt-4 flex-wrap">
                 {categories.map(category => (
                   <Button
@@ -603,390 +321,359 @@ export function POSSystem() {
                     variant={selectedCategory === category ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(category)}
-                    className="text-xs px-4"
+                    className="shadow-sm transition-all duration-200 hover:shadow-md"
                   >
-                    {category === 'all' ? 'Tout' : category}
+                    {category === 'all' ? 'Tous les produits' : category}
                   </Button>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Grille des produits - Format optimisé */}
-          <ScrollArea className="flex-1">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
-              {filteredProducts.map(product => (
-                <Card 
-                  key={product.id} 
-                  className="cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-2 hover:border-primary/50 bg-gradient-to-br from-card to-card/80"
-                  onClick={() => addToCart(product)}
-                >
-                  <CardContent className="p-4 text-center">
-                    <div className="w-full h-32 bg-gradient-to-br from-muted/50 to-muted rounded-lg flex items-center justify-center mb-3">
-                      <Smartphone className="h-12 w-12 text-muted-foreground/60" />
-                    </div>
-                    <h3 className="font-semibold text-sm mb-2 line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
-                    <p className="text-xl font-bold text-primary mb-2">{product.price} FCFA</p>
-                    <Badge variant={product.stock > 10 ? 'default' : 'destructive'} className="text-xs w-full">
-                      Stock: {product.stock}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
+          {/* Grille de produits professionnelle */}
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
+            <CardContent className="p-6 h-full">
+              <ScrollArea className="h-full">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredProducts.map(product => (
+                    <Card 
+                      key={product.id} 
+                      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-border/30 hover:border-primary/40 bg-gradient-to-br from-card via-card/95 to-card/90"
+                    >
+                      <CardContent className="p-4 text-center space-y-3">
+                        <div className="w-full h-32 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-lg flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300">
+                          <Smartphone className="h-14 w-14 text-muted-foreground/60 group-hover:text-primary/60 transition-colors" />
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
+                          <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} FCFA</p>
+                          
+                          <Badge 
+                            variant={product.stock > 10 ? 'default' : 'destructive'} 
+                            className="mb-3 w-full justify-center"
+                          >
+                            Stock: {product.stock}
+                          </Badge>
+                          
+                          {/* Bouton Ajouter amélioré */}
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product);
+                            }}
+                            className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200"
+                            size="sm"
+                          >
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                            Ajouter
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Section Panier et Paiement - Droite - Interface Professionnelle */}
-        <div className="w-full lg:w-[600px] xl:w-[650px] bg-card border-l flex flex-col">
-
-          {/* En-tête du panier avec pavé numérique compact */}
-          <div className="px-4 pb-2 bg-gradient-to-r from-primary/5 to-primary/10 mx-4 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                Panier ({cart.length})
-              </h2>
-              <Button variant="outline" size="sm" onClick={clearCart} className="hover:bg-destructive/10">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Vider
-              </Button>
-            </div>
-
-            {/* Pavé numérique compact */}
-            <div className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-900/80 rounded-lg p-3 border-2 border-primary/20">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold">
-                    PAVÉ
-                  </div>
-                  <Button
-                    variant={calculatorMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleNumericInput('calc')}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Calculator className="h-3 w-3 mr-1" />
-                    Calc
-                  </Button>
-                </div>
-                
-                {/* Affichage compact */}
-                <div className={`border rounded px-3 py-1 font-mono text-sm min-w-[80px] text-center ${
-                  pendingCommand ? 'bg-yellow-50 border-yellow-300 text-yellow-800' : 'bg-card border-primary/30'
-                }`}>
-                  {pendingCommand ? pendingCommand.value : 
-                   calculatorMode ? (calculator || '0') : (numericInput || '0')}
+        {/* Section Panier - Interface professionnelle */}
+        <div className="w-96 flex flex-col space-y-4">
+          {/* Pavé numérique */}
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-primary" />
+                  Pavé Numérique
+                </h3>
+                <div className="bg-muted/50 px-3 py-1 rounded-lg font-mono text-sm">
+                  {numericInput || '0'}
                 </div>
               </div>
-
-              {/* Indicateurs d'état compacts */}
-              <div className="flex gap-1 mb-2 flex-wrap">
-                {selectedCartItemId && (
-                  <div className="bg-primary/20 rounded px-2 py-0.5">
-                    <p className="text-xs text-primary font-medium">Sélectionné</p>
-                  </div>
-                )}
-                {calculatorMode && (
-                  <div className="bg-blue-100 rounded px-2 py-0.5">
-                    <p className="text-xs text-blue-700 font-medium">Calc</p>
-                  </div>
-                )}
-                {paymentAmount && !pendingCommand && (
-                  <div className="bg-green-100 rounded px-2 py-0.5">
-                    <p className="text-xs text-green-700 font-medium">{paymentAmount} FCFA</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Commande en attente compacte */}
-              {pendingCommand && (
-                <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-yellow-800 font-bold">⚠️ {pendingCommand.description}</p>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPendingCommand(null)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        ✕
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleNumericInput('enter')}
-                        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
-                      >
-                        ✓
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Boutons numériques compacts en format 4x3 */}
-              <div className="grid grid-cols-4 gap-1">
-                {[1, 2, 3, 'clear'].map((item, index) => (
+              
+              <div className="grid grid-cols-4 gap-2">
+                {[7, 8, 9, 'C'].map((btn) => (
                   <Button
-                    key={index}
+                    key={btn}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleNumericInput(item === 'clear' ? 'clear' : item.toString())}
-                    disabled={item !== 'clear' && !!pendingCommand}
-                    className={`h-8 text-xs font-bold ${
-                      item === 'clear' 
-                        ? 'bg-red-500 hover:bg-red-600 text-white border-0' 
-                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
-                    }`}
+                    onClick={() => handleNumericInput(btn === 'C' ? 'clear' : btn.toString())}
+                    className={`h-10 font-bold ${btn === 'C' ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : ''}`}
                   >
-                    {item === 'clear' ? '⌫' : item}
+                    {btn}
                   </Button>
                 ))}
-                
-                {[4, 5, 6, '+'].map((item, index) => (
+                {[4, 5, 6, '⌫'].map((btn) => (
                   <Button
-                    key={index}
+                    key={btn}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleNumericInput(item.toString())}
-                    disabled={item !== '+' && !!pendingCommand}
-                    className={`h-8 text-xs font-bold ${
-                      item === '+' && calculatorMode 
-                        ? 'bg-secondary hover:bg-secondary/80' 
-                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
-                    }`}
+                    onClick={() => handleNumericInput(btn.toString())}
+                    className="h-10 font-bold"
                   >
-                    {item}
+                    {btn}
                   </Button>
                 ))}
-                
-                {[7, 8, 9, '-'].map((item, index) => (
+                {[1, 2, 3, '✓'].map((btn) => (
                   <Button
-                    key={index}
-                    variant="outline"
+                    key={btn}
+                    variant={btn === '✓' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => handleNumericInput(item.toString())}
-                    disabled={item !== '-' && !!pendingCommand}
-                    className={`h-8 text-xs font-bold ${
-                      item === '-' && calculatorMode 
-                        ? 'bg-secondary hover:bg-secondary/80' 
-                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
-                    }`}
+                    onClick={() => handleNumericInput(btn === '✓' ? 'enter' : btn.toString())}
+                    className={`h-10 font-bold ${btn === '✓' ? 'bg-gradient-to-r from-primary to-primary/90' : ''}`}
                   >
-                    {item}
+                    {btn}
                   </Button>
                 ))}
-                
-                {[0, 'enter', '*', '/'].map((item, index) => (
-                  <Button
-                    key={index}
-                    variant={item === 'enter' && pendingCommand ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleNumericInput(item === 'enter' ? 'enter' : item.toString())}
-                    disabled={!['enter', '*', '/'].includes(item.toString()) && !!pendingCommand}
-                    className={`h-8 text-xs font-bold ${
-                      item === 'enter' 
-                        ? pendingCommand 
-                          ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse border-0' 
-                          : 'bg-blue-500 hover:bg-blue-600 text-white border-0'
-                        : (['*', '/'].includes(item.toString()) && calculatorMode)
-                        ? 'bg-secondary hover:bg-secondary/80'
-                        : 'bg-slate-100 hover:bg-blue-500 hover:text-white border-slate-300 disabled:opacity-50'
-                    }`}
-                  >
-                    {item === 'enter' ? '✓' : item === '*' ? '×' : item === '/' ? '÷' : item}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Raccourci total compact */}
-              {!pendingCommand && total > 0 && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setNumericInput(total.toString());
-                    setPendingCommand({
-                      type: 'payment',
-                      value: total.toString(),
-                      description: `Paiement exact: ${total.toFixed(0)} FCFA`
-                    });
-                  }}
-                  className="w-full h-6 text-xs mt-1"
+                  onClick={() => handleNumericInput('0')}
+                  className="col-span-4 h-10 font-bold"
                 >
-                  Total: {total.toFixed(0)} FCFA
+                  0
                 </Button>
-              )}
-            </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Articles du panier */}
-          <div className="flex-1 flex flex-col px-4">
-            <ScrollArea className="flex-1">
+          {/* Panier */}
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  Panier ({cart.length})
+                </CardTitle>
+                {cart.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={clearCart}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            
+            <CardContent className="flex-1 flex flex-col">
               {cart.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <div className="p-4 bg-muted/20 rounded-xl">
-                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-base font-medium">Panier vide</p>
-                    <p className="text-sm">Ajoutez des produits pour commencer</p>
+                <div className="flex-1 flex items-center justify-center text-center">
+                  <div className="space-y-3">
+                    <ShoppingCart className="h-16 w-16 mx-auto text-muted-foreground/30" />
+                    <div>
+                      <p className="font-medium text-muted-foreground">Panier vide</p>
+                      <p className="text-sm text-muted-foreground/70">Ajoutez des produits pour commencer</p>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2 pb-4">
-                  {cart.map(item => (
-                    <div 
-                      key={item.id} 
-                      className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                        selectedCartItemId === item.id 
-                          ? 'border-primary bg-primary/5 shadow-md' 
-                          : 'border-border bg-card hover:border-primary/30 hover:shadow-sm'
-                      }`}
-                      onClick={() => selectCartItem(item.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-sm mb-1">{item.name}</h4>
-                          <p className="text-primary font-bold text-base">{item.price} FCFA</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateQuantity(item.id, item.quantity - 1);
-                              }}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <div className={`min-w-[2.5rem] text-center py-1 px-2 rounded-md font-bold text-base ${
-                              selectedCartItemId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                            }`}>
-                              {selectedCartItemId === item.id && numericInput ? numericInput : item.quantity}
+                <>
+                  <ScrollArea className="flex-1 -mx-6 px-6">
+                    <div className="space-y-3">
+                      {cart.map(item => (
+                        <Card key={item.id} className="p-4 border-border/50 hover:border-primary/30 transition-colors">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm">{item.name}</h4>
+                                <p className="text-xs text-muted-foreground">{item.price.toLocaleString()} FCFA / unité</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFromCart(item.id)}
+                                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateQuantity(item.id, item.quantity + 1);
-                              }}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <div className="w-12 text-center py-1 bg-muted rounded font-bold text-sm">
+                                  {item.quantity}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              
+                              <div className="text-right">
+                                <p className="font-bold text-primary">{item.total.toLocaleString()} FCFA</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-base text-primary">{item.total} FCFA</p>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromCart(item.id);
-                              }}
-                              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Résumé et total */}
+                  <div className="space-y-4 pt-4 border-t border-border/50">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Sous-total:</span>
+                        <span className="font-semibold">{subtotal.toLocaleString()} FCFA</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>TVA (18%):</span>
+                        <span className="font-semibold">{tax.toFixed(0)} FCFA</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-lg font-bold text-primary">
+                        <span>TOTAL:</span>
+                        <span>{total.toFixed(0)} FCFA</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Bouton de validation */}
+                    <Button 
+                      onClick={validateOrder}
+                      className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200"
+                      size="lg"
+                    >
+                      <Check className="h-5 w-5 mr-2" />
+                      Valider la Commande
+                    </Button>
+                  </div>
+                </>
               )}
-            </ScrollArea>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modal de résumé de commande */}
+      <Dialog open={showOrderSummary} onOpenChange={setShowOrderSummary}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Eye className="h-6 w-6 text-primary" />
+              Résumé de la Commande
+            </DialogTitle>
+          </DialogHeader>
           
-          {/* Section Paiement */}
-          {cart.length > 0 && (
-            <div className="p-4 border-t space-y-4">
-              {/* Résumé */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Sous-total:</span>
-                  <span>{subtotal.toFixed(0)} FCFA</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>TVA (18%):</span>
-                  <span>{tax.toFixed(0)} FCFA</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total:</span>
-                  <span className="text-primary">{total.toFixed(0)} FCFA</span>
-                </div>
+          <div className="space-y-6">
+            {/* Articles */}
+            <div className="space-y-3">
+              <h3 className="font-semibold">Articles commandés:</h3>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.quantity} × {item.price.toLocaleString()} FCFA
+                      </p>
+                    </div>
+                    <p className="font-bold text-primary">{item.total.toLocaleString()} FCFA</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Totaux */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Sous-total:</span>
+                <span>{subtotal.toLocaleString()} FCFA</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>TVA (18%):</span>
+                <span>{tax.toFixed(0)} FCFA</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold text-primary">
+                <span>TOTAL À PAYER:</span>
+                <span>{total.toFixed(0)} FCFA</span>
+              </div>
+            </div>
+
+            {/* Paiement */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Mode de paiement:</label>
+                <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Espèces</SelectItem>
+                    <SelectItem value="card">Carte bancaire</SelectItem>
+                    <SelectItem value="mobile">Paiement mobile</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Méthodes de paiement */}
-              <div className="space-y-3">
-                <h3 className="font-medium">Mode de paiement</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('cash')}
-                  >
-                    Espèces
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('card')}
-                  >
-                    <CreditCard className="h-4 w-4 mr-1" />
-                    Carte
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('mobile')}
-                  >
-                    Mobile
-                  </Button>
-                </div>
-              </div>
-
-              {/* Montant reçu (pour espèces) */}
               {paymentMethod === 'cash' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Montant reçu</label>
-                  <Input
-                    type="number"
-                    value={receivedAmount || ''}
-                    onChange={(e) => setReceivedAmount(Number(e.target.value))}
-                    placeholder="0"
-                  />
-                  {receivedAmount > 0 && change >= 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Monnaie: <span className="font-bold text-foreground">{change.toFixed(0)} FCFA</span>
-                    </p>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Montant reçu:</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={receivedAmount || ''}
+                      onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setReceivedAmount(total)}
+                      className="whitespace-nowrap"
+                    >
+                      Montant exact
+                    </Button>
+                  </div>
+                  {receivedAmount > 0 && (
+                    <div className="mt-2 p-2 bg-muted/30 rounded">
+                      <p className="text-sm">
+                        Monnaie à rendre: <span className="font-bold text-primary">
+                          {change.toFixed(0)} FCFA
+                        </span>
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
-
-              {/* Boutons d'action */}
-              <div className="space-y-2">
-                <Button onClick={processPayment} className="w-full" size="lg">
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Finaliser la vente
-                </Button>
-                <Button variant="outline" onClick={printReceipt} className="w-full">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Imprimer reçu
-                </Button>
-              </div>
             </div>
-          )}
-        </div>
-      </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowOrderSummary(false)}
+                className="flex-1"
+              >
+                Modifier
+              </Button>
+              <Button 
+                onClick={processPayment}
+                className="flex-1 bg-gradient-to-r from-primary to-primary/90"
+                disabled={paymentMethod === 'cash' && receivedAmount < total}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Confirmer Paiement
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
