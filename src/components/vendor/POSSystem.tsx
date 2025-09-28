@@ -205,7 +205,7 @@ export function POSSystem() {
   return (
     <div className="flex h-screen bg-background">
       {/* Section Produits - Gauche */}
-      <div className="flex-[2] flex flex-col p-4 space-y-4">
+      <div className="flex-[4] flex flex-col p-4 space-y-4">
         {/* Barre de recherche et filtres */}
         <Card>
           <CardContent className="p-6">
@@ -299,7 +299,7 @@ export function POSSystem() {
       </div>
 
       {/* Section Panier et Paiement - Droite */}
-      <div className="w-full lg:w-80 xl:w-72 bg-card border-l flex flex-col">
+      <div className="w-full lg:w-64 xl:w-56 bg-card border-l flex flex-col">
         {/* En-tête du panier */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
