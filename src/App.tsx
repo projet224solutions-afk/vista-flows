@@ -11,13 +11,13 @@ import Home from "./pages/Home";
 import Marketplace from "./pages/Marketplace";
 import Tracking from "./pages/Tracking";
 import Profil from "./pages/Profil";
+import ClientDashboard from "./pages/ClientDashboard";
 import VendeurDashboard from "./pages/VendeurDashboard";
 import LivreurDashboard from "./pages/LivreurDashboard";
 import TaxiDashboard from "./pages/TaxiDashboard";
 import SyndicatDashboard from "./pages/SyndicatDashboard";
 import TransitaireDashboard from "./pages/TransitaireDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import ClientDashboard from "./pages/ClientDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
