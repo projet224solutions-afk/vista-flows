@@ -358,18 +358,6 @@ export function POSSystem() {
                             Stock: {product.stock}
                           </Badge>
                           
-                          {/* Bouton Ajouter amélioré */}
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(product);
-                            }}
-                            className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200"
-                            size="sm"
-                          >
-                            <ShoppingBag className="h-4 w-4 mr-2" />
-                            Ajouter
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -382,65 +370,6 @@ export function POSSystem() {
 
         {/* Section Panier - Interface professionnelle */}
         <div className="w-96 flex flex-col space-y-4">
-          {/* Pavé numérique */}
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-sm flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-primary" />
-                  Pavé Numérique
-                </h3>
-                <div className="bg-muted/50 px-3 py-1 rounded-lg font-mono text-sm">
-                  {numericInput || '0'}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-2">
-                {[7, 8, 9, 'C'].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericInput(btn === 'C' ? 'clear' : btn.toString())}
-                    className={`h-10 font-bold ${btn === 'C' ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : ''}`}
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                {[4, 5, 6, '⌫'].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericInput(btn.toString())}
-                    className="h-10 font-bold"
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                {[1, 2, 3, '✓'].map((btn) => (
-                  <Button
-                    key={btn}
-                    variant={btn === '✓' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleNumericInput(btn === '✓' ? 'enter' : btn.toString())}
-                    className={`h-10 font-bold ${btn === '✓' ? 'bg-gradient-to-r from-primary to-primary/90' : ''}`}
-                  >
-                    {btn}
-                  </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNumericInput('0')}
-                  className="col-span-4 h-10 font-bold"
-                >
-                  0
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Panier */}
           <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
             <CardHeader className="pb-3">
@@ -454,6 +383,29 @@ export function POSSystem() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
+              </div>
+              
+              {/* Section Ajouter produit */}
+              <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-semibold">Ajouter des produits</h3>
+                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                  {filteredProducts.slice(0, 6).map(product => (
+                    <Button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start h-auto p-2 text-left"
+                      disabled={product.stock <= 0}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-medium truncate">{product.name}</div>
+                        <div className="text-xs text-muted-foreground">{product.price.toLocaleString()} FCFA</div>
+                      </div>
+                      <Plus className="h-3 w-3 ml-1 flex-shrink-0" />
+                    </Button>
+                  ))}
+                </div>
               </div>
             </CardHeader>
             
