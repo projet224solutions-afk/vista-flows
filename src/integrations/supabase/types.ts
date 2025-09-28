@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      calls: {
+        Row: {
+          call_type: string
+          caller_id: string
+          ended_at: string | null
+          id: string
+          receiver_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["call_status_type"]
+        }
+        Insert: {
+          call_type?: string
+          caller_id: string
+          ended_at?: string | null
+          id?: string
+          receiver_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status_type"]
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          ended_at?: string | null
+          id?: string
+          receiver_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["call_status_type"]
+        }
+        Relationships: []
+      }
       carts: {
         Row: {
           created_at: string | null
@@ -321,6 +351,50 @@ export type Database = {
           },
         ]
       }
+      escrows: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          dispute_reason: string | null
+          id: string
+          released_at: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["escrow_status_type"]
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string
+          dispute_reason?: string | null
+          id?: string
+          released_at?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["escrow_status_type"]
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          dispute_reason?: string | null
+          id?: string
+          released_at?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["escrow_status_type"]
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrows_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -608,26 +682,32 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          file_url: string | null
           id: string
           read_at: string | null
           recipient_id: string
           sender_id: string
+          type: Database["public"]["Enums"]["message_type"] | null
         }
         Insert: {
           content: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
           read_at?: string | null
           recipient_id: string
           sender_id: string
+          type?: Database["public"]["Enums"]["message_type"] | null
         }
         Update: {
           content?: string
           created_at?: string | null
+          file_url?: string | null
           id?: string
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
+          type?: Database["public"]["Enums"]["message_type"] | null
         }
         Relationships: [
           {
@@ -1492,6 +1572,118 @@ export type Database = {
           },
         ]
       }
+      trackings: {
+        Row: {
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          order_id: string | null
+          status: Database["public"]["Enums"]["tracking_status_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          order_id?: string | null
+          status?: Database["public"]["Enums"]["tracking_status_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          order_id?: string | null
+          status?: Database["public"]["Enums"]["tracking_status_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trackings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method_type"]
+          order_id: string | null
+          reference_number: string | null
+          status: Database["public"]["Enums"]["transaction_status_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method_type"]
+          order_id?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["transaction_status_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method_type"]
+          order_id?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["transaction_status_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_ids: {
+        Row: {
+          created_at: string
+          custom_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -1631,6 +1823,63 @@ export type Database = {
           },
         ]
       }
+      virtual_cards: {
+        Row: {
+          card_number: string
+          created_at: string
+          cvv: string
+          expiry_date: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          card_number: string
+          created_at?: string
+          cvv: string
+          expiry_date: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          card_number?: string
+          created_at?: string
+          cvv?: string
+          expiry_date?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       warehouses: {
         Row: {
           address: string | null
@@ -1677,6 +1926,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_card_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_custom_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
@@ -1686,6 +1943,7 @@ export type Database = {
       }
     }
     Enums: {
+      call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"
       delivery_status:
         | "pending"
         | "assigned"
@@ -1693,6 +1951,8 @@ export type Database = {
         | "in_transit"
         | "delivered"
         | "cancelled"
+      escrow_status_type: "holding" | "released" | "disputed" | "cancelled"
+      message_type: "text" | "image" | "file" | "call" | "location"
       order_status:
         | "pending"
         | "confirmed"
@@ -1702,12 +1962,31 @@ export type Database = {
         | "delivered"
         | "cancelled"
       payment_method: "mobile_money" | "card" | "cash" | "bank_transfer"
+      payment_method_type:
+        | "card"
+        | "wallet"
+        | "mobile_money"
+        | "escrow"
+        | "orange_money"
+        | "mtn"
+        | "wave"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       ride_status:
         | "requested"
         | "accepted"
         | "in_progress"
         | "completed"
+        | "cancelled"
+      tracking_status_type:
+        | "waiting"
+        | "in_progress"
+        | "delivered"
+        | "cancelled"
+      transaction_status_type:
+        | "pending"
+        | "completed"
+        | "failed"
+        | "refunded"
         | "cancelled"
       user_role:
         | "admin"
@@ -1845,6 +2124,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      call_status_type: ["ringing", "accepted", "rejected", "ended", "missed"],
       delivery_status: [
         "pending",
         "assigned",
@@ -1853,6 +2133,8 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      escrow_status_type: ["holding", "released", "disputed", "cancelled"],
+      message_type: ["text", "image", "file", "call", "location"],
       order_status: [
         "pending",
         "confirmed",
@@ -1863,12 +2145,34 @@ export const Constants = {
         "cancelled",
       ],
       payment_method: ["mobile_money", "card", "cash", "bank_transfer"],
+      payment_method_type: [
+        "card",
+        "wallet",
+        "mobile_money",
+        "escrow",
+        "orange_money",
+        "mtn",
+        "wave",
+      ],
       payment_status: ["pending", "paid", "failed", "refunded"],
       ride_status: [
         "requested",
         "accepted",
         "in_progress",
         "completed",
+        "cancelled",
+      ],
+      tracking_status_type: [
+        "waiting",
+        "in_progress",
+        "delivered",
+        "cancelled",
+      ],
+      transaction_status_type: [
+        "pending",
+        "completed",
+        "failed",
+        "refunded",
         "cancelled",
       ],
       user_role: [
