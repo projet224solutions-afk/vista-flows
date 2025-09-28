@@ -53,7 +53,7 @@ export const useWallet = () => {
         .from('wallets')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setWallet(data);
