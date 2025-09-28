@@ -303,7 +303,7 @@ export default function ClientManagement() {
             </div>
             <select
               value={clientTypeFilter}
-              onChange={(e) => setClientTypeFilter(e.target.value as unknown)}
+              onChange={(e) => setClientTypeFilter(e.target.value as "all" | "new" | "regular" | "vip")}
               className="px-3 py-2 border rounded-md"
             >
               <option value="all">Tous les clients</option>
