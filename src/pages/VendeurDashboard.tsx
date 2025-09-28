@@ -248,6 +248,192 @@ export default function VendeurDashboard() {
         </div>
       </section>
 
+      {/* Interface à onglets - Style Odoo Professionnel */}
+      <div className="px-6 py-4">
+        <Tabs defaultValue="pos" className="w-full">
+          <div className="flex overflow-x-auto scrollbar-hide mb-6">
+            <TabsList className="flex-shrink-0 bg-card/50 backdrop-blur-sm p-1 rounded-xl border">
+              <TabsTrigger value="pos" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <CreditCard className="w-4 h-4 mr-2" />
+                POS Caisse
+              </TabsTrigger>
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Vue d'ensemble
+              </TabsTrigger>
+              <TabsTrigger value="products" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Package className="w-4 h-4 mr-2" />
+                Produits
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Commandes
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Users className="w-4 h-4 mr-2" />
+                Clients
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Paiements
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Package className="w-4 h-4 mr-2" />
+                Stock
+              </TabsTrigger>
+              <TabsTrigger value="marketing" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <Megaphone className="w-4 h-4 mr-2" />
+                Marketing
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-vendeur-primary data-[state=active]:text-white">
+                <PieChart className="w-4 h-4 mr-2" />
+                Analyses
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* POS - Point de Vente */}
+          <TabsContent value="pos" className="space-y-6">
+            <POSSystem />
+          </TabsContent>
+          
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Commandes récentes */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5" />
+                    Commandes récentes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 bg-accent rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{order.id}</h4>
+                            <Badge variant={order.priority === 'urgent' ? 'destructive' : 'secondary'}>
+                              {order.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{order.customer} • {order.product}</p>
+                          <p className="text-xs text-muted-foreground">{order.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{order.amount}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Produits top performance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Top produits
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {topProducts.map((product, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-accent rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium mb-1">{product.name}</h4>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-4 h-4" />
+                              {product.views}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <ShoppingCart className="w-4 h-4" />
+                              {product.sales}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Package className="w-4 h-4" />
+                              Stock: {product.stock}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-green-600">{product.revenue}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Stock faible */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-500" />
+                  Alertes stock faible
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {lowStockProducts.map((product, index) => (
+                    <div key={index} className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                      <h4 className="font-medium mb-2">{product.name}</h4>
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Stock actuel: <strong>{product.stock}</strong></span>
+                        <span className="text-orange-600">Seuil: {product.threshold}</span>
+                      </div>
+                      <Progress value={(product.stock / product.threshold) * 100} className="mt-2" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Gestion des produits */}
+          <TabsContent value="products">
+            <ProductManagement />
+          </TabsContent>
+
+          {/* Gestion des commandes */}
+          <TabsContent value="orders">
+            <OrderManagement />
+          </TabsContent>
+
+          {/* Gestion des clients */}
+          <TabsContent value="clients" className="space-y-6">
+            <ClientManagement />
+          </TabsContent>
+
+          {/* Gestion des paiements */}
+          <TabsContent value="payments">
+            <div className="space-y-6">
+              <PaymentManagement />
+              <PaymentProcessor />
+            </div>
+          </TabsContent>
+
+          {/* Gestion des stocks */}
+          <TabsContent value="stock">
+            <InventoryManagement />
+          </TabsContent>
+
+          {/* Marketing & Promotions */}
+          <TabsContent value="marketing">
+            <MarketingManagement />
+          </TabsContent>
+
+          {/* Analyses & Rapports */}
+          <TabsContent value="analytics">
+            <VendorAnalytics />
+          </TabsContent>
+        </Tabs>
+      </div>
+
       <NavigationFooter />
     </div>
   );
