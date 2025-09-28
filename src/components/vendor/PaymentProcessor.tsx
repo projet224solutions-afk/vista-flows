@@ -443,11 +443,11 @@ export default function PaymentProcessor() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {paymentMethods.map((method) => {
-              const Icon = method.icon;
+              const IconComponent = method.icon as any;
               return (
                 <div key={method.id} className={`p-4 border rounded-lg ${method.available ? 'bg-background' : 'bg-gray-50 opacity-50'}`}>
                   <div className="flex items-center gap-3 mb-3">
-                    <Icon className="w-6 h-6" />
+                    <IconComponent className="w-6 h-6" />
                     <div>
                       <h4 className="font-semibold">{method.name}</h4>
                       <Badge variant={method.available ? "default" : "secondary"}>
