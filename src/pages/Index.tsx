@@ -3,14 +3,17 @@ import { InterfaceCard } from "@/components/InterfaceCard";
 import { Button } from "@/components/ui/button";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import { PDGTestButton } from "@/components/PDGTestButton";
+import QuickFooter from "@/components/QuickFooter";
 import {
-  Store,
-  Truck,
-  Car,
-  Shield,
-  Ship,
+  Home,
+  ShoppingBag,
+  MapPin,
+  User,
+  BarChart3,
   Crown,
-  ShoppingBag
+  Zap,
+  Shield,
+  Globe
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -21,118 +24,82 @@ const Index = () => {
   const { profile } = useAuth();
   useRoleRedirect(); // Redirection automatique vers le dashboard approprié
 
-  const interfaces = [
+  // Interfaces principales basées sur le footer - Architecture professionnelle
+  const coreInterfaces = [
     {
-      title: "Interface Vendeur",
-      description: "Gestion commerciale complète",
-      icon: Store,
-      roleType: "vendeur" as const,
+      title: "🏠 Accueil",
+      description: "Tableau de bord principal et vue d'ensemble",
+      icon: Home,
+      path: "/home",
       features: [
-        "Dashboard avec KPIs (CA, bénéfices, stock)",
-        "CRM intégré & pipeline commercial",
-        "Gestion produits & catalogue SEO",
-        "Facturation & paiements automatisés",
-        "Analytics & rapports exportables",
-        "Gestion multi-entrepôts"
+        "Dashboard personnalisé selon votre rôle",
+        "Notifications et alertes importantes", 
+        "Raccourcis vers vos outils favoris",
+        "Statistiques et métriques clés",
+        "Actualités et mises à jour système"
       ],
-      onClick: () => navigate("/vendeur")
+      onClick: () => navigate("/home")
     },
     {
-      title: "Interface Livreur",
-      description: "Logistique et livraisons optimisées",
-      icon: Truck,
-      roleType: "livreur" as const,
-      features: [
-        "Dashboard temps réel & gains",
-        "Suivi GPS & géofencing",
-        "Paiements Mobile Money intégrés",
-        "Optimisation automatique des tournées",
-        "Messagerie client & support 24/7",
-        "Sécurité avancée (SOS, alertes)"
-      ],
-      onClick: () => navigate("/livreur")
-    },
-    {
-      title: "Interface Taxi/Moto",
-      description: "Transport urbain intelligent",
-      icon: Car,
-      roleType: "taxi" as const,
-      features: [
-        "Courses temps réel & programmées",
-        "Tarification dynamique par zones",
-        "Sécurité renforcée & vérifications",
-        "Gestion multi-véhicules",
-        "Fidélisation & promos locales",
-        "Reporting et analytics avancés"
-      ],
-      onClick: () => navigate("/taxi")
-    },
-    {
-      title: "Bureau Syndicat",
-      description: "Supervision et sécurité",
-      icon: Shield,
-      roleType: "syndicat" as const,
-      features: [
-        "Gestion des mototaxis en temps réel",
-        "Système de badges & QR codes",
-        "Détection doublons & anti-vol",
-        "Supervision GPS & alertes SOS",
-        "Communication inter-syndicats",
-        "Statistiques & rapports sécurisés"
-      ],
-      onClick: () => navigate("/syndicat")
-    },
-    {
-      title: "Transitaire International",
-      description: "Logistique mondiale",
-      icon: Ship,
-      roleType: "transitaire" as const,
-      features: [
-        "Suivi commandes internationales",
-        "Gestion douanes & documents",
-        "Coordination vendeurs-syndicats",
-        "Tracking expéditions temps réel",
-        "Gestion taxes & frais douaniers",
-        "Statistiques volumes & délais"
-      ],
-      onClick: () => navigate("/transitaire")
-    },
-    {
-      title: "Interface Admin/PDG",
-      description: "Pilotage stratégique global",
-      icon: Crown,
-      roleType: "admin" as const,
-      features: [
-        "Vue globale (ventes, utilisateurs)",
-        "Gestion utilisateurs & permissions",
-        "Supervision financière complète",
-        "Analytics & KPIs temps réel",
-        "Gestion produits & commandes",
-        "Système de mise à jour"
-      ],
-      onClick: () => navigate("/admin")
-    },
-    {
-      title: "Interface Client",
-      description: "Marketplace & achats",
+      title: "🛒 Marketplace",
+      description: "Plateforme de commerce et services",
       icon: ShoppingBag,
-      roleType: "client" as const,
+      path: "/marketplace",
       features: [
-        "Recherche intelligente & filtres",
-        "Fiches produit enrichies",
-        "Panier & paiement sécurisé",
-        "Suivi commande temps réel",
-        "Avis & évaluations détaillés",
-        "Messagerie & notifications"
+        "Catalogue complet de produits et services",
+        "Recherche avancée avec filtres intelligents",
+        "Comparaison de prix et évaluations",
+        "Panier et commande sécurisée",
+        "Gestion des favoris et listes"
       ],
-      onClick: () => navigate("/client")
+      onClick: () => navigate("/marketplace")
+    },
+    {
+      title: "📍 Suivi & Tracking",
+      description: "Géolocalisation et suivi en temps réel",
+      icon: MapPin,
+      path: "/tracking",
+      features: [
+        "Suivi GPS en temps réel",
+        "Historique des déplacements",
+        "Notifications de livraison",
+        "Estimation des temps d'arrivée",
+        "Cartes interactives avancées"
+      ],
+      onClick: () => navigate("/tracking")
+    },
+    {
+      title: "📊 Mon Espace",
+      description: "Dashboard personnel et gestion métier",
+      icon: BarChart3,
+      path: profile?.role ? `/${profile.role}` : "/client",
+      features: [
+        "Tableau de bord personnalisé",
+        "Gestion de vos activités professionnelles",
+        "Statistiques et performances détaillées",
+        "Outils métier spécialisés",
+        "Rapports et analytics avancés"
+      ],
+      onClick: () => {
+        const role = profile?.role || "client";
+        navigate(`/${role}`);
+      }
+    },
+    {
+      title: "👤 Profil",
+      description: "Gestion de compte et paramètres",
+      icon: User,
+      path: "/profil",
+      features: [
+        "Informations personnelles et sécurité",
+        "Paramètres et préférences",
+        "Historique d'activité complet",
+        "Notifications et alertes",
+        "Support et assistance technique"
+      ],
+      onClick: () => navigate("/profil")
     }
   ];
-
-  // Filtrer les interfaces selon le rôle de l'utilisateur
-  const visibleInterfaces = profile?.role
-    ? interfaces.filter(interface_ => interface_.roleType === profile.role)
-    : interfaces; // Si pas connecté, montrer toutes les interfaces
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,22 +111,22 @@ const Index = () => {
       <main className="container mx-auto px-6 py-12">
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-5xl font-bold text-foreground mb-6">
-            Choisissez votre interface
+            Bienvenue sur 224Solutions
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Plateforme e-commerce et logistique complète avec interfaces spécialisées
-            pour chaque rôle. Design ultra-moderne et fonctionnalités professionnelles.
+            Plateforme intégrée multi-services avec navigation simplifiée.
+            Accédez rapidement à toutes vos fonctionnalités essentielles.
           </p>
-          <div className="mt-8 p-6 bg-elegant-gradient rounded-2xl border border-border/50">
+          <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-border/50">
             <p className="text-muted-foreground text-sm">
-              🚀 <strong>Version de démonstration</strong> - Connectez Supabase pour débloquer toutes les fonctionnalités backend :
-              authentification, base de données, paiements, temps réel, analytics avancés.
+              ⚡ <strong>Navigation optimisée</strong> - Utilisez la barre de navigation en bas pour accéder rapidement à vos outils.
+              {!profile && " Connectez-vous pour accéder à votre espace personnalisé."}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-          {visibleInterfaces.map((interface_, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {coreInterfaces.map((interface_, index) => (
             <div
               key={interface_.title}
               className="animate-fade-in"
@@ -176,44 +143,53 @@ const Index = () => {
         </div>
 
         <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: "0.8s" }}>
-          <div className="max-w-4xl mx-auto bg-card border border-border/50 rounded-3xl p-8 shadow-elegant">
-            <h2 className="text-3xl font-bold text-foreground mb-6">
-              Fonctionnalités complètes avec Supabase
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-8 shadow-lg">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Plateforme 224Solutions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm mb-8">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-vendeur-primary">Authentification</h3>
-                <p className="text-muted-foreground">Email, téléphone, biométrie</p>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Une solution complète intégrant commerce, logistique, transport et services.
+              Navigation simplifiée via la barre de navigation en bas d'écran.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-6">
+              <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+                <Shield className="h-6 w-6 text-blue-600 mb-2" />
+                <span className="font-medium">Sécurisé</span>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-livreur-primary">Paiements</h3>
-                <p className="text-muted-foreground">Mobile Money, Stripe, PayPal</p>
+              <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+                <Globe className="h-6 w-6 text-green-600 mb-2" />
+                <span className="font-medium">Multi-services</span>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-taxi-primary">Temps réel</h3>
-                <p className="text-muted-foreground">GPS, WebSocket, notifications</p>
+              <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+                <Zap className="h-6 w-6 text-yellow-600 mb-2" />
+                <span className="font-medium">Temps réel</span>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-admin-secondary">Analytics</h3>
-                <p className="text-muted-foreground">KPIs, rapports, tableaux de bord</p>
+              <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+                <Crown className="h-6 w-6 text-purple-600 mb-2" />
+                <span className="font-medium">Professionnel</span>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-border/50">
-              <p className="text-muted-foreground mb-4">
-                Nouveau sur la plateforme ?
-              </p>
-              <Button
-                onClick={() => navigate('/auth')}
-                size="lg"
-                className="shadow-elegant hover:shadow-glow transition-all duration-300"
-              >
-                Créer un compte / Se connecter
-              </Button>
-            </div>
+            {!profile && (
+              <div className="pt-6 border-t border-border/20">
+                <p className="text-muted-foreground mb-4">
+                  Nouveau sur la plateforme ?
+                </p>
+                <Button
+                  onClick={() => navigate('/auth')}
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                >
+                  Créer un compte / Se connecter
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Footer de navigation */}
+      <QuickFooter />
     </div>
   );
 };
