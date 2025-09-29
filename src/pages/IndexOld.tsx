@@ -31,6 +31,7 @@ const Index = () => {
       description: "Tableau de bord principal et vue d'ensemble",
       icon: Home,
       path: "/home",
+      roleType: "client" as const,
       features: [
         "Dashboard personnalisé selon votre rôle",
         "Notifications et alertes importantes", 
