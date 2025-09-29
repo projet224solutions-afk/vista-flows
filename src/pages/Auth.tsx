@@ -34,11 +34,17 @@ export default function Auth() {
   const navigate = useNavigate();
 
   // Form data
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [showSignup, setShowSignup] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    phone: '',
+    country: ''
   });
 
   useEffect(() => {
@@ -73,22 +79,55 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      const validatedData = loginSchema.parse(formData);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: validatedData.email,
-        password: validatedData.password,
-      });
+      if (showSignup) {
+        // Inscription
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("Les mots de passe ne correspondent pas");
+        }
+        if (!selectedRole) {
+          throw new Error("Veuillez sélectionner un type de compte");
+        }
 
-      if (error) throw error;
+        const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
+        const { error } = await supabase.auth.signUp({
+          email: validatedData.email,
+          password: validatedData.password,
+          options: {
+            data: {
+              first_name: validatedData.firstName,
+              last_name: validatedData.lastName,
+              role: validatedData.role,
+              phone: formData.phone,
+              country: formData.country
+            },
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
 
-      setSuccess("Connexion réussie ! Redirection en cours...");
+        if (error) throw error;
+        setSuccess("Inscription réussie ! Vérifiez votre email.");
+      } else {
+        // Connexion
+        const validatedData = loginSchema.parse(formData);
+        const { error } = await supabase.auth.signInWithPassword({
+          email: validatedData.email,
+          password: validatedData.password,
+        });
 
+        if (error) throw error;
+        setSuccess("Connexion réussie ! Redirection en cours...");
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRoleClick = (role: UserRole) => {
+    setSelectedRole(role);
+    setShowSignup(true);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -128,14 +167,6 @@ export default function Auth() {
         {/* Authentification avec Supabase */}
         <p className="text-gray-500 mb-4 text-lg">Authentification avec Supabase</p>
 
-        {/* Message d'information */}
-        <div className="max-w-2xl mx-auto mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-blue-800 text-sm">
-            <strong>✨ Connexion intelligente :</strong> Utilisez vos identifiants habituels.
-            Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
-          </p>
-        </div>
-
         {/* Titre principal */}
         <h2 className="text-2xl text-gray-600 mb-8">
           Connectez-vous à votre <span className="font-bold text-gray-800">espace professionnel</span>
@@ -145,32 +176,64 @@ export default function Auth() {
       {/* Information supplémentaire */}
       <div className="max-w-4xl mx-auto px-6 mt-8">
         <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
-          <h3 className="text-xl font-bold text-center mb-4">Types de comptes supportés</h3>
+          <h3 className="text-xl font-bold text-center mb-4">
+            {showSignup ? "Sélectionnez votre type de compte" : "Types de comptes supportés"}
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+            <button
+              onClick={() => handleRoleClick('client')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
+                selectedRole === 'client' ? 'ring-2 ring-blue-600' : ''
+              }`}
+            >
               <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
               <span className="font-medium">Client</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+            </button>
+            <button
+              onClick={() => handleRoleClick('vendeur')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
+                selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
+              }`}
+            >
               <Store className="h-6 w-6 text-green-600 mb-2" />
               <span className="font-medium">Marchand</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+            </button>
+            <button
+              onClick={() => handleRoleClick('livreur')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
+                selectedRole === 'livreur' ? 'ring-2 ring-orange-600' : ''
+              }`}
+            >
               <Truck className="h-6 w-6 text-orange-600 mb-2" />
               <span className="font-medium">Livreur</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+            </button>
+            <button
+              onClick={() => handleRoleClick('transitaire')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
+                selectedRole === 'transitaire' ? 'ring-2 ring-indigo-600' : ''
+              }`}
+            >
               <Ship className="h-6 w-6 text-indigo-600 mb-2" />
               <span className="font-medium">Transitaire</span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Formulaire de connexion simplifié */}
+      {/* Formulaire de connexion/inscription */}
       <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
+            {/* Message d'information */}
+            {!showSignup && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  <strong>✨ Connexion intelligente :</strong> Utilisez vos identifiants habituels.
+                  Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
@@ -184,6 +247,63 @@ export default function Auth() {
                   <AlertCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">{success}</AlertDescription>
                 </Alert>
+              )}
+
+              {showSignup && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        placeholder="Votre prénom"
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        placeholder="Votre nom"
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="country">Pays</Label>
+                    <Input
+                      id="country"
+                      type="text"
+                      value={formData.country}
+                      onChange={(e) => handleInputChange('country', e.target.value)}
+                      placeholder="Votre pays"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="+224 XXX XXX XXX"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+                </>
               )}
 
               <div>
@@ -212,6 +332,21 @@ export default function Auth() {
                 />
               </div>
 
+              {showSignup && (
+                <div>
+                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    placeholder="Retapez votre mot de passe"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
@@ -220,18 +355,25 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion en cours...
+                    {showSignup ? "Inscription en cours..." : "Connexion en cours..."}
                   </>
                 ) : (
-                  'Se connecter'
+                  showSignup ? "S'inscrire" : 'Se connecter'
                 )}
               </Button>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Pas encore de compte ? <br />
-                  <span className="text-purple-600 font-medium">Contactez votre administrateur</span>
-                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSignup(!showSignup);
+                    setSelectedRole(null);
+                    setError(null);
+                  }}
+                  className="text-sm text-purple-600 font-medium hover:underline"
+                >
+                  {showSignup ? "Déjà un compte ? Se connecter" : "Pas de compte ? S'inscrire"}
+                </button>
               </div>
             </form>
           </CardContent>
