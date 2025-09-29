@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { InterfaceCard } from "@/components/InterfaceCard";
 import { Button } from "@/components/ui/button";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
+import { PDGTestButton } from "@/components/PDGTestButton";
 import {
   Store,
   Truck,
@@ -168,6 +169,11 @@ const Index = () => {
               <InterfaceCard {...interface_} />
             </div>
           ))}
+        </div>
+
+        {/* Bouton de test PDG pour Lovable */}
+        <div className="mt-12 max-w-md mx-auto animate-fade-in" style={{ animationDelay: "0.7s" }}>
+          <PDGTestButton />
         </div>
 
         <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: "0.8s" }}>
