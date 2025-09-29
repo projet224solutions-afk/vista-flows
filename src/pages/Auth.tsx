@@ -142,8 +142,33 @@ export default function Auth() {
         </h2>
       </div>
 
+      {/* Information supplémentaire */}
+      <div className="max-w-4xl mx-auto px-6 mt-8">
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
+          <h3 className="text-xl font-bold text-center mb-4">Types de comptes supportés</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+              <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
+              <span className="font-medium">Client</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+              <Store className="h-6 w-6 text-green-600 mb-2" />
+              <span className="font-medium">Marchand</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+              <Truck className="h-6 w-6 text-orange-600 mb-2" />
+              <span className="font-medium">Livreur</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
+              <Ship className="h-6 w-6 text-indigo-600 mb-2" />
+              <span className="font-medium">Transitaire</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Formulaire de connexion simplifié */}
-      <div className="max-w-md mx-auto px-6">
+      <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -211,31 +236,6 @@ export default function Auth() {
             </form>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Information supplémentaire */}
-      <div className="max-w-4xl mx-auto px-6 mt-12">
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
-          <h3 className="text-xl font-bold text-center mb-4">Types de comptes supportés</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
-              <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
-              <span className="font-medium">Client</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
-              <Store className="h-6 w-6 text-green-600 mb-2" />
-              <span className="font-medium">Marchand</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
-              <Truck className="h-6 w-6 text-orange-600 mb-2" />
-              <span className="font-medium">Livreur</span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-white/60 rounded-lg">
-              <Ship className="h-6 w-6 text-indigo-600 mb-2" />
-              <span className="font-medium">Transitaire</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Footer de navigation */}
