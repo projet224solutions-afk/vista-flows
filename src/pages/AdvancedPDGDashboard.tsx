@@ -184,11 +184,11 @@ export default function AdvancedPDGDashboard() {
   const [apiTestResults, setApiTestResults] = useState<any>(null);
   const [testingAPIs, setTestingAPIs] = useState(false);
 
-    // RBAC Check - Only PDG can access this dashboard
+    // RBAC Check - Only admin can access this dashboard
     useEffect(() => {
         // Client-side check - Server must also enforce this
-        if (!user || profile?.role !== 'PDG') {
-            toast.error("Accès refusé. Privilèges PDG requis.");
+        if (!user || profile?.role !== 'admin') {
+            toast.error("Accès refusé. Privilèges administrateur requis.");
             navigate('/auth');
             return;
         }
@@ -383,7 +383,7 @@ export default function AdvancedPDGDashboard() {
         { icon: Users, label: 'Utilisateurs & Vendeurs' },
         { icon: ShieldCheck, label: 'Sécurité & Monitoring' },
         { icon: Settings, label: 'Paramètres' },
-        ...(profile?.role === 'PDG' ? [{ icon: Bot, label: 'AI Copilot', special: true }] : [])
+        ...(profile?.role === 'admin' ? [{ icon: Bot, label: 'AI Copilot', special: true }] : [])
     ];
 
     const getStatusColor = (status: string) => {
@@ -547,10 +547,10 @@ export default function AdvancedPDGDashboard() {
 
                     {/* MAIN DASHBOARD CONTENT */}
                     <div className="flex-1 overflow-hidden">
-                        <div className={`flex h-full ${copilotVisible && profile?.role === 'PDG' ? '' : ''}`}>
+                        <div className={`flex h-full ${copilotVisible && profile?.role === 'admin' ? '' : ''}`}>
 
                             {/* Central Dashboard Area */}
-                            <div className={`flex-1 p-6 overflow-y-auto ${copilotVisible && profile?.role === 'PDG' ? 'mr-80' : ''}`}>
+                            <div className={`flex-1 p-6 overflow-y-auto ${copilotVisible && profile?.role === 'admin' ? 'mr-80' : ''}`}>
 
                                 {/* KPI Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -754,8 +754,8 @@ export default function AdvancedPDGDashboard() {
                                 </div>
                             </div>
 
-                            {/* ======================= AI COPILOT PANEL (PDG ONLY) ======================= */}
-                            {profile?.role === 'PDG' && copilotVisible && (
+                            {/* ======================= AI COPILOT PANEL (ADMIN ONLY) ======================= */}
+                            {profile?.role === 'admin' && copilotVisible && (
                                 <div className="w-80 bg-card border-l border-border flex flex-col absolute right-0 top-0 h-full">
 
                                     {/* Copilot Header */}
@@ -932,7 +932,7 @@ export default function AdvancedPDGDashboard() {
             </Dialog>
 
             {/* Floating Copilot Toggle (when panel is hidden) */}
-            {profile?.role === 'PDG' && !copilotVisible && (
+            {profile?.role === 'admin' && !copilotVisible && (
                 <Button
                     className="fixed bottom-6 right-6 rounded-full w-12 h-12 bg-blue-600 hover:bg-blue-700 shadow-lg"
                     onClick={() => setCopilotVisible(true)}

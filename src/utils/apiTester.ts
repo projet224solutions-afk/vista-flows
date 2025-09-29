@@ -65,11 +65,6 @@ export class SupabaseAPITester {
       const { data: session, error } = await supabase.auth.getSession();
       
       if (error) throw error;
-      
-      // Test des méthodes auth disponibles
-      const { data: providers } = await supabase.auth.getOAuthSignInUrl({
-        provider: 'github'
-      });
 
       return {
         name: 'Authentification',
@@ -77,8 +72,7 @@ export class SupabaseAPITester {
         message: session.session ? 'Utilisateur connecté' : 'Auth configurée, pas de session active',
         details: {
           hasSession: !!session.session,
-          userId: session.session?.user?.id,
-          oauthAvailable: !!providers
+          userId: session.session?.user?.id
         },
         duration: Date.now() - start
       };
@@ -142,7 +136,7 @@ export class SupabaseAPITester {
       // Test du canal temps réel
       const channel = supabase
         .channel('test-channel-' + Date.now())
-        .on('presence', { event: 'sync' }, (payload) => {
+        .on('broadcast', { event: 'test' }, (payload) => {
           console.log('Realtime test received:', payload);
         })
         .subscribe();
