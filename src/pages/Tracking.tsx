@@ -1,10 +1,12 @@
 // @ts-nocheck
 import { useState } from "react";
-import { Search, Package, Clock, CheckCircle, Truck, MapPin } from "lucide-react";
+import { Search, Package, Clock, CheckCircle, Truck, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import QuickFooter from "@/components/QuickFooter";
 
 interface TrackingResult {
   success: boolean;
@@ -293,6 +295,9 @@ export default function Tracking() {
           </Card>
         </section>
       )}
+
+      {/* Footer de navigation */}
+      <QuickFooter />
     </div>
   );
 }

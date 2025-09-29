@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
+import QuickFooter from "@/components/QuickFooter";
 
 const categories = [
   { id: 'all', label: 'Tout', count: 1250 },
@@ -224,6 +225,9 @@ export default function Marketplace() {
           ))}
         </div>
       </section>
+
+      {/* Footer de navigation */}
+      <QuickFooter />
     </div>
   );
 }

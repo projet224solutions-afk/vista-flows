@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MapPin, User, BarChart3 } from "lucide-react";
+import { Home, ShoppingBag, MapPin, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,53 +8,45 @@ export default function QuickFooter() {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // S'affiche uniquement pour les utilisateurs connectés
-  if (!profile) {
-    return null;
-  }
-
-  // Navigation de base pour tous les utilisateurs
-  const baseNavigationItems = [
-    { id: 'home', label: 'Accueil', icon: Home, path: '/home' },
-    { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag, path: '/marketplace' },
-    { id: 'tracking', label: 'Tracking', icon: MapPin, path: '/tracking' },
-  ];
-
-  // Dashboard selon le rôle
-  const getDashboardItem = () => {
-    const role = profile?.role;
-    switch (role) {
-      case 'vendeur':
-        return { id: 'dashboard', label: 'Commerce', icon: BarChart3, path: '/vendeur' };
-      case 'livreur':
-        return { id: 'dashboard', label: 'Livraisons', icon: BarChart3, path: '/livreur' };
-      case 'taxi':
-        return { id: 'dashboard', label: 'Taxi', icon: BarChart3, path: '/taxi' };
-      case 'transitaire':
-        return { id: 'dashboard', label: 'Transitaire', icon: BarChart3, path: '/transitaire' };
-      case 'syndicat':
-        return { id: 'dashboard', label: 'Syndicat', icon: BarChart3, path: '/syndicat' };
-      case 'admin':
-        return { id: 'dashboard', label: 'Admin', icon: BarChart3, path: '/admin' };
-      case 'client':
-      default:
-        return { id: 'dashboard', label: 'Mon Espace', icon: BarChart3, path: '/client' };
-    }
-  };
-
-  const dashboardItem = getDashboardItem();
+  // Navigation principale - 4 boutons essentiels selon vos spécifications
   const navigationItems = [
-    ...baseNavigationItems,
-    dashboardItem,
-    { id: 'profil', label: 'Profil', icon: User, path: '/profil' },
+    { 
+      id: 'home', 
+      label: 'Accueil', 
+      icon: Home, 
+      path: '/',
+      description: 'Interface d\'accueil avec toutes les fonctionnalités'
+    },
+    { 
+      id: 'marketplace', 
+      label: 'Marketplace', 
+      icon: ShoppingBag, 
+      path: '/marketplace',
+      description: 'Interface marketplace et toutes ses fonctionnalités'
+    },
+    { 
+      id: 'tracking', 
+      label: 'Suivi', 
+      icon: MapPin, 
+      path: '/tracking',
+      description: 'Fonctionnalités de tracking et suivi'
+    },
+    { 
+      id: 'profil', 
+      label: 'Profil', 
+      icon: User, 
+      path: profile ? '/profil' : '/auth',
+      description: profile ? 'Mon profil et paramètres' : 'Connexion selon votre rôle'
+    },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 shadow-lg">
-      <div className="flex items-center justify-around px-2 py-3 max-w-screen-xl mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 shadow-lg">
+      <div className="flex items-center justify-around px-4 py-3 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.path || 
-                          (item.id === 'dashboard' && location.pathname.includes(item.path.slice(1)));
+                          (item.path === '/' && location.pathname === '/') ||
+                          (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
           
           return (
@@ -62,18 +54,34 @@ export default function QuickFooter() {
               key={item.id}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-[64px]",
+                "flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 min-w-[70px] group",
                 isActive
-                  ? "text-primary bg-primary/10 scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  ? "text-purple-600 bg-purple-50 scale-105 shadow-md"
+                  : "text-gray-500 hover:text-purple-600 hover:bg-purple-50/50 hover:scale-105"
               )}
+              title={item.description}
             >
-              <Icon size={20} className="mb-1" />
-              <span className="text-xs font-medium leading-tight">{item.label}</span>
+              <div className={cn(
+                "p-2 rounded-full transition-all duration-300",
+                isActive 
+                  ? "bg-purple-600 text-white shadow-lg" 
+                  : "bg-gray-100 group-hover:bg-purple-100 group-hover:text-purple-600"
+              )}>
+                <Icon size={18} />
+              </div>
+              <span className={cn(
+                "text-xs font-medium mt-1 leading-tight",
+                isActive ? "text-purple-600" : "text-gray-600 group-hover:text-purple-600"
+              )}>
+                {item.label}
+              </span>
             </button>
           );
         })}
       </div>
+      
+      {/* Indicateur visuel pour l'élément actif */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-blue-500"></div>
     </div>
   );
 }

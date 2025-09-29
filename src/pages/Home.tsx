@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
+import QuickFooter from "@/components/QuickFooter";
 
 const promotions = [
   {
@@ -222,6 +223,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Footer de navigation */}
+      <QuickFooter />
     </div>
   );
 }

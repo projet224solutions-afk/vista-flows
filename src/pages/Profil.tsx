@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import QuickFooter from "@/components/QuickFooter";
 
 const userTypes = {
   client: {
@@ -266,6 +267,9 @@ export default function Profil() {
           Se déconnecter
         </Button>
       </section>
+
+      {/* Footer de navigation */}
+      <QuickFooter />
     </div>
   );
 }
