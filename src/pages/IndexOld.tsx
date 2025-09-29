@@ -45,6 +45,7 @@ const Index = () => {
       description: "Plateforme de commerce et services",
       icon: ShoppingBag,
       path: "/marketplace",
+      roleType: "client" as const,
       features: [
         "Catalogue complet de produits et services",
         "Recherche avancée avec filtres intelligents",
@@ -59,6 +60,7 @@ const Index = () => {
       description: "Géolocalisation et suivi en temps réel",
       icon: MapPin,
       path: "/tracking",
+      roleType: "client" as const,
       features: [
         "Suivi GPS en temps réel",
         "Historique des déplacements",
@@ -73,6 +75,7 @@ const Index = () => {
       description: "Dashboard personnel et gestion métier",
       icon: BarChart3,
       path: profile?.role ? `/${profile.role}` : "/client",
+      roleType: "client" as const,
       features: [
         "Tableau de bord personnalisé",
         "Gestion de vos activités professionnelles",
@@ -90,6 +93,7 @@ const Index = () => {
       description: "Gestion de compte et paramètres",
       icon: User,
       path: "/profil",
+      roleType: "client" as const,
       features: [
         "Informations personnelles et sécurité",
         "Paramètres et préférences",
