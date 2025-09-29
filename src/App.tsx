@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import NavigationFooter from "@/components/NavigationFooter";
+import QuickFooter from "@/components/QuickFooter";
 import { Suspense, lazy } from "react";
 
 // Lazy loading des pages pour optimiser le bundle
@@ -119,7 +119,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <NavigationFooter />
+            <QuickFooter />
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>

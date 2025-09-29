@@ -4,7 +4,6 @@ import { Bike, MapPin, Clock, TrendingUp, Star, Navigation } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 
 export default function TaxiDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -215,8 +214,6 @@ export default function TaxiDashboard() {
           </CardContent>
         </Card>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }

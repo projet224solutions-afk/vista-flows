@@ -4,7 +4,6 @@ import { Shield, Users, AlertTriangle, CheckCircle, Activity, QrCode } from "luc
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 
 export default function SyndicatDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -238,8 +237,6 @@ export default function SyndicatDashboard() {
           </CardContent>
         </Card>
       </section>
-
-      <NavigationFooter />
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   ShoppingBag
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import NavigationFooter from "@/components/NavigationFooter";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -215,8 +214,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-
-      <NavigationFooter />
     </div>
   );
 };

@@ -47,7 +47,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import NavigationFooter from "@/components/NavigationFooter";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -887,8 +886,6 @@ export default function PDGDashboard() {
           </DialogContent>
         </Dialog>
       )}
-
-      <NavigationFooter />
     </div>
   );
 }
