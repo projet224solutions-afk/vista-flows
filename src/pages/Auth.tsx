@@ -7,12 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Car, Users, Ship, Crown } from "lucide-react";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 
-// Validation schemas
+// Validation schemas avec tous les rôles
 const loginSchema = z.object({
   email: z.string().email("Adresse email invalide"),
   password: z.string().min(6, "Le mot de passe doit faire au moins 6 caractères")
@@ -21,10 +21,10 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
-  role: z.enum(['client', 'vendeur'])
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin'])
 });
 
-type UserRole = 'client' | 'vendeur';
+type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin';
 
 export default function AuthNew() {
   const [isLogin, setIsLogin] = useState(true);
@@ -148,18 +148,24 @@ export default function AuthNew() {
           </h2>
         </div>
 
-        {/* Section Commerce et services */}
-        <div className="max-w-4xl mx-auto px-6 pb-24">
-          <div className="mb-6">
+        {/* Toutes les catégories de rôles */}
+        <div className="max-w-6xl mx-auto px-6 pb-24">
+          
+          {/* Commerce et services */}
+          <div className="mb-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-8 bg-blue-500 rounded"></div>
               <h3 className="text-xl font-semibold text-gray-800">Commerce et services</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Client - Sélectionné par défaut */}
+              {/* Client */}
               <Card 
-                className="cursor-pointer border-2 border-blue-300 bg-blue-50 hover:shadow-lg transition-all duration-200"
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'client' 
+                    ? 'border-blue-300 bg-blue-50' 
+                    : 'border-gray-200 bg-white hover:border-blue-300'
+                }`}
                 onClick={() => handleRoleSelection('client')}
               >
                 <CardContent className="p-6">
@@ -171,27 +177,193 @@ export default function AuthNew() {
                       <h4 className="font-semibold text-xl text-gray-800">Client</h4>
                       <p className="text-gray-600 text-base">Acheter des produits et services</p>
                     </div>
-                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-white"></div>
-                    </div>
+                    {selectedRole === 'client' && (
+                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Marchand */}
+              {/* Vendeur */}
               <Card 
-                className="cursor-pointer border border-gray-200 bg-white hover:shadow-lg transition-all duration-200 hover:border-green-300"
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'vendeur' 
+                    ? 'border-green-300 bg-green-50' 
+                    : 'border-gray-200 bg-white hover:border-green-300'
+                }`}
                 onClick={() => handleRoleSelection('vendeur')}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className="p-4 rounded-lg bg-green-100 text-green-600">
+                    <div className="p-4 rounded-lg bg-green-500 text-white">
                       <Store className="h-8 w-8" />
                     </div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-xl text-gray-800">Marchand</h4>
                       <p className="text-gray-600 text-base">Gérer une boutique en ligne</p>
                     </div>
+                    {selectedRole === 'vendeur' && (
+                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Transport et logistique */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-8 bg-orange-500 rounded"></div>
+              <h3 className="text-xl font-semibold text-gray-800">Transport et logistique</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Livreur */}
+              <Card 
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'livreur' 
+                    ? 'border-orange-300 bg-orange-50' 
+                    : 'border-gray-200 bg-white hover:border-orange-300'
+                }`}
+                onClick={() => handleRoleSelection('livreur')}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="p-4 rounded-lg bg-orange-500 text-white">
+                      <Truck className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg text-gray-800">Livreur</h4>
+                      <p className="text-gray-600 text-sm">Livraison de colis et produits</p>
+                    </div>
+                    {selectedRole === 'livreur' && (
+                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Taxi */}
+              <Card 
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'taxi' 
+                    ? 'border-yellow-300 bg-yellow-50' 
+                    : 'border-gray-200 bg-white hover:border-yellow-300'
+                }`}
+                onClick={() => handleRoleSelection('taxi')}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="p-4 rounded-lg bg-yellow-500 text-white">
+                      <Car className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg text-gray-800">Chauffeur Taxi</h4>
+                      <p className="text-gray-600 text-sm">Transport de personnes</p>
+                    </div>
+                    {selectedRole === 'taxi' && (
+                      <div className="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Transitaire */}
+              <Card 
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'transitaire' 
+                    ? 'border-indigo-300 bg-indigo-50' 
+                    : 'border-gray-200 bg-white hover:border-indigo-300'
+                }`}
+                onClick={() => handleRoleSelection('transitaire')}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="p-4 rounded-lg bg-indigo-500 text-white">
+                      <Ship className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg text-gray-800">Transitaire</h4>
+                      <p className="text-gray-600 text-sm">Import/Export international</p>
+                    </div>
+                    {selectedRole === 'transitaire' && (
+                      <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Organisation et administration */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-8 bg-purple-500 rounded"></div>
+              <h3 className="text-xl font-semibold text-gray-800">Organisation et administration</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Syndicat */}
+              <Card 
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'syndicat' 
+                    ? 'border-purple-300 bg-purple-50' 
+                    : 'border-gray-200 bg-white hover:border-purple-300'
+                }`}
+                onClick={() => handleRoleSelection('syndicat')}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 rounded-lg bg-purple-500 text-white">
+                      <Users className="h-8 w-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-xl text-gray-800">Syndicat</h4>
+                      <p className="text-gray-600 text-base">Gestion des organisations professionnelles</p>
+                    </div>
+                    {selectedRole === 'syndicat' && (
+                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Admin */}
+              <Card 
+                className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
+                  selectedRole === 'admin' 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-200 bg-white hover:border-red-300'
+                }`}
+                onClick={() => handleRoleSelection('admin')}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 rounded-lg bg-red-500 text-white">
+                      <Crown className="h-8 w-8" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-xl text-gray-800">Administrateur</h4>
+                      <p className="text-gray-600 text-base">Gestion complète de la plateforme</p>
+                    </div>
+                    {selectedRole === 'admin' && (
+                      <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-white"></div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
