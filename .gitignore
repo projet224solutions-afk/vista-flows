@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.local
+.env.production
+
+# Google Cloud Platform - Sécurité
+.gcp/
+*.json
+service-account-*.json
+*-key.json
 
 # Editor directories and files
 .vscode/*

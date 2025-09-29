@@ -75,11 +75,11 @@ export const PDGAuthButton = () => {
             timestamp: Date.now()
         }));
 
-    setIsLoading(false);
-    setIsOpen(false);
-    
-    // Redirection vers l'interface PDG dédiée
-    navigate("/pdg", { state: { pdgAccess: true, level: credential.level } });
+        setIsLoading(false);
+        setIsOpen(false);
+
+        // Redirection vers l'interface PDG avancée
+        navigate("/pdg-advanced", { state: { pdgAccess: true, level: credential.level } });
     };
 
     const resetForm = () => {
@@ -94,19 +94,19 @@ export const PDGAuthButton = () => {
             setIsOpen(open);
             if (!open) resetForm();
         }}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-none hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
-          size="sm"
-        >
-          <Crown className="w-4 h-4 mr-2" />
-          Accès PDG
-          <Badge variant="secondary" className="ml-2 bg-yellow-400 text-black">
-            SÉCURISÉ
-          </Badge>
-        </Button>
-      </DialogTrigger>
+            <DialogTrigger asChild>
+                <Button
+                    variant="outline"
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-none hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                    size="sm"
+                >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Accès PDG
+                    <Badge variant="secondary" className="ml-2 bg-yellow-400 text-black">
+                        SÉCURISÉ
+                    </Badge>
+                </Button>
+            </DialogTrigger>
 
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
