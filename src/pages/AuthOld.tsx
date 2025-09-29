@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, ShoppingBag, Crown } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, ShoppingBag, Crown, Info } from "lucide-react";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";

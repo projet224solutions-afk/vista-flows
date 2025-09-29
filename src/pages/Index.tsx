@@ -30,6 +30,7 @@ const Index = () => {
       title: "🏠 Accueil",
       description: "Tableau de bord principal et vue d'ensemble",
       icon: Home,
+      roleType: "client" as const,
       path: "/home",
       features: [
         "Dashboard personnalisé selon votre rôle",
@@ -44,6 +45,7 @@ const Index = () => {
       title: "🛒 Marketplace",
       description: "Plateforme de commerce et services",
       icon: ShoppingBag,
+      roleType: "vendeur" as const,
       path: "/marketplace",
       features: [
         "Catalogue complet de produits et services",
@@ -58,6 +60,7 @@ const Index = () => {
       title: "📍 Suivi & Tracking",
       description: "Géolocalisation et suivi en temps réel",
       icon: MapPin,
+      roleType: "livreur" as const,
       path: "/tracking",
       features: [
         "Suivi GPS en temps réel",
@@ -72,6 +75,7 @@ const Index = () => {
       title: "📊 Mon Espace",
       description: "Dashboard personnel et gestion métier",
       icon: BarChart3,
+      roleType: (profile?.role as any) || "client",
       path: profile?.role ? `/${profile.role}` : "/client",
       features: [
         "Tableau de bord personnalisé",
@@ -89,6 +93,7 @@ const Index = () => {
       title: "👤 Profil",
       description: "Gestion de compte et paramètres",
       icon: User,
+      roleType: "client" as const,
       path: "/profil",
       features: [
         "Informations personnelles et sécurité",
