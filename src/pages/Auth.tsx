@@ -242,7 +242,7 @@ export default function Auth() {
       <QuickFooter />
 
       {/* Bouton PDG discret */}
-      <div className="fixed bottom-24 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50">
         <PDGAuthButton />
       </div>
     </div>
