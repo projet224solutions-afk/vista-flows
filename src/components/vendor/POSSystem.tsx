@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useProducts } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
   id: string;
@@ -64,7 +65,26 @@ interface Customer {
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
   const { user } = useAuth();
-  const { data: productsData, loading: productsLoading } = useProducts(user?.id);
+  
+  // Récupérer le vendor_id de l'utilisateur connecté
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (user?.id) {
+      supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setVendorId(data.id);
+          }
+        });
+    }
+  }, [user?.id]);
+  
+  const { data: productsData, loading: productsLoading } = useProducts(vendorId || undefined);
   
   // Transformer les données des produits pour le format POS
   const products = productsData?.map(p => ({
