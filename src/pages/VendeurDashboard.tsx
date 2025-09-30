@@ -314,99 +314,106 @@ export default function VendeurDashboard() {
       {/* Interface à onglets - Style Odoo Professionnel */}
       <div className="px-6 py-4">
         <Tabs defaultValue="pos" className="w-full">
-          <div className="flex overflow-x-auto scrollbar-hide mb-6 bg-gradient-to-r from-card via-card/95 to-card/80 p-3 rounded-2xl border shadow-lg backdrop-blur-sm">
-            <TabsList className="flex-shrink-0 bg-transparent p-0 h-auto -space-x-2 w-full">
-              <TabsTrigger 
-                value="pos" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                POS Caisse
-              </TabsTrigger>
-              <TabsTrigger 
-                value="dashboard" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Vue d'ensemble
-              </TabsTrigger>
-              <TabsTrigger 
-                value="products" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Produits
-              </TabsTrigger>
-              <TabsTrigger 
-                value="orders" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Commandes
-              </TabsTrigger>
-              <TabsTrigger 
-                value="clients" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Clients
-              </TabsTrigger>
-              <TabsTrigger 
-                value="agents" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <UserCheck className="w-4 h-4 mr-2" />
-                Agents & Permissions
-              </TabsTrigger>
-              <TabsTrigger 
-                value="warehouses" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <Warehouse className="w-4 h-4 mr-2" />
-                Entrepôts & Stocks
-              </TabsTrigger>
-              <TabsTrigger 
-                value="payments" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Paiements
-              </TabsTrigger>
-              <TabsTrigger 
-                value="stock" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Stock
-              </TabsTrigger>
-              <TabsTrigger 
-                value="marketing" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <Megaphone className="w-4 h-4 mr-2" />
-                Marketing
-              </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <PieChart className="w-4 h-4 mr-2" />
-                Analyses
-              </TabsTrigger>
-              <TabsTrigger 
-                value="wallet" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Wallet & Cartes
-              </TabsTrigger>
-              <TabsTrigger 
-                value="transactions" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
-              >
-                <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Transactions P2P
-              </TabsTrigger>
+          <div className="mb-6 bg-gradient-to-r from-card via-card/95 to-card/80 p-3 rounded-2xl border shadow-lg backdrop-blur-sm">
+            <TabsList className="bg-transparent p-0 h-auto w-full flex flex-col gap-3">
+              {/* Première rangée */}
+              <div className="flex overflow-x-auto scrollbar-hide -space-x-2">
+                <TabsTrigger 
+                  value="pos" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  POS Caisse
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="dashboard" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Vue d'ensemble
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="products" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Produits
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="orders" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Commandes
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="clients" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Clients
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="agents" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Agents & Permissions
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="warehouses" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <Warehouse className="w-4 h-4 mr-2" />
+                  Entrepôts & Stocks
+                </TabsTrigger>
+              </div>
+
+              {/* Deuxième rangée */}
+              <div className="flex overflow-x-auto scrollbar-hide -space-x-2">
+                <TabsTrigger 
+                  value="payments" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Paiements
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="stock" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Stock
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="marketing" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  Marketing
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="analytics" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <PieChart className="w-4 h-4 mr-2" />
+                  Analyses
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="wallet" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Wallet & Cartes
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="transactions" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105 data-[state=active]:z-10 hover:bg-muted/50 hover:scale-102 hover:z-20 transition-all duration-300 px-5 py-3 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-md relative"
+                >
+                  <ArrowRightLeft className="w-4 h-4 mr-2" />
+                  Transactions P2P
+                </TabsTrigger>
+              </div>
             </TabsList>
           </div>
 
