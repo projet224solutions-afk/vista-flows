@@ -179,7 +179,7 @@ export default function Auth() {
           <h3 className="text-xl font-bold text-center mb-4">
             {showSignup ? "Sélectionnez votre type de compte" : "Types de comptes supportés"}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <button
               onClick={() => handleRoleClick('client')}
               className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
@@ -206,6 +206,15 @@ export default function Auth() {
             >
               <Truck className="h-6 w-6 text-orange-600 mb-2" />
               <span className="font-medium">Livreur</span>
+            </button>
+            <button
+              onClick={() => handleRoleClick('taxi')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
+                selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
+              }`}
+            >
+              <Car className="h-6 w-6 text-yellow-600 mb-2" />
+              <span className="font-medium">Taxi Moto</span>
             </button>
             <button
               onClick={() => handleRoleClick('transitaire')}
