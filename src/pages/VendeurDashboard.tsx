@@ -315,124 +315,104 @@ export default function VendeurDashboard() {
       <div className="px-6 py-4">
         <Tabs defaultValue="pos" className="w-full">
           <div className="mb-6 bg-gradient-to-br from-card via-card/95 to-card/90 p-6 rounded-2xl border shadow-xl backdrop-blur-sm">
-            <TabsList className="bg-transparent p-0 h-auto w-full flex flex-col gap-6">
-              {/* Section Principal */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Vente & Gestion</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <TabsTrigger 
-                    value="pos" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">POS Caisse</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="dashboard" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <BarChart3 className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Vue d'ensemble</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="orders" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Commandes</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="payments" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Paiements</span>
-                  </TabsTrigger>
-                </div>
+            <TabsList className="bg-transparent p-0 h-auto w-full flex flex-col gap-4">
+              {/* Ligne 1 */}
+              <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                <TabsTrigger 
+                  value="pos" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">POS Caisse</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="dashboard" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <BarChart3 className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Vue d'ensemble</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="orders" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Commandes</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="payments" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Paiements</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="products" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <Package className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Produits</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="stock" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <Package className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Stock</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="warehouses" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <Warehouse className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Entrepôts</span>
+                </TabsTrigger>
               </div>
 
-              {/* Section Catalogue & Stock */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Catalogue & Inventaire</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <TabsTrigger 
-                    value="products" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <Package className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Produits</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="stock" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <Package className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Stock</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="warehouses" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <Warehouse className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Entrepôts</span>
-                  </TabsTrigger>
-                </div>
-              </div>
-
-              {/* Section Relations & Marketing */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Relations & Marketing</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <TabsTrigger 
-                    value="clients" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <Users className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Clients</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="agents" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <UserCheck className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Agents</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="marketing" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <Megaphone className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Marketing</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="analytics" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <PieChart className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Analyses</span>
-                  </TabsTrigger>
-                </div>
-              </div>
-
-              {/* Section Finance */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">Finance & Portefeuille</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <TabsTrigger 
-                    value="wallet" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Wallet</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="transactions" 
-                    className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
-                  >
-                    <ArrowRightLeft className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">Transactions P2P</span>
-                  </TabsTrigger>
-                </div>
+              {/* Ligne 2 */}
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <TabsTrigger 
+                  value="clients" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <Users className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Clients</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="agents" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <UserCheck className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Agents</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="marketing" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <Megaphone className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Marketing</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="analytics" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <PieChart className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Analyses</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="wallet" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Wallet</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="transactions" 
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-[1.02] hover:bg-muted/50 hover:shadow-md transition-all duration-300 px-4 py-4 rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm shadow-sm flex flex-col items-center gap-2 min-h-[80px]"
+                >
+                  <ArrowRightLeft className="w-5 h-5" />
+                  <span className="text-xs font-medium text-center">Transactions P2P</span>
+                </TabsTrigger>
               </div>
             </TabsList>
           </div>
