@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useProducts } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
   id: string;
@@ -64,7 +65,30 @@ interface Customer {
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
   const { user } = useAuth();
-  const { data: productsData, loading: productsLoading } = useProducts(user?.id);
+  
+  // Récupérer le vendor_id de l'utilisateur connecté
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (user?.id) {
+      supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (data) {
+            setVendorId(data.id);
+          } else {
+            // Pas de vendor_id trouvé, on chargera tous les produits
+            console.log('Pas de vendor trouvé, chargement de tous les produits du marketplace');
+          }
+        });
+    }
+  }, [user?.id]);
+  
+  // Charger tous les produits actifs du marketplace (sans filtrer par vendor)
+  const { data: productsData, loading: productsLoading } = useProducts();
   
   // Transformer les données des produits pour le format POS
   const products = productsData?.map(p => ({
@@ -73,7 +97,8 @@ export function POSSystem() {
     price: p.price,
     category: p.category_id || 'Divers',
     stock: p.stock_quantity || 0,
-    barcode: p.barcode
+    barcode: p.barcode,
+    images: p.images
   })) || [];
   
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -449,11 +474,22 @@ export function POSSystem() {
               <ScrollArea className="h-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-muted-foreground">Chargement des produits...</div>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <div className="text-muted-foreground">Chargement des produits du marketplace...</div>
+                    </div>
                   </div>
                 ) : filteredProducts.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-muted-foreground">Aucun produit trouvé</div>
+                  <div className="flex flex-col items-center justify-center h-full gap-4">
+                    <ShoppingBag className="h-16 w-16 text-muted-foreground/50" />
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-muted-foreground mb-2">Aucun produit disponible</div>
+                      <div className="text-sm text-muted-foreground">
+                        {searchTerm || selectedCategory !== 'all' 
+                          ? 'Essayez de modifier vos critères de recherche' 
+                          : 'Les produits du marketplace apparaîtront ici'}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

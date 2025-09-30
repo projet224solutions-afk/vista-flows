@@ -135,13 +135,25 @@ export default function Profil() {
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              <Edit className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {profile?.role === 'vendeur' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/vendeur')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                  Retour
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                <Edit className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
