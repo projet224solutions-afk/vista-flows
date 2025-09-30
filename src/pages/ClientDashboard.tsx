@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
 import UserIdDisplay from "@/components/UserIdDisplay";
+import UserProfileCard from "@/components/UserProfileCard";
+import VirtualCardButton from "@/components/VirtualCardButton";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -337,6 +339,7 @@ export default function ClientDashboard() {
                       <h2 className="text-2xl font-bold mb-1">
                         Salut <UserIdDisplay className="inline" showBadge={false} /> ! 👋
                       </h2>
+                      <UserIdDisplay layout="vertical" className="mb-2" />
                       <p className="opacity-90">Interface style Alibaba activée !</p>
                     </div>
                     <div className="text-right">
@@ -347,25 +350,22 @@ export default function ClientDashboard() {
                       </div>
                       <p className="text-sm opacity-80">Solde Wallet</p>
                       <p className="text-2xl font-bold">{formatPrice(walletBalance)}</p>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="mt-2 bg-red-500/80 hover:bg-red-600/80 text-white"
-                        onClick={repareCompteClient}
-                        disabled={isFixingAccount}
-                      >
-                        {isFixingAccount ? (
-                          <>
-                            <AlertTriangle className="w-4 h-4 mr-2 animate-spin" />
-                            Réparation...
-                          </>
-                        ) : (
-                          <>
-                            <Settings className="w-4 h-4 mr-2" />
-                            🔧 Réparer Compte
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="bg-red-500/80 hover:bg-red-600/80 text-white"
+                          onClick={repareCompteClient}
+                          disabled={isFixingAccount}
+                        >
+                          {isFixingAccount ? 'Réparation...' : 'Réparer Compte'}
+                        </Button>
+                        <VirtualCardButton 
+                          size="sm" 
+                          variant="outline" 
+                          className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -383,6 +383,38 @@ export default function ClientDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Profil utilisateur avec ID et wallet */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <UserProfileCard />
+              </div>
+              <div className="lg:col-span-2">
+                {/* Espace pour d'autres informations */}
+                <Card className="h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-green-600" />
+                      Actions Rapides
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <VirtualCardButton className="w-full" />
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Recharger Wallet
+                      </Button>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-600">
+                        💡 Votre ID utilisateur apparaît maintenant sous votre nom dans toute l'interface
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
 
             {/* Statistiques rapides */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
