@@ -31,6 +31,7 @@ const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
 const AdvancedPDGDashboard = lazy(() => import("./pages/AdvancedPDGDashboard"));
+const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 // Removed deprecated PDG agent pages - being refactored
 const PDGTest = lazy(() => import("./pages/PDGTest")); // Test PDG
 const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
@@ -124,6 +125,10 @@ const App = () => (
               <Route
                 path="/pdg-advanced"
                 element={<AdvancedPDGDashboard />}
+              />
+              <Route
+                path="/pdg224solutionssoulbah"
+                element={<PDG224Solutions />}
               />
               {/* PDG routes removed - being refactored */}
               <Route
