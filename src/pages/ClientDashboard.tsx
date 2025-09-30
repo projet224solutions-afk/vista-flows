@@ -27,6 +27,7 @@ import QuickFooter from "@/components/QuickFooter";
 import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
+import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -390,31 +391,31 @@ export default function ClientDashboard() {
                 <UserProfileCard />
               </div>
               <div className="lg:col-span-2">
-                {/* Espace pour d'autres informations */}
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Wallet className="w-5 h-5 text-green-600" />
-                      Actions Rapides
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <VirtualCardButton className="w-full" />
-                      <Button variant="outline" className="w-full">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Recharger Wallet
-                      </Button>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-600">
-                        💡 Votre ID utilisateur apparaît maintenant sous votre nom dans toute l'interface
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <WalletTransactionHistory />
               </div>
             </div>
+
+            {/* Actions rapides */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-purple-600" />
+                  Actions Rapides
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <VirtualCardButton className="w-full" />
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600">
+                      ✅ <strong>Wallet créé automatiquement</strong><br/>
+                      💡 Votre ID apparaît sous votre nom<br/>
+                      🎯 Système 100% opérationnel
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Statistiques rapides */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

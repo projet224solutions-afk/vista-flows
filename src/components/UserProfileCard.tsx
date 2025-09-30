@@ -201,8 +201,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Wallet Info */}
-        {showWalletDetails && userInfo.wallet && (
+        {/* Wallet Info - Toujours affiché */}
+        {showWalletDetails && (
           <div className="bg-white/60 rounded-lg p-4 border border-blue-200">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -210,12 +210,20 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <span className="font-semibold text-gray-800">Wallet</span>
               </div>
               <Badge variant="outline" className="bg-green-100 text-green-700">
-                {userInfo.wallet.status}
+                {userInfo.wallet?.status || 'Création...'}
               </Badge>
             </div>
             <p className="text-2xl font-bold text-green-600">
-              {userInfo.wallet.balance.toLocaleString()} {userInfo.wallet.currency}
+              {userInfo.wallet ? 
+                `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` : 
+                'Initialisation...'
+              }
             </p>
+            {!userInfo.wallet && (
+              <p className="text-xs text-gray-500 mt-1">
+                Wallet en cours de création automatique...
+              </p>
+            )}
           </div>
         )}
 
