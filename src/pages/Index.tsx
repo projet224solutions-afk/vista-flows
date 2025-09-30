@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
-import { 
-  Search, 
-  Grid3X3, 
-  MessageSquare, 
-  Truck, 
+import {
+  Search,
+  Grid3X3,
+  MessageSquare,
+  Truck,
   Users,
   ShoppingBag,
   Store,
@@ -18,6 +18,7 @@ import {
   Star,
   TrendingUp,
   Zap,
+  Crown,
   Shield,
   Globe,
   Clock,
@@ -173,6 +174,32 @@ export default function IndexAlibaba() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* 🚨 TEST ULTRA-BASIQUE - PRIORITÉ ABSOLUE 🚨 */}
+      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 text-center shadow-lg sticky top-0 z-50">
+        <h2 className="text-xl font-bold mb-2">🚨 RIEN NE FONCTIONNE ? TEST D'URGENCE ! 🚨</h2>
+        <div className="space-y-3">
+          <Button
+            onClick={() => navigate('/diagnostic-fonctionnalites')}
+            className="bg-white text-red-600 hover:bg-gray-100 font-bold text-xl px-8 py-3 shadow-lg animate-pulse"
+          >
+            🔍 DIAGNOSTIC DES FONCTIONNALITÉS - TESTEZ ICI ! 🔍
+          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button
+              onClick={() => navigate('/test-ultra-basic')}
+              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
+            >
+              🔥 Test Ultra-Basic
+            </Button>
+            <Button
+              onClick={() => window.open('/test-pur.html', '_blank')}
+              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
+            >
+              🌟 Test HTML Pur
+            </Button>
+          </div>
+        </div>
+      </div>
       {/* Header moderne */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -191,7 +218,7 @@ export default function IndexAlibaba() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {profile ? (
                 <Button onClick={() => navigate(`/${profile.role}`)}>
@@ -215,10 +242,10 @@ export default function IndexAlibaba() {
             <span className="text-yellow-300">Multi-Services</span>
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Découvrez des milliers de produits et services de qualité. 
+            Découvrez des milliers de produits et services de qualité.
             Achetez, vendez et connectez-vous avec notre communauté.
           </p>
-          
+
           {/* Barre de recherche */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex bg-white rounded-full p-2 shadow-lg">
@@ -229,7 +256,7 @@ export default function IndexAlibaba() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:ring-0"
               />
-              <Button 
+              <Button
                 className="bg-purple-600 hover:bg-purple-700 rounded-full px-8"
                 onClick={() => navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`)}
               >
@@ -260,6 +287,98 @@ export default function IndexAlibaba() {
         </div>
       </section>
 
+      {/* Test Interface Client Alibaba */}
+      <section className="py-8 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold mb-4">🚀 TESTS FRONT-END & DIAGNOSTICS</h2>
+          <p className="mb-6">Tests pour identifier les problèmes front-end - Testez maintenant !</p>
+          <div className="flex justify-center gap-4 mb-6 flex-wrap">
+            <Button
+              onClick={() => navigate('/client-simple')}
+              className="bg-green-500 text-white hover:bg-green-600 font-bold text-lg px-6 py-3 shadow-lg"
+              size="lg"
+            >
+              ✅ CLIENT SIMPLE
+            </Button>
+            <Button
+              onClick={() => navigate('/vendeur-simple')}
+              className="bg-orange-500 text-white hover:bg-orange-600 font-bold text-lg px-6 py-3 shadow-lg"
+              size="lg"
+            >
+              🛒 VENDEUR SIMPLE
+            </Button>
+            <Button
+              onClick={() => navigate('/test-client')}
+              className="bg-white text-blue-600 hover:bg-gray-100 font-bold text-lg px-6 py-3 shadow-lg"
+              size="lg"
+            >
+              🧪 DIAGNOSTIC
+            </Button>
+            <Button
+              onClick={() => navigate('/client')}
+              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold text-lg px-6 py-3 shadow-lg"
+              size="lg"
+            >
+              🛒 CLIENT COMPLEXE
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Accès PDG Mode Test */}
+      <section className="py-8 bg-gradient-to-r from-red-500 to-orange-500 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold mb-4">🧪 MODE TEST ACTIVÉ</h2>
+          <p className="mb-6">Authentification désactivée - Accès libre à toutes les interfaces PDG</p>
+          <div className="flex justify-center gap-4 flex-wrap">
+            <Button
+              onClick={() => navigate('/pdg-advanced')}
+              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
+              size="lg"
+            >
+              <Crown className="w-5 h-5 mr-2" />
+              Interface PDG Avancée
+            </Button>
+            <Button
+              onClick={() => navigate('/pdg')}
+              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
+              size="lg"
+            >
+              <Crown className="w-5 h-5 mr-2" />
+              Interface PDG Standard
+            </Button>
+            <Button
+              onClick={() => navigate('/pdg-test')}
+              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold"
+              size="lg"
+            >
+              🔧 Diagnostic PDG
+            </Button>
+            <Button
+              onClick={() => navigate('/pdg-simple')}
+              className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold"
+              size="lg"
+            >
+              ✅ PDG Simple (Test)
+            </Button>
+            <Button
+              onClick={() => navigate('/pdg-basic')}
+              className="bg-gradient-to-r from-emerald-400 to-green-500 text-white hover:from-emerald-500 hover:to-green-600 font-bold shadow-lg"
+              size="lg"
+            >
+              🎯 PDG BASIC (GARANTI)
+            </Button>
+            <Button
+              onClick={() => navigate('/client')}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 font-bold shadow-lg"
+              size="lg"
+            >
+              🚀 INTERFACE CLIENT ALIBABA
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Nos Services - Section principale comme dans l'image */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
@@ -274,7 +393,7 @@ export default function IndexAlibaba() {
             {mainServices.map((service) => {
               const Icon = service.icon;
               return (
-                <Card 
+                <Card
                   key={service.id}
                   className="cursor-pointer hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50"
                   onClick={() => handleServiceClick(service)}
@@ -305,8 +424,8 @@ export default function IndexAlibaba() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
             <h2 className="text-3xl font-bold text-gray-800">Catégories populaires</h2>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate('/marketplace')}
               className="hidden md:flex"
             >
@@ -316,14 +435,14 @@ export default function IndexAlibaba() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {popularCategories.map((category) => (
-              <Card 
+              <Card
                 key={category.name}
                 className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
                 onClick={() => handleCategoryClick(category.name)}
               >
                 <div className="relative">
-                  <img 
-                    src={category.image} 
+                  <img
+                    src={category.image}
                     alt={category.name}
                     className="w-full h-32 object-cover"
                   />
@@ -354,8 +473,8 @@ export default function IndexAlibaba() {
               <h2 className="text-3xl font-bold text-gray-800 mb-2">Produits tendance</h2>
               <p className="text-gray-600">Les produits les plus populaires du moment</p>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate('/marketplace')}
               className="hidden md:flex"
             >
@@ -365,18 +484,18 @@ export default function IndexAlibaba() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {trendingProducts.map((product) => (
-              <Card 
+              <Card
                 key={product.id}
                 className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
                 onClick={() => handleProductClick(product.id)}
               >
                 <div className="relative">
-                  <img 
-                    src={product.image} 
+                  <img
+                    src={product.image}
                     alt={product.name}
                     className="w-full h-48 object-cover"
                   />
-                  <Badge 
+                  <Badge
                     className="absolute top-2 left-2 bg-red-500 text-white"
                   >
                     {product.badge}
@@ -451,7 +570,7 @@ export default function IndexAlibaba() {
 
       {/* Footer de navigation */}
       <QuickFooter />
-      
+
       {/* Bouton PDG */}
       <div className="fixed bottom-24 right-4 z-50">
         <PDGAuthButton />

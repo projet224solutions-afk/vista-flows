@@ -17,13 +17,13 @@ export default function SupportTicketsSimple() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
+            <div className="text-center py-8">
             <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Gestion des Tickets</h3>
-            <p className="text-muted-foreground">
+              <p className="text-muted-foreground">
               Module en cours de développement. Les fonctionnalités seront disponibles prochainement.
-            </p>
-          </div>
+              </p>
+            </div>
         </CardContent>
       </Card>
     </div>

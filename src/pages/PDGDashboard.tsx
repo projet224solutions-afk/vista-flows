@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Crown, 
-  Users, 
-  TrendingUp, 
-  ShoppingCart, 
-  Package, 
+import {
+  Crown,
+  Users,
+  TrendingUp,
+  ShoppingCart,
+  Package,
   DollarSign,
   FileText,
   Download,
@@ -96,7 +96,7 @@ export default function PDGDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   // États pour les données
   const [stats, setStats] = useState<PDGStats>({
     totalUsers: 15847,
@@ -121,7 +121,7 @@ export default function PDGDashboard() {
       revenue: 2500000
     },
     {
-      id: "2", 
+      id: "2",
       name: "Fatou Sow",
       email: "fatou@example.com",
       role: "livreur",
@@ -133,7 +133,7 @@ export default function PDGDashboard() {
     {
       id: "3",
       name: "Ibrahim Kone",
-      email: "ibrahim@example.com", 
+      email: "ibrahim@example.com",
       role: "taxi",
       status: "suspended",
       joinDate: "2024-02-10",
@@ -190,31 +190,15 @@ export default function PDGDashboard() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Vérification des privilèges PDG
+  // AUTHENTIFICATION TEMPORAIREMENT DÉSACTIVÉE POUR TESTS
   useEffect(() => {
-    const pdgAuth = sessionStorage.getItem("pdg_auth");
-    if (!pdgAuth) {
-      toast({
-        title: "Accès refusé",
-        description: "Authentification PDG requise",
-        variant: "destructive"
-      });
-      navigate("/");
-      return;
-    }
-
-    const authData = JSON.parse(pdgAuth);
-    // Vérifier si l'authentification n'a pas expiré (24h)
-    if (Date.now() - authData.timestamp > 24 * 60 * 60 * 1000) {
-      sessionStorage.removeItem("pdg_auth");
-      toast({
-        title: "Session expirée",
-        description: "Veuillez vous reconnecter",
-        variant: "destructive"
-      });
-      navigate("/");
-    }
-  }, [navigate, toast]);
+    console.log("🧪 PDG Dashboard en mode test - Authentification désactivée");
+    toast({
+      title: "🧪 Mode Test Activé",
+      description: "Interface PDG accessible sans authentification",
+      variant: "default"
+    });
+  }, []);
 
   // Fonctions de gestion des utilisateurs
   const handleUserAction = (userId: string, action: 'suspend' | 'activate' | 'delete') => {
@@ -242,8 +226,8 @@ export default function PDGDashboard() {
   const handleProductAction = (productId: string, action: 'block' | 'approve') => {
     setProducts(prev => prev.map(product => {
       if (product.id === productId) {
-        return { 
-          ...product, 
+        return {
+          ...product,
           status: action === 'block' ? 'blocked' as const : 'active' as const,
           compliance: action === 'block' ? 'non_compliant' as const : 'compliant' as const
         };
@@ -286,7 +270,7 @@ export default function PDGDashboard() {
       title: `Export ${format.toUpperCase()}`,
       description: "Génération du rapport en cours...",
     });
-    
+
     // Simulation de l'export
     setTimeout(() => {
       toast({
@@ -346,8 +330,8 @@ export default function PDGDashboard() {
             <Badge variant="outline" className="bg-yellow-400 text-black border-yellow-400">
               ACCÈS MAXIMUM
             </Badge>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 sessionStorage.removeItem("pdg_auth");
                 navigate("/");
@@ -526,24 +510,24 @@ export default function PDGDashboard() {
                         <TableCell>
                           <div className="flex gap-2">
                             {user.status === 'suspended' ? (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleUserAction(user.id, 'activate')}
                               >
                                 <Unlock className="w-4 h-4" />
                               </Button>
                             ) : (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleUserAction(user.id, 'suspend')}
                               >
                                 <Lock className="w-4 h-4" />
                               </Button>
                             )}
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => setSelectedUser(user)}
                             >
@@ -598,16 +582,16 @@ export default function PDGDashboard() {
                         <TableCell>
                           <div className="flex gap-2">
                             {product.status === 'blocked' ? (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleProductAction(product.id, 'approve')}
                               >
                                 <CheckCircle className="w-4 h-4" />
                               </Button>
                             ) : (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleProductAction(product.id, 'block')}
                               >
@@ -711,7 +695,7 @@ export default function PDGDashboard() {
                   <p className="text-sm text-muted-foreground">
                     Dernière mise à jour: 15 septembre 2024
                   </p>
-                  <Button 
+                  <Button
                     onClick={handleSystemUpdate}
                     disabled={isLoading}
                     className="w-full"
@@ -745,7 +729,7 @@ export default function PDGDashboard() {
                   <p className="text-sm text-muted-foreground">
                     Sauvegarde du: 10 septembre 2024
                   </p>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={handleSystemRollback}
                     disabled={isLoading}
@@ -801,16 +785,16 @@ export default function PDGDashboard() {
                   <div className="space-y-4">
                     <h3 className="font-semibold">Rapports Financiers</h3>
                     <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full justify-start"
                         onClick={() => handleExportData('pdf')}
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Rapport mensuel PDF
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full justify-start"
                         onClick={() => handleExportData('excel')}
                       >
@@ -819,20 +803,20 @@ export default function PDGDashboard() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <h3 className="font-semibold">Rapports Utilisateurs</h3>
                     <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full justify-start"
                         onClick={() => handleExportData('pdf')}
                       >
                         <Users className="w-4 h-4 mr-2" />
                         Liste utilisateurs PDF
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full justify-start"
                         onClick={() => handleExportData('excel')}
                       >

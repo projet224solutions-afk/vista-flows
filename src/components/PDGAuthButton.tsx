@@ -43,19 +43,26 @@ export const PDGAuthButton = () => {
         setIsLoading(true);
         setError("");
 
+        // Debug des valeurs saisies
+        console.log("🔍 DEBUG AUTH PDG:", {
+            userCode: `'${userCode}'`,
+            accessCode: `'${accessCode}'`,
+            credential: PDG_CREDENTIALS[userCode as keyof typeof PDG_CREDENTIALS]
+        });
+
         // Simulation d'une vérification sécurisée
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         const credential = PDG_CREDENTIALS[userCode as keyof typeof PDG_CREDENTIALS];
 
         if (!credential) {
-            setError("Code utilisateur invalide");
+            setError(`Code utilisateur invalide: '${userCode}'`);
             setIsLoading(false);
             return;
         }
 
         if (credential.code !== accessCode) {
-            setError("Code d'accès incorrect");
+            setError(`Code d'accès incorrect. Attendu: '${credential.code}', Reçu: '${accessCode}'`);
             setIsLoading(false);
             return;
         }

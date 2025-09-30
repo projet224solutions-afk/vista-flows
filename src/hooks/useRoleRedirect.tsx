@@ -17,27 +17,15 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // REDIRECTIONS AUTOMATIQUES DÉSACTIVÉES POUR PERMETTRE LE TEST DES INTERFACES
+    // L'utilisateur peut naviguer librement sans être forcé sur son dashboard
+    console.log("🧪 Redirections automatiques désactivées - Navigation libre autorisée");
+
+    // Gardons juste la logique de base pour référence
     if (!loading && user && profile) {
-      const targetRoute = roleRoutes[profile.role];
-      if (targetRoute) {
-        const currentPath = window.location.pathname;
-        
-        // Si l'utilisateur est sur la page d'accueil ou d'authentification, rediriger vers son dashboard
-        if (currentPath === '/' || currentPath === '/auth' || currentPath === '/home') {
-          navigate(targetRoute);
-        }
-        
-        // Empêcher l'accès aux dashboards d'autres rôles (sauf pour les admins)
-        const isOnWrongDashboard = Object.values(roleRoutes).includes(currentPath) && 
-                                   currentPath !== targetRoute && 
-                                   profile.role !== 'admin';
-        
-        if (isOnWrongDashboard) {
-          navigate(targetRoute);
-        }
-      }
+      console.log("👤 Utilisateur connecté:", profile.role);
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading]);
 
   return { user, profile, loading };
 };

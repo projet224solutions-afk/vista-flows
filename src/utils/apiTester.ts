@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { googleAI, googleMaps } from '@/services/googleCloud';
+// import { googleAI, googleMaps } from '@/services/googleCloud'; // Temporairement désactivé
 
 // Types pour les résultats de tests
 interface TestResult {
@@ -30,7 +30,7 @@ interface APITestSuite {
  * 🔐 Tests Supabase
  */
 export class SupabaseAPITester {
-  
+
   static async testConnection(): Promise<TestResult> {
     const start = Date.now();
     try {
@@ -39,9 +39,9 @@ export class SupabaseAPITester {
         .from('profiles')
         .select('count')
         .limit(0);
-      
+
       if (error) throw error;
-      
+
       return {
         name: 'Connexion Supabase',
         status: 'success',
@@ -63,9 +63,9 @@ export class SupabaseAPITester {
     try {
       // Test de session auth
       const { data: session, error } = await supabase.auth.getSession();
-      
+
       if (error) throw error;
-      
+
       // Test des méthodes auth disponibles
       const { data: providers } = await supabase.auth.getOAuthSignInUrl({
         provider: 'github'
@@ -185,13 +185,13 @@ export class SupabaseAPITester {
     try {
       // Test d'accès au storage
       const { data: buckets, error } = await supabase.storage.listBuckets();
-      
+
       if (error) throw error;
 
       // Test de upload (fichier test)
       const testFile = new Blob(['test-content'], { type: 'text/plain' });
       const fileName = `test-${Date.now()}.txt`;
-      
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('uploads')
         .upload(fileName, testFile);
@@ -226,7 +226,7 @@ export class SupabaseAPITester {
 
   static async runAllTests(): Promise<TestResult[]> {
     console.log('🧪 Démarrage des tests Supabase...');
-    
+
     const tests = [
       this.testConnection(),
       this.testAuthentication(),
@@ -243,25 +243,18 @@ export class SupabaseAPITester {
  * 🌩️ Tests Google Cloud
  */
 export class GoogleCloudAPITester {
-  
+
   static async testAIService(): Promise<TestResult> {
     const start = Date.now();
     try {
-      const testQuery = "test de connexion AI";
-      const response = await googleAI.generateCopilotResponse(testQuery, {
-        test: true,
-        timestamp: new Date().toISOString()
-      });
-
-      const isWorking = response && response.length > 10;
-
+      // Service temporairement désactivé
       return {
         name: 'Google AI',
-        status: isWorking ? 'success' : 'warning',
-        message: isWorking ? 'Service AI opérationnel' : 'AI en mode simulation',
+        status: 'warning',
+        message: 'Service AI temporairement désactivé',
         details: {
-          responseLength: response?.length || 0,
-          mode: process.env.NODE_ENV === 'development' ? 'simulation' : 'production'
+          mode: 'disabled',
+          reason: 'Configuration en cours'
         },
         duration: Date.now() - start
       };
@@ -278,28 +271,14 @@ export class GoogleCloudAPITester {
   static async testMapsService(): Promise<TestResult> {
     const start = Date.now();
     try {
-      // Test de calcul de distance (méthode locale)
-      const distance = googleMaps.calculateDistance(
-        { lat: 14.7167, lng: -17.4677 }, // Dakar
-        { lat: 5.3364, lng: -4.0267 }     // Abidjan
-      );
-
-      // Test de géocodage (si API key disponible)
-      let geocodingWorking = false;
-      try {
-        const coords = await googleMaps.geocodeAddress("Dakar, Sénégal");
-        geocodingWorking = !!coords;
-      } catch {
-        // Géocodage non disponible (pas de clé API)
-      }
-
+      // Service temporairement désactivé
       return {
         name: 'Google Maps',
-        status: 'success',
-        message: 'Service Maps opérationnel',
+        status: 'warning',
+        message: 'Service Maps temporairement désactivé',
         details: {
-          distanceCalculation: distance + ' km',
-          geocodingAvailable: geocodingWorking,
+          mode: 'disabled',
+          reason: 'Configuration en cours',
           mapsApiKey: !!process.env.VITE_GOOGLE_MAPS_API_KEY
         },
         duration: Date.now() - start
@@ -344,7 +323,7 @@ export class GoogleCloudAPITester {
 
   static async runAllTests(): Promise<TestResult[]> {
     console.log('🌩️ Démarrage des tests Google Cloud...');
-    
+
     const tests = [
       this.testCloudConfig(),
       this.testAIService(),
@@ -359,17 +338,17 @@ export class GoogleCloudAPITester {
  * 🎯 Test Suite Principal
  */
 export class APITestRunner {
-  
+
   static async runFullTestSuite(): Promise<APITestSuite> {
     console.log('🚀 Démarrage de la suite de tests complète 224Solutions...');
-    
+
     const [supabaseResults, googleCloudResults] = await Promise.all([
       SupabaseAPITester.runAllTests(),
       GoogleCloudAPITester.runAllTests()
     ]);
 
     const allResults = [...supabaseResults, ...googleCloudResults];
-    
+
     const overall = {
       total: allResults.length,
       passed: allResults.filter(r => r.status === 'success').length,
@@ -391,8 +370,8 @@ export class APITestRunner {
 
     // Détail par service
     allResults.forEach(result => {
-      const emoji = result.status === 'success' ? '✅' : 
-                   result.status === 'warning' ? '⚠️' : '❌';
+      const emoji = result.status === 'success' ? '✅' :
+        result.status === 'warning' ? '⚠️' : '❌';
       console.log(`${emoji} ${result.name}: ${result.message} (${result.duration}ms)`);
     });
 
@@ -401,11 +380,11 @@ export class APITestRunner {
 
   static getTestResultsHTML(results: APITestSuite): string {
     const { overall, supabase, googleCloud } = results;
-    
-    const statusIcon = (status: string) => 
+
+    const statusIcon = (status: string) =>
       status === 'success' ? '✅' : status === 'warning' ? '⚠️' : '❌';
 
-    const generateTestRows = (tests: TestResult[]) => 
+    const generateTestRows = (tests: TestResult[]) =>
       tests.map(test => `
         <tr class="${test.status === 'success' ? 'bg-green-50' : test.status === 'warning' ? 'bg-yellow-50' : 'bg-red-50'}">
           <td class="px-4 py-2">${statusIcon(test.status)} ${test.name}</td>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 TEST PUR HTML/JS - 224SOLUTIONS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .alert {
+            background: #ff4444;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .test-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .status {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #2196F3;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        #compteur {
+            font-size: 48px;
+            color: #ff6b6b;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .diagnostic {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="alert">
+            🚨 TEST PUR HTML/JAVASCRIPT - AUCUNE DÉPENDANCE 🚨
+        </div>
+
+        <h1 style="text-align: center; color: #333;">
+            🔥 TEST D'URGENCE - 224SOLUTIONS 🔥
+        </h1>
+
+        <div class="diagnostic">
+            <h2>🔍 DIAGNOSTIC INSTANTANÉ :</h2>
+            <ul>
+                <li><strong>✅ HTML fonctionne</strong> - Cette page s'affiche</li>
+                <li><strong>✅ CSS fonctionne</strong> - Vous voyez les couleurs et styles</li>
+                <li><strong>❓ JavaScript fonctionne</strong> - À tester avec les boutons</li>
+                <li><strong>❓ Événements onClick fonctionnent</strong> - À tester maintenant</li>
+            </ul>
+        </div>
+
+        <div id="compteur">
+            Clics : <span id="nombre-clics">0</span>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="test-button" onclick="testerClic()">
+                🧪 TEST CLIC SIMPLE
+            </button>
+
+            <button class="test-button" onclick="testerAlert()">
+                📢 TEST ALERT
+            </button>
+
+            <button class="test-button" onclick="testerConsole()">
+                📱 TEST CONSOLE
+            </button>
+
+            <button class="test-button" onclick="retourAccueil()">
+                🏠 RETOUR REACT
+            </button>
+        </div>
+
+        <div id="status" class="status">
+            <h3>📊 État actuel :</h3>
+            <p id="derniere-action">Aucune action effectuée</p>
+            <p id="heure">Page chargée à : <span id="heure-chargement"></span></p>
+        </div>
+
+        <div class="diagnostic">
+            <h2>⚠️ SI LES BOUTONS NE MARCHENT PAS :</h2>
+            <ol>
+                <li><strong>JavaScript est désactivé</strong> dans votre navigateur</li>
+                <li><strong>Extension bloque JavaScript</strong> (AdBlock, etc.)</li>
+                <li><strong>Navigateur trop ancien</strong></li>
+                <li><strong>Problème de sécurité/firewall</strong></li>
+            </ol>
+
+            <h3>🔧 SOLUTIONS :</h3>
+            <ul>
+                <li>Ouvrez F12 → Console → Cherchez des erreurs rouges</li>
+                <li>Désactivez temporairement vos extensions</li>
+                <li>Testez dans un autre navigateur (Chrome, Firefox)</li>
+                <li>Testez en navigation privée</li>
+            </ul>
+        </div>
+
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin-top: 30px;">
+            <h3>🎯 INSTRUCTIONS PRÉCISES :</h3>
+            <ol style="font-size: 18px; line-height: 1.6;">
+                <li><strong>Cliquez sur "TEST CLIC SIMPLE"</strong> → Le compteur doit augmenter</li>
+                <li><strong>Cliquez sur "TEST ALERT"</strong> → Une popup doit apparaître</li>
+                <li><strong>Cliquez sur "TEST CONSOLE"</strong> → Ouvrez F12 pour voir les logs</li>
+                <li><strong>Dites-moi EXACTEMENT ce qui se passe !</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let compteur = 0;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('heure-chargement').textContent = new Date().toLocaleTimeString();
+            console.log('🔍 PAGE HTML PURE CHARGÉE À:', new Date());
+        });
+
+        function testerClic() {
+            compteur++;
+            document.getElementById('nombre-clics').textContent = compteur;
+            document.getElementById('derniere-action').textContent = `Clic numéro ${compteur} à ${new Date().toLocaleTimeString()}`;
+
+            // Changement de couleur pour feedback visuel
+            const element = document.getElementById('compteur');
+            element.style.color = compteur % 2 === 0 ? '#ff6b6b' : '#4ecdc4';
+
+            console.log('✅ CLIC RÉUSSI! Compteur:', compteur);
+
+            // Success feedback
+            const status = document.getElementById('status');
+            status.className = 'status success';
+
+            if (compteur === 1) {
+                alert('🎉 FÉLICITATIONS ! JavaScript fonctionne parfaitement !');
+            }
+        }
+
+        function testerAlert() {
+            const message = `🔥 TEST ALERT RÉUSSI !\n\nCompteur actuel: ${compteur}\nHeure: ${new Date().toLocaleTimeString()}\n\nJavaScript fonctionne !`;
+            alert(message);
+            console.log('✅ TEST ALERT RÉUSSI');
+        }
+
+        function testerConsole() {
+            console.log('🔍 TEST CONSOLE - DÉBUT');
+            console.log('📊 État actuel:', {
+                compteur: compteur,
+                timestamp: new Date(),
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            });
+            console.log('✅ TEST CONSOLE - FIN');
+
+            alert('Ouvrez la Console (F12 → Console) pour voir les logs !');
+        }
+
+        function retourAccueil() {
+            if (confirm('Retourner à l\'interface React ?')) {
+                window.location.href = '/';
+            }
+        }
+
+        // Test automatique au chargement
+        setTimeout(() => {
+            console.log('🤖 TEST AUTOMATIQUE: La page fonctionne depuis 3 secondes');
+        }, 3000);
+    </script>
+</body>
+
+</html>

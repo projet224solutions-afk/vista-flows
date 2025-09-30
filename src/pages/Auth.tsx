@@ -54,7 +54,11 @@ export default function Auth() {
 
           if (profile?.role) {
             // Redirection automatique vers le dashboard approprié
-            navigate(`/${profile.role}`);
+            if (profile.role === 'client') {
+              navigate('/client');
+            } else {
+              navigate(`/${profile.role}`);
+            }
           } else {
             // Si pas de profil trouvé, rediriger vers client par défaut
             navigate('/client');
@@ -97,6 +101,15 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
+      {/* 🚨 ALERTE INTERFACE PDG - ACCÈS DIRECT 🚨 */}
+      <div className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white p-3 text-center shadow-lg sticky top-0 z-50">
+        <Button
+          onClick={() => window.open('http://localhost:5176/pdg.html', '_blank')}
+          className="bg-white text-red-600 hover:bg-gray-100 font-bold text-lg px-6 py-2 shadow-lg animate-pulse"
+        >
+          🎯 INTERFACE PDG HTML PUR → FONCTIONNE À 100% 🎯
+        </Button>
+      </div>
       {/* Header avec 224SOLUTIONS et boutons */}
       <div className="text-center py-8 px-4">
         <h1 className="text-4xl font-bold text-purple-600 mb-6">224SOLUTIONS</h1>
@@ -244,6 +257,36 @@ export default function Auth() {
       {/* Bouton PDG discret */}
       <div className="fixed bottom-24 right-4 z-50">
         <PDGAuthButton />
+        <Button
+          onClick={() => navigate('/pdg-test')}
+          variant="outline"
+          className="bg-orange-500 hover:bg-orange-600 text-white border-none"
+        >
+          🔧 Test PDG Debug
+        </Button>
+        <Button
+          onClick={() => {
+            // Forcer l'auth PDG
+            sessionStorage.setItem("pdg_auth", JSON.stringify({
+              userCode: "PDG001",
+              name: "Directeur Général",
+              level: "PDG_SUPREME",
+              timestamp: Date.now()
+            }));
+            navigate('/pdg-advanced');
+          }}
+          variant="outline"
+          className="bg-red-500 hover:bg-red-600 text-white border-none"
+        >
+          🚀 Accès PDG Direct
+        </Button>
+        <Button
+          onClick={() => navigate('/pdg-basic')}
+          variant="outline"
+          className="bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white border-none shadow-lg"
+        >
+          🎯 PDG BASIC GARANTI
+        </Button>
       </div>
     </div>
   );

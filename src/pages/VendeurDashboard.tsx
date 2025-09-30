@@ -1,16 +1,17 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Package, TrendingUp, ShoppingCart, Star, Eye, Plus, Users, 
+import {
+  Package, TrendingUp, ShoppingCart, Star, Eye, Plus, Users,
   BarChart3, CreditCard, Truck, MessageSquare, Megaphone,
   FileText, Settings, AlertTriangle, DollarSign, Target,
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
-  Warehouse, UserCheck, ArrowRightLeft, Send
+  Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -30,12 +31,15 @@ import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
-import { WalletDashboard } from "@/components/wallet/WalletDashboard";
-import { TransactionSystem } from "@/components/wallet/TransactionSystem";
+import WalletDashboard from "@/components/wallet/WalletDashboard";
+import UserWalletCard from "@/components/wallet/UserWalletCard";
+import VirtualCardDisplay from "@/components/wallet/VirtualCardDisplay";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { useWallet } from "@/hooks/useWallet";
+import { WalletTransactionService } from "@/services/walletTransactionService";
+import VirtualCardService from "@/services/virtualCardService";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { debugSupabaseConnection, fixVendorProfile, testProductCreation } from "@/utils/debugSupabase";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -44,7 +48,38 @@ export default function VendeurDashboard() {
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   const { userInfo, loading: userInfoLoading } = useUserInfo();
-  const { wallet, loading: walletLoading } = useWallet();
+  const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [virtualCard, setVirtualCard] = useState(null);
+
+  // Charger les données wallet et carte virtuelle
+  useEffect(() => {
+    const loadWalletData = async () => {
+      if (!user?.id) return;
+
+      setWalletLoading(true);
+      try {
+        const [walletData, cardData] = await Promise.all([
+          WalletTransactionService.getUserWallet(user.id),
+          VirtualCardService.getUserCard(user.id)
+        ]);
+
+        setWallet(walletData);
+        setVirtualCard(cardData);
+      } catch (error) {
+        console.error('Erreur chargement wallet vendeur:', error);
+        toast({
+          title: "Erreur Wallet",
+          description: "Impossible de charger vos données financières",
+          variant: "destructive"
+        });
+      } finally {
+        setWalletLoading(false);
+      }
+    };
+
+    loadWalletData();
+  }, [user?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -53,33 +88,33 @@ export default function VendeurDashboard() {
 
   // Données du tableau de bord - utilise les données réelles si disponibles
   const mainStats = [
-    { 
-      label: "Chiffre d'affaires", 
-      value: stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA", 
-      change: "+12%", 
-      icon: DollarSign, 
-      color: "text-green-600" 
+    {
+      label: "Chiffre d'affaires",
+      value: stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA",
+      change: "+12%",
+      icon: DollarSign,
+      color: "text-green-600"
     },
-    { 
-      label: "Commandes ce mois", 
-      value: stats ? stats.orders_count.toString() : "156", 
-      change: "+8%", 
-      icon: ShoppingCart, 
-      color: "text-blue-600" 
+    {
+      label: "Commandes ce mois",
+      value: stats ? stats.orders_count.toString() : "156",
+      change: "+8%",
+      icon: ShoppingCart,
+      color: "text-blue-600"
     },
-    { 
-      label: "Clients actifs", 
-      value: stats ? stats.customers_count.toString() : "89", 
-      change: "+15%", 
-      icon: Users, 
-      color: "text-purple-600" 
+    {
+      label: "Clients actifs",
+      value: stats ? stats.customers_count.toString() : "89",
+      change: "+15%",
+      icon: Users,
+      color: "text-purple-600"
     },
-    { 
-      label: "Taux conversion", 
-      value: "3.2%", 
-      change: "+0.5%", 
-      icon: Target, 
-      color: "text-orange-600" 
+    {
+      label: "Taux conversion",
+      value: "3.2%",
+      change: "+0.5%",
+      icon: Target,
+      color: "text-orange-600"
     }
   ];
 
@@ -163,55 +198,85 @@ export default function VendeurDashboard() {
   ];
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-vendeur-accent via-background to-accent">
-        {/* Header Professionnel Style Odoo */}
-        <header className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-elegant">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Header Ultra-Professionnel */}
+      <header className="bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50 shadow-lg">
+        <div className="px-8 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-vendeur-gradient rounded-xl flex items-center justify-center shadow-glow">
-                    <Activity className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-xl">
+                  <Activity className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+                    224SOLUTIONS
+                  </h1>
+                  <p className="text-base text-gray-600 flex items-center gap-3 font-medium">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    {profile?.first_name || user?.email?.split('@')[0]} • Espace Vendeur Pro
+                    {userInfo && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-mono font-bold">
+                        ID: {userInfo.custom_id}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {/* Informations Wallet Ultra-Professionnelles */}
+              {wallet && !walletLoading && (
+                <div className="hidden lg:flex items-center gap-4 ml-8">
+                  {/* Solde Wallet Premium */}
+                  <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-blue-700">{wallet.balance.toLocaleString()} {wallet.currency}</div>
+                        <div className="text-xs text-blue-600 font-medium">Solde Disponible</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Statut Carte Virtuelle Premium */}
+                  {virtualCard && (
+                    <div className="px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200/50 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
+                        <div>
+                          <div className="text-sm font-bold text-emerald-800">Carte Active</div>
+                          <div className="text-xs text-emerald-600 font-mono">****{virtualCard.card_number.slice(-4)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Message Premium si pas de wallet */}
+              {!wallet && !walletLoading && (
+                <div className="hidden lg:flex items-center gap-3 ml-8 px-5 py-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50 shadow-sm">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold bg-vendeur-gradient bg-clip-text text-transparent">
-                      224SOLUTIONS Commerce Pro
-                    </h1>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="w-2 h-2 bg-vendeur-secondary rounded-full"></span>
-                      {profile?.first_name || user?.email?.split('@')[0]} • Dashboard Vendeur
-                      {userInfo && (
-                        <span className="text-xs bg-primary/10 px-2 py-1 rounded-full font-mono">
-                          ID: {userInfo.custom_id}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              {/* Informations Wallet dans l'en-tête */}
-              {wallet && !walletLoading && (
-                <div className="hidden md:flex items-center gap-4 ml-6 px-4 py-2 bg-vendeur/10 rounded-lg border">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-vendeur" />
-                    <div className="text-sm">
-                      <div className="font-medium">{wallet.balance.toLocaleString()} {wallet.currency}</div>
-                      <div className="text-xs text-muted-foreground">Solde disponible</div>
-                    </div>
+                    <div className="text-sm font-bold text-amber-800">Configuration Requise</div>
+                    <div className="text-xs text-amber-600">Wallet en cours de création...</div>
                   </div>
                 </div>
               )}
-              </div>
-            <div className="flex items-center gap-3">
-              <Button size="sm" variant="outline" className="hidden lg:flex hover:shadow-glow transition-all duration-300" onClick={() => {
-                // Focus on search inputs in active tab
+            </div>
+            <div className="flex items-center gap-4">
+              <Button size="lg" variant="outline" className="hidden xl:flex bg-white/80 hover:bg-white border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300" onClick={() => {
                 const activeSearchInput = document.querySelector('input[placeholder*="Rechercher"]') as HTMLInputElement;
                 activeSearchInput?.focus();
               }}>
-                <Search className="w-4 h-4 mr-2" />
-                Recherche globale
+                <Search className="w-4 h-4 mr-2 text-gray-600" />
+                <span className="text-gray-700 font-medium">Recherche globale</span>
               </Button>
-              <Button size="sm" variant="outline" className="relative hover:shadow-glow transition-all duration-300" onClick={() => {
-                // Show notifications/alerts
+
+              <Button size="lg" variant="outline" className="relative bg-white/80 hover:bg-white border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300" onClick={() => {
                 if (urgentAlerts.length > 0) {
                   urgentAlerts.forEach(alert => {
                     toast({
@@ -222,15 +287,15 @@ export default function VendeurDashboard() {
                   });
                 }
               }}>
-                <Bell className="w-4 h-4" />
+                <Bell className="w-4 h-4 text-gray-600" />
                 {urgentAlerts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white font-bold animate-pulse">
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full text-xs flex items-center justify-center text-white font-bold animate-bounce shadow-lg">
                     {urgentAlerts.length}
                   </span>
                 )}
               </Button>
-              <Button size="sm" className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300" onClick={() => {
-                // Switch to products tab and trigger new product dialog
+
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold px-6 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => {
                 const productsTab = document.querySelector('[value="products"]') as HTMLElement;
                 productsTab?.click();
                 setTimeout(() => {
@@ -241,7 +306,8 @@ export default function VendeurDashboard() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau Produit
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
+
+              <Button size="lg" variant="ghost" onClick={handleSignOut} className="hover:bg-red-50 hover:text-red-600 text-gray-600 transition-all duration-300">
                 <Settings className="w-4 h-4" />
               </Button>
             </div>
@@ -254,14 +320,12 @@ export default function VendeurDashboard() {
         <section className="px-4 py-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {urgentAlerts.map((alert, index) => (
-              <Card key={index} className={`border-l-4 ${
-                alert.priority === 'high' ? 'border-l-red-500' : 'border-l-orange-500'
-              }`}>
+              <Card key={index} className={`border-l-4 ${alert.priority === 'high' ? 'border-l-red-500' : 'border-l-orange-500'
+                }`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className={`w-5 h-5 ${
-                      alert.priority === 'high' ? 'text-red-500' : 'text-orange-500'
-                    }`} />
+                    <AlertTriangle className={`w-5 h-5 ${alert.priority === 'high' ? 'text-red-500' : 'text-orange-500'
+                      }`} />
                     <p className="text-sm font-medium">{alert.message}</p>
                   </div>
                 </CardContent>
@@ -271,37 +335,48 @@ export default function VendeurDashboard() {
         </section>
       )}
 
-      {/* Statistiques principales - Style Odoo Professionnel */}
-      <section className="px-6 py-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-foreground mb-1">Performance en Temps Réel</h2>
-          <p className="text-sm text-muted-foreground">Indicateurs clés de performance de votre entreprise</p>
+      {/* Statistiques Ultra-Professionnelles */}
+      <section className="px-8 py-8">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Tableau de Bord Exécutif</h2>
+          <p className="text-gray-600 text-lg">Indicateurs clés de performance en temps réel</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {mainStats.map((stat, index) => {
             const Icon = stat.icon;
+            const colors = [
+              'from-blue-500 to-blue-600',
+              'from-emerald-500 to-emerald-600',
+              'from-purple-500 to-purple-600',
+              'from-orange-500 to-orange-600'
+            ];
+            const bgColors = [
+              'from-blue-50 to-blue-100',
+              'from-emerald-50 to-emerald-100',
+              'from-purple-50 to-purple-100',
+              'from-orange-50 to-orange-100'
+            ];
             return (
-              <Card key={index} className="relative overflow-hidden border-0 shadow-elegant hover:shadow-glow transition-all duration-500 group cursor-pointer">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-vendeur-gradient opacity-5 rounded-full -translate-y-6 translate-x-6 group-hover:opacity-10 transition-opacity duration-300" />
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-start justify-between">
+              <Card key={index} className="relative overflow-hidden border-0 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 group cursor-pointer transform hover:-translate-y-1">
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${bgColors[index]} opacity-20 rounded-full -translate-y-8 translate-x-8 group-hover:opacity-30 transition-opacity duration-300`} />
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex items-start justify-between mb-6">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">{stat.label}</p>
-                      <p className="text-3xl font-bold text-foreground mb-3 group-hover:scale-105 transition-transform duration-300">{stat.value}</p>
-                      <div className="flex items-center gap-2">
-                        <div className={`flex items-center text-sm font-semibold px-2 py-1 rounded-full ${
-                          stat.change.startsWith('+') 
-                            ? 'text-vendeur-secondary bg-vendeur-secondary/10' 
-                            : 'text-red-600 bg-red-50'
-                        }`}>
-                          <TrendingUp className="w-3 h-3 mr-1" />
+                      <p className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">{stat.label}</p>
+                      <p className="text-4xl font-bold text-gray-800 mb-4 group-hover:scale-105 transition-transform duration-300">{stat.value}</p>
+                      <div className="flex items-center gap-3">
+                        <div className={`flex items-center text-sm font-bold px-3 py-2 rounded-full ${stat.change.startsWith('+')
+                          ? 'text-emerald-700 bg-emerald-100'
+                          : 'text-red-700 bg-red-100'
+                          }`}>
+                          <TrendingUp className="w-4 h-4 mr-2" />
                           {stat.change}
                         </div>
-                        <span className="text-xs text-muted-foreground">vs période précédente</span>
                       </div>
+                      <p className="text-xs text-gray-500 mt-2 font-medium">vs période précédente</p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-vendeur-gradient shadow-elegant group-hover:shadow-glow transition-all duration-300">
-                      <Icon className="w-6 h-6 text-white" />
+                    <div className={`p-5 rounded-2xl bg-gradient-to-br ${colors[index]} shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110`}>
+                      <Icon className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -311,97 +386,97 @@ export default function VendeurDashboard() {
         </div>
       </section>
 
-      {/* Interface à onglets - Style Odoo Professionnel */}
-      <div className="px-6 py-4">
+      {/* Interface à onglets Ultra-Moderne */}
+      <div className="px-8 py-6">
         <Tabs defaultValue="pos" className="w-full">
-          <div className="flex overflow-x-auto scrollbar-hide mb-6 bg-card/80 p-2 rounded-xl border shadow-sm">
-            <TabsList className="flex-shrink-0 bg-transparent p-0 h-auto gap-2 w-full">
-              <TabsTrigger 
-                value="pos" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+          <div className="flex overflow-x-auto scrollbar-hide mb-8 bg-white/90 backdrop-blur-lg p-3 rounded-2xl border border-gray-200/50 shadow-xl">
+            <TabsList className="flex-shrink-0 bg-transparent p-0 h-auto gap-3 w-full">
+              <TabsTrigger
+                value="pos"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-700 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
               >
-                <CreditCard className="w-4 h-4 mr-2" />
+                <CreditCard className="w-5 h-5 mr-3" />
                 POS Caisse
               </TabsTrigger>
-              <TabsTrigger 
-                value="dashboard" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              <TabsTrigger
+                value="dashboard"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
               >
-                <BarChart3 className="w-4 h-4 mr-2" />
+                <BarChart3 className="w-5 h-5 mr-3" />
                 Vue d'ensemble
               </TabsTrigger>
-              <TabsTrigger 
-                value="products" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              <TabsTrigger
+                value="products"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
               >
-                <Package className="w-4 h-4 mr-2" />
+                <Package className="w-5 h-5 mr-3" />
                 Produits
               </TabsTrigger>
-              <TabsTrigger 
-                value="orders" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              <TabsTrigger
+                value="orders"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
+                <ShoppingCart className="w-5 h-5 mr-3" />
                 Commandes
               </TabsTrigger>
-              <TabsTrigger 
-                value="clients" 
+              <TabsTrigger
+                value="clients"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <Users className="w-4 h-4 mr-2" />
                 Clients
               </TabsTrigger>
-              <TabsTrigger 
-                value="agents" 
+              <TabsTrigger
+                value="agents"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <UserCheck className="w-4 h-4 mr-2" />
                 Agents & Permissions
               </TabsTrigger>
-              <TabsTrigger 
-                value="warehouses" 
+              <TabsTrigger
+                value="warehouses"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <Warehouse className="w-4 h-4 mr-2" />
                 Entrepôts & Stocks
               </TabsTrigger>
-              <TabsTrigger 
-                value="payments" 
+              <TabsTrigger
+                value="payments"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Paiements
               </TabsTrigger>
-              <TabsTrigger 
-                value="stock" 
+              <TabsTrigger
+                value="stock"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <Package className="w-4 h-4 mr-2" />
                 Stock
               </TabsTrigger>
-              <TabsTrigger 
-                value="marketing" 
+              <TabsTrigger
+                value="marketing"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <Megaphone className="w-4 h-4 mr-2" />
                 Marketing
               </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
+              <TabsTrigger
+                value="analytics"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <PieChart className="w-4 h-4 mr-2" />
                 Analyses
               </TabsTrigger>
-              <TabsTrigger 
-                value="wallet" 
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
+              <TabsTrigger
+                value="wallet"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
               >
-                <CreditCard className="w-4 h-4 mr-2" />
+                <CreditCard className="w-5 h-5 mr-3" />
                 Wallet & Cartes
               </TabsTrigger>
-              <TabsTrigger 
-                value="transactions" 
+              <TabsTrigger
+                value="transactions"
                 className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
               >
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
@@ -414,8 +489,49 @@ export default function VendeurDashboard() {
           <TabsContent value="pos" className="space-y-6">
             <POSSystem />
           </TabsContent>
-          
+
           <TabsContent value="dashboard" className="space-y-6">
+            {/* Panneau de diagnostic */}
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-800">
+                  <AlertTriangle className="w-5 h-5" />
+                  🔧 Diagnostic & Réparation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-orange-700 mb-4">
+                  Si vous ne pouvez pas ajouter de produits ou si l'interface ne fonctionne pas, utilisez ces outils de diagnostic :
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    onClick={debugSupabaseConnection}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    🔍 Diagnostic Complet
+                  </Button>
+                  <Button
+                    onClick={fixVendorProfile}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    🔧 Réparer Profil Vendeur
+                  </Button>
+                  <Button
+                    onClick={testProductCreation}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    🧪 Test Ajout Produit
+                  </Button>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualiser
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Commandes récentes */}
               <Card>
@@ -561,13 +677,128 @@ export default function VendeurDashboard() {
           </TabsContent>
 
           {/* Wallet & Cartes Virtuelles */}
-          <TabsContent value="wallet">
-            <WalletDashboard />
+          <TabsContent value="wallet" className="space-y-6">
+            {walletLoading ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p>Chargement de votre wallet...</p>
+                </CardContent>
+              </Card>
+            ) : wallet ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Wallet principal */}
+                <div>
+                  <UserWalletCard />
+                </div>
+
+                {/* Carte virtuelle */}
+                <div>
+                  <VirtualCardDisplay userId={user?.id} showControls={false} />
+                </div>
+              </div>
+            ) : (
+              <Card className="border-orange-200 bg-orange-50">
+                <CardContent className="p-8 text-center">
+                  <AlertTriangle className="w-12 h-12 mx-auto text-orange-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-orange-800 mb-2">Wallet non configuré</h3>
+                  <p className="text-orange-600 mb-4">
+                    Votre compte vendeur n'a pas encore de wallet associé.
+                    Cela sera créé automatiquement lors de votre prochaine connexion.
+                  </p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualiser la page
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Transactions P2P */}
-          <TabsContent value="transactions">
-            <TransactionSystem />
+          <TabsContent value="transactions" className="space-y-6">
+            {wallet ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Envoi rapide */}
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Send className="w-5 h-5" />
+                      Transfert d'argent
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="recipient">Email du destinataire</Label>
+                      <Input
+                        id="recipient"
+                        type="email"
+                        placeholder="destinataire@exemple.com"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="amount">Montant ({wallet.currency})</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        placeholder="0"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="message">Message (optionnel)</Label>
+                      <Input
+                        id="message"
+                        placeholder="Paiement pour..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button className="w-full bg-vendeur-gradient">
+                      <Send className="w-4 h-4 mr-2" />
+                      Envoyer maintenant
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Solde et infos */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Mon Solde</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center space-y-4">
+                      <div className="text-3xl font-bold text-vendeur">
+                        {wallet.balance.toLocaleString()} {wallet.currency}
+                      </div>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full">
+                          <Download className="w-4 h-4 mr-2" />
+                          Recharger
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Retirer
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <Card className="border-orange-200 bg-orange-50">
+                <CardContent className="p-8 text-center">
+                  <AlertTriangle className="w-12 h-12 mx-auto text-orange-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-orange-800 mb-2">Wallet requis</h3>
+                  <p className="text-orange-600">
+                    Vous devez avoir un wallet configuré pour effectuer des transactions.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -576,8 +807,8 @@ export default function VendeurDashboard() {
       <div className="fixed bottom-24 right-6 z-40">
         <Dialog>
           <DialogTrigger asChild>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-vendeur-gradient hover:shadow-glow text-white px-12 py-8 text-xl font-bold rounded-full shadow-2xl hover:scale-105 transition-all duration-300 min-w-[280px] min-h-[80px]"
             >
               <Send className="h-8 w-8 mr-4" />

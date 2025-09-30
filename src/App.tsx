@@ -16,7 +16,14 @@ const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const Profil = lazy(() => import("./pages/Profil"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
+const ClientDashboardPro = lazy(() => import("./pages/ClientDashboardPro"));
+const ClientDashboardUltimate = lazy(() => import("./pages/ClientDashboardUltimate"));
+const TestClient = lazy(() => import("./pages/TestClient"));
+const ClientDashboardSimple = lazy(() => import("./pages/ClientDashboardSimple"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
+const VendeurDashboardSimple = lazy(() => import("./pages/VendeurDashboardSimple"));
+const TestUltraBasic = lazy(() => import("./pages/TestUltraBasic"));
+const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
@@ -24,6 +31,14 @@ const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
 const AdvancedPDGDashboard = lazy(() => import("./pages/AdvancedPDGDashboard"));
+const PDGAgentDashboard = lazy(() => import("./pages/PDGAgentDashboard")); // Agent management
+const AgentDashboardWrapper = lazy(() => import("./components/AgentDashboardWrapper")); // Agent interface
+const SubAgentDashboardWrapper = lazy(() => import("./components/SubAgentDashboardWrapper")); // Sub-agent interface
+const UserActivation = lazy(() => import("./pages/UserActivation")); // User activation
+const PDGTest = lazy(() => import("./pages/PDGTest")); // Test PDG
+const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
+const PDGBasic = lazy(() => import("./pages/PDGBasic")); // PDG Basic
+const PDGMinimal = lazy(() => import("./pages/PDGMinimal")); // PDG Minimal
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Composant de loading
@@ -114,12 +129,80 @@ const App = () => (
                 element={<AdvancedPDGDashboard />}
               />
               <Route
+                path="/pdg-agents"
+                element={<PDGAgentDashboard />}
+              />
+              <Route
+                path="/pdg-test"
+                element={<PDGTest />}
+              />
+              <Route
+                path="/pdg-simple"
+                element={<PDGSimple />}
+              />
+              <Route
+                path="/pdg-basic"
+                element={<PDGBasic />}
+              />
+              <Route
+                path="/pdg-minimal"
+                element={<PDGMinimal />}
+              />
+              <Route
+                path="/agent-dashboard/:agentId"
+                element={<AgentDashboardWrapper />}
+              />
+              <Route
+                path="/sub-agent-dashboard/:subAgentId"
+                element={<SubAgentDashboardWrapper />}
+              />
+              <Route
+                path="/activate/:token"
+                element={<UserActivation />}
+              />
+              <Route
                 path="/client"
                 element={
                   <ProtectedRoute allowedRoles={['client', 'admin']}>
                     <ClientDashboard />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/client-pro"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'admin']}>
+                    <ClientDashboardPro />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/client-ultimate"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'admin']}>
+                    <ClientDashboardUltimate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/test-client"
+                element={<TestClient />}
+              />
+              <Route
+                path="/client-simple"
+                element={<ClientDashboardSimple />}
+              />
+              <Route
+                path="/vendeur-simple"
+                element={<VendeurDashboardSimple />}
+              />
+              <Route
+                path="/test-ultra-basic"
+                element={<TestUltraBasic />}
+              />
+              <Route
+                path="/diagnostic-fonctionnalites"
+                element={<DiagnosticFonctionnalites />}
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
