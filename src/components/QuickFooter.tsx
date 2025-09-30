@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MapPin, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, User, Bike } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,33 +8,40 @@ export default function QuickFooter() {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // Navigation principale - 4 boutons essentiels selon vos spécifications
+  // Navigation principale - 5 boutons essentiels avec Taxi-Moto
   const navigationItems = [
-    { 
-      id: 'home', 
-      label: 'Accueil', 
-      icon: Home, 
+    {
+      id: 'home',
+      label: 'Accueil',
+      icon: Home,
       path: '/',
       description: 'Interface d\'accueil avec toutes les fonctionnalités'
     },
-    { 
-      id: 'marketplace', 
-      label: 'Marketplace', 
-      icon: ShoppingBag, 
+    {
+      id: 'marketplace',
+      label: 'Marketplace',
+      icon: ShoppingBag,
       path: '/marketplace',
       description: 'Interface marketplace et toutes ses fonctionnalités'
     },
-    { 
-      id: 'tracking', 
-      label: 'Suivi', 
-      icon: MapPin, 
+    {
+      id: 'taxi-moto',
+      label: 'Taxi-Moto',
+      icon: Bike,
+      path: '/taxi-moto',
+      description: 'Service de transport urbain - Réservation de taxi-moto'
+    },
+    {
+      id: 'tracking',
+      label: 'Suivi',
+      icon: MapPin,
       path: '/tracking',
       description: 'Fonctionnalités de tracking et suivi'
     },
-    { 
-      id: 'profil', 
-      label: 'Profil', 
-      icon: User, 
+    {
+      id: 'profil',
+      label: 'Profil',
+      icon: User,
       path: profile ? '/profil' : '/auth',
       description: profile ? 'Mon profil et paramètres' : 'Connexion selon votre rôle'
     },
@@ -44,11 +51,11 @@ export default function QuickFooter() {
     <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 shadow-lg">
       <div className="flex items-center justify-around px-4 py-3 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-                          (item.path === '/' && location.pathname === '/') ||
-                          (item.id === 'profil' && !profile && location.pathname === '/auth');
+          const isActive = location.pathname === item.path ||
+            (item.path === '/' && location.pathname === '/') ||
+            (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
-          
+
           return (
             <button
               key={item.id}
@@ -63,8 +70,8 @@ export default function QuickFooter() {
             >
               <div className={cn(
                 "p-2 rounded-full transition-all duration-300",
-                isActive 
-                  ? "bg-purple-600 text-white shadow-lg" 
+                isActive
+                  ? "bg-purple-600 text-white shadow-lg"
                   : "bg-gray-100 group-hover:bg-purple-100 group-hover:text-purple-600"
               )}>
                 <Icon size={18} />
@@ -79,7 +86,7 @@ export default function QuickFooter() {
           );
         })}
       </div>
-      
+
       {/* Indicateur visuel pour l'élément actif */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-blue-500"></div>
     </div>

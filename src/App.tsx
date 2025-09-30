@@ -26,6 +26,7 @@ const TestUltraBasic = lazy(() => import("./pages/TestUltraBasic"));
 const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
+const TaxiMoto = lazy(() => import("./pages/TaxiMoto"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -66,6 +67,7 @@ const App = () => (
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/taxi-moto" element={<TaxiMoto />} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
 
