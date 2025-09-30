@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Car, Users, Ship, Crown } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown } from "lucide-react";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
@@ -213,7 +213,7 @@ export default function Auth() {
                 selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
               }`}
             >
-              <Car className="h-6 w-6 text-yellow-600 mb-2" />
+              <Bike className="h-6 w-6 text-yellow-600 mb-2" />
               <span className="font-medium">Taxi Moto</span>
             </button>
             <button
