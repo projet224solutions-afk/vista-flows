@@ -31,10 +31,8 @@ const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
 const AdvancedPDGDashboard = lazy(() => import("./pages/AdvancedPDGDashboard"));
-const PDGAgentDashboard = lazy(() => import("./pages/PDGAgentDashboard")); // Agent management
-const AgentDashboardWrapper = lazy(() => import("./components/AgentDashboardWrapper")); // Agent interface
-const SubAgentDashboardWrapper = lazy(() => import("./components/SubAgentDashboardWrapper")); // Sub-agent interface
-const UserActivation = lazy(() => import("./pages/UserActivation")); // User activation
+const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
+// Removed deprecated PDG agent pages - being refactored
 const PDGTest = lazy(() => import("./pages/PDGTest")); // Test PDG
 const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
 const PDGBasic = lazy(() => import("./pages/PDGBasic")); // PDG Basic
@@ -129,37 +127,10 @@ const App = () => (
                 element={<AdvancedPDGDashboard />}
               />
               <Route
-                path="/pdg-agents"
-                element={<PDGAgentDashboard />}
+                path="/pdg224solutionssoulbah"
+                element={<PDG224Solutions />}
               />
-              <Route
-                path="/pdg-test"
-                element={<PDGTest />}
-              />
-              <Route
-                path="/pdg-simple"
-                element={<PDGSimple />}
-              />
-              <Route
-                path="/pdg-basic"
-                element={<PDGBasic />}
-              />
-              <Route
-                path="/pdg-minimal"
-                element={<PDGMinimal />}
-              />
-              <Route
-                path="/agent-dashboard/:agentId"
-                element={<AgentDashboardWrapper />}
-              />
-              <Route
-                path="/sub-agent-dashboard/:subAgentId"
-                element={<SubAgentDashboardWrapper />}
-              />
-              <Route
-                path="/activate/:token"
-                element={<UserActivation />}
-              />
+              {/* PDG routes removed - being refactored */}
               <Route
                 path="/client"
                 element={

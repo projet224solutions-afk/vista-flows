@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import AgentDashboard from '@/pages/AgentDashboard';
+// AgentDashboard removed - feature being refactored
 
 export const AgentDashboardWrapper: React.FC = () => {
     const { agentId } = useParams<{ agentId: string }>();
@@ -13,7 +13,7 @@ export const AgentDashboardWrapper: React.FC = () => {
         return <div>Agent ID manquant</div>;
     }
 
-    return <AgentDashboard agentId={agentId} />;
+    return <div className="p-8 text-center">Agent Dashboard en cours de refonte</div>;
 };
 
 export default AgentDashboardWrapper;

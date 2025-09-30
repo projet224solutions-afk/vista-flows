@@ -49,6 +49,45 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          data_json: Json | null
+          hash: string | null
+          id: string
+          ip_address: string | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          data_json?: Json | null
+          hash?: string | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          data_json?: Json | null
+          hash?: string | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       calls: {
         Row: {
           call_type: string
@@ -171,6 +210,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      commission_config: {
+        Row: {
+          commission_type: string
+          commission_value: number
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          max_amount: number | null
+          min_amount: number | null
+          service_name: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          commission_type: string
+          commission_value: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number | null
+          service_name: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          max_amount?: number | null
+          min_amount?: number | null
+          service_name?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      copilot_conversations: {
+        Row: {
+          actions: Json | null
+          created_at: string
+          executed: boolean
+          id: string
+          message_in: string
+          message_out: string
+          mfa_verified: boolean
+          pdg_user_id: string
+        }
+        Insert: {
+          actions?: Json | null
+          created_at?: string
+          executed?: boolean
+          id?: string
+          message_in: string
+          message_out: string
+          mfa_verified?: boolean
+          pdg_user_id: string
+        }
+        Update: {
+          actions?: Json | null
+          created_at?: string
+          executed?: boolean
+          id?: string
+          message_in?: string
+          message_out?: string
+          mfa_verified?: boolean
+          pdg_user_id?: string
+        }
+        Relationships: []
       }
       customer_credits: {
         Row: {
@@ -507,6 +621,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fraud_detection_logs: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          flags: Json
+          id: string
+          reviewed: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string
+          risk_score: number
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          flags: Json
+          id?: string
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level: string
+          risk_score: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          flags?: Json
+          id?: string
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          risk_score?: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       interactions: {
         Row: {
@@ -2070,6 +2226,60 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          device_info: Json | null
+          fee: number
+          id: string
+          metadata: Json | null
+          net_amount: number
+          receiver_wallet_id: string | null
+          sender_wallet_id: string | null
+          status: string
+          transaction_id: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          device_info?: Json | null
+          fee?: number
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          receiver_wallet_id?: string | null
+          sender_wallet_id?: string | null
+          status?: string
+          transaction_id: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          device_info?: Json | null
+          fee?: number
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          receiver_wallet_id?: string | null
+          sender_wallet_id?: string | null
+          status?: string
+          transaction_id?: string
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           balance: number
@@ -2175,9 +2385,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_commission: {
+        Args: {
+          p_amount: number
+          p_service_name: string
+          p_transaction_type: string
+        }
+        Returns: number
+      }
       credit_wallet: {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
+      }
+      detect_fraud: {
+        Args: {
+          p_amount: number
+          p_transaction_type: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       generate_card_number: {
         Args: Record<PropertyKey, never>
@@ -2188,6 +2414,10 @@ export type Database = {
         Returns: string
       }
       generate_transaction_custom_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_transaction_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

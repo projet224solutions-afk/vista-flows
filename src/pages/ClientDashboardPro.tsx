@@ -19,7 +19,7 @@ import {
     Plus, Minus, ShoppingCart, Truck, CheckCircle, Clock, AlertTriangle,
     Phone, Mail, Lock, Fingerprint, Camera, QrCode, FileText, BarChart3,
     Settings, HelpCircle, LogOut, Home, Gift, Percent, Navigation,
-    ThumbsUp, ThumbsDown, Flag, Send, Mic, Video, Image, PaperPlane,
+    ThumbsUp, ThumbsDown, Flag, Send, Mic, Video, Image,
     Banknote, ArrowUpDown, History, Calendar, TrendingUp, DollarSign,
     CameraIcon, ScanLine, Users, Store, MapPinIcon, RefreshCw, ExternalLink
 } from "lucide-react";

@@ -225,24 +225,24 @@ export default function AdvancedPDGDashboard() {
 
   const loadTransactionStats = async () => {
     try {
-      // Compter les transactions depuis les wallets
+      // Compter les transactions depuis enhanced_transactions
       const { count: totalTransactions } = await supabase
-        .from('wallet_transactions')
+        .from('enhanced_transactions')
         .select('*', { count: 'exact', head: true });
 
       // Calculer le total des revenus (somme des montants des transactions complétées)
       const { data: completedTransactions } = await supabase
-        .from('wallet_transactions')
+        .from('enhanced_transactions')
         .select('amount')
         .eq('status', 'completed');
 
-      const totalRevenue = completedTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+      const totalRevenue = completedTransactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
       const totalCommissions = totalRevenue * 0.05; // 5% de commission
 
       // Récupérer les transactions récentes
       const { data: recentTransactions } = await supabase
-        .from('wallet_transactions')
-        .select('id, amount, type, created_at, status')
+        .from('enhanced_transactions')
+        .select('id, amount, method, created_at, status')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -252,8 +252,8 @@ export default function AdvancedPDGDashboard() {
         totalCommissions,
         recentTransactions: recentTransactions?.map(t => ({
           id: t.id,
-          amount: t.amount || 0,
-          type: t.type || 'unknown',
+          amount: Number(t.amount) || 0,
+          type: t.method || 'unknown',
           date: new Date(t.created_at).toLocaleDateString(),
           status: t.status || 'pending'
         })) || []
@@ -546,7 +546,7 @@ export default function AdvancedPDGDashboard() {
   );
 
   // Rendu conditionnel pour l'authentification
-  if (!pdgAuth && profile?.role !== 'PDG') {
+  if (!pdgAuth && profile?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -611,7 +611,7 @@ export default function AdvancedPDGDashboard() {
             </div>
 
             {/* AI Copilot Menu Entry - PDG ONLY */}
-            {(profile?.role === 'PDG' || pdgAuth) && (
+            {pdgAuth && (
               <div className="mt-6 pt-4 border-t border-border">
                 <Button
                   variant="outline"
@@ -705,11 +705,11 @@ export default function AdvancedPDGDashboard() {
 
           {/* Dashboard Content */}
           <div className="flex-1 overflow-hidden">
-            <div className={`flex h-full ${copilotVisible && (profile?.role === 'PDG' || pdgAuth) ? '' : ''}`}>
+            <div className={`flex h-full ${copilotVisible && pdgAuth ? '' : ''}`}>
               
               {/* Central Dashboard Area - Navigation par onglets */}
               <div className={`flex-1 p-6 overflow-y-auto ${
-                copilotVisible && (profile?.role === 'PDG' || pdgAuth) ? 'mr-80' : ''
+                copilotVisible && pdgAuth ? 'mr-80' : ''
               }`}>
                 
                 {/* Breadcrumb/Navigation actuelle */}
@@ -733,7 +733,7 @@ export default function AdvancedPDGDashboard() {
               </div>
 
               {/* ======================= AI COPILOT INTELLIGENT (PDG ONLY) ======================= */}
-              {(profile?.role === 'PDG' || pdgAuth) && copilotVisible && (
+              {pdgAuth && copilotVisible && (
                 <div className="w-80 absolute right-0 top-0 h-full">
                   <div className="relative h-full">
                     <Button
@@ -793,7 +793,7 @@ export default function AdvancedPDGDashboard() {
         </div>
 
         {/* Floating Copilot Toggle (when panel is hidden) */}
-        {(profile?.role === 'PDG' || pdgAuth) && !copilotVisible && (
+        {pdgAuth && !copilotVisible && (
           <Button
             className="fixed bottom-6 right-6 rounded-full w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg animate-pulse"
             onClick={() => setCopilotVisible(true)}

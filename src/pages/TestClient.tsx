@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ShoppingCart, Home, User, Package, AlertTriangle, Settings } from 'lucide-react';
-import { debugSupabaseConnection, fixVendorProfile, testProductCreation } from '@/utils/debugSupabase';
+// Debug utilities removed - being refactored
 
 export default function TestClient() {
     const testButtons = [
@@ -136,19 +136,19 @@ export default function TestClient() {
                             </p>
                             <div className="flex gap-2 flex-wrap">
                                 <Button
-                                    onClick={debugSupabaseConnection}
+                                    onClick={() => toast.info('Debug utilities being refactored')}
                                     className="bg-blue-600 hover:bg-blue-700"
                                 >
                                     🔍 Diagnostic Complet
                                 </Button>
                                 <Button
-                                    onClick={fixVendorProfile}
+                                    onClick={() => toast.info('Debug utilities being refactored')}
                                     className="bg-green-600 hover:bg-green-700"
                                 >
                                     🔧 Réparer Profil Vendeur
                                 </Button>
                                 <Button
-                                    onClick={testProductCreation}
+                                    onClick={() => toast.info('Debug utilities being refactored')}
                                     className="bg-purple-600 hover:bg-purple-700"
                                 >
                                     🧪 Test Ajout Produit

@@ -12,12 +12,13 @@ import { toast } from 'sonner';
 
 export interface POSSettings {
   id?: string;
-  user_id: string;
+  vendor_id: string;
   company_name: string;
   tax_enabled: boolean;
   tax_rate: number;
   currency: string;
   receipt_footer: string;
+  auto_print_receipt?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -42,7 +43,7 @@ export const usePOSSettings = () => {
       const { data, error: fetchError } = await supabase
         .from('pos_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('vendor_id', user.id)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -54,12 +55,13 @@ export const usePOSSettings = () => {
       } else {
         // Créer des paramètres par défaut
         const defaultSettings: Omit<POSSettings, 'id' | 'created_at' | 'updated_at'> = {
-          user_id: user.id,
+          vendor_id: user.id,
           company_name: 'Mon Commerce',
           tax_enabled: true,
-          tax_rate: 0.18, // 18% TVA par défaut
+          tax_rate: 0.18,
           currency: 'FCFA',
-          receipt_footer: 'Merci de votre visite !'
+          receipt_footer: 'Merci de votre visite !',
+          auto_print_receipt: false
         };
 
         const { data: newSettings, error: createError } = await supabase
@@ -80,12 +82,13 @@ export const usePOSSettings = () => {
 
       // Utiliser des paramètres par défaut en cas d'erreur
       setSettings({
-        user_id: user.id,
+        vendor_id: user.id,
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
         currency: 'FCFA',
-        receipt_footer: 'Merci de votre visite !'
+        receipt_footer: 'Merci de votre visite !',
+        auto_print_receipt: false
       });
     } finally {
       setLoading(false);
@@ -144,12 +147,13 @@ export const usePOSSettings = () => {
 
     try {
       const defaultSettings: Omit<POSSettings, 'id' | 'created_at' | 'updated_at'> = {
-        user_id: user.id,
+        vendor_id: user.id,
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
         currency: 'FCFA',
-        receipt_footer: 'Merci de votre visite !'
+        receipt_footer: 'Merci de votre visite !',
+        auto_print_receipt: false
       };
 
       if (settings?.id) {

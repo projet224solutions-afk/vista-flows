@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -31,15 +31,10 @@ import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
-import WalletDashboard from "@/components/wallet/WalletDashboard";
-import UserWalletCard from "@/components/wallet/UserWalletCard";
-import VirtualCardDisplay from "@/components/wallet/VirtualCardDisplay";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { WalletTransactionService } from "@/services/walletTransactionService";
-import VirtualCardService from "@/services/virtualCardService";
+// Removed deprecated wallet and debug services - being refactored
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { debugSupabaseConnection, fixVendorProfile, testProductCreation } from "@/utils/debugSupabase";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -59,13 +54,11 @@ export default function VendeurDashboard() {
 
       setWalletLoading(true);
       try {
-        const [walletData, cardData] = await Promise.all([
-          WalletTransactionService.getUserWallet(user.id),
-          VirtualCardService.getUserCard(user.id)
-        ]);
-
-        setWallet(walletData);
-        setVirtualCard(cardData);
+        // Removed wallet service calls - being refactored
+        toast({
+          title: "Wallet",
+          description: "Fonctionnalité wallet en cours de refonte",
+        });
       } catch (error) {
         console.error('Erreur chargement wallet vendeur:', error);
         toast({
@@ -389,99 +382,106 @@ export default function VendeurDashboard() {
       {/* Interface à onglets Ultra-Moderne */}
       <div className="px-8 py-6">
         <Tabs defaultValue="pos" className="w-full">
-          <div className="flex overflow-x-auto scrollbar-hide mb-8 bg-white/90 backdrop-blur-lg p-3 rounded-2xl border border-gray-200/50 shadow-xl">
-            <TabsList className="flex-shrink-0 bg-transparent p-0 h-auto gap-3 w-full">
-              <TabsTrigger
-                value="pos"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-700 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
-              >
-                <CreditCard className="w-5 h-5 mr-3" />
-                POS Caisse
-              </TabsTrigger>
-              <TabsTrigger
-                value="dashboard"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
-              >
-                <BarChart3 className="w-5 h-5 mr-3" />
-                Vue d'ensemble
-              </TabsTrigger>
-              <TabsTrigger
-                value="products"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
-              >
-                <Package className="w-5 h-5 mr-3" />
-                Produits
-              </TabsTrigger>
-              <TabsTrigger
-                value="orders"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
-              >
-                <ShoppingCart className="w-5 h-5 mr-3" />
-                Commandes
-              </TabsTrigger>
-              <TabsTrigger
-                value="clients"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Clients
-              </TabsTrigger>
-              <TabsTrigger
-                value="agents"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <UserCheck className="w-4 h-4 mr-2" />
-                Agents & Permissions
-              </TabsTrigger>
-              <TabsTrigger
-                value="warehouses"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <Warehouse className="w-4 h-4 mr-2" />
-                Entrepôts & Stocks
-              </TabsTrigger>
-              <TabsTrigger
-                value="payments"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Paiements
-              </TabsTrigger>
-              <TabsTrigger
-                value="stock"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Stock
-              </TabsTrigger>
-              <TabsTrigger
-                value="marketing"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <Megaphone className="w-4 h-4 mr-2" />
-                Marketing
-              </TabsTrigger>
-              <TabsTrigger
-                value="analytics"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <PieChart className="w-4 h-4 mr-2" />
-                Analyses
-              </TabsTrigger>
-              <TabsTrigger
-                value="wallet"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900"
-              >
-                <CreditCard className="w-5 h-5 mr-3" />
-                Wallet & Cartes
-              </TabsTrigger>
-              <TabsTrigger
-                value="transactions"
-                className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0"
-              >
-                <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Transactions P2P
-              </TabsTrigger>
+          <div className="mb-8 bg-white/90 backdrop-blur-lg p-3 rounded-2xl border border-gray-200/50 shadow-xl">
+            <TabsList className="bg-transparent p-0 h-auto w-full flex flex-col gap-3">
+              {/* Première ligne - 7 boutons */}
+              <div className="flex gap-3">
+                <TabsTrigger
+                  value="pos"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-700 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <CreditCard className="w-5 h-5 mr-3" />
+                  POS Caisse
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dashboard"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <BarChart3 className="w-5 h-5 mr-3" />
+                  Vue d'ensemble
+                </TabsTrigger>
+                <TabsTrigger
+                  value="products"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <Package className="w-5 h-5 mr-3" />
+                  Produits
+                </TabsTrigger>
+                <TabsTrigger
+                  value="orders"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-3" />
+                  Commandes
+                </TabsTrigger>
+                <TabsTrigger
+                  value="clients"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Clients
+                </TabsTrigger>
+                <TabsTrigger
+                  value="agents"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Agents
+                </TabsTrigger>
+                <TabsTrigger
+                  value="warehouses"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <Warehouse className="w-4 h-4 mr-2" />
+                  Entrepôts
+                </TabsTrigger>
+              </div>
+
+              {/* Deuxième ligne - 6 boutons */}
+              <div className="flex gap-3">
+                <TabsTrigger
+                  value="payments"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Paiements
+                </TabsTrigger>
+                <TabsTrigger
+                  value="stock"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Stock
+                </TabsTrigger>
+                <TabsTrigger
+                  value="marketing"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  Marketing
+                </TabsTrigger>
+                <TabsTrigger
+                  value="analytics"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <PieChart className="w-4 h-4 mr-2" />
+                  Analyses
+                </TabsTrigger>
+                <TabsTrigger
+                  value="wallet"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <CreditCard className="w-5 h-5 mr-3" />
+                  Wallet
+                </TabsTrigger>
+                <TabsTrigger
+                  value="transactions"
+                  className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
+                >
+                  <ArrowRightLeft className="w-4 h-4 mr-2" />
+                  Transactions
+                </TabsTrigger>
+              </div>
             </TabsList>
           </div>
 
@@ -505,19 +505,19 @@ export default function VendeurDashboard() {
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    onClick={debugSupabaseConnection}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     🔍 Diagnostic Complet
                   </Button>
                   <Button
-                    onClick={fixVendorProfile}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     🔧 Réparer Profil Vendeur
                   </Button>
                   <Button
-                    onClick={testProductCreation}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
                     🧪 Test Ajout Produit
@@ -687,15 +687,13 @@ export default function VendeurDashboard() {
               </Card>
             ) : wallet ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Wallet principal */}
-                <div>
-                  <UserWalletCard />
-                </div>
-
-                {/* Carte virtuelle */}
-                <div>
-                  <VirtualCardDisplay userId={user?.id} showControls={false} />
-                </div>
+                {/* Wallet features being refactored */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Wallet</CardTitle>
+                    <CardDescription>Fonctionnalité en cours de refonte</CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
             ) : (
               <Card className="border-orange-200 bg-orange-50">
