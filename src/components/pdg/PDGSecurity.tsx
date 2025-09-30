@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, AlertTriangle, Activity, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PDGSecurity() {
@@ -32,14 +32,13 @@ export default function PDGSecurity() {
     }
   };
 
-  const getRiskLevelBadge = (level: string) => {
-    const colors = {
-      low: 'bg-green-500/20 text-green-300 border-green-500/30',
-      medium: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-      high: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-      critical: 'bg-red-500/20 text-red-300 border-red-500/30'
-    };
-    return colors[level as keyof typeof colors] || 'bg-slate-500/20 text-slate-300';
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+      case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      default: return 'bg-green-500/10 text-green-500 border-green-500/20';
+    }
   };
 
   if (loading) {
@@ -54,117 +53,135 @@ export default function PDGSecurity() {
     <div className="space-y-6">
       {/* Security Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-100">
-              Actions Auditées
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{auditLogs.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-orange-100">
-              Alertes Fraude
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {fraudLogs.filter(f => !f.reviewed).length}
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Activity className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{auditLogs.length}</p>
+                <p className="text-sm text-muted-foreground">Actions Enregistrées</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-red-100">
-              Critiques
-            </CardTitle>
-            <XCircle className="h-4 w-4 text-red-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {fraudLogs.filter(f => f.risk_level === 'critical' && !f.reviewed).length}
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{fraudLogs.filter(f => f.risk_level === 'critical' || f.risk_level === 'high').length}</p>
+                <p className="text-sm text-muted-foreground">Alertes Critiques</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{fraudLogs.filter(f => f.reviewed).length}</p>
+                <p className="text-sm text-muted-foreground">Alertes Traitées</p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Fraud Detection Logs */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      {/* Fraud Detection Alerts */}
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Shield className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
             Détection de Fraude
           </CardTitle>
-          <CardDescription>Alertes de sécurité non traitées</CardDescription>
+          <CardDescription>Alertes de sécurité récentes</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {fraudLogs.filter(f => !f.reviewed).map((log) => (
+            {fraudLogs.map((fraud, index) => (
               <div
-                key={log.id}
-                className="p-4 bg-slate-700/50 rounded-lg border border-slate-600"
+                key={fraud.id}
+                className="p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${index * 30}ms` }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <Badge className={getRiskLevelBadge(log.risk_level)}>
-                    {log.risk_level.toUpperCase()}
-                  </Badge>
-                  <span className="text-sm text-slate-400">
-                    Score: {log.risk_score}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-red-500" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant="outline" className={getRiskColor(fraud.risk_level)}>
+                          {fraud.risk_level}
+                        </Badge>
+                        <span className="text-sm font-semibold">Score: {fraud.risk_score}</span>
+                        {fraud.reviewed && (
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                            Traité
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(fraud.created_at).toLocaleString('fr-FR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {fraud.action_taken && (
+                      <p className="text-sm">Action: {fraud.action_taken}</p>
+                    )}
+                  </div>
                 </div>
-                <p className="text-white text-sm mb-2">
-                  Transaction suspecte détectée
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(log.flags || {}).map(([key, value]: [string, any]) => (
-                    <Badge key={key} variant="outline" className="text-xs">
-                      {key}: {typeof value === 'object' ? JSON.stringify(value) : value}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  {new Date(log.created_at).toLocaleString()}
-                </p>
               </div>
             ))}
-            {fraudLogs.filter(f => !f.reviewed).length === 0 && (
-              <p className="text-center text-slate-400 py-8">
-                Aucune alerte de fraude en attente
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Audit Logs */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Journal d'Audit</CardTitle>
-          <CardDescription>Actions récentes des administrateurs</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-primary" />
+            Journal d'Audit
+          </CardTitle>
+          <CardDescription>Historique des actions administratives</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {auditLogs.slice(0, 20).map((log) => (
+          <div className="space-y-3">
+            {auditLogs.map((log, index) => (
               <div
                 key={log.id}
-                className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg"
+                className="p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${index * 20}ms` }}
               >
-                <div>
-                  <p className="text-white font-medium">{log.action}</p>
-                  <p className="text-sm text-slate-400">
-                    {log.target_type && `${log.target_type}`}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{log.action}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.target_type} - {new Date(log.created_at).toLocaleString('fr-FR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <Badge variant="outline">
+                      {log.ip_address || 'N/A'}
+                    </Badge>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500">
-                  {new Date(log.created_at).toLocaleString()}
-                </p>
               </div>
             ))}
           </div>

@@ -90,15 +90,15 @@ export default function PDGUsers() {
 
   const getRoleBadge = (role: string) => {
     const colors = {
-      admin: 'bg-red-500/20 text-red-300 border-red-500/30',
-      vendeur: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      client: 'bg-green-500/20 text-green-300 border-green-500/30',
-      livreur: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-      taxi: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-      transitaire: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-      syndicat: 'bg-pink-500/20 text-pink-300 border-pink-500/30'
+      admin: 'bg-red-500/10 text-red-500 border-red-500/20',
+      vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+      client: 'bg-green-500/10 text-green-500 border-green-500/20',
+      livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+      taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+      transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+      syndicat: 'bg-pink-500/10 text-pink-500 border-pink-500/20'
     };
-    return colors[role as keyof typeof colors] || 'bg-slate-500/20 text-slate-300';
+    return colors[role as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
 
   if (loading) {
@@ -111,27 +111,72 @@ export default function PDGUsers() {
 
   return (
     <div className="space-y-6">
+      {/* Header Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <UserCheck className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{users.filter(u => u.is_active).length}</p>
+                <p className="text-sm text-muted-foreground">Utilisateurs Actifs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                <UserX className="w-6 h-6 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{users.filter(u => !u.is_active).length}</p>
+                <p className="text-sm text-muted-foreground">Utilisateurs Suspendus</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{users.length}</p>
+                <p className="text-sm text-muted-foreground">Total Utilisateurs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Gestion des Utilisateurs</CardTitle>
-          <CardDescription>Total: {filteredUsers.length} utilisateurs</CardDescription>
+          <CardTitle>Gestion des Utilisateurs</CardTitle>
+          <CardDescription>Recherche et filtrage</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Rechercher par email, nom..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-slate-700 border-slate-600 text-white"
+                  className="pl-10 bg-background"
                 />
               </div>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-48 bg-slate-700 border-slate-600 text-white">
+              <SelectTrigger className="w-48 bg-background">
                 <SelectValue placeholder="Filtrer par rôle" />
               </SelectTrigger>
               <SelectContent>
@@ -151,24 +196,33 @@ export default function PDGUsers() {
 
       {/* Users List */}
       <div className="grid gap-4">
-        {filteredUsers.map((user) => (
-          <Card key={user.id} className="bg-slate-800/50 border-slate-700">
+        {filteredUsers.map((user, index) => (
+          <Card 
+            key={user.id} 
+            className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-200 animate-fade-in"
+            style={{ animationDelay: `${index * 30}ms` }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-white" />
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+                      <Shield className="w-7 h-7 text-primary-foreground" />
+                    </div>
+                    {user.is_active && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card" />
+                    )}
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold">
+                    <h3 className="text-lg font-semibold">
                       {user.first_name} {user.last_name}
                     </h3>
-                    <p className="text-sm text-slate-400">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
                     <div className="flex gap-2 mt-2">
-                      <Badge className={getRoleBadge(user.role)}>
+                      <Badge variant="outline" className={getRoleBadge(user.role)}>
                         {user.role}
                       </Badge>
-                      <Badge className={user.is_active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}>
+                      <Badge variant="outline" className={user.is_active ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
                         {user.is_active ? 'Actif' : 'Suspendu'}
                       </Badge>
                     </div>
@@ -179,7 +233,7 @@ export default function PDGUsers() {
                     variant="outline"
                     size="sm"
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
-                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
+                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
                   >
                     {user.is_active ? (
                       <>
@@ -201,9 +255,9 @@ export default function PDGUsers() {
       </div>
 
       {filteredUsers.length === 0 && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-slate-400">Aucun utilisateur trouvé</p>
+            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
           </CardContent>
         </Card>
       )}

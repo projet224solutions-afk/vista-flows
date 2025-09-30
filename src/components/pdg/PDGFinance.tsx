@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { DollarSign, TrendingUp, Wallet, Download, RefreshCw } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -13,10 +14,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
   ResponsiveContainer
 } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 interface FinanceStats {
   total_revenue: number;
@@ -24,6 +24,11 @@ interface FinanceStats {
   pending_payments: number;
   active_wallets: number;
 }
+
+const chartConfig = {
+  amount: { label: "Montant", color: "hsl(var(--primary))" },
+  commission: { label: "Commission", color: "hsl(var(--chart-2))" }
+};
 
 export default function PDGFinance() {
   const [stats, setStats] = useState<FinanceStats>({
@@ -43,7 +48,6 @@ export default function PDGFinance() {
   const loadFinanceData = async () => {
     setLoading(true);
     try {
-      // Charger les transactions
       const { data: trans } = await supabase
         .from('wallet_transactions')
         .select('*')
@@ -52,7 +56,6 @@ export default function PDGFinance() {
 
       setTransactions(trans || []);
 
-      // Calculer les statistiques
       const revenue = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
       const commissions = trans?.reduce((sum, t) => sum + Number(t.fee || 0), 0) || 0;
       const pending = trans?.filter(t => t.status === 'pending').reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
@@ -104,66 +107,99 @@ export default function PDGFinance() {
 
   const chartData = transactions.slice(0, 10).reverse().map(t => ({
     date: new Date(t.created_at).toLocaleDateString(),
-    montant: Number(t.amount),
+    amount: Number(t.amount),
     commission: Number(t.fee)
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-100">
-              Revenu Total
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-green-500" />
+              </div>
+              Revenus Totaux
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {stats.total_revenue.toLocaleString()} GNF
+            <div className="space-y-2">
+              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {stats.total_revenue.toLocaleString()} GNF
+              </p>
+              <p className="text-xs text-green-500 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                +12.5% ce mois
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-blue-500" />
+              </div>
               Commissions
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {stats.total_commissions.toLocaleString()} GNF
+            <div className="space-y-2">
+              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {stats.total_commissions.toLocaleString()} GNF
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Sur {transactions.length} transactions
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-orange-100">
-              En Attente
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-orange-500" />
+              </div>
+              Paiements en Attente
             </CardTitle>
-            <RefreshCw className="h-4 w-4 text-orange-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {stats.pending_payments.toLocaleString()} GNF
+            <div className="space-y-2">
+              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {stats.pending_payments.toLocaleString()} GNF
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {transactions.filter(t => t.status === 'pending').length} transactions
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-purple-100">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-purple-500" />
+              </div>
               Wallets Actifs
             </CardTitle>
-            <Wallet className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {stats.active_wallets}
+            <div className="space-y-2">
+              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {stats.active_wallets}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Utilisateurs
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -171,56 +207,59 @@ export default function PDGFinance() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-white">Évolution des Transactions</CardTitle>
-            <CardDescription>10 dernières transactions</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              Évolution des Transactions
+            </CardTitle>
+            <CardDescription>Volume des 10 dernières transactions</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ChartContainer config={chartConfig} className="h-[300px]">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
-                  labelStyle={{ color: '#F3F4F6' }}
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                 />
-                <Legend />
-                <Line type="monotone" dataKey="montant" stroke="#10B981" strokeWidth={2} />
-                <Line type="monotone" dataKey="commission" stroke="#3B82F6" strokeWidth={2} />
               </LineChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-white">Commissions par Transaction</CardTitle>
-            <CardDescription>Vue détaillée</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-primary" />
+              Répartition des Commissions
+            </CardTitle>
+            <CardDescription>Par transaction</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ChartContainer config={chartConfig} className="h-[300px]">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
-                  labelStyle={{ color: '#F3F4F6' }}
-                />
-                <Legend />
-                <Bar dataKey="commission" fill="#8B5CF6" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="commission" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>
 
       {/* Export Section */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Export des Données</CardTitle>
+          <CardTitle>Export des Données</CardTitle>
           <CardDescription>Télécharger les rapports financiers</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -229,15 +268,15 @@ export default function PDGFinance() {
               type="date"
               value={dateRange.from}
               onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-              className="bg-slate-700 border-slate-600 text-white"
+              className="bg-background"
             />
             <Input
               type="date"
               value={dateRange.to}
               onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-              className="bg-slate-700 border-slate-600 text-white"
+              className="bg-background"
             />
-            <Button onClick={exportData} className="gap-2">
+            <Button onClick={exportData} className="gap-2 shadow-lg">
               <Download className="w-4 h-4" />
               Exporter CSV
             </Button>
@@ -246,29 +285,57 @@ export default function PDGFinance() {
       </Card>
 
       {/* Recent Transactions */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Transactions Récentes</CardTitle>
-          <CardDescription>Les 10 dernières transactions</CardDescription>
+          <CardTitle className="text-xl">Transactions Récentes</CardTitle>
+          <CardDescription>Les 10 dernières opérations financières</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {transactions.slice(0, 10).map((trans) => (
+          <div className="space-y-3">
+            {transactions.slice(0, 10).map((trans, index) => (
               <div
                 key={trans.id}
-                className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg"
+                className="group p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 hover:border-border/60 transition-all duration-200 animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div>
-                  <p className="text-white font-medium">{trans.transaction_id}</p>
-                  <p className="text-sm text-slate-400">
-                    {new Date(trans.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-bold">{Number(trans.amount).toLocaleString()} GNF</p>
-                  <p className="text-sm text-slate-400">
-                    Commission: {Number(trans.fee).toLocaleString()} GNF
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                      trans.status === 'completed' ? 'bg-green-500/10' : 
+                      trans.status === 'pending' ? 'bg-orange-500/10' : 
+                      'bg-red-500/10'
+                    }`}>
+                      <DollarSign className={`w-6 h-6 ${
+                        trans.status === 'completed' ? 'text-green-500' : 
+                        trans.status === 'pending' ? 'text-orange-500' : 
+                        'text-red-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">
+                        Transaction #{trans.transaction_id}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(trans.created_at).toLocaleDateString('fr-FR', { 
+                          day: '2-digit', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <p className="text-xl font-bold">
+                      {Number(trans.amount).toLocaleString()} GNF
+                    </p>
+                    <Badge variant="outline" className={
+                      trans.status === 'completed' ? 'border-green-500/50 bg-green-500/10 text-green-500' :
+                      trans.status === 'pending' ? 'border-orange-500/50 bg-orange-500/10 text-orange-500' :
+                      'border-red-500/50 bg-red-500/10 text-red-500'
+                    }>
+                      {trans.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             ))}
