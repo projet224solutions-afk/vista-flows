@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import SubAgentDashboard from '@/pages/SubAgentDashboard';
+// SubAgentDashboard removed - feature being refactored
 
 export const SubAgentDashboardWrapper: React.FC = () => {
     const { subAgentId } = useParams<{ subAgentId: string }>();
@@ -13,7 +13,7 @@ export const SubAgentDashboardWrapper: React.FC = () => {
         return <div>Sous-Agent ID manquant</div>;
     }
 
-    return <SubAgentDashboard subAgentId={subAgentId} />;
+    return <div className="p-8 text-center">Sub-Agent Dashboard en cours de refonte</div>;
 };
 
 export default SubAgentDashboardWrapper;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -31,15 +31,10 @@ import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
-import WalletDashboard from "@/components/wallet/WalletDashboard";
-import UserWalletCard from "@/components/wallet/UserWalletCard";
-import VirtualCardDisplay from "@/components/wallet/VirtualCardDisplay";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { WalletTransactionService } from "@/services/walletTransactionService";
-import VirtualCardService from "@/services/virtualCardService";
+// Removed deprecated wallet and debug services - being refactored
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { debugSupabaseConnection, fixVendorProfile, testProductCreation } from "@/utils/debugSupabase";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -59,13 +54,11 @@ export default function VendeurDashboard() {
 
       setWalletLoading(true);
       try {
-        const [walletData, cardData] = await Promise.all([
-          WalletTransactionService.getUserWallet(user.id),
-          VirtualCardService.getUserCard(user.id)
-        ]);
-
-        setWallet(walletData);
-        setVirtualCard(cardData);
+        // Removed wallet service calls - being refactored
+        toast({
+          title: "Wallet",
+          description: "Fonctionnalité wallet en cours de refonte",
+        });
       } catch (error) {
         console.error('Erreur chargement wallet vendeur:', error);
         toast({
@@ -505,19 +498,19 @@ export default function VendeurDashboard() {
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   <Button
-                    onClick={debugSupabaseConnection}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     🔍 Diagnostic Complet
                   </Button>
                   <Button
-                    onClick={fixVendorProfile}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     🔧 Réparer Profil Vendeur
                   </Button>
                   <Button
-                    onClick={testProductCreation}
+                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
                     🧪 Test Ajout Produit
@@ -687,15 +680,13 @@ export default function VendeurDashboard() {
               </Card>
             ) : wallet ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Wallet principal */}
-                <div>
-                  <UserWalletCard />
-                </div>
-
-                {/* Carte virtuelle */}
-                <div>
-                  <VirtualCardDisplay userId={user?.id} showControls={false} />
-                </div>
+                {/* Wallet features being refactored */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Wallet</CardTitle>
+                    <CardDescription>Fonctionnalité en cours de refonte</CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
             ) : (
               <Card className="border-orange-200 bg-orange-50">
