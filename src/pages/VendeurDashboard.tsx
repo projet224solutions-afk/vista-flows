@@ -11,7 +11,7 @@ import {
   FileText, Settings, AlertTriangle, DollarSign, Target,
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
-  Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw
+  Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw, LogOut
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -75,8 +75,21 @@ export default function VendeurDashboard() {
   }, [user?.id]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      await signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      toast({
+        title: "Erreur de déconnexion",
+        description: "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive"
+      });
+    }
   };
 
   // Données du tableau de bord - utilise les données réelles si disponibles
@@ -300,8 +313,14 @@ export default function VendeurDashboard() {
                 Nouveau Produit
               </Button>
 
-              <Button size="lg" variant="ghost" onClick={handleSignOut} className="hover:bg-red-50 hover:text-red-600 text-gray-600 transition-all duration-300">
-                <Settings className="w-4 h-4" />
+              <Button 
+                size="lg" 
+                variant="ghost" 
+                onClick={handleSignOut} 
+                className="hover:bg-red-50 hover:text-red-600 text-gray-600 transition-all duration-300"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -481,6 +500,16 @@ export default function VendeurDashboard() {
                   <ArrowRightLeft className="w-4 h-4 mr-2" />
                   Transactions
                 </TabsTrigger>
+                
+                {/* Bouton de déconnexion visible */}
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 px-4 py-3 rounded-lg font-semibold transition-all duration-200"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Déconnexion
+                </Button>
               </div>
             </TabsList>
           </div>
