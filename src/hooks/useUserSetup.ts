@@ -195,13 +195,25 @@ export const useUserSetup = () => {
         }
     };
 
-    // Fonction pour générer un ID utilisateur unique
+    // Fonction pour générer un ID utilisateur unique (3 lettres + 4 chiffres)
     const generateCustomId = async (): Promise<string> => {
         let attempts = 0;
         const maxAttempts = 10;
 
         while (attempts < maxAttempts) {
-            const id = 'USR' + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
+            // Générer 3 lettres aléatoires (A-Z)
+            let letters = '';
+            for (let i = 0; i < 3; i++) {
+                letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
+            }
+
+            // Générer 4 chiffres aléatoires (0-9)
+            let numbers = '';
+            for (let i = 0; i < 4; i++) {
+                numbers += Math.floor(Math.random() * 10).toString();
+            }
+
+            const id = letters + numbers;
 
             // Vérifier l'unicité
             const { data, error } = await supabase
@@ -218,8 +230,11 @@ export const useUserSetup = () => {
             attempts++;
         }
 
-        // Si on arrive ici, générer un ID basé sur le timestamp
-        return 'USR' + Date.now().toString();
+        // Si on arrive ici, générer un ID basé sur le timestamp avec le bon format
+        const timestamp = Date.now().toString();
+        const letters = 'USR';
+        const numbers = timestamp.slice(-4);
+        return letters + numbers;
     };
 
     // Fonction pour générer un numéro de carte virtuelle

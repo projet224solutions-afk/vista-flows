@@ -11,6 +11,7 @@ import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
+import { useUserSetup } from "@/hooks/useUserSetup";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -32,6 +33,7 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { ensureUserSetup } = useUserSetup();
 
   // Form data
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -59,6 +61,13 @@ export default function Auth() {
             .single();
 
           if (profile?.role) {
+            // S'assurer que l'utilisateur a son setup complet (ID + Wallet)
+            try {
+              await ensureUserSetup(session.user.id);
+            } catch (error) {
+              console.error('Erreur setup utilisateur:', error);
+            }
+
             // Redirection automatique vers le dashboard approprié
             if (profile.role === 'client') {
               navigate('/client');
@@ -93,6 +102,16 @@ export default function Auth() {
         }
 
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
+
+        // Générer un ID utilisateur unique (3 lettres + 4 chiffres)
+        let userCustomId = '';
+        for (let i = 0; i < 3; i++) {
+          userCustomId += String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+        for (let i = 0; i < 4; i++) {
+          userCustomId += Math.floor(Math.random() * 10).toString();
+        }
+
         const { error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
@@ -102,7 +121,8 @@ export default function Auth() {
               last_name: validatedData.lastName,
               role: validatedData.role,
               phone: formData.phone,
-              country: formData.country
+              country: formData.country,
+              custom_id: userCustomId // Ajouter l'ID personnalisé
             },
             emailRedirectTo: `${window.location.origin}/`
           }
@@ -195,45 +215,40 @@ export default function Auth() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <button
               onClick={() => handleRoleClick('client')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
-                selectedRole === 'client' ? 'ring-2 ring-blue-600' : ''
-              }`}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'client' ? 'ring-2 ring-blue-600' : ''
+                }`}
             >
               <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
               <span className="font-medium">Client</span>
             </button>
             <button
               onClick={() => handleRoleClick('vendeur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
-                selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
-              }`}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
+                }`}
             >
               <Store className="h-6 w-6 text-green-600 mb-2" />
               <span className="font-medium">Marchand</span>
             </button>
             <button
               onClick={() => handleRoleClick('livreur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
-                selectedRole === 'livreur' ? 'ring-2 ring-orange-600' : ''
-              }`}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'livreur' ? 'ring-2 ring-orange-600' : ''
+                }`}
             >
               <Truck className="h-6 w-6 text-orange-600 mb-2" />
               <span className="font-medium">Livreur</span>
             </button>
             <button
               onClick={() => handleRoleClick('taxi')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
-                selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
-              }`}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
+                }`}
             >
               <Bike className="h-6 w-6 text-yellow-600 mb-2" />
               <span className="font-medium">Taxi Moto</span>
             </button>
             <button
               onClick={() => handleRoleClick('transitaire')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${
-                selectedRole === 'transitaire' ? 'ring-2 ring-indigo-600' : ''
-              }`}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'transitaire' ? 'ring-2 ring-indigo-600' : ''
+                }`}
             >
               <Ship className="h-6 w-6 text-indigo-600 mb-2" />
               <span className="font-medium">Transitaire</span>

@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
+import UserIdDisplay from "@/components/UserIdDisplay";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -333,7 +334,9 @@ export default function ClientDashboard() {
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="text-2xl font-bold mb-1">Salut {profile?.first_name || 'Client'} ! 👋</h2>
+                      <h2 className="text-2xl font-bold mb-1">
+                        Salut <UserIdDisplay className="inline" showBadge={false} /> ! 👋
+                      </h2>
                       <p className="opacity-90">Interface style Alibaba activée !</p>
                     </div>
                     <div className="text-right">

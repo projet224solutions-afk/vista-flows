@@ -61,9 +61,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         let customId = '';
 
-        // Créer ID utilisateur si manquant
+        // Créer ID utilisateur si manquant (3 lettres + 4 chiffres)
         if (needsUserId) {
-          customId = 'USR' + Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
+          // Générer 3 lettres aléatoires (A-Z)
+          let letters = '';
+          for (let i = 0; i < 3; i++) {
+            letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
+          }
+
+          // Générer 4 chiffres aléatoires (0-9)
+          let numbers = '';
+          for (let i = 0; i < 4; i++) {
+            numbers += Math.floor(Math.random() * 10).toString();
+          }
+
+          customId = letters + numbers;
+
           const { error: idError } = await supabase
             .from('user_ids')
             .upsert({
@@ -78,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } else {
           // Récupérer l'ID existant
-          customId = userIdCheck.data?.custom_id || 'USR0000000';
+          customId = userIdCheck.data?.custom_id || 'ABC0000';
         }
 
         // Créer wallet si manquant
