@@ -47,6 +47,7 @@ import { toast } from "sonner";
 // import KafkaMonitor from "@/components/KafkaMonitor";
 // import WalletDashboard from "@/components/wallet/WalletDashboard";
 // import WalletAICopilot from "@/components/wallet/WalletAICopilot";
+import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 // import VirtualCardService from "@/services/virtualCardService";
 // import RealTimeWalletService from "@/services/realTimeWalletService";
 
@@ -750,115 +751,37 @@ export default function AdvancedPDGDashboard() {
                                 </div>
                             </div>
 
-                            {/* ======================= AI COPILOT PANEL (PDG ONLY) ======================= */}
+                            {/* ======================= AI COPILOT INTELLIGENT (PDG ONLY) ======================= */}
                             {(profile?.role === 'PDG' || pdgAuth) && copilotVisible && (
-                                <div className="w-80 bg-card border-l border-border flex flex-col absolute right-0 top-0 h-full">
-
-                                    {/* Copilot Header */}
-                                    <div className="p-4 border-b border-border">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <Bot className="h-5 w-5 text-blue-500" />
-                                                <h3 className="font-semibold">AI Copilot PDG</h3>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => exportChatHistory('pdf')}>
-                                                            <FileText className="h-4 w-4 mr-2" />
-                                                            Exporter PDF
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => exportChatHistory('excel')}>
-                                                            <Download className="h-4 w-4 mr-2" />
-                                                            Exporter Excel
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => setChatMessages([])}>
-                                                            Effacer historique
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => setCopilotVisible(false)}
-                                                >
-                                                    <XCircle className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                                            🔒 Accès Exclusif PDG • MFA Activé
-                                        </Badge>
-                                    </div>
-
-                                    {/* Chat Messages */}
-                                    <ScrollArea className="flex-1 p-4">
-                                        <div className="space-y-4">
-                                            {chatMessages.map((message) => (
-                                                <div
-                                                    key={message.id}
-                                                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                                                >
-                                                    <div
-                                                        className={`max-w-[80%] p-3 rounded-lg ${message.type === 'user'
-                                                            ? 'bg-primary text-primary-foreground'
-                                                            : message.actionType === 'warning'
-                                                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                                                : message.actionType === 'action'
-                                                                    ? 'bg-green-100 text-green-800 border border-green-200'
-                                                                    : 'bg-muted'
-                                                            }`}
-                                                    >
-                                                        {message.type === 'copilot' && (
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <Bot className="h-3 w-3" />
-                                                                <span className="text-xs font-medium">AI Copilot</span>
-                                                            </div>
-                                                        )}
-                                                        <div className="text-sm">{message.content}</div>
-                                                        <div className="text-xs opacity-70 mt-1">
-                                                            {message.timestamp.toLocaleTimeString()}
-                                                        </div>
-
-                                                        {/* Action buttons for certain message types */}
-                                                        {message.actionType === 'action' && message.metadata?.reportUrl && (
-                                                            <Button variant="outline" size="sm" className="mt-2">
-                                                                <Download className="h-3 w-3 mr-1" />
-                                                                Télécharger
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
-
-                                    {/* Chat Input */}
-                                    <div className="p-4 border-t border-border">
-                                        <div className="flex gap-2">
-                                            <Input
-                                                placeholder="Commande PDG..."
-                                                value={chatInput}
-                                                onChange={(e) => setChatInput(e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                                                className="flex-1"
-                                            />
-                                            <Button size="sm" variant="ghost">
-                                                <Mic className="h-4 w-4" />
-                                            </Button>
-                                            <Button size="sm" onClick={sendChatMessage}>
-                                                <Send className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground mt-2">
-                                            Exemples: "bloquer utilisateur 12847", "statistiques temps réel", "rapport financier"
-                                        </div>
+                                <div className="w-80 absolute right-0 top-0 h-full">
+                                    <div className="relative h-full">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setCopilotVisible(false)}
+                                            className="absolute top-2 right-2 z-10 bg-white/80 hover:bg-white"
+                                        >
+                                            <XCircle className="h-4 w-4" />
+                                        </Button>
+                                        <IntelligentChatInterface
+                                            context={{
+                                                userRole: 'PDG',
+                                                companyData: {
+                                                    name: '224Solutions',
+                                                    users: 15847,
+                                                    revenue: 125600000,
+                                                    growth: 18.5
+                                                },
+                                                recentActions: [],
+                                                currentPage: 'pdg-dashboard',
+                                                businessMetrics: {}
+                                            }}
+                                            onActionRequest={(action, data) => {
+                                                // Intégrer les actions du copilote avec le dashboard
+                                                console.log('Action copilote:', action, data);
+                                                toast.success(`Action exécutée: ${action}`);
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             )}

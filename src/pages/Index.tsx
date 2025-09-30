@@ -369,6 +369,13 @@ export default function IndexAlibaba() {
               🎯 PDG BASIC (GARANTI)
             </Button>
             <Button
+              onClick={() => navigate('/pdg-advanced')}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 font-bold shadow-lg animate-pulse"
+              size="lg"
+            >
+              🧠 PDG + IA COPILOTE INTELLIGENT
+            </Button>
+            <Button
               onClick={() => navigate('/client')}
               className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 font-bold shadow-lg"
               size="lg"
