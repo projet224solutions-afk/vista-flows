@@ -32,64 +32,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshProfile = useCallback(async () => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      setProfile(data);
-    } catch (error) {
-      console.error('Error in refreshProfile:', error);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Fetch profile when user changes
-  useEffect(() => {
-    if (user) {
-      refreshProfile();
-      // Setup automatique pour tous les nouveaux utilisateurs
-      ensureUserSetup();
-    } else {
-      setProfile(null);
-    }
-  }, [user, refreshProfile, ensureUserSetup]);
-
   // Fonction pour s'assurer que l'utilisateur a son setup complet
   const ensureUserSetup = useCallback(async () => {
     if (!user) return;
@@ -191,6 +133,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.error('Erreur lors de la configuration utilisateur');
     }
   }, [user]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error in refreshProfile:', error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch profile when user changes
+  useEffect(() => {
+    if (user) {
+      refreshProfile();
+      // Setup automatique pour tous les nouveaux utilisateurs
+      ensureUserSetup();
+    } else {
+      setProfile(null);
+    }
+  }, [user, refreshProfile, ensureUserSetup]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
