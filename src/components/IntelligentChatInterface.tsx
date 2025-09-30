@@ -31,6 +31,11 @@ export default function IntelligentChatInterface({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const aiService = useRef(new AICopilotService());
 
+    // Auto-scroll vers le bas quand de nouveaux messages arrivent
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
     // Suggestions intelligentes
     const quickActions = [
         { icon: BarChart3, label: "Analyse des ventes", command: "/stats" },
@@ -186,41 +191,66 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
         toast.info("Conversation effacée");
     };
 
-    return (
-        <Card className="h-full flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-6 h-6" />
-                    <Sparkles className="w-5 h-5 animate-pulse" />
-                    Copilote IA Intelligent
-                    <Badge variant="secondary" className="bg-yellow-400 text-black animate-pulse">
-                        🧠 ChatGPT Mode
-                    </Badge>
-                </CardTitle>
-                <div className="flex items-center gap-2 text-sm opacity-90">
-                    <Zap className="w-4 h-4" />
-                    Intelligence conversationnelle avancée • Analyse prédictive • Recommandations stratégiques
-                </div>
-            </CardHeader>
+  return (
+    <Card className="h-full flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Brain className="w-7 h-7 animate-pulse" />
+          <Sparkles className="w-6 h-6 animate-bounce" />
+          Assistant IA - 224Solutions
+          <Badge variant="secondary" className="bg-yellow-400 text-black animate-pulse font-bold">
+            🤖 Mode ChatGPT
+          </Badge>
+        </CardTitle>
+        <div className="flex items-center gap-2 text-sm opacity-90">
+          <Zap className="w-4 h-4" />
+          Tapez votre message ci-dessous pour une conversation intelligente
+        </div>
+      </CardHeader>
 
             <CardContent className="flex-1 flex flex-col p-0">
-                {/* Actions rapides */}
-                <div className="p-4 bg-white border-b">
-                    <div className="text-sm font-medium text-gray-700 mb-2">🚀 Actions rapides :</div>
-                    <div className="flex flex-wrap gap-2">
+                {/* Actions rapides organisées */}
+                <div className="p-4 bg-gradient-to-r from-white to-blue-50 border-b-2 border-blue-100">
+                    <div className="text-center mb-3">
+                        <h3 className="text-sm font-bold text-blue-800 mb-1">
+                            🚀 Actions Rapides Intelligentes
+                        </h3>
+                        <p className="text-xs text-blue-600">
+                            Cliquez pour des analyses instantanées ou tapez vos questions ci-dessous
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                         {quickActions.map((action, index) => (
                             <Button
                                 key={index}
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleQuickAction(action.command)}
-                                className="text-xs hover:bg-blue-50 hover:border-blue-300"
+                                className="flex items-center gap-2 text-xs p-3 h-auto whitespace-normal text-left justify-start border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-100 transition-all duration-200 hover:scale-105 rounded-lg shadow-sm"
                                 disabled={isLoading}
                             >
-                                <action.icon className="w-3 h-3 mr-1" />
-                                {action.label}
+                                <action.icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                <span className="flex-1 font-medium">{action.label}</span>
                             </Button>
                         ))}
+                    </div>
+                    
+                    {/* Suggestions de conversation */}
+                    <div className="mt-4 pt-3 border-t border-blue-200">
+                        <p className="text-xs font-medium text-blue-700 mb-2">💬 Essayez ces phrases :</p>
+                        <div className="flex flex-wrap gap-2">
+                            {['Bonjour', 'Comment ça va ?', 'Mes ventes augmentent ?', 'Recommandations'].map((suggestion) => (
+                                <Button
+                                    key={suggestion}
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setInputValue(suggestion)}
+                                    className="text-xs px-2 py-1 h-auto bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-full"
+                                >
+                                    {suggestion}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -294,36 +324,54 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
                     </div>
                 </ScrollArea>
 
-                {/* Input */}
-                <div className="p-4 bg-white border-t">
-                    <div className="flex items-center gap-2">
+                {/* Zone de saisie améliorée */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-t-2 border-blue-200">
+                    <div className="text-center mb-3">
+                        <p className="text-sm font-semibold text-blue-800">
+                            💬 Conversation avec votre Assistant IA
+                        </p>
+                        <p className="text-xs text-blue-600">
+                            Tapez votre message comme si vous parliez à ChatGPT
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
                         <div className="flex-1 relative">
                             <Input
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Posez-moi une question intelligente... (ex: 'Comment améliorer nos ventes ?')"
+                                placeholder="Tapez ici... Ex: 'Bonjour', 'Comment vont nos ventes ?', 'Analyse mes finances'"
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                 disabled={isLoading}
-                                className="pr-12 border-blue-200 focus:border-blue-400"
+                                className="text-lg py-3 px-4 pr-12 border-2 border-blue-300 focus:border-blue-500 rounded-xl shadow-md bg-white"
                             />
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={startVoiceRecognition}
                                 disabled={isLoading}
-                                className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 ${isListening ? 'text-red-500 animate-pulse' : 'text-gray-400'
-                                    }`}
+                                className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 rounded-full ${
+                                    isListening ? 'text-red-500 animate-pulse bg-red-50' : 'text-blue-400 hover:bg-blue-50'
+                                }`}
+                                title="Reconnaissance vocale"
                             >
                                 <Mic className="w-4 h-4" />
                             </Button>
                         </div>
-
-                        <Button
+                        
+                        <Button 
                             onClick={handleSendMessage}
                             disabled={!inputValue.trim() || isLoading}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105"
                         >
-                            <Send className="w-4 h-4" />
+                            {isLoading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <Send className="w-5 h-5 mr-2" />
+                                    Envoyer
+                                </>
+                            )}
                         </Button>
                     </div>
 

@@ -46,12 +46,14 @@ export class AICopilotService {
             "/config": "Configuration système"
         },
 
-        responses: {
-            greetings: [
-                "Bonjour ! Je suis votre copilote IA pour 224Solutions. Comment puis-je vous assister aujourd'hui ?",
-                "Salut ! Prêt à optimiser votre entreprise ? Que souhaitez-vous analyser ?",
-                "Bienvenue ! En tant que PDG, vous avez accès à toutes les fonctionnalités. Que désirez-vous ?",
-            ],
+    responses: {
+      greetings: [
+        "Bonjour ! 😊 Je suis votre assistant IA personnel pour 224Solutions. Comment puis-je vous aider aujourd'hui ? Vous pouvez me demander des analyses, des statistiques, ou simplement discuter de votre entreprise !",
+        "Salut ! 👋 Ravi de vous retrouver ! En tant que PDG, vous avez accès à toutes mes capacités d'analyse. Que souhaitez-vous explorer aujourd'hui - finances, utilisateurs, ou autre chose ?",
+        "Bonjour chef ! 🎯 Je suis là pour vous accompagner dans vos décisions stratégiques. Voulez-vous que je vous donne un aperçu de vos performances actuelles ou préférez-vous me poser une question spécifique ?",
+        "Coucou ! 😄 Votre copilote IA est à votre service ! Que diriez-vous d'une petite analyse de vos KPIs pour commencer la journée, ou avez-vous une question particulière en tête ?",
+        "Hello ! 🤖 Content de vous voir ! Je peux vous aider avec n'importe quoi concernant 224Solutions - des analyses de données aux recommandations stratégiques. Par où commençons-nous ?",
+      ],
 
             understanding: [
                 "Je comprends votre demande. Laissez-moi analyser cela...",
