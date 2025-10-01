@@ -435,7 +435,7 @@ export default function PDGDashboard() {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
+    <div className={`min-h-screen pb-20 transition-colors duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white' 
         : 'bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100'
@@ -1124,7 +1124,7 @@ export default function PDGDashboard() {
       {/* Dialog pour détails utilisateur */}
       {selectedUser && (
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent>
+          <DialogContent className="z-[70]">
             <DialogHeader>
               <DialogTitle>Détails Utilisateur</DialogTitle>
             </DialogHeader>
@@ -1164,7 +1164,7 @@ export default function PDGDashboard() {
       {showCopilotButton && !copilotVisible && (
         <Button
           onClick={() => setCopilotVisible(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full w-16 h-16 z-50 animate-pulse"
+          className="fixed bottom-20 right-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full w-16 h-16 z-[60] animate-pulse"
           size="lg"
           title="Assistant IA PDG"
         >
@@ -1174,7 +1174,7 @@ export default function PDGDashboard() {
 
       {/* Interface Copilot AI - Version Complète */}
       {copilotVisible && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
+        <div className="fixed bottom-20 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[60]">
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-2xl">
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5" />
