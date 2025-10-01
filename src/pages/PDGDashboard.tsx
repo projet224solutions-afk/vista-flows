@@ -43,12 +43,15 @@ import {
   Banknote,
   Smartphone,
   Building,
-  Building2
+  Building2,
+  Bot,
+  Brain
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
+import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -98,6 +101,9 @@ export default function PDGDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // États pour les nouvelles fonctionnalités
+  const [copilotVisible, setCopilotVisible] = useState(false);
 
   // États pour les données
   const [stats, setStats] = useState<PDGStats>({
@@ -877,6 +883,65 @@ export default function PDGDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Bouton Copilot AI flottant */}
+      {!copilotVisible && (
+        <Button
+          onClick={() => setCopilotVisible(true)}
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full w-16 h-16 z-50"
+          size="lg"
+        >
+          <Bot className="w-8 h-8" />
+        </Button>
+      )}
+
+      {/* Interface Copilot AI */}
+      {copilotVisible && (
+        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
+          <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-2xl">
+            <div className="flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              <h3 className="font-semibold">Copilot AI PDG</h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCopilotVisible(false)}
+              className="text-white hover:bg-white/20"
+            >
+              ×
+            </Button>
+          </div>
+          <div className="h-[calc(100%-60px)]">
+            <IntelligentChatInterface 
+              context={{
+                userRole: 'PDG',
+                companyData: {
+                  name: '224Solutions',
+                  users: stats.totalUsers,
+                  products: stats.totalProducts,
+                  revenue: stats.totalRevenue
+                },
+                recentActions: [],
+                currentPage: 'pdg-dashboard',
+                businessMetrics: {
+                  totalUsers: stats.totalUsers,
+                  activeUsers: stats.activeVendors,
+                  totalProducts: stats.totalProducts,
+                  totalTransactions: stats.totalTransactions
+                }
+              }}
+              onActionRequest={(action, data) => {
+                console.log('Action copilote:', action, data);
+                toast({
+                  title: "🤖 Action IA exécutée",
+                  description: `Action: ${action}`,
+                });
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
