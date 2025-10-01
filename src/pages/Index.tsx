@@ -285,27 +285,12 @@ export default function IndexAlibaba() {
           <p className="mb-6">Authentification désactivée - Accès libre à toutes les interfaces PDG</p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Button
-              onClick={() => navigate('/pdg-advanced')}
-              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
-              size="lg"
-            >
-              <Crown className="w-5 h-5 mr-2" />
-              Interface PDG Avancée
-            </Button>
-            <Button
               onClick={() => navigate('/pdg')}
               className="bg-white text-red-600 hover:bg-gray-100 font-bold"
               size="lg"
             >
               <Crown className="w-5 h-5 mr-2" />
               Interface PDG Standard
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-test')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold"
-              size="lg"
-            >
-              🔧 Diagnostic PDG
             </Button>
             <Button
               onClick={() => navigate('/pdg-simple')}
@@ -320,20 +305,6 @@ export default function IndexAlibaba() {
               size="lg"
             >
               🎯 PDG BASIC (GARANTI)
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-advanced')}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 font-bold shadow-lg animate-pulse"
-              size="lg"
-            >
-              🧠 PDG + IA COPILOTE INTELLIGENT
-            </Button>
-            <Button
-              onClick={() => navigate('/client')}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 font-bold shadow-lg"
-              size="lg"
-            >
-              🚀 INTERFACE CLIENT ALIBABA
             </Button>
           </div>
         </div>
