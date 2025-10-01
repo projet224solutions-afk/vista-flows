@@ -174,32 +174,6 @@ export default function IndexAlibaba() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* 🚨 TEST ULTRA-BASIQUE - PRIORITÉ ABSOLUE 🚨 */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 text-center shadow-lg sticky top-0 z-50">
-        <h2 className="text-xl font-bold mb-2">🚨 RIEN NE FONCTIONNE ? TEST D'URGENCE ! 🚨</h2>
-        <div className="space-y-3">
-          <Button
-            onClick={() => navigate('/diagnostic-fonctionnalites')}
-            className="bg-white text-red-600 hover:bg-gray-100 font-bold text-xl px-8 py-3 shadow-lg animate-pulse"
-          >
-            🔍 DIAGNOSTIC DES FONCTIONNALITÉS - TESTEZ ICI ! 🔍
-          </Button>
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={() => navigate('/test-ultra-basic')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
-            >
-              🔥 Test Ultra-Basic
-            </Button>
-            <Button
-              onClick={() => window.open('/test-pur.html', '_blank')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
-            >
-              🌟 Test HTML Pur
-            </Button>
-          </div>
-        </div>
-      </div>
       {/* Header moderne */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -287,104 +261,24 @@ export default function IndexAlibaba() {
         </div>
       </section>
 
-      {/* Test Interface Client Alibaba */}
-      <section className="py-8 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+      {/* Accès Interface PDG Standard */}
+      <section className="py-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🚀 TESTS FRONT-END & DIAGNOSTICS</h2>
-          <p className="mb-6">Tests pour identifier les problèmes front-end - Testez maintenant !</p>
-          <div className="flex justify-center gap-4 mb-6 flex-wrap">
+          <h2 className="text-2xl font-bold mb-4">🎯 Interface PDG - Gestion Complète</h2>
+          <p className="mb-6">Accédez à votre tableau de bord de gestion principal</p>
+          <div className="flex justify-center">
             <Button
-              onClick={() => navigate('/client-simple')}
-              className="bg-green-500 text-white hover:bg-green-600 font-bold text-lg px-6 py-3 shadow-lg"
+              onClick={() => navigate('/pdg')}
+              className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
               size="lg"
             >
-              ✅ CLIENT SIMPLE
-            </Button>
-            <Button
-              onClick={() => navigate('/vendeur-simple')}
-              className="bg-orange-500 text-white hover:bg-orange-600 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🛒 VENDEUR SIMPLE
-            </Button>
-            <Button
-              onClick={() => navigate('/test-client')}
-              className="bg-white text-blue-600 hover:bg-gray-100 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🧪 DIAGNOSTIC
-            </Button>
-            <Button
-              onClick={() => navigate('/client')}
-              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🛒 CLIENT COMPLEXE
+              <Crown className="w-6 h-6 mr-2" />
+              Interface PDG Standard
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Accès PDG Mode Test */}
-      <section className="py-8 bg-gradient-to-r from-red-500 to-orange-500 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🧪 MODE TEST ACTIVÉ</h2>
-          <p className="mb-6">Authentification désactivée - Accès libre à toutes les interfaces PDG</p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => navigate('/pdg-advanced')}
-              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
-              size="lg"
-            >
-              <Crown className="w-5 h-5 mr-2" />
-              Interface PDG Avancée
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg')}
-              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
-              size="lg"
-            >
-              <Crown className="w-5 h-5 mr-2" />
-              Interface PDG Standard
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-test')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold"
-              size="lg"
-            >
-              🔧 Diagnostic PDG
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-simple')}
-              className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold"
-              size="lg"
-            >
-              ✅ PDG Simple (Test)
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-basic')}
-              className="bg-gradient-to-r from-emerald-400 to-green-500 text-white hover:from-emerald-500 hover:to-green-600 font-bold shadow-lg"
-              size="lg"
-            >
-              🎯 PDG BASIC (GARANTI)
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-advanced')}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 font-bold shadow-lg animate-pulse"
-              size="lg"
-            >
-              🧠 PDG + IA COPILOTE INTELLIGENT
-            </Button>
-            <Button
-              onClick={() => navigate('/client')}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 font-bold shadow-lg"
-              size="lg"
-            >
-              🚀 INTERFACE CLIENT ALIBABA
-            </Button>
-          </div>
-        </div>
-      </section>
 
       {/* Nos Services - Section principale comme dans l'image */}
       <section className="py-16 bg-white">
@@ -577,11 +471,6 @@ export default function IndexAlibaba() {
 
       {/* Footer de navigation */}
       <QuickFooter />
-
-      {/* Bouton PDG */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <PDGAuthButton />
-      </div>
     </div>
   );
 }
