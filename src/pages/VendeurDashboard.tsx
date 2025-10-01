@@ -11,7 +11,8 @@ import {
   FileText, Settings, AlertTriangle, DollarSign, Target,
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
-  Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw, LogOut
+  Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw, LogOut,
+  Receipt
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -31,6 +32,7 @@ import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
+import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import { useUserInfo } from "@/hooks/useUserInfo";
 // Removed deprecated wallet and debug services - being refactored
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -456,8 +458,15 @@ export default function VendeurDashboard() {
                 </TabsTrigger>
               </div>
 
-              {/* Deuxième ligne - 6 boutons */}
+              {/* Deuxième ligne - 7 boutons */}
               <div className="flex gap-3">
+                <TabsTrigger
+                  value="expenses"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <Receipt className="w-5 h-5 mr-3" />
+                  Dépenses
+                </TabsTrigger>
                 <TabsTrigger
                   value="payments"
                   className="data-[state=active]:bg-vendeur-gradient data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-muted/50 transition-all duration-200 px-4 py-3 rounded-lg border-0 flex-1"
@@ -680,6 +689,11 @@ export default function VendeurDashboard() {
           {/* Entrepôts & Stocks */}
           <TabsContent value="warehouses" className="space-y-6">
             <WarehouseManagement />
+          </TabsContent>
+
+          {/* 💰 Gestion des Dépenses - NOUVELLE FONCTIONNALITÉ */}
+          <TabsContent value="expenses" className="space-y-6">
+            <ExpenseManagementDashboard />
           </TabsContent>
 
           {/* Gestion des paiements */}
