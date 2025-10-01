@@ -174,16 +174,6 @@ export default function IndexAlibaba() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* 🚨 TEST ULTRA-BASIQUE - PRIORITÉ ABSOLUE 🚨 */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 text-center shadow-lg sticky top-0 z-50">
-        <h2 className="text-xl font-bold mb-2">🚨 RIEN NE FONCTIONNE ? TEST D'URGENCE ! 🚨</h2>
-          <Button
-            onClick={() => navigate('/diagnostic-fonctionnalites')}
-            className="bg-white text-red-600 hover:bg-gray-100 font-bold text-xl px-8 py-3 shadow-lg animate-pulse"
-          >
-            🔍 DIAGNOSTIC DES FONCTIONNALITÉS - TESTEZ ICI ! 🔍
-          </Button>
-      </div>
       {/* Header moderne */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -283,20 +273,6 @@ export default function IndexAlibaba() {
               size="lg"
             >
               🛒 VENDEUR SIMPLE
-            </Button>
-            <Button
-              onClick={() => navigate('/test-client')}
-              className="bg-white text-blue-600 hover:bg-gray-100 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🧪 DIAGNOSTIC
-            </Button>
-            <Button
-              onClick={() => navigate('/client')}
-              className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🛒 CLIENT COMPLEXE
             </Button>
           </div>
         </div>
