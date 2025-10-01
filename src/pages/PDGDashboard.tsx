@@ -75,8 +75,10 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
+import CopilotTest from "@/components/CopilotTest";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
+import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -168,30 +170,47 @@ export default function PDGDashboard() {
   const [copilotVisible, setCopilotVisible] = useState(false);
   const [showCopilotButton, setShowCopilotButton] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [realTimeMode, setRealTimeMode] = useState(true);
 
-  // États pour les données temps réel
-  const [realUserStats, setRealUserStats] = useState<RealUserStats>({
-    totalUsers: 0,
-    activeUsers: 0,
-    usersByRole: { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 },
-    usersByRegion: []
-  });
+  // Utilisation du nouveau système unifié
+  const { stats: globalStats, loading: statsLoading } = useGlobalStats();
+  const { data: usersData, loading: usersLoading } = useUsers();
+  const { data: productsData, loading: productsLoading } = useProducts();
+  const { data: transactionsData, loading: transactionsLoading } = useTransactions();
 
-  const [realProductStats, setRealProductStats] = useState<RealProductStats>({
-    totalProducts: 0,
-    activeProducts: 0,
-    totalVendors: 0,
-    activeVendors: 0
-  });
+  // Calculer les stats par rôle
+  const usersByRole = usersData ? {
+    clients: usersData.filter((u: any) => u.role === 'client').length,
+    vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
+    drivers: usersData.filter((u: any) => u.role === 'taxi').length,
+    agents: usersData.filter((u: any) => u.role === 'livreur').length,
+    admins: usersData.filter((u: any) => u.role === 'admin').length,
+  } : { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 };
 
-  const [realTransactionStats, setRealTransactionStats] = useState<RealTransactionStats>({
-    totalTransactions: 0,
-    totalRevenue: 0,
-    totalCommissions: 0,
-    recentTransactions: []
-  });
+  // États pour les données temps réel (maintenant alimentés par le DataManager)
+  const realUserStats = {
+    totalUsers: globalStats.totalUsers,
+    activeUsers: usersData?.filter((u: any) => u.is_active).length || 0,
+    usersByRole,
+    usersByRegion: [] // À implémenter si nécessaire
+  };
+
+  const realProductStats = {
+    totalProducts: globalStats.totalProducts,
+    activeProducts: productsData?.filter((p: any) => p.is_active).length || 0,
+    totalVendors: globalStats.activeVendors,
+    activeVendors: globalStats.activeVendors
+  };
+
+  const realTransactionStats = {
+    totalTransactions: globalStats.totalTransactions,
+    totalRevenue: globalStats.totalRevenue,
+    totalCommissions: globalStats.totalRevenue * 0.05,
+    recentTransactions: transactionsData?.slice(0, 10) || []
+  };
+
+  // Loading global
+  const loading = statsLoading || usersLoading || productsLoading || transactionsLoading;
 
   // États pour les données mockées (fallback)
   const [stats, setStats] = useState<PDGStats>({
@@ -291,162 +310,10 @@ export default function PDGDashboard() {
     console.log("🧪 PDG Dashboard en mode test - Authentification désactivée");
     toast({
       title: "🧪 Mode Test Activé",
-      description: "Interface PDG accessible sans authentification",
+      description: "Interface PDG accessible sans authentification - Données temps réel activées",
       variant: "default"
     });
-    
-    // Charger les données temps réel si activé
-    if (realTimeMode) {
-      loadRealTimeData();
-    }
-  }, [realTimeMode]);
-
-  // Fonction pour charger les données temps réel depuis Supabase
-  const loadRealTimeData = async () => {
-    setLoading(true);
-    try {
-      // Charger les statistiques utilisateurs
-      await loadUserStats();
-      // Charger les statistiques produits
-      await loadProductStats();
-      // Charger les statistiques transactions
-      await loadTransactionStats();
-      
-      toast({
-        title: "📊 Données temps réel chargées",
-        description: "Les statistiques ont été mises à jour",
-      });
-    } catch (error) {
-      console.error('Erreur chargement données temps réel:', error);
-      toast({
-        title: "❌ Erreur chargement données",
-        description: "Basculement vers données mockées",
-        variant: "destructive"
-      });
-      setRealTimeMode(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserStats = async () => {
-    try {
-      // Compter tous les utilisateurs
-      const { count: totalUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Compter les utilisateurs actifs (connectés dans les 30 derniers jours)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('updated_at', thirtyDaysAgo.toISOString());
-
-      // Compter par rôle
-      const { data: roleData } = await supabase
-        .from('profiles')
-        .select('role')
-        .not('role', 'is', null);
-
-      const usersByRole = {
-        clients: roleData?.filter(u => u.role === 'client').length || 0,
-        vendors: roleData?.filter(u => u.role === 'vendeur').length || 0,
-        drivers: roleData?.filter(u => u.role === 'taxi').length || 0,
-        agents: roleData?.filter(u => u.role === 'livreur').length || 0,
-        admins: roleData?.filter(u => u.role === 'admin').length || 0,
-      };
-
-      setRealUserStats({
-        totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
-        usersByRole,
-        usersByRegion: [] // À implémenter si nécessaire
-      });
-
-      // Mettre à jour les stats principales avec les données réelles
-      setStats(prev => ({
-        ...prev,
-        totalUsers: totalUsers || 0,
-        activeVendors: usersByRole.vendors
-      }));
-
-    } catch (error) {
-      console.error('Erreur chargement stats utilisateurs:', error);
-    }
-  };
-
-  const loadProductStats = async () => {
-    try {
-      // Compter tous les produits
-      const { count: totalProducts } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      // Compter les produits actifs
-      const { count: activeProducts } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
-
-      // Compter les vendeurs
-      const { count: totalVendors } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'vendeur');
-
-      setRealProductStats({
-        totalProducts: totalProducts || 0,
-        activeProducts: activeProducts || 0,
-        totalVendors: totalVendors || 0,
-        activeVendors: totalVendors || 0 // Simplification
-      });
-
-      // Mettre à jour les stats principales
-      setStats(prev => ({
-        ...prev,
-        totalProducts: totalProducts || 0
-      }));
-
-    } catch (error) {
-      console.error('Erreur chargement stats produits:', error);
-    }
-  };
-
-  const loadTransactionStats = async () => {
-    try {
-      // Utiliser la table wallets pour simuler les transactions
-      const { count: totalTransactions } = await supabase
-        .from('wallets')
-        .select('*', { count: 'exact', head: true });
-
-      // Calculer le revenu total basé sur les soldes des wallets
-      const { data: walletData } = await supabase
-        .from('wallets')
-        .select('balance');
-
-      const totalRevenue = walletData?.reduce((sum, w) => sum + (w.balance || 0), 0) || 0;
-
-      setRealTransactionStats({
-        totalTransactions: totalTransactions || 0,
-        totalRevenue,
-        totalCommissions: totalRevenue * 0.05, // 5% de commission
-        recentTransactions: [] // Pas de données détaillées pour l'instant
-      });
-
-      // Mettre à jour les stats principales
-      setStats(prev => ({
-        ...prev,
-        totalTransactions: totalTransactions || 0,
-        totalRevenue: totalRevenue
-      }));
-
-    } catch (error) {
-      console.error('Erreur chargement stats transactions:', error);
-    }
-  };
+  }, []);
 
   // Fonctions de gestion des utilisateurs
   const handleUserAction = (userId: string, action: 'suspend' | 'activate' | 'delete') => {
@@ -1267,52 +1134,9 @@ export default function PDGDashboard() {
         </Button>
       )}
 
-      {/* Interface Copilot AI */}
+      {/* Interface Copilot AI - Version Test */}
       {copilotVisible && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
-          <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-2xl">
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5" />
-              <h3 className="font-semibold">Copilot AI PDG</h3>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCopilotVisible(false)}
-              className="text-white hover:bg-white/20"
-            >
-              ×
-            </Button>
-          </div>
-          <div className="h-[calc(100%-60px)]">
-            <IntelligentChatInterface 
-              context={{
-                userRole: 'PDG',
-                companyData: {
-                  name: '224Solutions',
-                  users: stats.totalUsers,
-                  products: stats.totalProducts,
-                  revenue: stats.totalRevenue
-                },
-                recentActions: [],
-                currentPage: 'pdg-dashboard',
-                businessMetrics: {
-                  totalUsers: stats.totalUsers,
-                  activeUsers: stats.activeVendors,
-                  totalProducts: stats.totalProducts,
-                  totalTransactions: stats.totalTransactions
-                }
-              }}
-              onActionRequest={(action, data) => {
-                console.log('Action copilote:', action, data);
-                toast({
-                  title: "🤖 Action IA exécutée",
-                  description: `Action: ${action}`,
-                });
-              }}
-            />
-          </div>
-        </div>
+        <CopilotTest onClose={() => setCopilotVisible(false)} />
       )}
     </div>
   );
