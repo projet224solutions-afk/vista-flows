@@ -453,11 +453,6 @@ export default function IndexAlibaba() {
 
       {/* Footer de navigation */}
       <QuickFooter />
-
-      {/* Bouton PDG */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <PDGAuthButton />
-      </div>
     </div>
   );
 }
