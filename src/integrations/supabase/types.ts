@@ -49,6 +49,62 @@ export type Database = {
           },
         ]
       }
+      agents_management: {
+        Row: {
+          agent_code: string
+          commission_rate: number | null
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          pdg_id: string
+          permissions: Json | null
+          phone: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          pdg_id: string
+          permissions?: Json | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          pdg_id?: string
+          permissions?: Json | null
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1168,6 +1224,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdg_management: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          permissions: Json | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          permissions?: Json | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          permissions?: Json | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       permissions: {
         Row: {
