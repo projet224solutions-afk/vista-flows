@@ -333,7 +333,7 @@ export default function PDGDashboard() {
       // Compter tous les utilisateurs
       const { count: totalUsers } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       // Compter les utilisateurs actifs (connectés dans les 30 derniers jours)
       const thirtyDaysAgo = new Date();
@@ -341,7 +341,7 @@ export default function PDGDashboard() {
       
       const { count: activeUsers } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .gte('updated_at', thirtyDaysAgo.toISOString());
 
       // Compter par rôle
@@ -380,21 +380,21 @@ export default function PDGDashboard() {
   const loadProductStats = async () => {
     try {
       // Compter tous les produits
-      const { count: totalProducts } = await supabase
+      const { count: totalProducts, error: error1 } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true });
 
-      // Compter les produits actifs
-      const { count: activeProducts } = await supabase
+      // Compter les produits actifs - Using filter instead of eq
+      const { count: activeProducts, error: error2 } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+        .filter('status', 'eq', 'active');
 
-      // Compter les vendeurs
-      const { count: totalVendors } = await supabase
+      // Compter les vendeurs - Using filter instead of eq
+      const { count: totalVendors, error: error3 } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .eq('role', 'vendeur');
+        .filter('role', 'eq', 'vendeur');
 
       setRealProductStats({
         totalProducts: totalProducts || 0,
@@ -419,7 +419,7 @@ export default function PDGDashboard() {
       // Utiliser la table wallets pour simuler les transactions
       const { count: totalTransactions } = await supabase
         .from('wallets')
-        .select('*', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true });
 
       // Calculer le revenu total basé sur les soldes des wallets
       const { data: walletData } = await supabase

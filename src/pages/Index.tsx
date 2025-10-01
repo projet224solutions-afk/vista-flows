@@ -177,28 +177,12 @@ export default function IndexAlibaba() {
       {/* 🚨 TEST ULTRA-BASIQUE - PRIORITÉ ABSOLUE 🚨 */}
       <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 text-center shadow-lg sticky top-0 z-50">
         <h2 className="text-xl font-bold mb-2">🚨 RIEN NE FONCTIONNE ? TEST D'URGENCE ! 🚨</h2>
-        <div className="space-y-3">
           <Button
             onClick={() => navigate('/diagnostic-fonctionnalites')}
             className="bg-white text-red-600 hover:bg-gray-100 font-bold text-xl px-8 py-3 shadow-lg animate-pulse"
           >
             🔍 DIAGNOSTIC DES FONCTIONNALITÉS - TESTEZ ICI ! 🔍
           </Button>
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={() => navigate('/test-ultra-basic')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
-            >
-              🔥 Test Ultra-Basic
-            </Button>
-            <Button
-              onClick={() => window.open('/test-pur.html', '_blank')}
-              className="bg-yellow-400 text-black hover:bg-yellow-300 font-bold text-lg px-6 py-2 shadow-lg"
-            >
-              🌟 Test HTML Pur
-            </Button>
-          </div>
-        </div>
       </div>
       {/* Header moderne */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -293,13 +277,6 @@ export default function IndexAlibaba() {
           <h2 className="text-2xl font-bold mb-4">🚀 TESTS FRONT-END & DIAGNOSTICS</h2>
           <p className="mb-6">Tests pour identifier les problèmes front-end - Testez maintenant !</p>
           <div className="flex justify-center gap-4 mb-6 flex-wrap">
-            <Button
-              onClick={() => navigate('/client-simple')}
-              className="bg-green-500 text-white hover:bg-green-600 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              ✅ CLIENT SIMPLE
-            </Button>
             <Button
               onClick={() => navigate('/vendeur-simple')}
               className="bg-orange-500 text-white hover:bg-orange-600 font-bold text-lg px-6 py-3 shadow-lg"
