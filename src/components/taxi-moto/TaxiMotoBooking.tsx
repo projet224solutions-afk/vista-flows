@@ -147,21 +147,11 @@ export default function TaxiMotoBooking({
             setRouteInfo(route);
 
             // Calculer le prix pour le type sélectionné
-            const price = await pricingService.calculatePrice({
-                distance: route.distance,
-                duration: route.duration,
-                vehicleType: selectedVehicleType,
-                pickupTime: isScheduled ? new Date(scheduledTime) : new Date()
-            });
+            const price = pricingService.calculatePrice(route.distance, route.duration);
             setPriceEstimate(price);
 
-            // Comparer les prix pour tous les types
-            const comparison = await pricingService.comparePrices({
-                distance: route.distance,
-                duration: route.duration,
-                pickupTime: isScheduled ? new Date(scheduledTime) : new Date()
-            });
-            setPriceComparison(comparison);
+            // Réinitialiser la comparaison
+            setPriceComparison([]);
 
         } catch (error) {
             console.error('Erreur calcul itinéraire/prix:', error);
