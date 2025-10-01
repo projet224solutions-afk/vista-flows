@@ -261,54 +261,6 @@ export default function IndexAlibaba() {
         </div>
       </section>
 
-      {/* Test Interface Client Alibaba */}
-      <section className="py-8 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🚀 TESTS FRONT-END & DIAGNOSTICS</h2>
-          <p className="mb-6">Tests pour identifier les problèmes front-end - Testez maintenant !</p>
-          <div className="flex justify-center gap-4 mb-6 flex-wrap">
-            <Button
-              onClick={() => navigate('/vendeur-simple')}
-              className="bg-orange-500 text-white hover:bg-orange-600 font-bold text-lg px-6 py-3 shadow-lg"
-              size="lg"
-            >
-              🛒 VENDEUR SIMPLE
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Accès PDG Mode Test */}
-      <section className="py-8 bg-gradient-to-r from-red-500 to-orange-500 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🧪 MODE TEST ACTIVÉ</h2>
-          <p className="mb-6">Authentification désactivée - Accès libre à toutes les interfaces PDG</p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => navigate('/pdg')}
-              className="bg-white text-red-600 hover:bg-gray-100 font-bold"
-              size="lg"
-            >
-              <Crown className="w-5 h-5 mr-2" />
-              Interface PDG Standard
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-simple')}
-              className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold"
-              size="lg"
-            >
-              ✅ PDG Simple (Test)
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg-basic')}
-              className="bg-gradient-to-r from-emerald-400 to-green-500 text-white hover:from-emerald-500 hover:to-green-600 font-bold shadow-lg"
-              size="lg"
-            >
-              🎯 PDG BASIC (GARANTI)
-            </Button>
-          </div>
-        </div>
-      </section>
 
       {/* Nos Services - Section principale comme dans l'image */}
       <section className="py-16 bg-white">
