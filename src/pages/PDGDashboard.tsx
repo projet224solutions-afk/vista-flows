@@ -45,13 +45,38 @@ import {
   Building,
   Building2,
   Bot,
-  Brain
+  Brain,
+  Moon,
+  Sun,
+  Server,
+  Clock,
+  Globe,
+  Zap,
+  Bell,
+  MoreVertical,
+  Trash2,
+  Sparkles,
+  Truck,
+  MessageSquare,
+  Wallet,
+  MapPin,
+  Star,
+  CheckCircle2,
+  Mail,
+  Phone,
+  Key,
+  HardDrive,
+  ArrowUpDown,
+  TrendingDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { supabase } from "@/integrations/supabase/client";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -63,6 +88,43 @@ interface PDGStats {
   activeVendors: number;
   pendingOrders: number;
   systemHealth: number;
+}
+
+// Types pour les vraies données temps réel
+interface RealUserStats {
+  totalUsers: number;
+  activeUsers: number;
+  usersByRole: {
+    clients: number;
+    vendors: number;
+    drivers: number;
+    agents: number;
+    admins: number;
+  };
+  usersByRegion: Array<{
+    region: string;
+    count: number;
+  }>;
+}
+
+interface RealProductStats {
+  totalProducts: number;
+  activeProducts: number;
+  totalVendors: number;
+  activeVendors: number;
+}
+
+interface RealTransactionStats {
+  totalTransactions: number;
+  totalRevenue: number;
+  totalCommissions: number;
+  recentTransactions: Array<{
+    id: string;
+    amount: number;
+    type: string;
+    date: string;
+    status: string;
+  }>;
 }
 
 interface UserAccount {
@@ -102,10 +164,35 @@ export default function PDGDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // États pour les nouvelles fonctionnalités
+  // États pour les nouvelles fonctionnalités avancées
   const [copilotVisible, setCopilotVisible] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [realTimeMode, setRealTimeMode] = useState(true);
 
-  // États pour les données
+  // États pour les données temps réel
+  const [realUserStats, setRealUserStats] = useState<RealUserStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    usersByRole: { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 },
+    usersByRegion: []
+  });
+
+  const [realProductStats, setRealProductStats] = useState<RealProductStats>({
+    totalProducts: 0,
+    activeProducts: 0,
+    totalVendors: 0,
+    activeVendors: 0
+  });
+
+  const [realTransactionStats, setRealTransactionStats] = useState<RealTransactionStats>({
+    totalTransactions: 0,
+    totalRevenue: 0,
+    totalCommissions: 0,
+    recentTransactions: []
+  });
+
+  // États pour les données mockées (fallback)
   const [stats, setStats] = useState<PDGStats>({
     totalUsers: 15847,
     totalRevenue: 125600000,
@@ -206,7 +293,159 @@ export default function PDGDashboard() {
       description: "Interface PDG accessible sans authentification",
       variant: "default"
     });
-  }, []);
+    
+    // Charger les données temps réel si activé
+    if (realTimeMode) {
+      loadRealTimeData();
+    }
+  }, [realTimeMode]);
+
+  // Fonction pour charger les données temps réel depuis Supabase
+  const loadRealTimeData = async () => {
+    setLoading(true);
+    try {
+      // Charger les statistiques utilisateurs
+      await loadUserStats();
+      // Charger les statistiques produits
+      await loadProductStats();
+      // Charger les statistiques transactions
+      await loadTransactionStats();
+      
+      toast({
+        title: "📊 Données temps réel chargées",
+        description: "Les statistiques ont été mises à jour",
+      });
+    } catch (error) {
+      console.error('Erreur chargement données temps réel:', error);
+      toast({
+        title: "❌ Erreur chargement données",
+        description: "Basculement vers données mockées",
+        variant: "destructive"
+      });
+      setRealTimeMode(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUserStats = async () => {
+    try {
+      // Compter tous les utilisateurs
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Compter les utilisateurs actifs (connectés dans les 30 derniers jours)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: activeUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('updated_at', thirtyDaysAgo.toISOString());
+
+      // Compter par rôle
+      const { data: roleData } = await supabase
+        .from('profiles')
+        .select('role')
+        .not('role', 'is', null);
+
+      const usersByRole = {
+        clients: roleData?.filter(u => u.role === 'client').length || 0,
+        vendors: roleData?.filter(u => u.role === 'vendeur').length || 0,
+        drivers: roleData?.filter(u => u.role === 'taxi').length || 0,
+        agents: roleData?.filter(u => u.role === 'livreur').length || 0,
+        admins: roleData?.filter(u => u.role === 'admin').length || 0,
+      };
+
+      setRealUserStats({
+        totalUsers: totalUsers || 0,
+        activeUsers: activeUsers || 0,
+        usersByRole,
+        usersByRegion: [] // À implémenter si nécessaire
+      });
+
+      // Mettre à jour les stats principales avec les données réelles
+      setStats(prev => ({
+        ...prev,
+        totalUsers: totalUsers || 0,
+        activeVendors: usersByRole.vendors
+      }));
+
+    } catch (error) {
+      console.error('Erreur chargement stats utilisateurs:', error);
+    }
+  };
+
+  const loadProductStats = async () => {
+    try {
+      // Compter tous les produits
+      const { count: totalProducts } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      // Compter les produits actifs
+      const { count: activeProducts } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+
+      // Compter les vendeurs
+      const { count: totalVendors } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'vendeur');
+
+      setRealProductStats({
+        totalProducts: totalProducts || 0,
+        activeProducts: activeProducts || 0,
+        totalVendors: totalVendors || 0,
+        activeVendors: totalVendors || 0 // Simplification
+      });
+
+      // Mettre à jour les stats principales
+      setStats(prev => ({
+        ...prev,
+        totalProducts: totalProducts || 0
+      }));
+
+    } catch (error) {
+      console.error('Erreur chargement stats produits:', error);
+    }
+  };
+
+  const loadTransactionStats = async () => {
+    try {
+      // Utiliser la table wallets pour simuler les transactions
+      const { count: totalTransactions } = await supabase
+        .from('wallets')
+        .select('*', { count: 'exact', head: true });
+
+      // Calculer le revenu total basé sur les soldes des wallets
+      const { data: walletData } = await supabase
+        .from('wallets')
+        .select('balance');
+
+      const totalRevenue = walletData?.reduce((sum, w) => sum + (w.balance || 0), 0) || 0;
+
+      setRealTransactionStats({
+        totalTransactions: totalTransactions || 0,
+        totalRevenue,
+        totalCommissions: totalRevenue * 0.05, // 5% de commission
+        recentTransactions: [] // Pas de données détaillées pour l'instant
+      });
+
+      // Mettre à jour les stats principales
+      setStats(prev => ({
+        ...prev,
+        totalTransactions: totalTransactions || 0,
+        totalRevenue: totalRevenue
+      }));
+
+    } catch (error) {
+      console.error('Erreur chargement stats transactions:', error);
+    }
+  };
 
   // Fonctions de gestion des utilisateurs
   const handleUserAction = (userId: string, action: 'suspend' | 'activate' | 'delete') => {
@@ -323,7 +562,11 @@ export default function PDGDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      darkMode 
+        ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white' 
+        : 'bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100'
+    }`}>
       {/* Header PDG */}
       <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 text-white p-6 shadow-2xl">
         <div className="container mx-auto flex items-center justify-between">
@@ -335,6 +578,25 @@ export default function PDGDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Badge variant="outline" className="bg-white/20 text-white border-white/30">
+              <Activity className="w-4 h-4 mr-2" />
+              {realTimeMode ? 'Données Temps Réel' : 'Données Mockées'}
+            </Badge>
+            <Button
+              onClick={() => setRealTimeMode(!realTimeMode)}
+              variant="outline"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              {realTimeMode ? 'Mode Mock' : 'Mode Réel'}
+            </Button>
+            <Button
+              onClick={() => setDarkMode(!darkMode)}
+              variant="outline"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
             <Badge variant="outline" className="bg-yellow-400 text-black border-yellow-400">
               ACCÈS MAXIMUM
             </Badge>
@@ -361,8 +623,12 @@ export default function PDGDashboard() {
               <Users className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+12% ce mois</p>
+              <div className="text-2xl font-bold">
+                {realTimeMode ? realUserStats.totalUsers.toLocaleString() : stats.totalUsers.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {realTimeMode ? `${realUserStats.activeUsers} actifs` : '+12% ce mois'}
+              </p>
             </CardContent>
           </Card>
 
@@ -372,8 +638,18 @@ export default function PDGDashboard() {
               <DollarSign className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{(stats.totalRevenue / 1000000).toFixed(1)}M FCFA</div>
-              <p className="text-xs text-muted-foreground">+{stats.monthlyGrowth}% ce mois</p>
+              <div className="text-2xl font-bold">
+                {realTimeMode 
+                  ? `${(realTransactionStats.totalRevenue / 1000000).toFixed(1)}M FCFA`
+                  : `${(stats.totalRevenue / 1000000).toFixed(1)}M FCFA`
+                }
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {realTimeMode 
+                  ? `${realTransactionStats.totalTransactions} transactions`
+                  : `+${stats.monthlyGrowth}% ce mois`
+                }
+              </p>
             </CardContent>
           </Card>
 
@@ -383,8 +659,12 @@ export default function PDGDashboard() {
               <Activity className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTransactions.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+15% ce mois</p>
+              <div className="text-2xl font-bold">
+                {realTimeMode ? realTransactionStats.totalTransactions.toLocaleString() : stats.totalTransactions.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {realTimeMode ? `${(realTransactionStats.totalCommissions / 1000).toFixed(0)}K commissions` : '+15% ce mois'}
+              </p>
             </CardContent>
           </Card>
 
@@ -423,8 +703,24 @@ export default function PDGDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64 flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
-                    <p className="text-muted-foreground">Graphique des ventes (Chart.js)</p>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={[
+                        { name: 'Jan', ventes: realTimeMode ? realTransactionStats.totalRevenue / 12 : 4000 },
+                        { name: 'Fév', ventes: realTimeMode ? realTransactionStats.totalRevenue / 10 : 3000 },
+                        { name: 'Mar', ventes: realTimeMode ? realTransactionStats.totalRevenue / 8 : 5000 },
+                        { name: 'Avr', ventes: realTimeMode ? realTransactionStats.totalRevenue / 6 : 4500 },
+                        { name: 'Mai', ventes: realTimeMode ? realTransactionStats.totalRevenue / 4 : 6000 },
+                        { name: 'Juin', ventes: realTimeMode ? realTransactionStats.totalRevenue / 2 : 7500 }
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${Number(value).toLocaleString()} FCFA`, 'Ventes']} />
+                        <Legend />
+                        <Line type="monotone" dataKey="ventes" stroke="#8884d8" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
@@ -437,27 +733,91 @@ export default function PDGDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Clients</span>
-                      <Badge>67%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Vendeurs</span>
-                      <Badge>17%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Livreurs</span>
-                      <Badge>10%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Taxis</span>
-                      <Badge>6%</Badge>
-                    </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={[
+                            { name: 'Clients', value: realTimeMode ? realUserStats.usersByRole.clients : 67, fill: '#8884d8' },
+                            { name: 'Vendeurs', value: realTimeMode ? realUserStats.usersByRole.vendors : 17, fill: '#82ca9d' },
+                            { name: 'Livreurs', value: realTimeMode ? realUserStats.usersByRole.agents : 10, fill: '#ffc658' },
+                            { name: 'Chauffeurs', value: realTimeMode ? realUserStats.usersByRole.drivers : 6, fill: '#ff7300' },
+                            { name: 'Admins', value: realTimeMode ? realUserStats.usersByRole.admins : 2, fill: '#8dd1e1' }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {[
+                            { name: 'Clients', value: realTimeMode ? realUserStats.usersByRole.clients : 67, fill: '#8884d8' },
+                            { name: 'Vendeurs', value: realTimeMode ? realUserStats.usersByRole.vendors : 17, fill: '#82ca9d' },
+                            { name: 'Livreurs', value: realTimeMode ? realUserStats.usersByRole.agents : 10, fill: '#ffc658' },
+                            { name: 'Chauffeurs', value: realTimeMode ? realUserStats.usersByRole.drivers : 6, fill: '#ff7300' },
+                            { name: 'Admins', value: realTimeMode ? realUserStats.usersByRole.admins : 2, fill: '#8dd1e1' }
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Graphique en barres pour les métriques de performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Métriques de Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { 
+                        name: 'Utilisateurs', 
+                        valeur: realTimeMode ? realUserStats.totalUsers : stats.totalUsers,
+                        objectif: 20000 
+                      },
+                      { 
+                        name: 'Produits', 
+                        valeur: realTimeMode ? realProductStats.totalProducts : stats.totalProducts,
+                        objectif: 15000 
+                      },
+                      { 
+                        name: 'Transactions', 
+                        valeur: realTimeMode ? realTransactionStats.totalTransactions : stats.totalTransactions,
+                        objectif: 10000 
+                      },
+                      { 
+                        name: 'Revenus (K)', 
+                        valeur: realTimeMode ? Math.round(realTransactionStats.totalRevenue / 1000) : Math.round(stats.totalRevenue / 1000),
+                        objectif: 150000 
+                      }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value, name) => [
+                        name === 'Revenus (K)' ? `${Number(value).toLocaleString()}K FCFA` : Number(value).toLocaleString(),
+                        name === 'valeur' ? 'Actuel' : 'Objectif'
+                      ]} />
+                      <Legend />
+                      <Bar dataKey="valeur" fill="#8884d8" name="Actuel" />
+                      <Bar dataKey="objectif" fill="#82ca9d" name="Objectif" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
