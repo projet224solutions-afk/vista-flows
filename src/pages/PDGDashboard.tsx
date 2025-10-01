@@ -166,6 +166,7 @@ export default function PDGDashboard() {
 
   // États pour les nouvelles fonctionnalités avancées
   const [copilotVisible, setCopilotVisible] = useState(false);
+  const [showCopilotButton, setShowCopilotButton] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [realTimeMode, setRealTimeMode] = useState(true);
@@ -596,6 +597,15 @@ export default function PDGDashboard() {
               className="bg-white/20 text-white border-white/30 hover:bg-white/30"
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            <Button
+              onClick={() => setCopilotVisible(true)}
+              variant="outline"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+              title="Assistant IA PDG"
+            >
+              <Bot className="w-4 h-4 mr-2" />
+              Copilot AI
             </Button>
             <Badge variant="outline" className="bg-yellow-400 text-black border-yellow-400">
               ACCÈS MAXIMUM
@@ -1246,11 +1256,12 @@ export default function PDGDashboard() {
       )}
 
       {/* Bouton Copilot AI flottant */}
-      {!copilotVisible && (
+      {showCopilotButton && !copilotVisible && (
         <Button
           onClick={() => setCopilotVisible(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full w-16 h-16 z-50"
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-2xl rounded-full w-16 h-16 z-50 animate-pulse"
           size="lg"
+          title="Assistant IA PDG"
         >
           <Bot className="w-8 h-8" />
         </Button>
