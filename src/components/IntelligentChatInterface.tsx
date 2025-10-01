@@ -226,7 +226,7 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
         {/* Actions rapides compactes */}
         <div className="p-3 bg-muted/30 border-b">
           <div className="grid grid-cols-3 gap-2 mb-2">
@@ -329,26 +329,27 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
           </div>
         </ScrollArea>
 
-        {/* Zone de saisie compacte */}
-        <div className="p-3 bg-card border-t">
-          <div className="flex items-center gap-2">
+        {/* Zone de saisie - Toujours visible */}
+        <div className="p-3 bg-background border-t flex-shrink-0">
+          <div className="flex items-center gap-2 mb-2">
             <div className="flex-1 relative">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Posez votre question..."
+                placeholder="💬 Posez votre question au copilote..."
                 onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
                 disabled={isLoading}
-                className="h-9 text-sm pr-10"
+                className="h-10 text-sm pr-10 bg-card"
               />
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={startVoiceRecognition}
                 disabled={isLoading}
-                className={`absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 ${
+                className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${
                   isListening ? 'text-destructive animate-pulse' : ''
                 }`}
+                title="Reconnaissance vocale"
               >
                 <Mic className="w-4 h-4" />
               </Button>
@@ -358,27 +359,32 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
               size="sm"
-              className="h-9 px-4"
+              className="h-10 px-5 bg-primary hover:bg-primary/90"
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground/20 border-t-primary-foreground"></div>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-1.5" />
-                  Envoyer
+                  <span className="font-medium">Envoyer</span>
                 </>
               )}
             </Button>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className="text-xs h-5">
-              <Zap className="w-3 h-3 mr-1" />
-              IA Avancée
-            </Badge>
-            <Badge variant="outline" className="text-xs h-5">
-              <Terminal className="w-3 h-3 mr-1" />
-              /stats /finances /aide
-            </Badge>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs h-5 bg-card">
+                <Zap className="w-3 h-3 mr-1" />
+                IA Avancée
+              </Badge>
+              <Badge variant="outline" className="text-xs h-5 bg-card">
+                <Terminal className="w-3 h-3 mr-1" />
+                /stats /finances /aide
+              </Badge>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              Appuyez sur Entrée pour envoyer
+            </span>
           </div>
         </div>
       </CardContent>
