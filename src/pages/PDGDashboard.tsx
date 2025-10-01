@@ -77,6 +77,7 @@ import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauMan
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 import CopilotTest from "@/components/CopilotTest";
 import AgentManagementDashboard from "@/components/agent-system/AgentManagementDashboard";
+import SecurityDashboard from "@/components/security/SecurityDashboard";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
@@ -179,7 +180,7 @@ export default function PDGDashboard() {
   const { data: usersData, loading: usersLoading } = useUsers();
   const { data: productsData, loading: productsLoading } = useProducts();
   const { data: transactionsData, loading: transactionsLoading } = useTransactions();
-  
+
   // Gestion PDG pour les agents
   const { pdgData, createPDG } = usePDGManagement();
 
@@ -435,11 +436,10 @@ export default function PDGDashboard() {
   };
 
   return (
-    <div className={`min-h-screen pb-20 transition-colors duration-300 ${
-      darkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white' 
-        : 'bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100'
-    }`}>
+    <div className={`min-h-screen pb-20 transition-colors duration-300 ${darkMode
+      ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white'
+      : 'bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100'
+      }`}>
       {/* Header PDG */}
       <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 text-white p-6 shadow-2xl">
         <div className="container mx-auto flex items-center justify-between">
@@ -521,13 +521,13 @@ export default function PDGDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {realTimeMode 
+                {realTimeMode
                   ? `${(realTransactionStats.totalRevenue / 1000000).toFixed(1)}M FCFA`
                   : `${(stats.totalRevenue / 1000000).toFixed(1)}M FCFA`
                 }
               </div>
               <p className="text-xs text-muted-foreground">
-                {realTimeMode 
+                {realTimeMode
                   ? `${realTransactionStats.totalTransactions} transactions`
                   : `+${stats.monthlyGrowth}% ce mois`
                 }
@@ -564,16 +564,17 @@ export default function PDGDashboard() {
 
         {/* Interface à onglets */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="products">Produits</TabsTrigger>
-          <TabsTrigger value="finance">Finance</TabsTrigger>
-          <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
-          <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
-          <TabsTrigger value="system">Système</TabsTrigger>
-          <TabsTrigger value="reports">Rapports</TabsTrigger>
-        </TabsList>
+          <TabsList className="grid w-full grid-cols-9">
+            <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
+            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="products">Produits</TabsTrigger>
+            <TabsTrigger value="finance">Finance</TabsTrigger>
+            <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
+            <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
+            <TabsTrigger value="security">Sécurité</TabsTrigger>
+            <TabsTrigger value="system">Système</TabsTrigger>
+            <TabsTrigger value="reports">Rapports</TabsTrigger>
+          </TabsList>
 
           {/* Tableau de bord */}
           <TabsContent value="dashboard" className="space-y-6">
@@ -665,25 +666,25 @@ export default function PDGDashboard() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={[
-                      { 
-                        name: 'Utilisateurs', 
+                      {
+                        name: 'Utilisateurs',
                         valeur: realTimeMode ? realUserStats.totalUsers : stats.totalUsers,
-                        objectif: 20000 
+                        objectif: 20000
                       },
-                      { 
-                        name: 'Produits', 
+                      {
+                        name: 'Produits',
                         valeur: realTimeMode ? realProductStats.totalProducts : stats.totalProducts,
-                        objectif: 15000 
+                        objectif: 15000
                       },
-                      { 
-                        name: 'Transactions', 
+                      {
+                        name: 'Transactions',
                         valeur: realTimeMode ? realTransactionStats.totalTransactions : stats.totalTransactions,
-                        objectif: 10000 
+                        objectif: 10000
                       },
-                      { 
-                        name: 'Revenus (K)', 
+                      {
+                        name: 'Revenus (K)',
                         valeur: realTimeMode ? Math.round(realTransactionStats.totalRevenue / 1000) : Math.round(stats.totalRevenue / 1000),
-                        objectif: 150000 
+                        objectif: 150000
                       }
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -941,7 +942,7 @@ export default function PDGDashboard() {
                   <p className="text-muted-foreground mb-6">
                     Pour utiliser le système d'agents, vous devez d'abord configurer votre profil PDG.
                   </p>
-                  <Button 
+                  <Button
                     onClick={async () => {
                       try {
                         await createPDG({
@@ -965,6 +966,11 @@ export default function PDGDashboard() {
 
           <TabsContent value="syndicate" className="space-y-6">
             <SyndicateBureauManagement />
+          </TabsContent>
+
+          {/* Sécurité et Monitoring */}
+          <TabsContent value="security" className="space-y-6">
+            <SecurityDashboard />
           </TabsContent>
 
           {/* Système */}
@@ -1190,7 +1196,7 @@ export default function PDGDashboard() {
             </Button>
           </div>
           <div className="h-[calc(100%-60px)]">
-            <IntelligentChatInterface 
+            <IntelligentChatInterface
               context={{
                 userRole: 'PDG',
                 companyData: {
