@@ -76,6 +76,7 @@ import { toast } from "sonner";
 import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 import CopilotTest from "@/components/CopilotTest";
+import AgentManagementDashboard from "@/components/agent-system/AgentManagementDashboard";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
@@ -559,15 +560,16 @@ export default function PDGDashboard() {
 
         {/* Interface à onglets */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
-            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-            <TabsTrigger value="products">Produits</TabsTrigger>
-            <TabsTrigger value="finance">Finance</TabsTrigger>
-            <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
-            <TabsTrigger value="system">Système</TabsTrigger>
-            <TabsTrigger value="reports">Rapports</TabsTrigger>
-          </TabsList>
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
+          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="products">Produits</TabsTrigger>
+          <TabsTrigger value="finance">Finance</TabsTrigger>
+          <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
+          <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
+          <TabsTrigger value="system">Système</TabsTrigger>
+          <TabsTrigger value="reports">Rapports</TabsTrigger>
+        </TabsList>
 
           {/* Tableau de bord */}
           <TabsContent value="dashboard" className="space-y-6">
@@ -925,6 +927,10 @@ export default function PDGDashboard() {
           </TabsContent>
 
           {/* Bureau Syndicat */}
+          <TabsContent value="agents" className="space-y-6">
+            <AgentManagementDashboard pdgId="temp-pdg-id" />
+          </TabsContent>
+
           <TabsContent value="syndicate" className="space-y-6">
             <SyndicateBureauManagement />
           </TabsContent>
