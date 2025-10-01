@@ -42,11 +42,13 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
-  Building
+  Building,
+  Building2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -394,11 +396,12 @@ export default function PDGDashboard() {
 
         {/* Interface à onglets */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="products">Produits</TabsTrigger>
             <TabsTrigger value="finance">Finance</TabsTrigger>
+            <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
             <TabsTrigger value="system">Système</TabsTrigger>
             <TabsTrigger value="reports">Rapports</TabsTrigger>
           </TabsList>
@@ -676,6 +679,11 @@ export default function PDGDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Bureau Syndicat */}
+          <TabsContent value="syndicate" className="space-y-6">
+            <SyndicateBureauManagement />
           </TabsContent>
 
           {/* Système */}
