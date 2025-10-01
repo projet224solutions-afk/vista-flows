@@ -80,6 +80,7 @@ import AgentManagementDashboard from "@/components/agent-system/AgentManagementD
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
+import { usePDGManagement } from "@/hooks/useAgentSystem";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -178,9 +179,12 @@ export default function PDGDashboard() {
   const { data: usersData, loading: usersLoading } = useUsers();
   const { data: productsData, loading: productsLoading } = useProducts();
   const { data: transactionsData, loading: transactionsLoading } = useTransactions();
+  
+  // Gestion PDG pour les agents
+  const { pdgData, createPDG } = usePDGManagement();
 
   // Calculer les stats par rôle
-  const usersByRole = usersData ? {
+  const usersByRole = Array.isArray(usersData) ? {
     clients: usersData.filter((u: any) => u.role === 'client').length,
     vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
     drivers: usersData.filter((u: any) => u.role === 'taxi').length,
@@ -191,14 +195,14 @@ export default function PDGDashboard() {
   // États pour les données temps réel (maintenant alimentés par le DataManager)
   const realUserStats = {
     totalUsers: globalStats.totalUsers,
-    activeUsers: usersData?.filter((u: any) => u.is_active).length || 0,
+    activeUsers: Array.isArray(usersData) ? usersData.filter((u: any) => u.is_active).length : 0,
     usersByRole,
     usersByRegion: [] // À implémenter si nécessaire
   };
 
   const realProductStats = {
     totalProducts: globalStats.totalProducts,
-    activeProducts: productsData?.filter((p: any) => p.is_active).length || 0,
+    activeProducts: Array.isArray(productsData) ? productsData.filter((p: any) => p.is_active).length : 0,
     totalVendors: globalStats.activeVendors,
     activeVendors: globalStats.activeVendors
   };
@@ -207,7 +211,7 @@ export default function PDGDashboard() {
     totalTransactions: globalStats.totalTransactions,
     totalRevenue: globalStats.totalRevenue,
     totalCommissions: globalStats.totalRevenue * 0.05,
-    recentTransactions: transactionsData?.slice(0, 10) || []
+    recentTransactions: Array.isArray(transactionsData) ? transactionsData.slice(0, 10) : []
   };
 
   // Loading global
@@ -928,7 +932,35 @@ export default function PDGDashboard() {
 
           {/* Bureau Syndicat */}
           <TabsContent value="agents" className="space-y-6">
-            <AgentManagementDashboard pdgId="temp-pdg-id" />
+            {pdgData ? (
+              <AgentManagementDashboard pdgId={pdgData.id} />
+            ) : (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold mb-4">Configuration PDG requise</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Pour utiliser le système d'agents, vous devez d'abord configurer votre profil PDG.
+                  </p>
+                  <Button 
+                    onClick={async () => {
+                      try {
+                        await createPDG({
+                          name: profile?.first_name + ' ' + profile?.last_name || 'PDG 224Solutions',
+                          email: profile?.email || user?.email || '',
+                          phone: profile?.phone || '',
+                          permissions: ['all']
+                        });
+                      } catch (error) {
+                        console.error('Erreur création PDG:', error);
+                      }
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    Configurer le profil PDG
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="syndicate" className="space-y-6">
@@ -1140,9 +1172,52 @@ export default function PDGDashboard() {
         </Button>
       )}
 
-      {/* Interface Copilot AI - Version Test */}
+      {/* Interface Copilot AI - Version Complète */}
       {copilotVisible && (
-        <CopilotTest onClose={() => setCopilotVisible(false)} />
+        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
+          <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-2xl">
+            <div className="flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              <h3 className="font-semibold">Copilot AI PDG</h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCopilotVisible(false)}
+              className="text-white hover:bg-white/20"
+            >
+              ×
+            </Button>
+          </div>
+          <div className="h-[calc(100%-60px)]">
+            <IntelligentChatInterface 
+              context={{
+                userRole: 'PDG',
+                companyData: {
+                  name: '224Solutions',
+                  users: globalStats?.totalUsers || stats.totalUsers,
+                  products: globalStats?.totalProducts || stats.totalProducts,
+                  revenue: globalStats?.totalRevenue || stats.totalRevenue
+                },
+                recentActions: [],
+                currentPage: 'pdg-dashboard',
+                businessMetrics: {
+                  totalUsers: globalStats?.totalUsers || stats.totalUsers,
+                  activeUsers: realUserStats.activeUsers || stats.activeVendors,
+                  totalProducts: globalStats?.totalProducts || stats.totalProducts,
+                  totalTransactions: globalStats?.totalTransactions || stats.totalTransactions
+                }
+              }}
+              onActionRequest={(action, data) => {
+                console.log('Action copilote:', action, data);
+                toast({
+                  title: "🤖 Action IA exécutée",
+                  description: `Action: ${action}`,
+                });
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
