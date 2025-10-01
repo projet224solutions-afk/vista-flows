@@ -37,29 +37,51 @@ export const useUserSetup = () => {
         try {
             console.log('🔍 Vérification du setup utilisateur pour:', userId);
 
-            // 1. Vérifier d'abord si l'utilisateur a déjà tout son setup
-            const { data: completeInfo, error: infoError } = await supabase
-                .rpc('get_user_complete_info', { target_user_id: userId });
+            // Récupérer les infos en parallèle
+            const [profileData, userIdData, walletData, cardData] = await Promise.all([
+                supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+                supabase.from('user_ids').select('custom_id').eq('user_id', userId).maybeSingle(),
+                supabase.from('wallets').select('*').eq('user_id', userId).maybeSingle(),
+                supabase.from('virtual_cards').select('*').eq('user_id', userId).maybeSingle()
+            ]);
 
-            if (infoError) {
-                console.error('❌ Erreur lors de la récupération des infos:', infoError);
-                throw infoError;
-            }
-
-            console.log('📋 Infos utilisateur récupérées:', completeInfo);
+            const completeInfo: UserCompleteInfo = {
+                user_id: userId,
+                email: profileData.data?.email || '',
+                first_name: profileData.data?.first_name,
+                last_name: profileData.data?.last_name,
+                role: profileData.data?.role || 'client',
+                custom_id: userIdData.data?.custom_id,
+                wallet: walletData.data ? {
+                    id: walletData.data.id,
+                    balance: walletData.data.balance,
+                    currency: walletData.data.currency,
+                    status: 'active'
+                } : undefined,
+                virtual_card: cardData.data ? {
+                    id: cardData.data.id,
+                    card_number: cardData.data.card_number,
+                    card_holder_name: (profileData.data?.first_name || '') + ' ' + (profileData.data?.last_name || ''),
+                    expiry_month: new Date(cardData.data.expiry_date).getMonth().toString().padStart(2, '0'),
+                    expiry_year: new Date(cardData.data.expiry_date).getFullYear().toString(),
+                    card_status: cardData.data.status,
+                    daily_limit: 500000,
+                    monthly_limit: 10000000
+                } : undefined
+            };
 
             // 2. Vérifier les éléments manquants
             const missingElements = [];
 
-            if (!completeInfo?.custom_id) {
+            if (!completeInfo.custom_id) {
                 missingElements.push('ID utilisateur');
             }
 
-            if (!completeInfo?.wallet?.id) {
+            if (!completeInfo.wallet) {
                 missingElements.push('Wallet');
             }
 
-            if (!completeInfo?.virtual_card?.id) {
+            if (!completeInfo.virtual_card) {
                 missingElements.push('Carte virtuelle');
             }
 
@@ -67,24 +89,13 @@ export const useUserSetup = () => {
             if (missingElements.length > 0) {
                 console.log('⚠️ Éléments manquants détectés:', missingElements);
                 toast.info(`Configuration en cours: ${missingElements.join(', ')}`);
-
                 await createMissingElements(userId, completeInfo);
-
-                // Récupérer les infos mises à jour
-                const { data: updatedInfo, error: updateError } = await supabase
-                    .rpc('get_user_complete_info', { target_user_id: userId });
-
-                if (updateError) {
-                    throw updateError;
-                }
-
-                setUserInfo(updatedInfo);
                 toast.success('✅ Configuration utilisateur complétée !');
             } else {
                 console.log('✅ Setup utilisateur complet déjà en place');
-                setUserInfo(completeInfo);
             }
 
+            setUserInfo(completeInfo);
             return completeInfo;
         } catch (error) {
             console.error('❌ Erreur setup utilisateur:', error);
@@ -121,13 +132,12 @@ export const useUserSetup = () => {
             // Créer le wallet s'il manque
             if (!currentInfo?.wallet?.id) {
                 console.log('🔄 Création Wallet...');
-                const { data: walletData, error: walletError } = await supabase
+            const { data: walletData, error: walletError } = await supabase
                     .from('wallets')
                     .upsert({
                         user_id: userId,
-                        balance: 0,
-                        currency: 'XAF',
-                        status: 'active'
+                        balance: 10000,
+                        currency: 'GNF'
                     })
                     .select()
                     .single();
@@ -168,16 +178,11 @@ export const useUserSetup = () => {
                 .from('virtual_cards')
                 .upsert({
                     user_id: userId,
-                    wallet_id: walletId,
                     card_number: cardNumber,
-                    card_holder_name: cardHolderName,
-                    expiry_month: String(expiryDate.getMonth() + 1).padStart(2, '0'),
-                    expiry_year: String(expiryDate.getFullYear()),
+                    cardholder_name: cardHolderName,
+                    expiry_date: expiryDate.toISOString(),
                     cvv: cvv,
-                    card_type: 'virtual',
-                    card_status: 'active',
-                    daily_limit: 500000,
-                    monthly_limit: 10000000
+                    status: 'active'
                 })
                 .select()
                 .single();

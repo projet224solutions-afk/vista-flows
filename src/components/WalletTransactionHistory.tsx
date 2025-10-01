@@ -18,10 +18,11 @@ import {
 interface Transaction {
   id: string;
   amount: number;
-  transaction_type: 'credit' | 'debit';
-  description: string;
+  sender_id: string;
+  receiver_id: string;
+  method: string;
   created_at: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: string;
 }
 
 interface WalletTransactionHistoryProps {
@@ -66,11 +67,11 @@ export const WalletTransactionHistory = ({
         setWalletBalance(walletData.balance);
         setWalletCurrency(walletData.currency);
 
-        // Récupérer les transactions
+        // Récupérer les transactions depuis enhanced_transactions
         const { data: transactionsData, error: transactionsError } = await supabase
-          .from('wallet_transactions')
-          .select('id, amount, transaction_type, description, created_at, status')
-          .eq('wallet_id', walletData.id)
+          .from('enhanced_transactions')
+          .select('id, amount, sender_id, receiver_id, method, created_at, status')
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
           .order('created_at', { ascending: false })
           .limit(limit);
 
@@ -88,11 +89,13 @@ export const WalletTransactionHistory = ({
     }
   };
 
-  const getTransactionIcon = (type: string, status: string) => {
+  const getTransactionIcon = (transaction: Transaction, status: string) => {
     if (status === 'pending') return <Clock className="w-4 h-4 text-orange-500" />;
     if (status === 'failed') return <XCircle className="w-4 h-4 text-red-500" />;
     
-    if (type === 'credit') return <ArrowUp className="w-4 h-4 text-green-500" />;
+    // Déterminer si c'est un crédit ou débit basé sur sender_id
+    const isCredit = transaction.receiver_id === user?.id;
+    if (isCredit) return <ArrowUp className="w-4 h-4 text-green-500" />;
     return <ArrowDown className="w-4 h-4 text-red-500" />;
   };
 
@@ -116,8 +119,9 @@ export const WalletTransactionHistory = ({
     );
   };
 
-  const formatAmount = (amount: number, type: string) => {
-    const sign = type === 'credit' ? '+' : '-';
+  const formatAmount = (amount: number, transaction: Transaction) => {
+    const isCredit = transaction.receiver_id === user?.id;
+    const sign = isCredit ? '+' : '-';
     return `${sign}${Math.abs(amount).toLocaleString()} ${walletCurrency}`;
   };
 
@@ -188,10 +192,10 @@ export const WalletTransactionHistory = ({
                 className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-green-200 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  {getTransactionIcon(transaction.transaction_type, transaction.status)}
+                  {getTransactionIcon(transaction, transaction.status)}
                   <div>
                     <p className="font-medium text-gray-800">
-                      {transaction.description}
+                      {transaction.method} - {transaction.receiver_id === user?.id ? 'Reçu' : 'Envoyé'}
                     </p>
                     <p className="text-xs text-gray-500">
                       {formatDate(transaction.created_at)}
@@ -201,11 +205,11 @@ export const WalletTransactionHistory = ({
                 
                 <div className="text-right">
                   <p className={`font-bold ${
-                    transaction.transaction_type === 'credit' 
+                    transaction.receiver_id === user?.id
                       ? 'text-green-600' 
                       : 'text-red-600'
                   }`}>
-                    {formatAmount(transaction.amount, transaction.transaction_type)}
+                    {formatAmount(transaction.amount, transaction)}
                   </p>
                   {getStatusBadge(transaction.status)}
                 </div>

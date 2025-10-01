@@ -23,15 +23,12 @@ interface UserInfo {
     id: string;
     balance: number;
     currency: string;
-    status: string;
   } | null;
   virtualCard: {
     id: string;
     card_number: string;
-    card_holder_name: string;
-    expiry_month: string;
-    expiry_year: string;
-    card_status: string;
+    expiry_date: string;
+    status: string;
   } | null;
 }
 
@@ -72,16 +69,16 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       // Récupérer le wallet
       const { data: walletData } = await supabase
         .from('wallets')
-        .select('id, balance, currency, status')
+        .select('id, balance, currency')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       // Récupérer la carte virtuelle
       const { data: cardData } = await supabase
         .from('virtual_cards')
-        .select('id, card_number, card_holder_name, expiry_month, expiry_year, card_status')
+        .select('id, card_number, expiry_date, status')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setUserInfo({
         customId: userIdData?.custom_id || null,
@@ -118,16 +115,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .from('virtual_cards')
         .insert({
           user_id: user.id,
-          wallet_id: userInfo.wallet.id,
           card_number: cardNumber,
-          card_holder_name: cardHolderName,
-          expiry_month: String(expiryDate.getMonth() + 1).padStart(2, '0'),
-          expiry_year: String(expiryDate.getFullYear()),
+          cardholder_name: cardHolderName,
+          expiry_date: expiryDate.toISOString(),
           cvv: cvv,
-          card_type: 'virtual',
-          card_status: 'active',
-          daily_limit: 500000,
-          monthly_limit: 10000000
+          status: 'active'
         })
         .select()
         .single();
@@ -210,7 +202,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <span className="font-semibold text-gray-800">Wallet</span>
               </div>
               <Badge variant="outline" className="bg-green-100 text-green-700">
-                {userInfo.wallet?.status || 'Création...'}
+                {userInfo.wallet ? 'Actif' : 'Création...'}
               </Badge>
             </div>
             <p className="text-2xl font-bold text-green-600">
@@ -236,7 +228,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
             </div>
             {userInfo.virtualCard && (
               <Badge variant="outline" className="bg-purple-100 text-purple-700">
-                {userInfo.virtualCard.card_status}
+                {userInfo.virtualCard.status}
               </Badge>
             )}
           </div>
@@ -275,12 +267,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <div className="flex justify-between items-center mt-3">
                   <div>
                     <p className="text-xs opacity-75">TITULAIRE</p>
-                    <p className="text-sm font-semibold">{userInfo.virtualCard.card_holder_name}</p>
+                    <p className="text-sm font-semibold">{profile?.first_name} {profile?.last_name}</p>
                   </div>
                   <div>
                     <p className="text-xs opacity-75">EXPIRE</p>
                     <p className="text-sm font-semibold">
-                      {userInfo.virtualCard.expiry_month}/{userInfo.virtualCard.expiry_year}
+                      {new Date(userInfo.virtualCard.expiry_date).toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' })}
                     </p>
                   </div>
                 </div>

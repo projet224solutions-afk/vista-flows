@@ -19,10 +19,8 @@ import {
 interface VirtualCardInfo {
   id: string;
   card_number: string;
-  card_holder_name: string;
-  expiry_month: string;
-  expiry_year: string;
-  card_status: string;
+  expiry_date: string;
+  status: string;
   cvv?: string;
 }
 
@@ -59,18 +57,18 @@ export const VirtualCardButton = ({
       // Récupérer le wallet
       const { data: walletData } = await supabase
         .from('wallets')
-        .select('id, balance, currency, status')
+        .select('id, balance, currency')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setWallet(walletData);
 
       // Récupérer la carte virtuelle
       const { data: cardData } = await supabase
         .from('virtual_cards')
-        .select('id, card_number, card_holder_name, expiry_month, expiry_year, card_status, cvv')
+        .select('id, card_number, expiry_date, status, cvv')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setVirtualCard(cardData);
 
@@ -103,16 +101,11 @@ export const VirtualCardButton = ({
         .from('virtual_cards')
         .insert({
           user_id: user.id,
-          wallet_id: wallet.id,
           card_number: cardNumber,
-          card_holder_name: cardHolderName,
-          expiry_month: String(expiryDate.getMonth() + 1).padStart(2, '0'),
-          expiry_year: String(expiryDate.getFullYear()),
+          cardholder_name: cardHolderName,
+          expiry_date: expiryDate.toISOString(),
           cvv: cvv,
-          card_type: 'virtual',
-          card_status: 'active',
-          daily_limit: 500000,
-          monthly_limit: 10000000
+          status: 'active'
         })
         .select()
         .single();
@@ -182,7 +175,7 @@ export const VirtualCardButton = ({
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm opacity-90">224SOLUTIONS</span>
                 <Badge className="bg-white/20 text-white">
-                  {virtualCard.card_status}
+                  {virtualCard.status}
                 </Badge>
               </div>
               
@@ -220,12 +213,12 @@ export const VirtualCardButton = ({
                 <div className="flex justify-between">
                   <div>
                     <p className="text-xs opacity-75">TITULAIRE</p>
-                    <p className="text-sm font-semibold">{virtualCard.card_holder_name}</p>
+                    <p className="text-sm font-semibold">{profile?.first_name} {profile?.last_name}</p>
                   </div>
                   <div>
                     <p className="text-xs opacity-75">EXPIRE</p>
                     <p className="text-sm font-semibold">
-                      {virtualCard.expiry_month}/{virtualCard.expiry_year}
+                      {new Date(virtualCard.expiry_date).toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' })}
                     </p>
                   </div>
                   {showCardNumber && virtualCard.cvv && (

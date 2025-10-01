@@ -254,31 +254,35 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
                     </div>
                 </div>
 
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
+                {/* Messages - Interface professionnelle et épurée */}
+                <ScrollArea className="flex-1 p-6 bg-white">
+                    <div className="max-w-4xl mx-auto space-y-6">
                         {messages.map((message) => (
-                            <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'
-                                }`}>
+                            <div key={message.id} className={`flex gap-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
                                 {message.type === 'assistant' && (
-                                    <Avatar className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500">
-                                        <AvatarFallback className="text-white text-xs">
-                                            <Brain className="w-4 h-4" />
+                                    <Avatar className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg flex-shrink-0">
+                                        <AvatarFallback className="text-white">
+                                            <Brain className="w-5 h-5" />
                                         </AvatarFallback>
                                     </Avatar>
                                 )}
 
-                                <div className={`max-w-[80%] rounded-lg p-3 ${message.type === 'user'
-                                        ? 'bg-blue-600 text-white ml-8'
-                                        : 'bg-white border border-gray-200 shadow-sm'
+                                <div className={`max-w-[75%] rounded-2xl p-4 shadow-md transition-all hover:shadow-lg ${
+                                    message.type === 'user'
+                                        ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white'
+                                        : 'bg-gray-50 border border-gray-200'
+                                }`}>
+                                    <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                                        message.type === 'user' ? 'text-white' : 'text-gray-800'
                                     }`}>
-                                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
                                         {message.content}
                                     </div>
 
-                                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                                        <span className="text-xs opacity-70">
-                                            {message.timestamp.toLocaleTimeString()}
+                                    <div className={`flex items-center justify-between mt-3 pt-3 border-t ${
+                                        message.type === 'user' ? 'border-white/20' : 'border-gray-200'
+                                    }`}>
+                                        <span className={`text-xs ${message.type === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
+                                            {message.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                         </span>
 
                                         {message.type === 'assistant' && (
@@ -286,17 +290,17 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => copyMessage(message.content)}
-                                                className="h-6 px-2"
+                                                className="h-7 px-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                                             >
-                                                <Copy className="w-3 h-3" />
+                                                <Copy className="w-3.5 h-3.5" />
                                             </Button>
                                         )}
                                     </div>
                                 </div>
 
                                 {message.type === 'user' && (
-                                    <Avatar className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500">
-                                        <AvatarFallback className="text-white text-xs font-bold">
+                                    <Avatar className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg flex-shrink-0">
+                                        <AvatarFallback className="text-white text-sm font-semibold">
                                             {profile?.first_name?.[0] || 'U'}
                                         </AvatarFallback>
                                     </Avatar>
@@ -305,16 +309,16 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
                         ))}
 
                         {isLoading && (
-                            <div className="flex gap-3 justify-start">
-                                <Avatar className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500">
-                                    <AvatarFallback className="text-white text-xs">
-                                        <Brain className="w-4 h-4 animate-pulse" />
+                            <div className="flex gap-4 justify-start animate-fade-in">
+                                <Avatar className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg flex-shrink-0">
+                                    <AvatarFallback className="text-white">
+                                        <Brain className="w-5 h-5 animate-pulse" />
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                                    <div className="flex items-center gap-2 text-blue-600">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                        <span className="text-sm">L'IA analyse votre demande...</span>
+                                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-md">
+                                    <div className="flex items-center gap-3 text-blue-600">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-200 border-t-blue-600"></div>
+                                        <span className="text-sm font-medium">Le copilote réfléchit...</span>
                                     </div>
                                 </div>
                             </div>
@@ -324,76 +328,81 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
                     </div>
                 </ScrollArea>
 
-                {/* Zone de saisie améliorée */}
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-t-2 border-blue-200">
-                    <div className="text-center mb-3">
-                        <p className="text-sm font-semibold text-blue-800">
-                            💬 Conversation avec votre Assistant IA
-                        </p>
-                        <p className="text-xs text-blue-600">
-                            Tapez votre message comme si vous parliez à ChatGPT
-                        </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                        <div className="flex-1 relative">
-                            <Input
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Tapez ici... Ex: 'Bonjour', 'Comment vont nos ventes ?', 'Analyse mes finances'"
-                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                disabled={isLoading}
-                                className="text-lg py-3 px-4 pr-12 border-2 border-blue-300 focus:border-blue-500 rounded-xl shadow-md bg-white"
-                            />
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={startVoiceRecognition}
-                                disabled={isLoading}
-                                className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 rounded-full ${
-                                    isListening ? 'text-red-500 animate-pulse bg-red-50' : 'text-blue-400 hover:bg-blue-50'
-                                }`}
-                                title="Reconnaissance vocale"
+                {/* Zone de saisie professionnelle */}
+                <div className="p-6 bg-white border-t border-gray-200">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="flex-1 relative">
+                                <Input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder="Posez votre question... (Ex: Analyse mes ventes, Comment améliorer nos performances ?)"
+                                    onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
+                                    disabled={isLoading}
+                                    className="text-base py-6 px-6 pr-14 border-2 border-gray-300 focus:border-blue-500 rounded-xl shadow-sm bg-white transition-all"
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={startVoiceRecognition}
+                                    disabled={isLoading}
+                                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-9 w-9 p-0 rounded-full transition-all ${
+                                        isListening ? 'text-red-500 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'
+                                    }`}
+                                    title="Reconnaissance vocale"
+                                >
+                                    <Mic className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            
+                            <Button 
+                                onClick={handleSendMessage}
+                                disabled={!inputValue.trim() || isLoading}
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-6 rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Mic className="w-4 h-4" />
+                                {isLoading ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                ) : (
+                                    <>
+                                        <Send className="w-5 h-5 mr-2" />
+                                        <span className="font-semibold">Envoyer</span>
+                                    </>
+                                )}
                             </Button>
                         </div>
-                        
-                        <Button 
-                            onClick={handleSendMessage}
-                            disabled={!inputValue.trim() || isLoading}
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105"
-                        >
-                            {isLoading ? (
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            ) : (
-                                <>
-                                    <Send className="w-5 h-5 mr-2" />
-                                    Envoyer
-                                </>
-                            )}
-                        </Button>
-                    </div>
 
-                    <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs border-green-300 text-green-700">
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                Mode IA Avancé
-                            </Badge>
-                            <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
-                                <Terminal className="w-3 h-3 mr-1" />
-                                Commandes: /stats /aide
-                            </Badge>
-                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Badge variant="outline" className="text-xs border-green-400 text-green-700 bg-green-50 px-3 py-1">
+                                    <Sparkles className="w-3 h-3 mr-1.5" />
+                                    Intelligence conversationnelle
+                                </Badge>
+                                <Badge variant="outline" className="text-xs border-blue-400 text-blue-700 bg-blue-50 px-3 py-1">
+                                    <Terminal className="w-3 h-3 mr-1.5" />
+                                    /stats • /finances • /aide
+                                </Badge>
+                            </div>
 
-                        <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={exportChat} className="h-6 px-2">
-                                <Download className="w-3 h-3" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={clearChat} className="h-6 px-2">
-                                <RefreshCw className="w-3 h-3" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={exportChat} 
+                                    className="h-8 px-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                    title="Exporter la conversation"
+                                >
+                                    <Download className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={clearChat} 
+                                    className="h-8 px-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                    title="Nouvelle conversation"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
