@@ -123,11 +123,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               cardholder_name: `${user.user_metadata?.first_name || 'Client'} ${user.user_metadata?.last_name || customId}`,
               expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
               cvv: Math.floor(Math.random() * 900 + 100).toString(),
-              status: 'active',
-              card_type: 'virtual',
               daily_limit: 500000,
-              monthly_limit: 2000000,
-              created_at: new Date().toISOString()
+              monthly_limit: 2000000
             });
 
           if (cardError) {
