@@ -33,6 +33,7 @@ import { POSSystem } from "@/components/vendor/POSSystem";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
+import CommunicationModule from "@/components/communication/CommunicationModule";
 import { useUserInfo } from "@/hooks/useUserInfo";
 // Removed deprecated wallet and debug services - being refactored
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -509,6 +510,13 @@ export default function VendeurDashboard() {
                   <ArrowRightLeft className="w-4 h-4 mr-2" />
                   Transactions
                 </TabsTrigger>
+                <TabsTrigger
+                  value="communication"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <MessageSquare className="w-5 h-5 mr-3" />
+                  Communication
+                </TabsTrigger>
                 
                 {/* Bouton de déconnexion visible */}
                 <Button
@@ -694,6 +702,11 @@ export default function VendeurDashboard() {
           {/* 💰 Gestion des Dépenses - NOUVELLE FONCTIONNALITÉ */}
           <TabsContent value="expenses" className="space-y-6">
             <ExpenseManagementDashboard />
+          </TabsContent>
+
+          {/* Communication */}
+          <TabsContent value="communication" className="space-y-6">
+            <CommunicationModule />
           </TabsContent>
 
           {/* Gestion des paiements */}

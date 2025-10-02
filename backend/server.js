@@ -20,6 +20,7 @@ const errorHandler = require('./src/middleware/errorHandler');
 const openaiRoutes = require('./src/routes/openai');
 const authRoutes = require('./src/routes/auth');
 const emailRoutes = require('./src/routes/email');
+const agoraRoutes = require('./src/routes/agora');
 const healthRoutes = require('./src/routes/health');
 
 const app = express();
@@ -135,6 +136,9 @@ app.use('/api/openai', authMiddleware, openaiRoutes);
 // Routes Email (avec authentification)
 app.use('/api/email', emailRoutes);
 
+// Routes Agora (avec authentification)
+app.use('/api/agora', agoraRoutes);
+
 // Route racine
 app.get('/', (req, res) => {
     res.json({
@@ -146,6 +150,7 @@ app.get('/', (req, res) => {
             health: '/api/health',
             auth: '/api/auth',
             email: '/api/email (authentification requise)',
+            agora: '/api/agora (authentification requise)',
             openai: '/api/openai (authentification requise)'
         }
     });
@@ -160,6 +165,7 @@ app.use('*', (req, res) => {
             '/api/health',
             '/api/auth',
             '/api/email',
+            '/api/agora',
             '/api/openai'
         ]
     });
