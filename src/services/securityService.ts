@@ -49,6 +49,7 @@ export interface SystemAlert {
     target_users: string[];
     channels: ('email' | 'push' | 'sms' | 'dashboard')[];
     status: 'active' | 'acknowledged' | 'resolved';
+    created_at?: string;
     metadata?: Record<string, any>;
 }
 

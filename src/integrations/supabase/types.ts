@@ -642,6 +642,201 @@ export type Database = {
           },
         ]
       }
+      expense_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_expense_id: string | null
+          severity: string | null
+          title: string
+          vendor_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_expense_id?: string | null
+          severity?: string | null
+          title: string
+          vendor_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_expense_id?: string | null
+          severity?: string | null
+          title?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_alerts_related_expense_id_fkey"
+            columns: ["related_expense_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_analytics: {
+        Row: {
+          analysis_date: string
+          category_breakdown: Json | null
+          created_at: string | null
+          efficiency_score: number | null
+          id: string
+          recommendations: string[] | null
+          total_expenses: number | null
+          trends: Json | null
+          vendor_id: string
+        }
+        Insert: {
+          analysis_date?: string
+          category_breakdown?: Json | null
+          created_at?: string | null
+          efficiency_score?: number | null
+          id?: string
+          recommendations?: string[] | null
+          total_expenses?: number | null
+          trends?: Json | null
+          vendor_id: string
+        }
+        Update: {
+          analysis_date?: string
+          category_breakdown?: Json | null
+          created_at?: string | null
+          efficiency_score?: number | null
+          id?: string
+          recommendations?: string[] | null
+          total_expenses?: number | null
+          trends?: Json | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      expense_budgets: {
+        Row: {
+          budget_limit: number
+          category_id: string | null
+          created_at: string | null
+          id: string
+          month: string
+          spent_amount: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          budget_limit: number
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          month: string
+          spent_amount?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          budget_limit?: number
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          month?: string
+          spent_amount?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_categories: {
+        Row: {
+          budget_limit: number | null
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          budget_limit?: number | null
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          budget_limit?: number | null
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      expense_receipts: {
+        Row: {
+          expense_id: string
+          file_name: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          uploaded_at: string | null
+        }
+        Insert: {
+          expense_id: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string | null
+        }
+        Update: {
+          expense_id?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_receipts_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -1014,6 +1209,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -2229,6 +2457,56 @@ export type Database = {
           },
         ]
       }
+      vendor_expenses: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          payment_method: string | null
+          receipt_url: string | null
+          status: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          payment_method?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          payment_method?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string | null
@@ -2485,9 +2763,21 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_expense_stats: {
+        Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
+        Returns: Json
+      }
+      create_default_expense_categories: {
+        Args: { p_vendor_id: string }
+        Returns: undefined
+      }
       credit_wallet: {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
+      }
+      detect_expense_anomalies: {
+        Args: { p_vendor_id: string }
+        Returns: Json
       }
       detect_fraud: {
         Args: {
