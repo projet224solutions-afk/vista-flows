@@ -33,7 +33,7 @@ export default function CopilotTest({ onClose }: CopilotTestProps) {
     // Ajouter le message utilisateur
     const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      type: 'user' as const,
       content: input,
       timestamp: new Date()
     };
@@ -44,7 +44,7 @@ export default function CopilotTest({ onClose }: CopilotTestProps) {
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant',
+        type: 'assistant' as const,
         content: `✅ J'ai bien reçu votre message : "${input}". Voici quelques actions que je peux effectuer :
         
 📊 Analyser vos données business

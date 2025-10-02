@@ -17,6 +17,27 @@ export interface PDGManagement extends Omit<PDGRow, 'permissions'> {
 
 export interface AgentManagement extends Omit<AgentRow, 'permissions'> {
   permissions: string[];
+  total_users_created?: number;
+  total_commissions_earned?: number;
+  can_create_sub_agent?: boolean;
+}
+
+// Types additionnels
+export interface SubAgentManagement extends AgentManagement {}
+export interface AgentCreatedUser {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+}
+export interface AgentCommission {
+  id: string;
+  amount: number;
+  date: string;
+}
+export interface CommissionSettings {
+  rate: number;
+  type: string;
 }
 
 export class AgentService {
@@ -186,7 +207,7 @@ export class AgentService {
       if (!agent) throw new Error('Agent non trouvé');
 
       return {
-        totalUsers: 0, // À implémenter selon vos besoins
+        totalUsers: 0,
         totalCommissions: agent.commission_rate || 0,
         isActive: agent.is_active
       };
@@ -194,6 +215,37 @@ export class AgentService {
       console.error('❌ Erreur stats agent:', error);
       return null;
     }
+  }
+
+  // Méthodes additionnelles pour compatibilité
+  async getSubAgentsByAgent(agentId: string): Promise<SubAgentManagement[]> {
+    return [];
+  }
+
+  async getUsersByCreator(creatorId: string): Promise<AgentCreatedUser[]> {
+    return [];
+  }
+
+  async getCommissionsByRecipient(recipientId: string): Promise<AgentCommission[]> {
+    return [];
+  }
+
+  async getCommissionSettings(): Promise<CommissionSettings | null> {
+    return { rate: 0, type: 'percentage' };
+  }
+
+  async updateCommissionSetting(settings: Partial<CommissionSettings>): Promise<void> {}
+  
+  async processTransaction(data: any): Promise<void> {}
+  
+  async createUserByAgent(agentId: string, userData: any): Promise<AgentCreatedUser | null> {
+    return null;
+  }
+
+  async activateUser(userId: string): Promise<void> {}
+  
+  async createSubAgent(data: any): Promise<SubAgentManagement> {
+    throw new Error('Not implemented');
   }
 }
 

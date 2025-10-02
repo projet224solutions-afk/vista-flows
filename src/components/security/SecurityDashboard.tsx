@@ -309,7 +309,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                                                     {alert.alert_type}
                                                 </Badge>
                                                 <span className="text-xs text-gray-500">
-                                                    {new Date(alert.created_at || '').toLocaleTimeString()}
+                                                    {new Date((alert as any).created_at || new Date()).toLocaleTimeString()}
                                                 </span>
                                             </div>
                                         </div>
