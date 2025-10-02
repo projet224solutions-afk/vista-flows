@@ -9,11 +9,18 @@ interface CopilotTestProps {
   onClose: () => void;
 }
 
+type Message = {
+  id: string;
+  type: 'assistant' | 'user';
+  content: string;
+  timestamp: Date;
+};
+
 export default function CopilotTest({ onClose }: CopilotTestProps) {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      type: 'assistant' as const,
+      type: 'assistant',
       content: '🤖 Bonjour ! Je suis votre assistant IA PDG. Comment puis-je vous aider aujourd\'hui ?',
       timestamp: new Date()
     }
@@ -24,9 +31,9 @@ export default function CopilotTest({ onClose }: CopilotTestProps) {
     if (!input.trim()) return;
 
     // Ajouter le message utilisateur
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user' as const,
+      type: 'user',
       content: input,
       timestamp: new Date()
     };
@@ -35,9 +42,9 @@ export default function CopilotTest({ onClose }: CopilotTestProps) {
 
     // Simuler une réponse IA
     setTimeout(() => {
-      const aiResponse = {
+      const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant' as const,
+        type: 'assistant',
         content: `✅ J'ai bien reçu votre message : "${input}". Voici quelques actions que je peux effectuer :
         
 📊 Analyser vos données business

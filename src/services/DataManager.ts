@@ -59,25 +59,22 @@ export class DataManager {
     try {
       console.log(`🔍 Fetching data for ${queryConfig.table}`);
       
-      let query = supabase.from(queryConfig.table);
-      
       // Construire la requête
-      if (queryConfig.select) {
-        query = query.select(queryConfig.select);
-      } else {
-        query = query.select('*');
-      }
+      let query = supabase
+        .from(queryConfig.table as any)
+        .select(queryConfig.select || '*');
 
       // Appliquer les filtres
       if (queryConfig.filters) {
         Object.entries(queryConfig.filters).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            query = query.in(key, value);
+            query = query.in(key, value as any);
           } else if (typeof value === 'object' && value.operator) {
             // Filtres avancés : { operator: 'gte', value: 100 }
-            query = query[value.operator](key, value.value);
+            const operator = value.operator as any;
+            query = (query as any)[operator](key, value.value);
           } else {
-            query = query.eq(key, value);
+            query = query.eq(key, value as any);
           }
         });
       }
@@ -123,7 +120,7 @@ export class DataManager {
     try {
       console.log(`✏️ Mutating ${mutationConfig.table} - ${mutationConfig.operation}`);
 
-      let query = supabase.from(mutationConfig.table);
+      let query = supabase.from(mutationConfig.table as any);
       let result;
 
       switch (mutationConfig.operation) {
