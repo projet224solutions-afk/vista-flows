@@ -21,6 +21,7 @@ import {
   MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
+import { useMockExpenseManagement } from '@/hooks/useMockExpenseManagement';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -39,8 +40,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
-  
-  // Hook principal de gestion des dépenses
+
+  // Hook principal de gestion des dépenses (avec fallback vers données simulées)
+  const realExpenseData = useExpenseManagement();
+  const mockExpenseData = useMockExpenseManagement();
+
+  // Utiliser les données simulées si les vraies données ne sont pas disponibles
+  const expenseData = realExpenseData.error ? mockExpenseData : realExpenseData;
+
   const {
     quickStats,
     analytics,
@@ -51,18 +58,18 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     isLoading,
     error,
     refetch
-  } = useExpenseManagement();
+  } = expenseData;
 
   // Calculs pour les métriques
   const metrics = useMemo(() => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
+
     // Dépenses du mois actuel
     const currentMonthExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.expense_date);
-      return expenseDate.getMonth() === currentMonth && 
-             expenseDate.getFullYear() === currentYear;
+      return expenseDate.getMonth() === currentMonth &&
+        expenseDate.getFullYear() === currentYear;
     });
 
     // Dépenses du mois précédent
@@ -70,15 +77,15 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     const lastMonthExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.expense_date);
-      return expenseDate.getMonth() === lastMonth && 
-             expenseDate.getFullYear() === lastMonthYear;
+      return expenseDate.getMonth() === lastMonth &&
+        expenseDate.getFullYear() === lastMonthYear;
     });
 
     const currentMonthTotal = currentMonthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
     const lastMonthTotal = lastMonthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
-    
-    const monthlyChange = lastMonthTotal > 0 
-      ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 
+
+    const monthlyChange = lastMonthTotal > 0
+      ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
       : 0;
 
     return {
@@ -86,8 +93,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       lastMonthTotal,
       monthlyChange,
       currentMonthCount: currentMonthExpenses.length,
-      averageExpense: currentMonthExpenses.length > 0 
-        ? currentMonthTotal / currentMonthExpenses.length 
+      averageExpense: currentMonthExpenses.length > 0
+        ? currentMonthTotal / currentMonthExpenses.length
         : 0
     };
   }, [expenses]);
@@ -142,7 +149,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       <Alert className="m-4">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Erreur lors du chargement des données de dépenses. 
+          Erreur lors du chargement des données de dépenses.
           <Button variant="link" onClick={refetch} className="ml-2">
             Réessayer
           </Button>
@@ -157,9 +164,17 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-          <p className="text-gray-600">Suivez et analysez vos dépenses professionnelles</p>
+          <div className="flex items-center gap-3">
+            <p className="text-gray-600">Suivez et analysez vos dépenses professionnelles</p>
+            {realExpenseData.error && (
+              <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
+                <Activity className="w-3 h-3 mr-1" />
+                Mode Démonstration
+              </Badge>
+            )}
+          </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Alertes non lues */}
           {quickStats.unreadAlerts > 0 && (
@@ -168,7 +183,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               {quickStats.unreadAlerts} alertes
             </Badge>
           )}
-          
+
           {/* Anomalies détectées */}
           {quickStats.hasAnomalies && (
             <Badge variant="outline" className="border-orange-500 text-orange-600">
@@ -176,7 +191,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               Anomalies détectées
             </Badge>
           )}
-          
+
           <Button size="sm" variant="outline" onClick={refetch}>
             <Activity className="w-4 h-4 mr-2" />
             Actualiser
@@ -310,22 +325,22 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData.categoryData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
+                    <XAxis
+                      dataKey="name"
                       angle={-45}
                       textAnchor="end"
                       height={80}
                       fontSize={12}
                     />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
                       labelStyle={{ color: '#374151' }}
                     />
-                    <Bar 
-                      dataKey="montant" 
+                    <Bar
+                      dataKey="montant"
                       fill="#3B82F6"
                       radius={[4, 4, 0, 0]}
                     />
@@ -355,13 +370,13 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       labelLine={false}
                     >
                       {chartData.pieData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.color || CHART_COLORS[index % CHART_COLORS.length]} 
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color || CHART_COLORS[index % CHART_COLORS.length]}
                         />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
                     />
                   </PieChart>
@@ -384,7 +399,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
                     labelStyle={{ color: '#374151' }}
                   />
@@ -453,7 +468,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                               <Badge variant="outline" className="text-xs">
                                 {anomaly.amount?.toLocaleString()} XAF
                               </Badge>
-                              <Badge 
+                              <Badge
                                 variant={anomaly.severity === 'critical' ? 'destructive' : 'secondary'}
                                 className="text-xs"
                               >

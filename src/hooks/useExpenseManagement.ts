@@ -22,6 +22,7 @@ import {
   type ExpenseBudget,
   type ExpenseAlert
 } from '@/services/expenseService';
+import { MockExpenseService } from '@/services/mockExpenseService';
 
 /**
  * 🏷️ Hook pour la gestion des catégories de dépenses
@@ -467,7 +468,7 @@ export function useExpenseManagement() {
     currentPage,
     selectedExpense,
     quickStats,
-    
+
     // Données
     categories: categories.categories,
     expenses: expenses.expenses,
@@ -476,42 +477,42 @@ export function useExpenseManagement() {
     anomalies: analytics.anomalies,
     alerts: alerts.alerts,
     walletHistory: walletIntegration.walletHistory,
-    
+
     // Actions de navigation
     applyFilters,
     clearFilters,
     goToPage,
     selectExpense,
-    
+
     // Actions sur les catégories
     createCategory: categories.createCategory,
     updateCategory: categories.updateCategory,
     deleteCategory: categories.deleteCategory,
     createDefaultCategories: categories.createDefaultCategories,
-    
+
     // Actions sur les dépenses
     createExpense: expenses.createExpense,
     updateExpense: expenses.updateExpense,
     deleteExpense: expenses.deleteExpense,
     approveExpense: expenses.approveExpense,
     rejectExpense: expenses.rejectExpense,
-    
+
     // Actions sur les alertes
     markAlertAsRead: alerts.markAsRead,
     dismissAlert: alerts.dismissAlert,
-    
+
     // Actions wallet
     payFromWallet: walletIntegration.payFromWallet,
-    
+
     // États de chargement
     isLoading: categories.isLoading || expenses.isLoading || analytics.isLoading,
     isCreating: categories.isCreating || expenses.isCreating,
     isUpdating: categories.isUpdating || expenses.isUpdating,
     isDeleting: categories.isDeleting || expenses.isDeleting,
-    
+
     // Erreurs
     error: categories.error || expenses.error || analytics.error,
-    
+
     // Fonctions de rafraîchissement
     refetch: () => {
       categories.refetch();
