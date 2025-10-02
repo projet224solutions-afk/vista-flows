@@ -19,6 +19,7 @@ const errorHandler = require('./src/middleware/errorHandler');
 // Import des routes
 const openaiRoutes = require('./src/routes/openai');
 const authRoutes = require('./src/routes/auth');
+const emailRoutes = require('./src/routes/email');
 const healthRoutes = require('./src/routes/health');
 
 const app = express();
@@ -131,6 +132,9 @@ app.use('/api/auth', authRoutes);
 // Routes OpenAI (avec authentification et permissions)
 app.use('/api/openai', authMiddleware, openaiRoutes);
 
+// Routes Email (avec authentification)
+app.use('/api/email', emailRoutes);
+
 // Route racine
 app.get('/', (req, res) => {
     res.json({
@@ -141,6 +145,7 @@ app.get('/', (req, res) => {
         endpoints: {
             health: '/api/health',
             auth: '/api/auth',
+            email: '/api/email (authentification requise)',
             openai: '/api/openai (authentification requise)'
         }
     });
@@ -154,6 +159,7 @@ app.use('*', (req, res) => {
         availableEndpoints: [
             '/api/health',
             '/api/auth',
+            '/api/email',
             '/api/openai'
         ]
     });

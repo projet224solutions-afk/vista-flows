@@ -255,16 +255,48 @@ export default function SyndicateBureauManagement() {
      * Envoie l'email au président avec le lien permanent
      */
     const sendPresidentEmail = async (bureau: SyndicateBureau) => {
-        // Simuler l'envoi d'email
-        console.log('📧 Email envoyé à:', bureau.president_email);
-        console.log('🔗 Lien permanent:', bureau.permanent_link);
+        try {
+            // Import dynamique du service email
+            const { emailService } = await import('@/services/emailService');
+            
+            // Données pour l'email du président
+            const emailData = {
+                president_name: bureau.president_name,
+                president_email: bureau.president_email,
+                bureau_code: bureau.bureau_code,
+                prefecture: bureau.prefecture,
+                commune: bureau.commune,
+                permanent_link: bureau.permanent_link,
+                access_token: bureau.access_token
+            };
 
-        // Mettre à jour la date d'envoi
-        setBureaus(prev => prev.map(b =>
-            b.id === bureau.id
-                ? { ...b, link_sent_at: new Date().toISOString() }
-                : b
-        ));
+            // Envoi de l'email via le service
+            const success = await emailService.sendSyndicatePresidentEmail(emailData);
+
+            if (success) {
+                // Mettre à jour la date d'envoi
+                setBureaus(prev => prev.map(b =>
+                    b.id === bureau.id
+                        ? { ...b, link_sent_at: new Date().toISOString() }
+                        : b
+                ));
+                
+                console.log('✅ Email envoyé avec succès à:', bureau.president_email);
+                console.log('🔗 Lien permanent:', bureau.permanent_link);
+            } else {
+                throw new Error('Échec de l\'envoi d\'email');
+            }
+        } catch (error) {
+            console.error('❌ Erreur envoi email président:', error);
+            toast.error('Erreur lors de l\'envoi de l\'email au président');
+            
+            // Fallback: afficher les informations dans la console
+            console.log('📧 FALLBACK - Informations du bureau:', {
+                president_email: bureau.president_email,
+                permanent_link: bureau.permanent_link,
+                access_token: bureau.access_token
+            });
+        }
     };
 
     /**
