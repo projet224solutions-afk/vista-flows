@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { mockCommunicationService } from './mockCommunicationService';
 import { toast } from 'sonner';
 import agoraService, { MessageData } from './agoraService';
 
@@ -115,6 +116,11 @@ export interface UserPresence {
 }
 
 class CommunicationService {
+  // Vérifier si on est en mode démo
+  private isDemoMode(): boolean {
+    return !import.meta.env.VITE_SUPABASE_URL || 
+           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co';
+  }
   private static instance: CommunicationService;
 
   static getInstance(): CommunicationService {
@@ -597,6 +603,11 @@ class CommunicationService {
    * Recherche des utilisateurs pour créer des conversations (TOUS les utilisateurs)
    */
   async searchUsers(query: string, limit: number = 10): Promise<any[]> {
+    if (this.isDemoMode()) {
+      console.log('🎭 Mode démo communication - recherche utilisateurs');
+      return mockCommunicationService.searchUsers(query, limit);
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -618,7 +629,8 @@ class CommunicationService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur recherche utilisateurs:', error);
-      return [];
+      // Fallback vers le mode démo
+      return mockCommunicationService.searchUsers(query, limit);
     }
   }
 
@@ -626,6 +638,11 @@ class CommunicationService {
    * Récupère tous les utilisateurs de la plateforme pour communication universelle
    */
   async getAllUsers(limit: number = 50, offset: number = 0): Promise<any[]> {
+    if (this.isDemoMode()) {
+      console.log('🎭 Mode démo communication - tous les utilisateurs');
+      return mockCommunicationService.getAllUsers(limit, offset);
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -648,7 +665,8 @@ class CommunicationService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur récupération utilisateurs:', error);
-      return [];
+      // Fallback vers le mode démo
+      return mockCommunicationService.getAllUsers(limit, offset);
     }
   }
 

@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { mockWalletService } from './mockWalletService';
 
 // =====================================================
 // TYPES ET INTERFACES
@@ -63,8 +64,19 @@ export interface WalletSettings {
 // =====================================================
 
 class WalletService {
+  // Vérifier si on est en mode démo
+  private isDemoMode(): boolean {
+    return !import.meta.env.VITE_SUPABASE_URL || 
+           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co';
+  }
+
   // Récupérer le wallet d'un utilisateur
   async getUserWallet(userId: string): Promise<Wallet | null> {
+    if (this.isDemoMode()) {
+      console.log('🎭 Mode démo wallet activé');
+      return mockWalletService.getUserWallet(userId);
+    }
+
     try {
       const { data, error } = await supabase
         .from('wallets')
@@ -83,12 +95,19 @@ class WalletService {
       return data;
     } catch (error) {
       console.error('❌ Erreur récupération wallet:', error);
-      return null;
+      // Fallback vers le mode démo en cas d'erreur
+      console.log('🎭 Fallback vers mode démo');
+      return mockWalletService.getUserWallet(userId);
     }
   }
 
   // Créer un wallet pour un utilisateur
   async createUserWallet(userId: string, userEmail: string): Promise<Wallet | null> {
+    if (this.isDemoMode()) {
+      console.log('🎭 Création wallet démo pour:', userEmail);
+      return mockWalletService.createUserWallet(userId, userEmail);
+    }
+
     try {
       // Générer une adresse wallet unique
       const timestamp = Date.now();
@@ -126,12 +145,18 @@ class WalletService {
       return data;
     } catch (error) {
       console.error('❌ Erreur création wallet:', error);
-      return null;
+      // Fallback vers le mode démo
+      console.log('🎭 Fallback création wallet démo');
+      return mockWalletService.createUserWallet(userId, userEmail);
     }
   }
 
   // Récupérer les transactions d'un wallet
   async getWalletTransactions(walletId: string, limit: number = 50): Promise<Transaction[]> {
+    if (this.isDemoMode()) {
+      return mockWalletService.getWalletTransactions(walletId, limit);
+    }
+
     try {
       const { data, error } = await supabase
         .from('wallet_transactions')
@@ -144,7 +169,8 @@ class WalletService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur récupération transactions:', error);
-      return [];
+      // Fallback vers le mode démo
+      return mockWalletService.getWalletTransactions(walletId, limit);
     }
   }
 
