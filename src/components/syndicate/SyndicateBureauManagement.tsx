@@ -198,7 +198,8 @@ export default function SyndicateBureauManagement() {
         try {
             // Générer le lien permanent et le token d'accès
             const accessToken = generateAccessToken();
-            const permanentLink = `https://224solutions.com/syndicat/access/${accessToken}`;
+            // Générer le lien permanent avec le token (correspond à la route React)
+            const permanentLink = `${window.location.origin}/syndicat/president/${accessToken}`;
 
             const newBureau: SyndicateBureau = {
                 id: Date.now().toString(),
@@ -231,7 +232,7 @@ export default function SyndicateBureauManagement() {
             });
 
             setShowCreateDialog(false);
-            
+
             // Afficher le lien généré dans l'interface
             toast.success('Bureau syndical créé avec succès !', {
                 description: `Lien généré: ${permanentLink}`,
@@ -269,7 +270,7 @@ export default function SyndicateBureauManagement() {
         try {
             // Import dynamique du service email simple (garanti de fonctionner)
             const { simpleEmailService } = await import('@/services/simpleEmailService');
-            
+
             // Données pour l'email du président
             const emailData = {
                 president_name: bureau.president_name,
@@ -307,7 +308,7 @@ export default function SyndicateBureauManagement() {
                         ? { ...b, link_sent_at: new Date().toISOString() }
                         : b
                 ));
-                
+
                 console.log('✅ PROCESSUS D\'ENVOI TERMINÉ AVEC SUCCÈS');
                 console.log('📧 Le président devrait maintenant avoir accès aux informations');
                 console.log('');
@@ -316,7 +317,7 @@ export default function SyndicateBureauManagement() {
                 console.log('- Lien d\'accès:', bureau.permanent_link);
                 console.log('- Token d\'accès:', bureau.access_token);
                 console.log('- Date d\'envoi:', new Date().toLocaleString());
-                
+
                 // Notification de succès
                 toast.success('✅ Email traité avec succès !', {
                     description: 'Le président a maintenant accès aux informations',
@@ -328,14 +329,14 @@ export default function SyndicateBureauManagement() {
                         }
                     }
                 });
-                
+
                 return true;
             } else {
                 throw new Error('Échec du processus d\'envoi');
             }
         } catch (error) {
             console.error('❌ ERREUR DANS LE PROCESSUS D\'ENVOI:', error);
-            
+
             // Afficher les informations importantes même en cas d'erreur
             console.log('');
             console.log('📧 INFORMATIONS BUREAU (DISPONIBLES POUR ENVOI MANUEL):');
@@ -351,7 +352,7 @@ export default function SyndicateBureauManagement() {
             console.log('📝 SUJET EMAIL: 🏛️ Création de votre Bureau Syndical -', bureau.bureau_code);
             console.log('');
             console.log('💡 SOLUTION: Copiez ces informations et envoyez-les manuellement');
-            
+
             // Essayer de copier les informations
             try {
                 const emailContent = `
@@ -377,9 +378,9 @@ Cliquez sur le lien et utilisez le token pour accéder à votre interface.
 Cordialement,
 224Solutions
                 `;
-                
+
                 await navigator.clipboard.writeText(emailContent);
-                
+
                 toast.warning('⚠️ Envoi automatique impossible', {
                     description: 'Contenu copié - Envoyez manuellement par email',
                     duration: 20000,
@@ -391,19 +392,19 @@ Cordialement,
                         }
                     }
                 });
-                
+
                 // Marquer comme "envoyé" même si c'est manuel
                 setBureaus(prev => prev.map(b =>
                     b.id === bureau.id
                         ? { ...b, link_sent_at: new Date().toISOString() }
                         : b
                 ));
-                
+
                 return true; // On considère que c'est un succès car l'info est disponible
-                
+
             } catch (clipboardError) {
                 console.error('❌ Erreur copie presse-papier:', clipboardError);
-                
+
                 // Dernière solution: afficher dans une alerte
                 const alertContent = `
 INFORMATIONS À ENVOYER PAR EMAIL:
@@ -414,14 +415,14 @@ Token: ${bureau.access_token}
 
 Copiez ces informations et envoyez-les par email au président.
                 `;
-                
+
                 alert(alertContent);
-                
+
                 toast.error('❌ Toutes les méthodes ont échoué', {
                     description: 'Informations affichées - Envoyez manuellement',
                     duration: 15000
                 });
-                
+
                 return false;
             }
         }
@@ -455,7 +456,7 @@ Copiez ces informations et envoyez-les par email au président.
         try {
             // Demander l'email de test à l'utilisateur
             const testEmail = prompt('Entrez votre email pour tester le système d\'envoi:', 'test@example.com');
-            
+
             if (!testEmail || !testEmail.includes('@')) {
                 toast.error('Email invalide', {
                     description: 'Veuillez entrer une adresse email valide'
@@ -465,11 +466,11 @@ Copiez ces informations et envoyez-les par email au président.
 
             // Import dynamique du service email simple
             const { simpleEmailService } = await import('@/services/simpleEmailService');
-            
+
             console.log('🧪 TEST DU SYSTÈME D\'EMAIL');
             console.log('===========================');
             console.log('📧 Email de test:', testEmail);
-            
+
             toast.info('🧪 Test du système d\'email en cours...', {
                 description: `Email de test: ${testEmail}`,
                 duration: 3000
@@ -489,14 +490,14 @@ Copiez ces informations et envoyez-les par email au président.
                         }
                     }
                 });
-                
+
                 console.log('✅ TEST RÉUSSI - Le système d\'email fonctionne');
             } else {
                 toast.warning('⚠️ Test partiellement réussi', {
                     description: 'Vérifiez votre client email ou la console',
                     duration: 10000
                 });
-                
+
                 console.log('⚠️ TEST PARTIEL - Vérifiez votre client email');
             }
         } catch (error) {
@@ -676,72 +677,72 @@ Copiez ces informations et envoyez-les par email au président.
                                         Créer un Bureau Syndical
                                     </Button>
                                 </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Nouveau Bureau Syndical</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="prefecture">Préfecture *</Label>
-                                        <Input
-                                            id="prefecture"
-                                            value={formData.prefecture}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, prefecture: e.target.value }))}
-                                            placeholder="Ex: Dakar"
-                                        />
+                                <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Nouveau Bureau Syndical</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="prefecture">Préfecture *</Label>
+                                            <Input
+                                                id="prefecture"
+                                                value={formData.prefecture}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, prefecture: e.target.value }))}
+                                                placeholder="Ex: Dakar"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="commune">Commune *</Label>
+                                            <Input
+                                                id="commune"
+                                                value={formData.commune}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, commune: e.target.value }))}
+                                                placeholder="Ex: Plateau"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="president_name">Nom du Président *</Label>
+                                            <Input
+                                                id="president_name"
+                                                value={formData.president_name}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, president_name: e.target.value }))}
+                                                placeholder="Nom complet"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="president_email">Email du Président *</Label>
+                                            <Input
+                                                id="president_email"
+                                                type="email"
+                                                value={formData.president_email}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, president_email: e.target.value }))}
+                                                placeholder="email@example.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="president_phone">Téléphone (optionnel)</Label>
+                                            <Input
+                                                id="president_phone"
+                                                value={formData.president_phone}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, president_phone: e.target.value }))}
+                                                placeholder="+221 77 123 45 67"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 pt-4">
+                                            <Button onClick={createBureau} className="flex-1">
+                                                Créer le Bureau
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowCreateDialog(false)}
+                                                className="flex-1"
+                                            >
+                                                Annuler
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Label htmlFor="commune">Commune *</Label>
-                                        <Input
-                                            id="commune"
-                                            value={formData.commune}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, commune: e.target.value }))}
-                                            placeholder="Ex: Plateau"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="president_name">Nom du Président *</Label>
-                                        <Input
-                                            id="president_name"
-                                            value={formData.president_name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, president_name: e.target.value }))}
-                                            placeholder="Nom complet"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="president_email">Email du Président *</Label>
-                                        <Input
-                                            id="president_email"
-                                            type="email"
-                                            value={formData.president_email}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, president_email: e.target.value }))}
-                                            placeholder="email@example.com"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="president_phone">Téléphone (optionnel)</Label>
-                                        <Input
-                                            id="president_phone"
-                                            value={formData.president_phone}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, president_phone: e.target.value }))}
-                                            placeholder="+221 77 123 45 67"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2 pt-4">
-                                        <Button onClick={createBureau} className="flex-1">
-                                            Créer le Bureau
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setShowCreateDialog(false)}
-                                            className="flex-1"
-                                        >
-                                            Annuler
-                                        </Button>
-                                    </div>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
 
@@ -965,9 +966,9 @@ Copiez ces informations et envoyez-les par email au président.
                                             <div key={status} className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-3 h-3 rounded-full ${status === 'active' ? 'bg-green-500' :
-                                                            status === 'pending' ? 'bg-yellow-500' :
-                                                                status === 'suspended' ? 'bg-red-500' :
-                                                                    'bg-gray-500'
+                                                        status === 'pending' ? 'bg-yellow-500' :
+                                                            status === 'suspended' ? 'bg-red-500' :
+                                                                'bg-gray-500'
                                                         }`}></div>
                                                     <span className="capitalize">{getStatusLabel(status)}</span>
                                                 </div>

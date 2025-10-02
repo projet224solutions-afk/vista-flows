@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,7 @@ interface BureauStats {
 }
 
 export default function SyndicatePresident() {
+    const { accessToken } = useParams<{ accessToken: string }>();
     const { user, profile, signOut } = useAuth();
     const [activeTab, setActiveTab] = useState('dashboard');
     const [bureauInfo, setBureauInfo] = useState<BureauInfo | null>(null);
@@ -91,37 +93,82 @@ export default function SyndicatePresident() {
         sosAlertsToday: 0
     });
     const [loading, setLoading] = useState(true);
+    const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {
-        loadBureauInfo();
-        loadStats();
-    }, []);
+        if (accessToken) {
+            authenticateWithToken();
+        }
+    }, [accessToken]);
+
+    useEffect(() => {
+        if (authenticated) {
+            loadBureauInfo();
+            loadStats();
+        }
+    }, [authenticated]);
+
+    /**
+     * Authentifie le président avec le token d'accès
+     */
+    const authenticateWithToken = async () => {
+        try {
+            console.log('🔐 Authentification avec token:', accessToken);
+
+            if (!accessToken) {
+                toast.error('Token d\'accès manquant');
+                return;
+            }
+
+            // Simuler la vérification du token (en attendant l'intégration Supabase)
+            // Dans un vrai système, on vérifierait le token dans la base de données
+            if (accessToken.length >= 10) {
+                console.log('✅ Token valide, authentification réussie');
+                setAuthenticated(true);
+                toast.success('Authentification réussie !', {
+                    description: 'Bienvenue dans votre interface de bureau syndical'
+                });
+            } else {
+                console.log('❌ Token invalide');
+                toast.error('Token d\'accès invalide');
+            }
+        } catch (error) {
+            console.error('❌ Erreur authentification:', error);
+            toast.error('Erreur lors de l\'authentification');
+        }
+    };
 
     /**
      * Charge les informations du bureau
      */
     const loadBureauInfo = async () => {
         try {
-            // Simuler le chargement depuis Supabase
+            console.log('📊 Chargement des informations du bureau avec token:', accessToken);
+
+            // Simuler le chargement depuis Supabase basé sur le token
+            // Dans un vrai système, on récupérerait les infos du bureau via le token
             const mockBureau: BureauInfo = {
-                id: '1',
-                bureau_code: 'SYN-2025-00001',
+                id: accessToken || '1',
+                bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
                 prefecture: 'Dakar',
                 commune: 'Plateau',
-                president_name: 'Mamadou Diallo',
-                president_email: 'mamadou.diallo@email.com',
+                president_name: 'Président du Bureau',
+                president_email: 'president@bureau-syndicat.com',
                 status: 'active',
                 total_members: 45,
                 active_members: 42,
                 total_vehicles: 38,
                 total_cotisations: 2250000,
                 treasury_balance: 1850000,
-                created_at: '2025-09-25T10:00:00Z'
+                created_at: new Date().toISOString()
             };
 
             setBureauInfo(mockBureau);
+
+            console.log('✅ Informations du bureau chargées:', mockBureau);
+            toast.success('Informations du bureau chargées avec succès');
         } catch (error) {
-            console.error('Erreur chargement bureau:', error);
+            console.error('❌ Erreur chargement bureau:', error);
             toast.error('Impossible de charger les informations du bureau');
         } finally {
             setLoading(false);
@@ -133,13 +180,16 @@ export default function SyndicatePresident() {
      */
     const loadStats = async () => {
         try {
+            console.log('📈 Chargement des statistiques du bureau');
+
+            // Simuler des statistiques réalistes
             const mockStats: BureauStats = {
                 totalMembers: 45,
                 activeMembers: 42,
                 pendingMembers: 3,
                 totalVehicles: 38,
                 verifiedVehicles: 35,
-                monthlyRevenue: 225000,
+                monthlyRevenue: 2250000,
                 treasuryBalance: 1850000,
                 activeElections: 1,
                 pendingClaims: 2,
@@ -147,32 +197,80 @@ export default function SyndicatePresident() {
             };
 
             setStats(mockStats);
+            console.log('✅ Statistiques chargées:', mockStats);
         } catch (error) {
-            console.error('Erreur chargement statistiques:', error);
+            console.error('❌ Erreur chargement statistiques:', error);
+            toast.error('Impossible de charger les statistiques');
         }
     };
 
-    /**
-     * Déconnexion
-     */
-    const handleSignOut = async () => {
-        await signOut();
-        toast.success('Déconnexion réussie');
-    };
-
-    if (loading) {
+    // Écran d'authentification si pas encore authentifié
+    if (!authenticated) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-                <Card className="w-96">
-                    <CardContent className="p-8 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <h3 className="text-lg font-semibold mb-2">Chargement...</h3>
-                        <p className="text-gray-600">Accès à votre bureau syndical</p>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Crown className="w-8 h-8 text-white" />
+                        </div>
+                        <CardTitle className="text-2xl font-bold text-gray-800">
+                            Bureau Syndical 224Solutions
+                        </CardTitle>
+                        <p className="text-gray-600 mt-2">
+                            Interface Président - Authentification en cours...
+                        </p>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                        {loading ? (
+                            <div className="space-y-4">
+                                <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                                <p className="text-gray-600">Vérification du token d'accès...</p>
+                                <p className="text-sm text-gray-500">Token: {accessToken?.slice(0, 10)}...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
+                                <p className="text-red-600 font-medium">Authentification échouée</p>
+                                <p className="text-gray-600 text-sm">
+                                    Le token d'accès fourni n'est pas valide ou a expiré.
+                                </p>
+                                <Button
+                                    onClick={() => window.location.href = '/'}
+                                    className="w-full"
+                                >
+                                    Retour à l'accueil
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
         );
     }
+
+    // Écran de chargement
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+                <Card className="w-full max-w-md">
+                    <CardContent className="p-8 text-center">
+                        <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                        <h3 className="text-lg font-semibold mb-2">Chargement de votre bureau</h3>
+                        <p className="text-gray-600">Préparation de votre interface...</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    /**
+     * Déconnexion
+     */
+    const handleSignOut = async () => {
+        console.log('🚪 Déconnexion du bureau syndical');
+        toast.success('Déconnexion réussie');
+        window.location.href = '/';
+    };
 
     if (!bureauInfo) {
         return (
