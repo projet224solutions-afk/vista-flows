@@ -39,7 +39,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface SyndicateBureau {
     id: string;
@@ -221,9 +221,6 @@ export default function SyndicateBureauManagement() {
 
             setBureaus(prev => [...prev, newBureau]);
 
-            // Simuler l'envoi d'email
-            await sendPresidentEmail(newBureau);
-
             // Réinitialiser le formulaire
             setFormData({
                 prefecture: '',
@@ -234,7 +231,21 @@ export default function SyndicateBureauManagement() {
             });
 
             setShowCreateDialog(false);
-            toast.success('Bureau syndical créé avec succès ! Email envoyé au président.');
+            
+            // Afficher le lien généré dans l'interface
+            toast.success('Bureau syndical créé avec succès !', {
+                description: `Lien généré: ${permanentLink}`,
+                duration: 10000
+            });
+
+            // Envoyer l'email au président (en arrière-plan)
+            sendPresidentEmail(newBureau).then(success => {
+                if (success) {
+                    toast.success('✅ Email envoyé avec succès au président !');
+                } else {
+                    toast.warning('⚠️ Bureau créé mais email non envoyé. Utilisez le bouton "Renvoyer le lien".');
+                }
+            });
 
         } catch (error) {
             console.error('Erreur création bureau:', error);
@@ -254,7 +265,7 @@ export default function SyndicateBureauManagement() {
     /**
      * Envoie l'email au président avec le lien permanent
      */
-    const sendPresidentEmail = async (bureau: SyndicateBureau) => {
+    const sendPresidentEmail = async (bureau: SyndicateBureau): Promise<boolean> => {
         try {
             // Import dynamique du service email
             const { emailService } = await import('@/services/emailService');
@@ -283,19 +294,27 @@ export default function SyndicateBureauManagement() {
                 
                 console.log('✅ Email envoyé avec succès à:', bureau.president_email);
                 console.log('🔗 Lien permanent:', bureau.permanent_link);
+                return true;
             } else {
                 throw new Error('Échec de l\'envoi d\'email');
             }
         } catch (error) {
             console.error('❌ Erreur envoi email président:', error);
-            toast.error('Erreur lors de l\'envoi de l\'email au président');
             
-            // Fallback: afficher les informations dans la console
+            // Fallback: afficher les informations dans la console et l'interface
             console.log('📧 FALLBACK - Informations du bureau:', {
                 president_email: bureau.president_email,
                 permanent_link: bureau.permanent_link,
                 access_token: bureau.access_token
             });
+
+            // Afficher une notification avec le lien pour que l'utilisateur puisse le copier
+            toast.error('Email non envoyé', {
+                description: `Copiez ce lien manuellement: ${bureau.permanent_link}`,
+                duration: 15000
+            });
+            
+            return false;
         }
     };
 
@@ -303,8 +322,21 @@ export default function SyndicateBureauManagement() {
      * Renvoie le lien permanent
      */
     const resendLink = async (bureau: SyndicateBureau) => {
-        await sendPresidentEmail(bureau);
-        toast.success('Lien renvoyé avec succès');
+        toast.info('Envoi de l\'email en cours...', {
+            description: `Destinataire: ${bureau.president_email}`
+        });
+        
+        const success = await sendPresidentEmail(bureau);
+        
+        if (success) {
+            toast.success('✅ Email renvoyé avec succès !', {
+                description: `Le lien a été envoyé à ${bureau.president_email}`
+            });
+        } else {
+            toast.error('❌ Échec de l\'envoi de l\'email', {
+                description: 'Utilisez les boutons "Copier" ou "Ouvrir" pour partager le lien manuellement'
+            });
+        }
     };
 
     /**
@@ -582,6 +614,7 @@ export default function SyndicateBureauManagement() {
                                         <TableHead>Code Bureau</TableHead>
                                         <TableHead>Localisation</TableHead>
                                         <TableHead>Président</TableHead>
+                                        <TableHead>Lien d'accès</TableHead>
                                         <TableHead>Membres</TableHead>
                                         <TableHead>Statut</TableHead>
                                         <TableHead>Actions</TableHead>
@@ -596,6 +629,42 @@ export default function SyndicateBureauManagement() {
                                                 <div>
                                                     <p className="font-medium">{bureau.president_name}</p>
                                                     <p className="text-sm text-gray-600">{bureau.president_email}</p>
+                                                    {bureau.link_sent_at && (
+                                                        <p className="text-xs text-green-600">
+                                                            ✅ Email envoyé le {new Date(bureau.link_sent_at).toLocaleDateString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="max-w-xs">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Link className="w-4 h-4 text-blue-500" />
+                                                        <span className="text-sm font-medium text-blue-600">Lien généré</span>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-2 rounded border text-xs font-mono break-all">
+                                                        {bureau.permanent_link}
+                                                    </div>
+                                                    <div className="flex items-center gap-1 mt-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => copyLink(bureau.permanent_link)}
+                                                            className="text-xs"
+                                                        >
+                                                            <Copy className="w-3 h-3 mr-1" />
+                                                            Copier
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => window.open(bureau.permanent_link, '_blank')}
+                                                            className="text-xs"
+                                                        >
+                                                            <ExternalLink className="w-3 h-3 mr-1" />
+                                                            Ouvrir
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -610,27 +679,24 @@ export default function SyndicateBureauManagement() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => copyLink(bureau.permanent_link)}
-                                                    >
-                                                        <Copy className="w-4 h-4" />
-                                                    </Button>
+                                                <div className="flex flex-col gap-2">
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => resendLink(bureau)}
+                                                        className="text-xs"
                                                     >
-                                                        <Send className="w-4 h-4" />
+                                                        <Send className="w-3 h-3 mr-1" />
+                                                        Renvoyer Email
                                                     </Button>
                                                     {bureau.status === 'pending' && (
                                                         <Button
                                                             size="sm"
                                                             onClick={() => changeBureauStatus(bureau.id, 'active')}
+                                                            className="text-xs bg-green-600 hover:bg-green-700"
                                                         >
-                                                            <CheckCircle className="w-4 h-4" />
+                                                            <CheckCircle className="w-3 h-3 mr-1" />
+                                                            Activer
                                                         </Button>
                                                     )}
                                                     {bureau.status === 'active' && (
@@ -638,8 +704,10 @@ export default function SyndicateBureauManagement() {
                                                             size="sm"
                                                             variant="destructive"
                                                             onClick={() => changeBureauStatus(bureau.id, 'suspended')}
+                                                            className="text-xs"
                                                         >
-                                                            <XCircle className="w-4 h-4" />
+                                                            <XCircle className="w-3 h-3 mr-1" />
+                                                            Suspendre
                                                         </Button>
                                                     )}
                                                 </div>
