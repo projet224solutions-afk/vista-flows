@@ -21,6 +21,8 @@ const openaiRoutes = require('./src/routes/openai');
 const authRoutes = require('./src/routes/auth');
 const emailRoutes = require('./src/routes/email');
 const agoraRoutes = require('./src/routes/agora');
+const walletRoutes = require('./src/routes/wallet'); // Nouveau
+const notificationsRoutes = require('./src/routes/notifications'); // Nouveau
 const healthRoutes = require('./src/routes/health');
 
 const app = express();
@@ -138,6 +140,12 @@ app.use('/api/email', emailRoutes);
 
 // Routes Agora (avec authentification)
 app.use('/api/agora', agoraRoutes);
+
+// Routes Wallet (avec authentification)
+app.use('/api/wallet', walletRoutes);
+
+// Routes Notifications (avec authentification)
+app.use('/api/notifications', notificationsRoutes);
 
 // Route racine
 app.get('/', (req, res) => {

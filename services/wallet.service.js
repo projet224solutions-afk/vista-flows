@@ -1,0 +1,670 @@
+/**
+ * 💰 SERVICE WALLET COMPLET - 224SOLUTIONS
+ * Gestion complète des wallets avec commissions automatiques
+ */
+
+const { createClient } = require('@supabase/supabase-js');
+const firebaseService = require('./firebase.service');
+const { commissionConfig, paymentMethods } = require('../config/firebase.config');
+
+class WalletService {
+    constructor() {
+        this.supabase = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
+    }
+
+    /**
+     * 🏦 GESTION DES WALLETS
+     */
+
+    /**
+     * Crée un wallet pour un nouvel utilisateur
+     */
+    async createWallet(userId, initialBalance = 1000) {
+        try {
+            console.log('💰 Création wallet pour utilisateur:', userId);
+
+            // Utiliser la fonction Supabase pour créer le wallet
+            const { data, error } = await this.supabase
+                .rpc('create_user_wallet', {
+                    p_user_id: userId,
+                    p_initial_balance: initialBalance
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            console.log('✅ Wallet créé avec ID:', data);
+
+            // Envoyer notification de bienvenue
+            const user = await this.getUserById(userId);
+            if (user && user.fcm_token) {
+                await firebaseService.sendRegistrationSuccessNotification(
+                    user.fcm_token,
+                    `${user.first_name} ${user.last_name}`
+                );
+            }
+
+            return {
+                success: true,
+                walletId: data,
+                initialBalance
+            };
+        } catch (error) {
+            console.error('❌ Erreur création wallet:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Obtient les informations d'un wallet
+     */
+    async getWallet(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('wallets')
+                .select(`
+                    *,
+                    users!inner(id, first_name, last_name, email, phone)
+                `)
+                .eq('user_id', userId)
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, wallet: data };
+        } catch (error) {
+            console.error('❌ Erreur récupération wallet:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Met à jour le solde d'un wallet
+     */
+    async updateWalletBalance(walletId, newBalance) {
+        try {
+            const { data, error } = await this.supabase
+                .from('wallets')
+                .update({ 
+                    balance: newBalance,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', walletId)
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, wallet: data };
+        } catch (error) {
+            console.error('❌ Erreur mise à jour solde:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * 💸 TRANSACTIONS AVEC COMMISSIONS
+     */
+
+    /**
+     * Effectue un transfert entre wallets avec commission 1.5%
+     */
+    async transferMoney(senderId, receiverId, amount, description = null) {
+        try {
+            console.log('💸 Transfert:', senderId, '→', receiverId, amount);
+
+            // Vérifier les utilisateurs
+            const sender = await this.getUserById(senderId);
+            const receiver = await this.getUserById(receiverId);
+
+            if (!sender || !receiver) {
+                throw new Error('Utilisateur expéditeur ou destinataire non trouvé');
+            }
+
+            // Vérifier le solde de l'expéditeur
+            const senderWallet = await this.getWallet(senderId);
+            if (!senderWallet.success) {
+                throw new Error('Wallet expéditeur non trouvé');
+            }
+
+            // Calculer la commission (1.5%)
+            const commission = amount * commissionConfig.transferCommission;
+            const totalAmount = amount + commission;
+
+            if (senderWallet.wallet.balance < totalAmount) {
+                throw new Error('Solde insuffisant pour effectuer le transfert');
+            }
+
+            // Créer la transaction avec commission
+            const { data: transactionId, error } = await this.supabase
+                .rpc('create_transaction_with_commission', {
+                    p_sender_id: senderId,
+                    p_receiver_id: receiverId,
+                    p_amount: amount,
+                    p_transaction_type: 'transfer',
+                    p_payment_method: paymentMethods.WALLET_TRANSFER,
+                    p_description: description
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            // Mettre à jour les soldes des wallets
+            const updateResult = await this.supabase
+                .rpc('update_wallet_balances', {
+                    p_transaction_id: transactionId
+                });
+
+            if (updateResult.error) {
+                throw updateResult.error;
+            }
+
+            // Récupérer les détails de la transaction
+            const transaction = await this.getTransactionById(transactionId);
+
+            // Envoyer notifications
+            if (sender.fcm_token) {
+                await firebaseService.sendTransactionSuccessNotification(
+                    sender.fcm_token,
+                    {
+                        id: transactionId,
+                        amount,
+                        currency: 'GNF',
+                        type: 'transfer',
+                        recipientName: `${receiver.first_name} ${receiver.last_name}`
+                    }
+                );
+            }
+
+            if (receiver.fcm_token) {
+                await firebaseService.sendTransactionSuccessNotification(
+                    receiver.fcm_token,
+                    {
+                        id: transactionId,
+                        amount,
+                        currency: 'GNF',
+                        type: 'received',
+                        senderName: `${sender.first_name} ${sender.last_name}`
+                    }
+                );
+            }
+
+            console.log('✅ Transfert réussi, transaction ID:', transactionId);
+
+            return {
+                success: true,
+                transactionId,
+                amount,
+                commission,
+                totalAmount,
+                transaction: transaction.transaction
+            };
+        } catch (error) {
+            console.error('❌ Erreur transfert:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Effectue un retrait avec frais fixes (1000 GNF + commission API)
+     */
+    async withdrawMoney(userId, amount, paymentMethod, paymentDetails) {
+        try {
+            console.log('💰 Retrait:', userId, amount, paymentMethod);
+
+            // Vérifier l'utilisateur
+            const user = await this.getUserById(userId);
+            if (!user) {
+                throw new Error('Utilisateur non trouvé');
+            }
+
+            // Vérifier le wallet
+            const userWallet = await this.getWallet(userId);
+            if (!userWallet.success) {
+                throw new Error('Wallet non trouvé');
+            }
+
+            // Calculer les frais de retrait
+            const { data: feesData, error: feesError } = await this.supabase
+                .rpc('calculate_withdrawal_fees', {
+                    p_amount: amount,
+                    p_payment_method: paymentMethod
+                });
+
+            if (feesError) {
+                throw feesError;
+            }
+
+            const fees = feesData[0];
+            const totalDeduction = amount + fees.total_fees;
+
+            if (userWallet.wallet.balance < totalDeduction) {
+                throw new Error('Solde insuffisant pour effectuer le retrait');
+            }
+
+            // Créer la transaction de retrait
+            const { data: transactionId, error } = await this.supabase
+                .rpc('create_transaction_with_commission', {
+                    p_sender_id: userId,
+                    p_receiver_id: null,
+                    p_amount: amount,
+                    p_transaction_type: 'withdrawal',
+                    p_payment_method: paymentMethod,
+                    p_description: `Retrait via ${paymentMethod}`
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            // Mettre à jour le solde du wallet
+            const updateResult = await this.supabase
+                .rpc('update_wallet_balances', {
+                    p_transaction_id: transactionId
+                });
+
+            if (updateResult.error) {
+                throw updateResult.error;
+            }
+
+            // Traiter le retrait via l'API externe
+            const withdrawalResult = await this.processExternalWithdrawal(
+                paymentMethod,
+                fees.net_amount,
+                paymentDetails,
+                transactionId
+            );
+
+            // Envoyer notification
+            if (user.fcm_token) {
+                if (withdrawalResult.success) {
+                    await firebaseService.sendWithdrawalApprovedNotification(
+                        user.fcm_token,
+                        {
+                            id: transactionId,
+                            amount,
+                            currency: 'GNF',
+                            method: paymentMethod
+                        }
+                    );
+                } else {
+                    await firebaseService.sendWithdrawalRejectedNotification(
+                        user.fcm_token,
+                        {
+                            id: transactionId,
+                            amount,
+                            currency: 'GNF',
+                            reason: withdrawalResult.error
+                        }
+                    );
+                }
+            }
+
+            console.log('✅ Retrait traité, transaction ID:', transactionId);
+
+            return {
+                success: withdrawalResult.success,
+                transactionId,
+                amount,
+                fees: fees.total_fees,
+                netAmount: fees.net_amount,
+                withdrawalResult
+            };
+        } catch (error) {
+            console.error('❌ Erreur retrait:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Effectue un dépôt sur un wallet
+     */
+    async depositMoney(userId, amount, paymentMethod, reference) {
+        try {
+            console.log('💳 Dépôt:', userId, amount, paymentMethod);
+
+            // Créer la transaction de dépôt
+            const { data: transactionId, error } = await this.supabase
+                .rpc('create_transaction_with_commission', {
+                    p_sender_id: null,
+                    p_receiver_id: userId,
+                    p_amount: amount,
+                    p_transaction_type: 'deposit',
+                    p_payment_method: paymentMethod,
+                    p_description: `Dépôt via ${paymentMethod}`
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            // Mettre à jour le solde du wallet
+            const updateResult = await this.supabase
+                .rpc('update_wallet_balances', {
+                    p_transaction_id: transactionId
+                });
+
+            if (updateResult.error) {
+                throw updateResult.error;
+            }
+
+            // Envoyer notification
+            const user = await this.getUserById(userId);
+            if (user && user.fcm_token) {
+                await firebaseService.sendTransactionSuccessNotification(
+                    user.fcm_token,
+                    {
+                        id: transactionId,
+                        amount,
+                        currency: 'GNF',
+                        type: 'deposit'
+                    }
+                );
+            }
+
+            console.log('✅ Dépôt réussi, transaction ID:', transactionId);
+
+            return {
+                success: true,
+                transactionId,
+                amount
+            };
+        } catch (error) {
+            console.error('❌ Erreur dépôt:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * 🌐 INTÉGRATIONS APIS EXTERNES
+     */
+
+    /**
+     * Traite un retrait via une API externe
+     */
+    async processExternalWithdrawal(paymentMethod, amount, paymentDetails, transactionId) {
+        try {
+            switch (paymentMethod) {
+                case paymentMethods.PAYPAL:
+                    return await this.processPayPalWithdrawal(amount, paymentDetails, transactionId);
+                
+                case paymentMethods.STRIPE:
+                    return await this.processStripeWithdrawal(amount, paymentDetails, transactionId);
+                
+                case paymentMethods.MOBILE_MONEY:
+                    return await this.processMobileMoneyWithdrawal(amount, paymentDetails, transactionId);
+                
+                case paymentMethods.BANK_CARD:
+                    return await this.processBankCardWithdrawal(amount, paymentDetails, transactionId);
+                
+                default:
+                    throw new Error('Méthode de paiement non supportée');
+            }
+        } catch (error) {
+            console.error('❌ Erreur traitement retrait externe:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Traite un retrait PayPal
+     */
+    async processPayPalWithdrawal(amount, paymentDetails, transactionId) {
+        try {
+            // Intégration PayPal API
+            // Cette fonction devrait utiliser l'API PayPal pour effectuer le paiement
+            console.log('💰 Traitement retrait PayPal:', amount, paymentDetails.email);
+            
+            // Simulation pour la démo
+            const success = Math.random() > 0.1; // 90% de succès
+            
+            if (success) {
+                // Mettre à jour la transaction avec la référence PayPal
+                await this.supabase
+                    .from('transactions')
+                    .update({
+                        reference_id: `PP_${Date.now()}`,
+                        status: 'completed',
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', transactionId);
+                
+                return { success: true, reference: `PP_${Date.now()}` };
+            } else {
+                throw new Error('Échec du traitement PayPal');
+            }
+        } catch (error) {
+            console.error('❌ Erreur PayPal:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Traite un retrait Stripe
+     */
+    async processStripeWithdrawal(amount, paymentDetails, transactionId) {
+        try {
+            console.log('💳 Traitement retrait Stripe:', amount);
+            
+            // Simulation pour la démo
+            const success = Math.random() > 0.05; // 95% de succès
+            
+            if (success) {
+                await this.supabase
+                    .from('transactions')
+                    .update({
+                        reference_id: `ST_${Date.now()}`,
+                        status: 'completed',
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', transactionId);
+                
+                return { success: true, reference: `ST_${Date.now()}` };
+            } else {
+                throw new Error('Échec du traitement Stripe');
+            }
+        } catch (error) {
+            console.error('❌ Erreur Stripe:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Traite un retrait Mobile Money
+     */
+    async processMobileMoneyWithdrawal(amount, paymentDetails, transactionId) {
+        try {
+            console.log('📱 Traitement retrait Mobile Money:', amount, paymentDetails.phone);
+            
+            // Simulation pour la démo
+            const success = Math.random() > 0.15; // 85% de succès
+            
+            if (success) {
+                await this.supabase
+                    .from('transactions')
+                    .update({
+                        reference_id: `MM_${Date.now()}`,
+                        status: 'completed',
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', transactionId);
+                
+                return { success: true, reference: `MM_${Date.now()}` };
+            } else {
+                throw new Error('Échec du traitement Mobile Money');
+            }
+        } catch (error) {
+            console.error('❌ Erreur Mobile Money:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Traite un retrait carte bancaire
+     */
+    async processBankCardWithdrawal(amount, paymentDetails, transactionId) {
+        try {
+            console.log('🏦 Traitement retrait carte bancaire:', amount);
+            
+            // Simulation pour la démo
+            const success = Math.random() > 0.1; // 90% de succès
+            
+            if (success) {
+                await this.supabase
+                    .from('transactions')
+                    .update({
+                        reference_id: `BC_${Date.now()}`,
+                        status: 'completed',
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq('id', transactionId);
+                
+                return { success: true, reference: `BC_${Date.now()}` };
+            } else {
+                throw new Error('Échec du traitement carte bancaire');
+            }
+        } catch (error) {
+            console.error('❌ Erreur carte bancaire:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * 📊 HISTORIQUE ET STATISTIQUES
+     */
+
+    /**
+     * Obtient l'historique des transactions d'un utilisateur
+     */
+    async getTransactionHistory(userId, limit = 50, offset = 0) {
+        try {
+            const { data, error } = await this.supabase
+                .from('transactions')
+                .select(`
+                    *,
+                    commissions(*)
+                `)
+                .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, transactions: data };
+        } catch (error) {
+            console.error('❌ Erreur historique transactions:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Obtient les statistiques d'un wallet
+     */
+    async getWalletStats(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            // Calculer des statistiques additionnelles
+            const stats = {
+                ...data,
+                totalTransactions: data.total_received + data.total_sent + data.total_withdrawn,
+                netBalance: data.total_received - data.total_sent - data.total_withdrawn,
+                commissionRate: commissionConfig.transferCommission * 100
+            };
+
+            return { success: true, stats };
+        } catch (error) {
+            console.error('❌ Erreur stats wallet:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * 🛠️ UTILITAIRES
+     */
+
+    /**
+     * Obtient un utilisateur par ID
+     */
+    async getUserById(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return data;
+        } catch (error) {
+            console.error('❌ Erreur récupération utilisateur:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Obtient une transaction par ID
+     */
+    async getTransactionById(transactionId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('transactions')
+                .select(`
+                    *,
+                    commissions(*)
+                `)
+                .eq('id', transactionId)
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, transaction: data };
+        } catch (error) {
+            console.error('❌ Erreur récupération transaction:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Valide un montant de transaction
+     */
+    validateAmount(amount, transactionType = 'transfer') {
+        const config = commissionConfig;
+        
+        if (transactionType === 'transfer') {
+            return amount >= config.minTransfer && amount <= config.maxTransfer;
+        } else if (transactionType === 'withdrawal') {
+            return amount >= config.minWithdrawal && amount <= config.maxWithdrawal;
+        }
+        
+        return amount > 0;
+    }
+}
+
+// Export singleton
+const walletService = new WalletService();
+module.exports = walletService;
