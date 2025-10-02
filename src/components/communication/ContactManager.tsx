@@ -3,7 +3,7 @@
  * Composant pour gérer les contacts et créer des conversations
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,71 +40,80 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations, useUserSearch, useUserPresence } from "@/hooks/useCommunication";
+import communicationService from "@/services/communicationService";
 import { toast } from "sonner";
 
-// Mock data pour les contacts
-const mockContacts = [
-  {
-    id: 'user1',
-    email: 'jean.dupont@example.com',
-    first_name: 'Jean',
-    last_name: 'Dupont',
-    avatar_url: null,
-    role: 'Vendeur',
-    location: 'Dakar, Sénégal',
-    last_seen: '2025-01-02T10:30:00Z',
-    is_favorite: true,
-    status: 'online' as const
-  },
-  {
-    id: 'user2',
-    email: 'marie.martin@example.com',
-    first_name: 'Marie',
-    last_name: 'Martin',
-    avatar_url: null,
-    role: 'Cliente',
-    location: 'Thiès, Sénégal',
-    last_seen: '2025-01-02T09:15:00Z',
-    is_favorite: false,
-    status: 'away' as const
-  },
-  {
-    id: 'user3',
-    email: 'pierre.durand@example.com',
-    first_name: 'Pierre',
-    last_name: 'Durand',
-    avatar_url: null,
-    role: 'Agent',
-    location: 'Saint-Louis, Sénégal',
-    last_seen: '2025-01-01T18:20:00Z',
-    is_favorite: true,
-    status: 'offline' as const
-  }
-];
+// Interface pour les contacts universels
+interface UniversalContact {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string;
+  role: string;
+  phone?: string;
+  created_at: string;
+  last_seen?: string;
+  is_favorite?: boolean;
+  status?: 'online' | 'offline' | 'away' | 'busy';
+}
 
 export default function ContactManager() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddContact, setShowAddContact] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
-  
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [allUsers, setAllUsers] = useState<UniversalContact[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // Hooks
   const { createPrivateConversation } = useConversations();
   const { searchResults, isSearching, setSearchQuery: setUserSearchQuery } = useUserSearch();
-  const { presence } = useUserPresence(mockContacts.map(c => c.id));
+  const { presence } = useUserPresence(allUsers.map(c => c.id));
+
+  // Charger tous les utilisateurs au montage
+  useEffect(() => {
+    loadAllUsers();
+  }, []);
+
+  const loadAllUsers = async () => {
+    try {
+      setLoading(true);
+      const users = await communicationService.getAllUsers(100);
+
+      // Exclure l'utilisateur actuel de la liste
+      const filteredUsers = users.filter(u => u.id !== user?.id);
+
+      setAllUsers(filteredUsers.map(u => ({
+        ...u,
+        is_favorite: false, // À implémenter avec une table favorites
+        status: 'offline' as const
+      })));
+    } catch (error) {
+      console.error('Erreur chargement utilisateurs:', error);
+      toast.error('Erreur lors du chargement des contacts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtrer les contacts
-  const filteredContacts = mockContacts.filter(contact => {
+  const filteredContacts = allUsers.filter(contact => {
     const matchesSearch = searchQuery === '' ||
       contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.role.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesFilter = selectedFilter === 'all' ||
       (selectedFilter === 'favorites' && contact.is_favorite) ||
-      (selectedFilter === 'online' && contact.status === 'online');
-    
-    return matchesSearch && matchesFilter;
+      (selectedFilter === 'online' && getPresenceStatus(contact.id) === 'online');
+
+    const matchesRole = selectedRole === 'all' ||
+      contact.role.toLowerCase() === selectedRole.toLowerCase();
+
+    return matchesSearch && matchesFilter && matchesRole;
   });
 
   // Obtenir le statut de présence
@@ -121,7 +130,7 @@ export default function ContactManager() {
       busy: 'bg-red-500',
       offline: 'bg-gray-400'
     };
-    
+
     return (
       <div className={`w-3 h-3 rounded-full ${colors[status as keyof typeof colors] || colors.offline}`} />
     );
@@ -149,8 +158,8 @@ export default function ContactManager() {
             <div className="flex items-center space-x-3">
               <Users className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Total contacts</p>
-                <p className="text-2xl font-bold">{mockContacts.length}</p>
+                <p className="text-sm text-muted-foreground">Total utilisateurs</p>
+                <p className="text-2xl font-bold">{allUsers.length}</p>
               </div>
             </div>
           </CardContent>
@@ -163,7 +172,7 @@ export default function ContactManager() {
               <div>
                 <p className="text-sm text-muted-foreground">En ligne</p>
                 <p className="text-2xl font-bold">
-                  {mockContacts.filter(c => c.status === 'online').length}
+                  {allUsers.filter(c => getPresenceStatus(c.id) === 'online').length}
                 </p>
               </div>
             </div>
@@ -177,7 +186,7 @@ export default function ContactManager() {
               <div>
                 <p className="text-sm text-muted-foreground">Favoris</p>
                 <p className="text-2xl font-bold">
-                  {mockContacts.filter(c => c.is_favorite).length}
+                  {allUsers.filter(c => c.is_favorite).length}
                 </p>
               </div>
             </div>
@@ -231,8 +240,8 @@ export default function ContactManager() {
                 className="pl-10"
               />
             </div>
-            
-            <div className="flex space-x-2">
+
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant={selectedFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
@@ -257,14 +266,63 @@ export default function ContactManager() {
                 En ligne
               </Button>
             </div>
+
+            {/* Filtre par rôle */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedRole === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRole('all')}
+              >
+                Tous les rôles
+              </Button>
+              <Button
+                variant={selectedRole === 'vendeur' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRole('vendeur')}
+              >
+                Vendeurs
+              </Button>
+              <Button
+                variant={selectedRole === 'client' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRole('client')}
+              >
+                Clients
+              </Button>
+              <Button
+                variant={selectedRole === 'transitaire' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRole('transitaire')}
+              >
+                Transitaires
+              </Button>
+              <Button
+                variant={selectedRole === 'agent' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRole('agent')}
+              >
+                Agents
+              </Button>
+            </div>
           </div>
 
           {/* Liste des contacts */}
           <ScrollArea className="h-[500px]">
-            {filteredContacts.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p>Chargement des utilisateurs...</p>
+              </div>
+            ) : filteredContacts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun contact trouvé</p>
+                <p>Aucun utilisateur trouvé</p>
+                <p className="text-sm mt-2">
+                  {searchQuery || selectedRole !== 'all'
+                    ? 'Modifiez vos critères de recherche'
+                    : 'Aucun utilisateur disponible'}
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -284,7 +342,7 @@ export default function ContactManager() {
                               {getStatusIndicator(getPresenceStatus(contact.id))}
                             </div>
                           </div>
-                          
+
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
                               <h4 className="font-medium">
@@ -294,10 +352,17 @@ export default function ContactManager() {
                                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">{contact.role}</p>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {contact.role}
+                              </Badge>
+                              <p className="text-sm text-muted-foreground">
+                                {getPresenceStatus(contact.id) === 'online' ? 'En ligne' : 'Hors ligne'}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -326,14 +391,14 @@ export default function ContactManager() {
                           <Mail className="w-3 h-3" />
                           <span className="truncate">{contact.email}</span>
                         </div>
-                        
+
                         {contact.location && (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <MapPin className="w-3 h-3" />
                             <span>{contact.location}</span>
                           </div>
                         )}
-                        
+
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <Calendar className="w-3 h-3" />
                           <span>Vu {new Date(contact.last_seen).toLocaleDateString('fr-FR')}</span>
@@ -350,11 +415,11 @@ export default function ContactManager() {
                           <MessageSquare className="w-4 h-4 mr-1" />
                           Chat
                         </Button>
-                        
+
                         <Button variant="outline" size="sm">
                           <Phone className="w-4 h-4" />
                         </Button>
-                        
+
                         <Button variant="outline" size="sm">
                           <Video className="w-4 h-4" />
                         </Button>
@@ -406,7 +471,7 @@ function AddContactForm({ onAdd }: { onAdd: (data: any) => void }) {
           />
         </div>
       </div>
-      
+
       <div>
         <label className="text-sm font-medium">Email</label>
         <Input
@@ -416,7 +481,7 @@ function AddContactForm({ onAdd }: { onAdd: (data: any) => void }) {
           required
         />
       </div>
-      
+
       <div>
         <label className="text-sm font-medium">Rôle</label>
         <Input
@@ -425,7 +490,7 @@ function AddContactForm({ onAdd }: { onAdd: (data: any) => void }) {
           placeholder="Ex: Vendeur, Client, Agent..."
         />
       </div>
-      
+
       <div>
         <label className="text-sm font-medium">Localisation</label>
         <Input
@@ -434,7 +499,7 @@ function AddContactForm({ onAdd }: { onAdd: (data: any) => void }) {
           placeholder="Ex: Dakar, Sénégal"
         />
       </div>
-      
+
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline">
           Annuler

@@ -32,11 +32,13 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunication, useConversations, useCalls, useUserPresence } from "@/hooks/useCommunication";
+import { useWallet } from "@/hooks/useWallet";
 import ChatInterface from './ChatInterface';
 import CallHistory from './CallHistory';
 import ContactManager from './ContactManager';
 import NotificationCenter from './NotificationCenter';
 import CommunicationStats from './CommunicationStats';
+import CommunicationPreview from './CommunicationPreview';
 import { toast } from "sonner";
 
 interface CommunicationModuleProps {
@@ -45,7 +47,7 @@ interface CommunicationModuleProps {
 
 export default function CommunicationModule({ className }: CommunicationModuleProps) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('preview');
   const [showSettings, setShowSettings] = useState(false);
   
   // Hooks de communication
@@ -53,6 +55,9 @@ export default function CommunicationModule({ className }: CommunicationModulePr
   const { conversations, isLoading: conversationsLoading } = useConversations();
   const { isInCall, currentCall } = useCalls();
   const { presence } = useUserPresence();
+  
+  // Hook wallet pour création automatique
+  const { wallet, isLoading: walletLoading, isInitialized: walletInitialized } = useWallet();
 
   // Statistiques rapides
   const totalConversations = conversations.length;
@@ -73,15 +78,20 @@ export default function CommunicationModule({ className }: CommunicationModulePr
     );
   }
 
-  if (!isInitialized) {
+  if (!isInitialized || walletLoading) {
     return (
       <Card className={className}>
         <CardContent className="p-6 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold mb-2">Initialisation...</h3>
           <p className="text-muted-foreground">
-            Configuration du système de communication en cours
+            Configuration du système de communication et portefeuille en cours
           </p>
+          {walletInitialized && (
+            <p className="text-sm text-green-600 mt-2">
+              ✅ Portefeuille 224Solutions activé
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -208,7 +218,12 @@ export default function CommunicationModule({ className }: CommunicationModulePr
 
         <CardContent className="p-0">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="preview" className="flex items-center space-x-2">
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Aperçu</span>
+              </TabsTrigger>
+              
               <TabsTrigger value="chat" className="flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4" />
                 <span className="hidden sm:inline">Chat</span>
@@ -239,6 +254,10 @@ export default function CommunicationModule({ className }: CommunicationModulePr
                 <span className="hidden sm:inline">Stats</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="preview" className="p-6">
+              <CommunicationPreview />
+            </TabsContent>
 
             <TabsContent value="chat" className="p-0">
               <div className="h-[600px]">

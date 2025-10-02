@@ -22,7 +22,7 @@ export interface Conversation {
   created_by: string;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   participants?: ConversationParticipant[];
   last_message?: Message;
@@ -37,7 +37,7 @@ export interface ConversationParticipant {
   joined_at: string;
   left_at?: string;
   is_active: boolean;
-  
+
   // Relations
   user?: {
     id: string;
@@ -68,7 +68,7 @@ export interface Message {
   deleted_at?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   sender?: {
     id: string;
@@ -594,14 +594,23 @@ class CommunicationService {
   // =====================================================
 
   /**
-   * Recherche des utilisateurs pour créer des conversations
+   * Recherche des utilisateurs pour créer des conversations (TOUS les utilisateurs)
    */
   async searchUsers(query: string, limit: number = 10): Promise<any[]> {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, avatar_url')
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .select(`
+          id, 
+          email, 
+          first_name, 
+          last_name, 
+          avatar_url,
+          role,
+          phone,
+          created_at
+        `)
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,role.ilike.%${query}%`)
         .limit(limit);
 
       if (error) throw error;
@@ -609,6 +618,66 @@ class CommunicationService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur recherche utilisateurs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Récupère tous les utilisateurs de la plateforme pour communication universelle
+   */
+  async getAllUsers(limit: number = 50, offset: number = 0): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id, 
+          email, 
+          first_name, 
+          last_name, 
+          avatar_url,
+          role,
+          phone,
+          created_at,
+          last_seen
+        `)
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('❌ Erreur récupération utilisateurs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Récupère les utilisateurs par rôle
+   */
+  async getUsersByRole(role: string, limit: number = 20): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id, 
+          email, 
+          first_name, 
+          last_name, 
+          avatar_url,
+          role,
+          phone,
+          created_at
+        `)
+        .eq('role', role)
+        .limit(limit)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('❌ Erreur récupération utilisateurs par rôle:', error);
       return [];
     }
   }
@@ -624,12 +693,12 @@ class CommunicationService {
           .select('id', { count: 'exact' })
           .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
           .eq('status', 'active'),
-        
+
         supabase
           .from('messages')
           .select('id', { count: 'exact' })
           .eq('sender_id', userId),
-        
+
         supabase
           .from('calls')
           .select('id', { count: 'exact' })
