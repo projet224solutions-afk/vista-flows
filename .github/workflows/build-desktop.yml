@@ -1,0 +1,315 @@
+name: Build Desktop Apps
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build React app
+        run: |
+          npm run build
+          echo "React app built successfully"
+          
+      - name: Install Electron
+        run: |
+          npm install -g electron-builder
+          npm install electron --save-dev
+          
+      - name: Create Electron main process
+        run: |
+          cat > electron-main.js << 'EOF'
+          const { app, BrowserWindow, Menu } = require('electron');
+          const path = require('path');
+          const isDev = process.env.NODE_ENV === 'development';
+          
+          function createWindow() {
+            const mainWindow = new BrowserWindow({
+              width: 1400,
+              height: 900,
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                enableRemoteModule: false
+              },
+              icon: path.join(__dirname, 'assets/icon.png'),
+              title: '224Solutions - Bureau Syndicat',
+              show: false
+            });
+            
+            const startUrl = isDev 
+              ? 'http://localhost:3000' 
+              : `file://${path.join(__dirname, '../dist/index.html')}`;
+              
+            mainWindow.loadURL(startUrl);
+            
+            mainWindow.once('ready-to-show', () => {
+              mainWindow.show();
+            });
+            
+            // Menu personnalisé
+            const template = [
+              {
+                label: '224Solutions',
+                submenu: [
+                  { role: 'about', label: 'À propos' },
+                  { type: 'separator' },
+                  { role: 'quit', label: 'Quitter' }
+                ]
+              },
+              {
+                label: 'Fichier',
+                submenu: [
+                  { role: 'close', label: 'Fermer' }
+                ]
+              },
+              {
+                label: 'Affichage',
+                submenu: [
+                  { role: 'reload', label: 'Actualiser' },
+                  { role: 'forceReload', label: 'Forcer l\'actualisation' },
+                  { role: 'toggleDevTools', label: 'Outils de développement' },
+                  { type: 'separator' },
+                  { role: 'resetZoom', label: 'Zoom normal' },
+                  { role: 'zoomIn', label: 'Zoom avant' },
+                  { role: 'zoomOut', label: 'Zoom arrière' },
+                  { type: 'separator' },
+                  { role: 'togglefullscreen', label: 'Plein écran' }
+                ]
+              }
+            ];
+            
+            const menu = Menu.buildFromTemplate(template);
+            Menu.setApplicationMenu(menu);
+          }
+          
+          app.whenReady().then(createWindow);
+          
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') {
+              app.quit();
+            }
+          });
+          
+          app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) {
+              createWindow();
+            }
+          });
+          EOF
+          
+      - name: Create package.json for Electron
+        run: |
+          cat > electron-package.json << 'EOF'
+          {
+            "name": "224solutions-bureau-syndicat",
+            "version": "1.0.0",
+            "description": "224Solutions - Gestion Bureau Syndicat",
+            "main": "electron-main.js",
+            "homepage": "./",
+            "author": "224Solutions",
+            "license": "MIT",
+            "build": {
+              "appId": "com.224solutions.bureau-syndicat",
+              "productName": "224Solutions Bureau Syndicat",
+              "directories": {
+                "output": "electron-dist"
+              },
+              "files": [
+                "electron-main.js",
+                "dist/**/*",
+                "node_modules/**/*"
+              ],
+              "win": {
+                "target": "nsis",
+                "icon": "assets/icon.ico"
+              },
+              "nsis": {
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true,
+                "createDesktopShortcut": true,
+                "createStartMenuShortcut": true
+              }
+            },
+            "scripts": {
+              "electron": "electron .",
+              "build-electron": "electron-builder",
+              "dist": "electron-builder --publish=never"
+            }
+          }
+          EOF
+          
+      - name: Build Windows executable
+        run: |
+          copy electron-package.json package.json
+          npx electron-builder --win --publish=never
+          
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 224solutions-windows-exe
+          path: electron-dist/*.exe
+          retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build React app
+        run: npm run build
+        
+      - name: Install Electron
+        run: |
+          npm install -g electron-builder
+          npm install electron --save-dev
+          
+      - name: Create Electron main process
+        run: |
+          cat > electron-main.js << 'EOF'
+          const { app, BrowserWindow, Menu } = require('electron');
+          const path = require('path');
+          
+          function createWindow() {
+            const mainWindow = new BrowserWindow({
+              width: 1400,
+              height: 900,
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true
+              },
+              title: '224Solutions - Bureau Syndicat',
+              show: false
+            });
+            
+            mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+            
+            mainWindow.once('ready-to-show', () => {
+              mainWindow.show();
+            });
+          }
+          
+          app.whenReady().then(createWindow);
+          
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') {
+              app.quit();
+            }
+          });
+          EOF
+          
+      - name: Create package.json for Electron
+        run: |
+          cat > electron-package.json << 'EOF'
+          {
+            "name": "224solutions-bureau-syndicat",
+            "version": "1.0.0",
+            "main": "electron-main.js",
+            "build": {
+              "appId": "com.224solutions.bureau-syndicat",
+              "productName": "224Solutions Bureau Syndicat",
+              "directories": {
+                "output": "electron-dist"
+              },
+              "mac": {
+                "target": "dmg",
+                "category": "public.app-category.business"
+              }
+            }
+          }
+          EOF
+          
+      - name: Build macOS DMG
+        run: |
+          cp electron-package.json package.json
+          npx electron-builder --mac --publish=never
+          
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 224solutions-macos-dmg
+          path: electron-dist/*.dmg
+          retention-days: 30
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 224solutions-windows-exe
+          path: ./windows
+          
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 224solutions-macos-dmg
+          path: ./macos
+          
+      - name: Create Desktop Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: desktop-v${{ github.run_number }}
+          name: 224Solutions Desktop v${{ github.run_number }}
+          body: |
+            🖥️ **Versions Desktop Automatiques**
+            
+            💻 **Windows (.exe):**
+            - Téléchargez le fichier .exe
+            - Exécutez l'installateur
+            - Suivez les instructions d'installation
+            
+            🍎 **macOS (.dmg):**
+            - Téléchargez le fichier .dmg
+            - Montez l'image disque
+            - Glissez l'app vers Applications
+            
+            🚀 **Fonctionnalités Desktop:**
+            - Interface native Windows/macOS
+            - Gestion hors ligne complète
+            - Synchronisation automatique
+            - Notifications système
+            - Raccourcis clavier
+            - Menu contextuel
+            
+            📊 **Build:** ${{ github.sha }}
+            🕒 **Date:** ${{ github.event.head_commit.timestamp }}
+          files: |
+            ./windows/*.exe
+            ./macos/*.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

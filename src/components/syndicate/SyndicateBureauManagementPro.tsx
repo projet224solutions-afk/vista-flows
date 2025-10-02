@@ -62,10 +62,14 @@ import {
     Pencil,
     Save,
     X,
-    Check
+    Check,
+    Bike,
+    UserPlus,
+    Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import AddTaxiMotardForm from './AddTaxiMotardForm';
 
 interface SyndicateBureau {
     id: string;
@@ -823,6 +827,15 @@ export default function SyndicateBureauManagementPro() {
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Actualiser
                         </Button>
+                        <AddTaxiMotardForm 
+                            onSuccess={(result) => {
+                                console.log('Taxi-motard créé:', result);
+                                toast.success('Taxi-motard ajouté avec succès !');
+                                // Recharger les données
+                                loadBureauxFromSupabase();
+                            }}
+                        />
+                        
                         <Button
                             onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
                             variant="outline"

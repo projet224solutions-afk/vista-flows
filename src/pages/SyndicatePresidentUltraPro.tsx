@@ -81,6 +81,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import SyndicateWalletDashboard from '@/components/syndicate/SyndicateWalletDashboard';
+import AddTaxiMotardForm from '@/components/syndicate/AddTaxiMotardForm';
+import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 
 interface BureauInfo {
     id: string;
@@ -650,62 +653,9 @@ export default function SyndicatePresidentUltraPro() {
     };
 
     /**
-     * Télécharge l'interface pour utilisation hors ligne
+     * Affiche le dialogue de téléchargement
      */
-    const downloadInterface = async () => {
-        try {
-            toast.info('📥 Génération de l\'interface...', {
-                description: 'Création du package téléchargeable',
-                duration: 3000
-            });
-
-            // Créer un package avec toutes les données
-            const interfacePackage = {
-                bureau_info: bureauInfo,
-                members: members,
-                vehicles: vehicles,
-                transactions: transactions,
-                sos_alerts: sosAlerts,
-                generated_at: new Date().toISOString(),
-                version: '1.0.0',
-                instructions: {
-                    desktop: 'Ouvrez index.html dans votre navigateur',
-                    mobile: 'Utilisez l\'application mobile 224Solutions',
-                    tablet: 'Accédez via votre navigateur web'
-                },
-                offline_capabilities: [
-                    'Consultation des données',
-                    'Ajout de nouveaux membres',
-                    'Enregistrement des transactions',
-                    'Gestion des véhicules',
-                    'Synchronisation automatique'
-                ]
-            };
-
-            // Créer et télécharger le fichier
-            const blob = new Blob([JSON.stringify(interfacePackage, null, 2)], {
-                type: 'application/json'
-            });
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `bureau-syndical-${bureauInfo?.bureau_code}-interface-complete.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success('✅ Interface téléchargée !', {
-                description: 'Package prêt pour utilisation hors ligne',
-                duration: 8000
-            });
-
-        } catch (error) {
-            console.error('❌ Erreur téléchargement:', error);
-            toast.error('Erreur lors du téléchargement');
-        }
-    };
+    const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
     /**
      * Déconnexion sécurisée
@@ -948,14 +898,25 @@ export default function SyndicatePresidentUltraPro() {
                                 </p>
                             </div>
                             
-                            <Button
-                                onClick={downloadInterface}
-                                variant="outline"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Télécharger
-                            </Button>
+                            <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+                                <DialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl"
+                                    >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Télécharger
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-6xl rounded-2xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                            Télécharger 224Solutions
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    <AutoDownloadDetector />
+                                </DialogContent>
+                            </Dialog>
                             
                             <Button
                                 onClick={logout}
@@ -1206,13 +1167,14 @@ export default function SyndicatePresidentUltraPro() {
                                         </Select>
                                     </div>
                                     
-                                    <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
-                                        <DialogTrigger asChild>
-                                            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl">
-                                                <UserPlus className="w-4 h-4 mr-2" />
-                                                Ajouter un Membre
-                                            </Button>
-                                        </DialogTrigger>
+                                    <div className="flex gap-3">
+                                        <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl">
+                                                    <UserPlus className="w-4 h-4 mr-2" />
+                                                    Ajouter un Membre
+                                                </Button>
+                                            </DialogTrigger>
                                         <DialogContent className="max-w-2xl rounded-2xl">
                                             <DialogHeader>
                                                 <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -1304,9 +1266,19 @@ export default function SyndicatePresidentUltraPro() {
                                                     </Button>
                                                 </div>
                                             </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                        
+                                        <AddTaxiMotardForm 
+                                            syndicateId={bureauInfo?.id}
+                                            onSuccess={(result) => {
+                                                console.log('Taxi-motard créé:', result);
+                                                toast.success('Taxi-motard ajouté avec succès !');
+                                                // Recharger les données
+                                                loadBureauData(bureauInfo?.id || 'demo-1');
+                                            }}
+                                        />
+                                    </div>
                             </CardContent>
                         </Card>
 
@@ -1426,14 +1398,10 @@ export default function SyndicatePresidentUltraPro() {
                     </TabsContent>
 
                     <TabsContent value="treasury" className="space-y-6">
-                        <Card className="border-0 shadow-xl rounded-2xl">
-                            <CardHeader>
-                                <CardTitle className="text-xl font-bold text-gray-800">Trésorerie</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-gray-600">Module de trésorerie en cours de développement...</p>
-                            </CardContent>
-                        </Card>
+                        <SyndicateWalletDashboard 
+                            syndicateId={bureauInfo?.id || 'demo-1'}
+                            bureauName={bureauInfo?.bureau_code}
+                        />
                     </TabsContent>
 
                     <TabsContent value="routes" className="space-y-6">
