@@ -38,7 +38,7 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useProducts } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface Product {
   id: string;

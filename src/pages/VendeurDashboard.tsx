@@ -34,8 +34,9 @@ import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import CommunicationModule from "@/components/communication/CommunicationModule";
+import WalletDashboard from "@/components/vendor/WalletDashboard";
 import { useUserInfo } from "@/hooks/useUserInfo";
-// Removed deprecated wallet and debug services - being refactored
+import { useWallet, useWalletTransactions } from "@/hooks/useWallet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
@@ -46,36 +47,20 @@ export default function VendeurDashboard() {
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   const { userInfo, loading: userInfoLoading } = useUserInfo();
-  const [wallet, setWallet] = useState(null);
-  const [walletLoading, setWalletLoading] = useState(true);
-  const [virtualCard, setVirtualCard] = useState(null);
+  
+  // Hooks wallet intégrés
+  const { wallet, isLoading: walletLoading, isInitialized: walletInitialized } = useWallet();
+  const { transactions } = useWalletTransactions(wallet?.id);
 
-  // Charger les données wallet et carte virtuelle
+  // Notification de succès wallet
   useEffect(() => {
-    const loadWalletData = async () => {
-      if (!user?.id) return;
-
-      setWalletLoading(true);
-      try {
-        // Removed wallet service calls - being refactored
-        toast({
-          title: "Wallet",
-          description: "Fonctionnalité wallet en cours de refonte",
-        });
-      } catch (error) {
-        console.error('Erreur chargement wallet vendeur:', error);
-        toast({
-          title: "Erreur Wallet",
-          description: "Impossible de charger vos données financières",
-          variant: "destructive"
-        });
-      } finally {
-        setWalletLoading(false);
-      }
-    };
-
-    loadWalletData();
-  }, [user?.id]);
+    if (walletInitialized && wallet) {
+      toast({
+        title: "✅ Wallet Activé",
+        description: `Solde disponible: ${wallet.balance.toLocaleString()} ${wallet.currency}`,
+      });
+    }
+  }, [walletInitialized, wallet]);
 
   const handleSignOut = async () => {
     try {
@@ -233,7 +218,7 @@ export default function VendeurDashboard() {
                 </div>
               </div>
               {/* Informations Wallet Ultra-Professionnelles */}
-              {wallet && !walletLoading && (
+              {wallet && walletInitialized && (
                 <div className="hidden lg:flex items-center gap-4 ml-8">
                   {/* Solde Wallet Premium */}
                   <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50 shadow-sm">
@@ -248,18 +233,16 @@ export default function VendeurDashboard() {
                     </div>
                   </div>
 
-                  {/* Statut Carte Virtuelle Premium */}
-                  {virtualCard && (
-                    <div className="px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200/50 shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
-                        <div>
-                          <div className="text-sm font-bold text-emerald-800">Carte Active</div>
-                          <div className="text-xs text-emerald-600 font-mono">****{virtualCard.card_number.slice(-4)}</div>
-                        </div>
+                  {/* Statut Wallet */}
+                  <div className="px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200/50 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
+                      <div>
+                        <div className="text-sm font-bold text-emerald-800">Wallet Actif</div>
+                        <div className="text-xs text-emerald-600 font-mono">{wallet.wallet_address.slice(-8)}</div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
@@ -732,44 +715,9 @@ export default function VendeurDashboard() {
             <VendorAnalytics />
           </TabsContent>
 
-          {/* Wallet & Cartes Virtuelles */}
+          {/* Wallet & Transactions */}
           <TabsContent value="wallet" className="space-y-6">
-            {walletLoading ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p>Chargement de votre wallet...</p>
-                </CardContent>
-              </Card>
-            ) : wallet ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Wallet features being refactored */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Wallet</CardTitle>
-                    <CardDescription>Fonctionnalité en cours de refonte</CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-            ) : (
-              <Card className="border-orange-200 bg-orange-50">
-                <CardContent className="p-8 text-center">
-                  <AlertTriangle className="w-12 h-12 mx-auto text-orange-600 mb-4" />
-                  <h3 className="text-lg font-semibold text-orange-800 mb-2">Wallet non configuré</h3>
-                  <p className="text-orange-600 mb-4">
-                    Votre compte vendeur n'a pas encore de wallet associé.
-                    Cela sera créé automatiquement lors de votre prochaine connexion.
-                  </p>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-orange-600 hover:bg-orange-700"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Actualiser la page
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <WalletDashboard />
           </TabsContent>
 
           {/* Transactions P2P */}
@@ -843,13 +791,21 @@ export default function VendeurDashboard() {
                 </Card>
               </div>
             ) : (
-              <Card className="border-orange-200 bg-orange-50">
+              <Card className="border-green-200 bg-green-50">
                 <CardContent className="p-8 text-center">
-                  <AlertTriangle className="w-12 h-12 mx-auto text-orange-600 mb-4" />
-                  <h3 className="text-lg font-semibold text-orange-800 mb-2">Wallet requis</h3>
-                  <p className="text-orange-600">
-                    Vous devez avoir un wallet configuré pour effectuer des transactions.
+                  <CreditCard className="w-12 h-12 mx-auto text-green-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">Wallet en cours de création</h3>
+                  <p className="text-green-600 mb-4">
+                    Votre portefeuille 224Solutions est en cours de création automatique.
+                    Une fois activé, vous pourrez effectuer des transactions.
                   </p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Vérifier le statut
+                  </Button>
                 </CardContent>
               </Card>
             )}
