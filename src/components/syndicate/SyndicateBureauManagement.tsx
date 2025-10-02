@@ -220,6 +220,47 @@ export default function SyndicateBureauManagement() {
                 created_at: new Date().toISOString()
             };
 
+            // Sauvegarder dans Supabase
+            try {
+                const { data: supabaseBureau, error: supabaseError } = await supabase
+                    .from('syndicate_bureaus')
+                    .insert([{
+                        bureau_code: newBureau.bureau_code,
+                        prefecture: newBureau.prefecture,
+                        commune: newBureau.commune,
+                        full_location: newBureau.full_location,
+                        president_name: newBureau.president_name,
+                        president_email: newBureau.president_email,
+                        president_phone: newBureau.president_phone,
+                        permanent_link: newBureau.permanent_link,
+                        access_token: newBureau.access_token,
+                        status: newBureau.status,
+                        total_members: newBureau.total_members,
+                        active_members: newBureau.active_members,
+                        total_vehicles: newBureau.total_vehicles,
+                        total_cotisations: newBureau.total_cotisations
+                    }])
+                    .select()
+                    .single();
+
+                if (supabaseBureau && !supabaseError) {
+                    console.log('✅ Bureau sauvegardé dans Supabase:', supabaseBureau);
+                    // Utiliser l'ID de Supabase
+                    newBureau.id = supabaseBureau.id;
+                    toast.success('Bureau sauvegardé dans Supabase !');
+                } else {
+                    console.log('⚠️ Erreur Supabase, sauvegarde locale uniquement:', supabaseError);
+                    toast.warning('Bureau créé en mode local', {
+                        description: 'Supabase non disponible'
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Erreur sauvegarde Supabase:', error);
+                toast.warning('Bureau créé en mode local', {
+                    description: 'Erreur de connexion Supabase'
+                });
+            }
+
             setBureaus(prev => [...prev, newBureau]);
 
             // Réinitialiser le formulaire

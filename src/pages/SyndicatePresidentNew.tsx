@@ -36,6 +36,7 @@ import {
     CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from '@/lib/supabase';
 
 interface BureauInfo {
     id: string;
@@ -99,22 +100,56 @@ export default function SyndicatePresidentNew() {
     }, [authenticated]);
 
     /**
-     * Authentifie le président avec le token d'accès
+     * Authentifie le président avec le token d'accès via Supabase
      */
     const authenticateWithToken = async () => {
         try {
-            console.log('🔐 Authentification avec token:', accessToken);
-
+            console.log('🔐 Authentification Supabase avec token:', accessToken);
+            
             if (!accessToken) {
                 toast.error('Token d\'accès manquant');
                 return;
             }
 
-            // Simuler la vérification du token
+            // Méthode 1: Vérifier le token dans la table des bureaux syndicaux
+            const { data: bureau, error: bureauError } = await supabase
+                .from('syndicate_bureaus')
+                .select('*')
+                .eq('access_token', accessToken)
+                .eq('status', 'active')
+                .single();
+
+            if (bureau && !bureauError) {
+                console.log('✅ Token trouvé dans Supabase, bureau:', bureau);
+                
+                // Créer une session utilisateur temporaire pour le président
+                const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+                
+                if (authData.user && !authError) {
+                    console.log('✅ Session Supabase créée pour le président');
+                    setAuthenticated(true);
+                    
+                    // Mettre à jour la date d'accès au lien
+                    await supabase
+                        .from('syndicate_bureaus')
+                        .update({ link_accessed_at: new Date().toISOString() })
+                        .eq('access_token', accessToken);
+                    
+                    toast.success('Authentification Supabase réussie !', {
+                        description: `Bienvenue ${bureau.president_name}`
+                    });
+                    
+                    return;
+                }
+            }
+
+            // Méthode 2: Fallback - Authentification avec token simple (mode démo)
+            console.log('🎭 Mode démo - Authentification sans Supabase');
+            
             if (accessToken.length >= 10) {
-                console.log('✅ Token valide, authentification réussie');
+                console.log('✅ Token valide (mode démo), authentification réussie');
                 setAuthenticated(true);
-                toast.success('Authentification réussie !', {
+                toast.success('Authentification réussie (Mode Démo) !', {
                     description: 'Bienvenue dans votre interface de bureau syndical'
                 });
             } else {
@@ -122,19 +157,63 @@ export default function SyndicatePresidentNew() {
                 toast.error('Token d\'accès invalide');
             }
         } catch (error) {
-            console.error('❌ Erreur authentification:', error);
-            toast.error('Erreur lors de l\'authentification');
+            console.error('❌ Erreur authentification Supabase:', error);
+            
+            // Fallback en cas d'erreur Supabase
+            console.log('🎭 Fallback - Mode démo activé');
+            if (accessToken && accessToken.length >= 10) {
+                setAuthenticated(true);
+                toast.warning('Authentification en mode démo', {
+                    description: 'Supabase non disponible - Mode démonstration activé'
+                });
+            } else {
+                toast.error('Erreur lors de l\'authentification');
+            }
         }
     };
 
     /**
-     * Charge les informations du bureau
+     * Charge les informations du bureau depuis Supabase
      */
     const loadBureauInfo = async () => {
         try {
-            console.log('📊 Chargement des informations du bureau avec token:', accessToken);
+            console.log('📊 Chargement des informations du bureau depuis Supabase avec token:', accessToken);
+            
+            // Méthode 1: Charger depuis Supabase
+            const { data: bureau, error: bureauError } = await supabase
+                .from('syndicate_bureaus')
+                .select('*')
+                .eq('access_token', accessToken)
+                .single();
 
-            // Simuler le chargement depuis Supabase basé sur le token
+            if (bureau && !bureauError) {
+                console.log('✅ Bureau trouvé dans Supabase:', bureau);
+                
+                const bureauInfo: BureauInfo = {
+                    id: bureau.id,
+                    bureau_code: bureau.bureau_code,
+                    prefecture: bureau.prefecture,
+                    commune: bureau.commune,
+                    president_name: bureau.president_name,
+                    president_email: bureau.president_email,
+                    status: bureau.status,
+                    total_members: bureau.total_members || 0,
+                    active_members: bureau.active_members || 0,
+                    total_vehicles: bureau.total_vehicles || 0,
+                    total_cotisations: bureau.total_cotisations || 0,
+                    treasury_balance: bureau.treasury_balance || 0,
+                    created_at: bureau.created_at
+                };
+
+                setBureauInfo(bureauInfo);
+                console.log('✅ Informations du bureau Supabase chargées:', bureauInfo);
+                toast.success('Données Supabase chargées avec succès');
+                return;
+            }
+
+            // Méthode 2: Fallback - Données de démonstration
+            console.log('🎭 Fallback - Chargement des données de démonstration');
+            
             const mockBureau: BureauInfo = {
                 id: accessToken || '1',
                 bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
@@ -152,12 +231,33 @@ export default function SyndicatePresidentNew() {
             };
 
             setBureauInfo(mockBureau);
-
-            console.log('✅ Informations du bureau chargées:', mockBureau);
-            toast.success('Informations du bureau chargées avec succès');
+            console.log('✅ Informations du bureau (démo) chargées:', mockBureau);
+            toast.success('Données de démonstration chargées');
+            
         } catch (error) {
-            console.error('❌ Erreur chargement bureau:', error);
-            toast.error('Impossible de charger les informations du bureau');
+            console.error('❌ Erreur chargement bureau Supabase:', error);
+            
+            // Fallback en cas d'erreur
+            const fallbackBureau: BureauInfo = {
+                id: accessToken || '1',
+                bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
+                prefecture: 'Dakar',
+                commune: 'Plateau',
+                president_name: 'Président du Bureau Syndical',
+                president_email: 'president@bureau-syndicat.com',
+                status: 'active',
+                total_members: 45,
+                active_members: 42,
+                total_vehicles: 38,
+                total_cotisations: 2250000,
+                treasury_balance: 1850000,
+                created_at: new Date().toISOString()
+            };
+
+            setBureauInfo(fallbackBureau);
+            toast.warning('Mode démo activé', {
+                description: 'Impossible de se connecter à Supabase'
+            });
         } finally {
             setLoading(false);
         }
