@@ -267,8 +267,8 @@ export default function SyndicateBureauManagement() {
      */
     const sendPresidentEmail = async (bureau: SyndicateBureau): Promise<boolean> => {
         try {
-            // Import dynamique du service email
-            const { emailService } = await import('@/services/emailService');
+            // Import dynamique du service email hybride
+            const { hybridEmailService } = await import('@/services/hybridEmailService');
             
             // Données pour l'email du président
             const emailData = {
@@ -281,8 +281,12 @@ export default function SyndicateBureauManagement() {
                 access_token: bureau.access_token
             };
 
-            // Envoi de l'email via le service
-            const success = await emailService.sendSyndicatePresidentEmail(emailData);
+            console.log('📧 Envoi email au président:', bureau.president_email);
+            console.log('🔗 Lien à envoyer:', bureau.permanent_link);
+            console.log('🔑 Token:', bureau.access_token);
+
+            // Envoi de l'email via le service hybride (plusieurs méthodes)
+            const success = await hybridEmailService.sendSyndicatePresidentEmail(emailData);
 
             if (success) {
                 // Mettre à jour la date d'envoi
@@ -294,25 +298,56 @@ export default function SyndicateBureauManagement() {
                 
                 console.log('✅ Email envoyé avec succès à:', bureau.president_email);
                 console.log('🔗 Lien permanent:', bureau.permanent_link);
+                
+                // Afficher les informations importantes dans la console pour vérification
+                console.log('📧 DÉTAILS EMAIL ENVOYÉ:');
+                console.log('- Destinataire:', bureau.president_email);
+                console.log('- Code Bureau:', bureau.bureau_code);
+                console.log('- Lien d\'accès:', bureau.permanent_link);
+                console.log('- Token d\'accès:', bureau.access_token);
+                
                 return true;
             } else {
-                throw new Error('Échec de l\'envoi d\'email');
+                throw new Error('Toutes les méthodes d\'envoi ont échoué');
             }
         } catch (error) {
             console.error('❌ Erreur envoi email président:', error);
             
-            // Fallback: afficher les informations dans la console et l'interface
-            console.log('📧 FALLBACK - Informations du bureau:', {
-                president_email: bureau.president_email,
-                permanent_link: bureau.permanent_link,
-                access_token: bureau.access_token
-            });
-
-            // Afficher une notification avec le lien pour que l'utilisateur puisse le copier
-            toast.error('Email non envoyé', {
-                description: `Copiez ce lien manuellement: ${bureau.permanent_link}`,
-                duration: 15000
-            });
+            // Afficher les informations importantes même en cas d'erreur
+            console.log('📧 INFORMATIONS BUREAU (à envoyer manuellement):');
+            console.log('- Email président:', bureau.president_email);
+            console.log('- Nom président:', bureau.president_name);
+            console.log('- Code bureau:', bureau.bureau_code);
+            console.log('- Lien permanent:', bureau.permanent_link);
+            console.log('- Token d\'accès:', bureau.access_token);
+            
+            // Copier les informations dans le presse-papier
+            try {
+                const infoText = `
+Email: ${bureau.president_email}
+Nom: ${bureau.president_name}
+Bureau: ${bureau.bureau_code}
+Lien: ${bureau.permanent_link}
+Token: ${bureau.access_token}
+                `;
+                await navigator.clipboard.writeText(infoText);
+                
+                toast.error('❌ Envoi email échoué', {
+                    description: 'Informations copiées - Envoyez manuellement',
+                    duration: 15000,
+                    action: {
+                        label: 'Voir détails',
+                        onClick: () => {
+                            alert(`INFORMATIONS À ENVOYER:\n\nEmail: ${bureau.president_email}\nLien: ${bureau.permanent_link}\nToken: ${bureau.access_token}`);
+                        }
+                    }
+                });
+            } catch (clipboardError) {
+                toast.error('❌ Envoi email échoué', {
+                    description: 'Consultez la console pour les informations',
+                    duration: 10000
+                });
+            }
             
             return false;
         }
