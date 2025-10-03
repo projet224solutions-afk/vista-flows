@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, CreditCard, ShoppingCart, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import dynamique du POS
-const POSSystem = React.lazy(() => import('./POSSystem'));
+// Import dynamique du POS avec fallback vers la version simplifiée
+const POSSystem = React.lazy(() =>
+  import('./POSSystem').catch(() => import('./POSSystemSimple'))
+);
 
 // Composant de chargement
 const POSLoading = () => (
@@ -88,7 +90,7 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
           <RefreshCw className="w-4 h-4 mr-2" />
           Réessayer
         </Button>
-        
+
         <Button
           onClick={() => {
             toast.info('Redirection vers le support...');
@@ -136,7 +138,7 @@ const POSFallback = () => (
         <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto">
           <CreditCard className="w-10 h-10 text-white" />
         </div>
-        
+
         <div>
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
             Système de Caisse 224Solutions
@@ -152,13 +154,13 @@ const POSFallback = () => (
             <h4 className="font-semibold text-gray-800">Gestion Produits</h4>
             <p className="text-sm text-gray-600">Catalogue et inventaire</p>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <Calculator className="w-8 h-8 text-green-600 mx-auto mb-2" />
             <h4 className="font-semibold text-gray-800">Calculs Automatiques</h4>
             <p className="text-sm text-gray-600">Prix, taxes, remises</p>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <CreditCard className="w-8 h-8 text-purple-600 mx-auto mb-2" />
             <h4 className="font-semibold text-gray-800">Paiements</h4>
@@ -212,10 +214,14 @@ class POSErrorBoundary extends React.Component<
 
 // Export du wrapper principal
 export default function POSSystemWrapper() {
+  const [forceReload, setForceReload] = React.useState(0);
+
   return (
     <POSErrorBoundary fallback={POSError}>
       <Suspense fallback={<POSLoading />}>
-        <POSSystem />
+        <div key={forceReload}>
+          <POSSystem />
+        </div>
       </Suspense>
     </POSErrorBoundary>
   );
