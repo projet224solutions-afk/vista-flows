@@ -117,7 +117,7 @@ export default function SyndicatDashboardUltraPro() {
     const loadSyndicateData = async () => {
         try {
             setLoading(true);
-            
+
             // Simulation de données (à remplacer par vraie API Supabase)
             const mockMembers: SyndicateMember[] = [
                 {
@@ -178,8 +178,8 @@ export default function SyndicatDashboardUltraPro() {
                 active_members: mockMembers.filter(m => m.status === 'active').length,
                 total_taxi_motards: mockTaxiMotards.length,
                 active_taxi_motards: mockTaxiMotards.filter(t => t.status === 'active').length,
-                total_balance: mockMembers.reduce((sum, m) => sum + m.wallet_balance, 0) + 
-                              mockTaxiMotards.reduce((sum, t) => sum + t.wallet_balance, 0),
+                total_balance: mockMembers.reduce((sum, m) => sum + m.wallet_balance, 0) +
+                    mockTaxiMotards.reduce((sum, t) => sum + t.wallet_balance, 0),
                 monthly_revenue: 125000,
                 pending_validations: 3,
                 active_alerts: 1
@@ -266,7 +266,7 @@ export default function SyndicatDashboardUltraPro() {
                                     {profile?.role}
                                 </p>
                             </div>
-                            
+
                             <Button
                                 onClick={() => setShowDownloadDialog(true)}
                                 variant="outline"
@@ -275,7 +275,7 @@ export default function SyndicatDashboardUltraPro() {
                                 <Download className="w-4 h-4 mr-2" />
                                 Télécharger App
                             </Button>
-                            
+
                             <Button
                                 onClick={handleSignOut}
                                 variant="outline"
@@ -353,43 +353,43 @@ export default function SyndicatDashboardUltraPro() {
                 {/* Navigation par onglets ultra-stylée */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-6 bg-white shadow-lg rounded-2xl p-2 border border-gray-100 mb-8">
-                        <TabsTrigger 
-                            value="dashboard" 
+                        <TabsTrigger
+                            value="dashboard"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Home className="w-4 h-4 mr-2" />
                             Dashboard
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="members" 
+                        <TabsTrigger
+                            value="members"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Users className="w-4 h-4 mr-2" />
                             Membres
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="taxi-motards" 
+                        <TabsTrigger
+                            value="taxi-motards"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Bike className="w-4 h-4 mr-2" />
                             Taxi-Motards
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="wallet" 
+                        <TabsTrigger
+                            value="wallet"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Wallet className="w-4 h-4 mr-2" />
                             Trésorerie
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="gestion" 
+                        <TabsTrigger
+                            value="gestion"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Settings className="w-4 h-4 mr-2" />
                             Gestion
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="analytics" 
+                        <TabsTrigger
+                            value="analytics"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <BarChart3 className="w-4 h-4 mr-2" />
@@ -420,7 +420,7 @@ export default function SyndicatDashboardUltraPro() {
                                             </div>
                                             <span className="text-xs text-gray-500">Il y a 2h</span>
                                         </div>
-                                        
+
                                         <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
                                             <div className="flex items-center gap-3">
                                                 <HandCoins className="w-8 h-8 text-blue-600" />
@@ -431,7 +431,7 @@ export default function SyndicatDashboardUltraPro() {
                                             </div>
                                             <span className="text-xs text-gray-500">Il y a 4h</span>
                                         </div>
-                                        
+
                                         <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-200">
                                             <div className="flex items-center gap-3">
                                                 <QrCode className="w-8 h-8 text-purple-600" />
@@ -455,14 +455,14 @@ export default function SyndicatDashboardUltraPro() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
-                                    <AddTaxiMotardForm 
+                                    <AddTaxiMotardForm
                                         onSuccess={(result) => {
                                             console.log('Taxi-motard créé:', result);
                                             toast.success('Taxi-motard ajouté avec succès !');
                                             loadSyndicateData();
                                         }}
                                     />
-                                    
+
                                     <Button
                                         onClick={() => setActiveTab('members')}
                                         variant="outline"
@@ -471,7 +471,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Ajouter un Membre Bureau
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => setActiveTab('wallet')}
                                         variant="outline"
@@ -480,7 +480,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Wallet className="w-4 h-4 mr-2" />
                                         Gérer la Trésorerie
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => setShowGestionDialog(true)}
                                         variant="outline"
@@ -519,7 +519,7 @@ export default function SyndicatDashboardUltraPro() {
                                                         </Badge>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex items-center gap-2">
                                                         <Mail className="w-4 h-4 text-gray-400" />
@@ -540,7 +540,7 @@ export default function SyndicatDashboardUltraPro() {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="flex gap-2 mt-4">
                                                     <Button size="sm" variant="outline" className="flex-1 rounded-lg">
                                                         <Eye className="w-3 h-3 mr-1" />
@@ -568,7 +568,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Bike className="w-5 h-5" />
                                         Taxi-Motards ({taxiMotards.length})
                                     </CardTitle>
-                                    <AddTaxiMotardForm 
+                                    <AddTaxiMotardForm
                                         onSuccess={(result) => {
                                             console.log('Taxi-motard créé:', result);
                                             toast.success('Taxi-motard ajouté avec succès !');
@@ -593,7 +593,7 @@ export default function SyndicatDashboardUltraPro() {
                                                         </Badge>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex items-center gap-2">
                                                         <Phone className="w-4 h-4 text-gray-400" />
@@ -622,7 +622,7 @@ export default function SyndicatDashboardUltraPro() {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="flex gap-2 mt-4">
                                                     <Button size="sm" variant="outline" className="flex-1 rounded-lg">
                                                         <QrCode className="w-3 h-3 mr-1" />
@@ -643,7 +643,7 @@ export default function SyndicatDashboardUltraPro() {
 
                     {/* Onglet Wallet/Trésorerie */}
                     <TabsContent value="wallet" className="space-y-6">
-                        <SyndicateWalletDashboard 
+                        <SyndicateWalletDashboard
                             syndicateId="syndicate-demo-1"
                             bureauName="Bureau Syndicat 224Solutions"
                         />
@@ -668,7 +668,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Settings className="w-4 h-4 mr-2" />
                                         Configurer le Bureau
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => toast.success('Permissions mises à jour !')}
                                         variant="outline"
@@ -677,7 +677,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Shield className="w-4 h-4 mr-2" />
                                         Gérer les Permissions
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => toast.success('Notifications configurées !')}
                                         variant="outline"
@@ -686,7 +686,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Bell className="w-4 h-4 mr-2" />
                                         Paramètres Notifications
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => setShowDownloadDialog(true)}
                                         variant="outline"
@@ -717,7 +717,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <RefreshCw className="w-4 h-4 mr-2" />
                                         Synchroniser les Données
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => toast.success('Rapport généré !')}
                                         variant="outline"
@@ -726,7 +726,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Receipt className="w-4 h-4 mr-2" />
                                         Générer Rapport
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => toast.success('Sauvegarde créée !')}
                                         variant="outline"
@@ -735,7 +735,7 @@ export default function SyndicatDashboardUltraPro() {
                                         <Download className="w-4 h-4 mr-2" />
                                         Sauvegarder Données
                                     </Button>
-                                    
+
                                     <Button
                                         onClick={() => toast.info('Support contacté !')}
                                         variant="outline"
@@ -835,7 +835,7 @@ export default function SyndicatDashboardUltraPro() {
                                 Exporter Données
                             </Button>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200">
                             <h3 className="font-bold text-purple-800 mb-3">Fonctionnalités Disponibles</h3>
                             <ul className="space-y-2 text-sm text-purple-700">

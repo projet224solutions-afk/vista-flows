@@ -27,7 +27,7 @@ export default function LovableDiagnostic() {
 
     const runDiagnostic = async () => {
         setLoading(true);
-        
+
         const featureChecks: FeatureCheck[] = [];
 
         // Vérifier SyndicatDashboardUltraPro
@@ -171,7 +171,7 @@ export default function LovableDiagnostic() {
         // Afficher le résultat
         const successCount = featureChecks.filter(c => c.status === 'success').length;
         const totalCount = featureChecks.length;
-        
+
         if (successCount === totalCount) {
             toast.success(`🎉 Toutes les fonctionnalités sont opérationnelles ! (${successCount}/${totalCount})`);
         } else {
@@ -225,7 +225,7 @@ export default function LovableDiagnostic() {
                                 <Settings className="w-8 h-8 text-gray-400" />
                             </div>
                         </div>
-                        
+
                         <div className="bg-green-50 rounded-xl p-4 border border-green-200 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -235,7 +235,7 @@ export default function LovableDiagnostic() {
                                 <CheckCircle className="w-8 h-8 text-green-500" />
                             </div>
                         </div>
-                        
+
                         <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -245,7 +245,7 @@ export default function LovableDiagnostic() {
                                 <AlertTriangle className="w-8 h-8 text-yellow-500" />
                             </div>
                         </div>
-                        
+
                         <div className="bg-red-50 rounded-xl p-4 border border-red-200 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -345,7 +345,7 @@ export default function LovableDiagnostic() {
                                 </li>
                             </ul>
                         </div>
-                        
+
                         <div>
                             <h4 className="font-semibold text-gray-800 mb-3">🚀 Fonctionnalités Avancées</h4>
                             <ul className="space-y-2 text-sm text-gray-600">

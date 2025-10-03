@@ -29,7 +29,7 @@ import OrderManagement from "@/components/vendor/OrderManagement";
 import ClientManagement from "@/components/vendor/ClientManagement";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import PaymentProcessor from "@/components/vendor/PaymentProcessor";
-import { POSSystem } from "@/components/vendor/POSSystem";
+import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
@@ -516,7 +516,7 @@ export default function VendeurDashboard() {
 
           {/* POS - Point de Vente */}
           <TabsContent value="pos" className="space-y-6">
-            <POSSystem />
+            <POSSystemWrapper />
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">
