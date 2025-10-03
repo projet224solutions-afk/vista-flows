@@ -84,7 +84,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
   const handleUpdateCommissionSetting = async (settingKey: string, value: number) => {
     try {
-      await updateSetting(settingKey, value, pdgId);
+      await updateSetting(settingKey, value);
     } catch (error) {
       console.error('Erreur mise à jour paramètre:', error);
     }
@@ -512,21 +512,21 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {settings.map((setting) => (
-                <div key={setting.id} className="flex items-center justify-between p-4 border rounded-lg">
+              {settings && settings.length > 0 && settings.map((setting: any) => (
+                <div key={setting.id || Math.random()} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <h4 className="font-medium">{setting.description}</h4>
+                    <h4 className="font-medium">{setting.description || 'Configuration'}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Clé: {setting.setting_key}
+                      Clé: {setting.setting_key || 'N/A'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      value={setting.setting_value * 100}
+                      value={(setting.setting_value || 0) * 100}
                       onChange={(e) => {
                         const newValue = parseFloat(e.target.value) / 100;
-                        handleUpdateCommissionSetting(setting.setting_key, newValue);
+                        handleUpdateCommissionSetting(setting.setting_key || '', newValue);
                       }}
                       className="w-20 text-right"
                       step="0.1"

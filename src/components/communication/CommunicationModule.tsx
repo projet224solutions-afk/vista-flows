@@ -28,7 +28,9 @@ import {
   TrendingUp,
   Zap,
   Shield,
-  Globe
+  Globe,
+  Activity,
+  Send
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunication, useConversations, useCalls, useUserPresence } from "@/hooks/useCommunication";

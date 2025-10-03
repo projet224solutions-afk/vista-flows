@@ -392,10 +392,10 @@ export default function ContactManager() {
                           <span className="truncate">{contact.email}</span>
                         </div>
 
-                        {contact.location && (
+                        {(contact as any).location && (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <MapPin className="w-3 h-3" />
-                            <span>{contact.location}</span>
+                            <span>{(contact as any).location}</span>
                           </div>
                         )}
 

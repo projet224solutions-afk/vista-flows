@@ -15,7 +15,7 @@ export function useMockExpenseManagement() {
     const [selectedExpense, setSelectedExpense] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Données simulées
+    // Données simulées - synchrones
     const categories = useMemo(() => MockExpenseService.getCategories(), []);
     const expensesData = useMemo(() => MockExpenseService.getExpenses(currentFilters), [currentFilters]);
     const analytics = useMemo(() => MockExpenseService.getStats(), []);
@@ -23,8 +23,6 @@ export function useMockExpenseManagement() {
     const budgets = useMemo(() => MockExpenseService.getBudgets(), []);
     const aiAnalytics = useMemo(() => MockExpenseService.getAnalytics(), []);
     const notifications = useMemo(() => MockExpenseService.getNotifications(), []);
-
-    // Statistiques rapides
     const quickStats = useMemo(() => MockExpenseService.getQuickStats(), []);
 
     // Fonctions utilitaires
