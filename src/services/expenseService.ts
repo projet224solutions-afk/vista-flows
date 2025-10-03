@@ -127,13 +127,15 @@ export class ExpenseCategoryService {
     }
 
     /**
-     * Supprimer une catégorie (soft delete)
+     * Supprimer une catégorie (soft delete) - Désactivé car is_active n'existe pas
      */
     static async deleteCategory(categoryId: string): Promise<void> {
         try {
+            // La colonne is_active n'existe pas dans expense_categories
+            // Pour l'instant, on désactive cette fonctionnalité
             const { error } = await supabase
                 .from('expense_categories')
-                .update({ is_active: false })
+                .delete()
                 .eq('id', categoryId);
 
             if (error) throw error;

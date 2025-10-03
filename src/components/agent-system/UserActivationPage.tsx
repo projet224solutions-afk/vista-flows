@@ -53,14 +53,11 @@ export default function UserActivationPage() {
 
     try {
       const result = await activateUser(invitationToken, selectedDevice);
-      setActivationResult(result);
+      setActivationResult(result as any || {});
       setIsActivated(true);
       
       // Redirection automatique après 5 secondes
       setTimeout(() => {
-        if (result.downloadUrl) {
-          window.open(result.downloadUrl, '_blank');
-        }
         navigate('/');
       }, 5000);
     } catch (error) {
