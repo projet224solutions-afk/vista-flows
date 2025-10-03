@@ -29,15 +29,15 @@ export interface ExpenseStats {
 }
 
 export class MockExpenseService {
-  static async getCategories(vendorId: string): Promise<ExpenseCategory[]> {
+  static getCategories(vendorId?: string): ExpenseCategory[] {
     return [];
   }
 
-  static async getExpenses(vendorId: string): Promise<ExpenseWithDetails[]> {
-    return [];
+  static getExpenses(filters?: any): { expenses: ExpenseWithDetails[]; total: number } {
+    return { expenses: [], total: 0 };
   }
 
-  static async getStats(vendorId: string, startDate: Date, endDate: Date): Promise<ExpenseStats> {
+  static getStats(vendorId?: string, startDate?: Date, endDate?: Date): ExpenseStats {
     return {
       total_expenses: 0,
       expense_count: 0,
@@ -46,5 +46,47 @@ export class MockExpenseService {
       payment_methods: {},
       monthly_trend: []
     };
+  }
+
+  static getAlerts(): any[] {
+    return [];
+  }
+
+  static getBudgets(): any[] {
+    return [];
+  }
+
+  static getAnalytics(): { anomalies: any[] } {
+    return { anomalies: [] };
+  }
+
+  static getNotifications(): any[] {
+    return [];
+  }
+
+  static getQuickStats() {
+    return {
+      totalExpenses: 0,
+      expenseCount: 0,
+      averageExpense: 0,
+      unreadAlerts: 0,
+      hasAnomalies: false
+    };
+  }
+
+  static createCategory(data: any): void {
+    // Mock implementation
+  }
+
+  static createExpense(data: any): void {
+    // Mock implementation
+  }
+
+  static markAlertAsRead(alertId: string): void {
+    // Mock implementation
+  }
+
+  static markNotificationAsRead(notificationId: string): void {
+    // Mock implementation
   }
 }

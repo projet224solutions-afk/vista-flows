@@ -102,7 +102,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   // Données pour les graphiques
   const chartData = useMemo(() => {
     // Données par catégorie pour le graphique en barres
-    const categoryData = analytics.categories.map((cat, index) => ({
+    const analyticsData = analytics || { categories: [], monthly_trend: [] };
+    const categoryData = analyticsData.categories.map((cat, index) => ({
       name: cat.name,
       montant: cat.total,
       count: cat.count,
@@ -110,14 +111,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     }));
 
     // Données pour le graphique en secteurs
-    const pieData = analytics.categories.map((cat, index) => ({
+    const pieData = analyticsData.categories.map((cat, index) => ({
       name: cat.name,
       value: cat.total,
       color: cat.color || CHART_COLORS[index % CHART_COLORS.length]
     }));
 
     // Tendance mensuelle
-    const trendData = analytics.monthly_trend.map(item => ({
+    const trendData = analyticsData.monthly_trend.map(item => ({
       month: format(new Date(item.month + '-01'), 'MMM yyyy', { locale: fr }),
       montant: item.total
     }));
@@ -272,9 +273,9 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Catégories</p>
-                <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {analytics.categories.length} utilisées
+                  {(analytics?.categories || []).length} utilisées
                 </p>
               </div>
               <div className="p-3 bg-purple-50 rounded-full">

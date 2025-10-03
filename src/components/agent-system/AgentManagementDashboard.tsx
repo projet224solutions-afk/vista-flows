@@ -84,7 +84,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
   const handleUpdateCommissionSetting = async (settingKey: string, value: number) => {
     try {
-      await updateSetting(settingKey);
+      await updateSetting(settingKey, value);
     } catch (error) {
       console.error('Erreur mise à jour paramètre:', error);
     }

@@ -106,7 +106,7 @@ export class DataManager {
         this.setupRealtime(queryConfig, cacheKey);
       }
 
-      return data;
+      return data as T;
     } catch (error) {
       console.error(`💥 DataManager query failed:`, error);
       throw error;

@@ -4,14 +4,19 @@
  */
 
 export interface SecurityEvent {
+  id: string;
   event_type: string;
   severity_level: string;
   source_module: string;
   event_data: any;
   created_at: string;
+  ip_address?: string;
+  threat_level?: string;
+  auto_response_taken?: boolean;
 }
 
 export interface SecurityIncident {
+  id: string;
   incident_id: string;
   title: string;
   description: string;
@@ -19,6 +24,7 @@ export interface SecurityIncident {
   severity: string;
   status: string;
   created_at: string;
+  affected_modules?: string[];
 }
 
 export class MockSecurityService {
