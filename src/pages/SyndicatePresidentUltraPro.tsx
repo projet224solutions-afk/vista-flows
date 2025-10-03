@@ -77,7 +77,8 @@ import {
     CreditCard,
     Receipt,
     HandCoins,
-    Banknote
+    Banknote,
+    Send
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
