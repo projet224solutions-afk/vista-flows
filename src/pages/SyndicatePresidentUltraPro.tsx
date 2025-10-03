@@ -1279,6 +1279,7 @@ export default function SyndicatePresidentUltraPro() {
                                             }}
                                         />
                                     </div>
+                                </div>
                             </CardContent>
                         </Card>
 
