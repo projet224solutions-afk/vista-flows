@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, XCircle, AlertTriangle, Loader, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Loader, ArrowRight, Eye, Settings } from 'lucide-react';
+import LovableDiagnostic from '@/components/diagnostic/LovableDiagnostic';
 
 interface TestResult {
     name: string;
@@ -322,6 +324,15 @@ export default function DiagnosticFonctionnalites() {
                             >
                                 <ArrowRight className="w-4 h-4" />
                                 Accueil
+                            </Button>
+
+                            <Button
+                                onClick={() => navigate('/syndicat')}
+                                variant="outline"
+                                className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                            >
+                                <ArrowRight className="w-4 h-4" />
+                                Bureau Syndicat Ultra-Pro
                             </Button>
                         </div>
                     </CardContent>

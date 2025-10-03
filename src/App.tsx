@@ -28,6 +28,7 @@ const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
 const TaxiMoto = lazy(() => import("./pages/TaxiMoto"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
+const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const SyndicatePresident = lazy(() => import("./pages/SyndicatePresident"));
 const SyndicatePresidentUltraPro = lazy(() => import("./pages/SyndicatePresidentUltraPro"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
@@ -103,7 +104,7 @@ const App = () => (
                 path="/syndicat"
                 element={
                   <ProtectedRoute allowedRoles={['syndicat', 'admin']}>
-                    <SyndicatDashboard />
+                    <SyndicatDashboardUltraPro />
                   </ProtectedRoute>
                 }
               />
