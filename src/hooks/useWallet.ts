@@ -36,7 +36,7 @@ export function useWallet() {
     const createWallet = useMutation({
         mutationFn: () => {
             if (!user) throw new Error('Utilisateur non connecté');
-            return walletService.createUserWallet(user.id, user.email || '');
+            return walletService.createUserWallet(user.id);
         },
         onSuccess: (newWallet) => {
             if (newWallet) {
@@ -198,22 +198,9 @@ export function useWalletStats(walletId?: string) {
 export function useWalletManagement() {
     const queryClient = useQueryClient();
 
-    // Mettre à jour le statut d'un wallet
-    const updateWalletStatus = useMutation({
-        mutationFn: ({ walletId, status }: { walletId: string; status: Wallet['status'] }) => {
-            return walletService.updateWalletStatus(walletId, status);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['wallet'] });
-        },
-        onError: (error) => {
-            console.error('❌ Erreur mise à jour statut wallet:', error);
-        }
-    });
-
     return {
-        updateWalletStatus: updateWalletStatus.mutate,
-        isUpdatingStatus: updateWalletStatus.isPending
+        updateWalletStatus: () => {},
+        isUpdatingStatus: false
     };
 }
 
@@ -233,12 +220,12 @@ export function useWalletUtils() {
     }, []);
 
     // Générer un QR code
-    const generateQR = useCallback((walletAddress: string) => {
-        return walletService.generateWalletQR(walletAddress);
+    const generateQR = useCallback((walletId: string) => {
+        return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(walletId)}`;
     }, []);
 
     // Obtenir le statut d'un wallet
-    const getWalletStatusColor = useCallback((status: Wallet['status']) => {
+    const getWalletStatusColor = useCallback((status: string) => {
         switch (status) {
             case 'active':
                 return 'text-green-600 bg-green-100';
@@ -252,7 +239,7 @@ export function useWalletUtils() {
     }, []);
 
     // Obtenir l'icône d'un type de transaction
-    const getTransactionIcon = useCallback((type: Transaction['type']) => {
+    const getTransactionIcon = useCallback((type: string) => {
         switch (type) {
             case 'credit':
                 return '↗️';
@@ -280,9 +267,9 @@ export function useWalletUtils() {
 
 export function useWalletRegistration() {
     // Hook à utiliser lors de l'inscription
-    const onUserRegistration = useCallback(async (userId: string, userEmail: string) => {
+    const onUserRegistration = useCallback(async (userId: string) => {
         try {
-            await walletService.onUserRegistration(userId, userEmail);
+            await walletService.onUserRegistration(userId);
             console.log('✅ Wallet créé automatiquement lors de l\'inscription');
         } catch (error) {
             console.error('❌ Erreur création wallet inscription:', error);

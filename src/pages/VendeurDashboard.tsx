@@ -239,7 +239,7 @@ export default function VendeurDashboard() {
                       <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg"></div>
                       <div>
                         <div className="text-sm font-bold text-emerald-800">Wallet Actif</div>
-                        <div className="text-xs text-emerald-600 font-mono">{wallet.wallet_address.slice(-8)}</div>
+                        <div className="text-xs text-emerald-600 font-mono">{wallet.id.slice(-8)}</div>
                       </div>
                     </div>
                   </div>

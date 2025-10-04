@@ -10,9 +10,7 @@ const DEMO_WALLET: Wallet = {
   id: 'demo-wallet-001',
   user_id: 'demo-user-001',
   balance: 125000,
-  currency: 'FCFA',
-  status: 'active',
-  wallet_address: '224SOL_DEMO_001_12345678',
+  currency: 'GNF',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString()
 };
@@ -20,61 +18,73 @@ const DEMO_WALLET: Wallet = {
 const DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'tx-001',
-    wallet_id: 'demo-wallet-001',
-    type: 'credit',
-    amount: 1000,
-    currency: 'FCFA',
+    transaction_id: 'WELCOME_BONUS',
+    transaction_type: 'credit',
+    amount: 10000,
+    net_amount: 10000,
+    fee: 0,
+    currency: 'GNF',
     description: 'Bonus de bienvenue 224Solutions',
-    reference: 'WELCOME_BONUS',
     status: 'completed',
+    sender_wallet_id: null,
+    receiver_wallet_id: 'demo-wallet-001',
     created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString()
+    completed_at: new Date(Date.now() - 86400000).toISOString()
   },
   {
     id: 'tx-002',
-    wallet_id: 'demo-wallet-001',
-    type: 'credit',
+    transaction_id: 'SALE_001',
+    transaction_type: 'credit',
     amount: 75000,
-    currency: 'FCFA',
+    net_amount: 75000,
+    fee: 0,
+    currency: 'GNF',
     description: 'Vente produit - Smartphone Galaxy',
-    reference: 'SALE_001',
     status: 'completed',
+    sender_wallet_id: null,
+    receiver_wallet_id: 'demo-wallet-001',
     created_at: new Date(Date.now() - 43200000).toISOString(),
-    updated_at: new Date(Date.now() - 43200000).toISOString()
+    completed_at: new Date(Date.now() - 43200000).toISOString()
   },
   {
     id: 'tx-003',
-    wallet_id: 'demo-wallet-001',
-    type: 'credit',
+    transaction_id: 'SALE_002',
+    transaction_type: 'credit',
     amount: 50000,
-    currency: 'FCFA',
+    net_amount: 50000,
+    fee: 0,
+    currency: 'GNF',
     description: 'Vente produit - Casque Bluetooth',
-    reference: 'SALE_002',
     status: 'completed',
+    sender_wallet_id: null,
+    receiver_wallet_id: 'demo-wallet-001',
     created_at: new Date(Date.now() - 21600000).toISOString(),
-    updated_at: new Date(Date.now() - 21600000).toISOString()
+    completed_at: new Date(Date.now() - 21600000).toISOString()
   },
   {
     id: 'tx-004',
-    wallet_id: 'demo-wallet-001',
-    type: 'debit',
-    amount: 1000,
-    currency: 'FCFA',
+    transaction_id: 'FEE_001',
+    transaction_type: 'debit',
+    amount: 10000,
+    net_amount: 10000,
+    fee: 0,
+    currency: 'GNF',
     description: 'Frais de transaction',
-    reference: 'FEE_001',
     status: 'completed',
+    sender_wallet_id: 'demo-wallet-001',
+    receiver_wallet_id: null,
     created_at: new Date(Date.now() - 10800000).toISOString(),
-    updated_at: new Date(Date.now() - 10800000).toISOString()
+    completed_at: new Date(Date.now() - 10800000).toISOString()
   }
 ];
 
 const DEMO_STATS: WalletStats = {
   totalBalance: 125000,
   totalTransactions: 4,
-  totalCredits: 126000,
-  totalDebits: 1000,
+  totalCredits: 135000,
+  totalDebits: 10000,
   pendingTransactions: 0,
-  monthlyVolume: 126000
+  monthlyVolume: 145000
 };
 
 class MockWalletService {
@@ -84,7 +94,7 @@ class MockWalletService {
     return DEMO_WALLET;
   }
 
-  async createUserWallet(userId: string, userEmail: string): Promise<Wallet | null> {
+  async createUserWallet(userId: string, initialBalance: number = 10000): Promise<Wallet | null> {
     await new Promise(resolve => setTimeout(resolve, 1000));
     return DEMO_WALLET;
   }
@@ -99,15 +109,18 @@ class MockWalletService {
     
     const newTransaction: Transaction = {
       id: `tx-${Date.now()}`,
-      wallet_id: transactionData.wallet_id || 'demo-wallet-001',
-      type: transactionData.type || 'credit',
+      transaction_id: transactionData.transaction_id || `REF_${Date.now()}`,
+      transaction_type: transactionData.transaction_type || 'credit',
       amount: transactionData.amount || 0,
-      currency: transactionData.currency || 'FCFA',
+      net_amount: transactionData.net_amount || 0,
+      fee: transactionData.fee || 0,
+      currency: transactionData.currency || 'GNF',
       description: transactionData.description || 'Transaction',
-      reference: transactionData.reference || `REF_${Date.now()}`,
       status: 'completed',
+      sender_wallet_id: transactionData.sender_wallet_id || null,
+      receiver_wallet_id: transactionData.receiver_wallet_id || null,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      completed_at: new Date().toISOString()
     };
 
     DEMO_TRANSACTIONS.unshift(newTransaction);
@@ -117,20 +130,24 @@ class MockWalletService {
   async transferFunds(fromWalletId: string, toWalletId: string, amount: number, description: string): Promise<boolean> {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    const fee = amount * 0.01;
+    const net_amount = amount - fee;
+
     // Simuler un transfert réussi
     const transferTransaction: Transaction = {
       id: `tx-transfer-${Date.now()}`,
-      wallet_id: fromWalletId,
-      type: 'transfer',
+      transaction_id: `TRANSFER_${Date.now()}`,
+      transaction_type: 'transfer',
       amount,
-      currency: 'FCFA',
+      net_amount,
+      fee,
+      currency: 'GNF',
       description,
-      reference: `TRANSFER_${Date.now()}`,
       status: 'completed',
-      from_wallet_id: fromWalletId,
-      to_wallet_id: toWalletId,
+      sender_wallet_id: fromWalletId,
+      receiver_wallet_id: toWalletId,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      completed_at: new Date().toISOString()
     };
 
     DEMO_TRANSACTIONS.unshift(transferTransaction);
@@ -146,27 +163,17 @@ class MockWalletService {
     return DEMO_STATS;
   }
 
-  async updateWalletStatus(walletId: string, status: Wallet['status']): Promise<boolean> {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    DEMO_WALLET.status = status;
-    return true;
-  }
-
-  async onUserRegistration(userId: string, userEmail: string): Promise<void> {
+  async onUserRegistration(userId: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('✅ Wallet démo créé pour:', userEmail);
+    console.log('✅ Wallet démo créé pour:', userId);
   }
 
-  formatAmount(amount: number, currency: string = 'FCFA'): string {
+  formatAmount(amount: number, currency: string = 'GNF'): string {
     return `${amount.toLocaleString()} ${currency}`;
   }
 
   validateAmount(amount: number): boolean {
     return amount > 0 && amount <= 10000000;
-  }
-
-  generateWalletQR(walletAddress: string): string {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(walletAddress)}`;
   }
 }
 

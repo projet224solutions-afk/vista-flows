@@ -44,9 +44,9 @@ export default function WalletDashboard() {
   const [transferMessage, setTransferMessage] = useState('');
 
   const handleCopyAddress = () => {
-    if (wallet?.wallet_address) {
-      navigator.clipboard.writeText(wallet.wallet_address);
-      toast.success('Adresse copiée dans le presse-papiers');
+    if (wallet?.id) {
+      navigator.clipboard.writeText(wallet.id);
+      toast.success('ID Wallet copié dans le presse-papiers');
     }
   };
 
@@ -252,20 +252,20 @@ export default function WalletDashboard() {
             {/* Statut */}
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Statut</span>
-              <Badge variant={wallet.status === 'active' ? 'default' : 'secondary'}>
+              <Badge variant="default">
                 <CheckCircle className="w-3 h-3 mr-1" />
-                {wallet.status === 'active' ? 'Actif' : wallet.status}
+                Actif
               </Badge>
             </div>
 
             <Separator />
 
-            {/* Adresse wallet */}
+            {/* ID wallet */}
             <div>
-              <p className="text-sm font-medium mb-2">Adresse Wallet</p>
+              <p className="text-sm font-medium mb-2">ID Wallet</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs bg-gray-100 p-2 rounded font-mono">
-                  {wallet.wallet_address}
+                  {wallet.id}
                 </code>
                 <Button size="sm" variant="outline" onClick={handleCopyAddress}>
                   <Copy className="w-3 h-3" />

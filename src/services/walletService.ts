@@ -4,38 +4,40 @@
  * Intégration avec Supabase et création automatique
  */
 
-import { supabase } from '@/lib/supabase';
-import { mockWalletService } from './mockWalletService';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 // =====================================================
 // TYPES ET INTERFACES
 // =====================================================
+
+type DbWallet = Database['public']['Tables']['wallets']['Row'];
+type DbTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
 
 export interface Wallet {
   id: string;
   user_id: string;
   balance: number;
   currency: string;
-  status: 'active' | 'suspended' | 'closed';
-  wallet_address: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Transaction {
   id: string;
-  wallet_id: string;
-  type: 'credit' | 'debit' | 'transfer';
+  transaction_id: string;
+  transaction_type: string;
   amount: number;
+  net_amount: number;
+  fee: number;
   currency: string;
-  description: string;
-  reference: string;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
-  from_wallet_id?: string;
-  to_wallet_id?: string;
+  description: string | null;
+  status: string;
+  sender_wallet_id: string | null;
+  receiver_wallet_id: string | null;
   metadata?: any;
   created_at: string;
-  updated_at: string;
+  completed_at: string | null;
 }
 
 export interface WalletStats {
@@ -47,81 +49,37 @@ export interface WalletStats {
   monthlyVolume: number;
 }
 
-export interface WalletSettings {
-  id: string;
-  user_id: string;
-  notify_on_credit: boolean;
-  notify_on_debit: boolean;
-  notify_on_low_balance: boolean;
-  low_balance_threshold: number;
-  require_pin_for_transfers: boolean;
-  daily_transfer_limit: number;
-  monthly_transfer_limit: number;
-}
-
 // =====================================================
 // SERVICE WALLET
 // =====================================================
 
 class WalletService {
-  // Vérifier si on est en mode démo
-  private isDemoMode(): boolean {
-    return !import.meta.env.VITE_SUPABASE_URL || 
-           import.meta.env.VITE_SUPABASE_URL === 'https://demo.supabase.co';
-  }
-
   // Récupérer le wallet d'un utilisateur
   async getUserWallet(userId: string): Promise<Wallet | null> {
-    if (this.isDemoMode()) {
-      console.log('🎭 Mode démo wallet activé');
-      return mockWalletService.getUserWallet(userId);
-    }
-
     try {
       const { data, error } = await supabase
         .from('wallets')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Aucun wallet trouvé, on peut en créer un
-          return null;
-        }
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     } catch (error) {
       console.error('❌ Erreur récupération wallet:', error);
-      // Fallback vers le mode démo en cas d'erreur
-      console.log('🎭 Fallback vers mode démo');
-      return mockWalletService.getUserWallet(userId);
+      return null;
     }
   }
 
   // Créer un wallet pour un utilisateur
-  async createUserWallet(userId: string, userEmail: string): Promise<Wallet | null> {
-    if (this.isDemoMode()) {
-      console.log('🎭 Création wallet démo pour:', userEmail);
-      return mockWalletService.createUserWallet(userId, userEmail);
-    }
-
+  async createUserWallet(userId: string, initialBalance: number = 10000): Promise<Wallet | null> {
     try {
-      // Générer une adresse wallet unique
-      const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const walletAddress = `224SOL_${userId.substring(0, 8)}_${timestamp}_${randomSuffix}`;
-
       const { data, error } = await supabase
         .from('wallets')
         .insert({
           user_id: userId,
-          wallet_address: walletAddress,
-          balance: 1000.00, // Bonus de bienvenue
-          currency: 'FCFA',
-          status: 'active'
+          balance: initialBalance,
+          currency: 'GNF'
         })
         .select()
         .single();
@@ -129,39 +87,35 @@ class WalletService {
       if (error) throw error;
 
       // Créer la transaction de bonus de bienvenue
-      if (data) {
+      if (data && initialBalance > 0) {
         await this.createTransaction({
-          wallet_id: data.id,
-          type: 'credit',
-          amount: 1000.00,
-          currency: 'FCFA',
+          transaction_id: `WELCOME_${Date.now()}`,
+          transaction_type: 'credit',
+          amount: initialBalance,
+          net_amount: initialBalance,
+          fee: 0,
+          currency: 'GNF',
           description: 'Bonus de bienvenue 224Solutions',
-          reference: `WELCOME_${timestamp}`,
-          status: 'completed'
+          status: 'completed',
+          receiver_wallet_id: data.id
         });
       }
 
-      console.log('✅ Wallet créé avec succès:', walletAddress);
+      console.log('✅ Wallet créé avec succès');
       return data;
     } catch (error) {
       console.error('❌ Erreur création wallet:', error);
-      // Fallback vers le mode démo
-      console.log('🎭 Fallback création wallet démo');
-      return mockWalletService.createUserWallet(userId, userEmail);
+      return null;
     }
   }
 
   // Récupérer les transactions d'un wallet
   async getWalletTransactions(walletId: string, limit: number = 50): Promise<Transaction[]> {
-    if (this.isDemoMode()) {
-      return mockWalletService.getWalletTransactions(walletId, limit);
-    }
-
     try {
       const { data, error } = await supabase
         .from('wallet_transactions')
         .select('*')
-        .eq('wallet_id', walletId)
+        .or(`sender_wallet_id.eq.${walletId},receiver_wallet_id.eq.${walletId}`)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -169,21 +123,29 @@ class WalletService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur récupération transactions:', error);
-      // Fallback vers le mode démo
-      return mockWalletService.getWalletTransactions(walletId, limit);
+      return [];
     }
   }
 
   // Créer une transaction
   async createTransaction(transactionData: Partial<Transaction>): Promise<Transaction | null> {
     try {
-      const reference = transactionData.reference || `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const transaction_id = transactionData.transaction_id || `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
       const { data, error } = await supabase
         .from('wallet_transactions')
         .insert({
-          ...transactionData,
-          reference
+          transaction_id,
+          transaction_type: transactionData.transaction_type || 'transfer',
+          amount: transactionData.amount || 0,
+          net_amount: transactionData.net_amount || 0,
+          fee: transactionData.fee || 0,
+          currency: transactionData.currency || 'GNF',
+          description: transactionData.description,
+          status: transactionData.status || 'pending',
+          sender_wallet_id: transactionData.sender_wallet_id,
+          receiver_wallet_id: transactionData.receiver_wallet_id,
+          metadata: transactionData.metadata
         })
         .select()
         .single();
@@ -210,26 +172,30 @@ class WalletService {
         throw new Error('Solde insuffisant');
       }
 
+      const fee = amount * 0.01; // 1% de frais
+      const net_amount = amount - fee;
+
       // Créer la transaction de transfert
-      const reference = `TRANSFER_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const transaction_id = `TRANSFER_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
       const { error: transactionError } = await supabase
         .from('wallet_transactions')
         .insert({
-          wallet_id: fromWalletId,
-          type: 'transfer',
+          transaction_id,
+          transaction_type: 'transfer',
           amount,
-          currency: 'FCFA',
+          net_amount,
+          fee,
+          currency: 'GNF',
           description,
-          reference,
           status: 'completed',
-          from_wallet_id: fromWalletId,
-          to_wallet_id: toWalletId
+          sender_wallet_id: fromWalletId,
+          receiver_wallet_id: toWalletId
         });
 
       if (transactionError) throw transactionError;
 
-      // Mettre à jour les soldes (ceci devrait être fait via une fonction SQL pour l'atomicité)
+      // Mettre à jour les soldes
       const { error: updateFromError } = await supabase
         .from('wallets')
         .update({ balance: fromWallet.balance - amount })
@@ -247,7 +213,7 @@ class WalletService {
 
       const { error: updateToError } = await supabase
         .from('wallets')
-        .update({ balance: toWallet.balance + amount })
+        .update({ balance: toWallet.balance + net_amount })
         .eq('id', toWalletId);
 
       if (updateToError) throw updateToError;
@@ -264,8 +230,8 @@ class WalletService {
     try {
       const { data: transactions, error } = await supabase
         .from('wallet_transactions')
-        .select('type, amount, status, created_at')
-        .eq('wallet_id', walletId);
+        .select('transaction_type, amount, status, created_at, sender_wallet_id, receiver_wallet_id')
+        .or(`sender_wallet_id.eq.${walletId},receiver_wallet_id.eq.${walletId}`);
 
       if (error) throw error;
 
@@ -284,9 +250,12 @@ class WalletService {
 
         transactions.forEach(tx => {
           if (tx.status === 'completed') {
-            if (tx.type === 'credit') {
+            // Crédit si on reçoit
+            if (tx.receiver_wallet_id === walletId) {
               stats.totalCredits += tx.amount;
-            } else if (tx.type === 'debit') {
+            }
+            // Débit si on envoie
+            if (tx.sender_wallet_id === walletId) {
               stats.totalDebits += tx.amount;
             }
 
@@ -324,31 +293,15 @@ class WalletService {
     }
   }
 
-  // Mettre à jour le statut d'un wallet
-  async updateWalletStatus(walletId: string, status: Wallet['status']): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('wallets')
-        .update({ status })
-        .eq('id', walletId);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('❌ Erreur mise à jour statut wallet:', error);
-      return false;
-    }
-  }
-
   // Fonction appelée lors de l'inscription d'un utilisateur
-  async onUserRegistration(userId: string, userEmail: string): Promise<void> {
+  async onUserRegistration(userId: string): Promise<void> {
     try {
       // Vérifier si l'utilisateur a déjà un wallet
       const existingWallet = await this.getUserWallet(userId);
 
       if (!existingWallet) {
-        await this.createUserWallet(userId, userEmail);
-        console.log('✅ Wallet créé automatiquement pour:', userEmail);
+        await this.createUserWallet(userId);
+        console.log('✅ Wallet créé automatiquement');
       }
     } catch (error) {
       console.error('❌ Erreur création wallet inscription:', error);
@@ -356,22 +309,16 @@ class WalletService {
   }
 
   // Utilitaires
-  formatAmount(amount: number, currency: string = 'FCFA'): string {
+  formatAmount(amount: number, currency: string = 'GNF'): string {
     return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: currency === 'FCFA' ? 'XOF' : currency,
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
-    }).format(amount);
+    }).format(amount) + ' ' + currency;
   }
 
   validateAmount(amount: number): boolean {
-    return amount > 0 && amount <= 10000000; // Max 10M FCFA
-  }
-
-  generateWalletQR(walletAddress: string): string {
-    // Génération simple d'URL QR (à améliorer avec une vraie lib QR)
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(walletAddress)}`;
+    return amount > 0 && amount <= 10000000; // Max 10M GNF
   }
 }
 
