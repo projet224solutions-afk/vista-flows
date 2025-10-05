@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 
@@ -18,7 +18,71 @@ export const useSupabaseQuery = <T,>(
 
   const { enabled = true, refetchInterval } = options;
 
-  const executeQuery = useCallback(async () => {
+  useEffect(() => {
+    if (!enabled) return;
+
+    let isMounted = true;
+
+    const executeQuery = async () => {
+      try {
+        setLoading(true);
+        const result = await queryFn();
+
+        if (!isMounted) return;
+
+        if (result.error) {
+          setError(result.error);
+          setData(null);
+        } else {
+          setData(result.data);
+          setError(null);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err as PostgrestError);
+        setData(null);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    executeQuery();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [enabled, ...dependencies]);
+
+  // Set up refetch interval if specified
+  useEffect(() => {
+    if (!refetchInterval || !enabled) return;
+
+    const interval = setInterval(async () => {
+      try {
+        setLoading(true);
+        const result = await queryFn();
+
+        if (result.error) {
+          setError(result.error);
+          setData(null);
+        } else {
+          setData(result.data);
+          setError(null);
+        }
+      } catch (err) {
+        setError(err as PostgrestError);
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    }, refetchInterval);
+
+    return () => clearInterval(interval);
+  }, [refetchInterval, enabled]);
+
+  const refetch = async () => {
     if (!enabled) return;
 
     try {
@@ -38,25 +102,6 @@ export const useSupabaseQuery = <T,>(
     } finally {
       setLoading(false);
     }
-  }, [enabled, queryFn]);
-
-  useEffect(() => {
-    executeQuery();
-  }, [executeQuery, ...dependencies]);
-
-  // Set up refetch interval if specified
-  useEffect(() => {
-    if (!refetchInterval || !enabled) return;
-
-    const interval = setInterval(() => {
-      executeQuery();
-    }, refetchInterval);
-
-    return () => clearInterval(interval);
-  }, [refetchInterval, enabled, executeQuery]);
-
-  const refetch = () => {
-    executeQuery();
   };
 
   return { data, loading, error, refetch };

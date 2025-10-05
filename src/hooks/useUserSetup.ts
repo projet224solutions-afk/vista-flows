@@ -87,19 +87,16 @@ export const useUserSetup = () => {
 
             // 3. Si des éléments manquent, les créer
             if (missingElements.length > 0) {
-                console.log('⚠️ Éléments manquants détectés:', missingElements);
-                toast.info(`Configuration en cours: ${missingElements.join(', ')}`);
+                console.log('⚠️ Éléments manquants:', missingElements);
                 await createMissingElements(userId, completeInfo);
-                toast.success('✅ Configuration utilisateur complétée !');
             } else {
-                console.log('✅ Setup utilisateur complet déjà en place');
+                console.log('✅ Setup utilisateur complet');
             }
 
             setUserInfo(completeInfo);
             return completeInfo;
         } catch (error) {
             console.error('❌ Erreur setup utilisateur:', error);
-            toast.error('Erreur lors de la configuration utilisateur');
             throw error;
         } finally {
             setIsLoading(false);

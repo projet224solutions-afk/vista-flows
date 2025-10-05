@@ -90,7 +90,7 @@ export default function Profil() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
 
-  // If not authenticated, show login prompt
+  // Authentication check
   if (!user) {
     return (
       <div className="min-h-screen bg-background pb-20">
