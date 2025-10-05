@@ -149,6 +149,7 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
   };
 
   const sendMessage = async () => {
+    console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -208,6 +209,7 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
       setMessages(prev => [...prev, errorMessage]);
       toast.error('Erreur de communication avec le Copilote');
     } finally {
+      console.log('🔄 Copilote: Fin du traitement, isLoading = false');
       setIsLoading(false);
       setIsTyping(false);
     }
@@ -430,7 +432,7 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Tapez votre message..."
-            disabled={isLoading}
+            disabled={false}
             className="flex-1"
           />
           <Button
