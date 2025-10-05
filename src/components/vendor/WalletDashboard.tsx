@@ -51,6 +51,8 @@ export default function WalletDashboard() {
   const [showBalance, setShowBalance] = useState(true);
   const [transferAmount, setTransferAmount] = useState('');
   const [transferEmail, setTransferEmail] = useState('');
+  const [transferUserId, setTransferUserId] = useState('');
+  const [transferMethod, setTransferMethod] = useState('email'); // 'email' ou 'user_id'
   const [transferMessage, setTransferMessage] = useState('');
   const [transferCurrency, setTransferCurrency] = useState('GNF');
   const [availableCurrencies, setAvailableCurrencies] = useState([]);
@@ -98,40 +100,71 @@ export default function WalletDashboard() {
   }, [transferAmount, transferCurrency, user]);
 
   const handleTransfer = async () => {
-    if (!transferAmount || !transferEmail) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+    // Validation des champs obligatoires
+    if (!transferAmount) {
+      toast.error('Veuillez saisir le montant');
       return;
     }
 
-    if (!MultiCurrencyTransferService.isValidEmail(transferEmail)) {
+    if (transferMethod === 'email' && !transferEmail) {
+      toast.error('Veuillez saisir l\'email du destinataire');
+      return;
+    }
+
+    if (transferMethod === 'user_id' && !transferUserId) {
+      toast.error('Veuillez saisir l\'ID du destinataire');
+      return;
+    }
+
+    // Validation de l'email si méthode email
+    if (transferMethod === 'email' && !MultiCurrencyTransferService.isValidEmail(transferEmail)) {
       toast.error('Format d\'email invalide');
       return;
     }
 
+    // Validation du montant
     if (!MultiCurrencyTransferService.isValidAmount(parseFloat(transferAmount))) {
       toast.error('Montant invalide');
       return;
     }
 
+    // Validation des limites
     if (transferLimits && !transferLimits.canTransfer) {
       toast.error('Limite de transfert dépassée');
       return;
     }
 
     try {
-      const result = await MultiCurrencyTransferService.performTransfer({
-        receiverEmail: transferEmail,
-        amount: parseFloat(transferAmount),
-        currencySent: transferCurrency,
-        currencyReceived: transferCurrency,
-        description: transferMessage,
-        reference: `TXN-${Date.now()}`
-      });
+      let result;
+      
+      if (transferMethod === 'email') {
+        // Transfert par email
+        result = await MultiCurrencyTransferService.performTransfer({
+          receiverEmail: transferEmail,
+          amount: parseFloat(transferAmount),
+          currencySent: transferCurrency,
+          currencyReceived: transferCurrency,
+          description: transferMessage,
+          reference: `TXN-${Date.now()}`
+        });
+      } else {
+        // Transfert par ID utilisateur
+        result = await MultiCurrencyTransferService.performTransferByUserId({
+          receiverUserId: transferUserId,
+          amount: parseFloat(transferAmount),
+          currencySent: transferCurrency,
+          currencyReceived: transferCurrency,
+          description: transferMessage,
+          reference: `TXN-${Date.now()}`
+        });
+      }
 
       if (result.success) {
         toast.success(`${MultiCurrencyTransferService.formatAmount(result.amountSent, result.currencySent)} envoyé avec succès`);
+        // Réinitialiser le formulaire
         setTransferAmount('');
         setTransferEmail('');
+        setTransferUserId('');
         setTransferMessage('');
         setTransferFees(null);
         setTransferLimits(null);
@@ -294,15 +327,54 @@ export default function WalletDashboard() {
                         <DialogTitle>Envoyer de l'argent</DialogTitle>
                       </DialogHeader>
                   <div className="space-y-4">
+                    {/* Sélection de la méthode de transfert */}
                     <div>
-                      <Label>Email du destinataire</Label>
-                      <Input 
-                        type="email" 
-                        placeholder="destinataire@exemple.com"
-                        value={transferEmail}
-                        onChange={(e) => setTransferEmail(e.target.value)}
-                      />
+                      <Label>Méthode de transfert</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant={transferMethod === 'email' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setTransferMethod('email')}
+                        >
+                          📧 Par Email
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={transferMethod === 'user_id' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setTransferMethod('user_id')}
+                        >
+                          🆔 Par ID Utilisateur
+                        </Button>
+                      </div>
                     </div>
+
+                    {/* Champ selon la méthode sélectionnée */}
+                    {transferMethod === 'email' ? (
+                      <div>
+                        <Label>Email du destinataire</Label>
+                        <Input 
+                          type="email" 
+                          placeholder="destinataire@exemple.com"
+                          value={transferEmail}
+                          onChange={(e) => setTransferEmail(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <Label>ID du destinataire</Label>
+                        <Input 
+                          type="text" 
+                          placeholder="UUID du profil destinataire"
+                          value={transferUserId}
+                          onChange={(e) => setTransferUserId(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 L'ID utilisateur se trouve dans le profil du destinataire
+                        </p>
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -375,7 +447,12 @@ export default function WalletDashboard() {
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700"
                       onClick={handleTransfer}
-                      disabled={!transferAmount || !transferEmail || (transferLimits && !transferLimits.canTransfer)}
+                      disabled={
+                        !transferAmount || 
+                        (transferMethod === 'email' && !transferEmail) ||
+                        (transferMethod === 'user_id' && !transferUserId) ||
+                        (transferLimits && !transferLimits.canTransfer)
+                      }
                     >
                       <Send className="w-4 h-4 mr-2" />
                       Envoyer maintenant

@@ -256,7 +256,257 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- 2. FONCTION POUR CALCULER LES FRAIS
+-- 2. FONCTION DE TRANSFERT PAR ID UTILISATEUR
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION perform_multi_currency_transfer_by_user_id(
+    p_sender_id UUID,
+    p_receiver_user_id UUID,
+    p_amount DECIMAL(15, 2),
+    p_currency_sent VARCHAR(3),
+    p_currency_received VARCHAR(3) DEFAULT NULL,
+    p_description TEXT DEFAULT NULL,
+    p_reference VARCHAR(100) DEFAULT NULL
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_receiver_email VARCHAR(255);
+    v_sender_wallet_id UUID;
+    v_receiver_wallet_id UUID;
+    v_exchange_rate DECIMAL(20, 8);
+    v_amount_received DECIMAL(15, 2);
+    v_fee_amount DECIMAL(15, 2);
+    v_fee_percentage DECIMAL(5, 4);
+    v_fee_fixed DECIMAL(15, 2);
+    v_transaction_id VARCHAR(50);
+    v_sender_balance DECIMAL(15, 2);
+    v_sender_role VARCHAR(50);
+    v_daily_limit DECIMAL(15, 2);
+    v_daily_used DECIMAL(15, 2);
+    v_result JSONB;
+BEGIN
+    -- Validation des paramètres
+    IF p_amount <= 0 THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Montant invalide',
+            'error_code', 'INVALID_AMOUNT'
+        );
+    END IF;
+    
+    -- Déterminer la devise de réception (même que l'envoi si non spécifiée)
+    IF p_currency_received IS NULL THEN
+        p_currency_received := p_currency_sent;
+    END IF;
+    
+    -- Vérifier que l'expéditeur existe et récupérer son rôle
+    SELECT p.role INTO v_sender_role
+    FROM profiles p
+    WHERE p.id = p_sender_id;
+    
+    IF v_sender_role IS NULL THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Expéditeur non trouvé',
+            'error_code', 'SENDER_NOT_FOUND'
+        );
+    END IF;
+    
+    -- Vérifier que le destinataire existe et récupérer son email
+    SELECT p.email INTO v_receiver_email
+    FROM profiles p
+    WHERE p.id = p_receiver_user_id;
+    
+    IF v_receiver_email IS NULL THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Destinataire non trouvé',
+            'error_code', 'RECEIVER_NOT_FOUND'
+        );
+    END IF;
+    
+    -- Vérifier qu'on ne s'envoie pas à soi-même
+    IF p_sender_id = p_receiver_user_id THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Impossible de s''envoyer de l''argent à soi-même',
+            'error_code', 'SELF_TRANSFER'
+        );
+    END IF;
+    
+    -- Récupérer le wallet de l'expéditeur
+    SELECT w.id, w.balance INTO v_sender_wallet_id, v_sender_balance
+    FROM wallets w
+    WHERE w.user_id = p_sender_id AND w.currency = p_currency_sent;
+    
+    IF v_sender_wallet_id IS NULL THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Wallet expéditeur non trouvé',
+            'error_code', 'SENDER_WALLET_NOT_FOUND'
+        );
+    END IF;
+    
+    -- Vérifier le solde
+    IF v_sender_balance < p_amount THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Solde insuffisant',
+            'error_code', 'INSUFFICIENT_BALANCE'
+        );
+    END IF;
+    
+    -- Calculer le taux de change
+    v_exchange_rate := get_exchange_rate(p_currency_sent, p_currency_received);
+    
+    -- Calculer le montant reçu
+    v_amount_received := p_amount * v_exchange_rate;
+    
+    -- Calculer les frais
+    SELECT 
+        COALESCE(tf.fee_fixed, 0),
+        COALESCE(tf.fee_percentage, 0)
+    INTO v_fee_fixed, v_fee_percentage
+    FROM transfer_fees tf
+    WHERE tf.user_role = v_sender_role
+    AND tf.currency = p_currency_sent
+    AND tf.is_active = true
+    AND p_amount BETWEEN tf.amount_min AND tf.amount_max
+    ORDER BY tf.amount_min DESC
+    LIMIT 1;
+    
+    v_fee_amount := v_fee_fixed + (p_amount * v_fee_percentage);
+    
+    -- Vérifier les limites quotidiennes
+    SELECT w.daily_transfer_limit INTO v_daily_limit
+    FROM wallets w
+    WHERE w.id = v_sender_wallet_id;
+    
+    SELECT COALESCE(SUM(mct.amount_sent), 0) INTO v_daily_used
+    FROM multi_currency_transfers mct
+    WHERE mct.sender_id = p_sender_id
+    AND mct.currency_sent = p_currency_sent
+    AND DATE(mct.created_at) = CURRENT_DATE
+    AND mct.status = 'completed';
+    
+    IF (v_daily_used + p_amount + v_fee_amount) > v_daily_limit THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Limite quotidienne dépassée',
+            'error_code', 'DAILY_LIMIT_EXCEEDED'
+        );
+    END IF;
+    
+    -- Générer l'ID de transaction
+    v_transaction_id := generate_transaction_id();
+    
+    -- Créer la transaction
+    INSERT INTO multi_currency_transfers (
+        transaction_id,
+        sender_id,
+        receiver_id,
+        sender_wallet_id,
+        amount_sent,
+        currency_sent,
+        amount_received,
+        currency_received,
+        exchange_rate,
+        fee_amount,
+        fee_currency,
+        fee_percentage,
+        fee_fixed,
+        description,
+        reference,
+        status
+    ) VALUES (
+        v_transaction_id,
+        p_sender_id,
+        p_receiver_user_id,
+        v_sender_wallet_id,
+        p_amount,
+        p_currency_sent,
+        v_amount_received,
+        p_currency_received,
+        v_exchange_rate,
+        v_fee_amount,
+        p_currency_sent,
+        v_fee_percentage,
+        v_fee_fixed,
+        p_description,
+        p_reference,
+        'processing'
+    );
+    
+    -- Débiter l'expéditeur
+    UPDATE wallets 
+    SET balance = balance - p_amount - v_fee_amount,
+        updated_at = NOW()
+    WHERE id = v_sender_wallet_id;
+    
+    -- Créer ou mettre à jour le wallet du destinataire
+    INSERT INTO wallets (user_id, balance, currency, status)
+    VALUES (p_receiver_user_id, v_amount_received, p_currency_received, 'active')
+    ON CONFLICT (user_id, currency) 
+    DO UPDATE SET 
+        balance = wallets.balance + v_amount_received,
+        updated_at = NOW();
+    
+    -- Récupérer l'ID du wallet du destinataire
+    SELECT w.id INTO v_receiver_wallet_id
+    FROM wallets w
+    WHERE w.user_id = p_receiver_user_id AND w.currency = p_currency_received;
+    
+    -- Mettre à jour la transaction avec l'ID du wallet destinataire
+    UPDATE multi_currency_transfers 
+    SET receiver_wallet_id = v_receiver_wallet_id,
+        status = 'completed',
+        processed_at = NOW(),
+        completed_at = NOW()
+    WHERE transaction_id = v_transaction_id;
+    
+    -- Mettre à jour les limites quotidiennes
+    INSERT INTO daily_transfer_limits (user_id, amount_sent, currency, transaction_count)
+    VALUES (p_sender_id, p_amount + v_fee_amount, p_currency_sent, 1)
+    ON CONFLICT (user_id, date, currency)
+    DO UPDATE SET 
+        amount_sent = daily_transfer_limits.amount_sent + p_amount + v_fee_amount,
+        transaction_count = daily_transfer_limits.transaction_count + 1,
+        updated_at = NOW();
+    
+    -- Retourner le résultat
+    RETURN jsonb_build_object(
+        'success', true,
+        'transaction_id', v_transaction_id,
+        'amount_sent', p_amount,
+        'currency_sent', p_currency_sent,
+        'amount_received', v_amount_received,
+        'currency_received', p_currency_received,
+        'exchange_rate', v_exchange_rate,
+        'fee_amount', v_fee_amount,
+        'fee_percentage', v_fee_percentage,
+        'fee_fixed', v_fee_fixed,
+        'new_balance', v_sender_balance - p_amount - v_fee_amount
+    );
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        -- En cas d'erreur, marquer la transaction comme échouée
+        UPDATE multi_currency_transfers 
+        SET status = 'failed',
+            failure_reason = SQLERRM,
+            processed_at = NOW()
+        WHERE transaction_id = v_transaction_id;
+        
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Erreur lors du transfert: ' || SQLERRM,
+            'error_code', 'TRANSFER_ERROR'
+        );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- 3. FONCTION POUR CALCULER LES FRAIS
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION calculate_transfer_fees(

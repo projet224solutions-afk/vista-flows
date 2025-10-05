@@ -73,10 +73,10 @@ export interface ExchangeRate {
 }
 
 export class MultiCurrencyTransferService {
-    /**
-     * Effectuer un transfert multi-devises
-     */
-    static async performTransfer(request: TransferRequest): Promise<TransferResponse> {
+  /**
+   * Effectuer un transfert multi-devises par email
+   */
+  static async performTransfer(request: TransferRequest): Promise<TransferResponse> {
         try {
             const { data, error } = await supabase.rpc('perform_multi_currency_transfer', {
                 p_sender_id: (await supabase.auth.getUser()).data.user?.id,
@@ -103,10 +103,47 @@ export class MultiCurrencyTransferService {
         }
     }
 
-    /**
-     * Calculer les frais de transfert
-     */
-    static async calculateFees(
+  /**
+   * Effectuer un transfert multi-devises par ID utilisateur
+   */
+  static async performTransferByUserId(request: {
+    receiverUserId: string;
+    amount: number;
+    currencySent: string;
+    currencyReceived?: string;
+    description?: string;
+    reference?: string;
+  }): Promise<TransferResponse> {
+    try {
+      const { data, error } = await supabase.rpc('perform_multi_currency_transfer_by_user_id', {
+        p_sender_id: (await supabase.auth.getUser()).data.user?.id,
+        p_receiver_user_id: request.receiverUserId,
+        p_amount: request.amount,
+        p_currency_sent: request.currencySent,
+        p_currency_received: request.currencyReceived || request.currencySent,
+        p_description: request.description,
+        p_reference: request.reference
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data as TransferResponse;
+    } catch (error) {
+      console.error('Error performing transfer by user ID:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        errorCode: 'TRANSFER_ERROR'
+      };
+    }
+  }
+
+  /**
+   * Calculer les frais de transfert
+   */
+  static async calculateFees(
         userRole: string,
         amount: number,
         currency: string
