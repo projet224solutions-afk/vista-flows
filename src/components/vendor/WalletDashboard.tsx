@@ -3,7 +3,7 @@
  * Interface complète de gestion du portefeuille vendeur
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   CreditCard,
   DollarSign,
@@ -32,10 +33,12 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import MultiCurrencyTransfer from "@/components/wallet/MultiCurrencyTransfer";
+import { MultiCurrencyTransferService } from "@/services/MultiCurrencyTransferService";
 
 export default function WalletDashboard() {
+  const { user } = useAuth();
   const { wallet, loading: walletLoading, transactions, refetch, transferFunds } = useWallet();
 
   // Calculer les statistiques à partir des transactions
@@ -49,6 +52,10 @@ export default function WalletDashboard() {
   const [transferAmount, setTransferAmount] = useState('');
   const [transferEmail, setTransferEmail] = useState('');
   const [transferMessage, setTransferMessage] = useState('');
+  const [transferCurrency, setTransferCurrency] = useState('GNF');
+  const [availableCurrencies, setAvailableCurrencies] = useState([]);
+  const [transferFees, setTransferFees] = useState(null);
+  const [transferLimits, setTransferLimits] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const handleCopyAddress = () => {
@@ -58,17 +65,84 @@ export default function WalletDashboard() {
     }
   };
 
-  const handleTransfer = () => {
+  // Charger les devises disponibles
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const currencies = await MultiCurrencyTransferService.getAvailableCurrencies();
+        setAvailableCurrencies(currencies);
+      } catch (error) {
+        console.error('Error loading currencies:', error);
+      }
+    };
+    loadCurrencies();
+  }, []);
+
+  // Calculer les frais et limites quand les données changent
+  useEffect(() => {
+    if (transferAmount && transferCurrency && user) {
+      const calculateFeesAndLimits = async () => {
+        try {
+          const [fees, limits] = await Promise.all([
+            MultiCurrencyTransferService.calculateFees('client', parseFloat(transferAmount), transferCurrency),
+            MultiCurrencyTransferService.checkLimits(user.id, parseFloat(transferAmount), transferCurrency)
+          ]);
+          setTransferFees(fees);
+          setTransferLimits(limits);
+        } catch (error) {
+          console.error('Error calculating fees and limits:', error);
+        }
+      };
+      calculateFeesAndLimits();
+    }
+  }, [transferAmount, transferCurrency, user]);
+
+  const handleTransfer = async () => {
     if (!transferAmount || !transferEmail) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    // TODO: Implémenter la logique de transfert
-    toast.success('Transfert en cours de traitement...');
-    setTransferAmount('');
-    setTransferEmail('');
-    setTransferMessage('');
+    if (!MultiCurrencyTransferService.isValidEmail(transferEmail)) {
+      toast.error('Format d\'email invalide');
+      return;
+    }
+
+    if (!MultiCurrencyTransferService.isValidAmount(parseFloat(transferAmount))) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    if (transferLimits && !transferLimits.canTransfer) {
+      toast.error('Limite de transfert dépassée');
+      return;
+    }
+
+    try {
+      const result = await MultiCurrencyTransferService.performTransfer({
+        receiverEmail: transferEmail,
+        amount: parseFloat(transferAmount),
+        currencySent: transferCurrency,
+        currencyReceived: transferCurrency,
+        description: transferMessage,
+        reference: `TXN-${Date.now()}`
+      });
+
+      if (result.success) {
+        toast.success(`${MultiCurrencyTransferService.formatAmount(result.amountSent, result.currencySent)} envoyé avec succès`);
+        setTransferAmount('');
+        setTransferEmail('');
+        setTransferMessage('');
+        setTransferFees(null);
+        setTransferLimits(null);
+        refetch(); // Recharger les données
+      } else {
+        toast.error(result.error || 'Erreur lors du transfert');
+      }
+    } catch (error) {
+      console.error('Error performing transfer:', error);
+      toast.error('Erreur lors du transfert');
+    }
   };
 
   if (walletLoading) {
@@ -108,14 +182,10 @@ export default function WalletDashboard() {
     <div className="space-y-6">
       {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
-            Aperçu
-          </TabsTrigger>
-          <TabsTrigger value="transfer" className="flex items-center gap-2">
-            <Send className="h-4 w-4" />
-            Transfert Multi-Devises
+            Mon Portefeuille
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
@@ -223,41 +293,94 @@ export default function WalletDashboard() {
                       <DialogHeader>
                         <DialogTitle>Envoyer de l'argent</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label>Email du destinataire</Label>
-                          <Input
-                            type="email"
-                            placeholder="destinataire@exemple.com"
-                            value={transferEmail}
-                            onChange={(e) => setTransferEmail(e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label>Montant ({wallet.currency})</Label>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={transferAmount}
-                            onChange={(e) => setTransferAmount(e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label>Message (optionnel)</Label>
-                          <Input
-                            placeholder="Paiement pour..."
-                            value={transferMessage}
-                            onChange={(e) => setTransferMessage(e.target.value)}
-                          />
-                        </div>
-                        <Button
-                          className="w-full bg-blue-600 hover:bg-blue-700"
-                          onClick={handleTransfer}
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Envoyer maintenant
-                        </Button>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Email du destinataire</Label>
+                      <Input 
+                        type="email" 
+                        placeholder="destinataire@exemple.com"
+                        value={transferEmail}
+                        onChange={(e) => setTransferEmail(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Montant</Label>
+                        <Input 
+                          type="number" 
+                          step="0.01"
+                          min="0.01"
+                          placeholder="0.00"
+                          value={transferAmount}
+                          onChange={(e) => setTransferAmount(e.target.value)}
+                        />
                       </div>
+                      <div>
+                        <Label>Devise</Label>
+                        <Select value={transferCurrency} onValueChange={setTransferCurrency}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableCurrencies.map((currency) => (
+                              <SelectItem key={currency.code} value={currency.code}>
+                                {currency.symbol} {currency.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Message (optionnel)</Label>
+                      <Input 
+                        placeholder="Paiement pour..."
+                        value={transferMessage}
+                        onChange={(e) => setTransferMessage(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Affichage des frais et limites */}
+                    {transferFees && (
+                      <div className="p-3 bg-blue-50 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Montant:</span>
+                          <span>{MultiCurrencyTransferService.formatAmount(parseFloat(transferAmount || '0'), transferCurrency)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Frais:</span>
+                          <span>{MultiCurrencyTransferService.formatAmount(transferFees.feeAmount, transferCurrency)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span>Total à débiter:</span>
+                          <span>{MultiCurrencyTransferService.formatAmount(transferFees.totalAmount, transferCurrency)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {transferLimits && (
+                      <div className={`p-3 rounded-lg ${transferLimits.canTransfer ? 'bg-green-50' : 'bg-red-50'}`}>
+                        <div className="flex justify-between text-sm">
+                          <span>Limite quotidienne:</span>
+                          <span>{MultiCurrencyTransferService.formatAmount(transferLimits.dailyRemaining, transferCurrency)} restant</span>
+                        </div>
+                        {!transferLimits.canTransfer && (
+                          <p className="text-red-600 text-xs mt-1">⚠️ Limite dépassée</p>
+                        )}
+                      </div>
+                    )}
+
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={handleTransfer}
+                      disabled={!transferAmount || !transferEmail || (transferLimits && !transferLimits.canTransfer)}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Envoyer maintenant
+                    </Button>
+                  </div>
                     </DialogContent>
                   </Dialog>
 
@@ -386,9 +509,6 @@ export default function WalletDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="transfer" className="space-y-6">
-          <MultiCurrencyTransfer />
-        </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
           <Card>
