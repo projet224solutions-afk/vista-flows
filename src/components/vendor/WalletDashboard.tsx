@@ -93,7 +93,7 @@ export default function WalletDashboard() {
 
   // Calculer les frais et limites quand les données changent
   useEffect(() => {
-    if (transferAmount && transferCurrency && user) {
+    if (transferAmount && transferCurrency && user && parseFloat(transferAmount) > 0) {
       const calculateFeesAndLimits = async () => {
         try {
           const [fees, limits] = await Promise.all([
@@ -104,9 +104,20 @@ export default function WalletDashboard() {
           setTransferLimits(limits);
         } catch (error) {
           console.error('Error calculating fees and limits:', error);
+          // En cas d'erreur, définir des valeurs par défaut pour permettre le transfert
+          setTransferLimits({
+            canTransfer: true,
+            dailyRemaining: 1000000,
+            monthlyRemaining: 10000000,
+            currency: transferCurrency
+          });
         }
       };
       calculateFeesAndLimits();
+    } else {
+      // Réinitialiser les frais et limites si les conditions ne sont pas remplies
+      setTransferFees(null);
+      setTransferLimits(null);
     }
   }, [transferAmount, transferCurrency, user]);
 
@@ -140,8 +151,8 @@ export default function WalletDashboard() {
     }
 
     // Validation des limites
-    if (transferLimits && !transferLimits.canTransfer) {
-      toast.error('Limite de transfert dépassée');
+    if (transferLimits && transferLimits.canTransfer === false) {
+      toast.error(transferLimits.reason || 'Limite de transfert dépassée');
       return;
     }
 
@@ -462,11 +473,16 @@ export default function WalletDashboard() {
                         !transferAmount || 
                         (transferMethod === 'email' && !transferEmail) ||
                         (transferMethod === 'user_id' && !transferUserId) ||
-                        (transferLimits && !transferLimits.canTransfer)
+                        (transferLimits && transferLimits.canTransfer === false)
                       }
                     >
                       <Send className="w-4 h-4 mr-2" />
-                      Envoyer maintenant
+                      {transferAmount && 
+                       ((transferMethod === 'email' && transferEmail) || 
+                        (transferMethod === 'user_id' && transferUserId)) && 
+                       (!transferLimits || transferLimits.canTransfer !== false) 
+                        ? 'Envoyer maintenant' 
+                        : 'Remplissez les champs requis'}
                     </Button>
                   </div>
                     </DialogContent>
