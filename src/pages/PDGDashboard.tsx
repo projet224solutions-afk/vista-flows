@@ -48,9 +48,10 @@ import {
   Brain,
   Moon,
   Sun,
+  Globe,
+  Calculator,
   Server,
   Clock,
-  Globe,
   Zap,
   Bell,
   MoreVertical,
@@ -83,6 +84,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
 import { usePDGManagement } from "@/hooks/useAgentSystem";
+import PDGFinanceManagement from "@/components/pdg/PDGFinanceManagement";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -865,72 +867,7 @@ export default function PDGDashboard() {
 
           {/* Gestion financière */}
           <TabsContent value="finance" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Encaissements</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">89.2M FCFA</div>
-                  <p className="text-xs text-muted-foreground">Ce mois</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Commissions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12.1M FCFA</div>
-                  <p className="text-xs text-muted-foreground">Ce mois</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Paiements en attente</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">2.3M FCFA</div>
-                  <p className="text-xs text-muted-foreground">À traiter</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Transactions Récentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Montant</TableHead>
-                      <TableHead>Méthode</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Commission</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-mono">{transaction.id}</TableCell>
-                        <TableCell>{transaction.type}</TableCell>
-                        <TableCell>{transaction.amount.toLocaleString()} FCFA</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getPaymentMethodIcon(transaction.method)}
-                            <span className="capitalize">{transaction.method.replace('_', ' ')}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                        <TableCell>{transaction.commission.toLocaleString()} FCFA</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <PDGFinanceManagement />
           </TabsContent>
 
           {/* Bureau Syndicat */}
