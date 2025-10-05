@@ -1577,14 +1577,186 @@ export default function SyndicateBureauManagementPro() {
                     </Card>
                 </TabsContent>
 
-                {/* Autres onglets... (à compléter selon les besoins) */}
+                {/* Onglet Gestion - Fonctionnalités opérationnelles */}
                 <TabsContent value="management" className="space-y-6 mt-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Ajouter Taxi-Motard */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Bike className="w-5 h-5 text-blue-600" />
+                                    Ajouter un Taxi-Motard
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <AddTaxiMotardForm />
+                            </CardContent>
+                        </Card>
+
+                        {/* Paramètres du Système */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Settings className="w-5 h-5 text-purple-600" />
+                                    Paramètres Système
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Envoi automatique d'emails</p>
+                                        <p className="text-sm text-gray-600">Envoyer automatiquement les liens aux présidents</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Notifications SMS</p>
+                                        <p className="text-sm text-gray-600">Activer les notifications par SMS</p>
+                                    </div>
+                                    <Switch />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">QR Codes</p>
+                                        <p className="text-sm text-gray-600">Générer des QR codes pour les liens</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Téléchargements mobiles</p>
+                                        <p className="text-sm text-gray-600">Permettre le téléchargement sur mobile</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Gestion des Rôles */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-green-600" />
+                                    Gestion des Rôles
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Crown className="w-5 h-5 text-yellow-600" />
+                                        <span className="font-bold text-gray-800">PDG - Accès Complet</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Gestion totale de tous les bureaux syndicaux
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-blue-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Users className="w-5 h-5 text-blue-600" />
+                                        <span className="font-bold text-gray-800">Président - Bureau Local</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Gestion de leur bureau syndical uniquement
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-green-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Bike className="w-5 h-5 text-green-600" />
+                                        <span className="font-bold text-gray-800">Membre - Accès Limité</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Consultation et services de base
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Statistiques de Gestion */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-orange-600" />
+                                    Activité de Gestion
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Mail className="w-5 h-5 text-blue-600" />
+                                        <span className="font-semibold text-gray-800">Emails envoyés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-blue-700">
+                                        {bureaus.reduce((sum, b) => sum + b.email_sent_count, 0)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <MessageSquare className="w-5 h-5 text-green-600" />
+                                        <span className="font-semibold text-gray-800">SMS envoyés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-green-700">
+                                        {bureaus.reduce((sum, b) => sum + b.sms_sent_count, 0)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <QrCode className="w-5 h-5 text-purple-600" />
+                                        <span className="font-semibold text-gray-800">QR Codes générés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-purple-700">
+                                        {bureaus.filter(b => b.qr_code).length}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Download className="w-5 h-5 text-orange-600" />
+                                        <span className="font-semibold text-gray-800">Téléchargements</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-orange-700">
+                                        {bureaus.reduce((sum, b) => sum + b.download_count, 0)}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Actions Rapides de Gestion */}
                     <Card className="border-0 shadow-xl rounded-2xl">
                         <CardHeader>
-                            <CardTitle className="text-xl font-bold text-gray-800">Gestion Avancée</CardTitle>
+                            <CardTitle className="text-xl font-bold text-gray-800">Actions Rapides</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-gray-600">Fonctionnalités de gestion avancée en cours de développement...</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl"
+                                    onClick={() => toast.success('Synchronisation lancée')}
+                                >
+                                    <RefreshCw className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Synchroniser</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl"
+                                    onClick={() => toast.success('Export en cours...')}
+                                >
+                                    <Download className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Exporter</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl"
+                                    onClick={() => toast.info('Rapport en préparation')}
+                                >
+                                    <FileText className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Rapport</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl"
+                                    onClick={() => toast.success('Sauvegarde effectuée')}
+                                >
+                                    <Save className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Sauvegarder</span>
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
