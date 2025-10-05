@@ -31,6 +31,7 @@ const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const SyndicatePresident = lazy(() => import("./pages/SyndicatePresident"));
 const SyndicatePresidentNew = lazy(() => import("./pages/SyndicatePresidentNew"));
+const SyndicatePresidentSimple = lazy(() => import("./pages/SyndicatePresidentSimple"));
 const SyndicatePresidentUltraPro = lazy(() => import("./pages/SyndicatePresidentUltraPro"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
@@ -120,6 +121,10 @@ const App = () => (
               <Route
                 path="/syndicat/president-new"
                 element={<SyndicatePresidentNew />}
+              />
+              <Route
+                path="/syndicat/president-simple"
+                element={<SyndicatePresidentSimple />}
               />
               <Route
                 path="/invite/:invitationToken"
