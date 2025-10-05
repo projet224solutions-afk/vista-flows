@@ -29,6 +29,7 @@ import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -331,6 +332,15 @@ export default function ClientDashboard() {
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Communication
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleTabChange('copilote')}
+                className={activeTab === 'copilote' ? 'bg-purple-500 hover:bg-purple-600' : ''}
+              >
+                <Bot className="w-4 h-4 mr-2" />
+                Copilote IA
               </Button>
             </div>
           </ScrollArea>
@@ -716,6 +726,12 @@ export default function ClientDashboard() {
         {activeTab === 'communication' && (
           <div className="space-y-6">
             <SimpleCommunicationInterface />
+          </div>
+        )}
+
+        {activeTab === 'copilote' && (
+          <div className="space-y-6">
+            <CopiloteChat height="600px" />
           </div>
         )}
       </main>

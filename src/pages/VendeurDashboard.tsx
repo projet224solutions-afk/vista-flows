@@ -35,6 +35,7 @@ import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import CommunicationModule from "@/components/communication/CommunicationModule";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import CopiloteChat from "@/components/copilot/CopiloteChat";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useWallet } from "@/hooks/useWallet";
@@ -500,6 +501,13 @@ export default function VendeurDashboard() {
                   <MessageSquare className="w-5 h-5 mr-3" />
                   Communication
                 </TabsTrigger>
+                <TabsTrigger
+                  value="copilote"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <Bot className="w-5 h-5 mr-3" />
+                  Copilote IA
+                </TabsTrigger>
 
                 {/* Bouton de déconnexion visible */}
                 <Button
@@ -694,6 +702,11 @@ export default function VendeurDashboard() {
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
             <SimpleCommunicationInterface />
+          </TabsContent>
+
+          {/* Copilote IA */}
+          <TabsContent value="copilote" className="space-y-6">
+            <CopiloteChat height="600px" />
           </TabsContent>
 
           {/* Gestion des paiements */}

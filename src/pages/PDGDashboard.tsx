@@ -86,6 +86,7 @@ import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/
 import { usePDGManagement } from "@/hooks/useAgentSystem";
 import PDGFinanceManagement from "@/components/pdg/PDGFinanceManagement";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -568,7 +569,7 @@ export default function PDGDashboard() {
 
         {/* Interface à onglets */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="products">Produits</TabsTrigger>
@@ -576,6 +577,7 @@ export default function PDGDashboard() {
             <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
             <TabsTrigger value="syndicate">Bureau Syndicat</TabsTrigger>
             <TabsTrigger value="communication">Communication</TabsTrigger>
+            <TabsTrigger value="copilote">Copilote IA</TabsTrigger>
             <TabsTrigger value="security">Sécurité</TabsTrigger>
             <TabsTrigger value="system">Système</TabsTrigger>
             <TabsTrigger value="reports">Rapports</TabsTrigger>
@@ -992,6 +994,74 @@ export default function PDGDashboard() {
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
             <SimpleCommunicationInterface />
+          </TabsContent>
+
+          {/* Copilote IA */}
+          <TabsContent value="copilote" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <CopiloteChat height="700px" />
+              </div>
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bot className="h-5 w-5 text-blue-500" />
+                      Actions Rapides
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start">
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Solde Wallet
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Statistiques
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Taux de Change
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Users className="h-4 w-4 mr-2" />
+                      Gestion Utilisateurs
+                    </Button>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="h-5 w-5 text-purple-500" />
+                      Capacités IA
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Chat intelligent</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Actions métiers</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Simulations financières</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Gestion des taux</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Analyse des données</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Sécurité et Monitoring */}
