@@ -105,7 +105,7 @@ export default function SyndicatePresidentNew() {
     const authenticateWithToken = async () => {
         try {
             console.log('🔐 Authentification Supabase avec token:', accessToken);
-            
+
             if (!accessToken) {
                 toast.error('Token d\'accès manquant');
                 return;
@@ -121,31 +121,31 @@ export default function SyndicatePresidentNew() {
 
             if (bureau && !bureauError) {
                 console.log('✅ Token trouvé dans Supabase, bureau:', bureau);
-                
+
                 // Créer une session utilisateur temporaire pour le président
                 const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-                
+
                 if (authData.user && !authError) {
                     console.log('✅ Session Supabase créée pour le président');
                     setAuthenticated(true);
-                    
+
                     // Mettre à jour la date d'accès au lien
                     await supabase
                         .from('syndicate_bureaus')
                         .update({ link_accessed_at: new Date().toISOString() })
                         .eq('access_token', accessToken);
-                    
+
                     toast.success('Authentification Supabase réussie !', {
                         description: `Bienvenue ${bureau.president_name}`
                     });
-                    
+
                     return;
                 }
             }
 
             // Méthode 2: Fallback - Authentification avec token simple (mode démo)
             console.log('🎭 Mode démo - Authentification sans Supabase');
-            
+
             if (accessToken.length >= 10) {
                 console.log('✅ Token valide (mode démo), authentification réussie');
                 setAuthenticated(true);
@@ -158,7 +158,7 @@ export default function SyndicatePresidentNew() {
             }
         } catch (error) {
             console.error('❌ Erreur authentification Supabase:', error);
-            
+
             // Fallback en cas d'erreur Supabase
             console.log('🎭 Fallback - Mode démo activé');
             if (accessToken && accessToken.length >= 10) {
@@ -178,7 +178,7 @@ export default function SyndicatePresidentNew() {
     const loadBureauInfo = async () => {
         try {
             console.log('📊 Chargement des informations du bureau depuis Supabase avec token:', accessToken);
-            
+
             // Méthode 1: Charger depuis Supabase
             const { data: bureau, error: bureauError } = await supabase
                 .from('syndicate_bureaus')
@@ -188,7 +188,7 @@ export default function SyndicatePresidentNew() {
 
             if (bureau && !bureauError) {
                 console.log('✅ Bureau trouvé dans Supabase:', bureau);
-                
+
                 const bureauInfo: BureauInfo = {
                     id: bureau.id,
                     bureau_code: bureau.bureau_code,
@@ -213,7 +213,7 @@ export default function SyndicatePresidentNew() {
 
             // Méthode 2: Fallback - Données de démonstration
             console.log('🎭 Fallback - Chargement des données de démonstration');
-            
+
             const mockBureau: BureauInfo = {
                 id: accessToken || '1',
                 bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
@@ -233,10 +233,10 @@ export default function SyndicatePresidentNew() {
             setBureauInfo(mockBureau);
             console.log('✅ Informations du bureau (démo) chargées:', mockBureau);
             toast.success('Données de démonstration chargées');
-            
+
         } catch (error) {
             console.error('❌ Erreur chargement bureau Supabase:', error);
-            
+
             // Fallback en cas d'erreur
             const fallbackBureau: BureauInfo = {
                 id: accessToken || '1',
@@ -373,7 +373,7 @@ export default function SyndicatePresidentNew() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
-                                    {bureauInfo?.bureau_code || 'Bureau Syndical'}
+                                    Syndicat de Taxi Moto de {bureauInfo?.commune || 'Bureau Syndical'}
                                 </h1>
                                 <p className="text-gray-600">
                                     {bureauInfo?.prefecture} - {bureauInfo?.commune}

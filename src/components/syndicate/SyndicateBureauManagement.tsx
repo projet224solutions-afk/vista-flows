@@ -201,9 +201,13 @@ export default function SyndicateBureauManagement() {
             // Générer le lien permanent avec le token (correspond à la route React)
             const permanentLink = `${window.location.origin}/syndicat/president/${accessToken}`;
 
+            // Générer le code bureau basé sur la ville
+            const cityCode = formData.commune.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 3);
+            const bureauCode = `SYN-${cityCode}-${String(bureaus.length + 1).padStart(3, '0')}`;
+            
             const newBureau: SyndicateBureau = {
                 id: Date.now().toString(),
-                bureau_code: `SYN-2025-${String(bureaus.length + 1).padStart(5, '0')}`,
+                bureau_code: bureauCode,
                 prefecture: formData.prefecture,
                 commune: formData.commune,
                 full_location: `${formData.prefecture} - ${formData.commune}`,

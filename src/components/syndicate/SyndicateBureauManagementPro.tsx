@@ -165,7 +165,7 @@ export default function SyndicateBureauManagementPro() {
     const loadBureauxFromSupabase = async () => {
         try {
             console.log('📊 Chargement bureaux depuis Supabase...');
-            
+
             const { data: bureaux, error } = await supabase
                 .from('syndicate_bureaus')
                 .select('*')
@@ -334,13 +334,17 @@ export default function SyndicateBureauManagementPro() {
             // Générer le token d'accès permanent
             const accessToken = generateAccessToken();
             const permanentLink = `${window.location.origin}/syndicat/president/${accessToken}`;
-            
+
             // Générer le QR Code si activé
             const qrCode = formData.enable_qr_code ? await generateQRCode(permanentLink) : undefined;
 
+            // Générer le code bureau basé sur la ville (nom complet de la ville)
+            const cityName = formData.commune.toUpperCase().replace(/[^A-Z]/g, '');
+            const bureauCode = `SYN-${cityName}-${String(bureaus.length + 1).padStart(3, '0')}`;
+
             const newBureau: SyndicateBureau = {
                 id: Date.now().toString(),
-                bureau_code: `SYN-2025-${String(bureaus.length + 1).padStart(5, '0')}`,
+                bureau_code: bureauCode,
                 prefecture: formData.prefecture,
                 commune: formData.commune,
                 full_location: `${formData.prefecture} - ${formData.commune}`,
@@ -505,8 +509,8 @@ export default function SyndicateBureauManagementPro() {
                 // Mettre à jour les statistiques
                 setBureaus(prev => prev.map(b =>
                     b.id === bureau.id
-                        ? { 
-                            ...b, 
+                        ? {
+                            ...b,
                             link_sent_at: new Date().toISOString(),
                             email_sent_count: b.email_sent_count + 1
                         }
@@ -552,7 +556,7 @@ export default function SyndicateBureauManagementPro() {
 
             // Simulation d'envoi SMS (à remplacer par une vraie API SMS)
             const smsContent = `🏛️ Bureau Syndical ${bureau.bureau_code} créé ! Accédez à votre interface: ${bureau.permanent_link} Token: ${bureau.access_token}`;
-            
+
             // Ici, intégrer une vraie API SMS (Twilio, etc.)
             console.log('📱 SMS à envoyer:', smsContent);
             console.log('📞 Numéro:', bureau.president_phone);
@@ -713,20 +717,20 @@ export default function SyndicateBureauManagementPro() {
      */
     const filteredAndSortedBureaus = bureaus
         .filter(bureau => {
-            const matchesSearch = 
+            const matchesSearch =
                 bureau.bureau_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 bureau.president_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 bureau.full_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 bureau.president_email.toLowerCase().includes(searchTerm.toLowerCase());
-            
+
             const matchesStatus = statusFilter === 'all' || bureau.status === statusFilter;
-            
+
             return matchesSearch && matchesStatus;
         })
         .sort((a, b) => {
             const aValue = a[sortBy as keyof SyndicateBureau];
             const bValue = b[sortBy as keyof SyndicateBureau];
-            
+
             if (sortOrder === 'asc') {
                 return aValue > bValue ? 1 : -1;
             } else {
@@ -827,7 +831,7 @@ export default function SyndicateBureauManagementPro() {
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Actualiser
                         </Button>
-                        <AddTaxiMotardForm 
+                        <AddTaxiMotardForm
                             onSuccess={(result) => {
                                 console.log('Taxi-motard créé:', result);
                                 toast.success('Taxi-motard ajouté avec succès !');
@@ -835,7 +839,7 @@ export default function SyndicateBureauManagementPro() {
                                 loadBureauxFromSupabase();
                             }}
                         />
-                        
+
                         <Button
                             onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
                             variant="outline"
@@ -920,36 +924,36 @@ export default function SyndicateBureauManagementPro() {
             {/* Navigation par onglets ultra-stylée */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 bg-white shadow-lg rounded-2xl p-2 border border-gray-100">
-                    <TabsTrigger 
-                        value="dashboard" 
+                    <TabsTrigger
+                        value="dashboard"
                         className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                     >
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Dashboard
                     </TabsTrigger>
-                    <TabsTrigger 
-                        value="bureaus" 
+                    <TabsTrigger
+                        value="bureaus"
                         className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                     >
                         <Building2 className="w-4 h-4 mr-2" />
                         Bureaux
                     </TabsTrigger>
-                    <TabsTrigger 
-                        value="management" 
+                    <TabsTrigger
+                        value="management"
                         className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                     >
                         <Settings className="w-4 h-4 mr-2" />
                         Gestion
                     </TabsTrigger>
-                    <TabsTrigger 
-                        value="sos" 
+                    <TabsTrigger
+                        value="sos"
                         className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                     >
                         <AlertTriangle className="w-4 h-4 mr-2" />
                         Alertes SOS
                     </TabsTrigger>
-                    <TabsTrigger 
-                        value="analytics" 
+                    <TabsTrigger
+                        value="analytics"
                         className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                     >
                         <TrendingUp className="w-4 h-4 mr-2" />
@@ -997,7 +1001,7 @@ export default function SyndicateBureauManagementPro() {
                                             />
                                         </div>
                                     </div>
-                                    
+
                                     <div>
                                         <Label htmlFor="president_name" className="text-sm font-semibold text-gray-700">Nom du Président *</Label>
                                         <Input
@@ -1008,7 +1012,7 @@ export default function SyndicateBureauManagementPro() {
                                             className="mt-1 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                         />
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <Label htmlFor="president_email" className="text-sm font-semibold text-gray-700">Email du Président *</Label>
@@ -1039,7 +1043,7 @@ export default function SyndicateBureauManagementPro() {
                                             <Settings className="w-4 h-4" />
                                             Options avancées
                                         </h4>
-                                        
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="flex items-center justify-between">
                                                 <Label htmlFor="is_link_permanent" className="text-sm text-gray-700">Lien permanent</Label>
@@ -1049,7 +1053,7 @@ export default function SyndicateBureauManagementPro() {
                                                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_link_permanent: checked }))}
                                                 />
                                             </div>
-                                            
+
                                             <div className="flex items-center justify-between">
                                                 <Label htmlFor="auto_send_email" className="text-sm text-gray-700">Envoi email auto</Label>
                                                 <Switch
@@ -1058,7 +1062,7 @@ export default function SyndicateBureauManagementPro() {
                                                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_send_email: checked }))}
                                                 />
                                             </div>
-                                            
+
                                             <div className="flex items-center justify-between">
                                                 <Label htmlFor="auto_send_sms" className="text-sm text-gray-700">Envoi SMS auto</Label>
                                                 <Switch
@@ -1067,7 +1071,7 @@ export default function SyndicateBureauManagementPro() {
                                                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_send_sms: checked }))}
                                                 />
                                             </div>
-                                            
+
                                             <div className="flex items-center justify-between">
                                                 <Label htmlFor="enable_qr_code" className="text-sm text-gray-700">QR Code</Label>
                                                 <Switch
@@ -1080,8 +1084,8 @@ export default function SyndicateBureauManagementPro() {
                                     </div>
 
                                     <div className="flex gap-3 pt-4">
-                                        <Button 
-                                            onClick={createBureau} 
+                                        <Button
+                                            onClick={createBureau}
                                             className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl py-3"
                                         >
                                             <Building2 className="w-4 h-4 mr-2" />
@@ -1117,7 +1121,7 @@ export default function SyndicateBureauManagementPro() {
                                                 <Building2 className="w-8 h-8 text-white" />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-800">{bureau.bureau_code}</h3>
+                                                <h3 className="text-lg font-bold text-gray-800">Syndicat de Taxi Moto de {bureau.commune}</h3>
                                                 <p className="text-gray-600 flex items-center gap-2">
                                                     <MapPin className="w-4 h-4" />
                                                     {bureau.full_location}
@@ -1179,7 +1183,7 @@ export default function SyndicateBureauManagementPro() {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                                     <SelectTrigger className="w-48 rounded-xl border-gray-200">
                                         <Filter className="w-4 h-4 mr-2" />
@@ -1249,7 +1253,7 @@ export default function SyndicateBureauManagementPro() {
                                                         Créé le {formatDate(bureau.created_at)}
                                                     </div>
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <MapPin className="w-4 h-4 text-gray-400" />
@@ -1257,7 +1261,7 @@ export default function SyndicateBureauManagementPro() {
                                                             <div className="flex items-center gap-2">
                                                                 <Input
                                                                     value={editingBureau.value}
-                                                                    onChange={(e) => setEditingBureau({...editingBureau, value: e.target.value})}
+                                                                    onChange={(e) => setEditingBureau({ ...editingBureau, value: e.target.value })}
                                                                     className="w-32 h-8 text-sm"
                                                                 />
                                                                 <Button size="sm" onClick={saveEdit} className="h-8 w-8 p-0">
@@ -1268,7 +1272,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 </Button>
                                                             </div>
                                                         ) : (
-                                                            <span 
+                                                            <span
                                                                 className="cursor-pointer hover:text-blue-600"
                                                                 onClick={() => startEditing(bureau.id, 'full_location', bureau.full_location)}
                                                             >
@@ -1277,7 +1281,7 @@ export default function SyndicateBureauManagementPro() {
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
@@ -1286,7 +1290,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 <div className="flex items-center gap-2">
                                                                     <Input
                                                                         value={editingBureau.value}
-                                                                        onChange={(e) => setEditingBureau({...editingBureau, value: e.target.value})}
+                                                                        onChange={(e) => setEditingBureau({ ...editingBureau, value: e.target.value })}
                                                                         className="w-32 h-8 text-sm"
                                                                     />
                                                                     <Button size="sm" onClick={saveEdit} className="h-8 w-8 p-0">
@@ -1297,7 +1301,7 @@ export default function SyndicateBureauManagementPro() {
                                                                     </Button>
                                                                 </div>
                                                             ) : (
-                                                                <span 
+                                                                <span
                                                                     className="font-semibold cursor-pointer hover:text-blue-600"
                                                                     onClick={() => startEditing(bureau.id, 'president_name', bureau.president_name)}
                                                                 >
@@ -1305,14 +1309,14 @@ export default function SyndicateBureauManagementPro() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        
+
                                                         <div className="flex items-center gap-2">
                                                             <Mail className="w-3 h-3 text-gray-400" />
                                                             {editingBureau?.id === bureau.id && editingBureau.field === 'president_email' ? (
                                                                 <div className="flex items-center gap-2">
                                                                     <Input
                                                                         value={editingBureau.value}
-                                                                        onChange={(e) => setEditingBureau({...editingBureau, value: e.target.value})}
+                                                                        onChange={(e) => setEditingBureau({ ...editingBureau, value: e.target.value })}
                                                                         className="w-40 h-8 text-sm"
                                                                         type="email"
                                                                     />
@@ -1324,7 +1328,7 @@ export default function SyndicateBureauManagementPro() {
                                                                     </Button>
                                                                 </div>
                                                             ) : (
-                                                                <span 
+                                                                <span
                                                                     className="text-sm text-gray-600 cursor-pointer hover:text-blue-600"
                                                                     onClick={() => startEditing(bureau.id, 'president_email', bureau.president_email)}
                                                                 >
@@ -1332,7 +1336,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        
+
                                                         {bureau.president_phone && (
                                                             <div className="flex items-center gap-2">
                                                                 <Phone className="w-3 h-3 text-gray-400" />
@@ -1340,7 +1344,7 @@ export default function SyndicateBureauManagementPro() {
                                                                     <div className="flex items-center gap-2">
                                                                         <Input
                                                                             value={editingBureau.value}
-                                                                            onChange={(e) => setEditingBureau({...editingBureau, value: e.target.value})}
+                                                                            onChange={(e) => setEditingBureau({ ...editingBureau, value: e.target.value })}
                                                                             className="w-32 h-8 text-sm"
                                                                         />
                                                                         <Button size="sm" onClick={saveEdit} className="h-8 w-8 p-0">
@@ -1351,7 +1355,7 @@ export default function SyndicateBureauManagementPro() {
                                                                         </Button>
                                                                     </div>
                                                                 ) : (
-                                                                    <span 
+                                                                    <span
                                                                         className="text-sm text-gray-600 cursor-pointer hover:text-blue-600"
                                                                         onClick={() => startEditing(bureau.id, 'president_phone', bureau.president_phone || '')}
                                                                     >
@@ -1360,7 +1364,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 )}
                                                             </div>
                                                         )}
-                                                        
+
                                                         {bureau.link_sent_at && (
                                                             <div className="flex items-center gap-2">
                                                                 <CheckCircle className="w-3 h-3 text-green-500" />
@@ -1371,7 +1375,7 @@ export default function SyndicateBureauManagementPro() {
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <div className="space-y-3">
                                                         <div className="bg-gray-50 p-3 rounded-lg border">
@@ -1384,11 +1388,11 @@ export default function SyndicateBureauManagementPro() {
                                                                     <Lock className="w-3 h-3 text-green-500" />
                                                                 )}
                                                             </div>
-                                                            
+
                                                             <div className="bg-white p-2 rounded border text-xs font-mono break-all mb-2">
                                                                 {bureau.permanent_link}
                                                             </div>
-                                                            
+
                                                             <div className="flex items-center gap-1">
                                                                 <Button
                                                                     size="sm"
@@ -1420,7 +1424,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        
+
                                                         {/* Statistiques d'accès */}
                                                         <div className="grid grid-cols-3 gap-2 text-xs">
                                                             <div className="text-center p-2 bg-blue-50 rounded">
@@ -1441,7 +1445,7 @@ export default function SyndicateBureauManagementPro() {
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <div className="space-y-2">
                                                         <div className="text-center">
@@ -1452,7 +1456,7 @@ export default function SyndicateBureauManagementPro() {
                                                             <p className="text-lg font-bold text-blue-600">{bureau.active_members}</p>
                                                             <p className="text-xs text-gray-600">sur {bureau.total_members}</p>
                                                         </div>
-                                                        
+
                                                         <div className="text-center">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 <DollarSign className="w-4 h-4 text-gray-400" />
@@ -1464,7 +1468,7 @@ export default function SyndicateBureauManagementPro() {
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <Badge className={`${getStatusColor(bureau.status)} px-3 py-1 rounded-full font-semibold border`}>
                                                         {getStatusLabel(bureau.status)}
@@ -1475,7 +1479,7 @@ export default function SyndicateBureauManagementPro() {
                                                         </p>
                                                     )}
                                                 </TableCell>
-                                                
+
                                                 <TableCell>
                                                     <div className="flex flex-col gap-2">
                                                         {/* Actions principales */}
@@ -1489,7 +1493,7 @@ export default function SyndicateBureauManagementPro() {
                                                             >
                                                                 <Mail className="w-3 h-3" />
                                                             </Button>
-                                                            
+
                                                             {bureau.president_phone && (
                                                                 <Button
                                                                     size="sm"
@@ -1501,7 +1505,7 @@ export default function SyndicateBureauManagementPro() {
                                                                     <MessageSquare className="w-3 h-3" />
                                                                 </Button>
                                                             )}
-                                                            
+
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
@@ -1512,7 +1516,7 @@ export default function SyndicateBureauManagementPro() {
                                                                 <Download className="w-3 h-3" />
                                                             </Button>
                                                         </div>
-                                                        
+
                                                         {/* Actions de statut */}
                                                         <div className="flex gap-1">
                                                             {bureau.status === 'pending' && (
@@ -1533,7 +1537,7 @@ export default function SyndicateBureauManagementPro() {
                                                                     Activer
                                                                 </Button>
                                                             )}
-                                                            
+
                                                             {bureau.status === 'active' && (
                                                                 <Button
                                                                     size="sm"
@@ -1561,7 +1565,7 @@ export default function SyndicateBureauManagementPro() {
                                     </TableBody>
                                 </Table>
                             </div>
-                            
+
                             {filteredAndSortedBureaus.length === 0 && (
                                 <div className="text-center py-12">
                                     <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -1659,12 +1663,11 @@ export default function SyndicateBureauManagementPro() {
                                         return (
                                             <div key={status} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-4 h-4 rounded-full ${
-                                                        status === 'active' ? 'bg-green-500' :
+                                                    <div className={`w-4 h-4 rounded-full ${status === 'active' ? 'bg-green-500' :
                                                         status === 'pending' ? 'bg-yellow-500' :
-                                                        status === 'suspended' ? 'bg-red-500' :
-                                                        'bg-gray-500'
-                                                    }`}></div>
+                                                            status === 'suspended' ? 'bg-red-500' :
+                                                                'bg-gray-500'
+                                                        }`}></div>
                                                     <span className="font-semibold capitalize">{getStatusLabel(status)}</span>
                                                 </div>
                                                 <div className="text-right">
@@ -1698,7 +1701,7 @@ export default function SyndicateBureauManagementPro() {
                                             Cotisations Totales Collectées
                                         </p>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="text-center p-4 bg-blue-50 rounded-xl">
                                             <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
@@ -1707,7 +1710,7 @@ export default function SyndicateBureauManagementPro() {
                                             </p>
                                             <p className="text-blue-600 text-sm font-semibold">Total Membres</p>
                                         </div>
-                                        
+
                                         <div className="text-center p-4 bg-purple-50 rounded-xl">
                                             <Activity className="w-8 h-8 mx-auto mb-2 text-purple-600" />
                                             <p className="text-2xl font-bold text-purple-700">

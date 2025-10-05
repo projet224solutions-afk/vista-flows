@@ -164,21 +164,21 @@ interface SOSAlert {
 export default function SyndicatePresidentUltraPro() {
     const { accessToken } = useParams<{ accessToken: string }>();
     const navigate = useNavigate();
-    
+
     // États d'authentification
     const [authenticated, setAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
     const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
     const [authCode, setAuthCode] = useState('');
     const [verificationSent, setVerificationSent] = useState(false);
-    
+
     // États des données
     const [bureauInfo, setBureauInfo] = useState<BureauInfo | null>(null);
     const [members, setMembers] = useState<Member[]>([]);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
-    
+
     // États de l'interface
     const [activeTab, setActiveTab] = useState('dashboard');
     const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
@@ -188,7 +188,7 @@ export default function SyndicatePresidentUltraPro() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    
+
     // États pour les formulaires
     const [newMember, setNewMember] = useState({
         name: '',
@@ -198,7 +198,7 @@ export default function SyndicatePresidentUltraPro() {
         vehicle_type: '',
         vehicle_serial: ''
     });
-    
+
     const [newVehicle, setNewVehicle] = useState({
         serial_number: '',
         type: '',
@@ -209,7 +209,7 @@ export default function SyndicatePresidentUltraPro() {
         insurance_expiry: '',
         last_inspection: ''
     });
-    
+
     const [newTransaction, setNewTransaction] = useState({
         type: 'cotisation' as const,
         amount: 0,
@@ -232,7 +232,7 @@ export default function SyndicatePresidentUltraPro() {
     const authenticateWithToken = async () => {
         try {
             console.log('🔐 Authentification avec token:', accessToken);
-            
+
             // Vérifier le token dans Supabase
             const { data: bureau, error } = await supabase
                 .from('syndicate_bureaus')
@@ -251,11 +251,11 @@ export default function SyndicatePresidentUltraPro() {
                 });
             } else {
                 console.log('✅ Token valide, bureau trouvé:', bureau);
-                
+
                 // Mettre à jour la date d'accès
                 await supabase
                     .from('syndicate_bureaus')
-                    .update({ 
+                    .update({
                         link_accessed_at: new Date().toISOString(),
                         last_activity: new Date().toISOString()
                     })
@@ -283,7 +283,7 @@ export default function SyndicatePresidentUltraPro() {
 
                 // Charger les données associées
                 await loadBureauData(bureau.id);
-                
+
                 setAuthenticated(true);
                 toast.success('🎉 Authentification réussie !', {
                     description: `Bienvenue ${bureau.president_name}`
@@ -452,7 +452,7 @@ export default function SyndicatePresidentUltraPro() {
 
         try {
             setVerificationSent(true);
-            
+
             if (authMethod === 'email') {
                 // Simuler l'envoi d'email
                 console.log('📧 Envoi code par email à:', bureauInfo.president_email);
@@ -521,7 +521,7 @@ export default function SyndicatePresidentUltraPro() {
             };
 
             setMembers(prev => [...prev, member]);
-            
+
             // Mettre à jour les statistiques du bureau
             if (bureauInfo) {
                 setBureauInfo(prev => prev ? {
@@ -575,7 +575,7 @@ export default function SyndicatePresidentUltraPro() {
             };
 
             setVehicles(prev => [...prev, vehicle]);
-            
+
             // Mettre à jour les statistiques du bureau
             if (bureauInfo) {
                 setBureauInfo(prev => prev ? {
@@ -627,7 +627,7 @@ export default function SyndicatePresidentUltraPro() {
             };
 
             setTransactions(prev => [...prev, transaction]);
-            
+
             // Mettre à jour les cotisations du bureau si c'est une cotisation
             if (newTransaction.type === 'cotisation' && bureauInfo) {
                 setBureauInfo(prev => prev ? {
@@ -675,19 +675,19 @@ export default function SyndicatePresidentUltraPro() {
      */
     const filteredAndSortedMembers = members
         .filter(member => {
-            const matchesSearch = 
+            const matchesSearch =
                 member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 member.vehicle_serial.toLowerCase().includes(searchTerm.toLowerCase());
-            
+
             const matchesStatus = filterStatus === 'all' || member.status === filterStatus;
-            
+
             return matchesSearch && matchesStatus;
         })
         .sort((a, b) => {
             const aValue = a[sortBy as keyof Member];
             const bValue = b[sortBy as keyof Member];
-            
+
             if (sortOrder === 'asc') {
                 return aValue > bValue ? 1 : -1;
             } else {
@@ -796,8 +796,8 @@ export default function SyndicatePresidentUltraPro() {
                                         {authMethod === 'email' ? '📧 Email:' : '📱 Téléphone:'}
                                     </p>
                                     <p className="font-semibold text-gray-800">
-                                        {authMethod === 'email' 
-                                            ? bureauInfo?.president_email 
+                                        {authMethod === 'email'
+                                            ? bureauInfo?.president_email
                                             : bureauInfo?.president_phone || 'Non configuré'
                                         }
                                     </p>
@@ -884,7 +884,7 @@ export default function SyndicatePresidentUltraPro() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    {bureauInfo?.bureau_code}
+                                    Syndicat de Taxi Moto de {bureauInfo?.commune}
                                 </h1>
                                 <p className="text-gray-600 text-sm">{bureauInfo?.full_location}</p>
                             </div>
@@ -898,7 +898,7 @@ export default function SyndicatePresidentUltraPro() {
                                     Président
                                 </p>
                             </div>
-                            
+
                             <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
                                 <DialogTrigger asChild>
                                     <Button
@@ -918,7 +918,7 @@ export default function SyndicatePresidentUltraPro() {
                                     <AutoDownloadDetector />
                                 </DialogContent>
                             </Dialog>
-                            
+
                             <Button
                                 onClick={logout}
                                 variant="outline"
@@ -994,50 +994,50 @@ export default function SyndicatePresidentUltraPro() {
                 {/* Navigation par onglets ultra-stylée */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-7 bg-white shadow-lg rounded-2xl p-2 border border-gray-100 mb-8">
-                        <TabsTrigger 
-                            value="dashboard" 
+                        <TabsTrigger
+                            value="dashboard"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Home className="w-4 h-4 mr-2" />
                             Dashboard
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="members" 
+                        <TabsTrigger
+                            value="members"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Users className="w-4 h-4 mr-2" />
                             Membres
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="vehicles" 
+                        <TabsTrigger
+                            value="vehicles"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Car className="w-4 h-4 mr-2" />
                             Véhicules
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="treasury" 
+                        <TabsTrigger
+                            value="treasury"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <Wallet className="w-4 h-4 mr-2" />
                             Trésorerie
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="routes" 
+                        <TabsTrigger
+                            value="routes"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <MapPin className="w-4 h-4 mr-2" />
                             Tickets Route
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="communication" 
+                        <TabsTrigger
+                            value="communication"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <MessageSquare className="w-4 h-4 mr-2" />
                             Communication
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="sos" 
+                        <TabsTrigger
+                            value="sos"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
                         >
                             <AlertTriangle className="w-4 h-4 mr-2" />
@@ -1061,14 +1061,13 @@ export default function SyndicatePresidentUltraPro() {
                                         {transactions.slice(0, 5).map((transaction) => (
                                             <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                        transaction.type === 'cotisation' ? 'bg-green-100' :
-                                                        transaction.type === 'fine' ? 'bg-red-100' :
-                                                        'bg-blue-100'
-                                                    }`}>
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'cotisation' ? 'bg-green-100' :
+                                                            transaction.type === 'fine' ? 'bg-red-100' :
+                                                                'bg-blue-100'
+                                                        }`}>
                                                         {transaction.type === 'cotisation' ? <DollarSign className="w-5 h-5 text-green-600" /> :
-                                                         transaction.type === 'fine' ? <AlertTriangle className="w-5 h-5 text-red-600" /> :
-                                                         <Receipt className="w-5 h-5 text-blue-600" />}
+                                                            transaction.type === 'fine' ? <AlertTriangle className="w-5 h-5 text-red-600" /> :
+                                                                <Receipt className="w-5 h-5 text-blue-600" />}
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-gray-800">{transaction.description}</p>
@@ -1102,7 +1101,7 @@ export default function SyndicatePresidentUltraPro() {
                                             </div>
                                             <Progress value={85} className="h-3" />
                                         </div>
-                                        
+
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-sm font-medium text-gray-700">Membres actifs</span>
@@ -1110,7 +1109,7 @@ export default function SyndicatePresidentUltraPro() {
                                             </div>
                                             <Progress value={92} className="h-3" />
                                         </div>
-                                        
+
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-sm font-medium text-gray-700">Véhicules en service</span>
@@ -1153,7 +1152,7 @@ export default function SyndicatePresidentUltraPro() {
                                                 className="pl-10 rounded-xl border-gray-200"
                                             />
                                         </div>
-                                        
+
                                         <Select value={filterStatus} onValueChange={setFilterStatus}>
                                             <SelectTrigger className="w-48 rounded-xl">
                                                 <Filter className="w-4 h-4 mr-2" />
@@ -1167,7 +1166,7 @@ export default function SyndicatePresidentUltraPro() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    
+
                                     <div className="flex gap-3">
                                         <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
                                             <DialogTrigger asChild>
@@ -1176,101 +1175,101 @@ export default function SyndicatePresidentUltraPro() {
                                                     Ajouter un Membre
                                                 </Button>
                                             </DialogTrigger>
-                                        <DialogContent className="max-w-2xl rounded-2xl">
-                                            <DialogHeader>
-                                                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                                    Nouveau Membre
-                                                </DialogTitle>
-                                            </DialogHeader>
-                                            <div className="space-y-4 p-2">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <Label htmlFor="member_name">Nom complet *</Label>
-                                                        <Input
-                                                            id="member_name"
-                                                            value={newMember.name}
-                                                            onChange={(e) => setNewMember(prev => ({ ...prev, name: e.target.value }))}
-                                                            placeholder="Nom et prénom"
-                                                            className="rounded-xl"
-                                                        />
+                                            <DialogContent className="max-w-2xl rounded-2xl">
+                                                <DialogHeader>
+                                                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                                        Nouveau Membre
+                                                    </DialogTitle>
+                                                </DialogHeader>
+                                                <div className="space-y-4 p-2">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <Label htmlFor="member_name">Nom complet *</Label>
+                                                            <Input
+                                                                id="member_name"
+                                                                value={newMember.name}
+                                                                onChange={(e) => setNewMember(prev => ({ ...prev, name: e.target.value }))}
+                                                                placeholder="Nom et prénom"
+                                                                className="rounded-xl"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="member_email">Email *</Label>
+                                                            <Input
+                                                                id="member_email"
+                                                                type="email"
+                                                                value={newMember.email}
+                                                                onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
+                                                                placeholder="email@example.com"
+                                                                className="rounded-xl"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <Label htmlFor="member_email">Email *</Label>
-                                                        <Input
-                                                            id="member_email"
-                                                            type="email"
-                                                            value={newMember.email}
-                                                            onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
-                                                            placeholder="email@example.com"
-                                                            className="rounded-xl"
-                                                        />
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <Label htmlFor="member_phone">Téléphone *</Label>
+                                                            <Input
+                                                                id="member_phone"
+                                                                value={newMember.phone}
+                                                                onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
+                                                                placeholder="+221 77 123 45 67"
+                                                                className="rounded-xl"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="member_license">Numéro de permis</Label>
+                                                            <Input
+                                                                id="member_license"
+                                                                value={newMember.license_number}
+                                                                onChange={(e) => setNewMember(prev => ({ ...prev, license_number: e.target.value }))}
+                                                                placeholder="LIC-2024-001"
+                                                                className="rounded-xl"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <Label htmlFor="vehicle_type">Type de véhicule</Label>
+                                                            <Select value={newMember.vehicle_type} onValueChange={(value) => setNewMember(prev => ({ ...prev, vehicle_type: value }))}>
+                                                                <SelectTrigger className="rounded-xl">
+                                                                    <SelectValue placeholder="Sélectionner le type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="moto-taxi">Moto-taxi</SelectItem>
+                                                                    <SelectItem value="taxi">Taxi</SelectItem>
+                                                                    <SelectItem value="bus">Bus</SelectItem>
+                                                                    <SelectItem value="camion">Camion</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="vehicle_serial">Numéro de série véhicule</Label>
+                                                            <Input
+                                                                id="vehicle_serial"
+                                                                value={newMember.vehicle_serial}
+                                                                onChange={(e) => setNewMember(prev => ({ ...prev, vehicle_serial: e.target.value }))}
+                                                                placeholder="MT-001-2024"
+                                                                className="rounded-xl"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-3 pt-4">
+                                                        <Button onClick={addMember} className="flex-1 rounded-xl">
+                                                            <UserPlus className="w-4 h-4 mr-2" />
+                                                            Ajouter le Membre
+                                                        </Button>
+                                                        <Button variant="outline" onClick={() => setShowAddMemberDialog(false)} className="flex-1 rounded-xl">
+                                                            Annuler
+                                                        </Button>
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <Label htmlFor="member_phone">Téléphone *</Label>
-                                                        <Input
-                                                            id="member_phone"
-                                                            value={newMember.phone}
-                                                            onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
-                                                            placeholder="+221 77 123 45 67"
-                                                            className="rounded-xl"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <Label htmlFor="member_license">Numéro de permis</Label>
-                                                        <Input
-                                                            id="member_license"
-                                                            value={newMember.license_number}
-                                                            onChange={(e) => setNewMember(prev => ({ ...prev, license_number: e.target.value }))}
-                                                            placeholder="LIC-2024-001"
-                                                            className="rounded-xl"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <Label htmlFor="vehicle_type">Type de véhicule</Label>
-                                                        <Select value={newMember.vehicle_type} onValueChange={(value) => setNewMember(prev => ({ ...prev, vehicle_type: value }))}>
-                                                            <SelectTrigger className="rounded-xl">
-                                                                <SelectValue placeholder="Sélectionner le type" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="moto-taxi">Moto-taxi</SelectItem>
-                                                                <SelectItem value="taxi">Taxi</SelectItem>
-                                                                <SelectItem value="bus">Bus</SelectItem>
-                                                                <SelectItem value="camion">Camion</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div>
-                                                        <Label htmlFor="vehicle_serial">Numéro de série véhicule</Label>
-                                                        <Input
-                                                            id="vehicle_serial"
-                                                            value={newMember.vehicle_serial}
-                                                            onChange={(e) => setNewMember(prev => ({ ...prev, vehicle_serial: e.target.value }))}
-                                                            placeholder="MT-001-2024"
-                                                            className="rounded-xl"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex gap-3 pt-4">
-                                                    <Button onClick={addMember} className="flex-1 rounded-xl">
-                                                        <UserPlus className="w-4 h-4 mr-2" />
-                                                        Ajouter le Membre
-                                                    </Button>
-                                                    <Button variant="outline" onClick={() => setShowAddMemberDialog(false)} className="flex-1 rounded-xl">
-                                                        Annuler
-                                                    </Button>
-                                                </div>
-                                            </div>
                                             </DialogContent>
                                         </Dialog>
-                                        
-                                        <AddTaxiMotardForm 
+
+                                        <AddTaxiMotardForm
                                             syndicateId={bureauInfo?.id}
                                             onSuccess={(result) => {
                                                 console.log('Taxi-motard créé:', result);
@@ -1320,7 +1319,7 @@ export default function SyndicatePresidentUltraPro() {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    
+
                                                     <TableCell>
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
@@ -1333,14 +1332,14 @@ export default function SyndicatePresidentUltraPro() {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    
+
                                                     <TableCell>
                                                         <div>
                                                             <p className="font-semibold text-gray-800">{member.vehicle_type}</p>
                                                             <p className="text-sm text-gray-600">{member.vehicle_serial}</p>
                                                         </div>
                                                     </TableCell>
-                                                    
+
                                                     <TableCell>
                                                         <div className="text-center">
                                                             <p className="font-bold text-lg text-green-600">
@@ -1348,7 +1347,7 @@ export default function SyndicatePresidentUltraPro() {
                                                             </p>
                                                             <Badge className={`${getStatusColor(member.cotisation_status)} text-xs`}>
                                                                 {member.cotisation_status === 'paid' ? 'À jour' :
-                                                                 member.cotisation_status === 'pending' ? 'En attente' : 'En retard'}
+                                                                    member.cotisation_status === 'pending' ? 'En attente' : 'En retard'}
                                                             </Badge>
                                                             {member.last_cotisation_date && (
                                                                 <p className="text-xs text-gray-500 mt-1">
@@ -1357,14 +1356,14 @@ export default function SyndicatePresidentUltraPro() {
                                                             )}
                                                         </div>
                                                     </TableCell>
-                                                    
+
                                                     <TableCell>
                                                         <Badge className={`${getStatusColor(member.status)} font-semibold`}>
                                                             {member.status === 'active' ? 'Actif' :
-                                                             member.status === 'inactive' ? 'Inactif' : 'Suspendu'}
+                                                                member.status === 'inactive' ? 'Inactif' : 'Suspendu'}
                                                         </Badge>
                                                     </TableCell>
-                                                    
+
                                                     <TableCell>
                                                         <div className="flex gap-2">
                                                             <Button size="sm" variant="outline" className="rounded-lg">
@@ -1400,7 +1399,7 @@ export default function SyndicatePresidentUltraPro() {
                     </TabsContent>
 
                     <TabsContent value="treasury" className="space-y-6">
-                        <SyndicateWalletDashboard 
+                        <SyndicateWalletDashboard
                             syndicateId={bureauInfo?.id || 'demo-1'}
                             bureauName={bureauInfo?.bureau_code}
                         />
@@ -1453,20 +1452,19 @@ export default function SyndicatePresidentUltraPro() {
                                                             {alert.member_name} - {alert.vehicle_serial}
                                                         </h3>
                                                         <div className="flex items-center gap-4 mb-3">
-                                                            <Badge className={`${
-                                                                alert.severity === 'critical' ? 'bg-red-600 text-white' :
-                                                                alert.severity === 'high' ? 'bg-orange-500 text-white' :
-                                                                alert.severity === 'medium' ? 'bg-yellow-500 text-white' :
-                                                                'bg-blue-500 text-white'
-                                                            }`}>
+                                                            <Badge className={`${alert.severity === 'critical' ? 'bg-red-600 text-white' :
+                                                                    alert.severity === 'high' ? 'bg-orange-500 text-white' :
+                                                                        alert.severity === 'medium' ? 'bg-yellow-500 text-white' :
+                                                                            'bg-blue-500 text-white'
+                                                                }`}>
                                                                 {alert.severity === 'critical' ? 'Critique' :
-                                                                 alert.severity === 'high' ? 'Élevé' :
-                                                                 alert.severity === 'medium' ? 'Moyen' : 'Faible'}
+                                                                    alert.severity === 'high' ? 'Élevé' :
+                                                                        alert.severity === 'medium' ? 'Moyen' : 'Faible'}
                                                             </Badge>
                                                             <Badge variant="outline">
                                                                 {alert.alert_type === 'emergency' ? 'Urgence' :
-                                                                 alert.alert_type === 'breakdown' ? 'Panne' :
-                                                                 alert.alert_type === 'accident' ? 'Accident' : 'Vol'}
+                                                                    alert.alert_type === 'breakdown' ? 'Panne' :
+                                                                        alert.alert_type === 'accident' ? 'Accident' : 'Vol'}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-gray-700 mb-3">{alert.description}</p>

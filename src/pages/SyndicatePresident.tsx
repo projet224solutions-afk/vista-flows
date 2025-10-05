@@ -303,7 +303,7 @@ export default function SyndicatePresident() {
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900">
-                                    Bureau Syndical {bureauInfo.bureau_code}
+                                    Syndicat de Taxi Moto de {bureauInfo.commune}
                                 </h1>
                                 <p className="text-sm text-gray-600">
                                     {bureauInfo.prefecture} - {bureauInfo.commune} • Président: {bureauInfo.president_name}
