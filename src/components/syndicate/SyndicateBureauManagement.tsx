@@ -36,7 +36,8 @@ import {
     Phone,
     Link,
     Copy,
-    ExternalLink
+    ExternalLink,
+    RotateCcw
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
@@ -101,58 +102,63 @@ export default function SyndicateBureauManagement() {
     }, []);
 
     /**
-     * Charge la liste des bureaux syndicaux
+     * Charge la liste des bureaux syndicaux depuis Supabase
      */
     const loadBureaus = async () => {
         try {
-            // Simuler le chargement depuis Supabase
-            const mockBureaus: SyndicateBureau[] = [
-                {
-                    id: '1',
-                    bureau_code: 'SYN-2025-00001',
-                    prefecture: 'Conakry',
-                    commune: 'Plateau',
-                    full_location: 'Conakry - Plateau',
-                    president_name: 'Mamadou Diallo',
-                    president_email: 'mamadou.diallo@email.com',
-                    president_phone: '+221 77 123 45 67',
-                    permanent_link: 'https://224solutions.com/syndicat/access/abc123def456',
-                    access_token: 'abc123def456',
-                    status: 'active',
-                    total_members: 45,
-                    active_members: 42,
-                    total_vehicles: 38,
-                    total_cotisations: 2250000,
-                    link_sent_at: '2025-09-25T10:30:00Z',
-                    link_accessed_at: '2025-09-25T14:20:00Z',
-                    created_at: '2025-09-25T10:00:00Z',
-                    validated_at: '2025-09-25T16:00:00Z'
-                },
-                {
-                    id: '2',
-                    bureau_code: 'SYN-2025-00002',
-                    prefecture: 'Thiès',
-                    commune: 'Thiès Nord',
-                    full_location: 'Thiès - Thiès Nord',
-                    president_name: 'Fatou Sall',
-                    president_email: 'fatou.sall@email.com',
-                    president_phone: '+221 76 987 65 43',
-                    permanent_link: 'https://224solutions.com/syndicat/access/xyz789uvw012',
-                    access_token: 'xyz789uvw012',
-                    status: 'pending',
-                    total_members: 0,
-                    active_members: 0,
-                    total_vehicles: 0,
-                    total_cotisations: 0,
-                    link_sent_at: '2025-09-30T09:15:00Z',
-                    created_at: '2025-09-30T09:00:00Z'
-                }
-            ];
+            console.log('🔄 Chargement des bureaux depuis Supabase...');
+            
+            // Charger depuis Supabase
+            const { data: supabaseBureaus, error } = await supabase
+                .from('syndicate_bureaus')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            setBureaus(mockBureaus);
+            if (error) {
+                console.error('❌ Erreur Supabase:', error);
+                // Fallback sur les données mockées en cas d'erreur
+                const mockBureaus: SyndicateBureau[] = [
+                    {
+                        id: '1',
+                        bureau_code: 'SYN-2025-00001',
+                        prefecture: 'Conakry',
+                        commune: 'Plateau',
+                        full_location: 'Conakry - Plateau',
+                        president_name: 'Mamadou Diallo',
+                        president_email: 'mamadou.diallo@email.com',
+                        president_phone: '+221 77 123 45 67',
+                        permanent_link: 'https://224solutions.com/syndicat/access/abc123def456',
+                        access_token: 'abc123def456',
+                        status: 'active',
+                        total_members: 45,
+                        active_members: 42,
+                        total_vehicles: 38,
+                        total_cotisations: 2250000,
+                        link_sent_at: '2025-09-25T10:30:00Z',
+                        link_accessed_at: '2025-09-25T14:20:00Z',
+                        created_at: '2025-09-25T10:00:00Z',
+                        validated_at: '2025-09-25T16:00:00Z'
+                    }
+                ];
+                setBureaus(mockBureaus);
+                toast.warning('Mode démo activé - Supabase non disponible');
+                return;
+            }
+
+            if (supabaseBureaus && supabaseBureaus.length > 0) {
+                console.log('✅ Bureaux chargés depuis Supabase:', supabaseBureaus.length);
+                setBureaus(supabaseBureaus);
+                toast.success(`${supabaseBureaus.length} bureau(s) chargé(s)`);
+            } else {
+                console.log('📭 Aucun bureau trouvé dans Supabase');
+                setBureaus([]);
+                toast.info('Aucun bureau syndical créé pour le moment');
+            }
+
         } catch (error) {
-            console.error('Erreur chargement bureaux:', error);
+            console.error('❌ Erreur chargement bureaux:', error);
             toast.error('Impossible de charger les bureaux syndicaux');
+            setBureaus([]);
         } finally {
             setLoading(false);
         }
@@ -265,7 +271,13 @@ export default function SyndicateBureauManagement() {
                 });
             }
 
+            // Ajouter le bureau à la liste locale
             setBureaus(prev => [...prev, newBureau]);
+
+            // Recharger les données depuis Supabase pour s'assurer de la persistance
+            setTimeout(() => {
+                loadBureaus();
+            }, 1000);
 
             // Réinitialiser le formulaire
             setFormData({
@@ -707,6 +719,14 @@ Copiez ces informations et envoyez-les par email au président.
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold">Gestion des Bureaux Syndicaux</h2>
                         <div className="flex gap-3">
+                            <Button
+                                onClick={loadBureaus}
+                                variant="outline"
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50 shadow-md hover:shadow-lg transition-all duration-300"
+                            >
+                                <RotateCcw className="w-4 h-4 mr-2" />
+                                Actualiser
+                            </Button>
                             <Button
                                 onClick={testEmailSystem}
                                 variant="outline"
