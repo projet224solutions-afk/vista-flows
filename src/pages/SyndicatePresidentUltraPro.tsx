@@ -172,6 +172,10 @@ export default function SyndicatePresidentUltraPro() {
     const [authCode, setAuthCode] = useState('');
     const [verificationSent, setVerificationSent] = useState(false);
 
+    // États pour les champs de saisie
+    const [emailInput, setEmailInput] = useState('');
+    const [phoneInput, setPhoneInput] = useState('');
+
     // États des données
     const [bureauInfo, setBureauInfo] = useState<BureauInfo | null>(null);
     const [members, setMembers] = useState<Member[]>([]);
@@ -445,22 +449,20 @@ export default function SyndicatePresidentUltraPro() {
      * Envoie un code de vérification par email ou SMS
      */
     const sendVerificationCode = async () => {
-        if (!bureauInfo) return;
-
         try {
             setVerificationSent(true);
 
             if (authMethod === 'email') {
                 // Simuler l'envoi d'email
-                console.log('📧 Envoi code par email à:', bureauInfo.president_email);
+                console.log('📧 Envoi code par email à:', emailInput);
                 toast.success('Code envoyé par email !', {
-                    description: `Vérifiez votre boîte mail: ${bureauInfo.president_email}`
+                    description: `Vérifiez votre boîte mail: ${emailInput}`
                 });
             } else {
                 // Simuler l'envoi de SMS
-                console.log('📱 Envoi code par SMS à:', bureauInfo.president_phone);
+                console.log('📱 Envoi code par SMS à:', phoneInput);
                 toast.success('Code envoyé par SMS !', {
-                    description: `Vérifiez vos messages: ${bureauInfo.president_phone}`
+                    description: `Vérifiez vos messages: ${phoneInput}`
                 });
             }
 
@@ -796,8 +798,8 @@ export default function SyndicatePresidentUltraPro() {
                                             <Input
                                                 id="email"
                                                 type="email"
-                                                value={bureauInfo?.president_email || ''}
-                                                onChange={(e) => setBureauInfo(prev => prev ? { ...prev, president_email: e.target.value } : null)}
+                                                value={emailInput}
+                                                onChange={(e) => setEmailInput(e.target.value)}
                                                 placeholder="votre.email@example.com"
                                                 className="mt-2 rounded-xl"
                                                 required
@@ -811,8 +813,8 @@ export default function SyndicatePresidentUltraPro() {
                                             <Input
                                                 id="phone"
                                                 type="tel"
-                                                value={bureauInfo?.president_phone || ''}
-                                                onChange={(e) => setBureauInfo(prev => prev ? { ...prev, president_phone: e.target.value } : null)}
+                                                value={phoneInput}
+                                                onChange={(e) => setPhoneInput(e.target.value)}
                                                 placeholder="+224 XXX XX XX XX"
                                                 className="mt-2 rounded-xl"
                                                 required
@@ -824,7 +826,7 @@ export default function SyndicatePresidentUltraPro() {
                                 <Button
                                     onClick={sendVerificationCode}
                                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl py-3"
-                                    disabled={authMethod === 'email' ? !bureauInfo?.president_email : !bureauInfo?.president_phone}
+                                    disabled={authMethod === 'email' ? !emailInput.trim() : !phoneInput.trim()}
                                 >
                                     <Send className="w-4 h-4 mr-2" />
                                     Envoyer le code de vérification
@@ -1080,8 +1082,8 @@ export default function SyndicatePresidentUltraPro() {
                                             <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'cotisation' ? 'bg-green-100' :
-                                                            transaction.type === 'fine' ? 'bg-red-100' :
-                                                                'bg-blue-100'
+                                                        transaction.type === 'fine' ? 'bg-red-100' :
+                                                            'bg-blue-100'
                                                         }`}>
                                                         {transaction.type === 'cotisation' ? <DollarSign className="w-5 h-5 text-green-600" /> :
                                                             transaction.type === 'fine' ? <AlertTriangle className="w-5 h-5 text-red-600" /> :
@@ -1471,9 +1473,9 @@ export default function SyndicatePresidentUltraPro() {
                                                         </h3>
                                                         <div className="flex items-center gap-4 mb-3">
                                                             <Badge className={`${alert.severity === 'critical' ? 'bg-red-600 text-white' :
-                                                                    alert.severity === 'high' ? 'bg-orange-500 text-white' :
-                                                                        alert.severity === 'medium' ? 'bg-yellow-500 text-white' :
-                                                                            'bg-blue-500 text-white'
+                                                                alert.severity === 'high' ? 'bg-orange-500 text-white' :
+                                                                    alert.severity === 'medium' ? 'bg-yellow-500 text-white' :
+                                                                        'bg-blue-500 text-white'
                                                                 }`}>
                                                                 {alert.severity === 'critical' ? 'Critique' :
                                                                     alert.severity === 'high' ? 'Élevé' :
