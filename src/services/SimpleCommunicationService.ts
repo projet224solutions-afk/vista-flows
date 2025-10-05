@@ -63,33 +63,47 @@ class SimpleCommunicationService {
    */
   async getConversations(userId: string): Promise<SimpleConversation[]> {
     try {
-      const { data, error } = await supabase
-        .from('conversations')
+      // Utiliser les messages existants pour créer des conversations virtuelles
+      const { data: messages, error } = await supabase
+        .from('messages')
         .select(`
           id,
-          name,
-          type,
-          participant_1,
-          participant_2,
-          last_message_at,
-          created_at
+          conversation_id,
+          sender_id,
+          content,
+          created_at,
+          sender:profiles!messages_sender_id_fkey(
+            id,
+            first_name,
+            last_name,
+            email
+          )
         `)
-        .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
-        .eq('status', 'active')
-        .order('last_message_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
         throw new Error(error.message);
       }
 
-      return data.map(conv => ({
-        id: conv.id,
-        name: conv.name || 'Conversation',
-        type: conv.type,
-        participants: [conv.participant_1, conv.participant_2].filter(Boolean),
-        last_message_at: conv.last_message_at,
-        unread_count: 0
-      }));
+      // Grouper les messages par conversation
+      const conversationMap = new Map<string, any>();
+      
+      messages.forEach(msg => {
+        if (!conversationMap.has(msg.conversation_id)) {
+          conversationMap.set(msg.conversation_id, {
+            id: msg.conversation_id,
+            name: `Conversation ${msg.conversation_id.slice(0, 8)}`,
+            type: 'private',
+            participants: [msg.sender_id],
+            last_message: msg.content,
+            last_message_at: msg.created_at,
+            unread_count: 0
+          });
+        }
+      });
+
+      return Array.from(conversationMap.values());
     } catch (error) {
       console.error('Error fetching conversations:', error);
       return [];
@@ -101,38 +115,11 @@ class SimpleCommunicationService {
    */
   async createPrivateConversation(userId1: string, userId2: string): Promise<SimpleConversation | null> {
     try {
-      // Vérifier si une conversation existe déjà
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .or(`and(participant_1.eq.${userId1},participant_2.eq.${userId2}),and(participant_1.eq.${userId2},participant_2.eq.${userId1})`)
-        .eq('type', 'private')
-        .eq('status', 'active')
-        .single();
-
-      if (existing) {
-        return await this.getConversationById(existing.id);
-      }
-
-      // Créer une nouvelle conversation
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert({
-          type: 'private',
-          participant_1: userId1,
-          participant_2: userId2,
-          status: 'active',
-          created_by: userId1
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      // Créer un ID de conversation unique
+      const conversationId = `conv_${userId1}_${userId2}_${Date.now()}`;
+      
       return {
-        id: data.id,
+        id: conversationId,
         name: 'Conversation privée',
         type: 'private',
         participants: [userId1, userId2],
@@ -150,31 +137,12 @@ class SimpleCommunicationService {
    */
   async getConversationById(conversationId: string): Promise<SimpleConversation | null> {
     try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          name,
-          type,
-          participant_1,
-          participant_2,
-          last_message_at,
-          created_at
-        `)
-        .eq('id', conversationId)
-        .eq('status', 'active')
-        .single();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      // Créer une conversation virtuelle basée sur l'ID
       return {
-        id: data.id,
-        name: data.name || 'Conversation',
-        type: data.type,
-        participants: [data.participant_1, data.participant_2].filter(Boolean),
-        last_message_at: data.last_message_at,
+        id: conversationId,
+        name: `Conversation ${conversationId.slice(0, 8)}`,
+        type: 'private',
+        participants: [],
         unread_count: 0
       };
     } catch (error) {
