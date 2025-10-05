@@ -28,6 +28,7 @@ import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import MultiCurrencyTransfer from "@/components/wallet/MultiCurrencyTransfer";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -106,6 +107,7 @@ export default function ClientDashboard() {
     }
   };
   const [membershipProgress, setMembershipProgress] = useState(75);
+  const [showMultiCurrencyTransfer, setShowMultiCurrencyTransfer] = useState(false);
 
   // ================= DONNÉES MOCKÉES STYLE ALIBABA =================
   const categories: Category[] = [
@@ -361,9 +363,9 @@ export default function ClientDashboard() {
                         >
                           {isFixingAccount ? 'Réparation...' : 'Réparer Compte'}
                         </Button>
-                        <VirtualCardButton 
-                          size="sm" 
-                          variant="outline" 
+                        <VirtualCardButton
+                          size="sm"
+                          variant="outline"
                           className="bg-white/20 hover:bg-white/30 text-white border-white/30"
                         />
                       </div>
@@ -406,13 +408,20 @@ export default function ClientDashboard() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <VirtualCardButton className="w-full" />
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">
-                      ✅ <strong>Wallet créé automatiquement</strong><br/>
-                      💡 Votre ID apparaît sous votre nom<br/>
-                      🎯 Système 100% opérationnel
-                    </p>
-                  </div>
+                  <Button
+                    onClick={() => setShowMultiCurrencyTransfer(true)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Transfert Multi-Devises
+                  </Button>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-600">
+                    ✅ <strong>Wallet créé automatiquement</strong><br />
+                    💡 Votre ID apparaît sous votre nom<br />
+                    🎯 Système 100% opérationnel
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -696,6 +705,26 @@ export default function ClientDashboard() {
           </div>
         )}
       </main>
+
+      {/* Modal Transfert Multi-Devises */}
+      {showMultiCurrencyTransfer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl font-semibold">💸 Transfert Multi-Devises</h2>
+              <Button
+                variant="ghost"
+                onClick={() => setShowMultiCurrencyTransfer(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <MultiCurrencyTransfer />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer de navigation */}
       <QuickFooter />
