@@ -37,7 +37,7 @@ import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDas
 import CommunicationModule from "@/components/communication/CommunicationModule";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { useWallet, useWalletTransactions } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/useWallet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
@@ -50,18 +50,17 @@ export default function VendeurDashboard() {
   const { userInfo, loading: userInfoLoading } = useUserInfo();
 
   // Hooks wallet intégrés
-  const { wallet, isLoading: walletLoading, isInitialized: walletInitialized } = useWallet();
-  const { transactions } = useWalletTransactions(wallet?.id);
+  const { wallet, loading: walletLoading, transactions } = useWallet();
 
   // Notification de succès wallet
   useEffect(() => {
-    if (walletInitialized && wallet) {
+    if (wallet) {
       toast({
         title: "✅ Wallet Activé",
         description: `Solde disponible: ${wallet.balance.toLocaleString()} ${wallet.currency}`,
       });
     }
-  }, [walletInitialized, wallet]);
+  }, [wallet]);
 
   const handleSignOut = async () => {
     try {
@@ -219,7 +218,7 @@ export default function VendeurDashboard() {
                 </div>
               </div>
               {/* Informations Wallet Ultra-Professionnelles */}
-              {wallet && walletInitialized && (
+              {wallet && (
                 <div className="hidden lg:flex items-center gap-4 ml-8">
                   {/* Solde Wallet Premium */}
                   <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50 shadow-sm">

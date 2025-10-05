@@ -59,7 +59,7 @@ export default function CommunicationModule({ className }: CommunicationModulePr
   const { presence } = useUserPresence();
   
   // Hook wallet pour création automatique
-  const { wallet, isLoading: walletLoading, isInitialized: walletInitialized } = useWallet();
+  const { wallet, loading: walletLoading } = useWallet();
 
   // Statistiques rapides
   const totalConversations = conversations.length;
@@ -89,7 +89,7 @@ export default function CommunicationModule({ className }: CommunicationModulePr
           <p className="text-muted-foreground">
             Configuration du système de communication et portefeuille en cours
           </p>
-          {walletInitialized && (
+          {wallet && (
             <p className="text-sm text-green-600 mt-2">
               ✅ Portefeuille 224Solutions activé
             </p>
