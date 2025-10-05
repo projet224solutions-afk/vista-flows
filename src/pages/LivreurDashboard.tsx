@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeliveries } from "@/hooks/useSupabaseQuery";
 import { 
@@ -12,8 +13,10 @@ import {
   AlertTriangle,
   CheckCircle,
   Navigation,
-  Star
+  Star,
+  MessageSquare
 } from "lucide-react";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 export default function LivreurDashboard() {
   const { profile, signOut } = useAuth();
@@ -94,8 +97,16 @@ export default function LivreurDashboard() {
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Navigation par onglets */}
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="p-6 border-0 shadow-elegant hover:shadow-glow transition-all duration-300">
               <div className="flex items-center justify-between">
@@ -189,6 +200,12 @@ export default function LivreurDashboard() {
             </div>
           </div>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="communication" className="space-y-6">
+            <SimpleCommunicationInterface />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

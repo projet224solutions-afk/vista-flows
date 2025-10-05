@@ -45,6 +45,7 @@ import SyndicateRoadTickets from "@/components/syndicate/SyndicateRoadTickets";
 import SyndicateCommunication from "@/components/syndicate/SyndicateCommunication";
 import SyndicateElections from "@/components/syndicate/SyndicateElections";
 import SyndicateSOSManagement from "@/components/syndicate/SyndicateSOSManagement";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 interface BureauInfo {
     id: string;
@@ -560,7 +561,7 @@ export default function SyndicatePresident() {
                         </TabsContent>
 
                         <TabsContent value="communication">
-                            <SyndicateCommunication bureauId={bureauInfo.id} />
+                            <SimpleCommunicationInterface />
                         </TabsContent>
 
                         <TabsContent value="elections">

@@ -35,6 +35,7 @@ import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
 import TaxiMotoFavorites from "@/components/taxi-moto/TaxiMotoFavorites";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 export default function TaxiMoto() {
     const { user, profile } = useAuth();
@@ -227,7 +228,7 @@ export default function TaxiMoto() {
             {/* Navigation par onglets */}
             <div className="px-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
                         <TabsTrigger value="booking" className="text-xs">
                             <Navigation className="w-4 h-4 mr-1" />
                             Réserver
@@ -243,6 +244,10 @@ export default function TaxiMoto() {
                         <TabsTrigger value="favorites" className="text-xs">
                             <Heart className="w-4 h-4 mr-1" />
                             Favoris
+                        </TabsTrigger>
+                        <TabsTrigger value="communication" className="text-xs">
+                            <Phone className="w-4 h-4 mr-1" />
+                            Communication
                         </TabsTrigger>
                     </TabsList>
 
@@ -269,6 +274,9 @@ export default function TaxiMoto() {
 
                         <TabsContent value="favorites" className="space-y-4">
                             <TaxiMotoFavorites userId={user?.id} />
+                        </TabsContent>
+                        <TabsContent value="communication" className="space-y-4">
+                            <SimpleCommunicationInterface />
                         </TabsContent>
                     </div>
                 </Tabs>

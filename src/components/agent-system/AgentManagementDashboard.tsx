@@ -20,10 +20,11 @@ import {
   Eye, Edit, Trash2, Mail, Phone, Shield, Crown,
   BarChart3, PieChart, Activity, Calendar, RefreshCw,
   CheckCircle, XCircle, AlertTriangle, Plus, Search,
-  Filter, Download, Upload, MoreVertical, Star
+  Filter, Download, Upload, MoreVertical, Star, MessageSquare
 } from "lucide-react";
 import { useAgentManagement, usePDGManagement, useCommissionManagement, useAgentSystemOverview } from "@/hooks/useAgentSystem";
 import { toast } from "sonner";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 interface AgentManagementDashboardProps {
   pdgId: string;
@@ -193,11 +194,12 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
       {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="commissions">Commissions</TabsTrigger>
             <TabsTrigger value="settings">Paramètres</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
           </TabsList>
 
           <div className="flex items-center gap-2">
@@ -560,6 +562,10 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               </Alert>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="communication" className="space-y-6">
+          <SimpleCommunicationInterface />
         </TabsContent>
       </Tabs>
     </div>

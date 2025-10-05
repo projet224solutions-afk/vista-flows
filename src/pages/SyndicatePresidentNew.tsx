@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 interface BureauInfo {
     id: string;
@@ -430,14 +431,7 @@ export default function SyndicatePresidentNew() {
                     </TabsContent>
 
                     <TabsContent value="communication" className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Communication</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-gray-600">Interface de communication en cours de développement...</p>
-                            </CardContent>
-                        </Card>
+                        <SimpleCommunicationInterface />
                     </TabsContent>
 
                     <TabsContent value="elections" className="space-y-6">

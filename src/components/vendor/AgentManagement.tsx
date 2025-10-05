@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, UserPlus, Shield, Settings, AlertTriangle } from 'lucide-react';
+import { Users, UserPlus, Shield, Settings, AlertTriangle, MessageSquare } from 'lucide-react';
 import { useAgentManagement } from '@/hooks/useAgentManagement';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SimpleCommunicationInterface from '@/components/communication/SimpleCommunicationInterface';
 
 export default function AgentManagement() {
   const { 
@@ -103,6 +105,15 @@ export default function AgentManagement() {
           <AlertDescription className="font-medium">{error}</AlertDescription>
         </Alert>
       )}
+
+      {/* Navigation par onglets */}
+      <Tabs defaultValue="agents" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
+          <TabsTrigger value="communication">Communication</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="agents" className="space-y-8">
 
       {/* Header Moderne */}
       <div className="flex justify-between items-start">
@@ -419,6 +430,12 @@ export default function AgentManagement() {
           </Card>
         )}
       </div>
+        </TabsContent>
+
+        <TabsContent value="communication" className="space-y-6">
+          <SimpleCommunicationInterface />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

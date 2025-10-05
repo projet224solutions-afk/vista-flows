@@ -28,6 +28,7 @@ import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 // ================= INTERFACES TYPESCRIPT =================
 interface Product {
@@ -321,6 +322,15 @@ export default function ClientDashboard() {
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Panier ({cartItems.length})
+              </Button>
+              <Button
+                variant={activeTab === 'communication' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleTabChange('communication')}
+                className={activeTab === 'communication' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Communication
               </Button>
             </div>
           </ScrollArea>
@@ -700,6 +710,12 @@ export default function ClientDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'communication' && (
+          <div className="space-y-6">
+            <SimpleCommunicationInterface />
           </div>
         )}
       </main>

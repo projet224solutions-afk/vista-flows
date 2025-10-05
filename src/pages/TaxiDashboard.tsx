@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bike, MapPin, Clock, TrendingUp, Star, Navigation } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bike, MapPin, Clock, TrendingUp, Star, Navigation, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 export default function TaxiDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -76,27 +78,35 @@ export default function TaxiDashboard() {
         </div>
       </header>
 
-      {/* Stats Cards */}
-      <section className="px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                    <Icon className={`w-8 h-8 ${stat.color}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+      {/* Navigation par onglets */}
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="communication">Communication</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Stats Cards */}
+          <section className="px-4 py-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={index}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                          <p className="text-2xl font-bold">{stat.value}</p>
+                        </div>
+                        <Icon className={`w-8 h-8 ${stat.color}`} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
 
       {/* Recent Rides */}
       <section className="px-4 py-2">
@@ -214,6 +224,14 @@ export default function TaxiDashboard() {
           </CardContent>
         </Card>
       </section>
+        </TabsContent>
+
+        <TabsContent value="communication" className="space-y-6">
+          <div className="px-4 py-6">
+            <SimpleCommunicationInterface />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
