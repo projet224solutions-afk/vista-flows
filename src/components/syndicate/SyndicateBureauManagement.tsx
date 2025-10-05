@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Badge as BadgeComponent } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -84,6 +84,7 @@ export default function SyndicateBureauManagement() {
     const [sosAlerts, setSOSAlerts] = useState<SOSAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
+    const [showBadgeDialog, setShowBadgeDialog] = useState(false);
     const [selectedBureau, setSelectedBureau] = useState<SyndicateBureau | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -95,6 +96,20 @@ export default function SyndicateBureauManagement() {
         president_email: '',
         president_phone: ''
     });
+
+    // Formulaire de badge
+    const [badgeForm, setBadgeForm] = useState({
+        name: '',
+        firstName: '',
+        giletNumber: '',
+        phone: '',
+        email: '',
+        plate: '',
+        serialNumber: '',
+        photo: null as File | null
+    });
+    const [badgeLoading, setBadgeLoading] = useState(false);
+    const [badgeUrl, setBadgeUrl] = useState<string | null>(null);
 
     useEffect(() => {
         loadBureaus();
@@ -591,6 +606,73 @@ Copiez ces informations et envoyez-les par email au président.
     };
 
     /**
+     * GÉNÉRATION DE BADGE TAXI-MOTO
+     * Crée un badge professionnel avec QR code
+     */
+    const generateBadge = async () => {
+        if (!badgeForm.name || !badgeForm.firstName || !badgeForm.phone || !badgeForm.plate || !badgeForm.serialNumber) {
+            toast.error('❌ Champs obligatoires manquants', {
+                description: 'Nom, prénom, téléphone, plaque et numéro de série sont requis'
+            });
+            return;
+        }
+
+        setBadgeLoading(true);
+        try {
+            const response = await fetch('/api/generateBadge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bureau_id: selectedBureau?.id || bureaus[0]?.id,
+                    created_by: 'pdg', // À remplacer par l'ID utilisateur réel
+                    ...badgeForm
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            setBadgeUrl(result.url);
+            
+            toast.success('✅ Badge généré avec succès !', {
+                description: 'Le badge a été créé et sauvegardé',
+                duration: 5000,
+                action: {
+                    label: 'Télécharger',
+                    onClick: () => {
+                        window.open(result.url, '_blank');
+                    }
+                }
+            });
+
+            // Réinitialiser le formulaire
+            setBadgeForm({
+                name: '',
+                firstName: '',
+                giletNumber: '',
+                phone: '',
+                email: '',
+                plate: '',
+                serialNumber: '',
+                photo: null
+            });
+            setShowBadgeDialog(false);
+
+        } catch (error) {
+            console.error('❌ Erreur génération badge:', error);
+            toast.error('❌ Erreur lors de la génération', {
+                description: 'Vérifiez la console pour plus de détails'
+            });
+        } finally {
+            setBadgeLoading(false);
+        }
+    };
+
+    /**
      * Copie le lien permanent
      */
     const copyLink = (link: string) => {
@@ -759,6 +841,14 @@ Copiez ces informations et envoyez-les par email au président.
                             >
                                 <Mail className="w-4 h-4 mr-2" />
                                 Tester Email
+                            </Button>
+                            <Button
+                                onClick={() => setShowBadgeDialog(true)}
+                                variant="outline"
+                                className="border-purple-500 text-purple-600 hover:bg-purple-50 shadow-md hover:shadow-lg transition-all duration-300"
+                            >
+                                <Shield className="w-4 h-4 mr-2" />
+                                Générer Badge
                             </Button>
                             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                                 <DialogTrigger asChild>
@@ -1093,6 +1183,158 @@ Copiez ces informations et envoyez-les par email au président.
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Modal de génération de badge */}
+            <Dialog open={showBadgeDialog} onOpenChange={setShowBadgeDialog}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-purple-600" />
+                            Générer un Badge Taxi-Moto
+                        </DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="space-y-6">
+                        {/* Informations du membre */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="name">Nom *</Label>
+                                <Input
+                                    id="name"
+                                    value={badgeForm.name}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Ex: Diallo"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="firstName">Prénom *</Label>
+                                <Input
+                                    id="firstName"
+                                    value={badgeForm.firstName}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                    placeholder="Ex: Mamadou"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="giletNumber">Numéro de gilet (optionnel)</Label>
+                                <Input
+                                    id="giletNumber"
+                                    value={badgeForm.giletNumber}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, giletNumber: e.target.value }))}
+                                    placeholder="Ex: 001"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="phone">Téléphone *</Label>
+                                <Input
+                                    id="phone"
+                                    value={badgeForm.phone}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="Ex: +221 77 123 45 67"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="email">Email (optionnel)</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={badgeForm.email}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, email: e.target.value }))}
+                                    placeholder="Ex: mamadou@example.com"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="plate">Numéro de plaque *</Label>
+                                <Input
+                                    id="plate"
+                                    value={badgeForm.plate}
+                                    onChange={(e) => setBadgeForm(prev => ({ ...prev, plate: e.target.value }))}
+                                    placeholder="Ex: GN-1234-A"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="serialNumber">Numéro de série *</Label>
+                            <Input
+                                id="serialNumber"
+                                value={badgeForm.serialNumber}
+                                onChange={(e) => setBadgeForm(prev => ({ ...prev, serialNumber: e.target.value }))}
+                                placeholder="Ex: TM-2024-001"
+                            />
+                        </div>
+
+                        {/* Photo optionnelle */}
+                        <div>
+                            <Label htmlFor="photo">Photo (optionnel)</Label>
+                            <Input
+                                id="photo"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setBadgeForm(prev => ({ ...prev, photo: file }));
+                                    }
+                                }}
+                                className="cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Aperçu du badge généré */}
+                        {badgeUrl && (
+                            <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
+                                <div className="text-center">
+                                    <Shield className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                                    <p className="text-sm font-medium text-purple-800">Badge généré avec succès !</p>
+                                    <a 
+                                        href={badgeUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-purple-600 hover:text-purple-800 underline"
+                                    >
+                                        Télécharger le badge
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-3 pt-4 border-t">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowBadgeDialog(false)}
+                                disabled={badgeLoading}
+                            >
+                                Annuler
+                            </Button>
+                            <Button
+                                onClick={generateBadge}
+                                disabled={badgeLoading}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {badgeLoading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                        Génération...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield className="w-4 h-4 mr-2" />
+                                        Générer et télécharger
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
