@@ -107,7 +107,8 @@ export default function SyndicateBureauManagement() {
     const loadBureaus = async () => {
         try {
             console.log('🔄 Chargement des bureaux depuis Supabase...');
-
+            console.log('🔗 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+            
             // Charger depuis Supabase
             const { data: supabaseBureaus, error } = await supabase
                 .from('syndicate_bureaus')
@@ -115,7 +116,12 @@ export default function SyndicateBureauManagement() {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Erreur Supabase:', error);
+                console.error('❌ Erreur Supabase détaillée:', error);
+                console.error('❌ Code d\'erreur:', error.code);
+                console.error('❌ Message:', error.message);
+                console.error('❌ Détails:', error.details);
+                console.error('❌ Hint:', error.hint);
+                
                 // Fallback sur les données mockées en cas d'erreur
                 const mockBureaus: SyndicateBureau[] = [
                     {
@@ -141,23 +147,28 @@ export default function SyndicateBureauManagement() {
                     }
                 ];
                 setBureaus(mockBureaus);
-                toast.warning('Mode démo activé - Supabase non disponible');
+                toast.warning('⚠️ Mode démo activé - Supabase non disponible', {
+                    description: `Erreur: ${error.message}`
+                });
                 return;
             }
 
             if (supabaseBureaus && supabaseBureaus.length > 0) {
                 console.log('✅ Bureaux chargés depuis Supabase:', supabaseBureaus.length);
+                console.log('📋 Première bureau:', supabaseBureaus[0]);
                 setBureaus(supabaseBureaus);
-                toast.success(`${supabaseBureaus.length} bureau(s) chargé(s)`);
+                toast.success(`✅ ${supabaseBureaus.length} bureau(s) chargé(s) depuis Supabase`);
             } else {
                 console.log('📭 Aucun bureau trouvé dans Supabase');
                 setBureaus([]);
-                toast.info('Aucun bureau syndical créé pour le moment');
+                toast.info('📭 Aucun bureau syndical créé pour le moment');
             }
 
         } catch (error) {
-            console.error('❌ Erreur chargement bureaux:', error);
-            toast.error('Impossible de charger les bureaux syndicaux');
+            console.error('❌ Exception lors du chargement:', error);
+            toast.error('❌ Impossible de charger les bureaux syndicaux', {
+                description: 'Vérifiez votre connexion internet'
+            });
             setBureaus([]);
         } finally {
             setLoading(false);
@@ -232,6 +243,15 @@ export default function SyndicateBureauManagement() {
 
             // Sauvegarder dans Supabase
             try {
+                console.log('🔄 Sauvegarde du bureau dans Supabase...');
+                console.log('📋 Données à sauvegarder:', {
+                    bureau_code: newBureau.bureau_code,
+                    prefecture: newBureau.prefecture,
+                    commune: newBureau.commune,
+                    president_name: newBureau.president_name,
+                    president_email: newBureau.president_email
+                });
+
                 const { data: supabaseBureau, error: supabaseError } = await supabase
                     .from('syndicate_bureaus')
                     .insert([{
@@ -248,27 +268,32 @@ export default function SyndicateBureauManagement() {
                         total_members: newBureau.total_members,
                         active_members: newBureau.active_members,
                         total_vehicles: newBureau.total_vehicles,
-                        total_cotisations: newBureau.total_cotisations
+                        total_cotisations: newBureau.total_cotisations,
+                        created_at: newBureau.created_at
                     }])
                     .select()
                     .single();
 
                 if (supabaseBureau && !supabaseError) {
-                    console.log('✅ Bureau sauvegardé dans Supabase:', supabaseBureau);
+                    console.log('✅ Bureau sauvegardé dans Supabase avec succès:', supabaseBureau);
                     // Utiliser l'ID de Supabase
                     newBureau.id = supabaseBureau.id;
-                    toast.success('Bureau sauvegardé dans Supabase !');
-                } else {
-                    console.log('⚠️ Erreur Supabase, sauvegarde locale uniquement:', supabaseError);
-                    toast.warning('Bureau créé en mode local', {
-                        description: 'Supabase non disponible'
+                    toast.success('✅ Bureau sauvegardé dans Supabase !', {
+                        description: `ID: ${supabaseBureau.id}`
                     });
+                } else {
+                    console.error('❌ Erreur Supabase détaillée:', supabaseError);
+                    toast.error('❌ Erreur de sauvegarde Supabase', {
+                        description: supabaseError?.message || 'Erreur inconnue'
+                    });
+                    // Continuer avec la sauvegarde locale
                 }
             } catch (error) {
-                console.error('❌ Erreur sauvegarde Supabase:', error);
-                toast.warning('Bureau créé en mode local', {
-                    description: 'Erreur de connexion Supabase'
+                console.error('❌ Exception lors de la sauvegarde Supabase:', error);
+                toast.error('❌ Erreur de connexion Supabase', {
+                    description: 'Vérifiez votre connexion internet'
                 });
+                // Continuer avec la sauvegarde locale
             }
 
             // Ajouter le bureau à la liste locale
