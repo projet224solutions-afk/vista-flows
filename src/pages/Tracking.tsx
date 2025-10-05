@@ -68,9 +68,9 @@ const mockTrackingData = {
       { name: "Casque Audio Bluetooth", quantity: 1, price: 45000 },
       { name: "Câble USB-C", quantity: 2, price: 3500 }
     ],
-    vendor: "TechStore Dakar",
+    vendor: "TechStore Conakry",
     customer: "Amadou Diallo",
-    deliveryAddress: "Dakar, Plateau, Rue 12 x 13",
+    deliveryAddress: "Conakry, Plateau, Rue 12 x 13",
     timeline: [
       {
         status: "pending",

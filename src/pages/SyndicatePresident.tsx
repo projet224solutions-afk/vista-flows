@@ -150,7 +150,7 @@ export default function SyndicatePresident() {
             const mockBureau: BureauInfo = {
                 id: accessToken || '1',
                 bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
-                prefecture: 'Dakar',
+                prefecture: 'Conakry',
                 commune: 'Plateau',
                 president_name: 'Président du Bureau',
                 president_email: 'president@bureau-syndicat.com',

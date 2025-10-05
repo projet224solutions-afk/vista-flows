@@ -26,7 +26,7 @@ export default function TaxiDashboard() {
   const recentRides = [
     {
       id: 'RIDE-2024-156',
-      pickup: 'Plateau, Dakar',
+      pickup: 'Plateau, Conakry',
       destination: 'Almadies',
       distance: '12 km',
       fare: '3,500 FCFA',

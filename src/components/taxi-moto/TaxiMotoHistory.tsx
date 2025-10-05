@@ -75,8 +75,8 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 {
                     id: 'RIDE-2025-00123',
                     date: '2025-09-30T14:30:00Z',
-                    pickupAddress: 'Plateau, Dakar',
-                    destinationAddress: 'Almadies, Dakar',
+                    pickupAddress: 'Plateau, Conakry',
+                    destinationAddress: 'Almadies, Conakry',
                     distance: 12.5,
                     duration: 25,
                     price: 3500,
@@ -92,8 +92,8 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 {
                     id: 'RIDE-2025-00122',
                     date: '2025-09-29T09:15:00Z',
-                    pickupAddress: 'Médina, Dakar',
-                    destinationAddress: 'Yoff, Dakar',
+                    pickupAddress: 'Médina, Conakry',
+                    destinationAddress: 'Yoff, Conakry',
                     distance: 8.2,
                     duration: 18,
                     price: 2800,
@@ -109,8 +109,8 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 {
                     id: 'RIDE-2025-00121',
                     date: '2025-09-28T16:45:00Z',
-                    pickupAddress: 'Parcelles Assainies, Dakar',
-                    destinationAddress: 'Point E, Dakar',
+                    pickupAddress: 'Parcelles Assainies, Conakry',
+                    destinationAddress: 'Point E, Conakry',
                     distance: 15.3,
                     duration: 32,
                     price: 4200,
@@ -125,8 +125,8 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 {
                     id: 'RIDE-2025-00120',
                     date: '2025-09-27T11:20:00Z',
-                    pickupAddress: 'Liberté 6, Dakar',
-                    destinationAddress: 'Sacré-Cœur, Dakar',
+                    pickupAddress: 'Liberté 6, Conakry',
+                    destinationAddress: 'Sacré-Cœur, Conakry',
                     distance: 6.8,
                     duration: 15,
                     price: 2200,

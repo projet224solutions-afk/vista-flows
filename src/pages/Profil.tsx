@@ -71,7 +71,7 @@ const recentActivity = [
     id: 2,
     type: 'review',
     title: 'Avis laissé',
-    description: 'TechStore Dakar - 5 étoiles',
+    description: 'TechStore Conakry - 5 étoiles',
     timestamp: '2024-01-14 09:15',
     status: 'Publié'
   },

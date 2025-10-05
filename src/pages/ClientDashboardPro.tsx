@@ -95,7 +95,7 @@ export default function ClientDashboardPro() {
             category: 'Électronique',
             discount: 10,
             inStock: true,
-            seller: 'TechStore Dakar'
+            seller: 'TechStore Conakry'
         },
         {
             id: 'P002',
@@ -721,7 +721,7 @@ export default function ClientDashboardPro() {
                                     <AvatarFallback>TS</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">TechStore Dakar</p>
+                                    <p className="font-semibold">TechStore Conakry</p>
                                     <p className="text-sm text-muted-foreground">Vendeur</p>
                                 </div>
                                 <Badge className="ml-auto">Nouveau</Badge>

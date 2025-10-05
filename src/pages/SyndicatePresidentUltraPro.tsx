@@ -399,7 +399,7 @@ export default function SyndicatePresidentUltraPro() {
                     severity: 'medium',
                     latitude: 14.6937,
                     longitude: -17.4441,
-                    address: 'Avenue Bourguiba, Dakar',
+                    address: 'Avenue Bourguiba, Conakry',
                     description: 'Panne moteur, besoin d\'assistance',
                     status: 'active',
                     created_at: '2024-10-01T14:30:00Z'
@@ -424,9 +424,9 @@ export default function SyndicatePresidentUltraPro() {
         const demoBureau: BureauInfo = {
             id: 'demo-1',
             bureau_code: 'SYN-DEMO-001',
-            prefecture: 'Dakar',
+            prefecture: 'Conakry',
             commune: 'Plateau',
-            full_location: 'Dakar - Plateau',
+            full_location: 'Conakry - Plateau',
             president_name: 'Président Démonstration',
             president_email: 'demo@224solutions.com',
             president_phone: '+221 77 000 00 00',

@@ -66,7 +66,7 @@ export default function SyndicateSOSManagement({ bureauId }: SyndicateSOSManagem
                     severity: 'critical',
                     latitude: 14.6937,
                     longitude: -17.4441,
-                    address: 'Avenue Bourguiba, Dakar',
+                    address: 'Avenue Bourguiba, Conakry',
                     description: 'Accident de circulation grave',
                     status: 'active',
                     created_at: '2025-09-30T15:30:00Z'
@@ -80,7 +80,7 @@ export default function SyndicateSOSManagement({ bureauId }: SyndicateSOSManagem
                     severity: 'medium',
                     latitude: 14.7167,
                     longitude: -17.4677,
-                    address: 'Yoff, Dakar',
+                    address: 'Yoff, Conakry',
                     description: 'Panne mécanique',
                     status: 'acknowledged',
                     created_at: '2025-09-30T14:15:00Z',

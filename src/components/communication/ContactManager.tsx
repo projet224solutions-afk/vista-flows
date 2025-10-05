@@ -496,7 +496,7 @@ function AddContactForm({ onAdd }: { onAdd: (data: any) => void }) {
         <Input
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          placeholder="Ex: Dakar, Sénégal"
+          placeholder="Ex: Conakry, Guinée"
         />
       </div>
 

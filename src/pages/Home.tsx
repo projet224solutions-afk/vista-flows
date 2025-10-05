@@ -64,7 +64,7 @@ const recentProducts = [
     title: 'Casque Audio Bluetooth Premium',
     price: 45000,
     originalPrice: 55000,
-    vendor: 'TechStore Dakar',
+    vendor: 'TechStore Conakry',
     rating: 4.8,
     reviewCount: 234,
     isPremium: true
@@ -95,7 +95,7 @@ const recommendedServices = [
     id: '1',
     icon: <Truck className="w-6 h-6 text-livreur-primary" />,
     title: 'Livraison Express',
-    description: 'Livraison en moins de 2h dans Dakar',
+    description: 'Livraison en moins de 2h dans Conakry',
     provider: 'FastDelivery',
     rating: 4.9,
     reviewCount: 1250,
@@ -135,7 +135,7 @@ export default function Home() {
                 <h1 className="text-xl font-bold text-foreground">MarketPlace</h1>
                 <p className="text-xs text-muted-foreground flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
-                  Dakar, Sénégal
+                  Conakry, Guinée
                 </p>
               </div>
             </div>

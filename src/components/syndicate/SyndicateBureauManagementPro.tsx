@@ -232,9 +232,9 @@ export default function SyndicateBureauManagementPro() {
             {
                 id: '1',
                 bureau_code: 'SYN-2025-00001',
-                prefecture: 'Dakar',
+                prefecture: 'Conakry',
                 commune: 'Plateau',
-                full_location: 'Dakar - Plateau',
+                full_location: 'Conakry - Plateau',
                 president_name: 'Mamadou Diallo',
                 president_email: 'mamadou.diallo@email.com',
                 president_phone: '+221 77 123 45 67',
@@ -301,14 +301,14 @@ export default function SyndicateBureauManagementPro() {
             const mockAlerts: SOSAlert[] = [
                 {
                     id: '1',
-                    bureau_name: 'SYN-2025-00001 (Dakar - Plateau)',
+                    bureau_name: 'SYN-2025-00001 (Conakry - Plateau)',
                     member_name: 'Ibrahima Ndiaye',
                     vehicle_serial: 'MT-2024-001234',
                     alert_type: 'emergency',
                     severity: 'critical',
                     latitude: 14.6937,
                     longitude: -17.4441,
-                    address: 'Avenue Bourguiba, Dakar',
+                    address: 'Avenue Bourguiba, Conakry',
                     description: 'Accident de circulation',
                     status: 'active',
                     created_at: '2025-09-30T15:30:00Z'
@@ -982,7 +982,7 @@ export default function SyndicateBureauManagementPro() {
                                                 id="prefecture"
                                                 value={formData.prefecture}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, prefecture: e.target.value }))}
-                                                placeholder="Ex: Dakar"
+                                                placeholder="Ex: Conakry"
                                                 className="mt-1 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                             />
                                         </div>

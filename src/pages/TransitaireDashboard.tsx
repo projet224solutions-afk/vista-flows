@@ -26,7 +26,7 @@ export default function TransitaireDashboard() {
   const activeShipments = [
     {
       id: 'INT-2024-089',
-      origin: 'Dakar, Sénégal',
+      origin: 'Conakry, Guinée',
       destination: 'Paris, France',
       weight: '125 kg',
       status: 'En douane',

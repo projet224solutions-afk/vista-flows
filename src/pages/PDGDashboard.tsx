@@ -291,7 +291,7 @@ export default function PDGDashboard() {
     {
       id: "PRD001",
       name: "Smartphone Samsung Galaxy",
-      vendor: "Tech Store Dakar",
+      vendor: "Tech Store Conakry",
       status: "active",
       price: 350000,
       sales: 45,

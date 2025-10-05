@@ -30,6 +30,7 @@ import ClientManagement from "@/components/vendor/ClientManagement";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
+import POSTestDirect from "@/components/vendor/POSTestDirect";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
@@ -47,7 +48,7 @@ export default function VendeurDashboard() {
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   const { userInfo, loading: userInfoLoading } = useUserInfo();
-  
+
   // Hooks wallet intégrés
   const { wallet, isLoading: walletLoading, isInitialized: walletInitialized } = useWallet();
   const { transactions } = useWalletTransactions(wallet?.id);
@@ -299,10 +300,10 @@ export default function VendeurDashboard() {
                 Nouveau Produit
               </Button>
 
-              <Button 
-                size="lg" 
-                variant="ghost" 
-                onClick={handleSignOut} 
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={handleSignOut}
                 className="hover:bg-red-50 hover:text-red-600 text-gray-600 transition-all duration-300"
                 title="Se déconnecter"
               >
@@ -500,7 +501,7 @@ export default function VendeurDashboard() {
                   <MessageSquare className="w-5 h-5 mr-3" />
                   Communication
                 </TabsTrigger>
-                
+
                 {/* Bouton de déconnexion visible */}
                 <Button
                   onClick={handleSignOut}
@@ -516,7 +517,12 @@ export default function VendeurDashboard() {
 
           {/* POS - Point de Vente */}
           <TabsContent value="pos" className="space-y-6">
-            <POSSystemWrapper />
+            <div className="w-full h-full">
+              <POSTestDirect />
+              <div className="mt-4">
+                <POSSystemWrapper />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">

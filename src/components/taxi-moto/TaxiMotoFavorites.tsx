@@ -75,8 +75,8 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
                 {
                     id: '1',
                     name: 'Maison → Bureau',
-                    pickupAddress: 'Liberté 6, Dakar',
-                    destinationAddress: 'Plateau, Dakar',
+                    pickupAddress: 'Liberté 6, Conakry',
+                    destinationAddress: 'Plateau, Conakry',
                     estimatedDistance: 8.5,
                     estimatedDuration: 18,
                     usageCount: 23,
@@ -85,8 +85,8 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
                 {
                     id: '2',
                     name: 'Bureau → Marché',
-                    pickupAddress: 'Plateau, Dakar',
-                    destinationAddress: 'Marché Sandaga, Dakar',
+                    pickupAddress: 'Plateau, Conakry',
+                    destinationAddress: 'Marché Sandaga, Conakry',
                     estimatedDistance: 3.2,
                     estimatedDuration: 12,
                     usageCount: 8,
@@ -95,8 +95,8 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
                 {
                     id: '3',
                     name: 'Aéroport → Hôtel',
-                    pickupAddress: 'Aéroport LSS, Dakar',
-                    destinationAddress: 'Almadies, Dakar',
+                    pickupAddress: 'Aéroport LSS, Conakry',
+                    destinationAddress: 'Almadies, Conakry',
                     estimatedDistance: 15.7,
                     estimatedDuration: 35,
                     usageCount: 3,

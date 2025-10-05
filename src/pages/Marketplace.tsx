@@ -23,7 +23,7 @@ const products = [
     title: 'Casque Audio Bluetooth Premium avec Réduction de Bruit',
     price: 45000,
     originalPrice: 55000,
-    vendor: 'TechStore Dakar',
+    vendor: 'TechStore Conakry',
     rating: 4.8,
     reviewCount: 234,
     isPremium: true

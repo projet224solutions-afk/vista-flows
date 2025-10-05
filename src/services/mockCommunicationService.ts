@@ -132,7 +132,7 @@ class MockCommunicationService {
         id: 'conv-002',
         participants: ['user-001', 'user-003'],
         is_group: false,
-        last_message: 'Le colis est en route vers Dakar',
+        last_message: 'Le colis est en route vers Conakry',
         last_message_at: '2025-01-02T13:15:00Z',
         unread_count: 0,
         created_at: '2025-01-01T15:30:00Z'

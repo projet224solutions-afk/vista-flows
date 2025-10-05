@@ -30,7 +30,7 @@ export class AICopilotService {
         company: {
             name: "224Solutions",
             services: ["Marketplace", "Livraison", "Paiements", "Gestion commerciale"],
-            countries: ["Guinée", "Sénégal", "Mali", "Burkina Faso"],
+            countries: ["Guinée", "Guinée", "Mali", "Burkina Faso"],
             currency: "XAF",
             roles: ["PDG", "Admin", "Vendeur", "Client", "Livreur", "Transitaire"]
         },

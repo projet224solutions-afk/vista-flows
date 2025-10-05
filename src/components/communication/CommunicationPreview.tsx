@@ -52,7 +52,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
       id: '3',
       sender: 'Pierre Durand',
       role: 'Transitaire',
-      message: 'Le colis est en route vers Dakar',
+      message: 'Le colis est en route vers Conakry',
       time: '08:45',
       unread: true
     }
