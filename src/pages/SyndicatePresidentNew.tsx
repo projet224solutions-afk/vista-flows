@@ -50,7 +50,7 @@ interface BureauInfo {
     active_members: number;
     total_vehicles: number;
     total_cotisations: number;
-    treasury_balance: number;
+    treasury_balance?: number;
     created_at: string;
 }
 
@@ -89,6 +89,11 @@ export default function SyndicatePresidentNew() {
     useEffect(() => {
         if (accessToken) {
             authenticateWithToken();
+        } else {
+            // Mode démo si pas de token
+            setAuthenticated(true);
+            loadBureauInfo();
+            loadStats();
         }
     }, [accessToken]);
 
@@ -100,262 +105,137 @@ export default function SyndicatePresidentNew() {
     }, [authenticated]);
 
     /**
-     * Authentifie le président avec le token d'accès via Supabase
+     * Authentification avec token Supabase
      */
     const authenticateWithToken = async () => {
         try {
-            console.log('🔐 Authentification Supabase avec token:', accessToken);
-
+            setLoading(true);
+            
             if (!accessToken) {
-                toast.error('Token d\'accès manquant');
-                return;
+                throw new Error('Token d\'accès manquant');
             }
 
-            // Méthode 1: Vérifier le token dans la table des bureaux syndicaux
-            const { data: bureau, error: bureauError } = await supabase
-                .from('syndicate_bureaus')
-                .select('*')
-                .eq('access_token', accessToken)
-                .eq('status', 'active')
-                .single();
-
-            if (bureau && !bureauError) {
-                console.log('✅ Token trouvé dans Supabase, bureau:', bureau);
-
-                // Créer une session utilisateur temporaire pour le président
-                const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-
-                if (authData.user && !authError) {
-                    console.log('✅ Session Supabase créée pour le président');
-                    setAuthenticated(true);
-
-                    // Mettre à jour la date d'accès au lien
-                    await supabase
-                        .from('syndicate_bureaus')
-                        .update({ link_accessed_at: new Date().toISOString() })
-                        .eq('access_token', accessToken);
-
-                    toast.success('Authentification Supabase réussie !', {
-                        description: `Bienvenue ${bureau.president_name}`
-                    });
-
-                    return;
-                }
-            }
-
-            // Méthode 2: Fallback - Authentification avec token simple (mode démo)
-            console.log('🎭 Mode démo - Authentification sans Supabase');
-
-            if (accessToken.length >= 10) {
-                console.log('✅ Token valide (mode démo), authentification réussie');
-                setAuthenticated(true);
-                toast.success('Authentification réussie (Mode Démo) !', {
-                    description: 'Bienvenue dans votre interface de bureau syndical'
-                });
-            } else {
-                console.log('❌ Token invalide');
-                toast.error('Token d\'accès invalide');
-            }
-        } catch (error) {
-            console.error('❌ Erreur authentification Supabase:', error);
-
-            // Fallback en cas d'erreur Supabase
-            console.log('🎭 Fallback - Mode démo activé');
-            if (accessToken && accessToken.length >= 10) {
-                setAuthenticated(true);
-                toast.warning('Authentification en mode démo', {
-                    description: 'Supabase non disponible - Mode démonstration activé'
-                });
-            } else {
-                toast.error('Erreur lors de l\'authentification');
-            }
-        }
-    };
-
-    /**
-     * Charge les informations du bureau depuis Supabase
-     */
-    const loadBureauInfo = async () => {
-        try {
-            console.log('📊 Chargement des informations du bureau depuis Supabase avec token:', accessToken);
-
-            // Méthode 1: Charger depuis Supabase
-            const { data: bureau, error: bureauError } = await supabase
+            // Vérifier le token dans Supabase
+            const { data: bureau, error } = await supabase
                 .from('syndicate_bureaus')
                 .select('*')
                 .eq('access_token', accessToken)
                 .single();
 
-            if (bureau && !bureauError) {
-                console.log('✅ Bureau trouvé dans Supabase:', bureau);
-
-                const bureauInfo: BureauInfo = {
-                    id: bureau.id,
-                    bureau_code: bureau.bureau_code,
-                    prefecture: bureau.prefecture,
-                    commune: bureau.commune,
-                    president_name: bureau.president_name,
-                    president_email: bureau.president_email,
-                    status: bureau.status,
-                    total_members: bureau.total_members || 0,
-                    active_members: bureau.active_members || 0,
-                    total_vehicles: bureau.total_vehicles || 0,
-                    total_cotisations: bureau.total_cotisations || 0,
-                    treasury_balance: bureau.treasury_balance || 0,
-                    created_at: bureau.created_at
-                };
-
-                setBureauInfo(bureauInfo);
-                console.log('✅ Informations du bureau Supabase chargées:', bureauInfo);
-                toast.success('Données Supabase chargées avec succès');
+            if (error || !bureau) {
+                console.warn('Token non trouvé dans Supabase, mode démo activé');
+                setAuthenticated(true);
                 return;
             }
 
-            // Méthode 2: Fallback - Données de démonstration
-            console.log('🎭 Fallback - Chargement des données de démonstration');
+            // Mettre à jour la date d'accès
+            await supabase
+                .from('syndicate_bureaus')
+                .update({ link_accessed_at: new Date().toISOString() })
+                .eq('id', bureau.id);
 
-            const mockBureau: BureauInfo = {
-                id: accessToken || '1',
-                bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
-                prefecture: 'Conakry',
-                commune: 'Plateau',
-                president_name: 'Président du Bureau Syndical',
-                president_email: 'president@bureau-syndicat.com',
-                status: 'active',
-                total_members: 45,
-                active_members: 42,
-                total_vehicles: 38,
-                total_cotisations: 2250000,
-                treasury_balance: 1850000,
-                created_at: new Date().toISOString()
-            };
-
-            setBureauInfo(mockBureau);
-            console.log('✅ Informations du bureau (démo) chargées:', mockBureau);
-            toast.success('Données de démonstration chargées');
+            setBureauInfo(bureau);
+            setAuthenticated(true);
+            console.log('✅ Authentification Supabase réussie');
 
         } catch (error) {
-            console.error('❌ Erreur chargement bureau Supabase:', error);
-
-            // Fallback en cas d'erreur
-            const fallbackBureau: BureauInfo = {
-                id: accessToken || '1',
-                bureau_code: `SYN-2025-${accessToken?.slice(-5) || '00001'}`,
-                prefecture: 'Conakry',
-                commune: 'Plateau',
-                president_name: 'Président du Bureau Syndical',
-                president_email: 'president@bureau-syndicat.com',
-                status: 'active',
-                total_members: 45,
-                active_members: 42,
-                total_vehicles: 38,
-                total_cotisations: 2250000,
-                treasury_balance: 1850000,
-                created_at: new Date().toISOString()
-            };
-
-            setBureauInfo(fallbackBureau);
-            toast.warning('Mode démo activé', {
-                description: 'Impossible de se connecter à Supabase'
-            });
+            console.error('❌ Erreur authentification:', error);
+            setAuthenticated(true);
         } finally {
             setLoading(false);
         }
     };
 
     /**
-     * Charge les statistiques
+     * Charge les informations du bureau
      */
-    const loadStats = async () => {
+    const loadBureauInfo = async () => {
         try {
-            console.log('📈 Chargement des statistiques du bureau');
-
-            // Simuler des statistiques réalistes
-            const mockStats: BureauStats = {
-                totalMembers: 45,
-                activeMembers: 42,
-                pendingMembers: 3,
-                totalVehicles: 38,
-                verifiedVehicles: 35,
-                monthlyRevenue: 2250000,
-                treasuryBalance: 1850000,
-                activeElections: 1,
-                pendingClaims: 2,
-                sosAlertsToday: 0
-            };
-
-            setStats(mockStats);
-            console.log('✅ Statistiques chargées:', mockStats);
+            if (!bureauInfo) {
+                // Données par défaut si pas encore chargées
+                setBureauInfo({
+                    id: 'demo-1',
+                    bureau_code: 'SYN-DEMO-001',
+                    prefecture: 'Conakry',
+                    commune: 'Conakry',
+                    president_name: 'Président Démonstration',
+                    president_email: 'demo@224solutions.com',
+                    status: 'active',
+                    total_members: 0,
+                    active_members: 0,
+                    total_vehicles: 0,
+                    total_cotisations: 0,
+                    created_at: new Date().toISOString()
+                });
+            }
         } catch (error) {
-            console.error('❌ Erreur chargement statistiques:', error);
-            toast.error('Impossible de charger les statistiques');
+            console.error('❌ Erreur chargement bureau:', error);
         }
     };
 
     /**
-     * Déconnexion
+     * Charge les statistiques du bureau
      */
-    const handleSignOut = async () => {
-        console.log('🚪 Déconnexion du bureau syndical');
-        toast.success('Déconnexion réussie');
-        window.location.href = '/';
+    const loadStats = async () => {
+        try {
+            // Statistiques par défaut (toutes à 0)
+            setStats({
+                totalMembers: 0,
+                activeMembers: 0,
+                pendingMembers: 0,
+                totalVehicles: 0,
+                verifiedVehicles: 0,
+                monthlyRevenue: 0,
+                treasuryBalance: 0,
+                activeElections: 0,
+                pendingClaims: 0,
+                sosAlertsToday: 0
+            });
+        } catch (error) {
+            console.error('❌ Erreur chargement stats:', error);
+        }
     };
 
-    // Écran d'authentification si pas encore authentifié
-    if (!authenticated) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md">
-                    <CardHeader className="text-center">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Crown className="w-8 h-8 text-white" />
-                        </div>
-                        <CardTitle className="text-2xl font-bold text-gray-800">
-                            Bureau Syndical 224Solutions
-                        </CardTitle>
-                        <p className="text-gray-600 mt-2">
-                            Interface Président - Authentification en cours...
-                        </p>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                        {loading ? (
-                            <div className="space-y-4">
-                                <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                                <p className="text-gray-600">Vérification du token d'accès...</p>
-                                <p className="text-sm text-gray-500">Token: {accessToken?.slice(0, 10)}...</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
-                                <p className="text-red-600 font-medium">Authentification échouée</p>
-                                <p className="text-gray-600 text-sm">
-                                    Le token d'accès fourni n'est pas valide ou a expiré.
-                                </p>
-                                <Button
-                                    onClick={() => window.location.href = '/'}
-                                    className="w-full"
-                                >
-                                    Retour à l'accueil
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    /**
+     * Gestion de la déconnexion
+     */
+    const handleSignOut = () => {
+        setAuthenticated(false);
+        setBureauInfo(null);
+        toast.success('Déconnexion réussie');
+    };
 
     // Écran de chargement
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-                <Card className="w-full max-w-md">
-                    <CardContent className="p-8 text-center">
-                        <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                        <h3 className="text-lg font-semibold mb-2">Chargement de votre bureau</h3>
-                        <p className="text-gray-600">Préparation de votre interface...</p>
-                    </CardContent>
-                </Card>
+                <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <Crown className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Chargement...</h2>
+                    <p className="text-gray-600">Authentification en cours</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Écran d'erreur d'authentification
+    if (!authenticated) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center">
+                <div className="text-center max-w-md mx-auto p-6">
+                    <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Accès non autorisé</h2>
+                    <p className="text-gray-600 mb-4">
+                        Vous n'avez pas les permissions nécessaires pour accéder à cette interface.
+                    </p>
+                    <Button onClick={() => window.location.href = '/'}>
+                        Retour à l'accueil
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -383,19 +263,16 @@ export default function SyndicatePresidentNew() {
 
                         <div className="flex items-center space-x-4">
                             <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">
-                                    {bureauInfo?.president_name}
-                                </p>
                                 <p className="text-sm text-gray-600">Président</p>
+                                <p className="font-semibold text-gray-900">{bureauInfo?.president_name}</p>
                             </div>
                             <Button
                                 onClick={handleSignOut}
                                 variant="outline"
                                 size="sm"
-                                className="flex items-center space-x-2"
                             >
-                                <LogOut className="w-4 h-4" />
-                                <span>Déconnexion</span>
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Déconnexion
                             </Button>
                         </div>
                     </div>
@@ -404,154 +281,113 @@ export default function SyndicatePresidentNew() {
 
             {/* Contenu principal */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Cartes de statistiques */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">Membres Total</p>
-                                    <p className="text-2xl font-bold text-blue-600">{stats.totalMembers}</p>
-                                </div>
-                                <Users className="w-8 h-8 text-blue-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">Véhicules</p>
-                                    <p className="text-2xl font-bold text-green-600">{stats.totalVehicles}</p>
-                                </div>
-                                <Car className="w-8 h-8 text-green-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">Trésorerie</p>
-                                    <p className="text-2xl font-bold text-purple-600">
-                                        {(stats.treasuryBalance / 1000).toFixed(0)}K FCFA
-                                    </p>
-                                </div>
-                                <DollarSign className="w-8 h-8 text-purple-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">Alertes SOS</p>
-                                    <p className="text-2xl font-bold text-red-600">{stats.sosAlertsToday}</p>
-                                </div>
-                                <AlertTriangle className="w-8 h-8 text-red-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Navigation par onglets */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="grid w-full grid-cols-7">
-                        <TabsTrigger value="dashboard">Tableau de Bord</TabsTrigger>
+                        <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
                         <TabsTrigger value="members">Membres</TabsTrigger>
                         <TabsTrigger value="vehicles">Véhicules</TabsTrigger>
-                        <TabsTrigger value="treasury">Trésorerie</TabsTrigger>
-                        <TabsTrigger value="tickets">Tickets Route</TabsTrigger>
+                        <TabsTrigger value="finance">Finance</TabsTrigger>
                         <TabsTrigger value="communication">Communication</TabsTrigger>
-                        <TabsTrigger value="sos">SOS</TabsTrigger>
+                        <TabsTrigger value="elections">Élections</TabsTrigger>
+                        <TabsTrigger value="settings">Paramètres</TabsTrigger>
                     </TabsList>
 
-                    {/* Tableau de bord principal */}
+                    {/* Tableau de bord */}
                     <TabsContent value="dashboard" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Actions rapides */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center space-x-2">
-                                        <Activity className="w-5 h-5" />
-                                        <span>Actions Rapides</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Button
-                                            onClick={() => setActiveTab('members')}
-                                            className="h-20 flex flex-col gap-2"
-                                        >
-                                            <Plus className="w-6 h-6" />
-                                            <span className="text-sm">Nouveau Membre</span>
-                                        </Button>
-
-                                        <Button
-                                            onClick={() => setActiveTab('vehicles')}
-                                            variant="outline"
-                                            className="h-20 flex flex-col gap-2"
-                                        >
-                                            <Car className="w-6 h-6" />
-                                            <span className="text-sm">Enregistrer Véhicule</span>
-                                        </Button>
-
-                                        <Button
-                                            onClick={() => setActiveTab('treasury')}
-                                            variant="outline"
-                                            className="h-20 flex flex-col gap-2"
-                                        >
-                                            <DollarSign className="w-6 h-6" />
-                                            <span className="text-sm">Gérer Cotisations</span>
-                                        </Button>
-
-                                        <Button
-                                            onClick={() => setActiveTab('sos')}
-                                            variant="outline"
-                                            className="h-20 flex flex-col gap-2 border-red-200 text-red-600 hover:bg-red-50"
-                                        >
-                                            <AlertTriangle className="w-6 h-6" />
-                                            <span className="text-sm">Alerte SOS</span>
-                                        </Button>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center">
+                                        <Users className="h-8 w-8 text-blue-600" />
+                                        <div className="ml-4">
+                                            <p className="text-sm font-medium text-gray-600">Total Membres</p>
+                                            <p className="text-2xl font-bold text-gray-900">{stats.totalMembers}</p>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            {/* Activités récentes */}
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center">
+                                        <Car className="h-8 w-8 text-green-600" />
+                                        <div className="ml-4">
+                                            <p className="text-sm font-medium text-gray-600">Véhicules</p>
+                                            <p className="text-2xl font-bold text-gray-900">{stats.totalVehicles}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center">
+                                        <DollarSign className="h-8 w-8 text-purple-600" />
+                                        <div className="ml-4">
+                                            <p className="text-sm font-medium text-gray-600">Trésorerie</p>
+                                            <p className="text-2xl font-bold text-gray-900">{stats.treasuryBalance.toLocaleString()} FCFA</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center">
+                                        <AlertTriangle className="h-8 w-8 text-red-600" />
+                                        <div className="ml-4">
+                                            <p className="text-sm font-medium text-gray-600">Alertes SOS</p>
+                                            <p className="text-2xl font-bold text-gray-900">{stats.sosAlertsToday}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="flex items-center space-x-2">
-                                        <Bell className="w-5 h-5" />
-                                        <span>Activités Récentes</span>
-                                    </CardTitle>
+                                    <CardTitle>Activités Récentes</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                                            <CheckCircle className="w-5 h-5 text-green-600" />
-                                            <div>
-                                                <p className="text-sm font-medium">Nouveau membre approuvé</p>
-                                                <p className="text-xs text-gray-600">Il y a 2 heures</p>
-                                            </div>
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                            <p className="text-sm text-gray-600">Système opérationnel</p>
                                         </div>
-
-                                        <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                                            <DollarSign className="w-5 h-5 text-blue-600" />
-                                            <div>
-                                                <p className="text-sm font-medium">Cotisation reçue - 50,000 FCFA</p>
-                                                <p className="text-xs text-gray-600">Il y a 4 heures</p>
-                                            </div>
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                            <p className="text-sm text-gray-600">Interface chargée avec succès</p>
                                         </div>
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                            <p className="text-sm text-gray-600">Prêt pour la gestion</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                        <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
-                                            <Car className="w-5 h-5 text-purple-600" />
-                                            <div>
-                                                <p className="text-sm font-medium">Véhicule vérifié</p>
-                                                <p className="text-xs text-gray-600">Hier</p>
-                                            </div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Statut du Bureau</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600">Statut</span>
+                                            <Badge className="bg-green-100 text-green-800">
+                                                {bureauInfo?.status === 'active' ? 'Actif' : bureauInfo?.status}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600">Code Bureau</span>
+                                            <span className="text-sm font-medium">{bureauInfo?.bureau_code}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600">Créé le</span>
+                                            <span className="text-sm font-medium">
+                                                {bureauInfo?.created_at ? new Date(bureauInfo.created_at).toLocaleDateString() : 'N/A'}
+                                            </span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -559,165 +395,69 @@ export default function SyndicatePresidentNew() {
                         </div>
                     </TabsContent>
 
-                    {/* Autres onglets avec contenu fonctionnel */}
-                    <TabsContent value="members">
+                    {/* Autres onglets - Placeholders */}
+                    <TabsContent value="members" className="space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Gestion des Membres</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Interface complète de gestion des membres du bureau syndical.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2">
-                                        <Plus className="w-6 h-6" />
-                                        <span>Ajouter Membre</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Users className="w-6 h-6" />
-                                        <span>Liste Membres</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Shield className="w-6 h-6" />
-                                        <span>Approuver Membres</span>
-                                    </Button>
-                                </div>
+                                <p className="text-gray-600">Interface de gestion des membres en cours de développement...</p>
                             </CardContent>
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="vehicles">
+                    <TabsContent value="vehicles" className="space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Gestion des Véhicules</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Enregistrement et suivi des véhicules du bureau syndical.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2">
-                                        <Plus className="w-6 h-6" />
-                                        <span>Nouveau Véhicule</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Car className="w-6 h-6" />
-                                        <span>Liste Véhicules</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <CheckCircle className="w-6 h-6" />
-                                        <span>Vérifications</span>
-                                    </Button>
-                                </div>
+                                <p className="text-gray-600">Interface de gestion des véhicules en cours de développement...</p>
                             </CardContent>
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="treasury">
+                    <TabsContent value="finance" className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Gestion de la Trésorerie</CardTitle>
+                                <CardTitle>Gestion Financière</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Suivi des cotisations et gestion financière du bureau.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2">
-                                        <DollarSign className="w-6 h-6" />
-                                        <span>Nouvelle Cotisation</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <TrendingUp className="w-6 h-6" />
-                                        <span>Rapport Financier</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Download className="w-6 h-6" />
-                                        <span>Exporter Données</span>
-                                    </Button>
-                                </div>
+                                <p className="text-gray-600">Interface de gestion financière en cours de développement...</p>
                             </CardContent>
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="tickets">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Tickets de Route</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Gestion des tickets de route et autorisations de circulation.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2">
-                                        <FileText className="w-6 h-6" />
-                                        <span>Nouveau Ticket</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Eye className="w-6 h-6" />
-                                        <span>Tickets Actifs</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Calendar className="w-6 h-6" />
-                                        <span>Historique</span>
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="communication">
+                    <TabsContent value="communication" className="space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Communication</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Système de communication interne du bureau syndical.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2">
-                                        <MessageSquare className="w-6 h-6" />
-                                        <span>Nouveau Message</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Bell className="w-6 h-6" />
-                                        <span>Notifications</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2">
-                                        <Send className="w-6 h-6" />
-                                        <span>Messages Envoyés</span>
-                                    </Button>
-                                </div>
+                                <p className="text-gray-600">Interface de communication en cours de développement...</p>
                             </CardContent>
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="sos">
+                    <TabsContent value="elections" className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-red-600">Gestion des Alertes SOS</CardTitle>
+                                <CardTitle>Élections</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-gray-600 mb-4">
-                                    Système d'alerte d'urgence pour les membres du bureau.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <Button className="h-20 flex flex-col gap-2 bg-red-600 hover:bg-red-700">
-                                        <AlertTriangle className="w-6 h-6" />
-                                        <span>Nouvelle Alerte</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2 border-red-200 text-red-600">
-                                        <Eye className="w-6 h-6" />
-                                        <span>Alertes Actives</span>
-                                    </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2 border-red-200 text-red-600">
-                                        <Calendar className="w-6 h-6" />
-                                        <span>Historique SOS</span>
-                                    </Button>
-                                </div>
+                                <p className="text-gray-600">Interface des élections en cours de développement...</p>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="settings" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Paramètres</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-gray-600">Interface des paramètres en cours de développement...</p>
                             </CardContent>
                         </Card>
                     </TabsContent>

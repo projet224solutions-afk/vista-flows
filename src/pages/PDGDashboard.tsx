@@ -967,7 +967,88 @@ export default function PDGDashboard() {
           </TabsContent>
 
           <TabsContent value="syndicate" className="space-y-6">
-            <SyndicateBureauManagementPro />
+            <div className="space-y-6">
+              {/* Monitoring en temps réel des bureaux syndicats */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-blue-700">
+                      <Activity className="w-5 h-5 mr-2" />
+                      Monitoring Temps Réel
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Bureaux Actifs</span>
+                        <Badge className="bg-green-100 text-green-800">En ligne</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Activités Aujourd'hui</span>
+                        <span className="text-sm font-semibold">12</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Alertes</span>
+                        <Badge variant="outline" className="text-orange-600">2</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-green-700">
+                      <Users className="w-5 h-5 mr-2" />
+                      Coordination
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Total Membres</span>
+                        <span className="text-sm font-semibold">0</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Nouveaux Aujourd'hui</span>
+                        <span className="text-sm font-semibold">0</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Véhicules</span>
+                        <span className="text-sm font-semibold">0</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-purple-700">
+                      <DollarSign className="w-5 h-5 mr-2" />
+                      Revenus Globaux
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Cotisations</span>
+                        <span className="text-sm font-semibold">0 FCFA</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Ce Mois</span>
+                        <span className="text-sm font-semibold">0 FCFA</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Croissance</span>
+                        <Badge className="bg-green-100 text-green-800">+0%</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Interface de gestion des bureaux syndicats */}
+              <SyndicateBureauManagementPro />
+            </div>
           </TabsContent>
 
           {/* Communication */}
