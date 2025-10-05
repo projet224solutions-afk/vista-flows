@@ -604,8 +604,8 @@ class CommunicationService {
    */
   async searchUsers(query: string, limit: number = 10): Promise<any[]> {
     if (this.isDemoMode()) {
-      console.log('🎭 Mode démo communication - recherche utilisateurs');
-      return mockCommunicationService.searchUsers(query, limit);
+      console.error('Mode Agora requis');
+      return [];
     }
 
     try {
@@ -629,8 +629,8 @@ class CommunicationService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur recherche utilisateurs:', error);
-      // Fallback vers le mode démo
-      return mockCommunicationService.searchUsers(query, limit);
+      console.error('Erreur recherche utilisateurs:', error);
+      return [];
     }
   }
 
@@ -639,8 +639,8 @@ class CommunicationService {
    */
   async getAllUsers(limit: number = 50, offset: number = 0): Promise<any[]> {
     if (this.isDemoMode()) {
-      console.log('🎭 Mode démo communication - tous les utilisateurs');
-      return mockCommunicationService.getAllUsers(limit, offset);
+      console.error('Mode Agora requis');
+      return [];
     }
 
     try {
@@ -665,8 +665,8 @@ class CommunicationService {
       return data || [];
     } catch (error) {
       console.error('❌ Erreur récupération utilisateurs:', error);
-      // Fallback vers le mode démo
-      return mockCommunicationService.getAllUsers(limit, offset);
+      console.error('Erreur récupération utilisateurs:', error);
+      return [];
     }
   }
 

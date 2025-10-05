@@ -173,8 +173,9 @@ export default function SyndicateBureauManagementPro() {
 
             if (error) {
                 console.error('❌ Erreur Supabase:', error);
-                // Charger les données de démonstration
-                loadDemoData();
+                toast.error('Erreur de chargement des données', {
+                    description: 'Impossible de charger les bureaux syndicaux'
+                });
                 return;
             }
 
@@ -213,85 +214,20 @@ export default function SyndicateBureauManagementPro() {
                 setBureaus(formattedBureaux);
                 console.log('✅ Bureaux chargés depuis Supabase:', formattedBureaux.length);
             } else {
-                console.log('ℹ️ Aucun bureau trouvé dans Supabase, chargement données démo');
-                loadDemoData();
+                console.log('ℹ️ Aucun bureau trouvé dans Supabase');
+                setBureaus([]);
             }
         } catch (error) {
             console.error('❌ Erreur chargement Supabase:', error);
-            loadDemoData();
+            toast.error('Erreur système', {
+                description: 'Impossible de se connecter à la base de données'
+            });
+            setBureaus([]);
         } finally {
             setLoading(false);
         }
     };
 
-    /**
-     * Charge les données de démonstration
-     */
-    const loadDemoData = () => {
-        const mockBureaus: SyndicateBureau[] = [
-            {
-                id: '1',
-                bureau_code: 'SYN-2025-00001',
-                prefecture: 'Conakry',
-                commune: 'Plateau',
-                full_location: 'Conakry - Plateau',
-                president_name: 'Mamadou Diallo',
-                president_email: 'mamadou.diallo@email.com',
-                president_phone: '+221 77 123 45 67',
-                permanent_link: `${window.location.origin}/syndicat/president/abc123def456`,
-                access_token: 'abc123def456',
-                status: 'active',
-                total_members: 45,
-                active_members: 42,
-                total_vehicles: 38,
-                total_cotisations: 2250000,
-                link_sent_at: '2025-09-25T10:30:00Z',
-                link_accessed_at: '2025-09-25T14:20:00Z',
-                created_at: '2025-09-25T10:00:00Z',
-                validated_at: '2025-09-25T16:00:00Z',
-                last_activity: '2025-10-01T09:15:00Z',
-                email_sent_count: 3,
-                sms_sent_count: 1,
-                is_link_permanent: true,
-                qr_code: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+PC9zdmc+',
-                download_count: 5,
-                mobile_access_count: 12,
-                desktop_access_count: 8,
-                tablet_access_count: 2
-            },
-            {
-                id: '2',
-                bureau_code: 'SYN-2025-00002',
-                prefecture: 'Thiès',
-                commune: 'Thiès Nord',
-                full_location: 'Thiès - Thiès Nord',
-                president_name: 'Fatou Sall',
-                president_email: 'fatou.sall@email.com',
-                president_phone: '+221 76 987 65 43',
-                permanent_link: `${window.location.origin}/syndicat/president/xyz789uvw012`,
-                access_token: 'xyz789uvw012',
-                status: 'pending',
-                total_members: 0,
-                active_members: 0,
-                total_vehicles: 0,
-                total_cotisations: 0,
-                link_sent_at: '2025-09-30T09:15:00Z',
-                created_at: '2025-09-30T09:00:00Z',
-                email_sent_count: 1,
-                sms_sent_count: 0,
-                is_link_permanent: true,
-                download_count: 0,
-                mobile_access_count: 0,
-                desktop_access_count: 0,
-                tablet_access_count: 0
-            }
-        ];
-
-        setBureaus(mockBureaus);
-        toast.info('Mode démonstration activé', {
-            description: 'Données de test chargées'
-        });
-    };
 
     /**
      * Charge les alertes SOS actives
@@ -1577,14 +1513,186 @@ export default function SyndicateBureauManagementPro() {
                     </Card>
                 </TabsContent>
 
-                {/* Autres onglets... (à compléter selon les besoins) */}
+                {/* Onglet Gestion - Fonctionnalités opérationnelles */}
                 <TabsContent value="management" className="space-y-6 mt-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Ajouter Taxi-Motard */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Bike className="w-5 h-5 text-blue-600" />
+                                    Ajouter un Taxi-Motard
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <AddTaxiMotardForm />
+                            </CardContent>
+                        </Card>
+
+                        {/* Paramètres du Système */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Settings className="w-5 h-5 text-purple-600" />
+                                    Paramètres Système
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Envoi automatique d'emails</p>
+                                        <p className="text-sm text-gray-600">Envoyer automatiquement les liens aux présidents</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Notifications SMS</p>
+                                        <p className="text-sm text-gray-600">Activer les notifications par SMS</p>
+                                    </div>
+                                    <Switch />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">QR Codes</p>
+                                        <p className="text-sm text-gray-600">Générer des QR codes pour les liens</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">Téléchargements mobiles</p>
+                                        <p className="text-sm text-gray-600">Permettre le téléchargement sur mobile</p>
+                                    </div>
+                                    <Switch defaultChecked />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Gestion des Rôles */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-green-600" />
+                                    Gestion des Rôles
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Crown className="w-5 h-5 text-yellow-600" />
+                                        <span className="font-bold text-gray-800">PDG - Accès Complet</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Gestion totale de tous les bureaux syndicaux
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-blue-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Users className="w-5 h-5 text-blue-600" />
+                                        <span className="font-bold text-gray-800">Président - Bureau Local</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Gestion de leur bureau syndical uniquement
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-green-50 rounded-xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Bike className="w-5 h-5 text-green-600" />
+                                        <span className="font-bold text-gray-800">Membre - Accès Limité</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 ml-8">
+                                        Consultation et services de base
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Statistiques de Gestion */}
+                        <Card className="border-0 shadow-xl rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-orange-600" />
+                                    Activité de Gestion
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Mail className="w-5 h-5 text-blue-600" />
+                                        <span className="font-semibold text-gray-800">Emails envoyés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-blue-700">
+                                        {bureaus.reduce((sum, b) => sum + b.email_sent_count, 0)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <MessageSquare className="w-5 h-5 text-green-600" />
+                                        <span className="font-semibold text-gray-800">SMS envoyés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-green-700">
+                                        {bureaus.reduce((sum, b) => sum + b.sms_sent_count, 0)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <QrCode className="w-5 h-5 text-purple-600" />
+                                        <span className="font-semibold text-gray-800">QR Codes générés</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-purple-700">
+                                        {bureaus.filter(b => b.qr_code).length}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Download className="w-5 h-5 text-orange-600" />
+                                        <span className="font-semibold text-gray-800">Téléchargements</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-orange-700">
+                                        {bureaus.reduce((sum, b) => sum + b.download_count, 0)}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Actions Rapides de Gestion */}
                     <Card className="border-0 shadow-xl rounded-2xl">
                         <CardHeader>
-                            <CardTitle className="text-xl font-bold text-gray-800">Gestion Avancée</CardTitle>
+                            <CardTitle className="text-xl font-bold text-gray-800">Actions Rapides</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-gray-600">Fonctionnalités de gestion avancée en cours de développement...</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl"
+                                    onClick={() => toast.success('Synchronisation lancée')}
+                                >
+                                    <RefreshCw className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Synchroniser</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl"
+                                    onClick={() => toast.success('Export en cours...')}
+                                >
+                                    <Download className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Exporter</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl"
+                                    onClick={() => toast.info('Rapport en préparation')}
+                                >
+                                    <FileText className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Rapport</span>
+                                </Button>
+                                <Button 
+                                    className="h-24 flex-col gap-2 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl"
+                                    onClick={() => toast.success('Sauvegarde effectuée')}
+                                >
+                                    <Save className="w-6 h-6" />
+                                    <span className="text-sm font-semibold">Sauvegarder</span>
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

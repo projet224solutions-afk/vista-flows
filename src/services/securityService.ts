@@ -3,21 +3,55 @@
  * Version simplifiée pour éviter les erreurs TypeScript
  */
 
+import { supabase } from '@/lib/supabase';
 import { MockSecurityService, type SecurityEvent, type SecurityIncident } from './mockSecurityService';
 
 export type { SecurityEvent, SecurityIncident };
 
 export class SecurityService {
   static async getSecurityEvents(): Promise<SecurityEvent[]> {
-    return MockSecurityService.getSecurityEvents();
+    try {
+      const { data, error } = await supabase
+        .from('security_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+      return [];
+    }
   }
 
   static async getSecurityIncidents(): Promise<SecurityIncident[]> {
-    return MockSecurityService.getSecurityIncidents();
+    try {
+      const { data, error } = await supabase
+        .from('security_incidents')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching security incidents:', error);
+      return [];
+    }
   }
 
   static async calculateThreatScore(userId: string): Promise<number> {
-    return MockSecurityService.calculateThreatScore(userId);
+    try {
+      const { data, error } = await supabase.rpc('calculate_threat_score', {
+        p_user_id: userId
+      });
+
+      if (error) throw error;
+      return data || 0;
+    } catch (error) {
+      console.error('Error calculating threat score:', error);
+      return 0;
+    }
   }
 
   static async generateSecurityId(): Promise<string> {
