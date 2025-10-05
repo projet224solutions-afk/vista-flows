@@ -173,8 +173,9 @@ export default function SyndicateBureauManagementPro() {
 
             if (error) {
                 console.error('❌ Erreur Supabase:', error);
-                // Charger les données de démonstration
-                loadDemoData();
+                toast.error('Erreur de chargement des données', {
+                    description: 'Impossible de charger les bureaux syndicaux'
+                });
                 return;
             }
 
@@ -213,85 +214,20 @@ export default function SyndicateBureauManagementPro() {
                 setBureaus(formattedBureaux);
                 console.log('✅ Bureaux chargés depuis Supabase:', formattedBureaux.length);
             } else {
-                console.log('ℹ️ Aucun bureau trouvé dans Supabase, chargement données démo');
-                loadDemoData();
+                console.log('ℹ️ Aucun bureau trouvé dans Supabase');
+                setBureaus([]);
             }
         } catch (error) {
             console.error('❌ Erreur chargement Supabase:', error);
-            loadDemoData();
+            toast.error('Erreur système', {
+                description: 'Impossible de se connecter à la base de données'
+            });
+            setBureaus([]);
         } finally {
             setLoading(false);
         }
     };
 
-    /**
-     * Charge les données de démonstration
-     */
-    const loadDemoData = () => {
-        const mockBureaus: SyndicateBureau[] = [
-            {
-                id: '1',
-                bureau_code: 'SYN-2025-00001',
-                prefecture: 'Conakry',
-                commune: 'Plateau',
-                full_location: 'Conakry - Plateau',
-                president_name: 'Mamadou Diallo',
-                president_email: 'mamadou.diallo@email.com',
-                president_phone: '+221 77 123 45 67',
-                permanent_link: `${window.location.origin}/syndicat/president/abc123def456`,
-                access_token: 'abc123def456',
-                status: 'active',
-                total_members: 45,
-                active_members: 42,
-                total_vehicles: 38,
-                total_cotisations: 2250000,
-                link_sent_at: '2025-09-25T10:30:00Z',
-                link_accessed_at: '2025-09-25T14:20:00Z',
-                created_at: '2025-09-25T10:00:00Z',
-                validated_at: '2025-09-25T16:00:00Z',
-                last_activity: '2025-10-01T09:15:00Z',
-                email_sent_count: 3,
-                sms_sent_count: 1,
-                is_link_permanent: true,
-                qr_code: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+PC9zdmc+',
-                download_count: 5,
-                mobile_access_count: 12,
-                desktop_access_count: 8,
-                tablet_access_count: 2
-            },
-            {
-                id: '2',
-                bureau_code: 'SYN-2025-00002',
-                prefecture: 'Thiès',
-                commune: 'Thiès Nord',
-                full_location: 'Thiès - Thiès Nord',
-                president_name: 'Fatou Sall',
-                president_email: 'fatou.sall@email.com',
-                president_phone: '+221 76 987 65 43',
-                permanent_link: `${window.location.origin}/syndicat/president/xyz789uvw012`,
-                access_token: 'xyz789uvw012',
-                status: 'pending',
-                total_members: 0,
-                active_members: 0,
-                total_vehicles: 0,
-                total_cotisations: 0,
-                link_sent_at: '2025-09-30T09:15:00Z',
-                created_at: '2025-09-30T09:00:00Z',
-                email_sent_count: 1,
-                sms_sent_count: 0,
-                is_link_permanent: true,
-                download_count: 0,
-                mobile_access_count: 0,
-                desktop_access_count: 0,
-                tablet_access_count: 0
-            }
-        ];
-
-        setBureaus(mockBureaus);
-        toast.info('Mode démonstration activé', {
-            description: 'Données de test chargées'
-        });
-    };
 
     /**
      * Charge les alertes SOS actives

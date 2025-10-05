@@ -3,6 +3,7 @@
  * Version simplifiée pour éviter les erreurs TypeScript
  */
 
+import { supabase } from '@/lib/supabase';
 import { MockExpenseService, type ExpenseCategory, type ExpenseWithDetails, type ExpenseStats } from './mockExpenseService';
 
 export type { ExpenseCategory, ExpenseWithDetails, ExpenseStats };
@@ -17,9 +18,14 @@ export interface VendorExpense {
 
 export interface ExpenseFilters {
   category_id?: string;
+  category?: string;
   start_date?: string;
+  startDate?: string;
   end_date?: string;
+  endDate?: string;
   status?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface ExpenseBudget {
@@ -30,14 +36,28 @@ export interface ExpenseBudget {
 
 export interface ExpenseAlert {
   id: string;
+  type: string;
   message: string;
+  date: string;
   is_read: boolean;
 }
 
 // Tous les services retournent des données mockées
 export class ExpenseCategoryService {
   static async getVendorCategories(vendorId: string): Promise<ExpenseCategory[]> {
-    return MockExpenseService.getCategories(vendorId);
+    try {
+      const { data, error } = await supabase
+        .from('expense_categories')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('name');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
   }
 
   static async createCategory(category: any): Promise<ExpenseCategory> {
@@ -58,7 +78,38 @@ export class ExpenseService {
     page: number = 1,
     limit: number = 20
   ): Promise<{ expenses: ExpenseWithDetails[]; total: number }> {
-    return MockExpenseService.getExpenses();
+    try {
+      let query = supabase
+        .from('vendor_expenses')
+        .select('*, category:expense_categories(name, color, icon)', { count: 'exact' })
+        .eq('vendor_id', vendorId)
+        .order('expense_date', { ascending: false });
+
+      if (filters.category) {
+        query = query.eq('category_id', filters.category);
+      }
+      if (filters.startDate) {
+        query = query.gte('expense_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('expense_date', filters.endDate);
+      }
+
+      const { data, error, count } = await query.range(
+        (filters.page - 1) * filters.limit,
+        filters.page * filters.limit - 1
+      );
+
+      if (error) throw error;
+
+      return {
+        expenses: data || [],
+        total: count || 0
+      };
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      return { expenses: [], total: 0 };
+    }
   }
 
   static async createExpense(expense: any): Promise<VendorExpense> {
@@ -86,7 +137,34 @@ export class ExpenseAnalyticsService {
     startDate?: string,
     endDate?: string
   ): Promise<ExpenseStats> {
-    return MockExpenseService.getStats();
+    try {
+      const { data, error } = await supabase.rpc('calculate_expense_stats', {
+        p_vendor_id: vendorId,
+        p_start_date: startDate,
+        p_end_date: endDate
+      });
+
+      if (error) throw error;
+
+      return data || {
+        total_expenses: 0,
+        expense_count: 0,
+        average_expense: 0,
+        categories: [],
+        payment_methods: {},
+        monthly_trend: []
+      };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return {
+        total_expenses: 0,
+        expense_count: 0,
+        average_expense: 0,
+        categories: [],
+        payment_methods: {},
+        monthly_trend: []
+      };
+    }
   }
 
   static async detectAnomalies(vendorId: string): Promise<any[]> {

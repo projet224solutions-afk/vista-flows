@@ -42,11 +42,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
   // Hook principal de gestion des dépenses (avec fallback vers données simulées)
-  const realExpenseData = useExpenseManagement();
-  const mockExpenseData = useMockExpenseManagement();
-
-  // Utiliser les données simulées si les vraies données ne sont pas disponibles
-  const expenseData = realExpenseData.error ? mockExpenseData : realExpenseData;
+  const expenseData = useExpenseManagement();
 
   const {
     quickStats,
@@ -165,14 +161,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-          <div className="flex items-center gap-3">
+          <div>
             <p className="text-gray-600">Suivez et analysez vos dépenses professionnelles</p>
-            {realExpenseData.error && (
-              <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
-                <Activity className="w-3 h-3 mr-1" />
-                Mode Démonstration
-              </Badge>
-            )}
           </div>
         </div>
 
@@ -435,10 +425,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                         <div key={alert.id} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                           <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium text-orange-800">{alert.title}</p>
+                            <p className="font-medium text-orange-800">{alert.type}</p>
                             <p className="text-sm text-orange-600">{alert.message}</p>
                             <p className="text-xs text-orange-500 mt-1">
-                              {format(new Date(alert.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                              {format(new Date(alert.date), 'dd/MM/yyyy HH:mm', { locale: fr })}
                             </p>
                           </div>
                         </div>

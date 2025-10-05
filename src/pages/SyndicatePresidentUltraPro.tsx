@@ -243,11 +243,9 @@ export default function SyndicatePresidentUltraPro() {
 
             if (error || !bureau) {
                 console.log('❌ Token invalide ou bureau inactif:', error);
-                // Mode démonstration avec données factices
-                loadDemoData();
-                setAuthenticated(true);
-                toast.warning('Mode démonstration activé', {
-                    description: 'Token non trouvé, utilisation de données de test'
+                setAuthenticated(false);
+                toast.error('Authentification échouée', {
+                    description: 'Token invalide ou bureau inactif'
                 });
             } else {
                 console.log('✅ Token valide, bureau trouvé:', bureau);
@@ -291,10 +289,9 @@ export default function SyndicatePresidentUltraPro() {
             }
         } catch (error) {
             console.error('❌ Erreur authentification:', error);
-            loadDemoData();
-            setAuthenticated(true);
-            toast.warning('Mode démonstration activé', {
-                description: 'Erreur de connexion, utilisation de données de test'
+            setAuthenticated(false);
+            toast.error('Erreur de connexion', {
+                description: 'Impossible de se connecter au serveur'
             });
         } finally {
             setLoading(false);
@@ -858,9 +855,9 @@ export default function SyndicatePresidentUltraPro() {
                                     </Button>
                                 </div>
 
-                                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                                    <p className="text-xs text-yellow-800">
-                                        💡 <strong>Mode démonstration:</strong> Utilisez le code <code>123456</code> ou le code bureau pour vous connecter.
+                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                    <p className="text-xs text-blue-800">
+                                        💡 <strong>Authentification sécurisée:</strong> Entrez votre code de vérification pour accéder à l'interface.
                                     </p>
                                 </div>
                             </div>
