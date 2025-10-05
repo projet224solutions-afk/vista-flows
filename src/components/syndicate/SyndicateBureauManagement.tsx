@@ -107,7 +107,7 @@ export default function SyndicateBureauManagement() {
     const loadBureaus = async () => {
         try {
             console.log('🔄 Chargement des bureaux depuis Supabase...');
-            
+
             // Charger depuis Supabase
             const { data: supabaseBureaus, error } = await supabase
                 .from('syndicate_bureaus')
@@ -210,7 +210,7 @@ export default function SyndicateBureauManagement() {
             // Générer le code bureau basé sur la ville
             const cityCode = formData.commune.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 3);
             const bureauCode = `SYN-${cityCode}-${String(bureaus.length + 1).padStart(3, '0')}`;
-            
+
             const newBureau: SyndicateBureau = {
                 id: Date.now().toString(),
                 bureau_code: bureauCode,
