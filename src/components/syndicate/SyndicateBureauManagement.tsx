@@ -108,7 +108,7 @@ export default function SyndicateBureauManagement() {
         try {
             console.log('🔄 Chargement des bureaux depuis Supabase...');
             console.log('🔗 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-            
+
             // Charger depuis Supabase
             const { data: supabaseBureaus, error } = await supabase
                 .from('syndicate_bureaus')
@@ -121,7 +121,7 @@ export default function SyndicateBureauManagement() {
                 console.error('❌ Message:', error.message);
                 console.error('❌ Détails:', error.details);
                 console.error('❌ Hint:', error.hint);
-                
+
                 // Fallback sur les données mockées en cas d'erreur
                 const mockBureaus: SyndicateBureau[] = [
                     {
