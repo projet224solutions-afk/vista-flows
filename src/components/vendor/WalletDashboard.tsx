@@ -30,13 +30,18 @@ import {
   CheckCircle,
   RefreshCw
 } from "lucide-react";
-import { useWallet, useWalletTransactions, useWalletStats } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 
 export default function WalletDashboard() {
-  const { wallet, isLoading: walletLoading, refetch } = useWallet();
-  const { transactions, isLoading: transactionsLoading } = useWalletTransactions(wallet?.id);
-  const { stats } = useWalletStats(wallet?.id);
+  const { wallet, loading: walletLoading, transactions, refetch } = useWallet();
+  
+  // Calculer les statistiques à partir des transactions
+  const stats = {
+    totalCredits: transactions.filter(t => t.status === 'completed' && t.amount > 0).reduce((sum, t) => sum + t.amount, 0),
+    totalDebits: Math.abs(transactions.filter(t => t.status === 'completed' && t.amount < 0).reduce((sum, t) => sum + t.amount, 0)),
+    totalTransactions: transactions.length
+  };
   
   const [showBalance, setShowBalance] = useState(true);
   const [transferAmount, setTransferAmount] = useState('');
@@ -309,7 +314,7 @@ export default function WalletDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {transactionsLoading ? (
+          {walletLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
               <p className="text-sm text-gray-600">Chargement des transactions...</p>
@@ -321,22 +326,18 @@ export default function WalletDashboard() {
                   <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
-                        transaction.type === 'credit' 
+                        transaction.amount > 0
                           ? 'bg-green-100 text-green-600' 
-                          : transaction.type === 'debit'
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-blue-100 text-blue-600'
+                          : 'bg-red-100 text-red-600'
                       }`}>
-                        {transaction.type === 'credit' ? (
+                        {transaction.amount > 0 ? (
                           <TrendingUp className="w-4 h-4" />
-                        ) : transaction.type === 'debit' ? (
-                          <Download className="w-4 h-4" />
                         ) : (
-                          <ArrowRightLeft className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium">{transaction.description}</p>
+                        <p className="font-medium">{transaction.description || transaction.method}</p>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <span>{new Date(transaction.created_at).toLocaleDateString()}</span>
                           <Badge variant="outline" className="text-xs">
@@ -346,10 +347,10 @@ export default function WalletDashboard() {
                       </div>
                     </div>
                     <div className={`text-right font-bold ${
-                      transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'credit' ? '+' : '-'}
-                      {transaction.amount.toLocaleString()} {transaction.currency}
+                      {transaction.amount > 0 ? '+' : ''}
+                      {transaction.amount.toLocaleString()} {wallet?.currency || 'GNF'}
                     </div>
                   </div>
                 ))}
