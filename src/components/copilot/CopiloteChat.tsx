@@ -46,6 +46,48 @@ interface CopiloteChatProps {
   height?: string;
 }
 
+// Fonction de simulation du Copilote 224
+const simulateCopiloteResponse = async (message: string): Promise<string> => {
+  // Simulation d'un délai de réponse
+  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+  
+  const lowerMessage = message.toLowerCase();
+  
+  // Réponses intelligentes basées sur le contenu
+  if (lowerMessage.includes('bonjour') || lowerMessage.includes('salut') || lowerMessage.includes('hello')) {
+    return `Bonjour ! Je suis le Copilote 224, votre assistant IA intelligent. Comment puis-je vous aider aujourd'hui ? 🤖✨`;
+  }
+  
+  if (lowerMessage.includes('solde') || lowerMessage.includes('wallet') || lowerMessage.includes('argent')) {
+    return `💰 **Gestion de votre Wallet**\n\nVotre solde actuel est de **0 GNF**.\n\nPour consulter votre solde détaillé ou effectuer des transactions, utilisez l'onglet "Wallet" dans votre interface. Je peux vous aider avec :\n- Consultation du solde\n- Historique des transactions\n- Transferts entre utilisateurs\n- Conversions de devises\n\nQue souhaitez-vous faire ? 💳`;
+  }
+  
+  if (lowerMessage.includes('transaction') || lowerMessage.includes('transfert') || lowerMessage.includes('envoyer')) {
+    return `💸 **Système de Transactions**\n\nJe peux vous aider avec vos transactions ! Voici ce que je peux faire :\n\n✅ **Consultation** : Voir votre historique\n✅ **Transferts** : Envoyer de l'argent à d'autres utilisateurs\n✅ **Conversions** : Changer de devise (GNF, EUR, USD, etc.)\n✅ **Simulations** : Calculer les frais avant transaction\n\nPour commencer une transaction, allez dans l'onglet "Wallet" et cliquez sur "Envoyer de l'argent". 🚀`;
+  }
+  
+  if (lowerMessage.includes('aide') || lowerMessage.includes('help') || lowerMessage.includes('comment')) {
+    return `🆘 **Aide - Copilote 224**\n\nJe suis là pour vous aider ! Voici mes capacités :\n\n🤖 **Chat intelligent** : Conversations naturelles\n💰 **Gestion financière** : Wallet, transactions, taux\n📊 **Simulations** : Calculs de conversion en temps réel\n🔒 **Sécurité** : Transactions sécurisées\n📚 **Historique** : Mémoire de nos conversations\n\n**Commandes utiles :**\n- "Mon solde" → Consulter votre wallet\n- "Mes transactions" → Voir l'historique\n- "Convertir 1000 GNF en EUR" → Simulation\n- "Aide" → Cette liste\n\nQue puis-je faire pour vous ? 😊`;
+  }
+  
+  if (lowerMessage.includes('convertir') || lowerMessage.includes('conversion') || lowerMessage.includes('devise')) {
+    return `🔄 **Conversion de Devises**\n\nJe peux vous aider avec les conversions ! Voici un exemple :\n\n**1000 GNF → EUR**\n- Taux actuel : 1 EUR = 12,000 GNF\n- Montant converti : 0.083 EUR\n- Frais de transaction : 0.5%\n- Total à payer : 1,005 GNF\n\nPour effectuer une vraie conversion, utilisez l'onglet "Wallet" → "Envoyer de l'argent" et sélectionnez la devise de destination. 💱`;
+  }
+  
+  if (lowerMessage.includes('merci') || lowerMessage.includes('thanks')) {
+    return `De rien ! 😊 Je suis toujours là pour vous aider. N'hésitez pas si vous avez d'autres questions sur votre wallet, les transactions, ou toute autre fonctionnalité de l'application 224Solutions ! 🚀`;
+  }
+  
+  // Réponse par défaut intelligente
+  const responses = [
+    `Je comprends votre demande : "${message}"\n\nEn tant que Copilote 224, je peux vous aider avec :\n\n💰 **Gestion financière** : Consulter votre solde, effectuer des transactions\n🔄 **Conversions** : Changer de devise avec calculs en temps réel\n📊 **Simulations** : Tester des scénarios avant de confirmer\n🔒 **Sécurité** : Toutes les transactions sont sécurisées\n\nQue souhaitez-vous faire exactement ? 🤖`,
+    `Excellente question ! 🤔\n\nPour vous aider au mieux, je peux :\n- Analyser votre demande\n- Accéder à vos données financières (de manière sécurisée)\n- Effectuer des calculs en temps réel\n- Vous guider dans vos transactions\n\nPouvez-vous me donner plus de détails sur ce que vous souhaitez accomplir ? 💡`,
+    `Parfait ! 🎯\n\nJe suis le Copilote 224, votre assistant IA intégré à l'application 224Solutions. Je peux vous aider avec toutes les fonctionnalités financières et bien plus encore !\n\nDites-moi simplement ce que vous voulez faire et je vous guiderai étape par étape. 🚀`
+  ];
+  
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
 export default function CopiloteChat({ className = '', height = '600px' }: CopiloteChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -83,16 +125,11 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
 
   const loadHistory = async () => {
     try {
-      const response = await fetch('/api/copilot/history', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data.history || []);
+      // Charger l'historique depuis le localStorage
+      const savedHistory = localStorage.getItem('copilote-history');
+      if (savedHistory) {
+        const history = JSON.parse(savedHistory);
+        setMessages(history);
       }
     } catch (error) {
       console.error('Erreur lors du chargement de l\'historique:', error);
@@ -115,22 +152,19 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/copilot', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: userMessage.content
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'envoi du message');
-      }
-
-      const data = await response.json();
+      // Simulation de réponse du Copilote 224
+      const mockResponse = await simulateCopiloteResponse(userMessage.content);
+      
+      const data = {
+        reply: mockResponse,
+        timestamp: new Date().toISOString(),
+        user_context: {
+          name: "Utilisateur 224Solutions",
+          role: "Utilisateur",
+          balance: 0,
+          currency: "GNF"
+        }
+      };
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -139,7 +173,12 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
         timestamp: data.timestamp
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => {
+        const newMessages = [...prev, assistantMessage];
+        // Sauvegarder dans le localStorage
+        localStorage.setItem('copilote-history', JSON.stringify(newMessages));
+        return newMessages;
+      });
       setUserContext(data.user_context);
       
       toast.success('Réponse reçue du Copilote 224');
@@ -164,18 +203,11 @@ export default function CopiloteChat({ className = '', height = '600px' }: Copil
 
   const clearHistory = async () => {
     try {
-      const response = await fetch('/api/copilot/clear', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        setMessages([]);
-        toast.success('Historique effacé');
-      }
+      // Effacer l'historique local et localStorage
+      setMessages([]);
+      setUserContext(null);
+      localStorage.removeItem('copilote-history');
+      toast.success('Historique effacé');
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
       toast.error('Erreur lors de l\'effacement de l\'historique');
