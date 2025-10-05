@@ -780,7 +780,6 @@ export default function SyndicatePresidentUltraPro() {
                                             variant={authMethod === 'phone' ? 'default' : 'outline'}
                                             onClick={() => setAuthMethod('phone')}
                                             className="rounded-xl"
-                                            disabled={!bureauInfo?.president_phone}
                                         >
                                             <Phone className="w-4 h-4 mr-2" />
                                             SMS
@@ -788,22 +787,44 @@ export default function SyndicatePresidentUltraPro() {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 p-4 rounded-xl">
-                                    <p className="text-sm text-gray-700 mb-2">
-                                        {authMethod === 'email' ? '📧 Email:' : '📱 Téléphone:'}
-                                    </p>
-                                    <p className="font-semibold text-gray-800">
-                                        {authMethod === 'email'
-                                            ? bureauInfo?.president_email
-                                            : bureauInfo?.president_phone || 'Non configuré'
-                                        }
-                                    </p>
+                                <div className="space-y-4">
+                                    {authMethod === 'email' ? (
+                                        <div>
+                                            <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                                                📧 Email du Président *
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={bureauInfo?.president_email || ''}
+                                                onChange={(e) => setBureauInfo(prev => prev ? { ...prev, president_email: e.target.value } : null)}
+                                                placeholder="votre.email@example.com"
+                                                className="mt-2 rounded-xl"
+                                                required
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
+                                                📱 Numéro de Téléphone *
+                                            </Label>
+                                            <Input
+                                                id="phone"
+                                                type="tel"
+                                                value={bureauInfo?.president_phone || ''}
+                                                onChange={(e) => setBureauInfo(prev => prev ? { ...prev, president_phone: e.target.value } : null)}
+                                                placeholder="+224 XXX XX XX XX"
+                                                className="mt-2 rounded-xl"
+                                                required
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <Button
                                     onClick={sendVerificationCode}
                                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl py-3"
-                                    disabled={authMethod === 'phone' && !bureauInfo?.president_phone}
+                                    disabled={authMethod === 'email' ? !bureauInfo?.president_email : !bureauInfo?.president_phone}
                                 >
                                     <Send className="w-4 h-4 mr-2" />
                                     Envoyer le code de vérification
