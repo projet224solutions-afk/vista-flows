@@ -21,6 +21,7 @@ const ClientDashboardUltimate = lazy(() => import("./pages/ClientDashboardUltima
 const TestClient = lazy(() => import("./pages/TestClient"));
 const ClientDashboardSimple = lazy(() => import("./pages/ClientDashboardSimple"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
+const VendeurDashboardOptimized = lazy(() => import("./pages/VendeurDashboardOptimized"));
 const VendeurDashboardSimple = lazy(() => import("./pages/VendeurDashboardSimple"));
 const TestUltraBasic = lazy(() => import("./pages/TestUltraBasic"));
 const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
@@ -84,6 +85,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
                     <VendeurDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vendeur-optimized"
+                element={
+                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                    <VendeurDashboardOptimized />
                   </ProtectedRoute>
                 }
               />
