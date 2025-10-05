@@ -36,6 +36,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { MultiCurrencyTransferService } from "@/services/MultiCurrencyTransferService";
+import { GlobalCurrencyService } from "@/services/GlobalCurrencyService";
 
 export default function WalletDashboard() {
   const { user } = useAuth();
@@ -71,10 +72,20 @@ export default function WalletDashboard() {
   useEffect(() => {
     const loadCurrencies = async () => {
       try {
-        const currencies = await MultiCurrencyTransferService.getAvailableCurrencies();
+        const currencies = await GlobalCurrencyService.getActiveCurrencies();
         setAvailableCurrencies(currencies);
+        if (currencies.length > 0 && !transferCurrency) {
+          setTransferCurrency(currencies[0].code); // Set default currency
+        }
       } catch (error) {
         console.error('Error loading currencies:', error);
+        // Fallback sur les devises principales
+        setAvailableCurrencies([
+          { code: 'GNF', name: 'Guinean Franc', symbol: 'FG' },
+          { code: 'USD', name: 'US Dollar', symbol: '$' },
+          { code: 'EUR', name: 'Euro', symbol: '€' },
+          { code: 'XOF', name: 'West African CFA Franc', symbol: 'CFA' }
+        ]);
       }
     };
     loadCurrencies();
@@ -392,7 +403,7 @@ export default function WalletDashboard() {
                         <Label>Devise</Label>
                         <Select value={transferCurrency} onValueChange={setTransferCurrency}>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Sélectionner une devise" />
                           </SelectTrigger>
                           <SelectContent>
                             {availableCurrencies.map((currency) => (

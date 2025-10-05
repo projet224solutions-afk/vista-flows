@@ -104,6 +104,12 @@ export default function PDGFinanceManagement() {
       setExchangeRates(ratesData);
       setRateHistory(historyData);
       setStatistics(statsData);
+      
+      // Définir les devises par défaut pour la simulation
+      if (currenciesData.length > 0) {
+        setSimulationFromCurrency(currenciesData.find(c => c.code === 'GNF')?.code || currenciesData[0].code);
+        setSimulationToCurrency(currenciesData.find(c => c.code === 'USD')?.code || currenciesData[1]?.code || currenciesData[0].code);
+      }
     } catch (error) {
       console.error('Error loading initial data:', error);
       toast({
@@ -387,7 +393,7 @@ export default function PDGFinanceManagement() {
                   <Label htmlFor="simulation-from">Devise d'envoi</Label>
                   <Select value={simulationFromCurrency} onValueChange={setSimulationFromCurrency}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Sélectionner une devise" />
                     </SelectTrigger>
                     <SelectContent>
                       {currencies.map((currency) => (
@@ -403,7 +409,7 @@ export default function PDGFinanceManagement() {
                   <Label htmlFor="simulation-to">Devise de réception</Label>
                   <Select value={simulationToCurrency} onValueChange={setSimulationToCurrency}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Sélectionner une devise" />
                     </SelectTrigger>
                     <SelectContent>
                       {currencies.map((currency) => (

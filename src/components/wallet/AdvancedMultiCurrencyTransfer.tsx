@@ -101,7 +101,7 @@ export default function AdvancedMultiCurrencyTransfer() {
     setLoading(true);
     try {
       const [currenciesData, profileData] = await Promise.all([
-        AdvancedMultiCurrencyService.getAvailableCurrencies(),
+        GlobalCurrencyService.getActiveCurrencies(),
         user ? AdvancedMultiCurrencyService.detectUserCurrencyProfile(user.id) : null
       ]);
       
@@ -113,6 +113,13 @@ export default function AdvancedMultiCurrencyTransfer() {
           ...prev,
           currencySent: profileData.defaultCurrency,
           autoDetectCurrency: true
+        }));
+      } else {
+        // Fallback sur les devises principales si pas de détection
+        setForm(prev => ({
+          ...prev,
+          currencySent: 'GNF',
+          currencyReceived: 'USD'
         }));
       }
     } catch (error) {
@@ -400,7 +407,7 @@ export default function AdvancedMultiCurrencyTransfer() {
                     onValueChange={(value) => setForm(prev => ({ ...prev, currencySent: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Sélectionner une devise" />
                     </SelectTrigger>
                     <SelectContent>
                       {currencies.map((currency) => (
@@ -419,7 +426,7 @@ export default function AdvancedMultiCurrencyTransfer() {
                     onValueChange={(value) => setForm(prev => ({ ...prev, currencyReceived: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Sélectionner une devise" />
                     </SelectTrigger>
                     <SelectContent>
                       {currencies.map((currency) => (
