@@ -34,6 +34,7 @@ import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import CommunicationModule from "@/components/communication/CommunicationModule";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useWallet } from "@/hooks/useWallet";
@@ -692,7 +693,7 @@ export default function VendeurDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
-            <CommunicationModule />
+            <SimpleCommunicationInterface />
           </TabsContent>
 
           {/* Gestion des paiements */}

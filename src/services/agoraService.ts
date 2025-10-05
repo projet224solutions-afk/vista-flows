@@ -61,7 +61,7 @@ class AgoraService {
   
   // Configuration
   private config: AgoraConfig | null = null;
-  private baseURL = 'http://localhost:3001/api';
+  private baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
   
   // Callbacks
   private messageCallbacks: ((message: MessageData) => void)[] = [];
@@ -84,16 +84,23 @@ class AgoraService {
    */
   async getTokens(channelName: string, userId: string): Promise<AgoraConfig> {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Token d\'authentification manquant');
+      // Utiliser Supabase pour l'authentification
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Session utilisateur non trouvée');
       }
 
       const response = await fetch(`${this.baseURL}/agora/session-tokens`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           channelName,

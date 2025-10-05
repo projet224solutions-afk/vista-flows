@@ -85,6 +85,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
 import { usePDGManagement } from "@/hooks/useAgentSystem";
 import PDGFinanceManagement from "@/components/pdg/PDGFinanceManagement";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 // Types pour les données PDG
 interface PDGStats {
@@ -990,7 +991,7 @@ export default function PDGDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
-            <CommunicationModule />
+            <SimpleCommunicationInterface />
           </TabsContent>
 
           {/* Sécurité et Monitoring */}

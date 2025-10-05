@@ -4,7 +4,7 @@
  * Intégration avec Supabase et Agora
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { mockCommunicationService } from './mockCommunicationService';
 import { toast } from 'sonner';
 import agoraService, { MessageData } from './agoraService';
