@@ -34,7 +34,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 
 export default function WalletDashboard() {
-  const { wallet, loading: walletLoading, transactions, refetch } = useWallet();
+  const { wallet, loading: walletLoading, transactions, refetch, transferFunds } = useWallet();
   
   // Calculer les statistiques à partir des transactions
   const stats = {

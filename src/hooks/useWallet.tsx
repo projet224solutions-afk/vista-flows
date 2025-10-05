@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import WalletTransferService from '@/services/WalletTransferService';
 
 interface Wallet {
   id: string;
@@ -251,7 +252,85 @@ export const useWallet = () => {
     }
   }, [user]);
 
-  return {
+
+  // Transfert entre wallets
+  const transferFunds = async (
+    toUserEmail: string,
+    amount: number,
+    description?: string,
+    currency: string = 'GNF'
+  ) => {
+    if (!user || !wallet) {
+      toast({
+        title: "Erreur",
+        description: "Utilisateur ou wallet non trouvé",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (wallet.balance < amount) {
+      toast({
+        title: "Erreur",
+        description: "Solde insuffisant",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const result = await WalletTransferService.transferFunds({
+        fromUserId: user.id,
+        toUserEmail,
+        amount,
+        description,
+        currency
+      });
+
+      if (result.success) {
+        // Mettre à jour le solde local
+        setWallet(prev => prev ? { ...prev, balance: result.newBalance || 0 } : null);
+        
+        // Recharger les données
+        await Promise.all([fetchWallet(), fetchTransactions()]);
+        
+        toast({
+          title: "Transfert réussi",
+          description: `${amount} ${currency} transféré vers ${toUserEmail}`,
+        });
+        
+        return true;
+      } else {
+        toast({
+          title: "Erreur de transfert",
+          description: result.error || "Erreur inconnue",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du transfert",
+        variant: "destructive",
+      });
+      console.error('Error transferring funds:', error);
+      return false;
+    }
+  };
+
+  // Vérifier si un utilisateur peut recevoir des transferts
+  const canReceiveTransfer = async (userEmail: string) => {
+    return await WalletTransferService.canReceiveTransfer(userEmail);
+  };
+
+  // Récupérer l'historique des transferts
+  const getTransferHistory = async (limit: number = 20) => {
+    if (!user) return [];
+    return await WalletTransferService.getTransferHistory(user.id, limit);
+  };
+
+    return {
     wallet,
     virtualCards,
     transactions,
