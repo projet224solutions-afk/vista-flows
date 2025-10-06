@@ -47,6 +47,7 @@ const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
 const PDGBasic = lazy(() => import("./pages/PDGBasic")); // PDG Basic
 const PDGMinimal = lazy(() => import("./pages/PDGMinimal")); // PDG Minimal
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
+const CommunicationTestPage = lazy(() => import("./pages/CommunicationTestPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Composant de loading
@@ -221,6 +222,10 @@ const App = () => (
               <Route
                 path="/diagnostic-fonctionnalites"
                 element={<DiagnosticFonctionnalites />}
+              />
+              <Route
+                path="/communication-test"
+                element={<CommunicationTestPage />}
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
