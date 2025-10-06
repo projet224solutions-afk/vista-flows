@@ -19,6 +19,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useVendorStats } from "@/hooks/useVendorData";
+import { useVendorOptimized } from "@/hooks/useVendorOptimized";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import InventoryManagement from "@/components/vendor/InventoryManagement";
@@ -30,6 +31,7 @@ import ClientManagement from "@/components/vendor/ClientManagement";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import PaymentProcessor from "@/components/vendor/PaymentProcessor";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
+import VendorDiagnostic from "@/components/vendor/VendorDiagnostic";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
@@ -49,6 +51,16 @@ export default function VendeurDashboard() {
   useRoleRedirect(); // S'assurer que seuls les vendeurs/admins accèdent à cette page
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   const { userInfo, loading: userInfoLoading } = useUserInfo();
+
+  // Hook optimisé pour les données vendeur
+  const {
+    stats: optimizedStats,
+    profile: vendorProfile,
+    loading: optimizedLoading,
+    error: optimizedError,
+    runDiagnostic,
+    autoFix
+  } = useVendorOptimized();
 
   // Hooks wallet intégrés
   const { wallet, loading: walletLoading, transactions } = useWallet();
@@ -81,25 +93,25 @@ export default function VendeurDashboard() {
     }
   };
 
-  // Données du tableau de bord - utilise les données réelles si disponibles
+  // Données du tableau de bord - utilise les données optimisées si disponibles
   const mainStats = [
     {
       label: "Chiffre d'affaires",
-      value: stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA",
+      value: optimizedStats ? `${optimizedStats.revenue.toLocaleString()} FCFA` : stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA",
       change: "+12%",
       icon: DollarSign,
       color: "text-green-600"
     },
     {
       label: "Commandes ce mois",
-      value: stats ? stats.orders_count.toString() : "156",
+      value: optimizedStats ? optimizedStats.orders_count.toString() : stats ? stats.orders_count.toString() : "156",
       change: "+8%",
       icon: ShoppingCart,
       color: "text-blue-600"
     },
     {
       label: "Clients actifs",
-      value: stats ? stats.customers_count.toString() : "89",
+      value: optimizedStats ? optimizedStats.customers_count.toString() : stats ? stats.customers_count.toString() : "89",
       change: "+15%",
       icon: Users,
       color: "text-purple-600"
@@ -532,47 +544,8 @@ export default function VendeurDashboard() {
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">
-            {/* Panneau de diagnostic */}
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-800">
-                  <AlertTriangle className="w-5 h-5" />
-                  🔧 Diagnostic & Réparation
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-orange-700 mb-4">
-                  Si vous ne pouvez pas ajouter de produits ou si l'interface ne fonctionne pas, utilisez ces outils de diagnostic :
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    🔍 Diagnostic Complet
-                  </Button>
-                  <Button
-                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    🔧 Réparer Profil Vendeur
-                  </Button>
-                  <Button
-                    onClick={() => toast({ title: "Debug", description: "Debug utilities being refactored" })}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    🧪 Test Ajout Produit
-                  </Button>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    variant="outline"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Actualiser
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Diagnostic et réparation vendeur */}
+            <VendorDiagnostic />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Commandes récentes */}
               <Card>
