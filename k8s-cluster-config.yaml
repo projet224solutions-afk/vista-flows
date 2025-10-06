@@ -1,0 +1,344 @@
+# 🚀 KUBERNETES CLUSTER MULTI-RÉGION - 224SOLUTIONS
+# Configuration pour 100M utilisateurs
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: 224solutions
+  labels:
+    app: 224solutions
+    tier: production
+    region: global
+
+---
+# 🔧 CONFIGURATION MICROSERVICES
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: 224solutions
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: 224solutions/user-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: url
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# 💰 WALLET SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallet-service
+  namespace: 224solutions
+spec:
+  replicas: 15
+  selector:
+    matchLabels:
+      app: wallet-service
+  template:
+    metadata:
+      labels:
+        app: wallet-service
+    spec:
+      containers:
+      - name: wallet-service
+        image: 224solutions/wallet-service:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: url
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: encryption-secret
+              key: key
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+---
+# 💳 PAYMENT SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: 224solutions
+spec:
+  replicas: 20
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: 224solutions/payment-service:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: secret-key
+        - name: PAYPAL_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: paypal-secret
+              key: client-id
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+---
+# 📱 NOTIFICATION SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: 224solutions
+spec:
+  replicas: 8
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: 224solutions/notification-service:latest
+        ports:
+        - containerPort: 3003
+        env:
+        - name: FCM_SERVER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fcm-secret
+              key: server-key
+        - name: TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              name: twilio-secret
+              key: account-sid
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# 🤖 AI SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: 224solutions
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+      - name: ai-service
+        image: 224solutions/ai-service:latest
+        ports:
+        - containerPort: 3004
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        - name: GOOGLE_AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: google-ai-secret
+              key: api-key
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+
+---
+# 🔐 SECURITY SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-service
+  namespace: 224solutions
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: security-service
+  template:
+    metadata:
+      labels:
+        app: security-service
+    spec:
+      containers:
+      - name: security-service
+        image: 224solutions/security-service:latest
+        ports:
+        - containerPort: 3005
+        env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: encryption-secret
+              key: key
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+---
+# 🌐 API GATEWAY
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: 224solutions
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: 224solutions/api-gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: RATE_LIMIT_RPS
+          value: "1000"
+        - name: RATE_LIMIT_BURST
+          value: "2000"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# 📊 MONITORING SERVICE
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitoring-service
+  namespace: 224solutions
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: monitoring-service
+  template:
+    metadata:
+      labels:
+        app: monitoring-service
+    spec:
+      containers:
+      - name: monitoring-service
+        image: 224solutions/monitoring-service:latest
+        ports:
+        - containerPort: 9090
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus:9090"
+        - name: GRAFANA_URL
+          value: "http://grafana:3000"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
