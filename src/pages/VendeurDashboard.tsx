@@ -12,7 +12,7 @@ import {
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
   Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw, LogOut,
-  Receipt
+  Receipt, Bot
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -33,7 +33,6 @@ import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
-import CommunicationModule from "@/components/communication/CommunicationModule";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
@@ -52,16 +51,6 @@ export default function VendeurDashboard() {
 
   // Hooks wallet intégrés
   const { wallet, loading: walletLoading, transactions } = useWallet();
-
-  // Notification de succès wallet
-  useEffect(() => {
-    if (wallet) {
-      toast({
-        title: "✅ Wallet Activé",
-        description: `Solde disponible: ${wallet.balance.toLocaleString()} ${wallet.currency}`,
-      });
-    }
-  }, [wallet]);
 
   const handleSignOut = async () => {
     try {

@@ -946,9 +946,9 @@ Copiez ces informations et envoyez-les par email au président.
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <Badge className={getStatusColor(bureau.status)}>
+                                            <BadgeComponent className={getStatusColor(bureau.status)}>
                                                 {getStatusLabel(bureau.status)}
-                                            </Badge>
+                                            </BadgeComponent>
                                             <p className="text-sm text-gray-600 mt-1">
                                                 {bureau.total_members} membres
                                             </p>
@@ -1033,9 +1033,9 @@ Copiez ces informations et envoyez-les par email au président.
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge className={getStatusColor(bureau.status)}>
+                                                <BadgeComponent className={getStatusColor(bureau.status)}>
                                                     {getStatusLabel(bureau.status)}
-                                                </Badge>
+                                                </BadgeComponent>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-2">
