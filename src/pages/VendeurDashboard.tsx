@@ -35,7 +35,7 @@ import VendorDiagnostic from "@/components/vendor/VendorDiagnostic";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import SimpleCommunicationLovable from "@/components/communication/SimpleCommunicationLovable";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
 import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
@@ -671,7 +671,7 @@ export default function VendeurDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
-            <SimpleCommunicationInterface />
+            <SimpleCommunicationLovable />
           </TabsContent>
 
           {/* Copilote IA */}

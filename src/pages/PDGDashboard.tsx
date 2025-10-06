@@ -85,7 +85,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
 import { usePDGManagement } from "@/hooks/useAgentSystem";
 import PDGFinanceManagement from "@/components/pdg/PDGFinanceManagement";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import SimpleCommunicationLovable from "@/components/communication/SimpleCommunicationLovable";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // Types pour les données PDG
@@ -999,7 +999,7 @@ export default function PDGDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
-            <SimpleCommunicationInterface />
+            <SimpleCommunicationLovable />
           </TabsContent>
 
           {/* Copilote IA */}

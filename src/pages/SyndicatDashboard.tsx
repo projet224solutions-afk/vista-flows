@@ -5,7 +5,7 @@ import { Shield, Users, AlertTriangle, CheckCircle, Activity, QrCode, MessageSqu
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import SimpleCommunicationLovable from "@/components/communication/SimpleCommunicationLovable";
 
 export default function SyndicatDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -251,7 +251,7 @@ export default function SyndicatDashboard() {
 
         <TabsContent value="communication" className="space-y-6">
           <div className="px-4 py-6">
-            <SimpleCommunicationInterface />
+            <SimpleCommunicationLovable />
           </div>
         </TabsContent>
       </Tabs>
