@@ -637,7 +637,7 @@ Copiez ces informations et envoyez-les par email au président.
 
             const result = await response.json();
             setBadgeUrl(result.url);
-            
+
             toast.success('✅ Badge généré avec succès !', {
                 description: 'Le badge a été créé et sauvegardé',
                 duration: 5000,
@@ -1193,7 +1193,7 @@ Copiez ces informations et envoyez-les par email au président.
                             Générer un Badge Taxi-Moto
                         </DialogTitle>
                     </DialogHeader>
-                    
+
                     <div className="space-y-6">
                         {/* Informations du membre */}
                         <div className="grid grid-cols-2 gap-4">
@@ -1293,9 +1293,9 @@ Copiez ces informations et envoyez-les par email au président.
                                 <div className="text-center">
                                     <Shield className="w-8 h-8 mx-auto mb-2 text-purple-600" />
                                     <p className="text-sm font-medium text-purple-800">Badge généré avec succès !</p>
-                                    <a 
-                                        href={badgeUrl} 
-                                        target="_blank" 
+                                    <a
+                                        href={badgeUrl}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-sm text-purple-600 hover:text-purple-800 underline"
                                     >

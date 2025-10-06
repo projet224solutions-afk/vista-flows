@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -189,36 +189,42 @@ export default function PDGDashboard() {
   // Gestion PDG pour les agents
   const { pdgData, createPDG } = usePDGManagement();
 
-  // Calculer les stats par rôle
-  const usersByRole = Array.isArray(usersData) ? {
-    clients: usersData.filter((u: any) => u.role === 'client').length,
-    vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
-    drivers: usersData.filter((u: any) => u.role === 'taxi').length,
-    agents: usersData.filter((u: any) => u.role === 'livreur').length,
-    admins: usersData.filter((u: any) => u.role === 'admin').length,
-  } : { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 };
+  // Calculer les stats par rôle (mémorisé pour éviter les recalculs)
+  const usersByRole = useMemo(() => {
+    if (!Array.isArray(usersData)) {
+      return { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 };
+    }
+    
+    return {
+      clients: usersData.filter((u: any) => u.role === 'client').length,
+      vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
+      drivers: usersData.filter((u: any) => u.role === 'taxi').length,
+      agents: usersData.filter((u: any) => u.role === 'livreur').length,
+      admins: usersData.filter((u: any) => u.role === 'admin').length,
+    };
+  }, [usersData]);
 
-  // États pour les données temps réel (maintenant alimentés par le DataManager)
-  const realUserStats = {
+  // États pour les données temps réel (mémorisés pour éviter les recalculs)
+  const realUserStats = useMemo(() => ({
     totalUsers: globalStats.totalUsers,
     activeUsers: Array.isArray(usersData) ? usersData.filter((u: any) => u.is_active).length : 0,
     usersByRole,
     usersByRegion: [] // À implémenter si nécessaire
-  };
+  }), [globalStats.totalUsers, usersData, usersByRole]);
 
-  const realProductStats = {
+  const realProductStats = useMemo(() => ({
     totalProducts: globalStats.totalProducts,
     activeProducts: Array.isArray(productsData) ? productsData.filter((p: any) => p.is_active).length : 0,
     totalVendors: globalStats.activeVendors,
     activeVendors: globalStats.activeVendors
-  };
+  }), [globalStats.totalProducts, globalStats.activeVendors, productsData]);
 
-  const realTransactionStats = {
+  const realTransactionStats = useMemo(() => ({
     totalTransactions: globalStats.totalTransactions,
     totalRevenue: globalStats.totalRevenue,
     totalCommissions: globalStats.totalRevenue * 0.05,
     recentTransactions: Array.isArray(transactionsData) ? transactionsData.slice(0, 10) : []
-  };
+  }), [globalStats.totalTransactions, globalStats.totalRevenue, transactionsData]);
 
   // Loading global
   const loading = statsLoading || usersLoading || productsLoading || transactionsLoading;
