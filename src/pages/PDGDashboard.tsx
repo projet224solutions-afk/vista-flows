@@ -85,7 +85,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGlobalStats, useUsers, useProducts, useTransactions } from "@/hooks/useDataManager";
 import { usePDGManagement } from "@/hooks/useAgentSystem";
 import PDGFinanceManagement from "@/components/pdg/PDGFinanceManagement";
-import SimpleCommunicationLovable from "@/components/communication/SimpleCommunicationLovable";
+import UltraSimpleCommunication from "@/components/communication/UltraSimpleCommunication";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // Types pour les données PDG
@@ -196,11 +196,11 @@ export default function PDGDashboard() {
     }
     
     return {
-      clients: usersData.filter((u: any) => u.role === 'client').length,
-      vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
-      drivers: usersData.filter((u: any) => u.role === 'taxi').length,
-      agents: usersData.filter((u: any) => u.role === 'livreur').length,
-      admins: usersData.filter((u: any) => u.role === 'admin').length,
+    clients: usersData.filter((u: any) => u.role === 'client').length,
+    vendors: usersData.filter((u: any) => u.role === 'vendeur').length,
+    drivers: usersData.filter((u: any) => u.role === 'taxi').length,
+    agents: usersData.filter((u: any) => u.role === 'livreur').length,
+    admins: usersData.filter((u: any) => u.role === 'admin').length,
     };
   }, [usersData]);
 
@@ -993,13 +993,13 @@ export default function PDGDashboard() {
               </div>
 
               {/* Interface de gestion des bureaux syndicats */}
-              <SyndicateBureauManagementPro />
+            <SyndicateBureauManagementPro />
             </div>
           </TabsContent>
 
           {/* Communication */}
           <TabsContent value="communication" className="space-y-6">
-            <SimpleCommunicationLovable />
+            <UltraSimpleCommunication />
           </TabsContent>
 
           {/* Copilote IA */}
