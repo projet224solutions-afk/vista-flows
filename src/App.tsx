@@ -35,6 +35,7 @@ const SyndicatePresidentNew = lazy(() => import("./pages/SyndicatePresidentNew")
 const SyndicatePresidentSimple = lazy(() => import("./pages/SyndicatePresidentSimple"));
 const SyndicatePresidentUltraSimple = lazy(() => import("./pages/SyndicatePresidentUltraSimple"));
 const SyndicatePresidentUltraPro = lazy(() => import("./pages/SyndicatePresidentUltraPro"));
+const SyndicatInstall = lazy(() => import("./pages/SyndicatInstall"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -129,6 +130,10 @@ const App = () => (
                 element={<SyndicatePresidentUltraPro />}
               />
               <Route
+                path="/syndicat/install/:token"
+                element={<SyndicatInstall />}
+              />
+              <Route
                 path="/syndicat/president-new/:accessToken"
                 element={<SyndicatePresidentNew />}
               />
@@ -137,13 +142,13 @@ const App = () => (
                 element={<SyndicatePresidentNew />}
               />
               <Route
-            path="/syndicat/president-simple"
-            element={<SyndicatePresidentSimple />}
-        />
-        <Route
-            path="/syndicat/president-ultra-simple"
-            element={<SyndicatePresidentUltraSimple />}
-        />
+                path="/syndicat/president-simple"
+                element={<SyndicatePresidentSimple />}
+              />
+              <Route
+                path="/syndicat/president-ultra-simple"
+                element={<SyndicatePresidentUltraSimple />}
+              />
               <Route
                 path="/invite/:invitationToken"
                 element={<UserActivationPage />}

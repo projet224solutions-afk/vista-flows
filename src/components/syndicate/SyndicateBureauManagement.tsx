@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import { installLinkService } from '@/services/installLinkService';
+import RealtimeSyncPanel from '@/components/pdg/RealtimeSyncPanel';
 
 interface SyndicateBureau {
     id: string;
@@ -547,6 +549,49 @@ Copiez ces informations et envoyez-les par email au président.
     };
 
     /**
+     * Envoie un lien d'installation PWA au président
+     */
+    const sendInstallLink = async (bureau: SyndicateBureau) => {
+        try {
+            toast.info('📱 Génération du lien d\'installation...', {
+                description: `Préparation pour ${bureau.president_name}`
+            });
+
+            const result = await installLinkService.generateAndSendInstallLink({
+                bureauId: bureau.id,
+                presidentName: bureau.president_name,
+                presidentEmail: bureau.president_email,
+                presidentPhone: bureau.president_phone,
+                bureauCode: bureau.bureau_code,
+                prefecture: bureau.prefecture,
+                commune: bureau.commune
+            });
+
+            if (result.success) {
+                toast.success('✅ Lien d\'installation envoyé !', {
+                    description: result.message,
+                    duration: 8000,
+                    action: {
+                        label: 'Voir le lien',
+                        onClick: () => {
+                            if (result.link) {
+                                window.open(result.link, '_blank');
+                            }
+                        }
+                    }
+                });
+            } else {
+                toast.error('❌ Échec de l\'envoi', {
+                    description: result.error || 'Erreur inconnue'
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erreur envoi lien installation:', error);
+            toast.error('❌ Erreur lors de l\'envoi du lien d\'installation');
+        }
+    };
+
+    /**
      * Teste le système d'email avec l'email de l'utilisateur
      */
     const testEmailSystem = async () => {
@@ -823,6 +868,9 @@ Copiez ces informations et envoyez-les par email au président.
 
                 {/* Onglet Vue d'ensemble */}
                 <TabsContent value="overview" className="space-y-4">
+                    {/* Panel de synchronisation temps réel */}
+                    <RealtimeSyncPanel />
+
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold">Gestion des Bureaux Syndicaux</h2>
                         <div className="flex gap-3">
@@ -1047,6 +1095,15 @@ Copiez ces informations et envoyez-les par email au président.
                                                     >
                                                         <Send className="w-3 h-3 mr-1" />
                                                         Renvoyer Email
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => sendInstallLink(bureau)}
+                                                        className="text-xs border-blue-500 text-blue-600 hover:bg-blue-50"
+                                                    >
+                                                        <Download className="w-3 h-3 mr-1" />
+                                                        Lien Installation
                                                     </Button>
                                                     {bureau.status === 'pending' && (
                                                         <Button

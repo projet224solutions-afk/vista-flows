@@ -1,259 +1,173 @@
 /**
- * 📍 HOOK DE GÉOLOCALISATION - 224SOLUTIONS
- * Hook React pour gérer la géolocalisation et le partage de position
+ * HOOK GÉOLOCALISATION
+ * Gestion de la géolocalisation pour les taxis-motos
+ * 224Solutions - Bureau Syndicat System
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import GeolocationService, { Position, LocationData, Geofence } from '../services/geolocation/GeolocationService';
+import { useState, useEffect, useCallback } from 'react';
 
-export interface UseGeolocationOptions {
-    enableHighAccuracy?: boolean;
-    timeout?: number;
-    maximumAge?: number;
-    watchPosition?: boolean;
-    interval?: number;
+export interface LocationData {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    timestamp: number;
+    address?: string;
 }
 
-export interface UseGeolocationReturn {
-    position: Position | null;
-    error: string | null;
+export interface GeolocationState {
+    location: LocationData | null;
     loading: boolean;
-    isTracking: boolean;
-    locationHistory: Position[];
-    startTracking: () => void;
-    stopTracking: () => void;
-    getCurrentPosition: () => Promise<Position>;
-    shareLocation: (toUserId: string, duration?: number) => Promise<string>;
-    stopSharing: (sharingId: string) => Promise<void>;
-    findNearbyUsers: (center: Position, radius?: number, userType?: 'delivery' | 'client') => Promise<LocationData[]>;
-    calculateDistance: (pos1: Position, pos2: Position) => number;
-    addGeofence: (geofence: Geofence) => void;
-    removeGeofence: (geofenceId: string) => void;
-    getAddressFromCoordinates: (position: Position) => Promise<string>;
-    getCoordinatesFromAddress: (address: string) => Promise<Position | null>;
+    error: string | null;
+    permission: PermissionState | null;
 }
 
-export const useGeolocation = (options: UseGeolocationOptions = {}): UseGeolocationReturn => {
-    const {
-        enableHighAccuracy = true,
-        timeout = 10000,
-        maximumAge = 30000,
-        watchPosition = false,
-        interval = 5000
-    } = options;
+export function useCurrentLocation() {
+    const [state, setState] = useState<GeolocationState>({
+        location: null,
+        loading: false,
+        error: null,
+        permission: null
+    });
 
-    const [position, setPosition] = useState<Position | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [isTracking, setIsTracking] = useState(false);
-    const [locationHistory, setLocationHistory] = useState<Position[]>([]);
+    const getCurrentLocation = useCallback((): Promise<LocationData> => {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Géolocalisation non supportée'));
+                return;
+            }
 
-    const geolocationService = useRef(GeolocationService.getInstance());
-    const positionListenerId = useRef<string>('');
+            setState(prev => ({ ...prev, loading: true, error: null }));
 
-    // Initialiser le service
-    useEffect(() => {
-        const service = geolocationService.current;
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const locationData: LocationData = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: Date.now()
+                    };
 
-        // Ajouter un listener pour les mises à jour de position
-        positionListenerId.current = `listener_${Date.now()}`;
-        service.addPositionListener(positionListenerId.current, (newPosition) => {
-            setPosition(newPosition);
-            setLocationHistory(service.getLocationHistory());
+                    setState(prev => ({
+                        ...prev,
+                        location: locationData,
+                        loading: false,
+                        error: null
+                    }));
+
+                    resolve(locationData);
+                },
+                (error) => {
+                    const errorMessage = getGeolocationErrorMessage(error.code);
+                    setState(prev => ({
+                        ...prev,
+                        loading: false,
+                        error: errorMessage
+                    }));
+                    reject(new Error(errorMessage));
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000 // 5 minutes
+                }
+            );
         });
+    }, []);
 
-        // Démarrer le suivi automatique si demandé
-        if (watchPosition) {
-            startTracking();
+    const watchLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            setState(prev => ({ ...prev, error: 'Géolocalisation non supportée' }));
+            return null;
         }
 
-        // Nettoyer à la destruction
-        return () => {
-            if (positionListenerId.current) {
-                service.removePositionListener(positionListenerId.current);
+        setState(prev => ({ ...prev, loading: true, error: null }));
+
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const locationData: LocationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: Date.now()
+                };
+
+                setState(prev => ({
+                    ...prev,
+                    location: locationData,
+                    loading: false,
+                    error: null
+                }));
+            },
+            (error) => {
+                const errorMessage = getGeolocationErrorMessage(error.code);
+                setState(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: errorMessage
+                }));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000
             }
-            if (isTracking) {
-                service.stopTracking();
+        );
+
+        return watchId;
+    }, []);
+
+    const stopWatching = useCallback((watchId: number) => {
+        navigator.geolocation.clearWatch(watchId);
+    }, []);
+
+    const checkPermission = useCallback(async () => {
+        if ('permissions' in navigator) {
+            try {
+                const permission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+                setState(prev => ({ ...prev, permission: permission.state }));
+                return permission.state;
+            } catch (error) {
+                console.warn('Erreur vérification permission:', error);
+                return 'unknown';
             }
-        };
-    }, [watchPosition]);
-
-    // Démarrer le suivi de position
-    const startTracking = useCallback(() => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const service = geolocationService.current;
-            service.startTracking(interval);
-            setIsTracking(true);
-
-            console.log('📍 Suivi de position démarré');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur inconnue');
-            console.error('Erreur démarrage suivi:', err);
-        } finally {
-            setLoading(false);
         }
-    }, [interval]);
+        return 'unknown';
+    }, []);
 
-    // Arrêter le suivi de position
-    const stopTracking = useCallback(() => {
+    const requestPermission = useCallback(async () => {
         try {
-            const service = geolocationService.current;
-            service.stopTracking();
-            setIsTracking(false);
-
-            console.log('📍 Suivi de position arrêté');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur inconnue');
-            console.error('Erreur arrêt suivi:', err);
+            await getCurrentLocation();
+            return true;
+        } catch (error) {
+            return false;
         }
-    }, []);
+    }, [getCurrentLocation]);
 
-    // Obtenir la position actuelle
-    const getCurrentPosition = useCallback(async (): Promise<Position> => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const service = geolocationService.current;
-            const pos = await service.getCurrentPosition();
-            setPosition(pos);
-            setLocationHistory(service.getLocationHistory());
-            return pos;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur géolocalisation';
-            setError(errorMessage);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    // Partager sa position
-    const shareLocation = useCallback(async (toUserId: string, duration: number = 3600000): Promise<string> => {
-        try {
-            const service = geolocationService.current;
-            const sharingId = await service.shareLocation(toUserId, duration);
-            console.log(`📍 Position partagée avec ${toUserId}: ${sharingId}`);
-            return sharingId;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur partage position';
-            setError(errorMessage);
-            throw err;
-        }
-    }, []);
-
-    // Arrêter le partage de position
-    const stopSharing = useCallback(async (sharingId: string): Promise<void> => {
-        try {
-            const service = geolocationService.current;
-            await service.stopSharing(sharingId);
-            console.log(`📍 Partage arrêté: ${sharingId}`);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur arrêt partage';
-            setError(errorMessage);
-            throw err;
-        }
-    }, []);
-
-    // Trouver les utilisateurs proches
-    const findNearbyUsers = useCallback(async (
-        center: Position,
-        radius: number = 5000,
-        userType?: 'delivery' | 'client'
-    ): Promise<LocationData[]> => {
-        try {
-            const service = geolocationService.current;
-            const users = await service.findNearbyUsers(center, radius, userType);
-            console.log(`📍 ${users.length} utilisateurs trouvés dans un rayon de ${radius}m`);
-            return users;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur recherche utilisateurs';
-            setError(errorMessage);
-            console.error('Erreur recherche utilisateurs:', err);
-            return [];
-        }
-    }, []);
-
-    // Calculer la distance entre deux positions
-    const calculateDistance = useCallback((pos1: Position, pos2: Position): number => {
-        const service = geolocationService.current;
-        return service.calculateDistance(pos1, pos2);
-    }, []);
-
-    // Ajouter un géofence
-    const addGeofence = useCallback((geofence: Geofence) => {
-        const service = geolocationService.current;
-        service.addGeofence(geofence);
-        console.log(`📍 Géofence ajoutée: ${geofence.name}`);
-    }, []);
-
-    // Supprimer un géofence
-    const removeGeofence = useCallback((geofenceId: string) => {
-        const service = geolocationService.current;
-        service.removeGeofence(geofenceId);
-        console.log(`📍 Géofence supprimée: ${geofenceId}`);
-    }, []);
-
-    // Obtenir l'adresse à partir des coordonnées
-    const getAddressFromCoordinates = useCallback(async (position: Position): Promise<string> => {
-        try {
-            const service = geolocationService.current;
-            return await service.getAddressFromCoordinates(position);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur géocodage inverse';
-            setError(errorMessage);
-            throw err;
-        }
-    }, []);
-
-    // Obtenir les coordonnées à partir d'une adresse
-    const getCoordinatesFromAddress = useCallback(async (address: string): Promise<Position | null> => {
-        try {
-            const service = geolocationService.current;
-            return await service.getCoordinatesFromAddress(address);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur géocodage';
-            setError(errorMessage);
-            throw err;
-        }
-    }, []);
-
-    // Gérer les erreurs de géolocalisation
     useEffect(() => {
-        const handleGeolocationError = (event: CustomEvent) => {
-            const { error, message } = event.detail;
-            setError(message);
-            console.error('Erreur géolocalisation:', error);
-        };
+        checkPermission();
+    }, [checkPermission]);
 
-        window.addEventListener('geolocationError', handleGeolocationError as EventListener);
-
-        return () => {
-            window.removeEventListener('geolocationError', handleGeolocationError as EventListener);
-        };
-    }, []);
+    const getGeolocationErrorMessage = (code: number): string => {
+        switch (code) {
+            case 1:
+                return 'Permission de géolocalisation refusée';
+            case 2:
+                return 'Position indisponible';
+            case 3:
+                return 'Délai d\'attente dépassé';
+            default:
+                return 'Erreur de géolocalisation inconnue';
+        }
+    };
 
     return {
-        position,
-        error,
-        loading,
-        isTracking,
-        locationHistory,
-        startTracking,
-        stopTracking,
-        getCurrentPosition,
-        shareLocation,
-        stopSharing,
-        findNearbyUsers,
-        calculateDistance,
-        addGeofence,
-        removeGeofence,
-        getAddressFromCoordinates,
-        getCoordinatesFromAddress
+        ...state,
+        getCurrentLocation,
+        watchLocation,
+        stopWatching,
+        checkPermission,
+        requestPermission
     };
-};
+}
 
-export default useGeolocation;
+export default useCurrentLocation;

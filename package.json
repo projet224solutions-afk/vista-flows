@@ -11,6 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/ios": "^7.4.3",
     "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -56,6 +60,7 @@
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.61.1",
     "react-resizable-panels": "^2.1.9",
@@ -65,6 +70,8 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
+    "vite-plugin-pwa": "^1.0.3",
+    "workbox-window": "^7.3.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {

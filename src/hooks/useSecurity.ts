@@ -4,37 +4,37 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { SecurityService, SecurityEvent, SecurityIncident } from '@/services/securityService';
+import { securityService } from '@/services/securityService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export interface SecurityStats {
-  total_events: number;
-  critical_threats: number;
-  resolved_incidents: number;
-  threat_score: number;
-  systemHealth?: string;
-  threatScore?: number;
-  totalEvents?: number;
-  criticalEvents?: number;
-  blockedIPs?: number;
-  activeIncidents?: number;
+    total_events: number;
+    critical_threats: number;
+    resolved_incidents: number;
+    threat_score: number;
+    systemHealth?: string;
+    threatScore?: number;
+    totalEvents?: number;
+    criticalEvents?: number;
+    blockedIPs?: number;
+    activeIncidents?: number;
 }
 
 export interface SystemAlert {
-  id: string;
-  message: string;
-  severity: string;
-  created_at: string;
-  priority?: string;
-  title?: string;
-  alert_type?: string;
-  status?: string;
+    id: string;
+    message: string;
+    severity: string;
+    created_at: string;
+    priority?: string;
+    title?: string;
+    alert_type?: string;
+    status?: string;
 }
 
 export interface ThreatAnalysis {
-  score: number;
-  threats: any[];
+    score: number;
+    threats: any[];
 }
 
 export function useSecurity() {
@@ -68,7 +68,7 @@ export function useSecurity() {
         loading,
         error,
         loadStats,
-        logEvent: async (event: any) => {},
+        logEvent: async (event: any) => { },
         blockIP: async (ip: string, reason: string) => true,
         analyzeThreat: async (ip: string) => null
     };
@@ -183,7 +183,7 @@ export function useSecurityAnalysis() {
         analysis: null,
         loading: false,
         analysisData: null,
-        runAnalysis: async () => {}
+        runAnalysis: async () => { }
     };
 }
 
@@ -193,7 +193,7 @@ export function useRealTimeProtection() {
         threats: [],
         protectionStatus: 'active',
         threatLevel: 'low',
-        toggleProtection: async (enabled: any) => {}
+        toggleProtection: async (enabled: any) => { }
     };
 }
 
@@ -203,7 +203,7 @@ export function useSecurityAudit() {
         loading: false,
         auditLogs: [],
         filters: { dateRange: '', severity: '' },
-        updateFilters: (filters: any) => {},
-        exportLogs: async (format: any) => {}
+        updateFilters: (filters: any) => { },
+        exportLogs: async (format: any) => { }
     };
 }

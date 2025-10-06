@@ -15,6 +15,14 @@ export interface SyndicateEmailData {
   access_token: string;
 }
 
+export interface InstallLinkEmailData {
+  president_name: string;
+  president_email: string;
+  bureau_code: string;
+  install_link: string;
+  subject: string;
+}
+
 class SimpleEmailService {
   private static instance: SimpleEmailService;
 
@@ -60,7 +68,7 @@ class SimpleEmailService {
     try {
       if (navigator.share) {
         console.log('🔄 Tentative Web Share API...');
-        
+
         const shareData = {
           title: `Bureau Syndical ${data.bureau_code}`,
           text: this.generateEmailText(data),
@@ -68,15 +76,15 @@ class SimpleEmailService {
         };
 
         await navigator.share(shareData);
-        
+
         toast.success('✅ Partage initié via Web Share API', {
           description: 'Sélectionnez votre application email'
         });
-        
+
         console.log('✅ Web Share API utilisée avec succès');
         return true;
       }
-      
+
       console.log('❌ Web Share API non supportée');
       return false;
     } catch (error) {
@@ -91,16 +99,16 @@ class SimpleEmailService {
   private async openEmailClient(data: SyndicateEmailData): Promise<boolean> {
     try {
       console.log('🔄 Ouverture du client email...');
-      
+
       const subject = `🏛️ Création de votre Bureau Syndical - ${data.bureau_code}`;
       const body = this.generateEmailText(data);
-      
+
       // Créer le lien mailto
       const mailtoLink = `mailto:${data.president_email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      
+
       // Ouvrir le client email
       const emailWindow = window.open(mailtoLink);
-      
+
       // Afficher une notification avec instructions
       toast.success('📧 Client email ouvert !', {
         description: 'Vérifiez votre client email et cliquez sur Envoyer',
@@ -122,7 +130,7 @@ class SimpleEmailService {
       console.log('Destinataire:', data.president_email);
       console.log('Sujet:', subject);
       console.log('Corps:', body);
-      
+
       return true;
     } catch (error) {
       console.log('❌ Erreur ouverture client email:', error);
@@ -136,7 +144,7 @@ class SimpleEmailService {
   private async copyAndDisplay(data: SyndicateEmailData): Promise<boolean> {
     try {
       console.log('🔄 Copie des informations...');
-      
+
       const emailContent = `
 📧 EMAIL À ENVOYER AU PRÉSIDENT
 ==============================
@@ -160,7 +168,7 @@ INSTRUCTIONS:
 
       // Copier dans le presse-papier
       await navigator.clipboard.writeText(emailContent);
-      
+
       // Afficher une notification détaillée
       toast.info('📋 Informations copiées !', {
         description: 'Contenu copié - Envoyez manuellement via votre email',
@@ -176,11 +184,11 @@ INSTRUCTIONS:
       // Afficher dans la console
       console.log('✅ Informations copiées dans le presse-papier');
       console.log(emailContent);
-      
+
       return true;
     } catch (error) {
       console.log('❌ Erreur copie:', error);
-      
+
       // Fallback: afficher dans une alerte
       const alertContent = `
 EMAIL À ENVOYER:
@@ -191,13 +199,13 @@ Token: ${data.access_token}
 
 Copiez ces informations et envoyez-les par email.
       `;
-      
+
       alert(alertContent);
-      
+
       toast.error('❌ Copie impossible', {
         description: 'Informations affichées dans une alerte'
       });
-      
+
       return true; // On considère que c'est un succès car l'info est affichée
     }
   }
@@ -223,7 +231,7 @@ SUJET DE L'EMAIL:
 MESSAGE:
 ${this.generateEmailText(data)}
     `;
-    
+
     alert(modalContent);
   }
 
@@ -280,8 +288,124 @@ Système de Gestion Syndicale Professionnel
 
     console.log('🧪 TEST D\'ENVOI D\'EMAIL');
     console.log('========================');
-    
+
     return await this.sendSyndicatePresidentEmail(testData);
+  }
+
+  /**
+   * Envoie un email avec lien d'installation PWA
+   */
+  async sendInstallLinkEmail(data: InstallLinkEmailData): Promise<boolean> {
+    console.log('📱 ENVOI EMAIL LIEN D\'INSTALLATION');
+    console.log('====================================');
+    console.log('Destinataire:', data.president_email);
+    console.log('Bureau:', data.bureau_code);
+    console.log('Lien d\'installation:', data.install_link);
+    console.log('');
+
+    // Méthode 1: Essayer Web Share API
+    const webShareSuccess = await this.tryWebShareInstallLink(data);
+    if (webShareSuccess) {
+      return true;
+    }
+
+    // Méthode 2: Ouvrir le client email avec mailto
+    const mailtoSuccess = await this.openEmailClientInstallLink(data);
+    if (mailtoSuccess) {
+      return true;
+    }
+
+    // Méthode 3: Afficher les informations
+    this.displayInstallLinkInfo(data);
+    return true;
+  }
+
+  /**
+   * Essaie d'utiliser Web Share API pour le lien d'installation
+   */
+  private async tryWebShareInstallLink(data: InstallLinkEmailData): Promise<boolean> {
+    if (!navigator.share) {
+      console.log('❌ Web Share API non supporté');
+      return false;
+    }
+
+    try {
+      const shareData = {
+        title: data.subject,
+        text: this.generateInstallLinkEmailContent(data),
+        url: data.install_link
+      };
+
+      await navigator.share(shareData);
+      console.log('✅ Web Share API réussi pour lien d\'installation');
+      return true;
+    } catch (error) {
+      console.log('❌ Web Share API échoué pour lien d\'installation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Ouvre le client email avec mailto pour le lien d'installation
+   */
+  private async openEmailClientInstallLink(data: InstallLinkEmailData): Promise<boolean> {
+    try {
+      const subject = encodeURIComponent(data.subject);
+      const body = encodeURIComponent(this.generateInstallLinkEmailContent(data));
+      const mailtoLink = `mailto:${data.president_email}?subject=${subject}&body=${body}`;
+
+      window.open(mailtoLink);
+      console.log('✅ Client email ouvert pour lien d\'installation');
+      return true;
+    } catch (error) {
+      console.log('❌ Erreur ouverture client email pour lien d\'installation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Affiche les informations du lien d'installation
+   */
+  private displayInstallLinkInfo(data: InstallLinkEmailData): void {
+    const emailContent = this.generateInstallLinkEmailContent(data);
+
+    console.log('📧 CONTENU EMAIL LIEN D\'INSTALLATION');
+    console.log('=====================================');
+    console.log('Destinataire:', data.president_email);
+    console.log('Sujet:', data.subject);
+    console.log('Contenu:');
+    console.log(emailContent);
+    console.log('Lien d\'installation:', data.install_link);
+    console.log('');
+    console.log('💡 SOLUTION: Copiez ces informations et envoyez-les manuellement');
+  }
+
+  /**
+   * Génère le contenu de l'email pour le lien d'installation
+   */
+  private generateInstallLinkEmailContent(data: InstallLinkEmailData): string {
+    return `
+📱 INSTALLATION APPLICATION BUREAU SYNDICAT
+
+Bonjour ${data.president_name},
+
+Votre lien d'installation sécurisé pour l'application Bureau Syndicat ${data.bureau_code} est prêt !
+
+🔗 LIEN D'INSTALLATION: ${data.install_link}
+
+📱 INSTRUCTIONS D'INSTALLATION:
+
+• Sur Android: Cliquez sur le lien et appuyez sur "Installer"
+• Sur iOS: Cliquez sur le lien, puis "Partager" → "Ajouter à l'écran d'accueil"
+• Sur PC: Cliquez sur le lien et suivez les instructions d'installation
+
+⏰ Ce lien est valable 24 heures pour votre sécurité.
+
+Une fois installée, l'application s'ouvrira automatiquement sur votre tableau de bord Bureau Syndicat.
+
+Cordialement,
+L'équipe 224Solutions
+    `.trim();
   }
 }
 
