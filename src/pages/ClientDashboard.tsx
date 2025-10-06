@@ -17,8 +17,8 @@ import {
   Menu, X, ChevronRight, ChevronDown, Globe, Smartphone, Headphones,
   Monitor, Shirt, Car, Building2, Gamepad2, BookOpen, Cpu, Zap,
   Store, Users, Briefcase, GraduationCap, Coffee, Pizza, Dumbbell,
-  Grid3X3, Share
-} from "lucide-react";
+  Grid3X3, Share, Bot
+} from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
