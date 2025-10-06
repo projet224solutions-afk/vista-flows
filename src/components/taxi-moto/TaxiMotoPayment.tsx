@@ -74,7 +74,7 @@ export default function TaxiMotoPayment({
     const [cardName, setCardName] = useState('');
 
     // Solde wallet 224Solutions (simulé)
-    const [walletBalance, setWalletBalance] = useState(15000);
+    const [walletBalance, setWalletBalance] = useState(0);
 
     const paymentMethods: PaymentMethod[] = [
         {
@@ -102,7 +102,7 @@ export default function TaxiMotoPayment({
             type: 'wallet_224',
             name: 'Portefeuille 224Solutions',
             icon: Wallet,
-            description: `Solde: ${walletBalance.toLocaleString()} FCFA`,
+            description: `Solde: ${walletBalance.toLocaleString()} GNF`,
             processingFee: 0,
             isAvailable: walletBalance >= paymentDetails.amount,
             estimatedTime: 'Instantané'
@@ -244,11 +244,11 @@ export default function TaxiMotoPayment({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
                             <span>Course #{paymentDetails.rideId}</span>
-                            <span>{paymentDetails.breakdown.baseAmount.toLocaleString()} FCFA</span>
+                            <span>{paymentDetails.breakdown.baseAmount.toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>TVA (18%)</span>
-                            <span>{paymentDetails.breakdown.taxes.toLocaleString()} FCFA</span>
+                            <span>{paymentDetails.breakdown.taxes.toLocaleString()} GNF</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
@@ -299,7 +299,7 @@ export default function TaxiMotoPayment({
 
                                         <div className="text-right">
                                             <div className="font-bold">
-                                                {total.toLocaleString()} FCFA
+                                                {total.toLocaleString()} GNF
                                             </div>
                                             {method.processingFee > 0 && (
                                                 <div className="text-xs text-orange-600">
@@ -431,10 +431,10 @@ export default function TaxiMotoPayment({
                             <div className="text-center py-4">
                                 <Wallet className="w-16 h-16 mx-auto mb-4 text-green-600" />
                                 <p className="text-lg font-semibold">
-                                    Solde disponible: {walletBalance.toLocaleString()} FCFA
+                                    Solde disponible: {walletBalance.toLocaleString()} GNF
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Montant à débiter: {calculateTotal(selectedMethod).toLocaleString()} FCFA
+                                    Montant à débiter: {calculateTotal(selectedMethod).toLocaleString()} GNF
                                 </p>
                             </div>
                         )}
@@ -445,7 +445,7 @@ export default function TaxiMotoPayment({
                                 <Banknote className="w-16 h-16 mx-auto mb-4 text-green-600" />
                                 <p className="text-lg font-semibold">Paiement en espèces</p>
                                 <p className="text-sm text-gray-600">
-                                    Vous paierez {calculateTotal(selectedMethod).toLocaleString()} FCFA au conducteur
+                                    Vous paierez {calculateTotal(selectedMethod).toLocaleString()} GNF au conducteur
                                 </p>
                                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                                     <p className="text-xs text-yellow-800">
@@ -471,7 +471,7 @@ export default function TaxiMotoPayment({
                         <div className="flex justify-between items-center">
                             <span className="font-semibold">Total à payer</span>
                             <span className="text-xl font-bold text-green-600">
-                                {calculateTotal(selectedMethod).toLocaleString()} FCFA
+                                {calculateTotal(selectedMethod).toLocaleString()} GNF
                             </span>
                         </div>
                     </CardContent>
@@ -528,7 +528,7 @@ export default function TaxiMotoPayment({
                         Paiement réussi !
                     </h3>
                     <p className="text-gray-600 mb-4">
-                        Votre paiement de {calculateTotal(selectedMethod).toLocaleString()} FCFA a été traité avec succès.
+                        Votre paiement de {calculateTotal(selectedMethod).toLocaleString()} GNF a été traité avec succès.
                     </p>
                     <div className="bg-green-50 p-4 rounded-lg mb-4">
                         <p className="text-sm text-green-800">

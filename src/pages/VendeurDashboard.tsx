@@ -107,8 +107,8 @@ export default function VendeurDashboard() {
     },
     {
       label: "Taux conversion",
-      value: "3.2%",
-      change: "+0.5%",
+      value: "0%",
+      change: "+0%",
       icon: Target,
       color: "text-orange-600"
     }

@@ -11,7 +11,6 @@ import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
-import { useUserSetup } from "@/hooks/useUserSetup";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -33,7 +32,6 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { ensureUserSetup } = useUserSetup();
 
   // Form data
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -61,13 +59,6 @@ export default function Auth() {
             .single();
 
           if (profile?.role) {
-            // S'assurer que l'utilisateur a son setup complet (ID + Wallet)
-            try {
-              await ensureUserSetup(session.user.id);
-            } catch (error) {
-              console.error('Erreur setup utilisateur:', error);
-            }
-
             // Redirection automatique vers le dashboard approprié
             if (profile.role === 'client') {
               navigate('/client');

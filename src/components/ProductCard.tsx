@@ -62,11 +62,11 @@ export default function ProductCard({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-vendeur-primary">
-              {price.toLocaleString()} FCFA
+              {price.toLocaleString()} GNF
             </span>
             {originalPrice && (
               <span className="text-sm text-muted-foreground line-through">
-                {originalPrice.toLocaleString()} FCFA
+                {originalPrice.toLocaleString()} GNF
               </span>
             )}
           </div>

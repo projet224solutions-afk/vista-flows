@@ -204,7 +204,7 @@ export function POSSystem() {
     if (input === 'enter') {
       if (numericInput) {
         setReceivedAmount(parseFloat(numericInput));
-        toast.success(`Montant saisi: ${numericInput} FCFA`);
+        toast.success(`Montant saisi: ${numericInput} GNF`);
         setNumericInput('');
       }
       return;
@@ -369,14 +369,14 @@ export function POSSystem() {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Devise</label>
                       <Select 
-                        value={settings?.currency || 'FCFA'} 
+                        value={settings?.currency || 'GNF'} 
                         onValueChange={(value) => updateSettings({ currency: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="FCFA">FCFA</SelectItem>
+                          <SelectItem value="GNF">GNF</SelectItem>
                           <SelectItem value="EUR">EUR</SelectItem>
                           <SelectItem value="USD">USD</SelectItem>
                         </SelectContent>
@@ -508,7 +508,7 @@ export function POSSystem() {
                             <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
                               {product.name}
                             </h3>
-                            <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} FCFA</p>
+                            <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} GNF</p>
                             
                             <Badge 
                               variant={product.stock > 10 ? 'default' : 'destructive'} 

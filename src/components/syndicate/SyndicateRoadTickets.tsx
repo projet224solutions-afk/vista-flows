@@ -218,7 +218,7 @@ export default function SyndicateRoadTickets({ bureauId }: SyndicateRoadTicketsP
                     <CardContent className="p-6 text-center">
                         <Download className="w-8 h-8 mx-auto mb-2 text-purple-600" />
                         <div className="text-2xl font-bold text-purple-600">
-                            {ticketStats.monthlyRevenue.toLocaleString()} FCFA
+                            {ticketStats.monthlyRevenue.toLocaleString()} GNF
                         </div>
                         <div className="text-sm text-gray-600">Revenus ce mois</div>
                     </CardContent>
@@ -258,9 +258,9 @@ export default function SyndicateRoadTickets({ bureauId }: SyndicateRoadTicketsP
                                     <SelectValue placeholder="Type de ticket" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="daily">Journalier (500 FCFA)</SelectItem>
-                                    <SelectItem value="weekly">Hebdomadaire (3,000 FCFA)</SelectItem>
-                                    <SelectItem value="monthly">Mensuel (10,000 FCFA)</SelectItem>
+                                    <SelectItem value="daily">Journalier (0 GNF)</SelectItem>
+                                    <SelectItem value="weekly">Hebdomadaire (0 GNF)</SelectItem>
+                                    <SelectItem value="monthly">Mensuel (0 GNF)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

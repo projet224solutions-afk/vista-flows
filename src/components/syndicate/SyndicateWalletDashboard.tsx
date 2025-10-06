@@ -98,12 +98,12 @@ export default function SyndicateWalletDashboard({ syndicateId, bureauName }: Sy
             // Simulation de données (à remplacer par vraie API)
             const mockData: SyndicateWalletData = {
                 syndicate_id: syndicateId,
-                balance: 2850000,
-                currency: 'FCFA',
-                total_income: 5200000,
-                total_expenses: 2350000,
-                monthly_cotisations: 450000,
-                pending_transactions: 3,
+                balance: 0,
+                currency: 'GNF',
+                total_income: 0,
+                total_expenses: 0,
+                monthly_cotisations: 0,
+                pending_transactions: 0,
                 recent_transactions: [
                     {
                         id: '1',

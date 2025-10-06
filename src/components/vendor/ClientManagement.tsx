@@ -112,7 +112,7 @@ export default function ClientManagement() {
 
       const vipClients = processedClients.filter(client => {
         const clientRevenue = client.orders.reduce((sum, order) => sum + order.total_amount, 0);
-        return clientRevenue > 500000; // VIP si plus de 500k FCFA dépensés
+        return clientRevenue > 0; // VIP si plus de 0 GNF dépensés
       }).length;
 
       const activeClients = processedClients.filter(client => {
@@ -270,7 +270,7 @@ export default function ClientManagement() {
               <CreditCard className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foregreen">CA total</p>
-                <p className="text-xl font-bold">{stats.totalRevenue.toLocaleString()} FCFA</p>
+                <p className="text-xl font-bold">{stats.totalRevenue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -281,7 +281,7 @@ export default function ClientManagement() {
               <ShoppingCart className="w-5 h-5 text-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Panier moyen</p>
-                <p className="text-xl font-bold">{stats.averageOrderValue.toLocaleString()} FCFA</p>
+                <p className="text-xl font-bold">{stats.averageOrderValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -376,7 +376,7 @@ export default function ClientManagement() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Total dépensé:</span>
                     <span className="font-semibold text-vendeur-primary">
-                      {clientRevenue.toLocaleString()} FCFA
+                      {clientRevenue.toLocaleString()} GNF
                     </span>
                   </div>
                   {lastOrder && (
@@ -496,7 +496,7 @@ export default function ClientManagement() {
                     <p className="text-2xl font-bold text-green-600">
                       {selectedClient.orders.reduce((sum, order) => sum + order.total_amount, 0).toLocaleString()}
                     </p>
-                    <p className="text-sm text-muted-foreground">FCFA dépensés</p>
+                    <p className="text-sm text-muted-foreground">GNF dépensés</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">
@@ -522,7 +522,7 @@ export default function ClientManagement() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{order.total_amount.toLocaleString()} FCFA</p>
+                        <p className="font-semibold">{order.total_amount.toLocaleString()} GNF</p>
                         <Badge variant="outline">{order.status}</Badge>
                       </div>
                     </div>
