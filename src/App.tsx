@@ -46,6 +46,7 @@ const PDGTest = lazy(() => import("./pages/PDGTest")); // Test PDG
 const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
 const PDGBasic = lazy(() => import("./pages/PDGBasic")); // PDG Basic
 const PDGMinimal = lazy(() => import("./pages/PDGMinimal")); // PDG Minimal
+const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Composant de loading
@@ -143,6 +144,10 @@ const App = () => (
               <Route
                 path="/invite/:invitationToken"
                 element={<UserActivationPage />}
+              />
+              <Route
+                path="/payment/:paymentId"
+                element={<PaymentPage />}
               />
               <Route
                 path="/transitaire"

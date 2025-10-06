@@ -12,7 +12,7 @@ import {
   Calendar, Phone, Mail, Filter, Search, Download, Upload,
   Bell, Menu, MoreHorizontal, Activity, PieChart, LineChart,
   Warehouse, UserCheck, ArrowRightLeft, Send, RefreshCw, LogOut,
-  Receipt, Bot
+  Receipt, Bot, Link, Share2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -38,6 +38,7 @@ import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDas
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
+import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useWallet } from "@/hooks/useWallet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -509,6 +510,13 @@ export default function VendeurDashboard() {
                   <Bot className="w-5 h-5 mr-3" />
                   Copilote IA
                 </TabsTrigger>
+                <TabsTrigger
+                  value="payment-links"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <Link className="w-5 h-5 mr-3" />
+                  Liens de paiement
+                </TabsTrigger>
 
                 {/* Bouton de déconnexion visible */}
                 <Button
@@ -669,6 +677,11 @@ export default function VendeurDashboard() {
           {/* Copilote IA */}
           <TabsContent value="copilote" className="space-y-6">
             <CopiloteChat height="600px" />
+          </TabsContent>
+
+          {/* Liens de paiement */}
+          <TabsContent value="payment-links" className="space-y-6">
+            <PaymentLinksManager />
           </TabsContent>
 
           {/* Gestion des paiements */}

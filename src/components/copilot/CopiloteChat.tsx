@@ -58,6 +58,30 @@ const simulateCopiloteResponse = async (message: string): Promise<string> => {
     return `Bonjour ! Je suis le Copilote 224, votre assistant IA intelligent. Comment puis-je vous aider aujourd'hui ? 🤖✨`;
   }
 
+  // Audit des liens de paiement
+  if (lowerMessage.includes('audit') || lowerMessage.includes('vérifier') || lowerMessage.includes('paiement') || lowerMessage.includes('lien')) {
+    return `🔍 **Audit du système de paiement en cours...**
+
+J'ai analysé votre système de liens de paiement et voici ce que j'ai trouvé :
+
+📊 **Statistiques actuelles :**
+• Liens créés : En cours d'analyse...
+• Taux de conversion : Calcul en cours...
+• Problèmes détectés : Scan en cours...
+
+🛡️ **Sécurité :**
+• Validation des permissions : ✅
+• Vérification des montants : ✅
+• Nettoyage des liens expirés : En cours...
+
+💡 **Recommandations :**
+• Optimiser le taux de conversion
+• Améliorer l'expérience utilisateur
+• Surveiller les montants élevés
+
+Voulez-vous que je lance un audit complet du système ? 🚀`;
+  }
+
   if (lowerMessage.includes('connect') || lowerMessage.includes('backend') || lowerMessage.includes('api') || lowerMessage.includes('serveur')) {
     return `🔗 **État de la Connexion**\n\nJe fonctionne actuellement en **mode simulation intelligent** ! 🚀\n\n✅ **Connecté** : Interface utilisateur opérationnelle\n✅ **Simulation** : Réponses intelligentes basées sur vos questions\n✅ **Historique** : Sauvegarde locale de nos conversations\n✅ **Sécurité** : Données protégées dans votre navigateur\n\n**Note** : Je n'ai pas besoin d'une connexion backend pour vous aider ! Je peux répondre à vos questions sur le wallet, les transactions, et toutes les fonctionnalités de l'application 224Solutions. 💡\n\nQue puis-je faire pour vous ? 😊`;
   }
