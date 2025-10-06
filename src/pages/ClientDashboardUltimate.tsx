@@ -98,13 +98,13 @@ export default function ClientDashboardUltimate() {
 
     // ================= ÉTATS PRINCIPAUX =================
     const [activeTab, setActiveTab] = useState('home');
-    const [walletBalance, setWalletBalance] = useState(567890);
+    const [walletBalance, setWalletBalance] = useState(0);
     const [cartItems, setCartItems] = useState<Product[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [userLevel, setUserLevel] = useState('Gold');
-    const [membershipProgress, setMembershipProgress] = useState(75);
+    const [membershipProgress, setMembershipProgress] = useState(0);
 
     // ================= DONNÉES MOCKÉES STYLE ALIBABA =================
     const categories: Category[] = [

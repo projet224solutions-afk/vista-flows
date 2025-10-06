@@ -158,8 +158,8 @@ export default function AddTaxiMotardForm({ syndicateId, onSuccess }: AddTaxiMot
                 },
                 wallet: {
                     id: `wallet_${Date.now()}`,
-                    balance: 1000,
-                    currency: 'FCFA'
+                    balance: 0,
+                    currency: 'GNF'
                 },
                 taxi_motard: {
                     id: `tm_${Date.now()}`,

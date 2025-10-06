@@ -199,7 +199,7 @@ export default function InventoryManagement() {
               <div className="w-5 h-5 bg-green-600 rounded-full" />
               <div>
                 <p className="text-sm text-muted-foreground">Valeur inventaire</p>
-                <p className="text-2xl font-bold">{totalValue.toLocaleString()} FCFA</p>
+                <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>

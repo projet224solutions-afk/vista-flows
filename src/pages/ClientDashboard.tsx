@@ -64,7 +64,7 @@ export default function ClientDashboard() {
 
   // ================= ÉTATS PRINCIPAUX =================
   const [activeTab, setActiveTab] = useState('home');
-  const [walletBalance, setWalletBalance] = useState(567890);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [userLevel, setUserLevel] = useState('Gold');
@@ -107,7 +107,7 @@ export default function ClientDashboard() {
       setIsFixingAccount(false);
     }
   };
-  const [membershipProgress, setMembershipProgress] = useState(75);
+  const [membershipProgress, setMembershipProgress] = useState(0);
 
   // ================= DONNÉES MOCKÉES STYLE ALIBABA =================
   const categories: Category[] = [

@@ -1172,7 +1172,7 @@ Copiez ces informations et envoyez-les par email au président.
                             <CardContent>
                                 <div className="text-center">
                                     <p className="text-3xl font-bold text-green-600">
-                                        {bureaus.reduce((sum, b) => sum + b.total_cotisations, 0).toLocaleString()} FCFA
+                                        {bureaus.reduce((sum, b) => sum + b.total_cotisations, 0).toLocaleString()} GNF
                                     </p>
                                     <p className="text-sm text-gray-600 mt-2">
                                         Collectées par tous les bureaux

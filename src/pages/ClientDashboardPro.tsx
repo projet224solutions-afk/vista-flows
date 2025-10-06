@@ -67,7 +67,7 @@ export default function ClientDashboardPro() {
 
     // États principaux
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [walletBalance, setWalletBalance] = useState(125000);
+    const [walletBalance, setWalletBalance] = useState(0);
     const [cartItems, setCartItems] = useState<Product[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [notifications, setNotifications] = useState([

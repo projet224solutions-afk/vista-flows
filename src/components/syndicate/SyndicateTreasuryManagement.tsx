@@ -29,7 +29,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
                         <div className="text-2xl font-bold text-green-600">
-                            {treasuryData.balance.toLocaleString()} FCFA
+                            {treasuryData.balance.toLocaleString()} GNF
                         </div>
                         <div className="text-sm text-gray-600">Solde de Caisse</div>
                     </CardContent>
@@ -39,7 +39,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <TrendingUp className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                         <div className="text-2xl font-bold text-blue-600">
-                            {treasuryData.monthlyIncome.toLocaleString()} FCFA
+                            {treasuryData.monthlyIncome.toLocaleString()} GNF
                         </div>
                         <div className="text-sm text-gray-600">Revenus ce mois</div>
                     </CardContent>
@@ -49,7 +49,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <TrendingDown className="w-8 h-8 mx-auto mb-2 text-red-600" />
                         <div className="text-2xl font-bold text-red-600">
-                            {treasuryData.monthlyExpenses.toLocaleString()} FCFA
+                            {treasuryData.monthlyExpenses.toLocaleString()} GNF
                         </div>
                         <div className="text-sm text-gray-600">Dépenses ce mois</div>
                     </CardContent>
@@ -59,7 +59,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <PieChart className="w-8 h-8 mx-auto mb-2 text-orange-600" />
                         <div className="text-2xl font-bold text-orange-600">
-                            {treasuryData.pendingCotisations.toLocaleString()} FCFA
+                            {treasuryData.pendingCotisations.toLocaleString()} GNF
                         </div>
                         <div className="text-sm text-gray-600">Cotisations en attente</div>
                     </CardContent>

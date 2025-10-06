@@ -74,29 +74,29 @@ export default function VendeurDashboard() {
   const mainStats = [
     {
       label: "Chiffre d'affaires",
-      value: stats ? `${stats.revenue.toLocaleString()} FCFA` : "2.4M FCFA",
-      change: "+12%",
+      value: stats ? `${stats.revenue.toLocaleString()} GNF` : "0 GNF",
+      change: "+0%",
       icon: DollarSign,
       color: "text-green-600"
     },
     {
       label: "Commandes ce mois",
-      value: stats ? stats.orders_count.toString() : "156",
-      change: "+8%",
+      value: stats ? stats.orders_count.toString() : "0",
+      change: "+0%",
       icon: ShoppingCart,
       color: "text-blue-600"
     },
     {
       label: "Clients actifs",
-      value: stats ? stats.customers_count.toString() : "89",
-      change: "+15%",
+      value: stats ? stats.customers_count.toString() : "0",
+      change: "+0%",
       icon: Users,
       color: "text-purple-600"
     },
     {
       label: "Taux conversion",
-      value: "3.2%",
-      change: "+0.5%",
+      value: "0%",
+      change: "+0%",
       icon: Target,
       color: "text-orange-600"
     }

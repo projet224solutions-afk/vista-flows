@@ -400,7 +400,7 @@ export default function TaxiMotoBooking({
 
                                         <div className="text-right">
                                             <div className="text-lg font-bold text-green-600">
-                                                {option.price.totalPrice.toLocaleString()} FCFA
+                                                {option.price.totalPrice.toLocaleString()} GNF
                                             </div>
                                             {option.price.appliedMultipliers.length > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
@@ -428,15 +428,15 @@ export default function TaxiMotoBooking({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
                             <span>Prix de base</span>
-                            <span>{priceEstimate.basePrice.toLocaleString()} FCFA</span>
+                            <span>{priceEstimate.basePrice.toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Distance ({routeInfo?.distance}km)</span>
-                            <span>{priceEstimate.distancePrice.toLocaleString()} FCFA</span>
+                            <span>{priceEstimate.distancePrice.toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Temps ({routeInfo?.duration}min)</span>
-                            <span>{priceEstimate.timePrice.toLocaleString()} FCFA</span>
+                            <span>{priceEstimate.timePrice.toLocaleString()} GNF</span>
                         </div>
 
                         {priceEstimate.appliedMultipliers.length > 0 && (
@@ -452,21 +452,21 @@ export default function TaxiMotoBooking({
                                 ))}
                                 <div className="flex justify-between text-sm">
                                     <span>Majoration</span>
-                                    <span>+{priceEstimate.surgeAmount.toLocaleString()} FCFA</span>
+                                    <span>+{priceEstimate.surgeAmount.toLocaleString()} GNF</span>
                                 </div>
                             </>
                         )}
 
                         <div className="flex justify-between text-sm">
                             <span>TVA (18%)</span>
-                            <span>{priceEstimate.taxes.toLocaleString()} FCFA</span>
+                            <span>{priceEstimate.taxes.toLocaleString()} GNF</span>
                         </div>
 
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span className="text-green-600">
-                                {priceEstimate.totalPrice.toLocaleString()} FCFA
+                                {priceEstimate.totalPrice.toLocaleString()} GNF
                             </span>
                         </div>
                     </CardContent>

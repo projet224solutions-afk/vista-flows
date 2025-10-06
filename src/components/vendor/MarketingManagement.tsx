@@ -270,7 +270,7 @@ export default function MarketingManagement() {
                   </div>
                   <div>
                     <Label htmlFor="discount_value">
-                      Valeur {promoForm.discount_type === 'percentage' ? '(%)' : '(FCFA)'}
+                      Valeur {promoForm.discount_type === 'percentage' ? '(%)' : '(GNF)'}
                     </Label>
                     <Input
                       id="discount_value"
