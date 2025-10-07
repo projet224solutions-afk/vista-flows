@@ -223,7 +223,7 @@ export default function IndexAlibaba() {
       </header>
 
       {/* Hero Section moderne */}
-      <section className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white pt-16 pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
@@ -266,7 +266,7 @@ export default function IndexAlibaba() {
             </div>
 
             {/* Stats modernes */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto mt-4">
               {[
                 { value: '2,500+', label: 'Produits' },
                 { value: '1,200+', label: 'Vendeurs' },
