@@ -6,9 +6,10 @@ import { agoraService } from "./services/agora.js";
 import { z } from "zod";
 import { 
   insertProfileSchema, insertWalletSchema, insertVendorSchema, insertProductSchema,
+  insertOrderSchema, insertOrderItemSchema,
   insertEnhancedTransactionSchema, insertAuditLogSchema, insertCommissionConfigSchema,
-  updateProfileSchema, updateProductSchema, updateWalletBalanceSchema,
-  updateTransactionStatusSchema, updateCommissionStatusSchema,
+  updateProfileSchema, updateProductSchema, updateOrderStatusSchema, updateOrderPaymentStatusSchema,
+  updateWalletBalanceSchema, updateTransactionStatusSchema, updateCommissionStatusSchema,
   registerSchema, loginSchema
 } from "../shared/schema.js";
 
@@ -205,6 +206,74 @@ export function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Product not found" });
       }
       res.json(product);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // ===== ORDERS =====
+  app.get("/api/orders", async (req, res) => {
+    const vendorId = req.query.vendorId as string | undefined;
+    const customerId = req.query.customerId as string | undefined;
+    const orders = await storage.getOrders(vendorId, customerId);
+    res.json(orders);
+  });
+
+  app.get("/api/orders/:id", async (req, res) => {
+    const order = await storage.getOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    res.json(order);
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const validated = insertOrderSchema.parse(req.body);
+      const order = await storage.createOrder(validated);
+      res.status(201).json(order);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    try {
+      const validated = updateOrderStatusSchema.parse(req.body);
+      const order = await storage.updateOrderStatus(req.params.id, validated.status);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  app.patch("/api/orders/:id/payment", async (req, res) => {
+    try {
+      const validated = updateOrderPaymentStatusSchema.parse(req.body);
+      const order = await storage.updateOrderPaymentStatus(req.params.id, validated.paymentStatus);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // ===== ORDER ITEMS =====
+  app.get("/api/orders/:orderId/items", async (req, res) => {
+    const items = await storage.getOrderItems(req.params.orderId);
+    res.json(items);
+  });
+
+  app.post("/api/orders/:orderId/items", async (req, res) => {
+    try {
+      const validated = insertOrderItemSchema.parse(req.body);
+      const item = await storage.createOrderItem(req.params.orderId, validated);
+      res.status(201).json(item);
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }

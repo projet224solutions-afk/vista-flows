@@ -3,6 +3,8 @@ import type {
   Wallet, InsertWallet,
   Vendor, InsertVendor,
   Product, InsertProduct,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
   EnhancedTransaction, InsertEnhancedTransaction,
   AuditLog, InsertAuditLog,
   CommissionConfig, InsertCommissionConfig
@@ -75,6 +77,17 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   
+  // Orders
+  getOrders(vendorId?: string, customerId?: string): Promise<Order[]>;
+  getOrderById(id: string): Promise<Order | undefined>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updateOrderPaymentStatus(id: string, paymentStatus: string): Promise<Order | undefined>;
+  
+  // Order Items
+  getOrderItems(orderId: string): Promise<OrderItem[]>;
+  createOrderItem(orderId: string, item: InsertOrderItem): Promise<OrderItem>;
+  
   // Enhanced Transactions
   getTransactionsByUserId(userId: string): Promise<EnhancedTransaction[]>;
   getTransactionById(id: string): Promise<EnhancedTransaction | undefined>;
@@ -99,6 +112,8 @@ export class MemStorage implements IStorage {
   private virtualCards: Map<string, VirtualCard> = new Map();
   private vendors: Map<string, Vendor> = new Map();
   private products: Map<string, Product> = new Map();
+  private orders: Map<string, Order> = new Map();
+  private orderItems: Map<string, OrderItem> = new Map();
   private transactions: Map<string, EnhancedTransaction> = new Map();
   private auditLogs: Map<string, AuditLog> = new Map();
   private commissionConfigs: Map<string, CommissionConfig> = new Map();
@@ -279,6 +294,84 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  // Orders
+  async getOrders(vendorId?: string, customerId?: string): Promise<Order[]> {
+    let result = Array.from(this.orders.values());
+    if (vendorId) {
+      result = result.filter(o => o.vendorId === vendorId);
+    }
+    if (customerId) {
+      result = result.filter(o => o.customerId === customerId);
+    }
+    return result;
+  }
+
+  async getOrderById(id: string): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const id = crypto.randomUUID();
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newOrder: Order = {
+      id,
+      orderNumber,
+      customerId: order.customerId,
+      vendorId: order.vendorId,
+      status: order.status ?? "pending",
+      paymentStatus: order.paymentStatus ?? "pending",
+      paymentMethod: order.paymentMethod ?? null,
+      subtotal: order.subtotal,
+      taxAmount: order.taxAmount ?? "0",
+      shippingAmount: order.shippingAmount ?? "0",
+      discountAmount: order.discountAmount ?? "0",
+      totalAmount: order.totalAmount,
+      shippingAddress: order.shippingAddress ?? null,
+      billingAddress: order.billingAddress ?? null,
+      notes: order.notes ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.orders.set(id, newOrder);
+    return newOrder;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+    const updated = { ...order, status: status as Order["status"], updatedAt: new Date() };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async updateOrderPaymentStatus(id: string, paymentStatus: string): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+    const updated = { ...order, paymentStatus: paymentStatus as Order["paymentStatus"], updatedAt: new Date() };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  // Order Items
+  async getOrderItems(orderId: string): Promise<OrderItem[]> {
+    return Array.from(this.orderItems.values()).filter(item => item.orderId === orderId);
+  }
+
+  async createOrderItem(orderId: string, item: InsertOrderItem): Promise<OrderItem> {
+    const id = crypto.randomUUID();
+    const newItem: OrderItem = {
+      id,
+      orderId: item.orderId,
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      createdAt: new Date()
+    };
+    this.orderItems.set(id, newItem);
+    return newItem;
+  }
+
   // Enhanced Transactions
   async getTransactionsByUserId(userId: string): Promise<EnhancedTransaction[]> {
     return Array.from(this.transactions.values()).filter(
@@ -456,6 +549,34 @@ export class DbStorage implements IStorage {
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async getOrders(vendorId?: string, customerId?: string): Promise<Order[]> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async getOrderById(id: string): Promise<Order | undefined> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async updateOrderPaymentStatus(id: string, paymentStatus: string): Promise<Order | undefined> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async getOrderItems(orderId: string): Promise<OrderItem[]> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async createOrderItem(orderId: string, item: InsertOrderItem): Promise<OrderItem> {
     throw new Error("DbStorage not implemented yet");
   }
 
