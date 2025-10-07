@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getErrorMessage, logError } from '@/lib/errors';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,7 +192,7 @@ export default function ProductManagement() {
     } catch (error) {
       toast({
         title: "Erreur",
-        description: `Impossible de sauvegarder le produit: ${error.message}`,
+        description: `Impossible de sauvegarder le produit: ${getErrorMessage(error)}`,
         variant: "destructive"
       });
     }

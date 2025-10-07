@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage, logError } from '@/lib/errors';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,7 +151,7 @@ export default function PaymentLinksManager() {
       console.error('Erreur création lien:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Impossible de créer le lien de paiement",
+        description: getErrorMessage(error, "Impossible de créer le lien de paiement"),
         variant: "destructive"
       });
     } finally {

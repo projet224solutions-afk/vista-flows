@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { getErrorMessage, logError } from '@/lib/errors';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,8 +189,8 @@ export default function TaxiMotoPayment({
                 onPaymentComplete(paymentData);
             }, 2000);
 
-        } catch (error: any) {
-            setPaymentError(error.message);
+        } catch (error) {
+            setPaymentError(getErrorMessage(error, 'Erreur lors du traitement du paiement'));
             setPaymentStep('error');
         } finally {
             setPaymentInProgress(false);

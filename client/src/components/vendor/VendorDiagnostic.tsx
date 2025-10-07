@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage, logError } from '@/lib/errors';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -106,7 +107,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                             .limit(1);
 
                         if (error) {
-                            results.push({ table, error: error.message });
+                            results.push({ table, error: getErrorMessage(error) });
                         }
                     } catch (err) {
                         results.push({ table, error: 'Erreur accès table' });
@@ -163,12 +164,13 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                     message: result.message
                 });
             } catch (error) {
+                logError(error, test.name);
                 testResults.push({
                     test: test.name,
                     status: 'error',
-                    message: error.message,
-                    details: error.stack,
-                    fix: getFixSuggestion(test.name, error.message)
+                    message: getErrorMessage(error),
+                    details: undefined,
+                    fix: getFixSuggestion(test.name, getErrorMessage(error))
                 });
             }
         }
@@ -269,7 +271,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
         } catch (error) {
             toast({
                 title: "Erreur lors de la réparation",
-                description: error.message,
+                description: getErrorMessage(error),
                 variant: "destructive",
             });
         } finally {

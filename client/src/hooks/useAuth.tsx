@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { getErrorMessage, logError } from '@/lib/errors';
 
 interface Profile {
   id: string;
@@ -54,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile(profile);
       setUser(profile);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logError(error, 'refreshProfile');
       localStorage.removeItem('auth_token');
       setProfile(null);
       setUser(null);
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(profile);
           setProfile(profile);
         } catch (error) {
-          console.error('Invalid token:', error);
+          logError(error, 'getInitialSession');
           localStorage.removeItem('auth_token');
           setUser(null);
           setProfile(null);
@@ -102,8 +103,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile(profile);
       setSession({ token });
       toast.success('Connexion réussie !');
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur de connexion');
+    } catch (error) {
+      const message = getErrorMessage(error, 'Erreur de connexion');
+      toast.error(message);
       throw error;
     }
   };
@@ -115,8 +117,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile(profile);
       setSession({ token });
       toast.success('Compte créé avec succès ! Wallet, ID et carte virtuelle configurés automatiquement.');
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la création du compte');
+    } catch (error) {
+      const message = getErrorMessage(error, 'Erreur lors de la création du compte');
+      toast.error(message);
       throw error;
     }
   };
