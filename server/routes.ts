@@ -131,7 +131,9 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/wallets/:id/balance", async (req, res) => {
+  // DEPRECATED: This endpoint is unsafe - allows direct balance modification
+  // Use /api/wallet/transfer instead for secure transfers
+  app.patch("/api/wallets/:id/balance", requireAuth, async (req: AuthRequest, res) => {
     try {
       const validated = updateWalletBalanceSchema.parse(req.body);
       const wallet = await storage.updateWalletBalance(req.params.id, validated.balance);
@@ -141,6 +143,60 @@ export function registerRoutes(app: Express) {
       res.json(wallet);
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // Secure wallet transfer with ACID transaction
+  app.post("/api/wallet/transfer", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // Validation schema for transfer
+      const transferSchema = z.object({
+        toUserId: z.string().uuid("Invalid recipient ID"),
+        amount: z.number().positive("Amount must be positive").or(z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid amount format")),
+        transactionType: z.string().optional().default('transfer'),
+        description: z.string().optional().nullable()
+      });
+
+      const validated = transferSchema.parse(req.body);
+      
+      const { pool } = await import('./db.js');
+      const client = await pool.connect();
+      
+      try {
+        await client.query('BEGIN');
+        
+        // Call the stored procedure for atomic transfer
+        const result = await client.query(
+          'SELECT process_transaction($1, $2, $3, $4, $5) as result',
+          [
+            req.userId, // from_user_id
+            validated.toUserId, // to_user_id
+            validated.amount, // amount
+            validated.transactionType, // transaction_type
+            validated.description || null // description
+          ]
+        );
+        
+        const transferResult = result.rows[0]?.result;
+        
+        if (transferResult.error) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: transferResult.error });
+        }
+        
+        await client.query('COMMIT');
+        res.json(transferResult);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Transfer failed" });
     }
   });
 

@@ -9,6 +9,9 @@ import type {
   AuditLog, InsertAuditLog,
   CommissionConfig, InsertCommissionConfig
 } from "../shared/schema.js";
+import { db } from './db.js';
+import { eq, or } from 'drizzle-orm';
+import * as schema from '../shared/schema.js';
 
 type UserId = {
   id: string;
@@ -481,39 +484,67 @@ export class MemStorage implements IStorage {
 
 export class DbStorage implements IStorage {
   async getProfileById(id: string): Promise<Profile | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.profiles)
+      .where(eq(schema.profiles.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async getProfileByEmail(email: string): Promise<Profile | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.profiles)
+      .where(eq(schema.profiles.email, email))
+      .limit(1);
+    return result[0];
   }
 
   async createProfile(profile: InsertProfile): Promise<Profile> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.profiles)
+      .values(profile)
+      .returning();
+    return result[0];
   }
 
-  async updateProfile(id: string, profile: Partial<InsertProfile>): Promise<Profile | undefined> {
-    throw new Error("DbStorage not implemented yet");
+  async updateProfile(id: string, profileData: Partial<InsertProfile>): Promise<Profile | undefined> {
+    const result = await db.update(schema.profiles)
+      .set({ ...profileData, updatedAt: new Date() })
+      .where(eq(schema.profiles.id, id))
+      .returning();
+    return result[0];
   }
 
   async createUserId(data: InsertUserId): Promise<UserId> {
-    throw new Error("DbStorage not implemented yet");
+    throw new Error("DbStorage.createUserId not implemented yet");
   }
 
   async getWalletByUserId(userId: string): Promise<Wallet | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.wallets)
+      .where(eq(schema.wallets.userId, userId))
+      .limit(1);
+    return result[0];
   }
 
   async getWalletsByUserId(userId: string): Promise<Wallet[]> {
-    throw new Error("DbStorage not implemented yet");
+    return await db.select()
+      .from(schema.wallets)
+      .where(eq(schema.wallets.userId, userId));
   }
 
   async createWallet(wallet: InsertWallet): Promise<Wallet> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.wallets)
+      .values(wallet)
+      .returning();
+    return result[0];
   }
 
   async updateWalletBalance(id: string, balance: string): Promise<Wallet | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.wallets)
+      .set({ balance, updatedAt: new Date() })
+      .where(eq(schema.wallets.id, id))
+      .returning();
+    return result[0];
   }
 
   async createVirtualCard(card: InsertVirtualCard): Promise<VirtualCard> {
@@ -581,19 +612,38 @@ export class DbStorage implements IStorage {
   }
 
   async getTransactionsByUserId(userId: string): Promise<EnhancedTransaction[]> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.enhancedTransactions)
+      .where(or(
+        eq(schema.enhancedTransactions.senderId, userId),
+        eq(schema.enhancedTransactions.receiverId, userId)
+      ))
+      .orderBy(schema.enhancedTransactions.createdAt);
+    
+    return result;
   }
 
   async getTransactionById(id: string): Promise<EnhancedTransaction | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.enhancedTransactions)
+      .where(eq(schema.enhancedTransactions.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async createTransaction(transaction: InsertEnhancedTransaction): Promise<EnhancedTransaction> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.enhancedTransactions)
+      .values(transaction)
+      .returning();
+    return result[0];
   }
 
   async updateTransactionStatus(id: string, status: string): Promise<EnhancedTransaction | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.enhancedTransactions)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(schema.enhancedTransactions.id, id))
+      .returning();
+    return result[0];
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
@@ -621,4 +671,10 @@ export class DbStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use DbStorage for production persistence with PostgreSQL
+// Critical methods implemented: auth (profiles), wallet, transactions
+// Note: vendor/product/order methods still use fallback throws - to be implemented
+export const storage = new DbStorage();
+
+// Legacy in-memory storage (deprecated):
+// export const storage = new MemStorage();
