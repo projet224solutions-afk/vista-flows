@@ -202,7 +202,7 @@ export class PaymentSecurity {
         .eq('user_id', userId)
         .single();
 
-      if (profileError || !profile) {
+      if (error || !profile) {
         return {
           isValid: false,
           error: 'Profil utilisateur non trouvé'

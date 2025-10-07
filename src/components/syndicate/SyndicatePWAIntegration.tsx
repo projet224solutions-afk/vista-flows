@@ -83,7 +83,7 @@ export default function SyndicatePWAIntegration({
     };
 
     const handleUpdate = () => {
-        updateServiceWorker(true);
+        updateServiceWorker();
         toast.success('🔄 Mise à jour en cours...');
     };
 

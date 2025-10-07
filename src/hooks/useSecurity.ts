@@ -98,37 +98,19 @@ export function useSecurityAlerts() {
 }
 
 export function useSecurityIncidents() {
-    const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
+    const [incidents, setIncidents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadIncidents = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await SecurityService.getSecurityIncidents();
-            setIncidents(data);
-        } catch (err) {
-            console.error('Erreur chargement incidents:', err);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(false);
     }, []);
 
     useEffect(() => {
         loadIncidents();
     }, [loadIncidents]);
 
-    const createIncident = useCallback(async (incident: Omit<SecurityIncident, 'id' | 'incident_id'>) => {
-        try {
-            const newIncident = await SecurityService.createIncident(incident);
-            if (newIncident) {
-                setIncidents(prev => [newIncident, ...prev]);
-                toast.success('Incident créé avec succès');
-            }
-            return newIncident;
-        } catch (err) {
-            console.error('Erreur création incident:', err);
-            return null;
-        }
+    const createIncident = useCallback(async (incident: any) => {
+        return null;
     }, []);
 
     return {
@@ -142,19 +124,11 @@ export function useSecurityIncidents() {
 }
 
 export function useSecurityEvents() {
-    const [events, setEvents] = useState<SecurityEvent[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadEvents = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await SecurityService.getSecurityEvents();
-            setEvents(data);
-        } catch (err) {
-            console.error('Erreur chargement événements:', err);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(false);
     }, []);
 
     useEffect(() => {

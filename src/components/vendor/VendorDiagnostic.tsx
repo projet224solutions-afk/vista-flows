@@ -99,13 +99,17 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                 const results = [];
 
                 for (const table of tables) {
-                    const { error } = await supabase
-                        .from(table)
-                        .select('id')
-                        .limit(1);
+                    try {
+                        const { error } = await supabase
+                            .from(table as any)
+                            .select('id')
+                            .limit(1);
 
-                    if (error) {
-                        results.push({ table, error: error.message });
+                        if (error) {
+                            results.push({ table, error: error.message });
+                        }
+                    } catch (err) {
+                        results.push({ table, error: 'Erreur accès table' });
                     }
                 }
 
@@ -204,7 +208,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                         .from('vendors')
                         .insert({
                             user_id: user.id,
-                            business_name: profile?.full_name || 'Entreprise',
+                            business_name: 'Mon Entreprise',
                             business_type: 'retail',
                             status: 'active'
                         });

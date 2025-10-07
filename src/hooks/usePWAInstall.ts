@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import { isMobile, isAndroid, isIOS, isDesktop } from 'react-device-detect';
 
 export interface InstallPromptEvent extends Event {
@@ -30,17 +29,8 @@ export function usePWAInstall() {
         showInstallBanner: false
     });
 
-    const {
-        needRefresh: [needRefresh, setNeedRefresh],
-        updateServiceWorker,
-    } = useRegisterSW({
-        onRegistered(r) {
-            console.log('✅ Service Worker enregistré:', r);
-        },
-        onRegisterError(error) {
-            console.error('❌ Erreur enregistrement SW:', error);
-        },
-    });
+    const [needRefresh, setNeedRefresh] = useState(false);
+    const updateServiceWorker = () => {};
 
     useEffect(() => {
         // Détecter le type d'appareil

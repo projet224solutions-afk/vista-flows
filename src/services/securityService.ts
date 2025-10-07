@@ -46,8 +46,8 @@ class SecurityService {
   private generateSecureToken(): string {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substring(2);
-    const crypto = crypto.getRandomValues(new Uint8Array(16));
-    const cryptoString = Array.from(crypto, byte => byte.toString(36)).join('');
+    const cryptoValues = window.crypto.getRandomValues(new Uint8Array(16));
+    const cryptoString = Array.from(cryptoValues, byte => byte.toString(36)).join('');
     return `secure_${timestamp}_${random}_${cryptoString}`;
   }
 
