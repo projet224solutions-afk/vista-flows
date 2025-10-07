@@ -62,40 +62,40 @@ export function registerRoutes(app: Express) {
   });
 
   // ===== PROFILES =====
-  app.get("/api/profiles/:id", async (req, res) => {
+  app.get("/api/profiles/:id", requireAuth, async (req: AuthRequest, res) => {
     const profile = await storage.getProfileById(req.params.id);
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
-    res.json(profile);
+    res.json(removePassword(profile));
   });
 
-  app.get("/api/profiles/email/:email", async (req, res) => {
+  app.get("/api/profiles/email/:email", requireAuth, async (req: AuthRequest, res) => {
     const profile = await storage.getProfileByEmail(req.params.email);
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
-    res.json(profile);
+    res.json(removePassword(profile));
   });
 
-  app.post("/api/profiles", async (req, res) => {
+  app.post("/api/profiles", requireAuth, async (req: AuthRequest, res) => {
     try {
       const validated = insertProfileSchema.parse(req.body);
       const profile = await storage.createProfile(validated);
-      res.status(201).json(profile);
+      res.status(201).json(removePassword(profile));
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
   });
 
-  app.patch("/api/profiles/:id", async (req, res) => {
+  app.patch("/api/profiles/:id", requireAuth, async (req: AuthRequest, res) => {
     try {
       const validated = updateProfileSchema.parse(req.body);
       const profile = await storage.updateProfile(req.params.id, validated);
       if (!profile) {
         return res.status(404).json({ error: "Profile not found" });
       }
-      res.json(profile);
+      res.json(removePassword(profile));
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
