@@ -84,7 +84,7 @@ export class DynamicPaymentService {
       createdByType: result.createdByType as 'delivery' | 'taxi_moto',
       amount: parseFloat(result.amount),
       currency: result.currency,
-      description: result.description,
+      description: result.description || '',
       recipientName: result.recipientName || undefined,
       status: result.status as 'active' | 'expired' | 'used' | 'cancelled',
       paymentUrl,
@@ -192,7 +192,7 @@ export class DynamicPaymentService {
         return { success: false, message: 'Payer wallet not found' };
       }
 
-      const amount = parseFloat(link.amount);
+      const amount = link.amount;
       const currentBalance = parseFloat(paidByWallet.balance);
 
       if (currentBalance < amount) {

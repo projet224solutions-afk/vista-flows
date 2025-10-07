@@ -661,7 +661,7 @@ export function registerRoutes(app: Express) {
   app.post("/api/transactions/calculate-fees", async (req, res) => {
     try {
       const validated = calculateFeesSchema.parse(req.body);
-      const fees = TransactionFeeService.calculateFees(validated.amount, validated.currency);
+      const fees = await TransactionFeeService.calculateFees(validated.amount, validated.currency);
       
       res.json({
         success: true,
@@ -678,7 +678,7 @@ export function registerRoutes(app: Express) {
   app.post("/api/transactions/calculate-cross-currency", async (req, res) => {
     try {
       const validated = crossCurrencySchema.parse(req.body);
-      const result = TransactionFeeService.calculateCrossCurrencyFees(
+      const result = await TransactionFeeService.calculateCrossCurrencyFees(
         validated.amount,
         validated.fromCurrency,
         validated.toCurrency
@@ -698,7 +698,7 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/transactions/supported-currencies", async (req, res) => {
     try {
-      const currencies = TransactionFeeService.getSupportedCurrencies();
+      const currencies = await TransactionFeeService.getSupportedCurrencies();
       
       res.json({
         success: true,
@@ -715,7 +715,7 @@ export function registerRoutes(app: Express) {
   app.get("/api/transactions/exchange-rate/:currency", async (req, res) => {
     try {
       const currency = req.params.currency.toUpperCase();
-      const rate = TransactionFeeService.getExchangeRate(currency);
+      const rate = await TransactionFeeService.getExchangeRate(currency);
       
       res.json({
         success: true,
@@ -735,7 +735,7 @@ export function registerRoutes(app: Express) {
   app.post("/api/transactions/update-exchange-rate", requireAuth, async (req: AuthRequest, res) => {
     try {
       const validated = updateRateSchema.parse(req.body);
-      const success = TransactionFeeService.updateExchangeRate(
+      const success = await TransactionFeeService.updateExchangeRate(
         validated.currency.toUpperCase(),
         validated.rate
       );

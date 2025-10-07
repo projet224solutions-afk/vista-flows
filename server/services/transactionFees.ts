@@ -3,6 +3,10 @@
  * Frais : 1% du montant + 1000 GNF (ou équivalent dans autre devise)
  */
 
+import { db } from "../db.js";
+import { currencyExchangeRates } from "../../shared/schema.js";
+import { eq, and, or, desc, sql, isNull, gt } from "drizzle-orm";
+
 interface FeeCalculation {
   amount: number;
   currency: string;
@@ -13,46 +17,106 @@ interface FeeCalculation {
 }
 
 interface CurrencyRates {
-  [key: string]: number; // Taux par rapport à GNF
+  [key: string]: number;
 }
 
-// Taux de change par rapport à GNF (Franc Guinéen)
-const EXCHANGE_RATES: CurrencyRates = {
+// Taux de change par défaut (fallback si DB vide)
+const DEFAULT_EXCHANGE_RATES: CurrencyRates = {
   'GNF': 1,
-  'XOF': 0.07, // CFA West Africa
-  'XAF': 0.07, // CFA Central Africa  
+  'XOF': 0.07,
+  'XAF': 0.07,
   'USD': 8500,
   'EUR': 9200,
   'NGN': 20,
   'GHS': 750,
 };
 
-// Frais fixes en GNF (équivalent à 1000 GNF dans chaque devise)
 const FIXED_FEE_GNF = 1000;
-
-// Pourcentage de frais (1%)
 const PERCENTAGE_FEE = 0.01;
+
+// Cache en mémoire pour performances
+let ratesCache: CurrencyRates | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export class TransactionFeeService {
   /**
-   * Calcule les frais automatiques pour une transaction
-   * @param amount Montant de la transaction
-   * @param currency Code ISO de la devise (GNF, XOF, USD, etc.)
-   * @returns Objet avec les détails des frais
+   * Charge les taux de change depuis la DB
    */
-  static calculateFees(amount: number, currency: string = 'GNF'): FeeCalculation {
-    const rate = EXCHANGE_RATES[currency] || 1;
+  private static async loadExchangeRates(): Promise<CurrencyRates> {
+    const now = Date.now();
     
-    // Calculer le frais fixe dans la devise de la transaction
+    if (ratesCache && (now - cacheTimestamp) < CACHE_TTL) {
+      return ratesCache;
+    }
+
+    try {
+      const rates = await db.select()
+        .from(currencyExchangeRates)
+        .where(
+          and(
+            eq(currencyExchangeRates.isActive, true),
+            or(
+              isNull(currencyExchangeRates.effectiveUntil),
+              gt(currencyExchangeRates.effectiveUntil, new Date())
+            )
+          )
+        );
+
+      if (rates.length === 0) {
+        await this.initializeDefaultRates();
+        return DEFAULT_EXCHANGE_RATES;
+      }
+
+      const ratesMap: CurrencyRates = { 'GNF': 1 };
+      
+      for (const rate of rates) {
+        ratesMap[rate.targetCurrency] = parseFloat(rate.rate);
+      }
+
+      ratesCache = ratesMap;
+      cacheTimestamp = now;
+      
+      return ratesMap;
+    } catch (error) {
+      console.error('Error loading exchange rates:', error);
+      return DEFAULT_EXCHANGE_RATES;
+    }
+  }
+
+  /**
+   * Initialise les taux par défaut dans la DB
+   */
+  private static async initializeDefaultRates(): Promise<void> {
+    try {
+      for (const [currency, rate] of Object.entries(DEFAULT_EXCHANGE_RATES)) {
+        if (currency === 'GNF') continue;
+        
+        await db.insert(currencyExchangeRates).values({
+          baseCurrency: 'GNF',
+          targetCurrency: currency,
+          rate: rate.toString(),
+          isActive: true
+        }).onConflictDoNothing();
+      }
+      
+      ratesCache = DEFAULT_EXCHANGE_RATES;
+      cacheTimestamp = Date.now();
+    } catch (error) {
+      console.error('Error initializing default rates:', error);
+    }
+  }
+
+  /**
+   * Calcule les frais automatiques pour une transaction
+   */
+  static async calculateFees(amount: number, currency: string = 'GNF'): Promise<FeeCalculation> {
+    const rates = await this.loadExchangeRates();
+    const rate = rates[currency] || 1;
+    
     const fixedFeeInCurrency = FIXED_FEE_GNF / rate;
-    
-    // Calculer le frais en pourcentage (1%)
     const percentageFee = amount * PERCENTAGE_FEE;
-    
-    // Total des frais
     const totalFee = percentageFee + fixedFeeInCurrency;
-    
-    // Montant après déduction des frais
     const amountAfterFee = amount - totalFee;
 
     return {
@@ -67,20 +131,16 @@ export class TransactionFeeService {
 
   /**
    * Convertit un montant d'une devise à une autre
-   * @param amount Montant à convertir
-   * @param fromCurrency Devise source
-   * @param toCurrency Devise cible
-   * @returns Montant converti
    */
-  static convertCurrency(
+  static async convertCurrency(
     amount: number,
     fromCurrency: string,
     toCurrency: string
-  ): number {
-    const fromRate = EXCHANGE_RATES[fromCurrency] || 1;
-    const toRate = EXCHANGE_RATES[toCurrency] || 1;
+  ): Promise<number> {
+    const rates = await this.loadExchangeRates();
+    const fromRate = rates[fromCurrency] || 1;
+    const toRate = rates[toCurrency] || 1;
     
-    // Convertir d'abord en GNF puis vers la devise cible
     const amountInGNF = amount * fromRate;
     const convertedAmount = amountInGNF / toRate;
     
@@ -89,28 +149,22 @@ export class TransactionFeeService {
 
   /**
    * Calcule les frais pour un transfert multi-devises
-   * @param amount Montant à envoyer
-   * @param fromCurrency Devise de l'expéditeur
-   * @param toCurrency Devise du destinataire
-   * @returns Détails complets du transfert avec frais
    */
-  static calculateCrossCurrencyFees(
+  static async calculateCrossCurrencyFees(
     amount: number,
     fromCurrency: string,
     toCurrency: string
-  ): {
+  ): Promise<{
     originalAmount: number;
     originalCurrency: string;
     convertedAmount: number;
     targetCurrency: string;
     fees: FeeCalculation;
     recipientReceives: number;
-  } {
-    // Calculer les frais dans la devise source
-    const fees = this.calculateFees(amount, fromCurrency);
+  }> {
+    const fees = await this.calculateFees(amount, fromCurrency);
     
-    // Convertir le montant après frais vers la devise cible
-    const convertedAmount = this.convertCurrency(
+    const convertedAmount = await this.convertCurrency(
       fees.amountAfterFee,
       fromCurrency,
       toCurrency
@@ -129,23 +183,88 @@ export class TransactionFeeService {
   /**
    * Obtient la liste des devises supportées
    */
-  static getSupportedCurrencies(): string[] {
-    return Object.keys(EXCHANGE_RATES);
+  static async getSupportedCurrencies(): Promise<string[]> {
+    const rates = await this.loadExchangeRates();
+    return Object.keys(rates);
   }
 
   /**
    * Obtient le taux de change d'une devise
    */
-  static getExchangeRate(currency: string): number {
-    return EXCHANGE_RATES[currency] || 1;
+  static async getExchangeRate(currency: string): Promise<number> {
+    const rates = await this.loadExchangeRates();
+    return rates[currency] || 1;
   }
 
   /**
    * Met à jour le taux de change d'une devise (pour le PDG)
    */
-  static updateExchangeRate(currency: string, rate: number): boolean {
+  static async updateExchangeRate(
+    currency: string,
+    rate: number,
+    effectiveUntil?: Date
+  ): Promise<boolean> {
     if (rate <= 0) return false;
-    EXCHANGE_RATES[currency] = rate;
-    return true;
+    
+    try {
+      await db.update(currencyExchangeRates)
+        .set({ isActive: false })
+        .where(
+          and(
+            eq(currencyExchangeRates.targetCurrency, currency),
+            eq(currencyExchangeRates.isActive, true)
+          )
+        );
+
+      await db.insert(currencyExchangeRates).values({
+        baseCurrency: 'GNF',
+        targetCurrency: currency,
+        rate: rate.toString(),
+        isActive: true,
+        effectiveUntil: effectiveUntil || null
+      });
+
+      ratesCache = null;
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating exchange rate:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Récupère tous les taux de change actifs
+   */
+  static async getAllRates(): Promise<Array<{
+    currency: string;
+    rate: number;
+    effectiveFrom: string;
+    effectiveUntil?: string;
+  }>> {
+    try {
+      const rates = await db.select()
+        .from(currencyExchangeRates)
+        .where(eq(currencyExchangeRates.isActive, true))
+        .orderBy(currencyExchangeRates.targetCurrency);
+
+      return rates.map(r => ({
+        currency: r.targetCurrency,
+        rate: parseFloat(r.rate),
+        effectiveFrom: r.effectiveFrom!.toISOString(),
+        effectiveUntil: r.effectiveUntil?.toISOString()
+      }));
+    } catch (error) {
+      console.error('Error getting all rates:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Vide le cache des taux de change
+   */
+  static clearCache(): void {
+    ratesCache = null;
+    cacheTimestamp = 0;
   }
 }
