@@ -112,6 +112,36 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const orders = pgTable("orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderNumber: text("order_number").notNull().unique().$defaultFn(() => `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
+  customerId: uuid("customer_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  vendorId: uuid("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  status: orderStatusEnum("status").default("pending"),
+  paymentStatus: paymentStatusEnum("payment_status").default("pending"),
+  paymentMethod: paymentMethodEnum("payment_method"),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  shippingAddress: jsonb("shipping_address"),
+  billingAddress: jsonb("billing_address"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
 export const enhancedTransactions = pgTable("enhanced_transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   senderId: uuid("sender_id").notNull().references(() => profiles.id),
