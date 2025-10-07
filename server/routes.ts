@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { storage } from "./storage.js";
 import { authService, removePassword } from "./services/auth.js";
 import { requireAuth, type AuthRequest } from "./middleware/auth.js";
+import { agoraService } from "./services/agora.js";
+import { z } from "zod";
 import { 
   insertProfileSchema, insertWalletSchema, insertVendorSchema, insertProductSchema,
   insertEnhancedTransactionSchema, insertAuditLogSchema, insertCommissionConfigSchema,
@@ -294,6 +296,161 @@ export function registerRoutes(app: Express) {
       res.json(config);
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // ===== AGORA COMMUNICATION =====
+  const rtcTokenSchema = z.object({
+    channelName: z.string().min(1).max(64),
+    uid: z.union([z.string(), z.number()]),
+    role: z.enum(['publisher', 'subscriber']).default('publisher'),
+    expirationTime: z.number().int().min(60).max(86400).default(3600)
+  });
+
+  const rtmTokenSchema = z.object({
+    userId: z.string().min(1).max(64),
+    expirationTime: z.number().int().min(60).max(86400).default(3600)
+  });
+
+  const sessionTokenSchema = z.object({
+    channelName: z.string().min(1).max(64),
+    role: z.enum(['publisher', 'subscriber']).default('publisher'),
+    expirationTime: z.number().int().min(60).max(86400).default(3600)
+  });
+
+  app.post("/api/agora/rtc-token", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = rtcTokenSchema.parse(req.body);
+      const token = agoraService.generateRTCToken(
+        validated.channelName,
+        validated.uid,
+        validated.role,
+        validated.expirationTime
+      );
+
+      res.json({
+        success: true,
+        data: {
+          token,
+          appId: process.env.AGORA_APP_ID,
+          channelName: validated.channelName,
+          uid: validated.uid,
+          role: validated.role,
+          expiresIn: validated.expirationTime
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to generate RTC token'
+      });
+    }
+  });
+
+  app.post("/api/agora/rtm-token", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = rtmTokenSchema.parse(req.body);
+      const token = agoraService.generateRTMToken(
+        validated.userId,
+        validated.expirationTime
+      );
+
+      res.json({
+        success: true,
+        data: {
+          token,
+          appId: process.env.AGORA_APP_ID,
+          userId: validated.userId,
+          expiresIn: validated.expirationTime
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to generate RTM token'
+      });
+    }
+  });
+
+  app.post("/api/agora/session-tokens", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = sessionTokenSchema.parse(req.body);
+      const sessionData = agoraService.generateSessionTokens(
+        req.userId!,
+        validated.channelName,
+        validated.role,
+        validated.expirationTime
+      );
+
+      res.json({
+        success: true,
+        data: sessionData
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to generate session tokens'
+      });
+    }
+  });
+
+  app.post("/api/agora/generate-channel", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { targetUserId, isGroup, groupId } = req.body;
+
+      if (isGroup && !groupId) {
+        return res.status(400).json({
+          success: false,
+          error: 'groupId required for group channels'
+        });
+      }
+
+      if (!isGroup && !targetUserId) {
+        return res.status(400).json({
+          success: false,
+          error: 'targetUserId required for private conversations'
+        });
+      }
+
+      let channelName;
+      if (isGroup) {
+        channelName = agoraService.generateGroupChannelName(groupId);
+      } else {
+        channelName = agoraService.generateChannelName(req.userId!, targetUserId);
+      }
+
+      res.json({
+        success: true,
+        data: {
+          channelName,
+          isGroup,
+          participants: isGroup ? [groupId] : [req.userId, targetUserId]
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to generate channel'
+      });
+    }
+  });
+
+  app.get("/api/agora/config", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const config = agoraService.validateConfiguration();
+      res.json({
+        success: true,
+        data: {
+          appId: process.env.AGORA_APP_ID,
+          isConfigured: config.isValid,
+          timestamp: config.timestamp
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve configuration'
+      });
     }
   });
 }

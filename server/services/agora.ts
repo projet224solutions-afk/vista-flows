@@ -1,4 +1,5 @@
-import { RtcTokenBuilder, RtmTokenBuilder, RtcRole } from 'agora-token';
+import agoraToken from 'agora-token';
+const { RtcTokenBuilder, RtmTokenBuilder, RtcRole } = agoraToken;
 
 interface SessionTokens {
   appId: string;
