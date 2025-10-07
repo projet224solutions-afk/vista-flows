@@ -54,7 +54,7 @@ export function useRealtimeSync(bureauId?: string) {
 
             // Charger les alertes SOS actives
             const { data: sosAlerts, error: sosError } = await supabase
-                .from('sos_alerts')
+                .from('syndicate_sos_alerts')
                 .select('id, status')
                 .eq('status', 'active');
 
@@ -124,7 +124,7 @@ export function useRealtimeSync(bureauId?: string) {
                         {
                             event: '*',
                             schema: 'public',
-                            table: 'sos_alerts'
+                            table: 'syndicate_sos_alerts'
                         },
                         (payload) => {
                             console.log('🔄 Mise à jour SOS reçue:', payload);

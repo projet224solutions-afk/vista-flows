@@ -13,6 +13,15 @@ export const callTypeEnum = pgEnum("call_type", ["audio", "video"]);
 export const userPresenceStatusEnum = pgEnum("user_presence_status", ["online", "offline", "away", "busy"]);
 export const paymentLinkStatusEnum = pgEnum("payment_link_status", ["active", "expired", "used", "cancelled"]);
 export const badgeStatusEnum = pgEnum("badge_status", ["active", "expired", "suspended", "revoked"]);
+export const syndicateBureauStatusEnum = pgEnum("syndicate_bureau_status", ["pending", "active", "suspended", "dissolved"]);
+export const syndicateMemberStatusEnum = pgEnum("syndicate_member_status", ["active", "inactive", "suspended"]);
+export const cotisationStatusEnum = pgEnum("cotisation_status", ["paid", "pending", "overdue"]);
+export const vehicleStatusEnum = pgEnum("vehicle_status", ["active", "maintenance", "retired"]);
+export const syndicateTransactionTypeEnum = pgEnum("syndicate_transaction_type", ["cotisation", "fine", "bonus", "expense"]);
+export const syndicateTransactionStatusEnum = pgEnum("syndicate_transaction_status", ["completed", "pending", "cancelled"]);
+export const sosAlertTypeEnum = pgEnum("sos_alert_type", ["emergency", "breakdown", "accident", "theft"]);
+export const sosSeverityEnum = pgEnum("sos_severity", ["low", "medium", "high", "critical"]);
+export const sosStatusEnum = pgEnum("sos_status", ["active", "resolved", "false_alarm"]);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -307,6 +316,103 @@ export const currencyExchangeRates = pgTable("currency_exchange_rates", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const syndicateBureaus = pgTable("syndicate_bureaus", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bureauCode: text("bureau_code").notNull().unique(),
+  prefecture: text("prefecture").notNull(),
+  commune: text("commune").notNull(),
+  fullLocation: text("full_location").notNull(),
+  presidentName: text("president_name").notNull(),
+  presidentEmail: text("president_email").notNull(),
+  presidentPhone: text("president_phone"),
+  permanentLink: text("permanent_link").notNull(),
+  accessToken: text("access_token").notNull().unique(),
+  status: syndicateBureauStatusEnum("status").default("pending"),
+  totalMembers: integer("total_members").default(0),
+  activeMembers: integer("active_members").default(0),
+  totalVehicles: integer("total_vehicles").default(0),
+  totalCotisations: decimal("total_cotisations", { precision: 15, scale: 2 }).default("0"),
+  treasuryBalance: decimal("treasury_balance", { precision: 15, scale: 2 }).default("0"),
+  emailSentCount: integer("email_sent_count").default(0),
+  smsSentCount: integer("sms_sent_count").default(0),
+  isLinkPermanent: boolean("is_link_permanent").default(true),
+  qrCode: text("qr_code"),
+  downloadCount: integer("download_count").default(0),
+  mobileAccessCount: integer("mobile_access_count").default(0),
+  desktopAccessCount: integer("desktop_access_count").default(0),
+  tabletAccessCount: integer("tablet_access_count").default(0),
+  linkSentAt: timestamp("link_sent_at"),
+  linkAccessedAt: timestamp("link_accessed_at"),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  validatedAt: timestamp("validated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const syndicateMembers = pgTable("syndicate_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bureauId: uuid("bureau_id").notNull().references(() => syndicateBureaus.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  licenseNumber: text("license_number"),
+  vehicleType: text("vehicle_type"),
+  vehicleSerial: text("vehicle_serial"),
+  status: syndicateMemberStatusEnum("status").default("active"),
+  cotisationStatus: cotisationStatusEnum("cotisation_status").default("pending"),
+  joinDate: timestamp("join_date").defaultNow(),
+  lastCotisationDate: timestamp("last_cotisation_date"),
+  totalCotisations: integer("total_cotisations").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const syndicateVehicles = pgTable("syndicate_vehicles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bureauId: uuid("bureau_id").notNull().references(() => syndicateBureaus.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => syndicateMembers.id, { onDelete: "cascade" }),
+  serialNumber: text("serial_number").notNull().unique(),
+  type: text("type").notNull(),
+  brand: text("brand"),
+  model: text("model"),
+  year: integer("year"),
+  status: vehicleStatusEnum("status").default("active"),
+  insuranceExpiry: timestamp("insurance_expiry"),
+  lastInspection: timestamp("last_inspection"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const syndicateTransactions = pgTable("syndicate_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bureauId: uuid("bureau_id").notNull().references(() => syndicateBureaus.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").references(() => syndicateMembers.id, { onDelete: "set null" }),
+  type: syndicateTransactionTypeEnum("type").notNull(),
+  amount: integer("amount").notNull(),
+  description: text("description").notNull(),
+  status: syndicateTransactionStatusEnum("status").default("completed"),
+  receiptUrl: text("receipt_url"),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const syndicateSosAlerts = pgTable("syndicate_sos_alerts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bureauId: uuid("bureau_id").notNull().references(() => syndicateBureaus.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => syndicateMembers.id, { onDelete: "cascade" }),
+  alertType: sosAlertTypeEnum("alert_type").notNull(),
+  severity: sosSeverityEnum("severity").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  address: text("address"),
+  description: text("description").notNull(),
+  status: sosStatusEnum("status").default("active"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
@@ -328,6 +434,11 @@ export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({ 
 export const insertDynamicPaymentLinkSchema = createInsertSchema(dynamicPaymentLinks).omit({ id: true, createdAt: true, updatedAt: true, linkId: true });
 export const insertTaxiMotoBadgeSchema = createInsertSchema(taxiMotoBadges).omit({ id: true, createdAt: true, updatedAt: true, badgeNumber: true, qrCodeData: true, issuedAt: true });
 export const insertCurrencyExchangeRateSchema = createInsertSchema(currencyExchangeRates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSyndicateBureauSchema = createInsertSchema(syndicateBureaus).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSyndicateMemberSchema = createInsertSchema(syndicateMembers).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSyndicateVehicleSchema = createInsertSchema(syndicateVehicles).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSyndicateTransactionSchema = createInsertSchema(syndicateTransactions).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSyndicateSosAlertSchema = createInsertSchema(syndicateSosAlerts).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
@@ -397,3 +508,13 @@ export type TaxiMotoBadge = typeof taxiMotoBadges.$inferSelect;
 export type InsertTaxiMotoBadge = z.infer<typeof insertTaxiMotoBadgeSchema>;
 export type CurrencyExchangeRate = typeof currencyExchangeRates.$inferSelect;
 export type InsertCurrencyExchangeRate = z.infer<typeof insertCurrencyExchangeRateSchema>;
+export type SyndicateBureau = typeof syndicateBureaus.$inferSelect;
+export type InsertSyndicateBureau = z.infer<typeof insertSyndicateBureauSchema>;
+export type SyndicateMember = typeof syndicateMembers.$inferSelect;
+export type InsertSyndicateMember = z.infer<typeof insertSyndicateMemberSchema>;
+export type SyndicateVehicle = typeof syndicateVehicles.$inferSelect;
+export type InsertSyndicateVehicle = z.infer<typeof insertSyndicateVehicleSchema>;
+export type SyndicateTransaction = typeof syndicateTransactions.$inferSelect;
+export type InsertSyndicateTransaction = z.infer<typeof insertSyndicateTransactionSchema>;
+export type SyndicateSosAlert = typeof syndicateSosAlerts.$inferSelect;
+export type InsertSyndicateSosAlert = z.infer<typeof insertSyndicateSosAlertSchema>;
