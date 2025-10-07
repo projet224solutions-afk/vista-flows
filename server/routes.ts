@@ -3,6 +3,9 @@ import { storage } from "./storage.js";
 import { authService, removePassword } from "./services/auth.js";
 import { requireAuth, type AuthRequest } from "./middleware/auth.js";
 import { agoraService } from "./services/agora.js";
+import { TransactionFeeService } from "./services/transactionFees.js";
+import { BadgeGeneratorService } from "./services/badgeGenerator.js";
+import { DynamicPaymentService } from "./services/dynamicPayment.js";
 import { z } from "zod";
 import { 
   insertProfileSchema, insertWalletSchema, insertVendorSchema, insertProductSchema,
@@ -633,6 +636,502 @@ export function registerRoutes(app: Express) {
       res.status(500).json({
         success: false,
         error: 'Failed to stop sharing'
+      });
+    }
+  });
+
+  // ===== MULTI-CURRENCY TRANSACTIONS WITH AUTOMATIC FEES =====
+
+  const calculateFeesSchema = z.object({
+    amount: z.number().positive(),
+    currency: z.string().default('GNF')
+  });
+
+  const crossCurrencySchema = z.object({
+    amount: z.number().positive(),
+    fromCurrency: z.string().default('GNF'),
+    toCurrency: z.string().default('GNF')
+  });
+
+  const updateRateSchema = z.object({
+    currency: z.string(),
+    rate: z.number().positive()
+  });
+
+  app.post("/api/transactions/calculate-fees", async (req, res) => {
+    try {
+      const validated = calculateFeesSchema.parse(req.body);
+      const fees = TransactionFeeService.calculateFees(validated.amount, validated.currency);
+      
+      res.json({
+        success: true,
+        data: fees
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid request'
+      });
+    }
+  });
+
+  app.post("/api/transactions/calculate-cross-currency", async (req, res) => {
+    try {
+      const validated = crossCurrencySchema.parse(req.body);
+      const result = TransactionFeeService.calculateCrossCurrencyFees(
+        validated.amount,
+        validated.fromCurrency,
+        validated.toCurrency
+      );
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid request'
+      });
+    }
+  });
+
+  app.get("/api/transactions/supported-currencies", async (req, res) => {
+    try {
+      const currencies = TransactionFeeService.getSupportedCurrencies();
+      
+      res.json({
+        success: true,
+        data: currencies
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch currencies'
+      });
+    }
+  });
+
+  app.get("/api/transactions/exchange-rate/:currency", async (req, res) => {
+    try {
+      const currency = req.params.currency.toUpperCase();
+      const rate = TransactionFeeService.getExchangeRate(currency);
+      
+      res.json({
+        success: true,
+        data: {
+          currency,
+          rate
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch exchange rate'
+      });
+    }
+  });
+
+  app.post("/api/transactions/update-exchange-rate", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = updateRateSchema.parse(req.body);
+      const success = TransactionFeeService.updateExchangeRate(
+        validated.currency.toUpperCase(),
+        validated.rate
+      );
+      
+      if (!success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid exchange rate'
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Exchange rate updated successfully'
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to update exchange rate'
+      });
+    }
+  });
+
+  // ===== TAXI-MOTO BADGE SYSTEM =====
+  const createBadgeSchema = z.object({
+    driverId: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    phone: z.string(),
+    vehicleNumber: z.string(),
+    vehicleType: z.enum(['moto_economique', 'moto_rapide', 'moto_premium']),
+    syndicateId: z.string().optional(),
+    syndicateName: z.string().optional(),
+    photoUrl: z.string().optional(),
+    licenseNumber: z.string().optional(),
+    city: z.string().optional()
+  });
+
+  const verifyBadgeSchema = z.object({
+    badgeData: z.string()
+  });
+
+  app.post("/api/badges/create", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createBadgeSchema.parse(req.body);
+      const badge = await BadgeGeneratorService.createBadge({
+        ...validated,
+        id: validated.driverId
+      });
+      
+      res.json({
+        success: true,
+        data: badge
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create badge'
+      });
+    }
+  });
+
+  app.post("/api/badges/verify", async (req, res) => {
+    try {
+      const validated = verifyBadgeSchema.parse(req.body);
+      const result = await BadgeGeneratorService.verifyBadge(validated.badgeData);
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to verify badge'
+      });
+    }
+  });
+
+  app.post("/api/badges/:badgeId/deactivate", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const badgeId = req.params.badgeId;
+      const success = await BadgeGeneratorService.deactivateBadge(badgeId);
+      
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          error: 'Badge not found'
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Badge deactivated successfully'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to deactivate badge'
+      });
+    }
+  });
+
+  app.post("/api/badges/:badgeId/renew", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const badgeId = req.params.badgeId;
+      const validated = createBadgeSchema.parse(req.body);
+      const newBadge = await BadgeGeneratorService.renewBadge(badgeId, {
+        ...validated,
+        id: validated.driverId
+      });
+      
+      res.json({
+        success: true,
+        data: newBadge
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to renew badge'
+      });
+    }
+  });
+
+  app.get("/api/badges/:badgeId/svg", async (req, res) => {
+    try {
+      const badgeId = req.params.badgeId;
+      // TODO: Récupérer le badge et le driver depuis la DB
+      // Pour l'instant, on retourne une erreur
+      res.status(404).json({
+        success: false,
+        error: 'Badge SVG generation not yet implemented'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate badge SVG'
+      });
+    }
+  });
+
+  // ===== DYNAMIC PAYMENT LINKS =====
+
+  const createPaymentLinkSchema = z.object({
+    createdBy: z.string(),
+    createdByType: z.enum(['delivery', 'taxi_moto']),
+    amount: z.number().positive(),
+    currency: z.string().optional(),
+    description: z.string().min(1),
+    customerPhone: z.string().optional(),
+    customerName: z.string().optional(),
+    expiryMinutes: z.number().positive().optional()
+  });
+
+  const processPaymentSchema = z.object({
+    linkId: z.string(),
+    paymentMethod: z.enum(['mobile_money', 'card', 'wallet']),
+    customerInfo: z.object({
+      name: z.string(),
+      phone: z.string(),
+      email: z.string().optional()
+    }).optional()
+  });
+
+  app.post("/api/payment-links/create", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createPaymentLinkSchema.parse(req.body);
+      const paymentLink = await DynamicPaymentService.createPaymentLink(validated);
+      
+      res.json({
+        success: true,
+        data: paymentLink
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create payment link'
+      });
+    }
+  });
+
+  app.get("/api/payment-links/:linkId", async (req, res) => {
+    try {
+      const linkId = req.params.linkId;
+      const paymentLink = await DynamicPaymentService.getPaymentLink(linkId);
+      
+      if (!paymentLink) {
+        return res.status(404).json({
+          success: false,
+          error: 'Payment link not found'
+        });
+      }
+
+      if (DynamicPaymentService.isExpired(paymentLink)) {
+        return res.status(410).json({
+          success: false,
+          error: 'Payment link has expired'
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: paymentLink
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch payment link'
+      });
+    }
+  });
+
+  app.post("/api/payment-links/:linkId/pay", async (req, res) => {
+    try {
+      const linkId = req.params.linkId;
+      const validated = processPaymentSchema.parse({ ...req.body, linkId });
+      
+      const result = await DynamicPaymentService.processPayment(
+        linkId,
+        {
+          paymentMethod: validated.paymentMethod,
+          customerInfo: validated.customerInfo
+        }
+      );
+      
+      res.json({
+        success: result.success,
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Payment processing failed'
+      });
+    }
+  });
+
+  app.post("/api/payment-links/:linkId/cancel", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const linkId = req.params.linkId;
+      const success = await DynamicPaymentService.cancelPaymentLink(linkId, req.userId!);
+      
+      if (!success) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized to cancel this payment link'
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Payment link cancelled'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to cancel payment link'
+      });
+    }
+  });
+
+  app.get("/api/payment-links/user/:userId", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.params.userId;
+      const status = req.query.status as any;
+      
+      const links = await DynamicPaymentService.getUserPaymentLinks(userId, status);
+      
+      res.json({
+        success: true,
+        data: links
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch payment links'
+      });
+    }
+  });
+
+  app.get("/api/payment-links/user/:userId/stats", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.params.userId;
+      const stats = await DynamicPaymentService.getPaymentStats(userId);
+      
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch payment stats'
+      });
+    }
+  });
+
+  // ===== SYNDICATE BUREAU MANAGEMENT =====
+  const createBureauSchema = z.object({
+    name: z.string().min(1),
+    city: z.string().min(1),
+    address: z.string().min(1),
+    phone: z.string().min(1),
+    email: z.string().email().optional(),
+    manager: z.string().optional()
+  });
+
+  const updateBureauStatusSchema = z.object({
+    status: z.enum(['active', 'inactive'])
+  });
+
+  app.get("/api/syndicate-bureaus", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // TODO: Récupérer depuis la DB
+      const bureaus: any[] = [];
+      
+      res.json({
+        success: true,
+        data: bureaus
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch syndicate bureaus'
+      });
+    }
+  });
+
+  app.post("/api/syndicate-bureaus", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createBureauSchema.parse(req.body);
+      
+      const bureau = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...validated,
+        status: 'active' as const,
+        createdAt: new Date().toISOString()
+      };
+      
+      // TODO: Sauvegarder en DB
+      
+      res.json({
+        success: true,
+        data: bureau
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create bureau'
+      });
+    }
+  });
+
+  app.post("/api/syndicate-bureaus/:bureauId/install", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const bureauId = req.params.bureauId;
+      
+      // TODO: Implémenter la logique d'installation
+      // - Générer un package d'installation
+      // - Créer un lien de téléchargement
+      // - Enregistrer l'installation
+      
+      res.json({
+        success: true,
+        data: {
+          installUrl: `/downloads/bureau-app-${bureauId}.zip`,
+          installedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to initiate installation'
+      });
+    }
+  });
+
+  app.patch("/api/syndicate-bureaus/:bureauId/status", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const bureauId = req.params.bureauId;
+      const validated = updateBureauStatusSchema.parse(req.body);
+      
+      // TODO: Mettre à jour en DB
+      
+      res.json({
+        success: true,
+        data: {
+          id: bureauId,
+          status: validated.status,
+          updatedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to update bureau status'
       });
     }
   });
