@@ -6,6 +6,11 @@ export const userRoleEnum = pgEnum("user_role", ["admin", "vendeur", "livreur", 
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "preparing", "ready", "in_transit", "delivered", "cancelled"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["mobile_money", "card", "cash", "bank_transfer"]);
+export const conversationTypeEnum = pgEnum("conversation_type", ["private", "group"]);
+export const messageTypeEnum = pgEnum("message_type", ["text", "image", "file", "audio", "video"]);
+export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "missed", "rejected"]);
+export const callTypeEnum = pgEnum("call_type", ["audio", "video"]);
+export const userPresenceStatusEnum = pgEnum("user_presence_status", ["online", "offline", "away", "busy"]);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -173,6 +178,48 @@ export const fraudDetectionLogs = pgTable("fraud_detection_logs", {
   createdAt: timestamp("created_at").defaultNow()
 });
 
+export const conversations = pgTable("conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: conversationTypeEnum("type").notNull().default("private"),
+  channelName: text("channel_name").notNull().unique(),
+  participants: jsonb("participants").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: uuid("sender_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  type: messageTypeEnum("type").default("text"),
+  metadata: jsonb("metadata"),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const calls = pgTable("calls", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "set null" }),
+  initiatorId: uuid("initiator_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  receiverId: uuid("receiver_id").references(() => profiles.id, { onDelete: "set null" }),
+  type: callTypeEnum("type").notNull(),
+  status: callStatusEnum("status").default("pending"),
+  channelName: text("channel_name").notNull(),
+  duration: integer("duration").default(0),
+  startedAt: timestamp("started_at"),
+  endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const userPresence = pgTable("user_presence", {
+  userId: uuid("user_id").primaryKey().references(() => profiles.id, { onDelete: "cascade" }),
+  status: userPresenceStatusEnum("status").default("offline"),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
@@ -185,6 +232,10 @@ export const insertFraudDetectionLogSchema = createInsertSchema(fraudDetectionLo
 export const insertUserIdSchema = createInsertSchema(userIds).omit({ id: true, createdAt: true });
 export const insertVirtualCardSchema = createInsertSchema(virtualCards).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
+export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export const insertCallSchema = createInsertSchema(calls).omit({ id: true, createdAt: true });
+export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({ updatedAt: true });
 
 export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
@@ -230,3 +281,11 @@ export type CopilotConversation = typeof copilotConversations.$inferSelect;
 export type InsertCopilotConversation = z.infer<typeof insertCopilotConversationSchema>;
 export type FraudDetectionLog = typeof fraudDetectionLogs.$inferSelect;
 export type InsertFraudDetectionLog = z.infer<typeof insertFraudDetectionLogSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Call = typeof calls.$inferSelect;
+export type InsertCall = z.infer<typeof insertCallSchema>;
+export type UserPresence = typeof userPresence.$inferSelect;
+export type InsertUserPresence = z.infer<typeof insertUserPresenceSchema>;
