@@ -1,13 +1,66 @@
 import type { Express } from "express";
 import { storage } from "./storage.js";
+import { authService, removePassword } from "./services/auth.js";
+import { requireAuth, type AuthRequest } from "./middleware/auth.js";
 import { 
   insertProfileSchema, insertWalletSchema, insertVendorSchema, insertProductSchema,
   insertEnhancedTransactionSchema, insertAuditLogSchema, insertCommissionConfigSchema,
   updateProfileSchema, updateProductSchema, updateWalletBalanceSchema,
-  updateTransactionStatusSchema, updateCommissionStatusSchema
+  updateTransactionStatusSchema, updateCommissionStatusSchema,
+  registerSchema, loginSchema
 } from "../shared/schema.js";
 
 export function registerRoutes(app: Express) {
+  // ===== AUTHENTICATION =====
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const validated = registerSchema.parse(req.body);
+      const result = await authService.register(validated);
+      res.status(201).json(result);
+    } catch (error: any) {
+      if (error.message?.includes("already exists")) {
+        return res.status(409).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message || "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const validated = loginSchema.parse(req.body);
+      const result = await authService.login(validated.email, validated.password);
+      
+      if (!result) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Login failed" });
+    }
+  });
+
+  app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const profile = await storage.getProfileById(req.userId);
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      
+      res.json(removePassword(profile));
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/auth/logout", requireAuth, async (req: AuthRequest, res) => {
+    res.json({ message: "Logged out successfully" });
+  });
+
   // ===== PROFILES =====
   app.get("/api/profiles/:id", async (req, res) => {
     const profile = await storage.getProfileById(req.params.id);

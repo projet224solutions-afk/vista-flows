@@ -60,7 +60,7 @@ async function autoSetupUser(userId: string, email: string, firstName?: string, 
   });
 }
 
-function removePassword(profile: Profile): Omit<Profile, 'password'> {
+export function removePassword(profile: Profile): Omit<Profile, 'password'> {
   const { password, ...profileWithoutPassword } = profile;
   return profileWithoutPassword;
 }
