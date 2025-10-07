@@ -47,19 +47,33 @@ class AgoraService {
     const privilegeExpire = expirationTimeInSeconds;
     
     const agoraRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
-    const numericUid = typeof uid === 'string' && !isNaN(Number(uid)) ? parseInt(uid) : uid;
 
-    const token = RtcTokenBuilder.buildTokenWithUid(
-      this.appId,
-      this.appCertificate,
-      channelName,
-      numericUid as number,
-      agoraRole,
-      tokenExpire,
-      privilegeExpire
-    );
+    let token: string;
+    if (typeof uid === 'string' && isNaN(Number(uid))) {
+      token = RtcTokenBuilder.buildTokenWithUserAccount(
+        this.appId,
+        this.appCertificate,
+        channelName,
+        uid,
+        agoraRole,
+        tokenExpire,
+        privilegeExpire
+      );
+      console.log('🎥 RTC Token generated (user account):', { channelName, uid, role });
+    } else {
+      const numericUid = typeof uid === 'number' ? uid : parseInt(uid);
+      token = RtcTokenBuilder.buildTokenWithUid(
+        this.appId,
+        this.appCertificate,
+        channelName,
+        numericUid,
+        agoraRole,
+        tokenExpire,
+        privilegeExpire
+      );
+      console.log('🎥 RTC Token generated (numeric UID):', { channelName, uid: numericUid, role });
+    }
 
-    console.log('🎥 RTC Token generated:', { channelName, uid: numericUid, role });
     return token;
   }
 

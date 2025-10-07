@@ -1,5 +1,3 @@
-import { apiRequest } from '@/lib/queryClient';
-
 interface RTCTokenRequest {
   channelName: string;
   uid: string | number;
@@ -24,40 +22,55 @@ interface GenerateChannelRequest {
   groupId?: string;
 }
 
+async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(error.error || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export const communicationService = {
   async getRTCToken(data: RTCTokenRequest) {
-    return apiRequest('/api/agora/rtc-token', {
+    return request('/api/agora/rtc-token', {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
     });
   },
 
   async getRTMToken(data: RTMTokenRequest) {
-    return apiRequest('/api/agora/rtm-token', {
+    return request('/api/agora/rtm-token', {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
     });
   },
 
   async getSessionTokens(data: SessionTokenRequest) {
-    return apiRequest('/api/agora/session-tokens', {
+    return request('/api/agora/session-tokens', {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
     });
   },
 
   async generateChannel(data: GenerateChannelRequest) {
-    return apiRequest('/api/agora/generate-channel', {
+    return request('/api/agora/generate-channel', {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' }
     });
   },
 
   async getConfig() {
-    return apiRequest('/api/agora/config');
+    return request('/api/agora/config');
   }
 };
