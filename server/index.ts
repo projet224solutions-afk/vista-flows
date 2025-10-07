@@ -1,6 +1,6 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { registerRoutes } from "./routes";
+import { setupVite } from "./vite";
 
 const app = express();
 app.use(express.json());
@@ -11,14 +11,7 @@ const PORT = 5000;
 (async () => {
   try {
     registerRoutes(app);
-
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-      root: process.cwd(),
-    });
-
-    app.use(vite.middlewares);
+    await setupVite(app);
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
