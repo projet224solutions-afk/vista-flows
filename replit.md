@@ -12,7 +12,21 @@ Preferred communication style: Simple, everyday language.
 The frontend is built with React 18 and TypeScript, utilizing Vite for fast development. UI components leverage Radix UI, Tailwind CSS for styling with a custom design system, Shadcn/ui, and Lucide React for icons. State management is handled by React Query for server state and React Hook Form for form management, complemented by a suite of custom hooks for business logic. Client-side navigation uses React Router DOM with role-based protected routes. The codebase emphasizes a component-based architecture with lazy loading for performance and a dedicated service layer for API interactions.
 
 ## Backend Architecture
-The backend primarily uses Supabase (PostgreSQL) with Row Level Security (RLS) for data persistence and security. Authentication is managed via Supabase Auth with JWT tokens, supporting multi-role access (7 user types). The system integrates Firebase Auth for mobile clients and employs a custom user ID system.
+The backend uses a hybrid approach: Supabase (PostgreSQL) for primary storage with Row Level Security (RLS), and Express.js with Drizzle ORM for API routes. The system has migrated critical operations to DbStorage (Drizzle + PostgreSQL) for consistent persistence.
+
+**Storage Layer** (October 2025):
+- **DbStorage (Active)**: Production storage using Drizzle ORM + PostgreSQL for auth, wallet, and transaction operations
+  - Auth methods: getProfileById, getProfileByEmail, createProfile, updateProfile
+  - Wallet methods: getWalletByUserId, getWalletsByUserId, createWallet, updateWalletBalance
+  - Transaction methods: getTransactionsByUserId, getTransactionById, createTransaction, updateTransactionStatus
+  - Vendor/Product/Order methods: To be implemented (currently throw "not implemented")
+- **MemStorage (Deprecated)**: Legacy in-memory volatile storage, being phased out
+- **Wallet Transfer Endpoint**: POST /api/wallet/transfer with ACID guarantees via `process_transaction` stored procedure, Zod validation, and requireAuth protection
+
+**Authentication**: Multi-role system (7 user types) with dual authentication challenge:
+- Supabase Auth (Auth.tsx) - frontend authentication
+- Custom JWT (useAuth) - legacy backend authentication
+- **CRITICAL ISSUE**: Creates orphaned accounts, architect recommends Supabase Auth migration as single source of truth
 
 Key services include:
 - **UserService**: User and profile management.
