@@ -892,7 +892,7 @@ export function registerRoutes(app: Express) {
 
   const processPaymentSchema = z.object({
     linkId: z.string(),
-    paymentMethod: z.enum(['mobile_money', 'card', 'wallet']),
+    paymentMethod: z.enum(['mobile_money', 'card', 'cash', 'bank_transfer']),
     customerInfo: z.object({
       name: z.string(),
       phone: z.string(),
@@ -929,7 +929,7 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      if (DynamicPaymentService.isExpired(paymentLink)) {
+      if (paymentLink.expiresAt && new Date(paymentLink.expiresAt) < new Date()) {
         return res.status(410).json({
           success: false,
           error: 'Payment link has expired'
