@@ -1,6 +1,6 @@
 import type { Express } from "express";
-import { storage } from "./storage";
-import { insertProfileSchema, insertVendorSchema, insertProductSchema } from "@shared/schema";
+import { storage } from "./storage.js";
+import { insertProfileSchema, insertVendorSchema, insertProductSchema } from "../shared/schema.js";
 
 export function registerRoutes(app: Express) {
   app.get("/api/profiles/:id", async (req, res) => {

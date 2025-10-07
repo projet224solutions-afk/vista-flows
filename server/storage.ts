@@ -1,4 +1,4 @@
-import type { Profile, InsertProfile, Wallet, Vendor, Product } from "@shared/schema";
+import type { Profile, InsertProfile, Wallet, Vendor, Product } from "../shared/schema.js";
 
 export interface IStorage {
   getProfileById(id: string): Promise<Profile | undefined>;
