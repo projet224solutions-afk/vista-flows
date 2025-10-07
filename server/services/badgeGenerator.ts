@@ -3,6 +3,10 @@
  * Génère des badges digitaux avec photo, infos du conducteur et QR code de vérification
  */
 
+import { db } from "../db.js";
+import { taxiMotoBadges, profiles } from "../../shared/schema.js";
+import { eq, and, or, desc } from "drizzle-orm";
+
 export interface DriverInfo {
   id: string;
   firstName: string;
@@ -25,6 +29,7 @@ export interface Badge {
   issuedDate: string;
   expiryDate: string;
   isActive: boolean;
+  status: 'active' | 'expired' | 'suspended' | 'revoked';
   verificationUrl: string;
 }
 
@@ -42,7 +47,7 @@ export class BadgeGeneratorService {
   /**
    * Génère les données QR code pour le badge
    */
-  private static generateQRData(badge: Badge, driver: DriverInfo): string {
+  private static generateQRData(badge: any, driver: DriverInfo): string {
     const data = {
       type: 'TAXI_MOTO_BADGE',
       badgeId: badge.id,
@@ -53,9 +58,9 @@ export class BadgeGeneratorService {
       vehicleNumber: driver.vehicleNumber,
       vehicleType: driver.vehicleType,
       syndicateName: driver.syndicateName || '',
-      issuedDate: badge.issuedDate,
-      expiryDate: badge.expiryDate,
-      verificationUrl: badge.verificationUrl
+      issuedDate: badge.issuedAt.toISOString(),
+      expiryDate: badge.expiresAt.toISOString(),
+      verificationUrl: `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/verify-badge/${badge.id}`
     };
 
     return JSON.stringify(data);
@@ -65,29 +70,47 @@ export class BadgeGeneratorService {
    * Crée un nouveau badge pour un conducteur
    */
   static async createBadge(driver: DriverInfo): Promise<Badge> {
-    const badgeId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const badgeNumber = this.generateBadgeNumber(driver.id);
-    const issuedDate = new Date().toISOString();
-    const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Valide 1 an
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-    const verificationUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/verify-badge/${badgeId}`;
-
-    const badge: Badge = {
-      id: badgeId,
-      driverId: driver.id,
+    const [result] = await db.insert(taxiMotoBadges).values({
       badgeNumber,
-      qrData: '', // Sera rempli après
-      issuedDate,
-      expiryDate: expiryDate.toISOString(),
-      isActive: true,
+      driverId: driver.id,
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+      phone: driver.phone,
+      vehicleNumber: driver.vehicleNumber,
+      vehicleType: driver.vehicleType,
+      syndicateId: driver.syndicateId,
+      syndicateName: driver.syndicateName,
+      photoUrl: driver.photoUrl,
+      licenseNumber: driver.licenseNumber,
+      city: driver.city,
+      status: 'active',
+      expiresAt,
+      qrCodeData: ''
+    }).returning();
+
+    const qrData = this.generateQRData(result, driver);
+
+    await db.update(taxiMotoBadges)
+      .set({ qrCodeData: qrData })
+      .where(eq(taxiMotoBadges.id, result.id));
+
+    const verificationUrl = `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/verify-badge/${result.id}`;
+
+    return {
+      id: result.id,
+      driverId: result.driverId,
+      badgeNumber: result.badgeNumber,
+      qrData,
+      issuedDate: result.issuedAt!.toISOString(),
+      expiryDate: result.expiresAt.toISOString(),
+      isActive: result.status === 'active',
+      status: result.status as 'active' | 'expired' | 'suspended' | 'revoked',
       verificationUrl
     };
-
-    // Générer les données QR après création du badge
-    badge.qrData = this.generateQRData(badge, driver);
-
-    return badge;
   }
 
   /**
@@ -100,61 +123,78 @@ export class BadgeGeneratorService {
     reason?: string;
   }> {
     try {
-      // Si c'est un JSON, c'est les données QR
-      let badgeData: any;
-      
+      let badge: any = null;
+
       if (badgeNumberOrQRData.startsWith('{')) {
-        badgeData = JSON.parse(badgeNumberOrQRData);
+        const badgeData = JSON.parse(badgeNumberOrQRData);
         
-        // Vérifier que c'est bien un badge taxi-moto
         if (badgeData.type !== 'TAXI_MOTO_BADGE') {
-          return {
-            isValid: false,
-            reason: 'Type de badge invalide'
-          };
-        }
-        
-        // Vérifier l'expiration
-        const expiryDate = new Date(badgeData.expiryDate);
-        if (expiryDate < new Date()) {
-          return {
-            isValid: false,
-            reason: 'Badge expiré'
-          };
+          return { isValid: false, reason: 'Type de badge invalide' };
         }
 
-        return {
-          isValid: true,
-          badge: {
-            id: badgeData.badgeId,
-            driverId: badgeData.driverId,
-            badgeNumber: badgeData.badgeNumber,
-            qrData: badgeNumberOrQRData,
-            issuedDate: badgeData.issuedDate,
-            expiryDate: badgeData.expiryDate,
-            isActive: true,
-            verificationUrl: badgeData.verificationUrl
-          },
-          driver: {
-            id: badgeData.driverId,
-            firstName: badgeData.driverName.split(' ')[0],
-            lastName: badgeData.driverName.split(' ').slice(1).join(' '),
-            phone: badgeData.phone,
-            vehicleNumber: badgeData.vehicleNumber,
-            vehicleType: badgeData.vehicleType,
-            syndicateName: badgeData.syndicateName
-          }
-        };
+        [badge] = await db.select()
+          .from(taxiMotoBadges)
+          .where(eq(taxiMotoBadges.badgeNumber, badgeData.badgeNumber));
+      } else {
+        [badge] = await db.select()
+          .from(taxiMotoBadges)
+          .where(eq(taxiMotoBadges.badgeNumber, badgeNumberOrQRData));
       }
 
-      // Sinon c'est un numéro de badge
-      // TODO: Implémenter la recherche en base de données
+      if (!badge) {
+        return { isValid: false, reason: 'Badge non trouvé' };
+      }
+
+      if (badge.status === 'revoked') {
+        return { isValid: false, reason: 'Badge révoqué' };
+      }
+
+      if (badge.status === 'suspended') {
+        return { isValid: false, reason: 'Badge suspendu' };
+      }
+
+      const expiryDate = new Date(badge.expiresAt);
+      if (expiryDate < new Date()) {
+        if (badge.status === 'active') {
+          await db.update(taxiMotoBadges)
+            .set({ status: 'expired' })
+            .where(eq(taxiMotoBadges.id, badge.id));
+        }
+        return { isValid: false, reason: 'Badge expiré' };
+      }
+
+      const verificationUrl = `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/verify-badge/${badge.id}`;
+
       return {
-        isValid: false,
-        reason: 'Badge non trouvé'
+        isValid: true,
+        badge: {
+          id: badge.id,
+          driverId: badge.driverId,
+          badgeNumber: badge.badgeNumber,
+          qrData: badge.qrCodeData,
+          issuedDate: badge.issuedAt!.toISOString(),
+          expiryDate: badge.expiresAt.toISOString(),
+          isActive: badge.status === 'active',
+          status: badge.status,
+          verificationUrl
+        },
+        driver: {
+          id: badge.driverId,
+          firstName: badge.firstName,
+          lastName: badge.lastName,
+          phone: badge.phone,
+          vehicleNumber: badge.vehicleNumber,
+          vehicleType: badge.vehicleType,
+          syndicateId: badge.syndicateId || undefined,
+          syndicateName: badge.syndicateName || undefined,
+          photoUrl: badge.photoUrl || undefined,
+          licenseNumber: badge.licenseNumber || undefined,
+          city: badge.city || undefined
+        }
       };
       
     } catch (error) {
+      console.error('Badge verification error:', error);
       return {
         isValid: false,
         reason: 'Erreur de vérification'
@@ -165,16 +205,96 @@ export class BadgeGeneratorService {
   /**
    * Désactive un badge
    */
-  static async deactivateBadge(badgeId: string): Promise<boolean> {
-    // TODO: Implémenter la mise à jour en base de données
-    return true;
+  static async deactivateBadge(badgeId: string, reason: 'suspended' | 'revoked' = 'suspended'): Promise<boolean> {
+    try {
+      await db.update(taxiMotoBadges)
+        .set({ status: reason })
+        .where(eq(taxiMotoBadges.id, badgeId));
+      return true;
+    } catch (error) {
+      console.error('Badge deactivation error:', error);
+      return false;
+    }
   }
 
   /**
    * Renouvelle un badge expiré
    */
   static async renewBadge(badgeId: string, driver: DriverInfo): Promise<Badge> {
-    return this.createBadge(driver);
+    const [oldBadge] = await db.select()
+      .from(taxiMotoBadges)
+      .where(eq(taxiMotoBadges.id, badgeId));
+
+    if (oldBadge && oldBadge.status !== 'revoked') {
+      await db.update(taxiMotoBadges)
+        .set({ status: 'expired' })
+        .where(eq(taxiMotoBadges.id, badgeId));
+    }
+
+    const badgeNumber = this.generateBadgeNumber(driver.id);
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+    const [result] = await db.insert(taxiMotoBadges).values({
+      badgeNumber,
+      driverId: driver.id,
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+      phone: driver.phone,
+      vehicleNumber: driver.vehicleNumber,
+      vehicleType: driver.vehicleType,
+      syndicateId: driver.syndicateId,
+      syndicateName: driver.syndicateName,
+      photoUrl: driver.photoUrl,
+      licenseNumber: driver.licenseNumber,
+      city: driver.city,
+      status: 'active',
+      expiresAt,
+      renewedFrom: badgeId,
+      qrCodeData: ''
+    }).returning();
+
+    const qrData = this.generateQRData(result, driver);
+
+    await db.update(taxiMotoBadges)
+      .set({ qrCodeData: qrData })
+      .where(eq(taxiMotoBadges.id, result.id));
+
+    const verificationUrl = `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/verify-badge/${result.id}`;
+
+    return {
+      id: result.id,
+      driverId: result.driverId,
+      badgeNumber: result.badgeNumber,
+      qrData,
+      issuedDate: result.issuedAt!.toISOString(),
+      expiryDate: result.expiresAt.toISOString(),
+      isActive: true,
+      status: 'active',
+      verificationUrl
+    };
+  }
+
+  /**
+   * Récupère tous les badges d'un conducteur
+   */
+  static async getDriverBadges(driverId: string): Promise<Badge[]> {
+    const badges = await db.select()
+      .from(taxiMotoBadges)
+      .where(eq(taxiMotoBadges.driverId, driverId))
+      .orderBy(desc(taxiMotoBadges.issuedAt));
+
+    return badges.map(badge => ({
+      id: badge.id,
+      driverId: badge.driverId,
+      badgeNumber: badge.badgeNumber,
+      qrData: badge.qrCodeData,
+      issuedDate: badge.issuedAt!.toISOString(),
+      expiryDate: badge.expiresAt.toISOString(),
+      isActive: badge.status === 'active',
+      status: badge.status as 'active' | 'expired' | 'suspended' | 'revoked',
+      verificationUrl: `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/verify-badge/${badge.id}`
+    }));
   }
 
   /**
