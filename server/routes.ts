@@ -891,13 +891,7 @@ export function registerRoutes(app: Express) {
   });
 
   const processPaymentSchema = z.object({
-    linkId: z.string(),
-    paymentMethod: z.enum(['mobile_money', 'card', 'cash', 'bank_transfer']),
-    customerInfo: z.object({
-      name: z.string(),
-      phone: z.string(),
-      email: z.string().optional()
-    }).optional()
+    paymentMethod: z.enum(['mobile_money', 'card', 'cash', 'bank_transfer'])
   });
 
   app.post("/api/payment-links/create", requireAuth, async (req: AuthRequest, res) => {
@@ -948,16 +942,16 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/payment-links/:linkId/pay", async (req, res) => {
+  app.post("/api/payment-links/:linkId/pay", requireAuth, async (req: AuthRequest, res) => {
     try {
       const linkId = req.params.linkId;
-      const validated = processPaymentSchema.parse({ ...req.body, linkId });
+      const validated = processPaymentSchema.parse(req.body);
       
       const result = await DynamicPaymentService.processPayment(
         linkId,
         {
-          paymentMethod: validated.paymentMethod,
-          customerInfo: validated.customerInfo
+          paidBy: req.userId!,
+          paymentMethod: validated.paymentMethod
         }
       );
       
