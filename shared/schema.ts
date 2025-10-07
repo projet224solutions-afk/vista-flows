@@ -8,7 +8,7 @@ export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "f
 export const paymentMethodEnum = pgEnum("payment_method", ["mobile_money", "card", "cash", "bank_transfer"]);
 
 export const profiles = pgTable("profiles", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   phone: text("phone"),
   firstName: text("first_name"),
@@ -106,10 +106,87 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const enhancedTransactions = pgTable("enhanced_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  senderId: uuid("sender_id").notNull().references(() => profiles.id),
+  receiverId: uuid("receiver_id").notNull().references(() => profiles.id),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("GNF"),
+  method: text("method").notNull().default("wallet_transfer"),
+  status: text("status").notNull().default("pending"),
+  customId: text("custom_id").notNull().unique().$defaultFn(() => `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  actorId: uuid("actor_id").notNull(),
+  action: text("action").notNull(),
+  targetType: text("target_type"),
+  targetId: text("target_id"),
+  dataJson: jsonb("data_json"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  hash: text("hash"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const commissionConfig = pgTable("commission_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  serviceName: text("service_name").notNull(),
+  transactionType: text("transaction_type").notNull(),
+  commissionType: text("commission_type").notNull(),
+  commissionValue: decimal("commission_value", { precision: 10, scale: 4 }).notNull(),
+  minAmount: decimal("min_amount", { precision: 15, scale: 2 }),
+  maxAmount: decimal("max_amount", { precision: 15, scale: 2 }),
+  isActive: boolean("is_active").default(true),
+  createdBy: uuid("created_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const copilotConversations = pgTable("copilot_conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pdgUserId: uuid("pdg_user_id").notNull().references(() => profiles.id),
+  messageIn: text("message_in").notNull(),
+  messageOut: text("message_out").notNull(),
+  actions: jsonb("actions"),
+  executed: boolean("executed").default(false),
+  mfaVerified: boolean("mfa_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const fraudDetectionLogs = pgTable("fraud_detection_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => profiles.id),
+  transactionId: uuid("transaction_id"),
+  riskScore: decimal("risk_score", { precision: 5, scale: 2 }).notNull(),
+  riskLevel: text("risk_level").notNull(),
+  flags: jsonb("flags").notNull(),
+  actionTaken: text("action_taken"),
+  reviewed: boolean("reviewed").default(false),
+  reviewedBy: uuid("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEnhancedTransactionSchema = createInsertSchema(enhancedTransactions).omit({ id: true, createdAt: true, updatedAt: true, customId: true });
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
+export const insertCommissionConfigSchema = createInsertSchema(commissionConfig).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCopilotConversationSchema = createInsertSchema(copilotConversations).omit({ id: true, createdAt: true });
+export const insertFraudDetectionLogSchema = createInsertSchema(fraudDetectionLogs).omit({ id: true, createdAt: true });
+export const insertUserIdSchema = createInsertSchema(userIds).omit({ id: true, createdAt: true });
+export const insertVirtualCardSchema = createInsertSchema(virtualCards).omit({ id: true, createdAt: true });
+export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
+
+export const updateProfileSchema = insertProfileSchema.partial();
+export const updateProductSchema = insertProductSchema.partial();
 
 export type Profile = typeof profiles.$inferSelect;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
@@ -119,3 +196,13 @@ export type Vendor = typeof vendors.$inferSelect;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type EnhancedTransaction = typeof enhancedTransactions.$inferSelect;
+export type InsertEnhancedTransaction = z.infer<typeof insertEnhancedTransactionSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type CommissionConfig = typeof commissionConfig.$inferSelect;
+export type InsertCommissionConfig = z.infer<typeof insertCommissionConfigSchema>;
+export type CopilotConversation = typeof copilotConversations.$inferSelect;
+export type InsertCopilotConversation = z.infer<typeof insertCopilotConversationSchema>;
+export type FraudDetectionLog = typeof fraudDetectionLogs.$inferSelect;
+export type InsertFraudDetectionLog = z.infer<typeof insertFraudDetectionLogSchema>;
