@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -10,15 +10,6 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // Vérification d'authentification réactivée
-  useEffect(() => {
-    if (!loading && !user) {
-      console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -31,19 +22,19 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // Vérification des rôles réactivée
-  if (!user || (profile && !allowedRoles.includes(profile.role))) {
+  // Redirection si non authentifié
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Vérification des rôles
+  if (profile && !allowedRoles.includes(profile.role)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">Accès non autorisé</h2>
           <p className="mb-4">Vous n'avez pas les permissions pour accéder à cette page.</p>
-          <button
-            onClick={() => navigate('/auth')}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Se connecter
-          </button>
+          <Navigate to="/auth" replace />
         </div>
       </div>
     );
