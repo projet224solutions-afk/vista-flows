@@ -211,7 +211,7 @@ export default function VendeurDashboard() {
                   </h1>
                   <p className="text-base text-gray-600 flex items-center gap-3 font-medium">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    {profile?.first_name || user?.email?.split('@')[0]} • Espace Vendeur Pro
+                    {profile?.firstName || user?.email?.split('@')[0]} • Espace Vendeur Pro
                     {userInfo && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-mono font-bold">
                         ID: {userInfo.custom_id}
