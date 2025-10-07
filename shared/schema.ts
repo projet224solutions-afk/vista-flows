@@ -10,6 +10,7 @@ export const paymentMethodEnum = pgEnum("payment_method", ["mobile_money", "card
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
+  password: text("password").notNull(),
   phone: text("phone"),
   firstName: text("first_name"),
   lastName: text("last_name"),
@@ -185,7 +186,7 @@ export const insertUserIdSchema = createInsertSchema(userIds).omit({ id: true, c
 export const insertVirtualCardSchema = createInsertSchema(virtualCards).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
 
-export const updateProfileSchema = insertProfileSchema.partial();
+export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
 export const updateWalletBalanceSchema = z.object({
   balance: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid balance format")
@@ -195,6 +196,20 @@ export const updateTransactionStatusSchema = z.object({
 });
 export const updateCommissionStatusSchema = z.object({
   isActive: z.boolean()
+});
+
+export const registerSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  role: z.enum(["admin", "vendeur", "livreur", "taxi", "syndicat", "transitaire", "client"]).default("client")
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required")
 });
 
 export type Profile = typeof profiles.$inferSelect;
