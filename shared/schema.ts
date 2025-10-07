@@ -254,6 +254,8 @@ export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true,
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true, orderNumber: true });
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true, createdAt: true });
 export const insertEnhancedTransactionSchema = createInsertSchema(enhancedTransactions).omit({ id: true, createdAt: true, updatedAt: true, customId: true });
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
 export const insertCommissionConfigSchema = createInsertSchema(commissionConfig).omit({ id: true, createdAt: true, updatedAt: true });
@@ -269,6 +271,12 @@ export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({ 
 
 export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
+export const updateOrderStatusSchema = z.object({
+  status: z.enum(["pending", "confirmed", "preparing", "ready", "in_transit", "delivered", "cancelled"])
+});
+export const updateOrderPaymentStatusSchema = z.object({
+  paymentStatus: z.enum(["pending", "paid", "failed", "refunded"])
+});
 export const updateWalletBalanceSchema = z.object({
   balance: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid balance format")
 });
@@ -301,6 +309,10 @@ export type Vendor = typeof vendors.$inferSelect;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type EnhancedTransaction = typeof enhancedTransactions.$inferSelect;
 export type InsertEnhancedTransaction = z.infer<typeof insertEnhancedTransactionSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
