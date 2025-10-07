@@ -3,7 +3,8 @@ import { storage } from "./storage.js";
 import { 
   insertProfileSchema, insertWalletSchema, insertVendorSchema, insertProductSchema,
   insertEnhancedTransactionSchema, insertAuditLogSchema, insertCommissionConfigSchema,
-  updateProfileSchema, updateProductSchema
+  updateProfileSchema, updateProductSchema, updateWalletBalanceSchema,
+  updateTransactionStatusSchema, updateCommissionStatusSchema
 } from "../shared/schema.js";
 
 export function registerRoutes(app: Express) {
@@ -73,8 +74,8 @@ export function registerRoutes(app: Express) {
 
   app.patch("/api/wallets/:id/balance", async (req, res) => {
     try {
-      const { balance } = req.body;
-      const wallet = await storage.updateWalletBalance(req.params.id, balance);
+      const validated = updateWalletBalanceSchema.parse(req.body);
+      const wallet = await storage.updateWalletBalance(req.params.id, validated.balance);
       if (!wallet) {
         return res.status(404).json({ error: "Wallet not found" });
       }
@@ -180,8 +181,8 @@ export function registerRoutes(app: Express) {
 
   app.patch("/api/transactions/:id/status", async (req, res) => {
     try {
-      const { status } = req.body;
-      const transaction = await storage.updateTransactionStatus(req.params.id, status);
+      const validated = updateTransactionStatusSchema.parse(req.body);
+      const transaction = await storage.updateTransactionStatus(req.params.id, validated.status);
       if (!transaction) {
         return res.status(404).json({ error: "Transaction not found" });
       }
@@ -232,8 +233,8 @@ export function registerRoutes(app: Express) {
 
   app.patch("/api/commission-config/:id/status", async (req, res) => {
     try {
-      const { isActive } = req.body;
-      const config = await storage.updateCommissionConfigStatus(req.params.id, isActive);
+      const validated = updateCommissionStatusSchema.parse(req.body);
+      const config = await storage.updateCommissionConfigStatus(req.params.id, validated.isActive);
       if (!config) {
         return res.status(404).json({ error: "Commission config not found" });
       }

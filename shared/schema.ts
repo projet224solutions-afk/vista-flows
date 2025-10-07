@@ -187,6 +187,15 @@ export const insertWalletTransactionSchema = createInsertSchema(walletTransactio
 
 export const updateProfileSchema = insertProfileSchema.partial();
 export const updateProductSchema = insertProductSchema.partial();
+export const updateWalletBalanceSchema = z.object({
+  balance: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid balance format")
+});
+export const updateTransactionStatusSchema = z.object({
+  status: z.enum(["pending", "completed", "failed", "refunded"])
+});
+export const updateCommissionStatusSchema = z.object({
+  isActive: z.boolean()
+});
 
 export type Profile = typeof profiles.$inferSelect;
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
