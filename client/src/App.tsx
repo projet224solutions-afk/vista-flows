@@ -52,6 +52,7 @@ const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const CommunicationTestPage = lazy(() => import("./pages/CommunicationTestPage"));
 const LovableTestPage = lazy(() => import("./pages/LovableTestPage"));
 const UltraSimpleTestPage = lazy(() => import("./pages/UltraSimpleTestPage"));
+const AuthTest = lazy(() => import("./pages/AuthTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Composant de loading
@@ -240,6 +241,10 @@ const App = () => (
               <Route
                 path="/ultra-simple-test"
                 element={<UltraSimpleTestPage />}
+              />
+              <Route
+                path="/auth-test"
+                element={<AuthTest />}
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
