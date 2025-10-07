@@ -11,6 +11,8 @@ export const messageTypeEnum = pgEnum("message_type", ["text", "image", "file", 
 export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "missed", "rejected"]);
 export const callTypeEnum = pgEnum("call_type", ["audio", "video"]);
 export const userPresenceStatusEnum = pgEnum("user_presence_status", ["online", "offline", "away", "busy"]);
+export const paymentLinkStatusEnum = pgEnum("payment_link_status", ["active", "expired", "used", "cancelled"]);
+export const badgeStatusEnum = pgEnum("badge_status", ["active", "expired", "suspended", "revoked"]);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -250,6 +252,61 @@ export const userPresence = pgTable("user_presence", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const dynamicPaymentLinks = pgTable("dynamic_payment_links", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  linkId: text("link_id").notNull().unique().$defaultFn(() => `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
+  createdBy: uuid("created_by").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  createdByType: text("created_by_type").notNull(),
+  recipientName: text("recipient_name"),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("GNF"),
+  description: text("description"),
+  status: paymentLinkStatusEnum("status").default("active"),
+  expiresAt: timestamp("expires_at").notNull(),
+  paidAt: timestamp("paid_at"),
+  paidBy: uuid("paid_by").references(() => profiles.id, { onDelete: "set null" }),
+  paymentMethod: paymentMethodEnum("payment_method"),
+  transactionId: text("transaction_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const taxiMotoBadges = pgTable("taxi_moto_badges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  badgeNumber: text("badge_number").notNull().unique(),
+  driverId: uuid("driver_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  phone: text("phone").notNull(),
+  vehicleNumber: text("vehicle_number").notNull(),
+  vehicleType: text("vehicle_type").notNull(),
+  syndicateId: text("syndicate_id"),
+  syndicateName: text("syndicate_name"),
+  photoUrl: text("photo_url"),
+  licenseNumber: text("license_number"),
+  city: text("city"),
+  status: badgeStatusEnum("status").default("active"),
+  qrCodeData: text("qr_code_data").notNull(),
+  issuedAt: timestamp("issued_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  renewedFrom: uuid("renewed_from").references((): any => taxiMotoBadges.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const currencyExchangeRates = pgTable("currency_exchange_rates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  baseCurrency: text("base_currency").notNull().default("GNF"),
+  targetCurrency: text("target_currency").notNull(),
+  rate: decimal("rate", { precision: 15, scale: 6 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  effectiveFrom: timestamp("effective_from").defaultNow(),
+  effectiveUntil: timestamp("effective_until"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
@@ -268,6 +325,9 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
 export const insertCallSchema = createInsertSchema(calls).omit({ id: true, createdAt: true });
 export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({ updatedAt: true });
+export const insertDynamicPaymentLinkSchema = createInsertSchema(dynamicPaymentLinks).omit({ id: true, createdAt: true, updatedAt: true, linkId: true });
+export const insertTaxiMotoBadgeSchema = createInsertSchema(taxiMotoBadges).omit({ id: true, createdAt: true, updatedAt: true, badgeNumber: true, qrCodeData: true, issuedAt: true });
+export const insertCurrencyExchangeRateSchema = createInsertSchema(currencyExchangeRates).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
@@ -331,3 +391,9 @@ export type Call = typeof calls.$inferSelect;
 export type InsertCall = z.infer<typeof insertCallSchema>;
 export type UserPresence = typeof userPresence.$inferSelect;
 export type InsertUserPresence = z.infer<typeof insertUserPresenceSchema>;
+export type DynamicPaymentLink = typeof dynamicPaymentLinks.$inferSelect;
+export type InsertDynamicPaymentLink = z.infer<typeof insertDynamicPaymentLinkSchema>;
+export type TaxiMotoBadge = typeof taxiMotoBadges.$inferSelect;
+export type InsertTaxiMotoBadge = z.infer<typeof insertTaxiMotoBadgeSchema>;
+export type CurrencyExchangeRate = typeof currencyExchangeRates.$inferSelect;
+export type InsertCurrencyExchangeRate = z.infer<typeof insertCurrencyExchangeRateSchema>;
