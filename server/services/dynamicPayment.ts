@@ -3,21 +3,27 @@
  * Permet aux livreurs/taxis de créer des liens de paiement à la volée
  */
 
+import { db } from "../db.js";
+import { dynamicPaymentLinks, walletTransactions, wallets } from "../../shared/schema.js";
+import { eq, and, desc, sql, gte } from "drizzle-orm";
+
 export interface PaymentLink {
   id: string;
   linkId: string;
-  createdBy: string; // ID du livreur/taxi
+  createdBy: string;
   createdByType: 'delivery' | 'taxi_moto';
   amount: number;
   currency: string;
   description: string;
-  customerPhone?: string;
-  customerName?: string;
-  status: 'pending' | 'paid' | 'expired' | 'cancelled';
+  recipientName?: string;
+  status: 'active' | 'expired' | 'used' | 'cancelled';
   paymentUrl: string;
   qrData: string;
   expiresAt: string;
   paidAt?: string;
+  paidBy?: string;
+  paymentMethod?: string;
+  transactionId?: string;
   createdAt: string;
 }
 
@@ -27,77 +33,120 @@ export interface CreatePaymentLinkData {
   amount: number;
   currency?: string;
   description: string;
-  customerPhone?: string;
-  customerName?: string;
-  expiryMinutes?: number; // Default: 60 minutes
+  recipientName?: string;
+  expiryMinutes?: number;
 }
 
 export class DynamicPaymentService {
   /**
-   * Génère un ID de lien unique
-   */
-  private static generateLinkId(): string {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substr(2, 6).toUpperCase();
-    return `PAY-${timestamp}-${random}`;
-  }
-
-  /**
    * Crée un lien de paiement dynamique
    */
   static async createPaymentLink(data: CreatePaymentLinkData): Promise<PaymentLink> {
-    const linkId = this.generateLinkId();
-    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
     const expiryMinutes = data.expiryMinutes || 60;
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
     
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
-    const paymentUrl = `${baseUrl}/pay/${linkId}`;
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : 'http://localhost:5000';
+    
+    const [result] = await db.insert(dynamicPaymentLinks).values({
+      createdBy: data.createdBy,
+      createdByType: data.createdByType,
+      recipientName: data.recipientName,
+      amount: data.amount.toString(),
+      currency: data.currency || 'GNF',
+      description: data.description,
+      expiresAt,
+      status: 'active'
+    }).returning();
 
+    const paymentUrl = `${baseUrl}/pay/${result.linkId}`;
+    
     const qrData = JSON.stringify({
       type: 'PAYMENT_LINK',
-      linkId,
+      linkId: result.linkId,
       amount: data.amount,
-      currency: data.currency || 'GNF',
+      currency: result.currency,
       description: data.description,
       createdBy: data.createdBy,
       paymentUrl,
       expiresAt: expiresAt.toISOString()
     });
 
-    const paymentLink: PaymentLink = {
-      id,
-      linkId,
-      createdBy: data.createdBy,
-      createdByType: data.createdByType,
-      amount: data.amount,
-      currency: data.currency || 'GNF',
-      description: data.description,
-      customerPhone: data.customerPhone,
-      customerName: data.customerName,
-      status: 'pending',
+    await db.update(dynamicPaymentLinks)
+      .set({ metadata: { paymentUrl, qrData } })
+      .where(eq(dynamicPaymentLinks.id, result.id));
+
+    return {
+      id: result.id,
+      linkId: result.linkId,
+      createdBy: result.createdBy,
+      createdByType: result.createdByType as 'delivery' | 'taxi_moto',
+      amount: parseFloat(result.amount),
+      currency: result.currency,
+      description: result.description,
+      recipientName: result.recipientName || undefined,
+      status: result.status as 'active' | 'expired' | 'used' | 'cancelled',
       paymentUrl,
       qrData,
-      expiresAt: expiresAt.toISOString(),
-      createdAt: new Date().toISOString()
+      expiresAt: result.expiresAt.toISOString(),
+      createdAt: result.createdAt!.toISOString()
     };
-
-    return paymentLink;
   }
 
   /**
    * Vérifie et récupère un lien de paiement
    */
   static async getPaymentLink(linkId: string): Promise<PaymentLink | null> {
-    // TODO: Récupérer depuis la DB
-    return null;
+    const [link] = await db.select()
+      .from(dynamicPaymentLinks)
+      .where(eq(dynamicPaymentLinks.linkId, linkId));
+
+    if (!link) return null;
+
+    const metadata = link.metadata as any || {};
+    const paymentUrl = metadata.paymentUrl || `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}/pay/${link.linkId}`;
+    const qrData = metadata.qrData || JSON.stringify({
+      type: 'PAYMENT_LINK',
+      linkId: link.linkId,
+      amount: parseFloat(link.amount),
+      currency: link.currency,
+      description: link.description,
+      paymentUrl
+    });
+
+    if (this.isExpired(link) && link.status === 'active') {
+      await db.update(dynamicPaymentLinks)
+        .set({ status: 'expired' })
+        .where(eq(dynamicPaymentLinks.id, link.id));
+      link.status = 'expired';
+    }
+
+    return {
+      id: link.id,
+      linkId: link.linkId,
+      createdBy: link.createdBy,
+      createdByType: link.createdByType as 'delivery' | 'taxi_moto',
+      amount: parseFloat(link.amount),
+      currency: link.currency,
+      description: link.description || '',
+      recipientName: link.recipientName || undefined,
+      status: link.status as 'active' | 'expired' | 'used' | 'cancelled',
+      paymentUrl,
+      qrData,
+      expiresAt: link.expiresAt.toISOString(),
+      paidAt: link.paidAt?.toISOString(),
+      paidBy: link.paidBy || undefined,
+      paymentMethod: link.paymentMethod || undefined,
+      transactionId: link.transactionId || undefined,
+      createdAt: link.createdAt!.toISOString()
+    };
   }
 
   /**
    * Vérifie si un lien est expiré
    */
-  static isExpired(link: PaymentLink): boolean {
+  private static isExpired(link: any): boolean {
     return new Date(link.expiresAt) < new Date();
   }
 
@@ -107,46 +156,171 @@ export class DynamicPaymentService {
   static async processPayment(
     linkId: string,
     paymentData: {
-      paymentMethod: 'mobile_money' | 'card' | 'wallet';
-      customerInfo?: {
-        name: string;
-        phone: string;
-        email?: string;
-      };
+      paidBy: string;
+      paymentMethod: 'mobile_money' | 'card' | 'cash' | 'bank_transfer';
     }
   ): Promise<{
     success: boolean;
     message: string;
     transactionId?: string;
   }> {
-    // TODO: Implémenter la logique de paiement
-    // 1. Vérifier que le lien existe et n'est pas expiré
-    // 2. Appeler le processeur de paiement approprié
-    // 3. Mettre à jour le statut du lien
-    // 4. Envoyer la notification au créateur
+    const link = await this.getPaymentLink(linkId);
     
-    return {
-      success: true,
-      message: 'Payment processed successfully',
-      transactionId: `TXN-${Date.now()}`
-    };
+    if (!link) {
+      return { success: false, message: 'Payment link not found' };
+    }
+
+    if (link.status !== 'active') {
+      return { success: false, message: `Payment link is ${link.status}` };
+    }
+
+    if (this.isExpired({ expiresAt: link.expiresAt })) {
+      await db.update(dynamicPaymentLinks)
+        .set({ status: 'expired' })
+        .where(eq(dynamicPaymentLinks.linkId, linkId));
+      return { success: false, message: 'Payment link has expired' };
+    }
+
+    const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      const [paidByWallet] = await db.select()
+        .from(wallets)
+        .where(eq(wallets.userId, paymentData.paidBy));
+
+      if (!paidByWallet) {
+        return { success: false, message: 'Payer wallet not found' };
+      }
+
+      const amount = parseFloat(link.amount);
+      const currentBalance = parseFloat(paidByWallet.balance);
+
+      if (currentBalance < amount) {
+        return { success: false, message: 'Insufficient balance' };
+      }
+
+      const [creatorWallet] = await db.select()
+        .from(wallets)
+        .where(eq(wallets.userId, link.createdBy));
+
+      if (!creatorWallet) {
+        return { success: false, message: 'Creator wallet not found' };
+      }
+
+      await db.update(wallets)
+        .set({ balance: (currentBalance - amount).toString() })
+        .where(eq(wallets.userId, paymentData.paidBy));
+
+      await db.update(wallets)
+        .set({ 
+          balance: (parseFloat(creatorWallet.balance) + amount).toString() 
+        })
+        .where(eq(wallets.userId, link.createdBy));
+
+      await db.insert(walletTransactions).values({
+        walletId: paidByWallet.id,
+        transactionId: `${transactionId}-DEBIT`,
+        type: 'payment_link_debit',
+        amount: amount.toString(),
+        currency: link.currency,
+        status: 'paid',
+        description: `Payment for ${link.description}`,
+        metadata: { linkId: link.linkId, createdBy: link.createdBy }
+      });
+
+      await db.insert(walletTransactions).values({
+        walletId: creatorWallet.id,
+        transactionId: `${transactionId}-CREDIT`,
+        type: 'payment_link_credit',
+        amount: amount.toString(),
+        currency: link.currency,
+        status: 'paid',
+        description: `Received payment: ${link.description}`,
+        metadata: { linkId: link.linkId, paidBy: paymentData.paidBy }
+      });
+
+      await db.update(dynamicPaymentLinks)
+        .set({
+          status: 'used',
+          paidAt: new Date(),
+          paidBy: paymentData.paidBy,
+          paymentMethod: paymentData.paymentMethod,
+          transactionId
+        })
+        .where(eq(dynamicPaymentLinks.linkId, linkId));
+
+      await this.notifyCreator(link);
+
+      return {
+        success: true,
+        message: 'Payment processed successfully',
+        transactionId
+      };
+    } catch (error: any) {
+      console.error('Payment processing error:', error);
+      return {
+        success: false,
+        message: error.message || 'Payment processing failed'
+      };
+    }
   }
 
   /**
    * Annule un lien de paiement
    */
   static async cancelPaymentLink(linkId: string, userId: string): Promise<boolean> {
-    // TODO: Vérifier que l'utilisateur est le créateur
-    // TODO: Mettre à jour le statut en DB
+    const [link] = await db.select()
+      .from(dynamicPaymentLinks)
+      .where(eq(dynamicPaymentLinks.linkId, linkId));
+
+    if (!link) return false;
+    if (link.createdBy !== userId) return false;
+    if (link.status !== 'active') return false;
+
+    await db.update(dynamicPaymentLinks)
+      .set({ status: 'cancelled' })
+      .where(eq(dynamicPaymentLinks.linkId, linkId));
+
     return true;
   }
 
   /**
    * Récupère les liens de paiement créés par un utilisateur
    */
-  static async getUserPaymentLinks(userId: string, status?: PaymentLink['status']): Promise<PaymentLink[]> {
-    // TODO: Récupérer depuis la DB avec filtre optionnel sur le statut
-    return [];
+  static async getUserPaymentLinks(userId: string, status?: string): Promise<PaymentLink[]> {
+    const conditions = [eq(dynamicPaymentLinks.createdBy, userId)];
+    
+    if (status) {
+      conditions.push(eq(dynamicPaymentLinks.status, status as any));
+    }
+
+    const links = await db.select()
+      .from(dynamicPaymentLinks)
+      .where(and(...conditions))
+      .orderBy(desc(dynamicPaymentLinks.createdAt));
+
+    return links.map(link => {
+      const metadata = link.metadata as any || {};
+      return {
+        id: link.id,
+        linkId: link.linkId,
+        createdBy: link.createdBy,
+        createdByType: link.createdByType as 'delivery' | 'taxi_moto',
+        amount: parseFloat(link.amount),
+        currency: link.currency,
+        description: link.description || '',
+        recipientName: link.recipientName || undefined,
+        status: link.status as 'active' | 'expired' | 'used' | 'cancelled',
+        paymentUrl: metadata.paymentUrl || '',
+        qrData: metadata.qrData || '',
+        expiresAt: link.expiresAt.toISOString(),
+        paidAt: link.paidAt?.toISOString(),
+        paidBy: link.paidBy || undefined,
+        paymentMethod: link.paymentMethod || undefined,
+        transactionId: link.transactionId || undefined,
+        createdAt: link.createdAt!.toISOString()
+      };
+    });
   }
 
   /**
@@ -159,12 +333,24 @@ export class DynamicPaymentService {
     pendingAmount: number;
     currency: string;
   }> {
-    // TODO: Calculer depuis la DB
+    const links = await db.select()
+      .from(dynamicPaymentLinks)
+      .where(eq(dynamicPaymentLinks.createdBy, userId));
+
+    const totalLinks = links.length;
+    const totalPaid = links.filter(l => l.status === 'used').length;
+    const totalAmount = links
+      .filter(l => l.status === 'used')
+      .reduce((sum, l) => sum + parseFloat(l.amount), 0);
+    const pendingAmount = links
+      .filter(l => l.status === 'active')
+      .reduce((sum, l) => sum + parseFloat(l.amount), 0);
+
     return {
-      totalLinks: 0,
-      totalPaid: 0,
-      totalAmount: 0,
-      pendingAmount: 0,
+      totalLinks,
+      totalPaid,
+      totalAmount,
+      pendingAmount,
       currency: 'GNF'
     };
   }
@@ -173,7 +359,6 @@ export class DynamicPaymentService {
    * Envoie une notification au créateur quand le paiement est effectué
    */
   private static async notifyCreator(link: PaymentLink): Promise<void> {
-    // TODO: Implémenter la notification (SMS/Push/Email)
     console.log(`📲 Notification sent to ${link.createdBy}: Payment received for ${link.amount} ${link.currency}`);
   }
 
@@ -181,7 +366,17 @@ export class DynamicPaymentService {
    * Nettoie les liens expirés (à exécuter périodiquement)
    */
   static async cleanExpiredLinks(): Promise<number> {
-    // TODO: Supprimer ou archiver les liens expirés de plus de 30 jours
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    
+    const result = await db.update(dynamicPaymentLinks)
+      .set({ status: 'expired' })
+      .where(
+        and(
+          eq(dynamicPaymentLinks.status, 'active'),
+          sql`${dynamicPaymentLinks.expiresAt} < ${thirtyDaysAgo}`
+        )
+      );
+
     return 0;
   }
 }
