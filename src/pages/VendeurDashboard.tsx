@@ -39,6 +39,9 @@ import UltraSimpleCommunication from "@/components/communication/UltraSimpleComm
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import WalletDashboard from "@/components/vendor/WalletDashboard";
 import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
+import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
+import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
+import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { useWallet } from "@/hooks/useWallet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -196,6 +199,9 @@ export default function VendeurDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Bannière PWA pour l'installation */}
+      <PWAInstallBanner />
+
       {/* Header Ultra-Professionnel */}
       <header className="bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50 shadow-lg">
         <div className="px-8 py-5">
@@ -212,6 +218,7 @@ export default function VendeurDashboard() {
                   <p className="text-base text-gray-600 flex items-center gap-3 font-medium">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     {profile?.first_name || user?.email?.split('@')[0]} • Espace Vendeur Pro
+                    <NetworkStatusIndicator />
                     {userInfo && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-mono font-bold">
                         ID: {userInfo.custom_id}
@@ -517,6 +524,13 @@ export default function VendeurDashboard() {
                   <Link className="w-5 h-5 mr-3" />
                   Liens de paiement
                 </TabsTrigger>
+                <TabsTrigger
+                  value="offline-sync"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-gray-100 transition-all duration-300 px-6 py-4 rounded-xl border-0 font-semibold text-gray-700 hover:text-gray-900 flex-1"
+                >
+                  <RefreshCw className="w-5 h-5 mr-3" />
+                  Sync Offline
+                </TabsTrigger>
 
                 {/* Bouton de déconnexion visible */}
                 <Button
@@ -682,6 +696,11 @@ export default function VendeurDashboard() {
           {/* Liens de paiement */}
           <TabsContent value="payment-links" className="space-y-6">
             <PaymentLinksManager />
+          </TabsContent>
+
+          {/* Synchronisation Offline */}
+          <TabsContent value="offline-sync" className="space-y-6">
+            <OfflineSyncPanel />
           </TabsContent>
 
           {/* Gestion des paiements */}
