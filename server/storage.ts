@@ -8,6 +8,42 @@ import type {
   CommissionConfig, InsertCommissionConfig
 } from "../shared/schema.js";
 
+type UserId = {
+  id: string;
+  userId: string;
+  customId: string;
+  createdAt: Date | null;
+};
+
+type InsertUserId = {
+  userId: string;
+  customId: string;
+};
+
+type VirtualCard = {
+  id: string;
+  userId: string;
+  cardNumber: string;
+  cardholderName: string;
+  expiryDate: Date;
+  cvv: string;
+  balance: string;
+  currency: string;
+  isActive: boolean | null;
+  createdAt: Date | null;
+};
+
+type InsertVirtualCard = {
+  userId: string;
+  cardNumber: string;
+  cardholderName: string;
+  expiryDate: Date;
+  cvv: string;
+  balance: string;
+  currency: string;
+  isActive: boolean;
+};
+
 export interface IStorage {
   // Profiles
   getProfileById(id: string): Promise<Profile | undefined>;
@@ -15,11 +51,17 @@ export interface IStorage {
   createProfile(profile: InsertProfile): Promise<Profile>;
   updateProfile(id: string, profile: Partial<InsertProfile>): Promise<Profile | undefined>;
   
+  // User IDs
+  createUserId(userId: InsertUserId): Promise<UserId>;
+  
   // Wallets
   getWalletByUserId(userId: string): Promise<Wallet | undefined>;
   getWalletsByUserId(userId: string): Promise<Wallet[]>;
   createWallet(wallet: InsertWallet): Promise<Wallet>;
   updateWalletBalance(id: string, balance: string): Promise<Wallet | undefined>;
+  
+  // Virtual Cards
+  createVirtualCard(card: InsertVirtualCard): Promise<VirtualCard>;
   
   // Vendors
   getVendors(): Promise<Vendor[]>;
@@ -52,7 +94,9 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private profiles: Map<string, Profile> = new Map();
+  private userIds: Map<string, UserId> = new Map();
   private wallets: Map<string, Wallet> = new Map();
+  private virtualCards: Map<string, VirtualCard> = new Map();
   private vendors: Map<string, Vendor> = new Map();
   private products: Map<string, Product> = new Map();
   private transactions: Map<string, EnhancedTransaction> = new Map();
@@ -73,6 +117,7 @@ export class MemStorage implements IStorage {
     const newProfile: Profile = {
       id,
       email: profile.email,
+      password: profile.password,
       phone: profile.phone ?? null,
       firstName: profile.firstName ?? null,
       lastName: profile.lastName ?? null,
@@ -92,6 +137,19 @@ export class MemStorage implements IStorage {
     const updated = { ...existing, ...profile, updatedAt: new Date() };
     this.profiles.set(id, updated);
     return updated;
+  }
+
+  // User IDs
+  async createUserId(data: InsertUserId): Promise<UserId> {
+    const id = crypto.randomUUID();
+    const newUserId: UserId = {
+      id,
+      userId: data.userId,
+      customId: data.customId,
+      createdAt: new Date()
+    };
+    this.userIds.set(id, newUserId);
+    return newUserId;
   }
 
   // Wallets
@@ -123,6 +181,25 @@ export class MemStorage implements IStorage {
     const updated = { ...wallet, balance, updatedAt: new Date() };
     this.wallets.set(id, updated);
     return updated;
+  }
+
+  // Virtual Cards
+  async createVirtualCard(card: InsertVirtualCard): Promise<VirtualCard> {
+    const id = crypto.randomUUID();
+    const newCard: VirtualCard = {
+      id,
+      userId: card.userId,
+      cardNumber: card.cardNumber,
+      cardholderName: card.cardholderName,
+      expiryDate: card.expiryDate,
+      cvv: card.cvv,
+      balance: card.balance,
+      currency: card.currency,
+      isActive: card.isActive,
+      createdAt: new Date()
+    };
+    this.virtualCards.set(id, newCard);
+    return newCard;
   }
 
   // Vendors
@@ -326,6 +403,10 @@ export class DbStorage implements IStorage {
     throw new Error("DbStorage not implemented yet");
   }
 
+  async createUserId(data: InsertUserId): Promise<UserId> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
   async getWalletByUserId(userId: string): Promise<Wallet | undefined> {
     throw new Error("DbStorage not implemented yet");
   }
@@ -339,6 +420,10 @@ export class DbStorage implements IStorage {
   }
 
   async updateWalletBalance(id: string, balance: string): Promise<Wallet | undefined> {
+    throw new Error("DbStorage not implemented yet");
+  }
+
+  async createVirtualCard(card: InsertVirtualCard): Promise<VirtualCard> {
     throw new Error("DbStorage not implemented yet");
   }
 
