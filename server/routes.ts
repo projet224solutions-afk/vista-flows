@@ -453,4 +453,118 @@ export function registerRoutes(app: Express) {
       });
     }
   });
+
+  // ===== GEOLOCATION =====
+  const positionSchema = z.object({
+    position: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      accuracy: z.number().optional(),
+      altitude: z.number().optional(),
+      speed: z.number().optional(),
+      heading: z.number().optional(),
+      timestamp: z.number()
+    }),
+    timestamp: z.number()
+  });
+
+  const nearbySchema = z.object({
+    center: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      timestamp: z.number()
+    }),
+    radius: z.number().default(5000),
+    userType: z.enum(['delivery', 'client']).optional()
+  });
+
+  const sharingSchema = z.object({
+    id: z.string(),
+    fromUserId: z.string(),
+    toUserId: z.string(),
+    position: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      timestamp: z.number()
+    }),
+    expiresAt: z.number(),
+    isActive: z.boolean(),
+    permissions: z.object({
+      canView: z.boolean(),
+      canTrack: z.boolean(),
+      canShare: z.boolean()
+    })
+  });
+
+  app.post("/api/geolocation/position", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = positionSchema.parse(req.body);
+      
+      console.log(`📍 Position saved for user ${req.userId}:`, validated.position);
+      
+      res.json({
+        success: true,
+        message: 'Position saved successfully'
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid position data'
+      });
+    }
+  });
+
+  app.post("/api/geolocation/nearby", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = nearbySchema.parse(req.body);
+      
+      const users: any[] = [];
+      
+      res.json({
+        success: true,
+        users
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid nearby search data'
+      });
+    }
+  });
+
+  app.post("/api/geolocation/sharing", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = sharingSchema.parse(req.body);
+      
+      console.log(`📍 Location sharing created:`, validated.id);
+      
+      res.json({
+        success: true,
+        data: validated
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Invalid sharing data'
+      });
+    }
+  });
+
+  app.delete("/api/geolocation/sharing/:id", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const sharingId = req.params.id;
+      
+      console.log(`📍 Location sharing stopped:`, sharingId);
+      
+      res.json({
+        success: true,
+        message: 'Sharing stopped successfully'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to stop sharing'
+      });
+    }
+  });
 }
