@@ -91,11 +91,15 @@ Preferred communication style: Simple, everyday language.
   - Built-in authentication
 
 **Communication Services**:
-- Agora.io:
+- Agora.io (Fully Integrated):
   - App ID: 6eb615539e434ff0991bb5f59dbca7ad
   - RTM (Real-Time Messaging) for chat
   - RTC (Real-Time Communication) for audio/video calls
   - Token-based authentication via backend
+  - UUID support for user identification
+  - 5 API endpoints: /rtc-token, /rtm-token, /session-tokens, /generate-channel, /config
+  - Rate limiting: 50 tokens per 15 minutes
+  - Database tables: conversations, messages, calls, user_presence
 
 **AI/ML Services**:
 - OpenAI API for AI Copilot (ChatGPT-style assistant)
@@ -125,6 +129,21 @@ Preferred communication style: Simple, everyday language.
 
 **Development Tools**:
 - GitHub for version control
-- Lovable.dev for deployment
+- Lovable.dev for deployment (migrated to Replit)
 - Cursor for AI-assisted development
 - ESLint and TypeScript for code quality
+
+# Recent Changes
+
+## October 7, 2025 - Agora Communication System Integration
+- **Backend Service**: Created TypeScript Agora service (server/services/agora.ts) with UUID support
+  - Supports both UUID strings and numeric UIDs for tokens
+  - RTC token generation for video/voice calls
+  - RTM token generation for real-time messaging
+  - Rate limiting and error handling
+- **API Routes**: Integrated 5 authenticated Agora endpoints in server/routes.ts
+- **Database**: Added 4 communication tables (conversations, messages, calls, user_presence)
+- **Frontend Service**: Created communicationService.ts for API interactions
+- **Configuration**: Fixed Vite config with allowedHosts for Replit iframe support
+- **Dependencies**: Installed agora-token package v2.0.5
+- **Status**: Fully functional, requires AGORA_APP_CERTIFICATE in Replit Secrets
