@@ -8,10 +8,12 @@ import type {
 
 class APIClient {
   private async request<T>(url: string, options?: RequestInit): Promise<T> {
+    const token = localStorage.getItem('auth_token');
     const response = await fetch(url, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options?.headers,
       },
     });
@@ -23,6 +25,34 @@ class APIClient {
 
     return response.json();
   }
+
+  auth = {
+    register: (data: { email: string; password: string; firstName?: string; lastName?: string; phone?: string; role?: string }) =>
+      this.request<{ profile: Profile; token: string }>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }).then(result => {
+        localStorage.setItem('auth_token', result.token);
+        return result;
+      }),
+    
+    login: (email: string, password: string) =>
+      this.request<{ profile: Profile; token: string }>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }).then(result => {
+        localStorage.setItem('auth_token', result.token);
+        return result;
+      }),
+    
+    logout: () =>
+      this.request('/api/auth/logout', {
+        method: 'POST',
+      }),
+    
+    me: () =>
+      this.request<Profile>('/api/auth/me'),
+  };
 
   profiles = {
     getById: (id: string) => 

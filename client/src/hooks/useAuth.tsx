@@ -1,24 +1,25 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface Profile {
   id: string;
   email: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   role: 'admin' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client';
-  avatar_url?: string;
+  avatarUrl?: string;
   phone?: string;
-  is_active: boolean;
+  isActive: boolean;
 }
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: Profile | null;
+  session: { token: string } | null;
   profile: Profile | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (data: { email: string; password: string; firstName?: string; lastName?: string; phone?: string; role?: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   ensureUserSetup: () => Promise<void>;
@@ -27,183 +28,111 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<Profile | null>(null);
+  const [session, setSession] = useState<{ token: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fonction pour s'assurer que l'utilisateur a son setup complet
+  // NOTE: Cette fonction est maintenant gérée automatiquement par le backend lors du register
+  // On la garde pour compatibilité mais elle ne fait plus rien (auto-setup fait par backend)
   const ensureUserSetup = useCallback(async () => {
     if (!user) return;
-
-    try {
-      console.log('🔍 Vérification setup utilisateur:', user.id);
-
-      // Vérifier les éléments essentiels
-      const [walletCheck, userIdCheck, virtualCardCheck] = await Promise.all([
-        supabase.from('wallets').select('id').eq('user_id', user.id).single(),
-        supabase.from('user_ids').select('custom_id').eq('user_id', user.id).single(),
-        supabase.from('virtual_cards').select('id').eq('user_id', user.id).single()
-      ]);
-
-      const needsWallet = walletCheck.error;
-      const needsUserId = userIdCheck.error;
-      const needsVirtualCard = virtualCardCheck.error;
-
-      if (needsWallet || needsUserId || needsVirtualCard) {
-        const missing = [];
-        if (needsWallet) missing.push('Wallet');
-        if (needsUserId) missing.push('ID utilisateur');
-        if (needsVirtualCard) missing.push('Carte virtuelle');
-
-        console.log('⚠️ Éléments manquants:', missing);
-        toast.info(`Configuration automatique en cours: ${missing.join(', ')}`);
-
-        let customId = '';
-
-        // Créer ID utilisateur si manquant (3 lettres + 4 chiffres)
-        if (needsUserId) {
-          // Générer 3 lettres aléatoires (A-Z)
-          let letters = '';
-          for (let i = 0; i < 3; i++) {
-            letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-          }
-
-          // Générer 4 chiffres aléatoires (0-9)
-          let numbers = '';
-          for (let i = 0; i < 4; i++) {
-            numbers += Math.floor(Math.random() * 10).toString();
-          }
-
-          customId = letters + numbers;
-
-          const { error: idError } = await supabase
-            .from('user_ids')
-            .upsert({
-              user_id: user.id,
-              custom_id: customId
-            });
-
-          if (idError) {
-            console.error('❌ Erreur création ID:', idError);
-          } else {
-            console.log('✅ ID utilisateur créé:', customId);
-          }
-        } else {
-          // Récupérer l'ID existant
-          customId = userIdCheck.data?.custom_id || 'ABC0000';
-        }
-
-        // Créer wallet si manquant
-        if (needsWallet) {
-          const { error: walletError } = await supabase
-            .from('wallets')
-            .upsert({
-              user_id: user.id,
-              balance: 10000, // Bonus de bienvenue
-              currency: 'XAF',
-              status: 'active'
-            });
-
-          if (walletError) {
-            console.error('❌ Erreur création wallet:', walletError);
-          } else {
-            console.log('✅ Wallet créé avec bonus de 10,000 XAF');
-          }
-        }
-
-        // Créer carte virtuelle si manquante
-        if (needsVirtualCard) {
-          const cardNumber = '4*** **** **** ' + Math.floor(Math.random() * 9999).toString().padStart(4, '0');
-          const { error: cardError } = await supabase
-            .from('virtual_cards')
-            .upsert({
-              user_id: user.id,
-              card_number: cardNumber,
-              cardholder_name: `${user.user_metadata?.first_name || 'Client'} ${user.user_metadata?.last_name || customId}`,
-              expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
-              cvv: Math.floor(Math.random() * 900 + 100).toString(),
-              daily_limit: 500000,
-              monthly_limit: 2000000
-            });
-
-          if (cardError) {
-            console.error('❌ Erreur création carte virtuelle:', cardError);
-          } else {
-            console.log('✅ Carte virtuelle créée:', cardNumber);
-          }
-        }
-
-        toast.success('✅ Configuration client complétée ! Wallet, ID et carte virtuelle créés.');
-      } else {
-        console.log('✅ Setup utilisateur complet');
-      }
-    } catch (error) {
-      console.error('❌ Erreur setup utilisateur:', error);
-      toast.error('Erreur lors de la configuration utilisateur');
-    }
+    console.log('✅ Setup utilisateur géré automatiquement par le backend lors du register');
   }, [user]);
 
   const refreshProfile = useCallback(async () => {
-    if (!user) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
       setProfile(null);
+      setUser(null);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      setProfile(data);
+      const profile = await api.auth.me();
+      setProfile(profile);
+      setUser(profile);
     } catch (error) {
-      console.error('Error in refreshProfile:', error);
+      console.error('Error fetching profile:', error);
+      localStorage.removeItem('auth_token');
+      setProfile(null);
+      setUser(null);
+      setSession(null);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session from localStorage
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      const token = localStorage.getItem('auth_token');
+      
+      if (token) {
+        setSession({ token });
+        try {
+          const profile = await api.auth.me();
+          setUser(profile);
+          setProfile(profile);
+        } catch (error) {
+          console.error('Invalid token:', error);
+          localStorage.removeItem('auth_token');
+          setUser(null);
+          setProfile(null);
+          setSession(null);
+        }
+      }
+      
       setLoading(false);
     };
 
     getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile when user changes
+  // Fetch profile when user changes (pour compatibilité)
   useEffect(() => {
     if (user) {
-      refreshProfile();
-      // Setup automatique pour tous les nouveaux utilisateurs
       ensureUserSetup();
-    } else {
-      setProfile(null);
     }
-  }, [user, refreshProfile, ensureUserSetup]);
+  }, [user, ensureUserSetup]);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { profile, token } = await api.auth.login(email, password);
+      setUser(profile);
+      setProfile(profile);
+      setSession({ token });
+      toast.success('Connexion réussie !');
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur de connexion');
+      throw error;
+    }
+  };
+
+  const signUp = async (data: { email: string; password: string; firstName?: string; lastName?: string; phone?: string; role?: string }) => {
+    try {
+      const { profile, token } = await api.auth.register(data);
+      setUser(profile);
+      setProfile(profile);
+      setSession({ token });
+      toast.success('Compte créé avec succès ! Wallet, ID et carte virtuelle configurés automatiquement.');
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors de la création du compte');
+      throw error;
+    }
+  };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('auth_token');
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      toast.success('Déconnexion réussie');
+    }
   };
 
   const value = {
@@ -211,6 +140,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     profile,
     loading,
+    signIn,
+    signUp,
     signOut,
     refreshProfile,
     ensureUserSetup
