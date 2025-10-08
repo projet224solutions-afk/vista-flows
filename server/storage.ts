@@ -7,7 +7,10 @@ import type {
   OrderItem, InsertOrderItem,
   EnhancedTransaction, InsertEnhancedTransaction,
   AuditLog, InsertAuditLog,
-  CommissionConfig, InsertCommissionConfig
+  CommissionConfig, InsertCommissionConfig,
+  DeliveryRequest, InsertDeliveryRequest,
+  EscrowTransaction, InsertEscrowTransaction,
+  Notification, InsertNotification
 } from "../shared/schema.js";
 import { db } from './db.js';
 import { eq, or, sql } from 'drizzle-orm';
@@ -130,6 +133,24 @@ export interface IStorage {
   createCall(call: InsertCall): Promise<Call>;
   updateCallStatus(id: string, status: string): Promise<Call | undefined>;
   endCall(id: string, duration: number): Promise<Call | undefined>;
+  
+  // Delivery Requests
+  getDeliveryRequests(clientId?: string, deliveryUserId?: string): Promise<any[]>;
+  getDeliveryRequestById(id: string): Promise<any | undefined>;
+  createDeliveryRequest(request: any): Promise<any>;
+  updateDeliveryRequest(id: string, updates: any): Promise<any | undefined>;
+  
+  // Escrow Transactions
+  getEscrowTransactions(clientId?: string, driverId?: string): Promise<any[]>;
+  getEscrowTransactionById(id: string): Promise<any | undefined>;
+  createEscrowTransaction(transaction: any): Promise<any>;
+  updateEscrowTransaction(id: string, updates: any): Promise<any | undefined>;
+  
+  // Notifications
+  getNotifications(userId: string): Promise<any[]>;
+  getUnreadNotifications(userId: string): Promise<any[]>;
+  createNotification(notification: any): Promise<any>;
+  markNotificationAsRead(id: string): Promise<any | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -559,6 +580,48 @@ export class MemStorage implements IStorage {
   async endCall(id: string, duration: number): Promise<Call | undefined> {
     throw new Error("Communication not implemented in MemStorage");
   }
+  
+  // Delivery Requests
+  async getDeliveryRequests(clientId?: string, deliveryUserId?: string): Promise<any[]> {
+    throw new Error("Delivery not implemented in MemStorage");
+  }
+  async getDeliveryRequestById(id: string): Promise<any | undefined> {
+    throw new Error("Delivery not implemented in MemStorage");
+  }
+  async createDeliveryRequest(request: any): Promise<any> {
+    throw new Error("Delivery not implemented in MemStorage");
+  }
+  async updateDeliveryRequest(id: string, updates: any): Promise<any | undefined> {
+    throw new Error("Delivery not implemented in MemStorage");
+  }
+  
+  // Escrow Transactions
+  async getEscrowTransactions(clientId?: string, driverId?: string): Promise<any[]> {
+    throw new Error("Escrow not implemented in MemStorage");
+  }
+  async getEscrowTransactionById(id: string): Promise<any | undefined> {
+    throw new Error("Escrow not implemented in MemStorage");
+  }
+  async createEscrowTransaction(transaction: any): Promise<any> {
+    throw new Error("Escrow not implemented in MemStorage");
+  }
+  async updateEscrowTransaction(id: string, updates: any): Promise<any | undefined> {
+    throw new Error("Escrow not implemented in MemStorage");
+  }
+  
+  // Notifications
+  async getNotifications(userId: string): Promise<any[]> {
+    throw new Error("Notifications not implemented in MemStorage");
+  }
+  async getUnreadNotifications(userId: string): Promise<any[]> {
+    throw new Error("Notifications not implemented in MemStorage");
+  }
+  async createNotification(notification: any): Promise<any> {
+    throw new Error("Notifications not implemented in MemStorage");
+  }
+  async markNotificationAsRead(id: string): Promise<any | undefined> {
+    throw new Error("Notifications not implemented in MemStorage");
+  }
 }
 
 export class DbStorage implements IStorage {
@@ -950,6 +1013,106 @@ export class DbStorage implements IStorage {
         endedAt: new Date()
       })
       .where(eq(schema.calls.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // Delivery Requests
+  async getDeliveryRequests(clientId?: string, deliveryUserId?: string): Promise<DeliveryRequest[]> {
+    let query = db.select().from(schema.deliveryRequests);
+    if (clientId) {
+      query = query.where(eq(schema.deliveryRequests.clientId, clientId)) as any;
+    } else if (deliveryUserId) {
+      query = query.where(eq(schema.deliveryRequests.deliveryUserId, deliveryUserId)) as any;
+    }
+    return (query as any).orderBy(schema.deliveryRequests.createdAt);
+  }
+  
+  async getDeliveryRequestById(id: string): Promise<DeliveryRequest | undefined> {
+    const result = await db.select()
+      .from(schema.deliveryRequests)
+      .where(eq(schema.deliveryRequests.id, id))
+      .limit(1);
+    return result[0];
+  }
+  
+  async createDeliveryRequest(request: InsertDeliveryRequest): Promise<DeliveryRequest> {
+    const result = await db.insert(schema.deliveryRequests)
+      .values(request)
+      .returning();
+    return result[0];
+  }
+  
+  async updateDeliveryRequest(id: string, updates: Partial<DeliveryRequest>): Promise<DeliveryRequest | undefined> {
+    const result = await db.update(schema.deliveryRequests)
+      .set(updates)
+      .where(eq(schema.deliveryRequests.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // Escrow Transactions
+  async getEscrowTransactions(clientId?: string, driverId?: string): Promise<EscrowTransaction[]> {
+    let query = db.select().from(schema.escrowTransactions);
+    if (clientId) {
+      query = query.where(eq(schema.escrowTransactions.clientId, clientId)) as any;
+    } else if (driverId) {
+      query = query.where(eq(schema.escrowTransactions.driverId, driverId)) as any;
+    }
+    return (query as any).orderBy(schema.escrowTransactions.createdAt);
+  }
+  
+  async getEscrowTransactionById(id: string): Promise<EscrowTransaction | undefined> {
+    const result = await db.select()
+      .from(schema.escrowTransactions)
+      .where(eq(schema.escrowTransactions.id, id))
+      .limit(1);
+    return result[0];
+  }
+  
+  async createEscrowTransaction(transaction: InsertEscrowTransaction): Promise<EscrowTransaction> {
+    const result = await db.insert(schema.escrowTransactions)
+      .values(transaction)
+      .returning();
+    return result[0];
+  }
+  
+  async updateEscrowTransaction(id: string, updates: Partial<EscrowTransaction>): Promise<EscrowTransaction | undefined> {
+    const result = await db.update(schema.escrowTransactions)
+      .set(updates)
+      .where(eq(schema.escrowTransactions.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // Notifications
+  async getNotifications(userId: string): Promise<Notification[]> {
+    const result = await db.select()
+      .from(schema.notifications)
+      .where(eq(schema.notifications.userId, userId))
+      .orderBy(schema.notifications.createdAt);
+    return result;
+  }
+  
+  async getUnreadNotifications(userId: string): Promise<Notification[]> {
+    const result = await db.select()
+      .from(schema.notifications)
+      .where(sql`${schema.notifications.userId} = ${userId} AND ${schema.notifications.isRead} = false`)
+      .orderBy(schema.notifications.createdAt);
+    return result;
+  }
+  
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const result = await db.insert(schema.notifications)
+      .values(notification)
+      .returning();
+    return result[0];
+  }
+  
+  async markNotificationAsRead(id: string): Promise<Notification | undefined> {
+    const result = await db.update(schema.notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(schema.notifications.id, id))
       .returning();
     return result[0];
   }
