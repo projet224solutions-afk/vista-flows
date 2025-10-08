@@ -158,7 +158,7 @@ export function useMotoSecurity(bureauId?: string, isPDG: boolean = false) {
                         },
                         (payload) => {
                             console.log('🔔 Nouvelle notification sécurité:', payload);
-                            handleNewNotification(payload.new);
+                            handleNewNotification(payload.new as SecurityNotification);
                         }
                     )
                     .on(

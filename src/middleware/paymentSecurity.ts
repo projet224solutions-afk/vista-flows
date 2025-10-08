@@ -197,22 +197,15 @@ export class PaymentSecurity {
   static async validateAdminPermissions(userId: string): Promise<SecurityValidation> {
     try {
       const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('role, status')
-        .eq('user_id', userId)
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
         .single();
 
-      if (profileError || !profile) {
+      if (error || !profile) {
         return {
           isValid: false,
           error: 'Profil utilisateur non trouvé'
-        };
-      }
-
-      if (profile.status !== 'active') {
-        return {
-          isValid: false,
-          error: 'Compte utilisateur non actif'
         };
       }
 

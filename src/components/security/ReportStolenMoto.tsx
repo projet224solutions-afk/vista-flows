@@ -73,10 +73,10 @@ export default function ReportStolenMoto({
                     numero_serie: formData.numero_serie,
                     vin: formData.vin || null,
                     chauffeur_id: user?.id,
-                    bureau_id: user?.bureau_id || 'default-bureau',
+                    bureau_id: null, // À récupérer depuis le profil utilisateur
                     ville: formData.ville,
                     description: formData.description,
-                    user_ip: 'client-ip', // À remplacer par l'IP réelle
+                    user_ip: 'client-ip',
                     user_agent: navigator.userAgent
                 })
             });

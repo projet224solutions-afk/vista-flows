@@ -80,7 +80,7 @@ export default function MotoSecurityDashboard({
                         
                         <div className="flex items-center gap-3">
                             <Badge 
-                                variant={isConnected ? "success" : "destructive"}
+                                variant={isConnected ? "default" : "destructive"}
                                 className="text-sm"
                             >
                                 <Activity className="w-4 h-4 mr-1" />

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { securityService } from '@/services/securityService';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -98,14 +98,21 @@ export function useSecurityAlerts() {
 }
 
 export function useSecurityIncidents() {
-    const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
+    const [incidents, setIncidents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadIncidents = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await SecurityService.getSecurityIncidents();
-            setIncidents(data);
+            const { data, error } = await supabase
+                .from('moto_security_audit')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100);
+            
+            if (!error && data) {
+                setIncidents(data);
+            }
         } catch (err) {
             console.error('Erreur chargement incidents:', err);
         } finally {
@@ -117,14 +124,20 @@ export function useSecurityIncidents() {
         loadIncidents();
     }, [loadIncidents]);
 
-    const createIncident = useCallback(async (incident: Omit<SecurityIncident, 'id' | 'incident_id'>) => {
+    const createIncident = useCallback(async (incident: any) => {
         try {
-            const newIncident = await SecurityService.createIncident(incident);
-            if (newIncident) {
-                setIncidents(prev => [newIncident, ...prev]);
+            const { data, error } = await supabase
+                .from('moto_security_audit')
+                .insert(incident)
+                .select()
+                .single();
+            
+            if (!error && data) {
+                setIncidents(prev => [data, ...prev]);
                 toast.success('Incident créé avec succès');
+                return data;
             }
-            return newIncident;
+            return null;
         } catch (err) {
             console.error('Erreur création incident:', err);
             return null;
@@ -142,14 +155,21 @@ export function useSecurityIncidents() {
 }
 
 export function useSecurityEvents() {
-    const [events, setEvents] = useState<SecurityEvent[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadEvents = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await SecurityService.getSecurityEvents();
-            setEvents(data);
+            const { data, error } = await supabase
+                .from('moto_security_audit')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(200);
+            
+            if (!error && data) {
+                setEvents(data);
+            }
         } catch (err) {
             console.error('Erreur chargement événements:', err);
         } finally {

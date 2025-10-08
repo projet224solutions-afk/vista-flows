@@ -282,7 +282,7 @@ export default function TaxiMoto() {
                         </TabsContent>
                         <TabsContent value="security" className="space-y-4">
                             <MotoSecurityDashboard 
-                                bureauId={user?.bureau_id}
+                                bureauId={undefined}
                                 isPDG={false}
                             />
                         </TabsContent>
