@@ -22,6 +22,9 @@ export const syndicateTransactionStatusEnum = pgEnum("syndicate_transaction_stat
 export const sosAlertTypeEnum = pgEnum("sos_alert_type", ["emergency", "breakdown", "accident", "theft"]);
 export const sosSeverityEnum = pgEnum("sos_severity", ["low", "medium", "high", "critical"]);
 export const sosStatusEnum = pgEnum("sos_status", ["active", "resolved", "false_alarm"]);
+export const deliveryStatusEnum = pgEnum("delivery_status", ["pending", "accepted", "picked_up", "in_transit", "delivered", "cancelled"]);
+export const escrowStatusEnum = pgEnum("escrow_status", ["pending", "held", "released", "refunded", "disputed", "resolved"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["info", "success", "warning", "error", "payment", "order", "message", "system"]);
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -413,6 +416,72 @@ export const syndicateSosAlerts = pgTable("syndicate_sos_alerts", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const deliveryRequests = pgTable("delivery_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  clientName: text("client_name"),
+  clientPhone: text("client_phone"),
+  clientPhoto: text("client_photo"),
+  deliveryUserId: uuid("delivery_user_id").references(() => profiles.id, { onDelete: "set null" }),
+  deliveryUserName: text("delivery_user_name"),
+  pickupAddress: text("pickup_address").notNull(),
+  deliveryAddress: text("delivery_address").notNull(),
+  pickupPosition: jsonb("pickup_position").notNull(),
+  deliveryPosition: jsonb("delivery_position").notNull(),
+  distance: decimal("distance", { precision: 10, scale: 2 }),
+  estimatedTime: integer("estimated_time"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  fees: decimal("fees", { precision: 10, scale: 2 }),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  status: deliveryStatusEnum("status").default("pending"),
+  acceptedAt: timestamp("accepted_at"),
+  pickedUpAt: timestamp("picked_up_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const escrowTransactions = pgTable("escrow_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  transactionId: text("transaction_id").notNull().unique().$defaultFn(() => `ESCROW-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
+  invoiceId: text("invoice_id"),
+  clientId: uuid("client_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  driverId: uuid("driver_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  driverName: text("driver_name"),
+  driverPhone: text("driver_phone"),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  feePercent: decimal("fee_percent", { precision: 5, scale: 2 }).notNull(),
+  feeAmount: decimal("fee_amount", { precision: 15, scale: 2 }).notNull(),
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }).notNull(),
+  startLocation: text("start_location").notNull(),
+  endLocation: text("end_location").notNull(),
+  startCoordinates: jsonb("start_coordinates"),
+  endCoordinates: jsonb("end_coordinates"),
+  distance: decimal("distance", { precision: 10, scale: 2 }),
+  duration: integer("duration"),
+  status: escrowStatusEnum("status").default("pending"),
+  heldAt: timestamp("held_at"),
+  releasedAt: timestamp("released_at"),
+  refundedAt: timestamp("refunded_at"),
+  disputedAt: timestamp("disputed_at"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull().default("info"),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  data: jsonb("data"),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
 export const insertProfileSchema = createInsertSchema(profiles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true, updatedAt: true });
@@ -439,6 +508,9 @@ export const insertSyndicateMemberSchema = createInsertSchema(syndicateMembers).
 export const insertSyndicateVehicleSchema = createInsertSchema(syndicateVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSyndicateTransactionSchema = createInsertSchema(syndicateTransactions).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSyndicateSosAlertSchema = createInsertSchema(syndicateSosAlerts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDeliveryRequestSchema = createInsertSchema(deliveryRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEscrowTransactionSchema = createInsertSchema(escrowTransactions).omit({ id: true, createdAt: true, updatedAt: true, transactionId: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 
 export const updateProfileSchema = insertProfileSchema.partial().omit({ password: true });
 export const updateProductSchema = insertProductSchema.partial();
@@ -518,3 +590,9 @@ export type SyndicateTransaction = typeof syndicateTransactions.$inferSelect;
 export type InsertSyndicateTransaction = z.infer<typeof insertSyndicateTransactionSchema>;
 export type SyndicateSosAlert = typeof syndicateSosAlerts.$inferSelect;
 export type InsertSyndicateSosAlert = z.infer<typeof insertSyndicateSosAlertSchema>;
+export type DeliveryRequest = typeof deliveryRequests.$inferSelect;
+export type InsertDeliveryRequest = z.infer<typeof insertDeliveryRequestSchema>;
+export type EscrowTransaction = typeof escrowTransactions.$inferSelect;
+export type InsertEscrowTransaction = z.infer<typeof insertEscrowTransactionSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
