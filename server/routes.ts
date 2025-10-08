@@ -200,6 +200,277 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // ===== COMMUNICATION - CONVERSATIONS =====
+  app.get("/api/conversations", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const conversations = await storage.getConversations(req.userId!);
+      res.json(conversations);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch conversations" });
+    }
+  });
+
+  app.get("/api/conversations/:id", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const conversation = await storage.getConversationById(req.params.id);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      // Verify user is participant
+      const participants = conversation.participants as string[];
+      if (!participants.includes(req.userId!)) {
+        return res.status(403).json({ error: "Access denied - not a participant" });
+      }
+      
+      res.json(conversation);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch conversation" });
+    }
+  });
+
+  app.post("/api/conversations", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const conversationSchema = z.object({
+        type: z.enum(['private', 'group']).default('private'),
+        channelName: z.string(),
+        participants: z.array(z.string()).min(1),
+        metadata: z.any().optional()
+      });
+      
+      const validated = conversationSchema.parse(req.body);
+      
+      // Ensure requester is included in participants
+      if (!validated.participants.includes(req.userId!)) {
+        validated.participants.push(req.userId!);
+      }
+      
+      const conversation = await storage.createConversation(validated);
+      res.status(201).json(conversation);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to create conversation" });
+    }
+  });
+
+  // ===== COMMUNICATION - MESSAGES =====
+  app.get("/api/conversations/:conversationId/messages", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // Verify user is participant in conversation
+      const conversation = await storage.getConversationById(req.params.conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      const participants = conversation.participants as string[];
+      if (!participants.includes(req.userId!)) {
+        return res.status(403).json({ error: "Access denied - not a participant" });
+      }
+      
+      const limit = parseInt(req.query.limit as string) || 100;
+      const messages = await storage.getMessages(req.params.conversationId, limit);
+      res.json(messages);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/conversations/:conversationId/messages", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // Verify user is participant in conversation
+      const conversation = await storage.getConversationById(req.params.conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      const participants = conversation.participants as string[];
+      if (!participants.includes(req.userId!)) {
+        return res.status(403).json({ error: "Access denied - not a participant" });
+      }
+      
+      const messageSchema = z.object({
+        content: z.string().min(1),
+        type: z.enum(['text', 'image', 'video', 'audio', 'file']).default('text'),
+        metadata: z.any().optional()
+      });
+      
+      const validated = messageSchema.parse(req.body);
+      const message = await storage.createMessage({
+        conversationId: req.params.conversationId,
+        senderId: req.userId!,
+        ...validated
+      });
+      res.status(201).json(message);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to create message" });
+    }
+  });
+
+  app.patch("/api/messages/:id/read", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const message = await storage.getMessageById(req.params.id);
+      if (!message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+      
+      // Verify user is participant in the conversation
+      const conversation = await storage.getConversationById(message.conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+      
+      const participants = conversation.participants as string[];
+      if (!participants.includes(req.userId!)) {
+        return res.status(403).json({ error: "Access denied - not a participant" });
+      }
+      
+      const updatedMessage = await storage.markMessageAsRead(req.params.id);
+      res.json(updatedMessage);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to mark message as read" });
+    }
+  });
+
+  // ===== COMMUNICATION - CALLS =====
+  app.get("/api/calls", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const calls = await storage.getCalls(req.userId!);
+      res.json(calls);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch calls" });
+    }
+  });
+
+  app.post("/api/calls", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const callSchema = z.object({
+        receiverId: z.string().uuid(),
+        type: z.enum(['audio', 'video']),
+        conversationId: z.string().uuid().optional()
+      });
+      
+      const validated = callSchema.parse(req.body);
+      
+      // If conversationId provided, verify user is participant
+      if (validated.conversationId) {
+        const conversation = await storage.getConversationById(validated.conversationId);
+        if (!conversation) {
+          return res.status(404).json({ error: "Conversation not found" });
+        }
+        
+        const participants = conversation.participants as string[];
+        if (!participants.includes(req.userId!)) {
+          return res.status(403).json({ error: "Access denied - not a participant" });
+        }
+      }
+      
+      // Generate Agora channel name and token
+      const channelName = `call_${Date.now()}_${crypto.randomUUID()}`;
+      const token = agoraService.generateRTCToken(channelName, req.userId!);
+      
+      const call = await storage.createCall({
+        initiatorId: req.userId!,
+        receiverId: validated.receiverId,
+        type: validated.type,
+        channelName,
+        conversationId: validated.conversationId
+      });
+      
+      res.status(201).json({ ...call, token });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to create call" });
+    }
+  });
+
+  app.patch("/api/calls/:id/status", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const statusSchema = z.object({
+        status: z.enum(['pending', 'ringing', 'active', 'completed', 'missed', 'rejected'])
+      });
+      
+      const validated = statusSchema.parse(req.body);
+      
+      // Fetch call and verify user is participant
+      const existingCall = await storage.getCallById(req.params.id);
+      if (!existingCall) {
+        return res.status(404).json({ error: "Call not found" });
+      }
+      
+      // Verify user is initiator or receiver
+      if (existingCall.initiatorId !== req.userId && existingCall.receiverId !== req.userId) {
+        return res.status(403).json({ error: "Access denied - not a call participant" });
+      }
+      
+      const call = await storage.updateCallStatus(req.params.id, validated.status);
+      res.json(call);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to update call status" });
+    }
+  });
+
+  app.patch("/api/calls/:id/end", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const endSchema = z.object({
+        duration: z.number().min(0)
+      });
+      
+      const validated = endSchema.parse(req.body);
+      
+      // Fetch call and verify user is participant
+      const existingCall = await storage.getCallById(req.params.id);
+      if (!existingCall) {
+        return res.status(404).json({ error: "Call not found" });
+      }
+      
+      // Verify user is initiator or receiver
+      if (existingCall.initiatorId !== req.userId && existingCall.receiverId !== req.userId) {
+        return res.status(403).json({ error: "Access denied - not a call participant" });
+      }
+      
+      const call = await storage.endCall(req.params.id, validated.duration);
+      res.json(call);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to end call" });
+    }
+  });
+
+  // Agora token generation endpoint
+  app.post("/api/agora/token", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const tokenSchema = z.object({
+        channelName: z.string().min(1),
+        uid: z.string().optional()
+      });
+      
+      const validated = tokenSchema.parse(req.body);
+      const token = agoraService.generateRTCToken(
+        validated.channelName, 
+        validated.uid || req.userId!
+      );
+      
+      res.json({ token, channelName: validated.channelName });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: error.message || "Failed to generate token" });
+    }
+  });
+
   // ===== VENDORS =====
   app.get("/api/vendors", async (req, res) => {
     const vendors = await storage.getVendors();

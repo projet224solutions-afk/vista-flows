@@ -12,6 +12,11 @@ import type {
 import { db } from './db.js';
 import { eq, or } from 'drizzle-orm';
 import * as schema from '../shared/schema.js';
+import type { 
+  Conversation, InsertConversation,
+  Message, InsertMessage,
+  Call, InsertCall
+} from '../shared/schema.js';
 
 type UserId = {
   id: string;
@@ -106,6 +111,25 @@ export interface IStorage {
   getActiveCommissionConfigs(): Promise<CommissionConfig[]>;
   createCommissionConfig(config: InsertCommissionConfig): Promise<CommissionConfig>;
   updateCommissionConfigStatus(id: string, isActive: boolean): Promise<CommissionConfig | undefined>;
+  
+  // Communication - Conversations
+  getConversations(userId: string): Promise<Conversation[]>;
+  getConversationById(id: string): Promise<Conversation | undefined>;
+  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  updateConversation(id: string, conversation: Partial<InsertConversation>): Promise<Conversation | undefined>;
+  
+  // Communication - Messages
+  getMessages(conversationId: string, limit?: number): Promise<Message[]>;
+  getMessageById(id: string): Promise<Message | undefined>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessageAsRead(id: string): Promise<Message | undefined>;
+  
+  // Communication - Calls
+  getCalls(userId: string): Promise<Call[]>;
+  getCallById(id: string): Promise<Call | undefined>;
+  createCall(call: InsertCall): Promise<Call>;
+  updateCallStatus(id: string, status: string): Promise<Call | undefined>;
+  endCall(id: string, duration: number): Promise<Call | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -480,6 +504,61 @@ export class MemStorage implements IStorage {
     this.commissionConfigs.set(id, updated);
     return updated;
   }
+
+  // Communication - Conversations (MemStorage stubs)
+  async getConversations(userId: string): Promise<Conversation[]> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async getConversationById(id: string): Promise<Conversation | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async updateConversation(id: string, conversation: Partial<InsertConversation>): Promise<Conversation | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  // Communication - Messages (MemStorage stubs)
+  async getMessages(conversationId: string, limit?: number): Promise<Message[]> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async getMessageById(id: string): Promise<Message | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async markMessageAsRead(id: string): Promise<Message | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  // Communication - Calls (MemStorage stubs)
+  async getCalls(userId: string): Promise<Call[]> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async getCallById(id: string): Promise<Call | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async createCall(call: InsertCall): Promise<Call> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async updateCallStatus(id: string, status: string): Promise<Call | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
+
+  async endCall(id: string, duration: number): Promise<Call | undefined> {
+    throw new Error("Communication not implemented in MemStorage");
+  }
 }
 
 export class DbStorage implements IStorage {
@@ -668,6 +747,121 @@ export class DbStorage implements IStorage {
 
   async updateCommissionConfigStatus(id: string, isActive: boolean): Promise<CommissionConfig | undefined> {
     throw new Error("DbStorage not implemented yet");
+  }
+
+  // Communication - Conversations
+  async getConversations(userId: string): Promise<Conversation[]> {
+    const result = await db.select()
+      .from(schema.conversations)
+      .where(
+        // Find conversations where user is in participants array
+        // Note: participants is jsonb, we need to check if userId is in the array
+        eq(schema.conversations.participants, userId)
+      );
+    return result;
+  }
+
+  async getConversationById(id: string): Promise<Conversation | undefined> {
+    const result = await db.select()
+      .from(schema.conversations)
+      .where(eq(schema.conversations.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const result = await db.insert(schema.conversations)
+      .values(conversation)
+      .returning();
+    return result[0];
+  }
+
+  async updateConversation(id: string, conversationData: Partial<InsertConversation>): Promise<Conversation | undefined> {
+    const result = await db.update(schema.conversations)
+      .set({ ...conversationData, updatedAt: new Date() })
+      .where(eq(schema.conversations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Communication - Messages
+  async getMessages(conversationId: string, limit: number = 100): Promise<Message[]> {
+    const result = await db.select()
+      .from(schema.messages)
+      .where(eq(schema.messages.conversationId, conversationId))
+      .orderBy(schema.messages.createdAt)
+      .limit(limit);
+    return result;
+  }
+
+  async getMessageById(id: string): Promise<Message | undefined> {
+    const result = await db.select()
+      .from(schema.messages)
+      .where(eq(schema.messages.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const result = await db.insert(schema.messages)
+      .values(message)
+      .returning();
+    return result[0];
+  }
+
+  async markMessageAsRead(id: string): Promise<Message | undefined> {
+    const result = await db.update(schema.messages)
+      .set({ isRead: true })
+      .where(eq(schema.messages.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Communication - Calls
+  async getCalls(userId: string): Promise<Call[]> {
+    const result = await db.select()
+      .from(schema.calls)
+      .where(or(
+        eq(schema.calls.initiatorId, userId),
+        eq(schema.calls.receiverId, userId)
+      ))
+      .orderBy(schema.calls.createdAt);
+    return result;
+  }
+
+  async getCallById(id: string): Promise<Call | undefined> {
+    const result = await db.select()
+      .from(schema.calls)
+      .where(eq(schema.calls.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createCall(call: InsertCall): Promise<Call> {
+    const result = await db.insert(schema.calls)
+      .values(call)
+      .returning();
+    return result[0];
+  }
+
+  async updateCallStatus(id: string, status: string): Promise<Call | undefined> {
+    const result = await db.update(schema.calls)
+      .set({ status: status as any })
+      .where(eq(schema.calls.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async endCall(id: string, duration: number): Promise<Call | undefined> {
+    const result = await db.update(schema.calls)
+      .set({ 
+        status: 'completed' as any, 
+        duration,
+        endedAt: new Date()
+      })
+      .where(eq(schema.calls.id, id))
+      .returning();
+    return result[0];
   }
 }
 
