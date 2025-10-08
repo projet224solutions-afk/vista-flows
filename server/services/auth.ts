@@ -54,9 +54,9 @@ async function autoSetupUser(userId: string, email: string, firstName?: string, 
     cardholderName,
     expiryDate,
     cvv: generateCVV(),
-    balance: '10000',
-    currency: 'XAF',
-    isActive: true
+    isActive: true,
+    dailyLimit: '500000',
+    monthlyLimit: '2000000'
   });
 }
 

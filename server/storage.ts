@@ -10,7 +10,7 @@ import type {
   CommissionConfig, InsertCommissionConfig
 } from "../shared/schema.js";
 import { db } from './db.js';
-import { eq, or } from 'drizzle-orm';
+import { eq, or, sql } from 'drizzle-orm';
 import * as schema from '../shared/schema.js';
 import type { 
   Conversation, InsertConversation,
@@ -37,9 +37,9 @@ type VirtualCard = {
   cardholderName: string;
   expiryDate: Date;
   cvv: string;
-  balance: string;
-  currency: string;
   isActive: boolean | null;
+  dailyLimit: string | null;
+  monthlyLimit: string | null;
   createdAt: Date | null;
 };
 
@@ -49,9 +49,9 @@ type InsertVirtualCard = {
   cardholderName: string;
   expiryDate: Date;
   cvv: string;
-  balance: string;
-  currency: string;
-  isActive: boolean;
+  isActive?: boolean;
+  dailyLimit?: string;
+  monthlyLimit?: string;
 };
 
 export interface IStorage {
@@ -235,9 +235,9 @@ export class MemStorage implements IStorage {
       cardholderName: card.cardholderName,
       expiryDate: card.expiryDate,
       cvv: card.cvv,
-      balance: card.balance,
-      currency: card.currency,
-      isActive: card.isActive,
+      isActive: card.isActive ?? true,
+      dailyLimit: card.dailyLimit ?? '500000',
+      monthlyLimit: card.monthlyLimit ?? '2000000',
       createdAt: new Date()
     };
     this.virtualCards.set(id, newCard);
@@ -594,7 +594,10 @@ export class DbStorage implements IStorage {
   }
 
   async createUserId(data: InsertUserId): Promise<UserId> {
-    throw new Error("DbStorage.createUserId not implemented yet");
+    const result = await db.insert(schema.userIds)
+      .values(data)
+      .returning();
+    return result[0];
   }
 
   async getWalletByUserId(userId: string): Promise<Wallet | undefined> {
@@ -627,67 +630,133 @@ export class DbStorage implements IStorage {
   }
 
   async createVirtualCard(card: InsertVirtualCard): Promise<VirtualCard> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.virtualCards)
+      .values(card)
+      .returning();
+    return result[0];
   }
 
   async getVendors(): Promise<Vendor[]> {
-    throw new Error("DbStorage not implemented yet");
+    return await db.select()
+      .from(schema.vendors);
   }
 
   async getVendorById(id: string): Promise<Vendor | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.vendors)
+      .where(eq(schema.vendors.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async getVendorByUserId(userId: string): Promise<Vendor | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.vendors)
+      .where(eq(schema.vendors.userId, userId))
+      .limit(1);
+    return result[0];
   }
 
   async createVendor(vendor: InsertVendor): Promise<Vendor> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.vendors)
+      .values(vendor)
+      .returning();
+    return result[0];
   }
 
   async getProducts(vendorId?: string): Promise<Product[]> {
-    throw new Error("DbStorage not implemented yet");
+    if (vendorId) {
+      return await db.select()
+        .from(schema.products)
+        .where(eq(schema.products.vendorId, vendorId));
+    }
+    return await db.select().from(schema.products);
   }
 
   async getProductById(id: string): Promise<Product | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.products)
+      .where(eq(schema.products.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.products)
+      .values(product)
+      .returning();
+    return result[0];
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.products)
+      .set({ ...product, updatedAt: new Date() })
+      .where(eq(schema.products.id, id))
+      .returning();
+    return result[0];
   }
 
   async getOrders(vendorId?: string, customerId?: string): Promise<Order[]> {
-    throw new Error("DbStorage not implemented yet");
+    let query = db.select().from(schema.orders);
+    
+    if (vendorId && customerId) {
+      return await query.where(
+        or(
+          eq(schema.orders.vendorId, vendorId),
+          eq(schema.orders.customerId, customerId)
+        )
+      );
+    } else if (vendorId) {
+      return await query.where(eq(schema.orders.vendorId, vendorId));
+    } else if (customerId) {
+      return await query.where(eq(schema.orders.customerId, customerId));
+    }
+    
+    return await query;
   }
 
   async getOrderById(id: string): Promise<Order | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.select()
+      .from(schema.orders)
+      .where(eq(schema.orders.id, id))
+      .limit(1);
+    return result[0];
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.orders)
+      .values(order)
+      .returning();
+    return result[0];
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.orders)
+      .set({ status: status as any, updatedAt: new Date() })
+      .where(eq(schema.orders.id, id))
+      .returning();
+    return result[0];
   }
 
   async updateOrderPaymentStatus(id: string, paymentStatus: string): Promise<Order | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.orders)
+      .set({ paymentStatus: paymentStatus as any, updatedAt: new Date() })
+      .where(eq(schema.orders.id, id))
+      .returning();
+    return result[0];
   }
 
   async getOrderItems(orderId: string): Promise<OrderItem[]> {
-    throw new Error("DbStorage not implemented yet");
+    return await db.select()
+      .from(schema.orderItems)
+      .where(eq(schema.orderItems.orderId, orderId));
   }
 
   async createOrderItem(orderId: string, item: InsertOrderItem): Promise<OrderItem> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.orderItems)
+      .values({ ...item, orderId })
+      .returning();
+    return result[0];
   }
 
   async getTransactionsByUserId(userId: string): Promise<EnhancedTransaction[]> {
@@ -726,27 +795,49 @@ export class DbStorage implements IStorage {
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.auditLogs)
+      .values(log)
+      .returning();
+    return result[0];
   }
 
-  async getAuditLogs(actorId?: string, limit?: number): Promise<AuditLog[]> {
-    throw new Error("DbStorage not implemented yet");
+  async getAuditLogs(actorId?: string, limit: number = 100): Promise<AuditLog[]> {
+    if (actorId) {
+      return await db.select()
+        .from(schema.auditLogs)
+        .where(eq(schema.auditLogs.actorId, actorId))
+        .orderBy(schema.auditLogs.createdAt)
+        .limit(limit);
+    }
+    return await db.select()
+      .from(schema.auditLogs)
+      .orderBy(schema.auditLogs.createdAt)
+      .limit(limit);
   }
 
   async getCommissionConfigs(): Promise<CommissionConfig[]> {
-    throw new Error("DbStorage not implemented yet");
+    return await db.select().from(schema.commissionConfig);
   }
 
   async getActiveCommissionConfigs(): Promise<CommissionConfig[]> {
-    throw new Error("DbStorage not implemented yet");
+    return await db.select()
+      .from(schema.commissionConfig)
+      .where(eq(schema.commissionConfig.isActive, true));
   }
 
   async createCommissionConfig(config: InsertCommissionConfig): Promise<CommissionConfig> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.insert(schema.commissionConfig)
+      .values(config)
+      .returning();
+    return result[0];
   }
 
   async updateCommissionConfigStatus(id: string, isActive: boolean): Promise<CommissionConfig | undefined> {
-    throw new Error("DbStorage not implemented yet");
+    const result = await db.update(schema.commissionConfig)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(schema.commissionConfig.id, id))
+      .returning();
+    return result[0];
   }
 
   // Communication - Conversations
@@ -754,9 +845,8 @@ export class DbStorage implements IStorage {
     const result = await db.select()
       .from(schema.conversations)
       .where(
-        // Find conversations where user is in participants array
-        // Note: participants is jsonb, we need to check if userId is in the array
-        eq(schema.conversations.participants, userId)
+        // Find conversations where user is in participants jsonb array
+        sql`${schema.conversations.participants}::jsonb ? ${userId}`
       );
     return result;
   }
