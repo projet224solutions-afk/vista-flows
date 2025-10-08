@@ -431,7 +431,7 @@ export class GeolocationService {
     public async getAddressFromCoordinates(position: Position): Promise<string> {
         try {
             const response = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${position.longitude},${position.latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${position.longitude},${position.latitude}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
             );
 
             if (!response.ok) {
@@ -452,7 +452,7 @@ export class GeolocationService {
     public async getCoordinatesFromAddress(address: string): Promise<Position | null> {
         try {
             const response = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`
             );
 
             if (!response.ok) {

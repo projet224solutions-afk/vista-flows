@@ -22,6 +22,7 @@ import {
     MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { mapService } from "@/services/mapService";
 
 interface LocationCoordinates {
     latitude: number;
@@ -61,27 +62,72 @@ export default function TaxiMotoTracking({
     const [estimatedArrival, setEstimatedArrival] = useState<string>('');
     const [rideProgress, setRideProgress] = useState(0);
 
-    // Simuler la mise à jour de la position du conducteur
+    // Calculer l'itinéraire avec Mapbox et mise à jour position conducteur
     useEffect(() => {
-        if (currentRide && currentRide.status !== 'pending') {
+        if (currentRide && currentRide.status !== 'pending' && userLocation) {
+            // Simuler position destination (en production, vient de currentRide)
+            const destination = {
+                latitude: 14.7237, // Exemple Conakry
+                longitude: -17.4541
+            };
+
+            // Calculer route réelle avec Mapbox
+            const calculateRealRoute = async () => {
+                try {
+                    const route = await mapService.calculateRoute(
+                        { 
+                            latitude: userLocation.latitude, 
+                            longitude: userLocation.longitude 
+                        },
+                        destination
+                    );
+
+                    // Mettre à jour l'estimation d'arrivée réelle
+                    setEstimatedArrival(`${Math.ceil(route.duration)} min`);
+                    
+                    // Initialiser position conducteur à partir de la route
+                    if (route.coordinates.length > 0) {
+                        setDriverLocation({
+                            latitude: route.coordinates[0].latitude,
+                            longitude: route.coordinates[0].longitude
+                        });
+                    }
+                } catch (error) {
+                    console.error('Route calculation error:', error);
+                    // Fallback position si Mapbox échoue
+                    setDriverLocation({
+                        latitude: 14.6937,
+                        longitude: -17.4441
+                    });
+                    setEstimatedArrival('10 min');
+                }
+            };
+
+            calculateRealRoute();
+
+            // Simuler mouvement progressif du conducteur (en production: WebSocket)
             const interval = setInterval(() => {
-                // Simuler le mouvement du conducteur
-                setDriverLocation({
-                    latitude: 14.6937 + (Math.random() - 0.5) * 0.01,
-                    longitude: -17.4441 + (Math.random() - 0.5) * 0.01
+                // Progression basée sur route réelle (simplifié)
+                setDriverLocation(prev => {
+                    if (!prev) return { latitude: 14.6937, longitude: -17.4441 };
+                    
+                    // Déplacement vers destination (interpolation simplifiée)
+                    const latDiff = (destination.latitude - prev.latitude) * 0.1;
+                    const lngDiff = (destination.longitude - prev.longitude) * 0.1;
+                    
+                    return {
+                        latitude: prev.latitude + latDiff,
+                        longitude: prev.longitude + lngDiff
+                    };
                 });
 
-                // Mettre à jour l'estimation d'arrivée
-                const minutes = Math.max(1, Math.floor(Math.random() * 15));
-                setEstimatedArrival(`${minutes} min`);
-
-                // Simuler la progression
-                setRideProgress(prev => Math.min(100, prev + Math.random() * 5));
+                // Mise à jour progression
+                setRideProgress(prev => Math.min(100, prev + 5));
             }, 3000);
 
             return () => clearInterval(interval);
         }
-    }, [currentRide]);
+    }, [currentRide, userLocation]);
 
     /**
      * Partage le trajet avec un proche

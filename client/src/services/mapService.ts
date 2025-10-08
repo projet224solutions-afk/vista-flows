@@ -1,5 +1,5 @@
 // Service de gestion des cartes (Maps) pour 224Solutions
-// Version simplifiée avec calculs de base
+// Intégration Mapbox API pour géolocalisation et routing
 
 export interface Location {
   latitude: number;
@@ -19,6 +19,12 @@ export interface GeocodeResult {
 }
 
 class MapService {
+  private mapboxToken: string;
+
+  constructor() {
+    this.mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+  }
+
   // Calculer la distance entre deux points (formule de Haversine)
   calculateDistance(point1: Location, point2: Location): number {
     const R = 6371; // Rayon de la Terre en km
@@ -62,29 +68,140 @@ class MapService {
     });
   }
 
-  // Calculer un itinéraire simple (simulation)
+  // Calculer un itinéraire avec Mapbox Directions API
   async calculateRoute(start: Location, end: Location): Promise<Route> {
-    const distance = this.calculateDistance(start, end);
-    const duration = distance * 3; // Estimation: 3 minutes par km
-    
-    return {
-      distance,
-      duration,
-      coordinates: [start, end]
-    };
+    if (!this.mapboxToken) {
+      console.warn('Mapbox token missing, using fallback calculation');
+      const distance = this.calculateDistance(start, end);
+      const duration = distance * 3; // Estimation: 3 minutes par km
+      
+      return {
+        distance,
+        duration,
+        coordinates: [start, end]
+      };
+    }
+
+    try {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${this.mapboxToken}`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Mapbox Directions API error');
+      }
+
+      const data = await response.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        
+        // Convertir les coordonnées GeoJSON en format Location
+        const coordinates: Location[] = route.geometry.coordinates.map((coord: number[]) => ({
+          longitude: coord[0],
+          latitude: coord[1]
+        }));
+
+        return {
+          distance: route.distance / 1000, // Convertir mètres en km
+          duration: route.duration / 60,   // Convertir secondes en minutes
+          coordinates
+        };
+      }
+
+      throw new Error('No routes found');
+    } catch (error) {
+      console.error('Mapbox routing error:', error);
+      
+      // Fallback to simple calculation
+      const distance = this.calculateDistance(start, end);
+      const duration = distance * 3;
+      
+      return {
+        distance,
+        duration,
+        coordinates: [start, end]
+      };
+    }
   }
 
-  // Géocode une adresse (stub pour compatibilité)
+  // Géocode une adresse avec Mapbox Geocoding API
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
-    return [{
-      address: address,
-      coordinates: { latitude: 0, longitude: 0 }
-    }];
+    if (!this.mapboxToken) {
+      console.warn('Mapbox token missing, returning empty geocoding result');
+      return [{
+        address: address,
+        coordinates: { latitude: 0, longitude: 0 }
+      }];
+    }
+
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${this.mapboxToken}&limit=5`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Mapbox Geocoding API error');
+      }
+
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        return data.features.map((feature: any) => ({
+          address: feature.place_name,
+          coordinates: {
+            latitude: feature.center[1],
+            longitude: feature.center[0]
+          }
+        }));
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Mapbox geocoding error:', error);
+      return [{
+        address: address,
+        coordinates: { latitude: 0, longitude: 0 }
+      }];
+    }
+  }
+
+  // Géocode inverse (coordonnées -> adresse)
+  async reverseGeocode(location: Location): Promise<string> {
+    if (!this.mapboxToken) {
+      return `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+    }
+
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json?access_token=${this.mapboxToken}`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Mapbox Reverse Geocoding API error');
+      }
+
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name;
+      }
+
+      return `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+    } catch (error) {
+      console.error('Mapbox reverse geocoding error:', error);
+      return `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+    }
   }
 
   // Obtenir un itinéraire (alias de calculateRoute)
   async getRoute(origin: Location, destination: Location): Promise<Route> {
     return this.calculateRoute(origin, destination);
+  }
+
+  // Vérifier si Mapbox est configuré
+  isMapboxConfigured(): boolean {
+    return !!this.mapboxToken;
   }
 }
 
