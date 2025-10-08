@@ -3,7 +3,15 @@ import bcrypt from 'bcrypt';
 import { storage } from '../storage.js';
 import type { InsertProfile, Profile } from '../../shared/schema.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+// SÉCURITÉ: Forcer JWT secret en production
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('CRITICAL: JWT_SECRET must be set in production environment');
+}
+
+// Fallback seulement en développement
+const SECRET_KEY = JWT_SECRET || 'dev-secret-key-ONLY-FOR-DEVELOPMENT';
 const JWT_EXPIRY = '7d';
 const SALT_ROUNDS = 10;
 
@@ -93,7 +101,7 @@ export const authService = {
     
     await autoSetupUser(profile.id, profile.email, data.firstName, data.lastName);
     
-    const token = jwt.sign({ userId: profile.id, email: profile.email }, JWT_SECRET, {
+    const token = jwt.sign({ userId: profile.id, email: profile.email }, SECRET_KEY, {
       expiresIn: JWT_EXPIRY
     });
     
@@ -118,7 +126,7 @@ export const authService = {
       throw new Error('Account is inactive');
     }
     
-    const token = jwt.sign({ userId: profile.id, email: profile.email }, JWT_SECRET, {
+    const token = jwt.sign({ userId: profile.id, email: profile.email }, SECRET_KEY, {
       expiresIn: JWT_EXPIRY
     });
     
@@ -130,7 +138,7 @@ export const authService = {
 
   verifyToken(token: string): { userId: string; email: string } {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+      const decoded = jwt.verify(token, SECRET_KEY) as { userId: string; email: string };
       return decoded;
     } catch (error) {
       throw new Error('Invalid or expired token');

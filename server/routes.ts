@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "./storage.js";
 import { authService, removePassword } from "./services/auth.js";
 import { requireAuth, type AuthRequest } from "./middleware/auth.js";
+import { authLimiter, apiLimiter, paymentLimiter } from "./middleware/rateLimiter.js";
 import { agoraService } from "./services/agora.js";
 import { TransactionFeeService } from "./services/transactionFees.js";
 import { BadgeGeneratorService } from "./services/badgeGenerator.js";
@@ -31,7 +32,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const validated = loginSchema.parse(req.body);
       const result = await authService.login(validated.email, validated.password);
@@ -108,12 +109,20 @@ export function registerRoutes(app: Express) {
   });
 
   // ===== WALLETS =====
-  app.get("/api/wallets/user/:userId", async (req, res) => {
+  app.get("/api/wallets/user/:userId", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
+    // SÉCURITÉ: Vérifier que l'utilisateur demande ses propres wallets
+    if (req.params.userId !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: Access denied' });
+    }
     const wallets = await storage.getWalletsByUserId(req.params.userId);
     res.json(wallets);
   });
 
-  app.get("/api/wallets/:userId/primary", async (req, res) => {
+  app.get("/api/wallets/:userId/primary", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
+    // SÉCURITÉ: Vérifier que l'utilisateur demande son propre wallet
+    if (req.params.userId !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: Access denied' });
+    }
     const wallet = await storage.getWalletByUserId(req.params.userId);
     if (!wallet) {
       return res.status(404).json({ error: "Wallet not found" });
@@ -121,7 +130,7 @@ export function registerRoutes(app: Express) {
     res.json(wallet);
   });
 
-  app.post("/api/wallets", async (req, res) => {
+  app.post("/api/wallets", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertWalletSchema.parse(req.body);
       const wallet = await storage.createWallet(validated);
@@ -493,7 +502,7 @@ export function registerRoutes(app: Express) {
     res.json(vendor);
   });
 
-  app.post("/api/vendors", async (req, res) => {
+  app.post("/api/vendors", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertVendorSchema.parse(req.body);
       const vendor = await storage.createVendor(validated);
@@ -518,7 +527,7 @@ export function registerRoutes(app: Express) {
     res.json(product);
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(validated);
@@ -528,7 +537,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/products/:id", async (req, res) => {
+  app.patch("/api/products/:id", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = updateProductSchema.parse(req.body);
       const product = await storage.updateProduct(req.params.id, validated);
@@ -557,7 +566,7 @@ export function registerRoutes(app: Express) {
     res.json(order);
   });
 
-  app.post("/api/orders", async (req, res) => {
+  app.post("/api/orders", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(validated);
@@ -567,7 +576,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/orders/:id/status", async (req, res) => {
+  app.patch("/api/orders/:id/status", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = updateOrderStatusSchema.parse(req.body);
       const order = await storage.updateOrderStatus(req.params.id, validated.status);
@@ -580,7 +589,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/orders/:id/payment", async (req, res) => {
+  app.patch("/api/orders/:id/payment", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = updateOrderPaymentStatusSchema.parse(req.body);
       const order = await storage.updateOrderPaymentStatus(req.params.id, validated.paymentStatus);
@@ -599,7 +608,7 @@ export function registerRoutes(app: Express) {
     res.json(items);
   });
 
-  app.post("/api/orders/:orderId/items", async (req, res) => {
+  app.post("/api/orders/:orderId/items", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertOrderItemSchema.parse(req.body);
       const item = await storage.createOrderItem(req.params.orderId, validated);
@@ -610,20 +619,28 @@ export function registerRoutes(app: Express) {
   });
 
   // ===== TRANSACTIONS =====
-  app.get("/api/transactions/user/:userId", async (req, res) => {
+  app.get("/api/transactions/user/:userId", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
+    // SÉCURITÉ: Vérifier que l'utilisateur demande ses propres transactions
+    if (req.params.userId !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: Access denied' });
+    }
     const transactions = await storage.getTransactionsByUserId(req.params.userId);
     res.json(transactions);
   });
 
-  app.get("/api/transactions/:id", async (req, res) => {
+  app.get("/api/transactions/:id", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     const transaction = await storage.getTransactionById(req.params.id);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
+    // SÉCURITÉ: Vérifier que l'utilisateur est sender ou receiver
+    if (transaction.senderId !== req.userId && transaction.receiverId !== req.userId) {
+      return res.status(403).json({ error: 'Forbidden: Access denied' });
+    }
     res.json(transaction);
   });
 
-  app.post("/api/transactions", async (req, res) => {
+  app.post("/api/transactions", requireAuth, paymentLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertEnhancedTransactionSchema.parse(req.body);
       const transaction = await storage.createTransaction(validated);
@@ -633,7 +650,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/transactions/:id/status", async (req, res) => {
+  app.patch("/api/transactions/:id/status", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = updateTransactionStatusSchema.parse(req.body);
       const transaction = await storage.updateTransactionStatus(req.params.id, validated.status);
@@ -654,7 +671,7 @@ export function registerRoutes(app: Express) {
     res.json(logs);
   });
 
-  app.post("/api/audit-logs", async (req, res) => {
+  app.post("/api/audit-logs", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertAuditLogSchema.parse(req.body);
       const log = await storage.createAuditLog(validated);
@@ -675,7 +692,7 @@ export function registerRoutes(app: Express) {
     res.json(configs);
   });
 
-  app.post("/api/commission-config", async (req, res) => {
+  app.post("/api/commission-config", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = insertCommissionConfigSchema.parse(req.body);
       const config = await storage.createCommissionConfig(validated);
@@ -685,7 +702,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/commission-config/:id/status", async (req, res) => {
+  app.patch("/api/commission-config/:id/status", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = updateCommissionStatusSchema.parse(req.body);
       const config = await storage.updateCommissionConfigStatus(req.params.id, validated.isActive);
@@ -1125,7 +1142,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/badges/verify", async (req, res) => {
+  app.post("/api/badges/verify", requireAuth, apiLimiter, async (req: AuthRequest, res) => {
     try {
       const validated = verifyBadgeSchema.parse(req.body);
       const result = await BadgeGeneratorService.verifyBadge(validated.badgeData);
