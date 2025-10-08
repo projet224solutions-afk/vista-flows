@@ -100,7 +100,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
 
                 for (const table of tables) {
                     const { error } = await supabase
-                        .from(table)
+                        .from(table as any)
                         .select('id')
                         .limit(1);
 
@@ -204,7 +204,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                         .from('vendors')
                         .insert({
                             user_id: user.id,
-                            business_name: profile?.full_name || 'Entreprise',
+                            business_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Entreprise',
                             business_type: 'retail',
                             status: 'active'
                         });

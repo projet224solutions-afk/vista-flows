@@ -316,9 +316,9 @@ export default function OfflineSyncPanel() {
                                                 <span className="capitalize">{type}</span>
                                             </div>
                                             <div className="flex gap-2 text-sm">
-                                                <span className="text-yellow-600">{stats.pending}</span>
-                                                <span className="text-green-600">{stats.synced}</span>
-                                                <span className="text-red-600">{stats.failed}</span>
+                                                <span className="text-yellow-600">{(stats as any)?.pending || 0}</span>
+                                                <span className="text-green-600">{(stats as any)?.synced || 0}</span>
+                                                <span className="text-red-600">{(stats as any)?.failed || 0}</span>
                                             </div>
                                         </div>
                                     ))}

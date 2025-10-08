@@ -26,7 +26,11 @@ import {
     Search,
     Loader2,
     TrendingUp,
-    TrendingDown,
+    FileText,
+    XCircle,
+    Info,
+    Download,
+    Phone,
     Activity
 } from 'lucide-react';
 import { toast } from 'sonner';

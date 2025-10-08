@@ -13,6 +13,7 @@ import { MapPin, Package, Clock, DollarSign, Navigation } from 'lucide-react';
 import useGeolocation from '../../hooks/useGeolocation';
 import DeliveryMap from './DeliveryMap';
 import { Position } from '../../services/geolocation/GeolocationService';
+import GeolocationService from '../../services/geolocation/GeolocationService';
 import { DeliveryService } from '../../services/delivery/DeliveryService';
 
 interface DeliveryRequestFormProps {
@@ -35,28 +36,35 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
     const [estimatedTime, setEstimatedTime] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const {
-        position: currentPosition,
-        getCurrentPosition,
-        getAddressFromCoordinates,
-        getCoordinatesFromAddress,
-        calculateDistance,
-        error: geolocationError
-    } = useGeolocation();
-
+    const geolocation = useGeolocation();
     const deliveryService = DeliveryService.getInstance();
 
     // Obtenir la position actuelle au chargement
     useEffect(() => {
-        getCurrentPosition().then((pos) => {
+        geolocation.getCurrentLocation().then((loc) => {
+            const pos = { latitude: loc.latitude, longitude: loc.longitude, timestamp: loc.timestamp };
             setPickupPosition(pos);
-            getAddressFromCoordinates(pos).then((address) => {
-                setPickupAddress(address);
-            });
         }).catch((error) => {
             console.error('Erreur géolocalisation:', error);
         });
     }, []);
+
+    // Calculer distance et prix
+    const calculatePriceAndTime = () => {
+        if (pickupPosition && deliveryPosition) {
+            const distance = GeolocationService.getInstance().calculateDistance(pickupPosition, deliveryPosition);
+            const distanceKm = distance / 1000;
+            
+            const basePrice = 5000;
+            const pricePerKm = 1000;
+            const price = Math.round(basePrice + (distanceKm * pricePerKm));
+            
+            const time = Math.ceil(distanceKm * 3);
+            
+            setEstimatedPrice(price);
+            setEstimatedTime(time);
+        }
+    };
 
     // Calculer les estimations quand les positions changent
     useEffect(() => {

@@ -37,10 +37,12 @@ export class NotificationService {
 
       // Envoyer l'email via Supabase Edge Functions ou service externe
       const { error: emailError } = await supabase.functions.invoke('send-email', {
-        to: user.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text
+        body: {
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text
+        }
       });
 
       if (emailError) {
@@ -75,13 +77,15 @@ export class NotificationService {
 
       // Envoyer la notification push via Supabase Edge Functions
       const { error: pushError } = await supabase.functions.invoke('send-push', {
-        tokens: pushTokens,
-        title: data.title,
-        body: data.message,
-        data: {
-          type: data.type,
-          payment_link_id: data.payment_link_id,
-          ...data.metadata
+        body: {
+          tokens: pushTokens,
+          title: data.title,
+          body: data.message,
+          data: {
+            type: data.type,
+            payment_link_id: data.payment_link_id,
+            ...data.metadata
+          }
         }
       });
 

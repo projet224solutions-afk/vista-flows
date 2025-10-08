@@ -51,12 +51,8 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     const [feeAmount, setFeeAmount] = useState(0);
     const [totalAmount, setTotalAmount] = useState(0);
 
-    const {
-        position: currentPosition,
-        getCurrentPosition,
-        getAddressFromCoordinates,
-        getCoordinatesFromAddress
-    } = useGeolocation();
+    const geolocation = useGeolocation();
+    const escrowService = EscrowService.getInstance();
 
     const escrowService = EscrowService.getInstance();
 

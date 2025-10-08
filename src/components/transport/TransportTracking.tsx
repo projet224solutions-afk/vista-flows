@@ -25,7 +25,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 }) => {
   const [request, setRequest] = useState<TransportRequest | null>(null);
   const [transportUser, setTransportUser] = useState<TransportUser | null>(null);
-  const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number; timestamp: number } | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [estimatedArrival, setEstimatedArrival] = useState(0);
@@ -80,15 +80,17 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       const position = await geolocationService.getCurrentPosition();
       setCurrentPosition({
         lat: position.latitude,
-        lng: position.longitude
+        lng: position.longitude,
+        timestamp: position.timestamp
       });
 
       // Démarrer le suivi de position
-      const watchId = geolocationService.watchPosition(
+      const watchId = navigator.geolocation.watchPosition(
         (newPosition) => {
           setCurrentPosition({
-            lat: newPosition.latitude,
-            lng: newPosition.longitude
+            lat: newPosition.coords.latitude,
+            lng: newPosition.coords.longitude,
+            timestamp: Date.now()
           });
           updateProgress();
         },
@@ -125,8 +127,14 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         request.deliveryPosition
       );
       
+      const pos1 = currentPosition ? {
+        latitude: currentPosition.lat,
+        longitude: currentPosition.lng,
+        timestamp: currentPosition.timestamp || Date.now()
+      } : request.pickupPosition;
+      
       const currentDistance = geolocationService.calculateDistance(
-        currentPosition,
+        pos1,
         request.deliveryPosition
       );
       
@@ -164,9 +172,15 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
     try {
       setIsLoading(true);
       
+      const proofPos = currentPosition ? {
+        latitude: currentPosition.lat,
+        longitude: currentPosition.lng,
+        timestamp: currentPosition.timestamp || Date.now()
+      } : undefined;
+      
       const proofOfDelivery = {
         photo: proofPhoto,
-        coordinates: currentPosition,
+        coordinates: proofPos,
         clientSignature: 'signature_client_' + Date.now()
       };
       

@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import { isMobile, isAndroid, isIOS, isDesktop } from 'react-device-detect';
 
 export interface InstallPromptEvent extends Event {
@@ -16,163 +15,100 @@ export interface InstallPromptEvent extends Event {
 export interface PWAInstallState {
     isInstallable: boolean;
     isInstalled: boolean;
-    deviceType: 'android' | 'ios' | 'desktop' | 'unknown';
-    installPrompt: InstallPromptEvent | null;
-    showInstallBanner: boolean;
+    deferredPrompt: InstallPromptEvent | null;
 }
 
 export function usePWAInstall() {
-    const [installState, setInstallState] = useState<PWAInstallState>({
-        isInstallable: false,
-        isInstalled: false,
-        deviceType: 'unknown',
-        installPrompt: null,
-        showInstallBanner: false
-    });
+    const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
+    const [isInstallable, setIsInstallable] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
 
-    const {
-        needRefresh: [needRefresh, setNeedRefresh],
-        updateServiceWorker,
-    } = useRegisterSW({
-        onRegistered(r) {
-            console.log('✅ Service Worker enregistré:', r);
-        },
-        onRegisterError(error) {
-            console.error('❌ Erreur enregistrement SW:', error);
-        },
-    });
-
+    // Détecte si l'app est déjà installée
     useEffect(() => {
-        // Détecter le type d'appareil
-        let deviceType: 'android' | 'ios' | 'desktop' | 'unknown' = 'unknown';
-        if (isAndroid) deviceType = 'android';
-        else if (isIOS) deviceType = 'ios';
-        else if (isDesktop) deviceType = 'desktop';
-
-        // Vérifier si l'app est déjà installée
-        const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-            (window.navigator as any).standalone === true;
-
-        setInstallState(prev => ({
-            ...prev,
-            deviceType,
-            isInstalled
-        }));
-
-        // Gérer l'événement beforeinstallprompt
-        const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            const promptEvent = e as InstallPromptEvent;
-
-            setInstallState(prev => ({
-                ...prev,
-                isInstallable: true,
-                installPrompt: promptEvent,
-                showInstallBanner: true
-            }));
+        const checkInstalled = () => {
+            // Mode standalone signifie que l'app est installée
+            const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+            const isInIosStandaloneMode = (window.navigator as any).standalone === true;
+            
+            setIsInstalled(isInStandaloneMode || isInIosStandaloneMode);
         };
 
-        // Gérer l'événement appinstalled
-        const handleAppInstalled = () => {
-            setInstallState(prev => ({
-                ...prev,
-                isInstalled: true,
-                showInstallBanner: false
-            }));
+        checkInstalled();
+    }, []);
+
+    // Écoute l'événement beforeinstallprompt
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            const event = e as InstallPromptEvent;
+            setDeferredPrompt(event);
+            setIsInstallable(true);
+            console.log('📱 PWA installable détecté');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        window.addEventListener('appinstalled', handleAppInstalled);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
 
-    const installApp = async () => {
-        if (!installState.installPrompt) {
-            // Pour iOS, afficher les instructions d'installation
-            if (installState.deviceType === 'ios') {
-                return showIOSInstallInstructions();
-            }
+    // Fonction pour déclencher l'installation
+    const promptInstall = async (): Promise<boolean> => {
+        if (!deferredPrompt) {
+            console.warn('❌ Aucune prompt d\'installation disponible');
             return false;
         }
 
         try {
-            await installState.installPrompt.prompt();
-            const { outcome } = await installState.installPrompt.userChoice;
-
-            if (outcome === 'accepted') {
-                setInstallState(prev => ({
-                    ...prev,
-                    showInstallBanner: false
-                }));
-                return true;
-            }
-            return false;
+            await deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            console.log(`✅ Installation ${outcome === 'accepted' ? 'acceptée' : 'refusée'}`);
+            
+            setDeferredPrompt(null);
+            setIsInstallable(false);
+            
+            return outcome === 'accepted';
         } catch (error) {
-            console.error('❌ Erreur installation:', error);
+            console.error('❌ Erreur lors de l\'installation:', error);
             return false;
         }
     };
 
-    const showIOSInstallInstructions = () => {
-        // Afficher les instructions pour iOS
-        const instructions = `
-📱 INSTALLATION SUR iOS
-
-1. Appuyez sur le bouton "Partager" (📤) en bas de l'écran
-2. Faites défiler et sélectionnez "Ajouter à l'écran d'accueil"
-3. Appuyez sur "Ajouter" pour installer l'application
-
-L'application sera alors disponible sur votre écran d'accueil !
-    `;
-
-        alert(instructions);
-        return true;
+    // Détecte le type de plateforme
+    const getPlatform = (): string => {
+        if (isIOS) return 'ios';
+        if (isAndroid) return 'android';
+        if (isDesktop) return 'desktop';
+        return 'unknown';
     };
 
-    const dismissInstallBanner = () => {
-        setInstallState(prev => ({
-            ...prev,
-            showInstallBanner: false
-        }));
-    };
-
-    const getInstallButtonText = () => {
-        switch (installState.deviceType) {
-            case 'android':
-                return '📱 Installer l\'application';
-            case 'ios':
-                return '📱 Ajouter à l\'écran d\'accueil';
-            case 'desktop':
-                return '💻 Installer l\'application';
-            default:
-                return '📱 Installer l\'application';
-        }
-    };
-
-    const getInstallInstructions = () => {
-        switch (installState.deviceType) {
-            case 'android':
-                return 'Appuyez sur "Installer" pour ajouter l\'application à votre écran d\'accueil';
-            case 'ios':
-                return 'Appuyez sur le bouton Partager (📤) puis "Ajouter à l\'écran d\'accueil"';
-            case 'desktop':
-                return 'Cliquez sur "Installer" pour ajouter l\'application à votre bureau';
-            default:
-                return 'Installez l\'application pour une meilleure expérience';
-        }
+    // Instructions spécifiques iOS (Safari)
+    const getIOSInstructions = () => {
+        return {
+            canInstall: isIOS && !isInstalled,
+            instructions: [
+                'Appuyez sur le bouton Partager',
+                'Sélectionnez "Sur l\'écran d\'accueil"',
+                'Appuyez sur "Ajouter"'
+            ]
+        };
     };
 
     return {
-        ...installState,
-        installApp,
-        dismissInstallBanner,
-        getInstallButtonText,
-        getInstallInstructions,
-        needRefresh,
-        updateServiceWorker
+        isInstallable,
+        isInstalled,
+        deferredPrompt,
+        promptInstall,
+        platform: getPlatform(),
+        isMobile,
+        isAndroid,
+        isIOS,
+        isDesktop,
+        iosInstructions: getIOSInstructions(),
+        canShowPrompt: isInstallable && !isInstalled && deferredPrompt !== null
     };
 }
+
+export default usePWAInstall;

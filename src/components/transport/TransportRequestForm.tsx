@@ -68,7 +68,9 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
 
   const calculatePriceAndTime = () => {
     if (pickupPosition && deliveryPosition) {
-      const distance = geolocationService.calculateDistance(pickupPosition, deliveryPosition);
+      const pos1 = { latitude: pickupPosition.lat, longitude: pickupPosition.lng, timestamp: Date.now() };
+      const pos2 = { latitude: deliveryPosition.lat, longitude: deliveryPosition.lng, timestamp: Date.now() };
+      const distance = geolocationService.calculateDistance(pos1, pos2);
       const distanceKm = distance / 1000;
       
       // Calcul du prix: 500 GNF de base + 100 GNF par km
@@ -101,12 +103,15 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
     setError(null);
 
     try {
+      const pos1 = { latitude: pickupPosition.lat, longitude: pickupPosition.lng, timestamp: Date.now() };
+      const pos2 = { latitude: deliveryPosition.lat, longitude: deliveryPosition.lng, timestamp: Date.now() };
+      
       const request = await transportService.createTransportRequest(
         'current_user_id', // À remplacer par l'ID utilisateur réel
         pickupAddress,
         deliveryAddress,
-        pickupPosition,
-        deliveryPosition,
+        pos1,
+        pos2,
         notes
       );
 

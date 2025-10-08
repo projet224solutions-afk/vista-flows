@@ -27,7 +27,7 @@ import {
     LogOut
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocationWatcher } from "@/hooks/useGeolocation";
+import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 
 interface RideRequest {
@@ -67,7 +67,7 @@ interface ActiveRide {
 
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
-    const { location, isWatching, startWatching, stopWatching } = useLocationWatcher();
+    const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
 
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -102,16 +102,16 @@ export default function TaxiMotoDriver() {
      * Démarre le suivi de position
      */
     const startLocationTracking = () => {
-        startWatching();
+        const watchId = watchLocation();
         // En production: envoyer la position au serveur en temps réel
-        console.log('📍 Suivi de position activé');
+        console.log('📍 Suivi de position activé', watchId);
     };
 
     /**
      * Arrête le suivi de position
      */
-    const stopLocationTracking = () => {
-        stopWatching();
+    const stopLocationTracking = (watchId: number) => {
+        stopWatching(watchId);
         console.log('📍 Suivi de position désactivé');
     };
 
