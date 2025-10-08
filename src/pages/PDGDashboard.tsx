@@ -77,6 +77,7 @@ import { toast } from "sonner";
 import SyndicateBureauManagementPro from "@/components/syndicate/SyndicateBureauManagementPro";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 import CopilotTest from "@/components/CopilotTest";
+import MotoSecurityDashboard from "@/components/security/MotoSecurityDashboard";
 import AgentManagementDashboard from "@/components/agent-system/AgentManagementDashboard";
 import SecurityDashboard from "@/components/security/SecurityDashboard";
 import CommunicationModule from "@/components/communication/CommunicationModule";
@@ -1072,7 +1073,10 @@ export default function PDGDashboard() {
 
           {/* Sécurité et Monitoring */}
           <TabsContent value="security" className="space-y-6">
-            <SecurityDashboard />
+            <MotoSecurityDashboard 
+              isPDG={true}
+              className="w-full"
+            />
           </TabsContent>
 
           {/* Système */}
