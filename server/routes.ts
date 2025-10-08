@@ -1912,25 +1912,25 @@ export function registerRoutes(app: Express) {
     try {
       const validated = createDeliveryRequestSchema.parse(req.body);
       
-      // TODO: Créer dans delivery_requests table via storage
-      // Pour l'instant, retourne une réponse simulée
-      const deliveryId = `delivery_${Date.now()}`;
+      // Validate userId authorization
+      if (validated.clientId !== req.userId) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Unauthorized: Cannot create delivery for another user' 
+        });
+      }
+      
+      const delivery = await storage.createDeliveryRequest({
+        ...validated,
+        price: validated.price?.toString(),
+        fees: validated.fees?.toString(),
+        totalPrice: validated.totalPrice?.toString(),
+        distance: validated.distance?.toString()
+      } as any);
       
       res.status(201).json({
         success: true,
-        delivery: {
-          id: deliveryId,
-          clientId: validated.clientId,
-          pickupAddress: validated.pickupAddress,
-          deliveryAddress: validated.deliveryAddress,
-          distance: validated.distance || 0,
-          estimatedTime: validated.estimatedTime || 0,
-          price: validated.price || 0,
-          fees: validated.fees || 0,
-          totalPrice: validated.totalPrice || 0,
-          status: 'pending',
-          createdAt: Date.now()
-        }
+        delivery
       });
     } catch (error: any) {
       res.status(400).json({
@@ -1942,13 +1942,26 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/delivery/request", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { userId, status, limit = 50, offset = 0 } = req.query;
+      const { role, type } = req.query as { role?: string; type?: string };
       
-      // TODO: Récupérer depuis delivery_requests table via storage
-      // Pour l'instant, retourne une liste vide
+      // Get user's profile to check role
+      const profile = await storage.getProfileById(req.userId!);
+      
+      let deliveries;
+      // Admin can see all, others only their own
+      if (profile?.role === 'admin') {
+        deliveries = await storage.getDeliveryRequests();
+      } else if (role === 'driver' || type === 'delivery' || profile?.role === 'livreur') {
+        // Delivery users see requests they're assigned to
+        deliveries = await storage.getDeliveryRequests(undefined, req.userId);
+      } else {
+        // Clients/others see only their own requests
+        deliveries = await storage.getDeliveryRequests(req.userId);
+      }
+      
       res.json({
         success: true,
-        deliveries: []
+        deliveries
       });
     } catch (error: any) {
       res.status(500).json({
@@ -1963,15 +1976,20 @@ export function registerRoutes(app: Express) {
       const { deliveryId } = req.params;
       const { deliveryUserId, deliveryUserName } = req.body;
       
-      // TODO: Mettre à jour DB
+      const updated = await storage.updateDeliveryRequest(deliveryId, {
+        status: 'accepted' as any,
+        deliveryUserId: deliveryUserId || req.userId,
+        deliveryUserName,
+        acceptedAt: new Date()
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ success: false, error: 'Delivery not found' });
+      }
+      
       res.json({
         success: true,
-        data: {
-          deliveryId,
-          status: 'accepted',
-          deliveryUserId,
-          acceptedAt: new Date().toISOString()
-        }
+        data: updated
       });
     } catch (error: any) {
       res.status(400).json({
@@ -1985,14 +2003,18 @@ export function registerRoutes(app: Express) {
     try {
       const { deliveryId } = req.params;
       
-      // TODO: Mettre à jour DB
+      const updated = await storage.updateDeliveryRequest(deliveryId, {
+        status: 'picked_up' as any,
+        pickedUpAt: new Date()
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ success: false, error: 'Delivery not found' });
+      }
+      
       res.json({
         success: true,
-        data: {
-          deliveryId,
-          status: 'picked_up',
-          pickedUpAt: new Date().toISOString()
-        }
+        data: updated
       });
     } catch (error: any) {
       res.status(400).json({
@@ -2006,14 +2028,18 @@ export function registerRoutes(app: Express) {
     try {
       const { deliveryId } = req.params;
       
-      // TODO: Mettre à jour DB
+      const updated = await storage.updateDeliveryRequest(deliveryId, {
+        status: 'delivered' as any,
+        deliveredAt: new Date()
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ success: false, error: 'Delivery not found' });
+      }
+      
       res.json({
         success: true,
-        data: {
-          deliveryId,
-          status: 'delivered',
-          deliveredAt: new Date().toISOString()
-        }
+        data: updated
       });
     } catch (error: any) {
       res.status(400).json({
@@ -2082,21 +2108,27 @@ export function registerRoutes(app: Express) {
     try {
       const validated = createEscrowInvoiceSchema.parse(req.body);
       
-      // TODO: Créer dans escrow_invoices table via storage
-      const invoiceId = `invoice_${Date.now()}`;
+      // Create escrow transaction with invoice data
+      const escrow = await storage.createEscrowTransaction({
+        clientId: req.userId!,
+        driverId: validated.driverId,
+        driverName: validated.driverName || '',
+        driverPhone: validated.driverPhone || '',
+        amount: validated.amount.toString(),
+        feePercent: (validated.feePercent || 5).toString(),
+        feeAmount: ((validated.amount * (validated.feePercent || 5)) / 100).toString(),
+        totalAmount: (validated.amount + (validated.amount * (validated.feePercent || 5)) / 100).toString(),
+        startLocation: validated.startLocation,
+        endLocation: validated.endLocation,
+        startCoordinates: validated.startCoordinates,
+        endCoordinates: validated.endCoordinates,
+        distance: validated.distance?.toString(),
+        duration: validated.duration
+      });
       
       res.status(201).json({
         success: true,
-        invoice: {
-          id: invoiceId,
-          driverId: validated.driverId,
-          amount: validated.amount,
-          feePercent: validated.feePercent || 5,
-          status: 'pending',
-          startLocation: validated.startLocation,
-          endLocation: validated.endLocation,
-          createdAt: new Date().toISOString()
-        }
+        invoice: escrow
       });
     } catch (error: any) {
       res.status(400).json({
@@ -2135,25 +2167,34 @@ export function registerRoutes(app: Express) {
     try {
       const validated = initiateEscrowSchema.parse(req.body);
       
-      // TODO: Créer dans escrow_transactions table via storage
-      // TODO: Bloquer les fonds dans le wallet
-      // TODO: Créer les notifications
+      // Validate userId authorization
+      if (validated.transaction.clientId !== req.userId) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Unauthorized: Cannot initiate escrow for another user' 
+        });
+      }
       
-      const transactionId = validated.transaction.id || `escrow_${Date.now()}`;
+      const escrow = await storage.createEscrowTransaction({
+        invoiceId: validated.transaction.invoiceId,
+        clientId: validated.transaction.clientId,
+        driverId: validated.transaction.driverId,
+        amount: validated.transaction.amount.toString(),
+        feePercent: validated.transaction.feePercent.toString(),
+        feeAmount: validated.transaction.feeAmount.toString(),
+        totalAmount: validated.transaction.totalAmount.toString(),
+        startLocation: validated.transaction.startLocation,
+        endLocation: validated.transaction.endLocation,
+        startCoordinates: validated.transaction.startCoordinates,
+        endCoordinates: validated.transaction.endCoordinates
+      });
+      
+      // TODO: Block funds in wallet
+      // TODO: Create notifications
       
       res.status(201).json({
         success: true,
-        transaction: {
-          id: transactionId,
-          invoiceId: validated.transaction.invoiceId,
-          clientId: validated.transaction.clientId,
-          driverId: validated.transaction.driverId,
-          amount: validated.transaction.amount,
-          totalAmount: validated.transaction.totalAmount,
-          status: 'pending',
-          paymentMethod: validated.paymentMethod,
-          createdAt: new Date().toISOString()
-        }
+        transaction: escrow
       });
     } catch (error: any) {
       res.status(400).json({
@@ -2188,13 +2229,21 @@ export function registerRoutes(app: Express) {
     res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
   });
 
-  // ===== NOTIFICATIONS (STUB - TABLE N'EXISTE PAS) =====
+  // ===== NOTIFICATIONS =====
   
   app.post("/api/notifications/send", requireAuth, async (req: AuthRequest, res) => {
     try {
-      // TODO: Implémenter quand table notifications sera créée
-      console.log('📬 Notification send (stub):', req.body);
-      res.json({ success: true, message: 'Notification queued (stub)' });
+      const { userId, type, title, message, data } = req.body;
+      
+      const notification = await storage.createNotification({
+        userId,
+        type: type || 'info',
+        title,
+        message,
+        data
+      });
+      
+      res.json({ success: true, notification });
     } catch (error: any) {
       res.status(500).json({ success: false, error: 'Failed to send notification' });
     }
@@ -2202,9 +2251,21 @@ export function registerRoutes(app: Express) {
 
   app.post("/api/notifications/push", requireAuth, async (req: AuthRequest, res) => {
     try {
-      // TODO: Implémenter quand table notifications sera créée
-      console.log('📱 Push notification (stub):', req.body);
-      res.json({ success: true, message: 'Push notification sent (stub)' });
+      const { userId, type, title, message, data } = req.body;
+      
+      // Create notification in DB
+      const notification = await storage.createNotification({
+        userId,
+        type: type || 'info',
+        title,
+        message,
+        data
+      });
+      
+      // TODO: Send actual push notification via FCM/etc
+      console.log('📱 Push notification queued:', notification.id);
+      
+      res.json({ success: true, notification });
     } catch (error: any) {
       res.status(500).json({ success: false, error: 'Failed to send push notification' });
     }
