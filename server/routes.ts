@@ -2187,4 +2187,38 @@ export function registerRoutes(app: Express) {
   app.get("/api/escrow/transactions/active", requireAuth, async (req: AuthRequest, res) => {
     res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
   });
+
+  // ===== NOTIFICATIONS (STUB - TABLE N'EXISTE PAS) =====
+  
+  app.post("/api/notifications/send", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // TODO: Implémenter quand table notifications sera créée
+      console.log('📬 Notification send (stub):', req.body);
+      res.json({ success: true, message: 'Notification queued (stub)' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: 'Failed to send notification' });
+    }
+  });
+
+  app.post("/api/notifications/push", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // TODO: Implémenter quand table notifications sera créée
+      console.log('📱 Push notification (stub):', req.body);
+      res.json({ success: true, message: 'Push notification sent (stub)' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: 'Failed to send push notification' });
+    }
+  });
+
+  // ===== WALLET CREDIT (DEPRECATED - USE /api/wallet/transfer) =====
+  // ⚠️ SECURITY: Cette route est dépréciée car elle permet de créditer sans audit
+  // Utiliser /api/wallet/transfer à la place
+  
+  app.post("/api/wallet/credit", requireAuth, async (req: AuthRequest, res) => {
+    res.status(410).json({ 
+      success: false, 
+      error: 'DEPRECATED: Use /api/wallet/transfer for secure audited transfers',
+      recommendation: 'POST /api/wallet/transfer with proper sender/receiver validation'
+    });
+  });
 }

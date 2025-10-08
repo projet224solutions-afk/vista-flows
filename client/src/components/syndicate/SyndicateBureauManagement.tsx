@@ -664,15 +664,23 @@ Copiez ces informations et envoyez-les par email au président.
 
         setBadgeLoading(true);
         try {
-            const response = await fetch('/api/generateBadge', {
+            // Utiliser la route Express /api/badges/create au lieu de l'ancien /api/generateBadge
+            const response = await fetch('/api/badges/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 },
                 body: JSON.stringify({
-                    bureau_id: selectedBureau?.id || bureaus[0]?.id,
-                    created_by: 'pdg', // À remplacer par l'ID utilisateur réel
-                    ...badgeForm
+                    driverId: `driver_${Date.now()}`,
+                    firstName: badgeForm.firstName,
+                    lastName: badgeForm.name,
+                    phone: badgeForm.phone,
+                    vehicleNumber: badgeForm.plate,
+                    vehicleType: 'moto_economique',
+                    syndicateId: selectedBureau?.id || bureaus[0]?.id,
+                    licenseNumber: badgeForm.serialNumber,
+                    photoUrl: badgeForm.photo || undefined
                 })
             });
 
@@ -681,15 +689,18 @@ Copiez ces informations et envoyez-les par email au président.
             }
 
             const result = await response.json();
-            setBadgeUrl(result.url);
+            
+            // Générer l'URL du SVG badge
+            const svgUrl = `/api/badges/${result.data.id}/svg`;
+            setBadgeUrl(svgUrl);
 
             toast.success('✅ Badge généré avec succès !', {
                 description: 'Le badge a été créé et sauvegardé',
                 duration: 5000,
                 action: {
-                    label: 'Télécharger',
+                    label: 'Voir',
                     onClick: () => {
-                        window.open(result.url, '_blank');
+                        window.open(svgUrl, '_blank');
                     }
                 }
             });
