@@ -25,34 +25,32 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Types pour l'authentification
+// Types pour l'authentification (custom JWT)
 export type User = {
   id: string;
   email?: string;
-  user_metadata?: {
-    first_name?: string;
-    last_name?: string;
-    role?: string;
-  };
+  firstName?: string;
+  lastName?: string;
+  role?: string;
 };
 
-// Helper pour obtenir l'utilisateur actuel
+// Helper pour obtenir l'utilisateur actuel (utilise custom JWT, pas Supabase Auth)
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
+    const authHelpers = await import('./auth-helpers');
+    const { data } = await authHelpers.getCurrentUser();
+    return data.user;
   } catch (error) {
     console.error('Erreur récupération utilisateur:', error);
     return null;
   }
 };
 
-// Helper pour la déconnexion
+// Helper pour la déconnexion (utilise custom JWT, pas Supabase Auth)
 export const signOut = async (): Promise<void> => {
   try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    const authHelpers = await import('./auth-helpers');
+    await authHelpers.signOut();
   } catch (error) {
     console.error('Erreur déconnexion:', error);
     throw error;

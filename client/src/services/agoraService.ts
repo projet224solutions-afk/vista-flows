@@ -84,15 +84,9 @@ class AgoraService {
    */
   async getTokens(channelName: string, userId: string): Promise<AgoraConfig> {
     try {
-      // Utiliser Supabase pour l'authentification
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      // Récupérer le token d'authentification custom JWT
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
         throw new Error('Session utilisateur non trouvée');
       }
 
@@ -100,7 +94,7 @@ class AgoraService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           channelName,

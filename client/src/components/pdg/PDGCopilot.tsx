@@ -38,10 +38,12 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
       // Simuler une réponse IA (à remplacer par l'appel à Lovable AI)
       const response = await generateAIResponse(input);
       
-      // Log conversation
-      const { data: { user } } = await supabase.auth.getUser();
+      // Log conversation - Récupérer l'utilisateur depuis notre système custom JWT
+      const { getCurrentUser } = await import('@/lib/auth-helpers');
+      const { data: userData } = await getCurrentUser();
+      
       await supabase.from('copilot_conversations').insert({
-        pdg_user_id: user?.id,
+        pdg_user_id: userData.user?.id,
         message_in: input,
         message_out: response,
         mfa_verified: mfaVerified

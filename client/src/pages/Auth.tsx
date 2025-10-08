@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
 import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown } from "lucide-react";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
 import QuickFooter from "@/components/QuickFooter";
@@ -32,6 +31,7 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, signIn, signUp } = useAuth();
 
   // Form data
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -47,34 +47,17 @@ export default function Auth() {
     country: ''
   });
 
+  // Redirection automatique vers le dashboard approprié quand l'utilisateur se connecte
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          // Récupérer le profil utilisateur pour connaître son rôle
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profile?.role) {
-            // Redirection automatique vers le dashboard approprié
-            if (profile.role === 'client') {
-              navigate('/client');
-            } else {
-              navigate(`/${profile.role}`);
-            }
-          } else {
-            // Si pas de profil trouvé, rediriger vers client par défaut
-            navigate('/client');
-          }
-        }
+    if (user) {
+      // Redirection basée sur le rôle
+      if (user.role === 'client') {
+        navigate('/client');
+      } else {
+        navigate(`/${user.role}`);
       }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,42 +77,20 @@ export default function Auth() {
 
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
 
-        // Générer un ID utilisateur unique (3 lettres + 4 chiffres)
-        let userCustomId = '';
-        for (let i = 0; i < 3; i++) {
-          userCustomId += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-        }
-        for (let i = 0; i < 4; i++) {
-          userCustomId += Math.floor(Math.random() * 10).toString();
-        }
-
-        const { error } = await supabase.auth.signUp({
+        await signUp({
           email: validatedData.email,
           password: validatedData.password,
-          options: {
-            data: {
-              first_name: validatedData.firstName,
-              last_name: validatedData.lastName,
-              role: validatedData.role,
-              phone: formData.phone,
-              country: formData.country,
-              custom_id: userCustomId // Ajouter l'ID personnalisé
-            },
-            emailRedirectTo: `${window.location.origin}/`
-          }
+          firstName: validatedData.firstName,
+          lastName: validatedData.lastName,
+          phone: formData.phone,
+          role: validatedData.role
         });
 
-        if (error) throw error;
-        setSuccess("Inscription réussie ! Vérifiez votre email.");
+        setSuccess("Inscription réussie ! Redirection en cours...");
       } else {
         // Connexion
         const validatedData = loginSchema.parse(formData);
-        const { error } = await supabase.auth.signInWithPassword({
-          email: validatedData.email,
-          password: validatedData.password,
-        });
-
-        if (error) throw error;
+        await signIn(validatedData.email, validatedData.password);
         setSuccess("Connexion réussie ! Redirection en cours...");
       }
     } catch (err) {
@@ -188,8 +149,8 @@ export default function Auth() {
           </Button>
         </div>
 
-        {/* Authentification avec Supabase */}
-        <p className="text-gray-500 mb-4 text-lg">Authentification avec Supabase</p>
+        {/* Authentification sécurisée */}
+        <p className="text-gray-500 mb-4 text-lg">Authentification sécurisée</p>
 
         {/* Titre principal */}
         <h2 className="text-2xl text-gray-600 mb-8">

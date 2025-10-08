@@ -288,9 +288,13 @@ class CopiloteService {
    */
   async createSession(sessionName?: string): Promise<string> {
     try {
+      // Récupérer l'utilisateur depuis notre système custom JWT
+      const { getCurrentUser } = await import('@/lib/auth-helpers');
+      const { data: userData } = await getCurrentUser();
+      
       const { data, error } = await supabase
         .rpc('create_ai_session', {
-          user_id_param: (await supabase.auth.getUser()).data.user?.id,
+          user_id_param: userData.user?.id,
           session_name_param: sessionName
         });
 
@@ -308,9 +312,13 @@ class CopiloteService {
    */
   async getAIStats(): Promise<any> {
     try {
+      // Récupérer l'utilisateur depuis notre système custom JWT
+      const { getCurrentUser } = await import('@/lib/auth-helpers');
+      const { data: userData } = await getCurrentUser();
+      
       const { data, error } = await supabase
         .rpc('get_ai_stats', {
-          user_id_param: (await supabase.auth.getUser()).data.user?.id
+          user_id_param: userData.user?.id
         });
 
       if (error) throw error;

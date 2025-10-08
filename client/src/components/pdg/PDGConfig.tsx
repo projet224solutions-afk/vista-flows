@@ -52,10 +52,12 @@ export default function PDGConfig() {
 
       if (error) throw error;
 
-      // Log action
-      const { data: { user } } = await supabase.auth.getUser();
+      // Log action - Récupérer l'utilisateur depuis notre système custom JWT
+      const { getCurrentUser } = await import('@/lib/auth-helpers');
+      const { data: userData } = await getCurrentUser();
+      
       await supabase.from('audit_logs').insert({
-        actor_id: user?.id,
+        actor_id: userData.user?.id,
         action: 'COMMISSION_CONFIG_CREATED',
         target_type: 'commission_config',
         data_json: newConfig

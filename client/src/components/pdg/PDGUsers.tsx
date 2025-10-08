@@ -73,9 +73,12 @@ export default function PDGUsers() {
 
       if (error) throw error;
 
-      // Log action
+      // Log action - Récupérer l'utilisateur depuis notre système custom JWT
+      const { getCurrentUser } = await import('@/lib/auth-helpers');
+      const { data: userData } = await getCurrentUser();
+      
       await supabase.from('audit_logs').insert({
-        actor_id: (await supabase.auth.getUser()).data.user?.id,
+        actor_id: userData.user?.id,
         action: currentStatus ? 'USER_SUSPENDED' : 'USER_ACTIVATED',
         target_type: 'user',
         target_id: userId
