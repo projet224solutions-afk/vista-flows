@@ -40,14 +40,33 @@ Preferred communication style: Simple, everyday language.
 - Communication: Messages, notifications, calls secured
 - Admin: Audit logs, commission config restricted
 
-## Backend Consolidation - COMPLETED ✅
-**50+ Express Routes Migrated**:
-- Authentication: register, login, profile (4 routes)
-- Wallets: CRUD + balance queries (3 routes)
-- Transactions: CRUD + ACID transfers (6 routes)
-- E-Commerce: Vendors, products, orders (15 routes)
-- Communication: Messages, notifications, calls (10 routes)
-- Logistics: Routes, drivers, vehicles, badges (12 routes)
+## Backend Consolidation - IN PROGRESS ⚠️
+**Express Routes Active** (60+ routes in server/routes.ts):
+- ✅ Authentication: register, login, profile (4 routes)
+- ✅ Wallets: CRUD + balance queries + transfer (4 routes)
+- ✅ Transactions: CRUD + ACID transfers + fees (10 routes)
+- ✅ E-Commerce: Vendors, products, orders (15 routes)
+- ✅ Communication: Conversations, messages, calls (10 routes)
+- ✅ Logistics: Transport requests lifecycle (5 routes)
+- ✅ Payments: Create, confirm, admin (5 routes)
+- ✅ Geolocation: Position, nearby, sharing (3 routes)
+- ✅ Badges: Create, verify, renew, SVG (5 routes)
+- ✅ Agora: RTC/RTM tokens, channels (5 routes)
+
+**Legacy Next.js Routes** (pages/api/ - TO BE MIGRATED):
+- ❌ Delivery: request, status, users/online (DeliveryService.ts)
+- ❌ Escrow: initiate, invoice, release, refund, dispute (EscrowService.ts)
+- ❌ Notifications: push, send (various services)
+- ❌ Wallet: credit endpoint (⚠️ SECURITY RISK - bypasses audit)
+- ❌ Transport: requests/active, users/online, user/status (TransportService.ts)
+
+**Migration Plan** (Architect Recommendation - Option A):
+1. Migrate delivery + escrow routes to Express with Zod validation
+2. Replace /api/wallet/credit with secure audited endpoint
+3. Migrate notifications routes (push, send)
+4. Refactor frontend to use /api/badges instead of /api/generateBadge
+5. Delete entire pages/api/ directory
+6. Test all flows end-to-end
 
 **Database Migration**:
 - Added `wallet_224` to `payment_method` enum
@@ -86,10 +105,11 @@ The backend uses a hybrid approach: Supabase (PostgreSQL) for primary storage wi
 - **MemStorage (Deprecated)**: Legacy in-memory volatile storage, being phased out
 - **Wallet Transfer Endpoint**: POST /api/wallet/transfer with ACID guarantees via `process_transaction` stored procedure, Zod validation, and requireAuth protection
 
-**Authentication**: Multi-role system (7 user types) with dual authentication challenge:
-- Supabase Auth (Auth.tsx) - frontend authentication
-- Custom JWT (useAuth) - legacy backend authentication
-- **CRITICAL ISSUE**: Creates orphaned accounts, architect recommends Supabase Auth migration as single source of truth
+**Authentication** (October 2025 - UNIFIED ✅): 
+- **Custom JWT System**: Single unified auth across entire platform (Auth.tsx, services, PDG components)
+- **Auth Helpers**: Centralized utilities in `lib/auth-helpers.ts` (getCurrentUser, getCurrentSession, signOut)
+- **Supabase Client**: Retained for database operations only (NOT for auth)
+- **Migration Complete**: All Supabase Auth calls eliminated, orphaned accounts risk resolved
 
 Key services include:
 - **UserService**: User and profile management.

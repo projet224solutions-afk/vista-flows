@@ -1882,4 +1882,309 @@ export function registerRoutes(app: Express) {
       });
     }
   });
+
+  // ===== DELIVERY (MIGRATION FROM NEXT.JS API) =====
+  
+  const createDeliveryRequestSchema = z.object({
+    clientId: z.string(),
+    clientName: z.string().optional(),
+    clientPhone: z.string().optional(),
+    clientPhoto: z.string().optional(),
+    pickupAddress: z.string(),
+    deliveryAddress: z.string(),
+    pickupPosition: z.object({
+      latitude: z.number(),
+      longitude: z.number()
+    }),
+    deliveryPosition: z.object({
+      latitude: z.number(),
+      longitude: z.number()
+    }),
+    distance: z.number().optional(),
+    estimatedTime: z.number().optional(),
+    price: z.number().optional(),
+    fees: z.number().optional(),
+    totalPrice: z.number().optional(),
+    notes: z.string().optional()
+  });
+
+  app.post("/api/delivery/request", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createDeliveryRequestSchema.parse(req.body);
+      
+      // TODO: Créer dans delivery_requests table via storage
+      // Pour l'instant, retourne une réponse simulée
+      const deliveryId = `delivery_${Date.now()}`;
+      
+      res.status(201).json({
+        success: true,
+        delivery: {
+          id: deliveryId,
+          clientId: validated.clientId,
+          pickupAddress: validated.pickupAddress,
+          deliveryAddress: validated.deliveryAddress,
+          distance: validated.distance || 0,
+          estimatedTime: validated.estimatedTime || 0,
+          price: validated.price || 0,
+          fees: validated.fees || 0,
+          totalPrice: validated.totalPrice || 0,
+          status: 'pending',
+          createdAt: Date.now()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create delivery request'
+      });
+    }
+  });
+
+  app.get("/api/delivery/request", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { userId, status, limit = 50, offset = 0 } = req.query;
+      
+      // TODO: Récupérer depuis delivery_requests table via storage
+      // Pour l'instant, retourne une liste vide
+      res.json({
+        success: true,
+        deliveries: []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch delivery requests'
+      });
+    }
+  });
+
+  app.post("/api/delivery/request/:deliveryId/accept", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { deliveryId } = req.params;
+      const { deliveryUserId, deliveryUserName } = req.body;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          deliveryId,
+          status: 'accepted',
+          deliveryUserId,
+          acceptedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to accept delivery request'
+      });
+    }
+  });
+
+  app.post("/api/delivery/request/:deliveryId/picked-up", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { deliveryId } = req.params;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          deliveryId,
+          status: 'picked_up',
+          pickedUpAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to update delivery request'
+      });
+    }
+  });
+
+  app.post("/api/delivery/request/:deliveryId/delivered", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { deliveryId } = req.params;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          deliveryId,
+          status: 'delivered',
+          deliveredAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to update delivery request'
+      });
+    }
+  });
+
+  app.get("/api/delivery/status", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { userId } = req.query;
+      
+      // TODO: Récupérer depuis delivery_requests table
+      res.json({
+        success: true,
+        status: 'offline',
+        activeDeliveries: 0
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch delivery status'
+      });
+    }
+  });
+
+  app.get("/api/delivery/users/online", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // TODO: Récupérer les livreurs en ligne
+      res.json({
+        success: true,
+        users: []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch online delivery users'
+      });
+    }
+  });
+
+  // ===== ESCROW (MIGRATION FROM NEXT.JS API) =====
+  
+  const createEscrowInvoiceSchema = z.object({
+    driverId: z.string(),
+    driverName: z.string().optional(),
+    driverPhone: z.string().optional(),
+    amount: z.number(),
+    feePercent: z.number().optional(),
+    startLocation: z.string(),
+    endLocation: z.string(),
+    startCoordinates: z.object({
+      latitude: z.number(),
+      longitude: z.number()
+    }).optional(),
+    endCoordinates: z.object({
+      latitude: z.number(),
+      longitude: z.number()
+    }).optional(),
+    distance: z.number().optional(),
+    duration: z.number().optional()
+  });
+
+  app.post("/api/escrow/invoice", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createEscrowInvoiceSchema.parse(req.body);
+      
+      // TODO: Créer dans escrow_invoices table via storage
+      const invoiceId = `invoice_${Date.now()}`;
+      
+      res.status(201).json({
+        success: true,
+        invoice: {
+          id: invoiceId,
+          driverId: validated.driverId,
+          amount: validated.amount,
+          feePercent: validated.feePercent || 5,
+          status: 'pending',
+          startLocation: validated.startLocation,
+          endLocation: validated.endLocation,
+          createdAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create escrow invoice'
+      });
+    }
+  });
+
+  const initiateEscrowSchema = z.object({
+    transaction: z.object({
+      id: z.string().optional(),
+      invoiceId: z.string(),
+      clientId: z.string(),
+      driverId: z.string(),
+      amount: z.number(),
+      feePercent: z.number(),
+      feeAmount: z.number(),
+      totalAmount: z.number(),
+      startLocation: z.string(),
+      endLocation: z.string(),
+      startCoordinates: z.object({
+        latitude: z.number(),
+        longitude: z.number()
+      }).optional(),
+      endCoordinates: z.object({
+        latitude: z.number(),
+        longitude: z.number()
+      }).optional()
+    }),
+    paymentMethod: z.string(),
+    paymentData: z.any().optional()
+  });
+
+  app.post("/api/escrow/initiate", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = initiateEscrowSchema.parse(req.body);
+      
+      // TODO: Créer dans escrow_transactions table via storage
+      // TODO: Bloquer les fonds dans le wallet
+      // TODO: Créer les notifications
+      
+      const transactionId = validated.transaction.id || `escrow_${Date.now()}`;
+      
+      res.status(201).json({
+        success: true,
+        transaction: {
+          id: transactionId,
+          invoiceId: validated.transaction.invoiceId,
+          clientId: validated.transaction.clientId,
+          driverId: validated.transaction.driverId,
+          amount: validated.transaction.amount,
+          totalAmount: validated.transaction.totalAmount,
+          status: 'pending',
+          paymentMethod: validated.paymentMethod,
+          createdAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to initiate escrow transaction'
+      });
+    }
+  });
+
+  // Routes escrow non implémentées (appelées par frontend mais n'existent pas en legacy)
+  app.post("/api/escrow/release", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
+
+  app.post("/api/escrow/refund", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
+
+  app.post("/api/escrow/dispute", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
+
+  app.post("/api/escrow/dispute/resolve", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
+
+  app.get("/api/escrow/qr-code", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
+
+  app.get("/api/escrow/transactions/active", requireAuth, async (req: AuthRequest, res) => {
+    res.status(501).json({ success: false, error: 'Not implemented yet - migration pending' });
+  });
 }
