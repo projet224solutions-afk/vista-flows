@@ -68,16 +68,19 @@ Preferred communication style: Simple, everyday language.
 7. ✅ Tests: Server running, 0 erreurs LSP, logs clean
 
 **Persistence Layer Status** :
-- ✅ DbStorage actif: auth, wallet, transactions
-- ⏳ TODO: delivery_requests, escrow_transactions, notifications tables (non créées)
-- ⏳ Routes delivery/escrow/notifications retournent mock data ou 501
+- ✅ DbStorage actif: auth, wallet, transactions, delivery, escrow, notifications
+- ✅ Tables créées: delivery_requests (22 cols), escrow_transactions (21 cols), notifications (9 cols)
+- ✅ Routes delivery/escrow/notifications opérationnelles avec DbStorage
+- ✅ 12 méthodes DbStorage implémentées (CRUD complet)
 - ℹ️ Frontend appelle uniquement /api/* Express (pages/api supprimé)
 
 **Sécurité** :
 - ✅ Toutes routes protégées requireAuth + rate limiting
 - ✅ Validation Zod sur toutes mutations
 - ✅ Wallet credit déprécié (évite bypass audit)
-- ⏳ TODO: userId validation sur delivery/escrow (comme wallets)
+- ✅ userId validation sur delivery/escrow (comme wallets)
+- ✅ GET delivery/request: filtrage par rôle (admin/livreur/client)
+- ✅ Faille privilege escalation corrigée (Architect validé)
 
 ## Mapbox Integration - PARTIAL ⚠️
 - ✅ API key configured (VITE_MAPBOX_TOKEN)
