@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
@@ -44,7 +44,7 @@ export const useChat = () => {
   const messagesSubscription = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Récupérer les utilisateurs avec qui on a déjà chatté
-  const fetchChatUsers = async () => {
+  const fetchChatUsers = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -77,7 +77,7 @@ export const useChat = () => {
     } catch (err) {
       console.error('Error fetching chat users:', err);
     }
-  };
+  }, [user]);
 
   // Récupérer les messages pour une conversation
   const fetchMessages = async (recipientId: string) => {
@@ -313,7 +313,7 @@ export const useChat = () => {
         messagesSubscription.current.unsubscribe();
       }
     };
-  }, [user]);
+  }, [user, fetchChatUsers]);
 
   return {
     messages,

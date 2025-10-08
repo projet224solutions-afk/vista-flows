@@ -83,6 +83,89 @@ export function useRealtimeSync(bureauId?: string) {
         }
     }, []);
 
+    // Gérer les mises à jour des bureaux
+    const handleBureauUpdate = useCallback((payload: any) => {
+        const { eventType, new: newRecord, old: oldRecord } = payload;
+
+        // Mettre à jour les statistiques
+        loadInitialStats();
+
+        // Ajouter l'update à la liste
+        const update: BureauUpdate = {
+            bureauId: newRecord?.id || oldRecord?.id,
+            bureauCode: newRecord?.bureau_code || oldRecord?.bureau_code,
+            updateType: 'status_change',
+            data: { new: newRecord, old: oldRecord },
+            timestamp: new Date().toISOString()
+        };
+
+        setUpdates(prev => [update, ...prev.slice(0, 9)]); // Garder les 10 derniers
+
+        // Notification toast
+        if (eventType === 'INSERT') {
+            toast.success('✅ Nouveau bureau créé', {
+                description: `${newRecord.bureau_code} - ${newRecord.prefecture}`
+            });
+        } else if (eventType === 'UPDATE') {
+            toast.info('🔄 Bureau mis à jour', {
+                description: `${newRecord.bureau_code}`
+            });
+        }
+    }, [loadInitialStats]);
+
+    // Gérer les mises à jour des membres
+    const handleMemberUpdate = useCallback((payload: any) => {
+        const { eventType, new: newRecord } = payload;
+
+        // Mettre à jour les statistiques
+        loadInitialStats();
+
+        // Ajouter l'update à la liste
+        const update: BureauUpdate = {
+            bureauId: newRecord.bureau_id,
+            bureauCode: 'N/A', // À récupérer si nécessaire
+            updateType: 'member_added',
+            data: newRecord,
+            timestamp: new Date().toISOString()
+        };
+
+        setUpdates(prev => [update, ...prev.slice(0, 9)]);
+
+        // Notification toast
+        if (eventType === 'INSERT') {
+            toast.success('👤 Nouveau membre ajouté', {
+                description: `${newRecord.name} - ${newRecord.vehicle_serial}`
+            });
+        }
+    }, [loadInitialStats]);
+
+    // Gérer les mises à jour SOS
+    const handleSOSUpdate = useCallback((payload: any) => {
+        const { eventType, new: newRecord } = payload;
+
+        // Mettre à jour les statistiques
+        loadInitialStats();
+
+        // Ajouter l'update à la liste
+        const update: BureauUpdate = {
+            bureauId: newRecord.bureau_id,
+            bureauCode: 'N/A',
+            updateType: 'sos_alert',
+            data: newRecord,
+            timestamp: new Date().toISOString()
+        };
+
+        setUpdates(prev => [update, ...prev.slice(0, 9)]);
+
+        // Notification toast pour les alertes SOS
+        if (eventType === 'INSERT' && newRecord.status === 'active') {
+            toast.error('🚨 ALERTE SOS', {
+                description: `${newRecord.member_name} - ${newRecord.vehicle_serial}`,
+                duration: 10000
+            });
+        }
+    }, [loadInitialStats]);
+
     // Configurer la synchronisation temps réel
     useEffect(() => {
         let subscription: any = null;
@@ -148,90 +231,7 @@ export function useRealtimeSync(bureauId?: string) {
                 subscription.unsubscribe();
             }
         };
-    }, [loadInitialStats]);
-
-    // Gérer les mises à jour des bureaux
-    const handleBureauUpdate = (payload: any) => {
-        const { eventType, new: newRecord, old: oldRecord } = payload;
-
-        // Mettre à jour les statistiques
-        loadInitialStats();
-
-        // Ajouter l'update à la liste
-        const update: BureauUpdate = {
-            bureauId: newRecord?.id || oldRecord?.id,
-            bureauCode: newRecord?.bureau_code || oldRecord?.bureau_code,
-            updateType: 'status_change',
-            data: { new: newRecord, old: oldRecord },
-            timestamp: new Date().toISOString()
-        };
-
-        setUpdates(prev => [update, ...prev.slice(0, 9)]); // Garder les 10 derniers
-
-        // Notification toast
-        if (eventType === 'INSERT') {
-            toast.success('✅ Nouveau bureau créé', {
-                description: `${newRecord.bureau_code} - ${newRecord.prefecture}`
-            });
-        } else if (eventType === 'UPDATE') {
-            toast.info('🔄 Bureau mis à jour', {
-                description: `${newRecord.bureau_code}`
-            });
-        }
-    };
-
-    // Gérer les mises à jour des membres
-    const handleMemberUpdate = (payload: any) => {
-        const { eventType, new: newRecord } = payload;
-
-        // Mettre à jour les statistiques
-        loadInitialStats();
-
-        // Ajouter l'update à la liste
-        const update: BureauUpdate = {
-            bureauId: newRecord.bureau_id,
-            bureauCode: 'N/A', // À récupérer si nécessaire
-            updateType: 'member_added',
-            data: newRecord,
-            timestamp: new Date().toISOString()
-        };
-
-        setUpdates(prev => [update, ...prev.slice(0, 9)]);
-
-        // Notification toast
-        if (eventType === 'INSERT') {
-            toast.success('👤 Nouveau membre ajouté', {
-                description: `${newRecord.name} - ${newRecord.vehicle_serial}`
-            });
-        }
-    };
-
-    // Gérer les mises à jour SOS
-    const handleSOSUpdate = (payload: any) => {
-        const { eventType, new: newRecord } = payload;
-
-        // Mettre à jour les statistiques
-        loadInitialStats();
-
-        // Ajouter l'update à la liste
-        const update: BureauUpdate = {
-            bureauId: newRecord.bureau_id,
-            bureauCode: 'N/A',
-            updateType: 'sos_alert',
-            data: newRecord,
-            timestamp: new Date().toISOString()
-        };
-
-        setUpdates(prev => [update, ...prev.slice(0, 9)]);
-
-        // Notification toast pour les alertes SOS
-        if (eventType === 'INSERT' && newRecord.status === 'active') {
-            toast.error('🚨 ALERTE SOS', {
-                description: `${newRecord.member_name} - ${newRecord.vehicle_serial}`,
-                duration: 10000
-            });
-        }
-    };
+    }, [loadInitialStats, handleBureauUpdate, handleMemberUpdate, handleSOSUpdate]);
 
     // Forcer une synchronisation manuelle
     const forceSync = useCallback(async () => {
