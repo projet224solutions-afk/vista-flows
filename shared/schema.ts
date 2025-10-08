@@ -5,7 +5,7 @@ import { z } from "zod";
 export const userRoleEnum = pgEnum("user_role", ["admin", "vendeur", "livreur", "taxi", "syndicat", "transitaire", "client"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "preparing", "ready", "in_transit", "delivered", "cancelled"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
-export const paymentMethodEnum = pgEnum("payment_method", ["mobile_money", "card", "cash", "bank_transfer"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["wallet_224", "mobile_money", "card", "cash", "bank_transfer"]);
 export const conversationTypeEnum = pgEnum("conversation_type", ["private", "group"]);
 export const messageTypeEnum = pgEnum("message_type", ["text", "image", "file", "audio", "video"]);
 export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "missed", "rejected"]);

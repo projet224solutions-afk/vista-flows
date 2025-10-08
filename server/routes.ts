@@ -1218,7 +1218,7 @@ export function registerRoutes(app: Express) {
   });
 
   const processPaymentSchema = z.object({
-    paymentMethod: z.enum(['mobile_money', 'card', 'cash', 'bank_transfer'])
+    paymentMethod: z.enum(['wallet_224', 'mobile_money', 'card', 'cash', 'bank_transfer'])
   });
 
   app.post("/api/payment-links/create", requireAuth, async (req: AuthRequest, res) => {
@@ -1453,6 +1453,415 @@ export function registerRoutes(app: Express) {
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to update bureau status'
+      });
+    }
+  });
+
+  // ===== VENDOR PAYMENTS (MIGRATION FROM NEXT.JS API) =====
+  
+  const createVendorPaymentSchema = z.object({
+    produit: z.string().min(1),
+    description: z.string().optional(),
+    montant: z.number().positive(),
+    devise: z.string().default('GNF'),
+    client_id: z.string().optional(),
+    vendeur_id: z.string()
+  });
+
+  const confirmPaymentSchema = z.object({
+    payment_id: z.string(),
+    payment_method: z.enum(['wallet_224', 'mobile_money', 'card', 'bank_transfer']),
+    transaction_id: z.string().optional()
+  });
+
+  app.post("/api/payments/create", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createVendorPaymentSchema.parse(req.body);
+      
+      // SÉCURITÉ: Vérifier que vendeur_id correspond à l'utilisateur authentifié
+      if (validated.vendeur_id !== req.userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized: You can only create payments for yourself'
+        });
+      }
+      
+      // Créer via DynamicPaymentService pour cohérence
+      const paymentLink = await DynamicPaymentService.createPaymentLink({
+        createdBy: validated.vendeur_id,
+        createdByType: 'delivery',
+        amount: validated.montant,
+        currency: validated.devise,
+        description: validated.produit + (validated.description ? ` - ${validated.description}` : ''),
+        recipientName: validated.client_id || '',
+        expiryMinutes: 10080 // 7 jours
+      });
+      
+      res.status(201).json({
+        success: true,
+        payment_link: {
+          id: paymentLink.id,
+          payment_id: paymentLink.linkId,
+          url: `/payment/${paymentLink.linkId}`,
+          produit: validated.produit,
+          montant: validated.montant,
+          frais: validated.montant * 0.01,
+          total: validated.montant * 1.01,
+          devise: validated.devise,
+          status: 'pending',
+          expires_at: paymentLink.expiresAt,
+          created_at: paymentLink.createdAt
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create payment'
+      });
+    }
+  });
+
+  app.post("/api/payments/confirm", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = confirmPaymentSchema.parse(req.body);
+      
+      const result = await DynamicPaymentService.processPayment(
+        validated.payment_id,
+        {
+          paidBy: req.userId!,
+          paymentMethod: validated.payment_method
+        }
+      );
+      
+      res.json({
+        success: result.success,
+        data: result
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Payment confirmation failed'
+      });
+    }
+  });
+
+  app.get("/api/payments/:paymentId", async (req, res) => {
+    try {
+      const paymentLink = await DynamicPaymentService.getPaymentLink(req.params.paymentId);
+      
+      if (!paymentLink) {
+        return res.status(404).json({
+          success: false,
+          error: 'Payment not found'
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: paymentLink
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch payment'
+      });
+    }
+  });
+
+  app.get("/api/payments/vendor/:vendorId", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { status, limit = '50' } = req.query;
+      const vendorId = req.params.vendorId;
+      
+      const links = await DynamicPaymentService.getUserPaymentLinks(vendorId);
+      
+      let filtered = links;
+      if (status && status !== 'all') {
+        filtered = links.filter(link => link.status === status);
+      }
+      
+      const limitNum = parseInt(limit as string);
+      filtered = filtered.slice(0, limitNum);
+      
+      res.json({
+        success: true,
+        data: filtered
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch vendor payments'
+      });
+    }
+  });
+
+  app.get("/api/payments/admin/all", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // TODO: Vérifier permissions admin
+      // Pour l'instant retourne vide
+      res.json({
+        success: true,
+        data: []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch all payments'
+      });
+    }
+  });
+
+  // ===== COMMUNICATION (MIGRATION FROM NEXT.JS API) =====
+
+  app.get("/api/communication/conversations", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { user_id } = req.query;
+      
+      if (!user_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'user_id required'
+        });
+      }
+      
+      const conversations = await storage.getConversations(user_id as string);
+      
+      res.json({
+        success: true,
+        conversations: conversations || []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch conversations',
+        details: error.message
+      });
+    }
+  });
+
+  app.post("/api/communication/conversations", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { participants, type = 'private', name, description } = req.body;
+      
+      if (!participants || participants.length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'At least 2 participants required'
+        });
+      }
+      
+      const conversation = await storage.createConversation({
+        type,
+        channelName: name || `conv_${Date.now()}`,
+        participants,
+        metadata: description ? { description } : null
+      });
+      
+      res.status(201).json({
+        success: true,
+        conversation
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create conversation',
+        details: error.message
+      });
+    }
+  });
+
+  app.get("/api/communication/messages", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { conversation_id, limit = '100' } = req.query;
+      
+      if (!conversation_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'conversation_id required'
+        });
+      }
+      
+      const messages = await storage.getMessages(
+        conversation_id as string,
+        parseInt(limit as string)
+      );
+      
+      res.json({
+        success: true,
+        messages: messages || []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch messages',
+        details: error.message
+      });
+    }
+  });
+
+  app.post("/api/communication/messages", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { conversation_id, sender_id, content, type = 'text' } = req.body;
+      
+      if (!conversation_id || !sender_id || !content) {
+        return res.status(400).json({
+          success: false,
+          error: 'conversation_id, sender_id and content required'
+        });
+      }
+      
+      const message = await storage.createMessage({
+        conversationId: conversation_id,
+        senderId: sender_id,
+        content,
+        type,
+        isRead: false
+      });
+      
+      res.status(201).json({
+        success: true,
+        message
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create message',
+        details: error.message
+      });
+    }
+  });
+
+  // ===== TRANSPORT (MIGRATION FROM NEXT.JS API) =====
+
+  const createTransportRequestSchema = z.object({
+    id: z.string(),
+    clientId: z.string(),
+    clientName: z.string(),
+    clientPhone: z.string(),
+    pickupAddress: z.string(),
+    deliveryAddress: z.string(),
+    pickupPosition: z.object({
+      lat: z.number(),
+      lng: z.number()
+    }),
+    deliveryPosition: z.object({
+      lat: z.number(),
+      lng: z.number()
+    }),
+    distance: z.number(),
+    estimatedTime: z.number(),
+    price: z.number(),
+    fees: z.number(),
+    totalPrice: z.number(),
+    notes: z.string().optional(),
+    status: z.string().default('pending')
+  });
+
+  app.post("/api/transport/request", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const validated = createTransportRequestSchema.parse(req.body);
+      
+      // TODO: Sauvegarder en DB via storage
+      // Pour l'instant simulation
+      const request = {
+        ...validated,
+        created_at: new Date().toISOString()
+      };
+      
+      res.status(201).json({
+        success: true,
+        data: request,
+        message: 'Transport request created successfully'
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create transport request'
+      });
+    }
+  });
+
+  app.get("/api/transport/request", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { userId, status, limit = '50' } = req.query;
+      
+      // TODO: Récupérer depuis DB
+      // Pour l'instant vide
+      res.json({
+        success: true,
+        data: []
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch transport requests'
+      });
+    }
+  });
+
+  app.post("/api/transport/request/:requestId/accept", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { requestId } = req.params;
+      const { driverId, driverName, vehicleInfo } = req.body;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          requestId,
+          status: 'accepted',
+          driverId,
+          driverName,
+          vehicleInfo,
+          acceptedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to accept transport request'
+      });
+    }
+  });
+
+  app.post("/api/transport/request/:requestId/picked-up", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { requestId } = req.params;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          requestId,
+          status: 'picked_up',
+          pickedUpAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to update transport request'
+      });
+    }
+  });
+
+  app.post("/api/transport/request/:requestId/delivered", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { requestId } = req.params;
+      
+      // TODO: Mettre à jour DB
+      res.json({
+        success: true,
+        data: {
+          requestId,
+          status: 'delivered',
+          deliveredAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        error: 'Failed to update transport request'
       });
     }
   });

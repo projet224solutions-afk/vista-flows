@@ -157,7 +157,7 @@ export class DynamicPaymentService {
     linkId: string,
     paymentData: {
       paidBy: string;
-      paymentMethod: 'mobile_money' | 'card' | 'cash' | 'bank_transfer';
+      paymentMethod: 'wallet_224' | 'mobile_money' | 'card' | 'cash' | 'bank_transfer';
     }
   ): Promise<{
     success: boolean;
