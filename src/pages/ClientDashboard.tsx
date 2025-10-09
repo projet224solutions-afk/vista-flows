@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useClientData } from "@/hooks/useClientData";
 import QuickFooter from "@/components/QuickFooter";
 import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";

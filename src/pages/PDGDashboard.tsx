@@ -74,6 +74,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
+import { usePDGData } from "@/hooks/usePDGData";
 import SyndicateBureauManagementPro from "@/components/syndicate/SyndicateBureauManagementPro";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 import CopilotTest from "@/components/CopilotTest";

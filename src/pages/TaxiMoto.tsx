@@ -22,7 +22,10 @@ import {
     Heart,
     Calendar,
     Phone,
-    AlertTriangle
+    AlertTriangle,
+    User,
+    Settings,
+    LogOut
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
@@ -46,6 +49,7 @@ export default function TaxiMoto() {
     const [currentRide, setCurrentRide] = useState(null);
     const [nearbyDrivers, setNearbyDrivers] = useState([]);
     const [loadingDrivers, setLoadingDrivers] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
 
     // Statistiques utilisateur
     const [userStats, setUserStats] = useState({
@@ -157,16 +161,28 @@ export default function TaxiMoto() {
                             </p>
                         </div>
 
-                        {/* Bouton SOS d'urgence */}
-                        <Button
-                            onClick={handleSOS}
-                            variant="destructive"
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700 animate-pulse"
-                        >
-                            <Shield className="w-4 h-4 mr-1" />
-                            SOS
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            {/* Bouton Profil */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                                <User className="w-4 h-4 mr-1" />
+                                Profil
+                            </Button>
+
+                            {/* Bouton SOS d'urgence */}
+                            <Button
+                                onClick={handleSOS}
+                                variant="destructive"
+                                size="sm"
+                                className="bg-red-600 hover:bg-red-700 animate-pulse"
+                            >
+                                <Shield className="w-4 h-4 mr-1" />
+                                SOS
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Indicateurs de statut */}
