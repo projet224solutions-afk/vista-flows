@@ -1,225 +1,282 @@
 /**
- * 💰 SERVICE DE GESTION DES DÉPENSES - VERSION SIMPLIFIÉE
- * Version simplifiée pour éviter les erreurs TypeScript
+ * 💰 SERVICE GESTION DÉPENSES RÉEL - 224SOLUTIONS
+ * Service opérationnel pour gestion des dépenses avec Supabase
  */
 
 import { supabase } from '@/lib/supabase';
-import { MockExpenseService, type ExpenseCategory, type ExpenseWithDetails, type ExpenseStats } from './mockExpenseService';
 
-export type { ExpenseCategory, ExpenseWithDetails, ExpenseStats };
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  created_at: string;
+}
 
 export interface VendorExpense {
   id: string;
-  amount: number;
-  description: string;
-  expense_date: string;
   vendor_id: string;
-}
-
-export interface ExpenseFilters {
-  category_id?: string;
-  category?: string;
-  start_date?: string;
-  startDate?: string;
-  end_date?: string;
-  endDate?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface ExpenseBudget {
-  id: string;
   category_id: string;
   amount: number;
+  description: string;
+  receipt_url?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  category: ExpenseCategory;
+}
+
+export interface ExpenseStats {
+  total_expenses: number;
+  monthly_expenses: number;
+  category_breakdown: Array<{
+    category_name: string;
+    total: number;
+    percentage: number;
+  }>;
+  monthly_trend: Array<{
+    month: string;
+    total: number;
+  }>;
 }
 
 export interface ExpenseAlert {
   id: string;
-  type: string;
+  type: 'budget_exceeded' | 'unusual_expense' | 'missing_receipt';
   message: string;
-  date: string;
-  is_read: boolean;
+  severity: 'low' | 'medium' | 'high';
+  created_at: string;
 }
 
-// Tous les services retournent des données mockées
-export class ExpenseCategoryService {
-  static async getVendorCategories(vendorId: string): Promise<ExpenseCategory[]> {
+class ExpenseService {
+  /**
+   * Obtenir les catégories de dépenses
+   */
+  async getCategories(): Promise<ExpenseCategory[]> {
     try {
       const { data, error } = await supabase
         .from('expense_categories')
         .select('*')
-        .eq('vendor_id', vendorId)
         .order('name');
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      return [];
+      console.error('❌ Erreur chargement catégories:', error);
+      throw error;
     }
   }
 
-  static async createCategory(category: any): Promise<ExpenseCategory> {
-    return { id: '1', name: 'Nouvelle catégorie', color: '#000', icon: 'tag' };
-  }
-
-  static async updateCategory(id: string, updates: any): Promise<void> {}
-  
-  static async deleteCategory(id: string): Promise<void> {}
-  
-  static async createDefaultCategories(vendorId: string): Promise<void> {}
-}
-
-export class ExpenseService {
-  static async getVendorExpenses(
-    vendorId: string,
-    filters: ExpenseFilters = {},
-    page: number = 1,
-    limit: number = 20
-  ): Promise<{ expenses: ExpenseWithDetails[]; total: number }> {
+  /**
+   * Obtenir les dépenses d'un vendeur
+   */
+  async getExpenses(vendorId: string, filters?: any): Promise<VendorExpense[]> {
     try {
       let query = supabase
         .from('vendor_expenses')
-        .select('*, category:expense_categories(name, color, icon)', { count: 'exact' })
+        .select(`
+          *,
+          category:expense_categories(*)
+        `)
         .eq('vendor_id', vendorId)
-        .order('expense_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (filters.category) {
-        query = query.eq('category_id', filters.category);
-      }
-      if (filters.startDate) {
-        query = query.gte('expense_date', filters.startDate);
-      }
-      if (filters.endDate) {
-        query = query.lte('expense_date', filters.endDate);
+      if (filters?.category_id) {
+        query = query.eq('category_id', filters.category_id);
       }
 
-      const { data, error, count } = await query.range(
-        (filters.page - 1) * filters.limit,
-        filters.page * filters.limit - 1
-      );
+      if (filters?.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      if (filters?.date_from) {
+        query = query.gte('created_at', filters.date_from);
+      }
+
+      if (filters?.date_to) {
+        query = query.lte('created_at', filters.date_to);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-
-      return {
-        expenses: data || [],
-        total: count || 0
-      };
+      return data || [];
     } catch (error) {
-      console.error('Error fetching expenses:', error);
-      return { expenses: [], total: 0 };
+      console.error('❌ Erreur chargement dépenses:', error);
+      throw error;
     }
   }
 
-  static async createExpense(expense: any): Promise<VendorExpense> {
-    return {
-      id: '1',
-      amount: 0,
-      description: '',
-      expense_date: new Date().toISOString(),
-      vendor_id: ''
-    };
-  }
-
-  static async updateExpense(id: string, updates: any): Promise<void> {}
-  
-  static async deleteExpense(id: string): Promise<void> {}
-  
-  static async approveExpense(id: string, approvedBy: string): Promise<void> {}
-  
-  static async rejectExpense(id: string, reason: string): Promise<void> {}
-}
-
-export class ExpenseAnalyticsService {
-  static async getExpenseStats(
-    vendorId: string,
-    startDate?: string,
-    endDate?: string
-  ): Promise<ExpenseStats> {
+  /**
+   * Créer une dépense
+   */
+  async createExpense(expense: Omit<VendorExpense, 'id' | 'created_at' | 'updated_at' | 'category'>): Promise<VendorExpense> {
     try {
-      const { data, error } = await supabase.rpc('calculate_expense_stats', {
-        p_vendor_id: vendorId,
-        p_start_date: startDate,
-        p_end_date: endDate
-      });
+      const { data, error } = await supabase
+        .from('vendor_expenses')
+        .insert(expense)
+        .select(`
+          *,
+          category:expense_categories(*)
+        `)
+        .single();
 
       if (error) throw error;
-
-      return data || {
-        total_expenses: 0,
-        expense_count: 0,
-        average_expense: 0,
-        categories: [],
-        payment_methods: {},
-        monthly_trend: []
-      };
+      return data;
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      return {
-        total_expenses: 0,
-        expense_count: 0,
-        average_expense: 0,
-        categories: [],
-        payment_methods: {},
-        monthly_trend: []
-      };
+      console.error('❌ Erreur création dépense:', error);
+      throw error;
     }
   }
 
-  static async detectAnomalies(vendorId: string): Promise<any[]> {
-    return [];
+  /**
+   * Mettre à jour une dépense
+   */
+  async updateExpense(id: string, updates: Partial<VendorExpense>): Promise<VendorExpense> {
+    try {
+      const { data, error } = await supabase
+        .from('vendor_expenses')
+        .update(updates)
+        .eq('id', id)
+        .select(`
+          *,
+          category:expense_categories(*)
+        `)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('❌ Erreur mise à jour dépense:', error);
+      throw error;
+    }
   }
 
-  static async getDetailedAnalytics(vendorId: string, period: string): Promise<any> {
-    return null;
+  /**
+   * Supprimer une dépense
+   */
+  async deleteExpense(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('vendor_expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('❌ Erreur suppression dépense:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtenir les statistiques des dépenses
+   */
+  async getStats(vendorId: string): Promise<ExpenseStats> {
+    try {
+      // Total des dépenses
+      const { data: totalData, error: totalError } = await supabase
+        .from('vendor_expenses')
+        .select('amount')
+        .eq('vendor_id', vendorId)
+        .eq('status', 'approved');
+
+      if (totalError) throw totalError;
+
+      const totalExpenses = totalData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+
+      // Dépenses du mois
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const { data: monthlyData, error: monthlyError } = await supabase
+        .from('vendor_expenses')
+        .select('amount')
+        .eq('vendor_id', vendorId)
+        .eq('status', 'approved')
+        .gte('created_at', `${currentMonth}-01`)
+        .lt('created_at', `${currentMonth}-32`);
+
+      if (monthlyError) throw monthlyError;
+
+      const monthlyExpenses = monthlyData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+
+      // Répartition par catégorie
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('vendor_expenses')
+        .select(`
+          amount,
+          category:expense_categories(name)
+        `)
+        .eq('vendor_id', vendorId)
+        .eq('status', 'approved');
+
+      if (categoryError) throw categoryError;
+
+      const categoryBreakdown = categoryData?.reduce((acc, expense) => {
+        const categoryName = expense.category?.name || 'Autres';
+        if (!acc[categoryName]) {
+          acc[categoryName] = 0;
+        }
+        acc[categoryName] += expense.amount;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const categoryBreakdownArray = Object.entries(categoryBreakdown).map(([name, total]) => ({
+        category_name: name,
+        total,
+        percentage: totalExpenses > 0 ? (total / totalExpenses) * 100 : 0
+      }));
+
+      return {
+        total_expenses: totalExpenses,
+        monthly_expenses: monthlyExpenses,
+        category_breakdown: categoryBreakdownArray,
+        monthly_trend: [] // TODO: Implémenter tendance mensuelle
+      };
+    } catch (error) {
+      console.error('❌ Erreur chargement statistiques:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtenir les alertes de dépenses
+   */
+  async getAlerts(vendorId: string): Promise<ExpenseAlert[]> {
+    try {
+      const { data, error } = await supabase
+        .from('expense_alerts')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('❌ Erreur chargement alertes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Créer une catégorie de dépense
+   */
+  async createCategory(category: Omit<ExpenseCategory, 'id' | 'created_at'>): Promise<ExpenseCategory> {
+    try {
+      const { data, error } = await supabase
+        .from('expense_categories')
+        .insert(category)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('❌ Erreur création catégorie:', error);
+      throw error;
+    }
   }
 }
 
-export class ExpenseReceiptService {
-  static async getExpenseReceipts(expenseId: string): Promise<any[]> {
-    return [];
-  }
-
-  static async uploadReceipt(expenseId: string, file: File, isPrimary?: boolean): Promise<any> {
-    return {};
-  }
-
-  static async deleteReceipt(id: string): Promise<void> {}
-
-  static async getReceiptUrl(filePath: string): Promise<string> {
-    return '';
-  }
-}
-
-export class ExpenseBudgetService {
-  static async getVendorBudgets(
-    vendorId: string,
-    year?: number,
-    month?: number
-  ): Promise<ExpenseBudget[]> {
-    return [];
-  }
-
-  static async upsertBudget(budget: any): Promise<void> {}
-}
-
-export class ExpenseAlertService {
-  static async getVendorAlerts(vendorId: string, unreadOnly: boolean = false): Promise<ExpenseAlert[]> {
-    return [];
-  }
-
-  static async markAlertAsRead(alertId: string): Promise<void> {}
-
-  static async dismissAlert(alertId: string): Promise<void> {}
-}
-
-export class ExpenseWalletIntegrationService {
-  static async payExpenseFromWallet(expenseId: string, vendorId: string): Promise<any> {
-    return { success: true };
-  }
-
-  static async getWalletExpenseHistory(vendorId: string): Promise<any[]> {
-    return [];
-  }
-}
+export const expenseService = new ExpenseService();
