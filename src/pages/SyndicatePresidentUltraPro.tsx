@@ -82,6 +82,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
+import { useSyndicateData } from '@/hooks/useSyndicateData';
 import SyndicateWalletDashboard from '@/components/syndicate/SyndicateWalletDashboard';
 import AddTaxiMotardForm from '@/components/syndicate/AddTaxiMotardForm';
 import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
@@ -176,7 +177,19 @@ export default function SyndicatePresidentUltraPro() {
     const [emailInput, setEmailInput] = useState('');
     const [phoneInput, setPhoneInput] = useState('');
 
-    // États des données
+    // Hook de données réelles
+    const {
+        bureauInfo: realBureauInfo,
+        members: realMembers,
+        vehicles: realVehicles,
+        transactions: realTransactions,
+        sosAlerts: realSosAlerts,
+        loading: dataLoading,
+        error: dataError,
+        loadAllData
+    } = useSyndicateData(authenticated ? 'demo-bureau-id' : undefined);
+
+    // États des données (fallback pour compatibilité)
     const [bureauInfo, setBureauInfo] = useState<BureauInfo | null>(null);
     const [members, setMembers] = useState<Member[]>([]);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -185,6 +198,25 @@ export default function SyndicatePresidentUltraPro() {
 
     // États de l'interface
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    // Synchroniser les données réelles avec les états locaux
+    useEffect(() => {
+        if (realBureauInfo) {
+            setBureauInfo(realBureauInfo);
+        }
+        if (realMembers) {
+            setMembers(realMembers);
+        }
+        if (realVehicles) {
+            setVehicles(realVehicles);
+        }
+        if (realTransactions) {
+            setTransactions(realTransactions);
+        }
+        if (realSosAlerts) {
+            setSOSAlerts(realSosAlerts);
+        }
+    }, [realBureauInfo, realMembers, realVehicles, realTransactions, realSosAlerts]);
     const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
     const [showAddVehicleDialog, setShowAddVehicleDialog] = useState(false);
     const [showTransactionDialog, setShowTransactionDialog] = useState(false);
