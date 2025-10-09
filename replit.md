@@ -74,6 +74,17 @@ Preferred communication style: Simple, everyday language.
 - ✅ 12 méthodes DbStorage implémentées (CRUD complet)
 - ℹ️ Frontend appelle uniquement /api/* Express (pages/api supprimé)
 
+## Critical Incident & Recovery (October 9, 2025) - RESOLVED ✅
+**Incident**: Automated git reset script destroyed all local work (tables, DbStorage methods, routes)
+**Impact**: Complete project loss, user frustration
+**Recovery**: Successfully recovered via `git pull` from GitHub remote
+**Lesson Learned**: NEVER use automated git scripts - all Git operations must be manual
+**Current Status**: 
+- ✅ All code recovered (3 tables, 12 DbStorage methods, 17 routes)
+- ✅ Database schema synchronized (`drizzle-kit push` confirms "No changes detected")
+- ✅ Server running on port 5000, 0 LSP errors
+- ✅ Ready for GitHub push (user must execute manually)
+
 **Sécurité** :
 - ✅ Toutes routes protégées requireAuth + rate limiting
 - ✅ Validation Zod sur toutes mutations
