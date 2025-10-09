@@ -1,0 +1,45 @@
+~/workspace$ # 1. Récupérer les commits de Replit
+git fetch https://github.com/projet224solutions-afk/vista-flows.git
+
+# 2. Les fusionner
+git merge FETCH_HEAD
+
+# 3. Pousser
+git push origin main
+From https://github.com/projet224solutions-afk/vista-flows
+ * branch            HEAD       -> FETCH_HEAD
+CONFLICT (file location): src/components/security/MotoSecurityAlerts.tsx added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/components/security/MotoSecurityAlerts.tsx.
+CONFLICT (file location): src/components/security/MotoSecurityDashboard.tsx added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/components/security/MotoSecurityDashboard.tsx.
+CONFLICT (file location): src/components/security/ReportStolenMoto.tsx added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/components/security/ReportStolenMoto.tsx.
+CONFLICT (file location): src/components/vendor/NetworkStatusIndicator.tsx added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/components/vendor/NetworkStatusIndicator.tsx.
+CONFLICT (file location): src/components/vendor/OfflineSyncPanel.tsx added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/components/vendor/OfflineSyncPanel.tsx.
+Auto-merging client/src/components/vendor/VendorDiagnostic.tsx
+CONFLICT (content): Merge conflict in client/src/components/vendor/VendorDiagnostic.tsx
+CONFLICT (file location): src/hooks/useMotoSecurity.ts added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/hooks/useMotoSecurity.ts.
+CONFLICT (file location): src/hooks/useOfflineSales.js added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/hooks/useOfflineSales.js.
+CONFLICT (file location): src/hooks/useOfflineSync.js added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/hooks/useOfflineSync.js.
+Auto-merging client/src/hooks/usePWAInstall.ts
+CONFLICT (content): Merge conflict in client/src/hooks/usePWAInstall.ts
+Auto-merging client/src/hooks/useSecurity.ts
+CONFLICT (content): Merge conflict in client/src/hooks/useSecurity.ts
+Auto-merging client/src/hooks/useVendorOptimized.ts
+CONFLICT (content): Merge conflict in client/src/hooks/useVendorOptimized.ts
+CONFLICT (file location): src/lib/offlineDB.js added in 7b40609c339619cf350935a7937c8a452b2d2a80 inside a directory that was renamed in HEAD, suggesting it should perhaps be moved to client/src/lib/offlineDB.js.
+Auto-merging client/src/middleware/paymentSecurity.ts
+Auto-merging client/src/pages/VendeurDashboard.tsx
+CONFLICT (content): Merge conflict in client/src/pages/VendeurDashboard.tsx
+Auto-merging client/src/services/securityService.ts
+CONFLICT (content): Merge conflict in client/src/services/securityService.ts
+Auto-merging package-lock.json
+CONFLICT (content): Merge conflict in package-lock.json
+Auto-merging package.json
+CONFLICT (content): Merge conflict in package.json
+CONFLICT (modify/delete): src/components/delivery/DeliveryRequestForm.tsx deleted in HEAD and modified in 7b40609c339619cf350935a7937c8a452b2d2a80.  Version 7b40609c339619cf350935a7937c8a452b2d2a80 of src/components/delivery/DeliveryRequestForm.tsx left in tree.
+CONFLICT (modify/delete): src/components/escrow/DynamicInvoiceForm.tsx deleted in HEAD and modified in 7b40609c339619cf350935a7937c8a452b2d2a80.  Version 7b40609c339619cf350935a7937c8a452b2d2a80 of src/components/escrow/DynamicInvoiceForm.tsx left in tree.
+CONFLICT (modify/delete): src/components/transport/TransportRequestForm.tsx deleted in HEAD and modified in 7b40609c339619cf350935a7937c8a452b2d2a80.  Version 7b40609c339619cf350935a7937c8a452b2d2a80 of src/components/transport/TransportRequestForm.tsx left in tree.
+CONFLICT (modify/delete): src/components/transport/TransportTracking.tsx deleted in HEAD and modified in 7b40609c339619cf350935a7937c8a452b2d2a80.  Version 7b40609c339619cf350935a7937c8a452b2d2a80 of src/components/transport/TransportTracking.tsx left in tree.
+CONFLICT (modify/delete): src/pages/TaxiMotoDriver.tsx deleted in HEAD and modified in 7b40609c339619cf350935a7937c8a452b2d2a80.  Version 7b40609c339619cf350935a7937c8a452b2d2a80 of src/pages/TaxiMotoDriver.tsx left in tree.
+Auto-merging vite.config.ts
+Automatic merge failed; fix conflicts and then commit the result.
+error: unable to read askpass response from 'replit-git-askpass'
+Password for 'https://ghp_123456abcdef@github.com':
