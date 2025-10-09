@@ -1,423 +1,221 @@
 /**
- * 🎯 SERVICE AGORA FRONTEND - 224SOLUTIONS
- * Service professionnel pour la gestion des communications Agora
- * RTM (Chat) + RTC (Audio/Vidéo) + Gestion des tokens
+ * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
+ * Service opérationnel pour communications audio/vidéo avec Agora
  */
 
-import AgoraRTM from 'agora-rtm-sdk';
 import AgoraRTC, { 
   IAgoraRTCClient, 
-  IAgoraRTCRemoteUser, 
   ICameraVideoTrack, 
   IMicrophoneAudioTrack,
-  ILocalVideoTrack,
-  ILocalAudioTrack
+  ConnectionState,
+  NetworkQuality
 } from 'agora-rtc-sdk-ng';
-import { toast } from 'sonner';
+import AgoraRTM from 'agora-rtm-sdk';
 
-// Types
 export interface AgoraConfig {
   appId: string;
-  rtcToken?: string;
-  rtmToken?: string;
-  channelName: string;
-  userId: string;
+  appCertificate: string;
+  tempToken?: string;
 }
 
 export interface CallConfig {
-  channelName: string;
-  isVideo: boolean;
-  userId: string;
+  channel: string;
+  uid: string;
+  token?: string;
+  role: 'publisher' | 'subscriber';
 }
 
-export interface MessageData {
-  id: string;
-  senderId: string;
-  content: string;
-  timestamp: number;
-  type: 'text' | 'image' | 'file' | 'location';
-  metadata?: any;
-}
-
-export interface UserPresence {
-  userId: string;
-  status: 'online' | 'offline' | 'away' | 'busy' | 'in_call';
-  lastSeen?: number;
+export interface UserInfo {
+  uid: string;
+  name: string;
+  avatar?: string;
+  status: 'online' | 'busy' | 'offline' | 'in_call';
 }
 
 class AgoraService {
-  private static instance: AgoraService;
-  
-  // RTM (Chat)
+  private client: IAgoraRTCClient | null = null;
   private rtmClient: any = null;
-  private rtmChannel: any = null;
-  private isRTMConnected = false;
-  
-  // RTC (Audio/Video)
-  private rtcClient: IAgoraRTCClient | null = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
-  private isRTCJoined = false;
-  
-  // Configuration
-  private config: AgoraConfig | null = null;
-  private baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-  
-  // Callbacks
-  private messageCallbacks: ((message: MessageData) => void)[] = [];
-  private presenceCallbacks: ((presence: UserPresence) => void)[] = [];
-  private callCallbacks: ((event: any) => void)[] = [];
-
-  static getInstance(): AgoraService {
-    if (!AgoraService.instance) {
-      AgoraService.instance = new AgoraService();
-    }
-    return AgoraService.instance;
-  }
-
-  // =====================================================
-  // GESTION DES TOKENS
-  // =====================================================
+  private isConnected = false;
+  private currentChannel = '';
+  private currentUid = '';
 
   /**
-   * Récupère les tokens depuis le backend
+   * Initialiser le client Agora
    */
-  async getTokens(channelName: string, userId: string): Promise<AgoraConfig> {
+  async initialize(config: AgoraConfig): Promise<void> {
     try {
-      // Utiliser Supabase pour l'authentification
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Session utilisateur non trouvée');
-      }
-
-      const response = await fetch(`${this.baseURL}/agora/session-tokens`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          channelName,
-          role: 'publisher',
-          expirationTime: 3600
-        })
+      // Initialiser RTC Client
+      this.client = AgoraRTC.createClient({ 
+        mode: 'rtc', 
+        codec: 'vp8' 
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la récupération des tokens');
-      }
-
-      return {
-        appId: result.data.appId,
-        rtcToken: result.data.rtcToken,
-        rtmToken: result.data.rtmToken,
-        channelName: result.data.channelName,
-        userId: result.data.userId
-      };
-    } catch (error) {
-      console.error('❌ Erreur récupération tokens:', error);
-      toast.error('Erreur lors de la récupération des tokens Agora');
-      throw error;
-    }
-  }
-
-  // =====================================================
-  // RTM (CHAT TEMPS RÉEL)
-  // =====================================================
-
-  /**
-   * Initialise le client RTM
-   */
-  async initializeRTM(config: AgoraConfig): Promise<void> {
-    try {
-      if (this.rtmClient) {
-        await this.disconnectRTM();
-      }
-
-      this.config = config;
+      // Initialiser RTM Client pour la messagerie
       this.rtmClient = AgoraRTM.createInstance(config.appId);
 
-      // Événements RTM
-      this.rtmClient.on('MessageFromPeer', (message: any, peerId: string) => {
-        this.handlePeerMessage(message, peerId);
-      });
+      // Configurer les événements RTC
+      this.setupRTCEvents();
+      
+      // Configurer les événements RTM
+      this.setupRTMEvents();
 
-      this.rtmClient.on('ConnectionStateChanged', (newState: string, reason: string) => {
-        console.log(`🔄 RTM Connection: ${newState}, Reason: ${reason}`);
-        this.isRTMConnected = newState === 'CONNECTED';
-      });
+      console.log('✅ Agora initialisé avec succès');
+    } catch (error) {
+      console.error('❌ Erreur initialisation Agora:', error);
+      throw error;
+    }
+  }
 
-      // Connexion avec token
-      await this.rtmClient.login({
-        uid: config.userId,
-        token: config.rtmToken
-      });
+  /**
+   * Configurer les événements RTC
+   */
+  private setupRTCEvents(): void {
+    if (!this.client) return;
 
+    this.client.on('user-published', async (user, mediaType) => {
+      console.log('👤 Utilisateur publié:', user.uid, mediaType);
+      await this.client!.subscribe(user, mediaType);
+    });
+
+    this.client.on('user-unpublished', (user, mediaType) => {
+      console.log('👤 Utilisateur déconnecté:', user.uid, mediaType);
+    });
+
+    this.client.on('user-joined', (user) => {
+      console.log('👤 Utilisateur rejoint:', user.uid);
+    });
+
+    this.client.on('user-left', (user) => {
+      console.log('👤 Utilisateur parti:', user.uid);
+    });
+
+    this.client.on('connection-state-change', (curState, revState) => {
+      console.log('🔗 État connexion:', curState, revState);
+      this.isConnected = curState === 'CONNECTED';
+    });
+
+    this.client.on('network-quality', (stats) => {
+      console.log('📊 Qualité réseau:', stats);
+    });
+  }
+
+  /**
+   * Configurer les événements RTM
+   */
+  private setupRTMEvents(): void {
+    if (!this.rtmClient) return;
+
+    this.rtmClient.on('ConnectionStateChanged', (newState, reason) => {
+      console.log('🔗 RTM État connexion:', newState, reason);
+    });
+
+    this.rtmClient.on('MessageFromPeer', (message, peerId) => {
+      console.log('💬 Message reçu:', message, 'de:', peerId);
+    });
+  }
+
+  /**
+   * Rejoindre un canal audio/vidéo
+   */
+  async joinChannel(config: CallConfig): Promise<void> {
+    if (!this.client) throw new Error('Client Agora non initialisé');
+
+    try {
       // Rejoindre le canal
-      this.rtmChannel = this.rtmClient.createChannel(config.channelName);
-      
-      this.rtmChannel.on('ChannelMessage', (message: any, memberId: string) => {
-        this.handleChannelMessage(message, memberId);
-      });
-
-      this.rtmChannel.on('MemberJoined', (memberId: string) => {
-        console.log(`👋 Membre rejoint: ${memberId}`);
-        this.notifyPresenceChange(memberId, 'online');
-      });
-
-      this.rtmChannel.on('MemberLeft', (memberId: string) => {
-        console.log(`👋 Membre parti: ${memberId}`);
-        this.notifyPresenceChange(memberId, 'offline');
-      });
-
-      await this.rtmChannel.join();
-      
-      console.log('✅ RTM initialisé avec succès');
-      toast.success('Chat connecté');
-    } catch (error) {
-      console.error('❌ Erreur initialisation RTM:', error);
-      toast.error('Erreur de connexion au chat');
-      throw error;
-    }
-  }
-
-  /**
-   * Envoie un message texte
-   */
-  async sendMessage(content: string, targetUserId?: string): Promise<void> {
-    try {
-      if (!this.rtmClient || !this.isRTMConnected) {
-        throw new Error('RTM non connecté');
-      }
-
-      const messageData: MessageData = {
-        id: Date.now().toString(),
-        senderId: this.config!.userId,
-        content,
-        timestamp: Date.now(),
-        type: 'text'
-      };
-
-      const message = this.rtmClient.createMessage({
-        text: JSON.stringify(messageData)
-      });
-
-      if (targetUserId) {
-        // Message privé
-        await this.rtmClient.sendMessageToPeer(message, targetUserId);
-      } else if (this.rtmChannel) {
-        // Message de canal
-        await this.rtmChannel.sendMessage(message);
-      }
-
-      console.log('📤 Message envoyé:', messageData);
-    } catch (error) {
-      console.error('❌ Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
-      throw error;
-    }
-  }
-
-  /**
-   * Gère les messages reçus d'un peer
-   */
-  private handlePeerMessage(message: any, peerId: string): void {
-    try {
-      const messageData: MessageData = JSON.parse(message.text);
-      messageData.senderId = peerId;
-      
-      this.messageCallbacks.forEach(callback => callback(messageData));
-      console.log('📥 Message peer reçu:', messageData);
-    } catch (error) {
-      console.error('❌ Erreur traitement message peer:', error);
-    }
-  }
-
-  /**
-   * Gère les messages reçus du canal
-   */
-  private handleChannelMessage(message: any, memberId: string): void {
-    try {
-      const messageData: MessageData = JSON.parse(message.text);
-      messageData.senderId = memberId;
-      
-      this.messageCallbacks.forEach(callback => callback(messageData));
-      console.log('📥 Message canal reçu:', messageData);
-    } catch (error) {
-      console.error('❌ Erreur traitement message canal:', error);
-    }
-  }
-
-  /**
-   * Déconnecte RTM
-   */
-  async disconnectRTM(): Promise<void> {
-    try {
-      if (this.rtmChannel) {
-        await this.rtmChannel.leave();
-        this.rtmChannel = null;
-      }
-
-      if (this.rtmClient) {
-        await this.rtmClient.logout();
-        this.rtmClient = null;
-      }
-
-      this.isRTMConnected = false;
-      console.log('🔌 RTM déconnecté');
-    } catch (error) {
-      console.error('❌ Erreur déconnexion RTM:', error);
-    }
-  }
-
-  // =====================================================
-  // RTC (AUDIO/VIDÉO)
-  // =====================================================
-
-  /**
-   * Initialise le client RTC
-   */
-  async initializeRTC(config: AgoraConfig): Promise<void> {
-    try {
-      if (this.rtcClient) {
-        await this.leaveRTCCall();
-      }
-
-      this.config = config;
-      this.rtcClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-
-      // Événements RTC
-      this.rtcClient.on('user-published', async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
-        await this.rtcClient!.subscribe(user, mediaType);
-        console.log(`🎥 Utilisateur publié: ${user.uid}, Type: ${mediaType}`);
-        
-        this.callCallbacks.forEach(callback => callback({
-          type: 'user-published',
-          user,
-          mediaType
-        }));
-      });
-
-      this.rtcClient.on('user-unpublished', (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
-        console.log(`🎥 Utilisateur non publié: ${user.uid}, Type: ${mediaType}`);
-        
-        this.callCallbacks.forEach(callback => callback({
-          type: 'user-unpublished',
-          user,
-          mediaType
-        }));
-      });
-
-      this.rtcClient.on('user-left', (user: IAgoraRTCRemoteUser) => {
-        console.log(`👋 Utilisateur parti: ${user.uid}`);
-        
-        this.callCallbacks.forEach(callback => callback({
-          type: 'user-left',
-          user
-        }));
-      });
-
-      console.log('✅ RTC initialisé avec succès');
-    } catch (error) {
-      console.error('❌ Erreur initialisation RTC:', error);
-      toast.error('Erreur d\'initialisation des appels');
-      throw error;
-    }
-  }
-
-  /**
-   * Rejoint un appel audio/vidéo
-   */
-  async joinCall(callConfig: CallConfig): Promise<void> {
-    try {
-      if (!this.rtcClient) {
-        throw new Error('RTC non initialisé');
-      }
-
-      // Rejoindre le canal
-      await this.rtcClient.join(
-        this.config!.appId,
-        callConfig.channelName,
-        this.config!.rtcToken || null,
-        callConfig.userId
+      await this.client.join(
+        config.token || undefined,
+        config.channel,
+        config.uid,
+        config.token || undefined
       );
 
-      this.isRTCJoined = true;
+      this.currentChannel = config.channel;
+      this.currentUid = config.uid;
 
-      // Créer les tracks audio
-      this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      await this.rtcClient.publish([this.localAudioTrack]);
-
-      // Créer les tracks vidéo si nécessaire
-      if (callConfig.isVideo) {
-        this.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-        await this.rtcClient.publish([this.localVideoTrack]);
+      // Publier audio et vidéo si rôle publisher
+      if (config.role === 'publisher') {
+        await this.publishLocalTracks();
       }
 
-      console.log('📞 Appel rejoint avec succès');
-      toast.success(callConfig.isVideo ? 'Appel vidéo connecté' : 'Appel audio connecté');
+      console.log('✅ Canal rejoint:', config.channel);
     } catch (error) {
-      console.error('❌ Erreur rejoindre appel:', error);
-      toast.error('Erreur lors de la connexion à l\'appel');
+      console.error('❌ Erreur rejoindre canal:', error);
       throw error;
     }
   }
 
   /**
-   * Quitte l'appel
+   * Publier les tracks locaux
    */
-  async leaveRTCCall(): Promise<void> {
+  private async publishLocalTracks(): Promise<void> {
+    if (!this.client) return;
+
     try {
-      // Arrêter les tracks locaux
+      // Créer et publier audio
+      this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      await this.client.publish([this.localAudioTrack]);
+
+      // Créer et publier vidéo
+      this.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+      await this.client.publish([this.localVideoTrack]);
+
+      console.log('✅ Tracks locaux publiés');
+    } catch (error) {
+      console.error('❌ Erreur publication tracks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Quitter le canal
+   */
+  async leaveChannel(): Promise<void> {
+    try {
+      // Arrêter et nettoyer les tracks locaux
       if (this.localAudioTrack) {
-        this.localAudioTrack.stop();
         this.localAudioTrack.close();
         this.localAudioTrack = null;
       }
 
       if (this.localVideoTrack) {
-        this.localVideoTrack.stop();
         this.localVideoTrack.close();
         this.localVideoTrack = null;
       }
 
-      // Quitter le canal
-      if (this.rtcClient && this.isRTCJoined) {
-        await this.rtcClient.leave();
-        this.isRTCJoined = false;
+      // Quitter le canal RTC
+      if (this.client) {
+        await this.client.leave();
       }
 
-      console.log('📞 Appel quitté');
-      toast.success('Appel terminé');
+      // Quitter le canal RTM
+      if (this.rtmClient && this.currentChannel) {
+        await this.rtmClient.leaveChannel(this.currentChannel);
+      }
+
+      this.isConnected = false;
+      this.currentChannel = '';
+      this.currentUid = '';
+
+      console.log('✅ Canal quitté');
     } catch (error) {
-      console.error('❌ Erreur quitter appel:', error);
+      console.error('❌ Erreur quitter canal:', error);
+      throw error;
     }
   }
 
   /**
-   * Active/désactive le microphone
+   * Activer/désactiver microphone
    */
   async toggleMicrophone(): Promise<boolean> {
+    if (!this.localAudioTrack) return false;
+
     try {
-      if (this.localAudioTrack) {
-        const enabled = this.localAudioTrack.enabled;
-        await this.localAudioTrack.setEnabled(!enabled);
-        console.log(`🎤 Microphone ${!enabled ? 'activé' : 'désactivé'}`);
-        return !enabled;
-      }
-      return false;
+      const enabled = !this.localAudioTrack.enabled;
+      await this.localAudioTrack.setEnabled(enabled);
+      console.log('🎤 Microphone:', enabled ? 'activé' : 'désactivé');
+      return enabled;
     } catch (error) {
       console.error('❌ Erreur toggle microphone:', error);
       return false;
@@ -425,106 +223,69 @@ class AgoraService {
   }
 
   /**
-   * Active/désactive la caméra
+   * Activer/désactiver caméra
    */
   async toggleCamera(): Promise<boolean> {
+    if (!this.localVideoTrack) return false;
+
     try {
-      if (this.localVideoTrack) {
-        const enabled = this.localVideoTrack.enabled;
-        await this.localVideoTrack.setEnabled(!enabled);
-        console.log(`📹 Caméra ${!enabled ? 'activée' : 'désactivée'}`);
-        return !enabled;
-      }
-      return false;
+      const enabled = !this.localVideoTrack.enabled;
+      await this.localVideoTrack.setEnabled(enabled);
+      console.log('📹 Caméra:', enabled ? 'activée' : 'désactivée');
+      return enabled;
     } catch (error) {
       console.error('❌ Erreur toggle caméra:', error);
       return false;
     }
   }
 
-  // =====================================================
-  // CALLBACKS ET ÉVÉNEMENTS
-  // =====================================================
-
   /**
-   * Ajoute un callback pour les messages
+   * Obtenir les statistiques de qualité
    */
-  onMessage(callback: (message: MessageData) => void): void {
-    this.messageCallbacks.push(callback);
+  async getNetworkQuality(): Promise<NetworkQuality | null> {
+    if (!this.client) return null;
+    return this.client.getRTCStats();
   }
 
   /**
-   * Ajoute un callback pour les changements de présence
+   * Vérifier si connecté
    */
-  onPresenceChange(callback: (presence: UserPresence) => void): void {
-    this.presenceCallbacks.push(callback);
+  isChannelConnected(): boolean {
+    return this.isConnected;
   }
 
   /**
-   * Ajoute un callback pour les événements d'appel
+   * Obtenir l'UID actuel
    */
-  onCallEvent(callback: (event: any) => void): void {
-    this.callCallbacks.push(callback);
+  getCurrentUid(): string {
+    return this.currentUid;
   }
 
   /**
-   * Notifie un changement de présence
+   * Obtenir le canal actuel
    */
-  private notifyPresenceChange(userId: string, status: UserPresence['status']): void {
-    const presence: UserPresence = {
-      userId,
-      status,
-      lastSeen: Date.now()
-    };
-    
-    this.presenceCallbacks.forEach(callback => callback(presence));
-  }
-
-  // =====================================================
-  // UTILITAIRES
-  // =====================================================
-
-  /**
-   * Obtient les tracks locaux
-   */
-  getLocalTracks() {
-    return {
-      audio: this.localAudioTrack,
-      video: this.localVideoTrack
-    };
+  getCurrentChannel(): string {
+    return this.currentChannel;
   }
 
   /**
-   * Vérifie si RTM est connecté
-   */
-  isRTMReady(): boolean {
-    return this.isRTMConnected;
-  }
-
-  /**
-   * Vérifie si RTC est connecté
-   */
-  isRTCReady(): boolean {
-    return this.isRTCJoined;
-  }
-
-  /**
-   * Nettoie toutes les connexions
+   * Nettoyer les ressources
    */
   async cleanup(): Promise<void> {
-    await Promise.all([
-      this.disconnectRTM(),
-      this.leaveRTCCall()
-    ]);
-    
-    this.messageCallbacks = [];
-    this.presenceCallbacks = [];
-    this.callCallbacks = [];
-    this.config = null;
-    
-    console.log('🧹 Service Agora nettoyé');
+    try {
+      await this.leaveChannel();
+      
+      if (this.rtmClient) {
+        await this.rtmClient.logout();
+        this.rtmClient = null;
+      }
+
+      this.client = null;
+      console.log('✅ Agora nettoyé');
+    } catch (error) {
+      console.error('❌ Erreur nettoyage Agora:', error);
+    }
   }
 }
 
-export const agoraService = AgoraService.getInstance();
-export default agoraService;
+export const agoraService = new AgoraService();

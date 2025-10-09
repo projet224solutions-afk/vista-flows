@@ -7,7 +7,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import SimpleCommunicationLovable from "@/components/communication/SimpleCommunicationLovable";
 import CommunicationModuleLovable from "@/components/communication/CommunicationModuleLovable";
 import { MessageSquare, Users, Bell, CheckCircle, Settings } from "lucide-react";
 
@@ -45,7 +44,7 @@ export default function LovableTestPage() {
                   <li>• Seulement useState</li>
                 </ul>
               </div>
-              
+
               <div className="p-4 bg-white border border-green-200 rounded-lg">
                 <h3 className="font-semibold text-green-800 mb-2">✅ Données Statiques</h3>
                 <ul className="text-sm text-green-700 space-y-1">
@@ -54,7 +53,7 @@ export default function LovableTestPage() {
                   <li>• Rendu immédiat</li>
                 </ul>
               </div>
-              
+
               <div className="p-4 bg-white border border-green-200 rounded-lg">
                 <h3 className="font-semibold text-green-800 mb-2">✅ Structure Simple</h3>
                 <ul className="text-sm text-green-700 space-y-1">
@@ -67,20 +66,6 @@ export default function LovableTestPage() {
           </CardContent>
         </Card>
 
-        {/* Test SimpleCommunicationLovable */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-6 h-6" />
-              Test SimpleCommunicationLovable
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
-              <SimpleCommunicationLovable />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Test CommunicationModuleLovable */}
         <Card>
@@ -113,7 +98,7 @@ export default function LovableTestPage() {
                   Vérifier que les composants de communication s'affichent correctement dans Lovable
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold text-yellow-800 mb-2">✅ Optimisations Appliquées</h4>
                 <ul className="text-sm text-yellow-700 space-y-1">
@@ -124,7 +109,7 @@ export default function LovableTestPage() {
                   <li>• Pas de dépendances externes</li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold text-yellow-800 mb-2">🔍 Tests à Effectuer</h4>
                 <ol className="text-sm text-yellow-700 space-y-1 list-decimal list-inside">
@@ -153,8 +138,8 @@ export default function LovableTestPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span className="text-sm">SimpleCommunicationLovable</span>
-                    <Badge className="bg-green-100 text-green-800">Ultra-simple</Badge>
+                    <span className="text-sm">CommunicationModuleLovable</span>
+                    <Badge className="bg-green-100 text-green-800">Opérationnel</Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
@@ -163,7 +148,7 @@ export default function LovableTestPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold text-blue-800 mb-3">🚀 Compatibilité Lovable</h4>
                 <div className="space-y-2">
