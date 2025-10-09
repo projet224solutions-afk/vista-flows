@@ -79,9 +79,9 @@ export function useCommunicationData() {
         id: conv.id,
         name: conv.name || 'Conversation',
         lastMessage: conv.last_message || 'Aucun message',
-        timestamp: new Date(conv.updated_at).toLocaleTimeString('fr-FR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        timestamp: new Date(conv.updated_at).toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
         }),
         unreadCount: conv.unread_count || 0,
         status: conv.participants?.[0]?.profiles?.status || 'offline',
@@ -127,9 +127,9 @@ export function useCommunicationData() {
         id: msg.id,
         sender: `${msg.profiles?.first_name} ${msg.profiles?.last_name}` || 'Utilisateur',
         content: msg.content,
-        timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
         }),
         isOwn: false, // TODO: Vérifier si c'est l'utilisateur actuel
         type: msg.type || 'text',
@@ -204,7 +204,7 @@ export function useCommunicationData() {
 
       // Recharger les messages
       await loadMessages(conversationId);
-      
+
       toast.success('Message envoyé');
       return messageData;
     } catch (error) {
@@ -281,6 +281,70 @@ export function useCommunicationData() {
     // loadAllData sera appelé avec l'userId depuis le composant parent
   }, []);
 
+  /**
+   * Rechercher des utilisateurs
+   */
+  const searchUsers = useCallback(async (query: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status,
+          avatar_url,
+          updated_at
+        `)
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .limit(10);
+
+      if (error) throw error;
+
+      const searchResults = data?.map(profile => ({
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        email: profile.email,
+        phone: profile.phone,
+        status: profile.status || 'offline',
+        avatar_url: profile.avatar_url,
+        last_seen: profile.updated_at
+      })) || [];
+
+      return searchResults;
+    } catch (error) {
+      console.error('❌ Erreur recherche utilisateurs:', error);
+      setError('Erreur lors de la recherche');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Ajouter un contact
+   */
+  const addContact = useCallback(async (contactId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .insert({
+          user_id: user?.id,
+          contact_id: contactId,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('❌ Erreur ajout contact:', error);
+      throw error;
+    }
+  }, [user?.id]);
+
   return {
     conversations,
     messages,
@@ -296,6 +360,8 @@ export function useCommunicationData() {
     markAsRead,
     setActiveConversation,
     loadAllData,
-    refetch: loadAllData
+    refetch: loadAllData,
+    searchUsers,
+    addContact
   };
 }
