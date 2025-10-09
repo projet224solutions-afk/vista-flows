@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useCommunicationData } from "@/hooks/useCommunicationData";
 import {
   MessageSquare, Send, Users, Bell, Phone, Video, 
   Search, Plus, CheckCircle, Clock, User, Settings
@@ -17,67 +18,50 @@ export default function SimpleCommunicationInterface() {
   const [activeTab, setActiveTab] = useState('chat');
   const [newMessage, setNewMessage] = useState('');
 
-  // Données mockées simplifiées
-  const conversations = [
-    {
-      id: '1',
-      name: 'Marie Diallo',
-      lastMessage: 'Salut ! Comment ça va ?',
-      timestamp: '14:30',
-      unreadCount: 0,
-      status: 'online'
-    },
-    {
-      id: '2',
-      name: 'Amadou Ba',
-      lastMessage: 'Merci pour l\'information',
-      timestamp: '13:45',
-      unreadCount: 2,
-      status: 'busy'
-    },
-    {
-      id: '3',
-      name: 'Fatou Sall',
-      lastMessage: 'À bientôt !',
-      timestamp: 'Hier 18:30',
-      unreadCount: 0,
-      status: 'offline'
+  // Utiliser le hook de communication pour les vraies données
+  const {
+    conversations,
+    messages,
+    contacts,
+    activeConversation,
+    loading: dataLoading,
+    error: dataError,
+    loadConversations,
+    loadMessages,
+    sendMessage,
+    createConversation,
+    setActiveConversation
+  } = useCommunicationData();
+
+  // Charger les données au montage
+  useEffect(() => {
+    if (user?.id) {
+      loadConversations(user.id);
     }
-  ];
+  }, [user?.id, loadConversations]);
 
-  const messages = [
-    {
-      id: '1',
-      sender: 'Marie Diallo',
-      content: 'Salut ! Comment ça va ?',
-      timestamp: '14:30',
-      isOwn: false
-    },
-    {
-      id: '2',
-      sender: 'Vous',
-      content: 'Ça va bien, merci ! Et toi ?',
-      timestamp: '14:32',
-      isOwn: true
-    },
-    {
-      id: '3',
-      sender: 'Marie Diallo',
-      content: 'Très bien aussi ! J\'ai une question sur le projet...',
-      timestamp: '14:35',
-      isOwn: false
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user?.id) return;
+
+    try {
+      if (activeConversation) {
+        await sendMessage(activeConversation, newMessage, user.id);
+      } else {
+        // Créer une nouvelle conversation si nécessaire
+        const newConv = await createConversation([user.id], 'Nouvelle conversation');
+        if (newConv) {
+          await sendMessage(newConv.id, newMessage, user.id);
+        }
+      }
+      setNewMessage('');
+    } catch (error) {
+      console.error('Erreur envoi message:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer le message",
+        variant: "destructive"
+      });
     }
-  ];
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-
-    toast({
-      title: "Message envoyé",
-      description: "Votre message a été envoyé avec succès",
-    });
-    
-    setNewMessage('');
   };
 
   const getStatusColor = (status: string) => {

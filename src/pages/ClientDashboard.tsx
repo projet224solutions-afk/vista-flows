@@ -63,10 +63,24 @@ export default function ClientDashboard() {
   const { user, profile, signOut, ensureUserSetup } = useAuth();
   const navigate = useNavigate();
 
+  // ================= HOOK DONNÉES RÉELLES =================
+  const {
+    products,
+    categories,
+    orders,
+    cartItems,
+    loading: dataLoading,
+    error: dataError,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    createOrder,
+    loadAllData
+  } = useClientData();
+
   // ================= ÉTATS PRINCIPAUX =================
   const [activeTab, setActiveTab] = useState('home');
   const [walletBalance, setWalletBalance] = useState(0);
-  const [cartItems, setCartItems] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [userLevel, setUserLevel] = useState('Gold');
   const [isFixingAccount, setIsFixingAccount] = useState(false);
@@ -110,49 +124,9 @@ export default function ClientDashboard() {
   };
   const [membershipProgress, setMembershipProgress] = useState(0);
 
-  // ================= DONNÉES MOCKÉES STYLE ALIBABA =================
-  const categories: Category[] = [
-    { id: 'electronics', name: 'Électronique', icon: Smartphone, color: 'bg-blue-500', itemCount: 15234 },
-    { id: 'fashion', name: 'Mode & Style', icon: Shirt, color: 'bg-pink-500', itemCount: 23456 },
-    { id: 'home', name: 'Maison & Jardin', icon: Building2, color: 'bg-green-500', itemCount: 8934 },
-    { id: 'sports', name: 'Sports & Loisirs', icon: Dumbbell, color: 'bg-orange-500', itemCount: 5678 },
-  ];
-
-  const hotProducts: Product[] = [
-    {
-      id: 'P001',
-      name: 'iPhone 15 Pro Max 1TB Titanium',
-      price: 1200000,
-      originalPrice: 1350000,
-      image: 'https://images.unsplash.com/photo-1592910119559-e9e8d9c9b0ee?w=400',
-      rating: 4.9,
-      reviews: 2847,
-      category: 'electronics',
-      discount: 11,
-      inStock: true,
-      seller: 'Apple Store Officiel',
-      brand: 'Apple',
-      isHot: true,
-      isNew: true,
-      isFreeShipping: true
-    },
-    {
-      id: 'P002',
-      name: 'MacBook Pro M3 16" 1TB SSD',
-      price: 1800000,
-      originalPrice: 2000000,
-      image: 'https://images.unsplash.com/photo-1541807084-5b52b7fd0be2?w=400',
-      rating: 4.8,
-      reviews: 1567,
-      category: 'electronics',
-      discount: 10,
-      inStock: true,
-      seller: 'TechWorld Pro',
-      brand: 'Apple',
-      isHot: true,
-      isFreeShipping: true
-    }
-  ];
+  // ================= DONNÉES RÉELLES DEPUIS LE HOOK =================
+  // Utiliser les catégories et produits du hook useClientData
+  const hotProducts = products.filter(product => product.isHot).slice(0, 10);
 
   // ================= VÉRIFICATION SETUP UTILISATEUR =================
   useEffect(() => {
@@ -166,23 +140,24 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
   }, []);
 
-  const addToCart = useCallback((product: Product) => {
-    setCartItems(prev => {
-      const exists = prev.find(item => item.id === product.id);
-      if (exists) {
-        toast.info('Produit déjà dans le panier');
-        return prev;
-      }
-      toast.success(`${product.name} ajouté au panier`, {
-        description: `Prix: ${formatPrice(product.price)}`,
-        action: {
-          label: "Voir panier",
-          onClick: () => setActiveTab('cart')
-        }
-      });
-      return [...prev, product];
-    });
-  }, [formatPrice]);
+  // Utiliser la fonction addToCart du hook useClientData
+  // const addToCart = useCallback((product: Product) => {
+  //   setCartItems(prev => {
+  //     const exists = prev.find(item => item.id === product.id);
+  //     if (exists) {
+  //       toast.info('Produit déjà dans le panier');
+  //       return prev;
+  //     }
+  //     toast.success(`${product.name} ajouté au panier`, {
+  //       description: `Prix: ${formatPrice(product.price)}`,
+  //       action: {
+  //         label: "Voir panier",
+  //         onClick: () => setActiveTab('cart')
+  //       }
+  //     });
+  //     return [...prev, product];
+  //   });
+  // }, [formatPrice]);
 
   const handleSignOut = async () => {
     try {
@@ -511,7 +486,8 @@ export default function ClientDashboard() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {categories.map(category => {
-                    const IconComponent = category.icon;
+                    // Utiliser une icône par défaut si pas d'icône spécifiée
+                    const IconComponent = category.icon || Smartphone;
                     return (
                       <div
                         key={category.id}
@@ -637,7 +613,8 @@ export default function ClientDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {categories.map(category => {
-                const IconComponent = category.icon;
+                // Utiliser une icône par défaut si pas d'icône spécifiée
+                const IconComponent = category.icon || Smartphone;
                 return (
                   <Card key={category.id} className="group hover:shadow-xl transition-all duration-300 cursor-pointer">
                     <CardContent className="p-6 text-center">
