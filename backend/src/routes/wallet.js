@@ -126,6 +126,38 @@ router.get('/stats', authMiddleware, async (req, res) => {
 });
 
 /**
+ * GET /api/wallet/balance - Obtenir le solde du wallet (endpoint demandé)
+ */
+router.get('/balance', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const result = await walletService.getWallet(userId);
+
+        if (!result.success || !result.wallet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Wallet non trouvé'
+            });
+        }
+
+        res.json({
+            success: true,
+            balance: result.wallet.balance,
+            currency: result.wallet.currency,
+            wallet: result.wallet
+        });
+    } catch (error) {
+        console.error('❌ Erreur solde wallet:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur serveur',
+            error: error.message
+        });
+    }
+});
+
+/**
  * 💸 TRANSACTIONS
  */
 

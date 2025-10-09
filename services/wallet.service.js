@@ -129,47 +129,29 @@ class WalletService {
                 throw new Error('Utilisateur expéditeur ou destinataire non trouvé');
             }
 
-            // Vérifier le solde de l'expéditeur
-            const senderWallet = await this.getWallet(senderId);
-            if (!senderWallet.success) {
-                throw new Error('Wallet expéditeur non trouvé');
+            // Valider le montant
+            if (!this.validateAmount(amount, 'transfer')) {
+                throw new Error('Montant invalide');
             }
 
-            // Calculer la commission (1.5%)
-            const commission = amount * commissionConfig.transferCommission;
-            const totalAmount = amount + commission;
-
-            if (senderWallet.wallet.balance < totalAmount) {
-                throw new Error('Solde insuffisant pour effectuer le transfert');
-            }
-
-            // Créer la transaction avec commission
-            const { data: transactionId, error } = await this.supabase
-                .rpc('create_transaction_with_commission', {
-                    p_sender_id: senderId,
-                    p_receiver_id: receiverId,
+            // Utiliser la fonction SQL existante pour traiter la transaction
+            const { data: result, error } = await this.supabase
+                .rpc('process_transaction', {
+                    p_from_user_id: senderId,
+                    p_to_user_id: receiverId,
                     p_amount: amount,
                     p_transaction_type: 'transfer',
-                    p_payment_method: paymentMethods.WALLET_TRANSFER,
                     p_description: description
                 });
 
             if (error) {
                 throw error;
             }
-
-            // Mettre à jour les soldes des wallets
-            const updateResult = await this.supabase
-                .rpc('update_wallet_balances', {
-                    p_transaction_id: transactionId
-                });
-
-            if (updateResult.error) {
-                throw updateResult.error;
+            if (result?.error) {
+                throw new Error(result.error);
             }
 
-            // Récupérer les détails de la transaction
-            const transaction = await this.getTransactionById(transactionId);
+            const transactionId = result?.transaction_id;
 
             // Envoyer notifications
             if (sender.fcm_token) {
@@ -203,10 +185,7 @@ class WalletService {
             return {
                 success: true,
                 transactionId,
-                amount,
-                commission,
-                totalAmount,
-                transaction: transaction.transaction
+                amount
             };
         } catch (error) {
             console.error('❌ Erreur transfert:', error);
@@ -332,38 +311,47 @@ class WalletService {
         try {
             console.log('💳 Dépôt:', userId, amount, paymentMethod);
 
-            // Créer la transaction de dépôt
-            const { data: transactionId, error } = await this.supabase
-                .rpc('create_transaction_with_commission', {
-                    p_sender_id: null,
-                    p_receiver_id: userId,
-                    p_amount: amount,
-                    p_transaction_type: 'deposit',
-                    p_payment_method: paymentMethod,
-                    p_description: `Dépôt via ${paymentMethod}`
-                });
-
-            if (error) {
-                throw error;
+            if (!this.validateAmount(amount, 'deposit')) {
+                throw new Error('Montant invalide');
             }
 
-            // Mettre à jour le solde du wallet
-            const updateResult = await this.supabase
-                .rpc('update_wallet_balances', {
-                    p_transaction_id: transactionId
-                });
-
-            if (updateResult.error) {
-                throw updateResult.error;
+            // Récupérer le wallet utilisateur
+            const wallet = await this.getWallet(userId);
+            if (!wallet.success) {
+                throw new Error('Wallet non trouvé');
             }
 
-            // Envoyer notification
+            // Insérer la transaction de dépôt
+            const { data: tx, error: txError } = await this.supabase
+                .from('wallet_transactions')
+                .insert({
+                    transaction_type: 'deposit',
+                    amount: amount,
+                    net_amount: amount,
+                    fee: 0,
+                    currency: 'GNF',
+                    description: `Dépôt via ${paymentMethod}${reference ? ' - ' + reference : ''}`,
+                    receiver_wallet_id: wallet.wallet.id,
+                    status: 'completed'
+                })
+                .select()
+                .single();
+            if (txError) throw txError;
+
+            // Créditer le wallet
+            const { error: creditError } = await this.supabase
+                .from('wallets')
+                .update({ balance: wallet.wallet.balance + amount, updated_at: new Date().toISOString() })
+                .eq('id', wallet.wallet.id);
+            if (creditError) throw creditError;
+
+            // Notification
             const user = await this.getUserById(userId);
             if (user && user.fcm_token) {
                 await firebaseService.sendTransactionSuccessNotification(
                     user.fcm_token,
                     {
-                        id: transactionId,
+                        id: tx.id,
                         amount,
                         currency: 'GNF',
                         type: 'deposit'
@@ -371,11 +359,11 @@ class WalletService {
                 );
             }
 
-            console.log('✅ Dépôt réussi, transaction ID:', transactionId);
+            console.log('✅ Dépôt réussi, transaction ID:', tx.id);
 
             return {
                 success: true,
-                transactionId,
+                transactionId: tx.id,
                 amount
             };
         } catch (error) {
@@ -547,13 +535,14 @@ class WalletService {
      */
     async getTransactionHistory(userId, limit = 50, offset = 0) {
         try {
+            // Trouver le wallet de l'utilisateur
+            const wallet = await this.getWallet(userId);
+            if (!wallet.success) throw new Error('Wallet non trouvé');
+
             const { data, error } = await this.supabase
-                .from('transactions')
-                .select(`
-                    *,
-                    commissions(*)
-                `)
-                .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+                .from('wallet_transactions')
+                .select('*')
+                .or(`sender_wallet_id.eq.${wallet.wallet.id},receiver_wallet_id.eq.${wallet.wallet.id}`)
                 .order('created_at', { ascending: false })
                 .range(offset, offset + limit - 1);
 
@@ -630,11 +619,8 @@ class WalletService {
     async getTransactionById(transactionId) {
         try {
             const { data, error } = await this.supabase
-                .from('transactions')
-                .select(`
-                    *,
-                    commissions(*)
-                `)
+                .from('wallet_transactions')
+                .select('*')
                 .eq('id', transactionId)
                 .single();
 
