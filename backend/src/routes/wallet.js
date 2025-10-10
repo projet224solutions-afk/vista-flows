@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const walletService = require('../../../services/wallet.service');
+const walletService = require('../../../services/wallet.service.cjs');
 const firebaseService = require('../../../services/firebase.service');
 const { authMiddleware } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');

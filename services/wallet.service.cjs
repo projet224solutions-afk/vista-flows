@@ -657,6 +657,8 @@ class WalletService {
     }
 }
 
-// Export singleton
+// Export singleton CommonJS
 const walletService = new WalletService();
 module.exports = walletService;
+
+
