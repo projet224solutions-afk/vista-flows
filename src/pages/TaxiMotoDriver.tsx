@@ -93,8 +93,6 @@ export default function TaxiMotoDriver() {
         if (isOnline) {
             startLocationTracking();
             simulateRideRequests();
-        } else {
-            stopLocationTracking();
         }
     }, [isOnline]);
 

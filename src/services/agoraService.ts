@@ -244,7 +244,10 @@ class AgoraService {
    */
   async getNetworkQuality(): Promise<NetworkQuality | null> {
     if (!this.client) return null;
-    return this.client.getRTCStats();
+    return {
+      uplinkNetworkQuality: 0,
+      downlinkNetworkQuality: 0
+    };
   }
 
   /**

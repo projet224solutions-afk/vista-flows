@@ -45,13 +45,9 @@ export default function SyndicatePWAIntegration({
     const {
         isInstallable,
         isInstalled,
-        deviceType,
-        showInstallBanner,
-        installApp,
-        getInstallButtonText,
-        getInstallInstructions,
-        needRefresh,
-        updateServiceWorker
+        platform,
+        isMobile,
+        promptInstall
     } = usePWAInstall();
 
     const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -65,7 +61,7 @@ export default function SyndicatePWAIntegration({
 
     const handleInstall = async () => {
         try {
-            const success = await installApp();
+            const success = await promptInstall();
             if (success) {
                 toast.success('✅ Installation lancée !', {
                     description: 'L\'application Bureau Syndicat sera installée sur votre appareil'
@@ -82,35 +78,20 @@ export default function SyndicatePWAIntegration({
         setShowInstallPrompt(false);
     };
 
-    const handleUpdate = () => {
-        updateServiceWorker(true);
-        toast.success('🔄 Mise à jour en cours...');
-    };
-
     const getDeviceIcon = () => {
-        switch (deviceType) {
-            case 'android':
-                return <Smartphone className="w-6 h-6 text-green-600" />;
-            case 'ios':
-                return <Smartphone className="w-6 h-6 text-blue-600" />;
-            case 'desktop':
-                return <Monitor className="w-6 h-6 text-purple-600" />;
-            default:
-                return <Smartphone className="w-6 h-6 text-gray-600" />;
+        if (isMobile) {
+            return <Smartphone className="w-6 h-6 text-green-600" />;
         }
+        return <Monitor className="w-6 h-6 text-purple-600" />;
     };
 
     const getDeviceBadge = () => {
-        switch (deviceType) {
-            case 'android':
-                return <Badge className="bg-green-100 text-green-800">Android</Badge>;
-            case 'ios':
-                return <Badge className="bg-blue-100 text-blue-800">iOS</Badge>;
-            case 'desktop':
-                return <Badge className="bg-purple-100 text-purple-800">Desktop</Badge>;
-            default:
-                return <Badge className="bg-gray-100 text-gray-800">Appareil</Badge>;
-        }
+        if (!platform) return null;
+        return (
+            <Badge variant="outline" className="ml-2">
+                {platform}
+            </Badge>
+        );
     };
 
     // Si l'app est déjà installée, afficher le statut
@@ -138,35 +119,6 @@ export default function SyndicatePWAIntegration({
         );
     }
 
-    // Bannière de mise à jour
-    if (needRefresh) {
-        return (
-            <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Shield className="w-6 h-6 text-blue-600" />
-                            <div>
-                                <h3 className="font-semibold text-blue-900">Mise à jour disponible</h3>
-                                <p className="text-sm text-blue-700">
-                                    Une nouvelle version de l'application est disponible
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={handleUpdate}
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            <Download className="w-4 h-4 mr-2" />
-                            Mettre à jour
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
-
     // Bannière d'installation
     if (showInstallPrompt && isInstallable) {
         return (
@@ -183,7 +135,7 @@ export default function SyndicatePWAIntegration({
                                     {getDeviceBadge()}
                                 </div>
                                 <p className="text-sm text-blue-700">
-                                    {getInstallInstructions()}
+                                    Installez l'application pour un accès rapide et hors ligne
                                 </p>
                                 <p className="text-xs text-blue-600 mt-1">
                                     Bureau: {bureauName} • Président: {presidentName}
@@ -196,17 +148,8 @@ export default function SyndicatePWAIntegration({
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700"
                             >
-                                {deviceType === 'ios' ? (
-                                    <>
-                                        <Share className="w-4 h-4 mr-2" />
-                                        Ajouter à l'écran d'accueil
-                                    </>
-                                ) : (
-                                    <>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Installer l'application
-                                    </>
-                                )}
+                                <Download className="w-4 h-4 mr-2" />
+                                Installer l'application
                             </Button>
                             <Button
                                 onClick={handleDismiss}
