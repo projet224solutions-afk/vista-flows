@@ -8,13 +8,15 @@ const logger = require('../utils/logger');
 
 class OpenAIService {
     constructor() {
-        if (!process.env.OPENAI_API_KEY) {
-            throw new Error('OPENAI_API_KEY manquante dans les variables d\'environnement');
+        this.enabled = !!process.env.OPENAI_API_KEY;
+        if (!this.enabled) {
+            logger.warn('OPENAI_API_KEY manquante - le service OpenAI sera désactivé.');
+            this.client = null;
+        } else {
+            this.client = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY,
+            });
         }
-
-        this.client = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
 
         this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
         this.maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS) || 1000;
@@ -23,7 +25,8 @@ class OpenAIService {
         logger.info('Service OpenAI initialisé', {
             model: this.model,
             maxTokens: this.maxTokens,
-            temperature: this.temperature
+            temperature: this.temperature,
+            enabled: this.enabled
         });
     }
 
@@ -36,6 +39,9 @@ class OpenAIService {
      */
     async analyzeProject(projectText, user, options = {}) {
         try {
+            if (!this.enabled || !this.client) {
+                throw new Error('Service OpenAI non configuré');
+            }
             // Validation des entrées
             if (!projectText || typeof projectText !== 'string') {
                 throw new Error('Le texte du projet est requis et doit être une chaîne de caractères');
@@ -292,6 +298,12 @@ INSTRUCTIONS:
      */
     async testConnection() {
         try {
+            if (!this.enabled || !this.client) {
+                return {
+                    success: false,
+                    message: 'Service OpenAI désactivé (clé absente)'
+                };
+            }
             const testCompletion = await this.client.chat.completions.create({
                 model: this.model,
                 messages: [
