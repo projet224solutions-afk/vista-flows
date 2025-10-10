@@ -252,15 +252,18 @@ export function useSyndicateData(bureauId?: string) {
                 throw transactionsError;
             }
 
-            const formattedTransactions: Transaction[] = transactionsData?.map(transaction => ({
-                id: transaction.id,
-                type: transaction.transaction_type || 'Transaction',
-                amount: transaction.amount,
-                description: transaction.description || 'Transaction syndicale',
-                date: new Date(transaction.created_at).toISOString().split('T')[0],
-                status: transaction.status || 'completed',
-                memberName: `${transaction.members?.first_name} ${transaction.members?.last_name}` || 'Membre'
-            })) || [];
+            const formattedTransactions: Transaction[] = transactionsData?.map(transaction => {
+                const member = (transaction.members as any);
+                return {
+                    id: transaction.id,
+                    type: transaction.transaction_type || 'Transaction',
+                    amount: transaction.amount,
+                    description: transaction.description || 'Transaction syndicale',
+                    date: new Date(transaction.created_at).toISOString().split('T')[0],
+                    status: transaction.status || 'completed',
+                    memberName: member ? `${member.first_name || ''} ${member.last_name || ''}`.trim() : 'Membre'
+                };
+            }) || [];
 
             setTransactions(formattedTransactions);
         } catch (error) {

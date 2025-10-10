@@ -129,16 +129,19 @@ export function usePDGData() {
         throw transactionsError;
       }
 
-      const formattedTransactions: Transaction[] = walletTransactions?.map(tx => ({
-        id: tx.id,
-        type: tx.transaction_type || 'Transaction',
-        amount: tx.amount,
-        method: 'mobile_money', // TODO: Récupérer vraie méthode
-        status: tx.status || 'completed',
-        date: new Date(tx.created_at).toISOString().split('T')[0],
-        user: `${tx.profiles?.first_name} ${tx.profiles?.last_name}` || 'Utilisateur',
-        commission: Math.floor(tx.amount * 0.015) // 1.5% commission
-      })) || [];
+      const formattedTransactions: Transaction[] = walletTransactions?.map(tx => {
+        const profile = (tx.profiles as any);
+        return {
+          id: tx.id,
+          type: tx.transaction_type || 'Transaction',
+          amount: tx.amount,
+          method: 'mobile_money', // TODO: Récupérer vraie méthode
+          status: tx.status || 'completed',
+          date: new Date(tx.created_at).toISOString().split('T')[0],
+          user: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Utilisateur',
+          commission: Math.floor(tx.amount * 0.015) // 1.5% commission
+        };
+      }) || [];
 
       setTransactions(formattedTransactions);
     } catch (error) {
@@ -168,15 +171,18 @@ export function usePDGData() {
         throw productsError;
       }
 
-      const formattedProducts: Product[] = productsData?.map(product => ({
-        id: product.id,
-        name: product.name,
-        vendor: product.vendors?.business_name || 'Vendeur',
-        status: product.status || 'active',
-        price: product.price,
-        sales: Math.floor(Math.random() * 100), // TODO: Calculer vraies ventes
-        compliance: 'compliant' // TODO: Vérifier vraie conformité
-      })) || [];
+      const formattedProducts: Product[] = productsData?.map(product => {
+        const vendor = (product.vendors as any);
+        return {
+          id: product.id,
+          name: product.name,
+          vendor: vendor?.business_name || 'Vendeur',
+          status: product.status || 'active',
+          price: product.price,
+          sales: Math.floor(Math.random() * 100), // TODO: Calculer vraies ventes
+          compliance: 'compliant' // TODO: Vérifier vraie conformité
+        };
+      }) || [];
 
       setProducts(formattedProducts);
     } catch (error) {

@@ -90,8 +90,8 @@ export function useClientData() {
         category: product.category || 'general',
         discount: product.discount,
         inStock: product.in_stock,
-        seller: product.vendors?.business_name || 'Vendeur',
-        brand: product.vendors?.brand || 'Marque',
+        seller: (product.vendors as any)?.business_name || (product.vendors as any)?.brand || 'Vendeur',
+        brand: (product.vendors as any)?.brand || (product.vendors as any)?.business_name || 'Marque',
         isHot: Math.random() > 0.7,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         isFreeShipping: Math.random() > 0.5
@@ -166,14 +166,20 @@ export function useClientData() {
         throw ordersError;
       }
 
-      const formattedOrders: Order[] = ordersData?.map(order => ({
-        id: order.id,
-        productName: order.order_items?.[0]?.products?.name || 'Produit',
-        status: order.status,
-        total: order.total_amount,
-        date: new Date(order.created_at).toISOString().split('T')[0],
-        seller: order.order_items?.[0]?.vendors?.business_name || 'Vendeur'
-      })) || [];
+      const formattedOrders: Order[] = ordersData?.map(order => {
+        const firstItem = order.order_items?.[0];
+        const productData = firstItem?.products as any;
+        const vendorData = firstItem?.vendors as any;
+        
+        return {
+          id: order.id,
+          productName: productData?.name || 'Produit',
+          status: order.status,
+          total: order.total_amount,
+          date: new Date(order.created_at).toISOString().split('T')[0],
+          seller: vendorData?.business_name || 'Vendeur'
+        };
+      }) || [];
 
       setOrders(formattedOrders);
     } catch (error) {

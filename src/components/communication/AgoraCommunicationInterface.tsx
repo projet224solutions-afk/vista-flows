@@ -55,19 +55,18 @@ export default function AgoraCommunicationInterface() {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   const [newMessage, setNewMessage] = useState('');
+  const [localActiveConv, setLocalActiveConv] = useState<string | null>(null);
 
   // Hooks pour les données
   const {
     conversations,
     messages,
     contacts,
-    activeConversation,
     loading: dataLoading,
     loadConversations,
     loadMessages,
     sendMessage,
-    createConversation,
-    setActiveConversation
+    createConversation
   } = useCommunicationData();
 
   const {
@@ -128,10 +127,10 @@ export default function AgoraCommunicationInterface() {
   };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || !activeConversation) return;
+        if (!newMessage.trim() || !localActiveConv) return;
 
         try {
-            await sendMessage(activeConversation, newMessage.trim(), user?.id || '');
+            await sendMessage(localActiveConv, newMessage.trim(), user?.id || '');
             setNewMessage('');
         } catch (error) {
             console.error('Erreur envoi message:', error);
@@ -146,8 +145,8 @@ export default function AgoraCommunicationInterface() {
     const handleCreateConversation = async (contact: Contact) => {
         try {
             const conversation = await createConversation([contact.id], `Chat avec ${contact.name}`);
-            if (conversation) {
-                setActiveConversation(conversation.id);
+            if (conversation?.id) {
+                setLocalActiveConv(conversation.id);
                 setActiveTab('chat');
             }
         } catch (error) {
@@ -194,11 +193,11 @@ export default function AgoraCommunicationInterface() {
                     <div
                       key={conv.id}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        activeConversation === conv.id
+                        localActiveConv === conv.id
                           ? 'bg-blue-100 border-blue-300'
                           : 'hover:bg-gray-100'
                       }`}
-                      onClick={() => setActiveConversation(conv.id)}
+                      onClick={() => setLocalActiveConv(conv.id)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
@@ -226,19 +225,19 @@ export default function AgoraCommunicationInterface() {
 
               {/* Zone de chat active */}
               <div className="flex-1 flex flex-col">
-                {activeConversation ? (
+                {localActiveConv ? (
                   <>
                     {/* En-tête de conversation */}
                     <div className="p-4 border-b flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={conversations.find(c => c.id === activeConversation)?.avatar} />
+                          <AvatarImage src={conversations.find(c => c.id === localActiveConv)?.avatar} />
                           <AvatarFallback>
-                            {conversations.find(c => c.id === activeConversation)?.name.charAt(0)}
+                            {conversations.find(c => c.id === localActiveConv)?.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{conversations.find(c => c.id === activeConversation)?.name}</div>
+                          <div className="font-medium">{conversations.find(c => c.id === localActiveConv)?.name}</div>
                           <div className="text-sm text-muted-foreground">En ligne</div>
                         </div>
                       </div>

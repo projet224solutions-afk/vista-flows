@@ -236,7 +236,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 <p className="text-sm font-medium text-gray-600">Catégories</p>
                 <p className="text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {(analytics?.categories || []).length} utilisées
+                  {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisées
                 </p>
               </div>
               <div className="p-3 bg-purple-50 rounded-full">
@@ -394,8 +394,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       <div key={alert.id} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                         <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-orange-800">{alert.title || alert.alert_type}</p>
-                          <p className="text-sm text-orange-600">{alert.message}</p>
+                          <p className="font-medium text-orange-800">{alert.message}</p>
+                          <p className="text-sm text-orange-600">{alert.severity}</p>
                           <p className="text-xs text-orange-500 mt-1">
                             {format(new Date(alert.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                           </p>

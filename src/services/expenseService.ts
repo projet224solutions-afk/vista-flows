@@ -212,8 +212,9 @@ class ExpenseService {
 
       if (categoryError) throw categoryError;
 
-      const categoryBreakdown = categoryData?.reduce((acc, expense) => {
-        const categoryName = expense.category?.name || 'Autres';
+      const categoryBreakdown = categoryData?.reduce((acc, expense: any) => {
+        const category = expense.category;
+        const categoryName = category?.name || 'Autres';
         if (!acc[categoryName]) {
           acc[categoryName] = 0;
         }

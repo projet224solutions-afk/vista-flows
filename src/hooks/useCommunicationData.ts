@@ -84,8 +84,8 @@ export function useCommunicationData() {
           minute: '2-digit'
         }),
         unreadCount: conv.unread_count || 0,
-        status: conv.participants?.[0]?.profiles?.status || 'offline',
-        avatar: conv.participants?.[0]?.profiles?.avatar_url
+        status: (conv.participants?.[0] as any)?.profiles?.status || 'offline',
+        avatar: (conv.participants?.[0] as any)?.profiles?.avatar_url
       })) || [];
 
       setConversations(formattedConversations);
@@ -123,18 +123,21 @@ export function useCommunicationData() {
         throw messagesError;
       }
 
-      const formattedMessages: Message[] = messagesData?.map(msg => ({
-        id: msg.id,
-        sender: `${msg.profiles?.first_name} ${msg.profiles?.last_name}` || 'Utilisateur',
-        content: msg.content,
-        timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        isOwn: false, // TODO: Vérifier si c'est l'utilisateur actuel
-        type: msg.type || 'text',
-        status: msg.status || 'sent'
-      })) || [];
+      const formattedMessages: Message[] = messagesData?.map(msg => {
+        const profile = (msg.profiles as any);
+        return {
+          id: msg.id,
+          sender: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Utilisateur',
+          content: msg.content,
+          timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          isOwn: false, // TODO: Vérifier si c'est l'utilisateur actuel
+          type: msg.type || 'text',
+          status: msg.status || 'sent'
+        };
+      }) || [];
 
       setMessages(formattedMessages);
     } catch (error) {
