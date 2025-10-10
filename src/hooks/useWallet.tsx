@@ -111,10 +111,21 @@ export const useWallet = (userId?: string) => {
   // Charger les transactions
   const loadTransactions = useCallback(async (userId: string) => {
     try {
+      // Récupérer l'id du wallet de l'utilisateur
+      const { data: walletRow, error: walletErr } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (walletErr || !walletRow?.id) {
+        throw walletErr || new Error('Wallet introuvable');
+      }
+
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('wallet_transactions')
         .select('*')
-        .eq('user_id', userId)
+        .or(`sender_wallet_id.eq.${walletRow.id},receiver_wallet_id.eq.${walletRow.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -123,7 +134,8 @@ export const useWallet = (userId?: string) => {
         throw transactionsError;
       }
 
-      setTransactions(transactionsData || []);
+      // Le schéma wallet_transactions diffère de l'interface locale; on caste pour affichage
+      setTransactions((transactionsData as unknown) as Transaction[]);
     } catch (error) {
       console.error('❌ Erreur chargement transactions:', error);
       setError('Erreur lors du chargement des transactions');
