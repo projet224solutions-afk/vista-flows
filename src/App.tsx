@@ -94,6 +94,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/vendeur/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                    <VendeurDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/vendeur-optimized"
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
