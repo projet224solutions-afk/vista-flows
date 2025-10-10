@@ -36,6 +36,16 @@ import {
   Wifi
 } from 'lucide-react';
 
+interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  status: 'online' | 'busy' | 'offline';
+  avatar?: string;
+  lastSeen?: string;
+}
+
 export default function AgoraCommunicationInterface() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -117,36 +127,38 @@ export default function AgoraCommunicationInterface() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation) return;
+    const handleSendMessage = async () => {
+        if (!newMessage.trim() || !activeConversation) return;
 
-    try {
-      await sendMessage(activeConversation.id, user?.id || '', newMessage.trim());
-      setNewMessage('');
-    } catch (error) {
-      console.error('Erreur envoi message:', error);
-      toast({
-        title: "❌ Erreur",
-        description: "Impossible d'envoyer le message",
-        variant: "destructive"
-      });
-    }
-  };
+        try {
+            await sendMessage(activeConversation, newMessage.trim(), user?.id || '');
+            setNewMessage('');
+        } catch (error) {
+            console.error('Erreur envoi message:', error);
+            toast({
+                title: "❌ Erreur",
+                description: "Impossible d'envoyer le message",
+                variant: "destructive"
+            });
+        }
+    };
 
-  const handleCreateConversation = async (contact: any) => {
-    try {
-      const conversation = await createConversation([contact.id], `Chat avec ${contact.first_name}`);
-      setActiveConversation(conversation);
-      setActiveTab('chat');
-    } catch (error) {
-      console.error('Erreur création conversation:', error);
-    }
-  };
+    const handleCreateConversation = async (contact: Contact) => {
+        try {
+            const conversation = await createConversation([contact.id], `Chat avec ${contact.name}`);
+            if (conversation) {
+                setActiveConversation(conversation.id);
+                setActiveTab('chat');
+            }
+        } catch (error) {
+            console.error('Erreur création conversation:', error);
+        }
+    };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    contact.last_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    const filteredContacts = contacts.filter(contact =>
+        contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contact.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -182,28 +194,28 @@ export default function AgoraCommunicationInterface() {
                     <div
                       key={conv.id}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        activeConversation?.id === conv.id
+                        activeConversation === conv.id
                           ? 'bg-blue-100 border-blue-300'
                           : 'hover:bg-gray-100'
                       }`}
-                      onClick={() => setActiveConversation(conv)}
+                      onClick={() => setActiveConversation(conv.id)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={conv.participants[0]?.profiles?.avatar_url} />
+                          <AvatarImage src={conv.avatar} />
                           <AvatarFallback>
-                            {conv.participants[0]?.profiles?.first_name?.charAt(0)}
+                            {conv.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{conv.name}</div>
                           <div className="text-sm text-muted-foreground truncate">
-                            {conv.last_message}
+                            {conv.lastMessage}
                           </div>
                         </div>
-                        {conv.unread_count > 0 && (
+                        {conv.unreadCount > 0 && (
                           <Badge variant="destructive" className="text-xs">
-                            {conv.unread_count}
+                            {conv.unreadCount}
                           </Badge>
                         )}
                       </div>
@@ -220,27 +232,25 @@ export default function AgoraCommunicationInterface() {
                     <div className="p-4 border-b flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={activeConversation.participants[0]?.profiles?.avatar_url} />
+                          <AvatarImage src={conversations.find(c => c.id === activeConversation)?.avatar} />
                           <AvatarFallback>
-                            {activeConversation.participants[0]?.profiles?.first_name?.charAt(0)}
+                            {conversations.find(c => c.id === activeConversation)?.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{activeConversation.name}</div>
+                          <div className="font-medium">{conversations.find(c => c.id === activeConversation)?.name}</div>
                           <div className="text-sm text-muted-foreground">En ligne</div>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => handleStartCall(activeConversation.participants[0], 'audio')}
                           disabled={!isInitialized}
                         >
                           <Phone className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => handleStartCall(activeConversation.participants[0], 'video')}
                           disabled={!isInitialized}
                         >
                           <Video className="w-4 h-4" />
@@ -253,18 +263,18 @@ export default function AgoraCommunicationInterface() {
                       {messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                          className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
                             className={`max-w-xs p-3 rounded-lg ${
-                              message.sender_id === user?.id
+                              message.isOwn
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100'
                             }`}
                           >
                             <div className="text-sm">{message.content}</div>
                             <div className="text-xs opacity-70 mt-1">
-                              {new Date(message.created_at).toLocaleTimeString()}
+                              {message.timestamp}
                             </div>
                           </div>
                         </div>
@@ -320,14 +330,14 @@ export default function AgoraCommunicationInterface() {
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={contact.avatar_url} />
+                        <AvatarImage src={contact.avatar} />
                         <AvatarFallback>
-                          {contact.first_name.charAt(0)}
+                          {contact.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium">
-                          {contact.first_name} {contact.last_name}
+                          {contact.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {contact.status === 'online' ? 'En ligne' : 
@@ -385,31 +395,31 @@ export default function AgoraCommunicationInterface() {
               {callType === 'video' ? 'Appel vidéo' : 'Appel vocal'}
             </DialogTitle>
           </DialogHeader>
-          {selectedContact && (
-            <>
-              {callType === 'video' ? (
-                <AgoraVideoCall
-                  channel={`call_${user?.id}_${selectedContact.id}_${Date.now()}`}
-                  callerInfo={{
-                    name: `${selectedContact.first_name} ${selectedContact.last_name}`,
-                    avatar: selectedContact.avatar_url,
-                    userId: selectedContact.id
-                  }}
-                  onCallEnd={() => setShowCallDialog(false)}
-                />
-              ) : (
-                <AgoraAudioCall
-                  channel={`call_${user?.id}_${selectedContact.id}_${Date.now()}`}
-                  callerInfo={{
-                    name: `${selectedContact.first_name} ${selectedContact.last_name}`,
-                    avatar: selectedContact.avatar_url,
-                    userId: selectedContact.id
-                  }}
-                  onCallEnd={() => setShowCallDialog(false)}
-                />
+              {selectedContact && (
+                <>
+                  {callType === 'video' ? (
+                    <AgoraVideoCall
+                      channel={`call_${user?.id}_${selectedContact.id}_${Date.now()}`}
+                      callerInfo={{
+                        name: selectedContact.name,
+                        avatar: selectedContact.avatar,
+                        userId: selectedContact.id
+                      }}
+                      onCallEnd={() => setShowCallDialog(false)}
+                    />
+                  ) : (
+                    <AgoraAudioCall
+                      channel={`call_${user?.id}_${selectedContact.id}_${Date.now()}`}
+                      callerInfo={{
+                        name: selectedContact.name,
+                        avatar: selectedContact.avatar,
+                        userId: selectedContact.id
+                      }}
+                      onCallEnd={() => setShowCallDialog(false)}
+                    />
+                  )}
+                </>
               )}
-            </>
-          )}
         </DialogContent>
       </Dialog>
     </div>

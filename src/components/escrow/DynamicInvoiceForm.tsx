@@ -54,8 +54,6 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     const geolocation = useGeolocation();
     const escrowService = EscrowService.getInstance();
 
-    const escrowService = EscrowService.getInstance();
-
     // Calculer les frais et le total
     useEffect(() => {
         const amountNum = parseFloat(amount) || 0;
@@ -67,11 +65,13 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     // Utiliser la position actuelle comme point de départ
     const useCurrentLocation = async () => {
         try {
-            const position = await getCurrentPosition();
-            setStartCoordinates(position);
-
-            const address = await getAddressFromCoordinates(position);
-            setStartLocation(address);
+            const position = await geolocation.getCurrentLocation();
+            setStartCoordinates({ 
+                latitude: position.latitude, 
+                longitude: position.longitude, 
+                timestamp: Date.now() 
+            });
+            setStartLocation(`${position.latitude}, ${position.longitude}`);
         } catch (error) {
             console.error('Erreur position actuelle:', error);
         }
@@ -80,29 +80,13 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     // Rechercher l'adresse de départ
     const searchStartLocation = async () => {
         if (!startLocation.trim()) return;
-
-        try {
-            const position = await getCoordinatesFromAddress(startLocation);
-            if (position) {
-                setStartCoordinates(position);
-            }
-        } catch (error) {
-            console.error('Erreur recherche adresse départ:', error);
-        }
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Rechercher l'adresse de destination
     const searchEndLocation = async () => {
         if (!endLocation.trim()) return;
-
-        try {
-            const position = await getCoordinatesFromAddress(endLocation);
-            if (position) {
-                setEndCoordinates(position);
-            }
-        } catch (error) {
-            console.error('Erreur recherche adresse destination:', error);
-        }
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Créer la facture
@@ -325,7 +309,6 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
                                     type="button"
                                     variant="outline"
                                     onClick={useCurrentLocation}
-                                    disabled={!currentPosition}
                                 >
                                     Ma position
                                 </Button>

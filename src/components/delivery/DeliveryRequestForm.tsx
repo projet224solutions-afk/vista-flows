@@ -79,7 +79,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
 
         setIsCalculating(true);
         try {
-            const distance = calculateDistance(pickupPosition, deliveryPosition);
+            const distance = GeolocationService.getInstance().calculateDistance(pickupPosition, deliveryPosition);
             const distanceKm = distance / 1000;
 
             // Calculer le prix (500 GNF de base + 100 GNF par km)
@@ -103,11 +103,13 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
     // Utiliser la position actuelle comme point de départ
     const useCurrentLocation = async () => {
         try {
-            const position = await getCurrentPosition();
-            setPickupPosition(position);
-
-            const address = await getAddressFromCoordinates(position);
-            setPickupAddress(address);
+            const position = await geolocation.getCurrentLocation();
+            setPickupPosition({ 
+                latitude: position.latitude, 
+                longitude: position.longitude, 
+                timestamp: Date.now() 
+            });
+            setPickupAddress(`${position.latitude}, ${position.longitude}`);
         } catch (error) {
             console.error('Erreur position actuelle:', error);
         }
@@ -116,29 +118,13 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
     // Rechercher l'adresse de départ
     const searchPickupAddress = async () => {
         if (!pickupAddress.trim()) return;
-
-        try {
-            const position = await getCoordinatesFromAddress(pickupAddress);
-            if (position) {
-                setPickupPosition(position);
-            }
-        } catch (error) {
-            console.error('Erreur recherche adresse départ:', error);
-        }
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Rechercher l'adresse de destination
     const searchDeliveryAddress = async () => {
         if (!deliveryAddress.trim()) return;
-
-        try {
-            const position = await getCoordinatesFromAddress(deliveryAddress);
-            if (position) {
-                setDeliveryPosition(position);
-            }
-        } catch (error) {
-            console.error('Erreur recherche adresse destination:', error);
-        }
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Soumettre la demande
@@ -212,7 +198,6 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                                     type="button"
                                     variant="outline"
                                     onClick={useCurrentLocation}
-                                    disabled={!currentPosition}
                                 >
                                     Ma position
                                 </Button>
@@ -337,10 +322,10 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                         )}
 
                         {/* Erreurs */}
-                        {geolocationError && (
+                        {geolocation.error && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                 <p className="text-sm text-red-600">
-                                    Erreur géolocalisation: {geolocationError}
+                                    Erreur géolocalisation: {geolocation.error}
                                 </p>
                             </div>
                         )}
