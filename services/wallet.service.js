@@ -205,9 +205,12 @@ class WalletService {
             if (userWallet.wallet.balance < amount) throw new Error('Solde insuffisant');
 
             // Insérer transaction pending
+            const txPublicId = `WDR_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
             const { data: tx, error: txError } = await this.supabase
                 .from('wallet_transactions')
                 .insert({
+                    transaction_id: txPublicId,
                     transaction_type: 'withdrawal',
                     amount: amount,
                     net_amount: netAmount,
@@ -256,7 +259,7 @@ class WalletService {
             });
 
             console.log('✅ Retrait traité, transaction ID:', tx.id);
-            return { success: withdrawalResult.success, transactionId: tx.id, amount, fees: totalFees, netAmount };
+            return { success: withdrawalResult.success, transactionId: txPublicId, amount, fees: totalFees, netAmount };
         } catch (error) {
             console.error('❌ Erreur retrait:', error);
             return { success: false, error: error.message };
@@ -280,10 +283,14 @@ class WalletService {
                 throw new Error('Wallet non trouvé');
             }
 
+            // Générer un transaction_id lisible
+            const txPublicId = `DEP_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
             // Insérer la transaction de dépôt
             const { data: tx, error: txError } = await this.supabase
                 .from('wallet_transactions')
                 .insert({
+                    transaction_id: txPublicId,
                     transaction_type: 'deposit',
                     amount: amount,
                     net_amount: amount,
@@ -316,7 +323,7 @@ class WalletService {
 
             return {
                 success: true,
-                transactionId: tx.id,
+                transactionId: txPublicId,
                 amount
             };
         } catch (error) {

@@ -11,7 +11,10 @@ DECLARE
     v_to_wallet_id UUID;
     v_from_balance DECIMAL;
     v_to_balance DECIMAL;
-    v_transaction_id UUID;
+    v_tx_row_id UUID;
+    v_tx_public_id VARCHAR(50);
+    v_fee DECIMAL := 0.00;
+    v_net_amount DECIMAL := 0.00;
     v_result JSON;
 BEGIN
     -- Vérifier que l'utilisateur source a un wallet
@@ -51,16 +54,21 @@ BEGIN
             updated_at = NOW()
         WHERE id = v_to_wallet_id;
         
-        -- Enregistrer la transaction
+        -- Générer un identifiant public et calculer net_amount
+        v_tx_public_id := COALESCE(generate_transaction_id(), 'TXN_' || FLOOR(EXTRACT(EPOCH FROM NOW()) * 1000)::TEXT);
+        v_fee := 0.00; -- ajuster si nécessaire (commission)
+        v_net_amount := p_amount - v_fee;
+
+        -- Enregistrer la transaction alignée avec le schéma (sender/receiver)
         INSERT INTO wallet_transactions (
-            from_wallet_id, to_wallet_id, amount, transaction_type, description, status
+            transaction_id, sender_wallet_id, receiver_wallet_id, amount, fee, net_amount, currency, transaction_type, description, status
         ) VALUES (
-            v_from_wallet_id, v_to_wallet_id, p_amount, p_transaction_type, p_description, 'completed'
-        ) RETURNING id INTO v_transaction_id;
+            v_tx_public_id, v_from_wallet_id, v_to_wallet_id, p_amount, v_fee, v_net_amount, 'GNF', p_transaction_type, p_description, 'completed'
+        ) RETURNING id INTO v_tx_row_id;
         
         -- Retourner le succès
         v_result := json_build_object(
-            'transaction_id', v_transaction_id,
+            'transaction_id', v_tx_public_id,
             'status', 'success',
             'amount', p_amount,
             'from_balance', v_from_balance - p_amount,
