@@ -20,7 +20,7 @@ const errorHandler = require('./src/middleware/errorHandler');
 const openaiRoutes = require('./src/routes/openai');
 const authRoutes = require('./src/routes/auth');
 const emailRoutes = require('./src/routes/email');
-const agoraRoutes = require('./routes/agora');
+const agoraRoutes = require('./src/routes/agora');
 const walletRoutes = require('./src/routes/wallet'); // Nouveau
 const notificationsRoutes = require('./src/routes/notifications'); // Nouveau
 const healthRoutes = require('./src/routes/health');
@@ -138,19 +138,8 @@ app.use('/api/openai', authMiddleware, openaiRoutes);
 // Routes Email (avec authentification)
 app.use('/api/email', emailRoutes);
 
-// Routes Agora (avec authentification) - montage conditionnel
-const hasAgoraEnv = !!process.env.AGORA_APP_ID && !!process.env.AGORA_APP_CERTIFICATE;
-const hasSupabaseForAgora = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (hasAgoraEnv && hasSupabaseForAgora) {
-    app.use('/api/agora', agoraRoutes);
-} else {
-    logger.warn('Routes Agora désactivées: variables manquantes', {
-        AGORA_APP_ID: !!process.env.AGORA_APP_ID,
-        AGORA_APP_CERTIFICATE: !!process.env.AGORA_APP_CERTIFICATE,
-        SUPABASE_URL: !!process.env.SUPABASE_URL,
-        SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    });
-}
+// Routes Agora (avec authentification)
+app.use('/api/agora', agoraRoutes);
 
 // Routes Wallet (avec authentification)
 app.use('/api/wallet', walletRoutes);
