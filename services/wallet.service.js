@@ -200,104 +200,67 @@ class WalletService {
         try {
             console.log('💰 Retrait:', userId, amount, paymentMethod);
 
-            // Vérifier l'utilisateur
+            // Vérifier l'utilisateur et wallet
             const user = await this.getUserById(userId);
-            if (!user) {
-                throw new Error('Utilisateur non trouvé');
-            }
-
-            // Vérifier le wallet
+            if (!user) throw new Error('Utilisateur non trouvé');
             const userWallet = await this.getWallet(userId);
-            if (!userWallet.success) {
-                throw new Error('Wallet non trouvé');
-            }
+            if (!userWallet.success) throw new Error('Wallet non trouvé');
 
-            // Calculer les frais de retrait
-            const { data: feesData, error: feesError } = await this.supabase
-                .rpc('calculate_withdrawal_fees', {
-                    p_amount: amount,
-                    p_payment_method: paymentMethod
-                });
+            // Valider montant
+            if (!this.validateAmount(amount, 'withdrawal')) throw new Error('Montant invalide');
 
-            if (feesError) {
-                throw feesError;
-            }
+            // Frais: fixe + pourcentage simple
+            const fixedFee = 1000; // GNF
+            const percentFee = Math.round(amount * commissionConfig.transferCommission);
+            const totalFees = fixedFee + percentFee;
+            const netAmount = amount - totalFees;
 
-            const fees = feesData[0];
-            const totalDeduction = amount + fees.total_fees;
+            if (userWallet.wallet.balance < amount) throw new Error('Solde insuffisant');
 
-            if (userWallet.wallet.balance < totalDeduction) {
-                throw new Error('Solde insuffisant pour effectuer le retrait');
-            }
+            // Insérer transaction pending
+            const { data: tx, error: txError } = await this.supabase
+                .from('wallet_transactions')
+                .insert({
+                    transaction_type: 'withdrawal',
+                    amount: amount,
+                    net_amount: netAmount,
+                    fee: totalFees,
+                    currency: 'GNF',
+                    description: `Retrait via ${paymentMethod}`,
+                    sender_wallet_id: userWallet.wallet.id,
+                    status: 'pending'
+                })
+                .select()
+                .single();
+            if (txError) throw txError;
 
-            // Créer la transaction de retrait
-            const { data: transactionId, error } = await this.supabase
-                .rpc('create_transaction_with_commission', {
-                    p_sender_id: userId,
-                    p_receiver_id: null,
-                    p_amount: amount,
-                    p_transaction_type: 'withdrawal',
-                    p_payment_method: paymentMethod,
-                    p_description: `Retrait via ${paymentMethod}`
-                });
+            // Débiter immédiatement le wallet
+            const { error: debitError } = await this.supabase
+                .from('wallets')
+                .update({ balance: userWallet.wallet.balance - amount, updated_at: new Date().toISOString() })
+                .eq('id', userWallet.wallet.id);
+            if (debitError) throw debitError;
 
-            if (error) {
-                throw error;
-            }
+            // Traiter le retrait externe (simulé) puis mise à jour du statut
+            const withdrawalResult = await this.processExternalWithdrawal(paymentMethod, netAmount, paymentDetails, tx.id);
 
-            // Mettre à jour le solde du wallet
-            const updateResult = await this.supabase
-                .rpc('update_wallet_balances', {
-                    p_transaction_id: transactionId
-                });
+            const { error: statusUpdateError } = await this.supabase
+                .from('wallet_transactions')
+                .update({ status: withdrawalResult.success ? 'completed' : 'failed', completed_at: new Date().toISOString() })
+                .eq('id', tx.id);
+            if (statusUpdateError) throw statusUpdateError;
 
-            if (updateResult.error) {
-                throw updateResult.error;
-            }
-
-            // Traiter le retrait via l'API externe
-            const withdrawalResult = await this.processExternalWithdrawal(
-                paymentMethod,
-                fees.net_amount,
-                paymentDetails,
-                transactionId
-            );
-
-            // Envoyer notification
+            // Notifications
             if (user.fcm_token) {
                 if (withdrawalResult.success) {
-                    await firebaseService.sendWithdrawalApprovedNotification(
-                        user.fcm_token,
-                        {
-                            id: transactionId,
-                            amount,
-                            currency: 'GNF',
-                            method: paymentMethod
-                        }
-                    );
+                    await firebaseService.sendWithdrawalApprovedNotification(user.fcm_token, { id: tx.id, amount, currency: 'GNF', method: paymentMethod });
                 } else {
-                    await firebaseService.sendWithdrawalRejectedNotification(
-                        user.fcm_token,
-                        {
-                            id: transactionId,
-                            amount,
-                            currency: 'GNF',
-                            reason: withdrawalResult.error
-                        }
-                    );
+                    await firebaseService.sendWithdrawalRejectedNotification(user.fcm_token, { id: tx.id, amount, currency: 'GNF', reason: withdrawalResult.error });
                 }
             }
 
-            console.log('✅ Retrait traité, transaction ID:', transactionId);
-
-            return {
-                success: withdrawalResult.success,
-                transactionId,
-                amount,
-                fees: fees.total_fees,
-                netAmount: fees.net_amount,
-                withdrawalResult
-            };
+            console.log('✅ Retrait traité, transaction ID:', tx.id);
+            return { success: withdrawalResult.success, transactionId: tx.id, amount, fees: totalFees, netAmount };
         } catch (error) {
             console.error('❌ Erreur retrait:', error);
             return { success: false, error: error.message };
