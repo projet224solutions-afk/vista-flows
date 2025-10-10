@@ -2,29 +2,43 @@
  * 🔥 SERVICE FIREBASE - 224SOLUTIONS (CommonJS)
  */
 
-const admin = require('firebase-admin');
-const { firebaseConfig, fcmConfig, notificationTypes } = require('../config/firebase.config');
+let admin = null;
+try {
+    admin = require('firebase-admin');
+} catch (_) {
+    // firebase-admin non installé ou non disponible
+}
+const { firebaseConfig, fcmConfig, notificationTypes } = require('../config/firebase.config.cjs');
 
 class FirebaseService {
     constructor() {
+        this.enabled = false;
         this.initializeFirebase();
     }
 
     initializeFirebase() {
         try {
+            if (!admin) {
+                console.warn('⚠️ firebase-admin non disponible - notifications désactivées');
+                this.enabled = false;
+                return;
+            }
             const serviceAccount = require('../config/firebase-service-account.json');
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 projectId: firebaseConfig.web.projectId,
                 storageBucket: firebaseConfig.web.storageBucket
             });
+            this.enabled = true;
             console.log('✅ Firebase Admin SDK initialisé');
         } catch (error) {
             console.error('❌ Erreur initialisation Firebase:', error);
+            this.enabled = false;
         }
     }
 
     async sendTransactionSuccessNotification(fcmToken, transactionData) {
+        if (!this.enabled || !admin) return { success: false, disabled: true };
         const { amount, currency, type, recipientName } = transactionData;
         let title, body;
         if (type === 'transfer') {
@@ -41,6 +55,7 @@ class FirebaseService {
     }
 
     async sendNotificationToUser(fcmToken, notification, data = {}) {
+        if (!this.enabled || !admin) return { success: false, disabled: true };
         try {
             const message = {
                 token: fcmToken,

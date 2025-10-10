@@ -5,7 +5,7 @@
 
 const { Storage } = require('@google-cloud/storage');
 const { createClient } = require('@supabase/supabase-js');
-const { gcsConfig } = require('../config/firebase.config');
+const { gcsConfig } = require('../config/firebase.config.cjs');
 const path = require('path');
 const fs = require('fs');
 
