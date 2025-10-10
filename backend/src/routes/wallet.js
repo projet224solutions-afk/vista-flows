@@ -6,7 +6,13 @@
 const express = require('express');
 const router = express.Router();
 const walletService = require('../../../services/wallet.service.cjs');
-const firebaseService = require('../../../services/firebase.service');
+// Firebase service est optionnel pour les notifications côté backend
+let firebaseService;
+try {
+    firebaseService = require('../../../services/firebase.service.cjs');
+} catch (_) {
+    firebaseService = null;
+}
 const { authMiddleware } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
