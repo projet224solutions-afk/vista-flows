@@ -42,7 +42,7 @@ export function useCommunicationData() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -330,10 +330,15 @@ export function useCommunicationData() {
    */
   const addContact = useCallback(async (contactId: string) => {
     try {
+      // Get current user from auth
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser) throw new Error('Non authentifié');
+
       const { error } = await supabase
         .from('contacts')
         .insert({
-          user_id: user?.id,
+          user_id: currentUser.id,
           contact_id: contactId,
           created_at: new Date().toISOString()
         });
@@ -343,7 +348,7 @@ export function useCommunicationData() {
       console.error('❌ Erreur ajout contact:', error);
       throw error;
     }
-  }, [user?.id]);
+  }, []);
 
   return {
     conversations,

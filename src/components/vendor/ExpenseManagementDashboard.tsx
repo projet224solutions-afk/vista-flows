@@ -45,15 +45,16 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const expenseData = useExpenseManagement();
 
   const {
-    quickStats,
-    analytics,
-    anomalies,
-    alerts,
     categories,
     expenses,
-    isLoading,
+    stats,
+    alerts,
+    createExpense,
+    updateExpense,
+    deleteExpense,
+    loading,
     error,
-    refetch
+    refetch,
   } = expenseData;
 
   // Calculs pour les métriques
@@ -63,7 +64,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
     // Dépenses du mois actuel
     const currentMonthExpenses = expenses.filter(expense => {
-      const expenseDate = new Date(expense.expense_date);
+      const expenseDate = new Date(expense.created_at);
       return expenseDate.getMonth() === currentMonth &&
         expenseDate.getFullYear() === currentYear;
     });
@@ -72,7 +73,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     const lastMonthExpenses = expenses.filter(expense => {
-      const expenseDate = new Date(expense.expense_date);
+      const expenseDate = new Date(expense.created_at);
       return expenseDate.getMonth() === lastMonth &&
         expenseDate.getFullYear() === lastMonthYear;
     });
@@ -97,32 +98,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
   // Données pour les graphiques
   const chartData = useMemo(() => {
-    // Données par catégorie pour le graphique en barres
-    const analyticsData = analytics || { categories: [], monthly_trend: [] };
-    const categoryData = analyticsData.categories.map((cat, index) => ({
-      name: cat.name,
-      montant: cat.total,
-      count: cat.count,
-      color: cat.color || CHART_COLORS[index % CHART_COLORS.length]
-    }));
+    return { categoryData: [], pieData: [], trendData: [] };
+  }, []);
 
-    // Données pour le graphique en secteurs
-    const pieData = analyticsData.categories.map((cat, index) => ({
-      name: cat.name,
-      value: cat.total,
-      color: cat.color || CHART_COLORS[index % CHART_COLORS.length]
-    }));
-
-    // Tendance mensuelle
-    const trendData = analyticsData.monthly_trend.map(item => ({
-      month: format(new Date(item.month + '-01'), 'MMM yyyy', { locale: fr }),
-      montant: item.total
-    }));
-
-    return { categoryData, pieData, trendData };
-  }, [analytics]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className={`space-y-6 ${className}`}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -168,18 +147,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         <div className="flex items-center gap-3">
           {/* Alertes non lues */}
-          {quickStats.unreadAlerts > 0 && (
+          {alerts.length > 0 && (
             <Badge variant="destructive" className="animate-pulse">
               <Bell className="w-3 h-3 mr-1" />
-              {quickStats.unreadAlerts} alertes
-            </Badge>
-          )}
-
-          {/* Anomalies détectées */}
-          {quickStats.hasAnomalies && (
-            <Badge variant="outline" className="border-orange-500 text-orange-600">
-              <Brain className="w-3 h-3 mr-1" />
-              Anomalies détectées
+              {alerts.length} alertes
             </Badge>
           )}
 
@@ -199,7 +170,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Dépenses</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {quickStats.totalExpenses.toLocaleString()} XAF
+                  {stats.total_expenses?.toLocaleString() || 0} XAF
                 </p>
                 <div className="flex items-center mt-2">
                   {metrics.monthlyChange >= 0 ? (
@@ -225,7 +196,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Nombre de Dépenses</p>
-                <p className="text-2xl font-bold text-gray-900">{quickStats.expenseCount}</p>
+                <p className="text-2xl font-bold text-gray-900">{expenses.length}</p>
                 <p className="text-sm text-gray-500 mt-2">
                   {metrics.currentMonthCount} ce mois
                 </p>
@@ -244,7 +215,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Dépense Moyenne</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {quickStats.averageExpense.toLocaleString()} XAF
+                  {(expenses.length > 0 ? (stats.total_expenses || 0) / expenses.length : 0).toLocaleString()} XAF
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   {metrics.averageExpense.toLocaleString()} XAF ce mois
@@ -407,72 +378,33 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             </CardContent>
           </Card>
 
-          {/* Alertes et anomalies */}
-          {(quickStats.unreadAlerts > 0 || quickStats.hasAnomalies) && (
+          {/* Alertes récentes */}
+          {alerts.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Alertes récentes */}
-              {quickStats.unreadAlerts > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-orange-600">
-                      <Bell className="w-5 h-5" />
-                      Alertes Récentes ({quickStats.unreadAlerts})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {alerts.slice(0, 3).map((alert) => (
-                        <div key={alert.id} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                          <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="font-medium text-orange-800">{alert.type}</p>
-                            <p className="text-sm text-orange-600">{alert.message}</p>
-                            <p className="text-xs text-orange-500 mt-1">
-                              {format(new Date(alert.date), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                            </p>
-                          </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-orange-600">
+                    <Bell className="w-5 h-5" />
+                    Alertes Récentes ({alerts.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {alerts.slice(0, 3).map((alert) => (
+                      <div key={alert.id} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                        <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-orange-800">{alert.title || alert.alert_type}</p>
+                          <p className="text-sm text-orange-600">{alert.message}</p>
+                          <p className="text-xs text-orange-500 mt-1">
+                            {format(new Date(alert.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Anomalies détectées */}
-              {quickStats.hasAnomalies && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-red-600">
-                      <Brain className="w-5 h-5" />
-                      Anomalies Détectées ({anomalies.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {anomalies.slice(0, 3).map((anomaly, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
-                          <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="font-medium text-red-800">{anomaly.title}</p>
-                            <p className="text-sm text-red-600">{anomaly.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {anomaly.amount?.toLocaleString()} XAF
-                              </Badge>
-                              <Badge
-                                variant={anomaly.severity === 'critical' ? 'destructive' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {anomaly.severity}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </TabsContent>

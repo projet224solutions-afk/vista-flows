@@ -29,7 +29,7 @@ import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import UltraSimpleCommunication from "@/components/communication/UltraSimpleCommunication";
+import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // ================= INTERFACES TYPESCRIPT =================
@@ -686,7 +686,7 @@ export default function ClientDashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setCartItems(prev => prev.filter(p => p.id !== item.id))}
+                              onClick={() => removeFromCart(item.id)}
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -703,7 +703,7 @@ export default function ClientDashboard() {
 
         {activeTab === 'communication' && (
           <div className="space-y-6">
-            <UltraSimpleCommunication />
+            <SimpleCommunicationInterface />
           </div>
         )}
 

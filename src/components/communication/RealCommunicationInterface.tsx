@@ -123,10 +123,10 @@ export default function RealCommunicationInterface() {
     };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || !activeConversation) return;
+        if (!newMessage.trim() || !activeConversation || !user?.id) return;
 
         try {
-            await sendMessage(activeConversation.id, user?.id || '', newMessage.trim());
+            await sendMessage(activeConversation.id, newMessage.trim(), user.id);
             setNewMessage('');
         } catch (error) {
             console.error('Erreur envoi message:', error);
@@ -283,22 +283,22 @@ export default function RealCommunicationInterface() {
                                             <div className="flex items-center gap-3">
                                                 <div className="relative">
                                                     <Avatar className="w-10 h-10">
-                                                        <AvatarImage src={conv.participants[0]?.profiles?.avatar_url} />
+                                                        <AvatarImage src={conv.avatar} />
                                                         <AvatarFallback>
-                                                            {conv.participants[0]?.profiles?.first_name?.charAt(0)}
+                                                            {conv.name.charAt(0)}
                                                         </AvatarFallback>
                                                     </Avatar>
-                                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(conv.participants[0]?.profiles?.status || 'offline')}`}></div>
+                                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(conv.status)}`}></div>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="font-medium truncate">{conv.name}</div>
                                                     <div className="text-sm text-muted-foreground truncate">
-                                                        {conv.last_message}
+                                                        {conv.lastMessage}
                                                     </div>
                                                 </div>
-                                                {conv.unread_count > 0 && (
+                                                {conv.unreadCount > 0 && (
                                                     <Badge variant="destructive" className="text-xs">
-                                                        {conv.unread_count}
+                                                        {conv.unreadCount}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -317,31 +317,31 @@ export default function RealCommunicationInterface() {
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <Avatar>
-                                                    <AvatarImage src={activeConversation.participants[0]?.profiles?.avatar_url} />
+                                                    <AvatarImage src={activeConversation.avatar} />
                                                     <AvatarFallback>
-                                                        {activeConversation.participants[0]?.profiles?.first_name?.charAt(0)}
+                                                        {activeConversation.name.charAt(0)}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(activeConversation.participants[0]?.profiles?.status || 'offline')}`}></div>
+                                                <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(activeConversation.status)}`}></div>
                                             </div>
                                             <div>
                                                 <div className="font-medium">{activeConversation.name}</div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {getStatusText(activeConversation.participants[0]?.profiles?.status || 'offline')}
+                                                    {getStatusText(activeConversation.status)}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleStartCall(activeConversation.participants[0], 'audio')}
+                                                onClick={() => handleStartCall({ id: activeConversation.id, name: activeConversation.name }, 'audio')}
                                                 disabled={!isInitialized}
                                             >
                                                 <Phone className="w-4 h-4" />
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleStartCall(activeConversation.participants[0], 'video')}
+                                                onClick={() => handleStartCall({ id: activeConversation.id, name: activeConversation.name }, 'video')}
                                                 disabled={!isInitialized}
                                             >
                                                 <Video className="w-4 h-4" />
@@ -361,17 +361,17 @@ export default function RealCommunicationInterface() {
                                             messages.map((message) => (
                                                 <div
                                                     key={message.id}
-                                                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                                                    className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
                                                 >
                                                     <div
-                                                        className={`max-w-xs p-3 rounded-lg ${message.sender_id === user?.id
+                                                        className={`max-w-xs p-3 rounded-lg ${message.isOwn
                                                                 ? 'bg-blue-600 text-white'
                                                                 : 'bg-gray-100'
                                                             }`}
                                                     >
                                                         <div className="text-sm">{message.content}</div>
                                                         <div className="text-xs opacity-70 mt-1">
-                                                            {new Date(message.created_at).toLocaleTimeString()}
+                                                            {message.timestamp}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -442,16 +442,16 @@ export default function RealCommunicationInterface() {
                                             <div className="flex items-center gap-3">
                                                 <div className="relative">
                                                     <Avatar>
-                                                        <AvatarImage src={contact.avatar_url} />
+                                                        <AvatarImage src={contact.avatar} />
                                                         <AvatarFallback>
-                                                            {contact.first_name.charAt(0)}
+                                                            {contact.name.charAt(0)}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(contact.status)}`}></div>
                                                 </div>
                                                 <div>
                                                     <div className="font-medium">
-                                                        {contact.first_name} {contact.last_name}
+                                                        {contact.name}
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
                                                         {getStatusText(contact.status)}
