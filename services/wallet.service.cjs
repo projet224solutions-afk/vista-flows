@@ -4,7 +4,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
-const firebaseService = require('./firebase.service');
+const firebaseService = require('./firebase.service.cjs');
 const { commissionConfig, paymentMethods } = require('../config/firebase.config');
 
 class WalletService {

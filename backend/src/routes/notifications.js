@@ -5,7 +5,12 @@
 
 const express = require('express');
 const router = express.Router();
-const firebaseService = require('../../../services/firebase.service');
+let firebaseService;
+try {
+    firebaseService = require('../../../services/firebase.service.cjs');
+} catch (_) {
+    firebaseService = null;
+}
 const authMiddleware = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 const { createClient } = require('@supabase/supabase-js');
