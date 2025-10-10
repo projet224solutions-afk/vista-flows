@@ -202,19 +202,19 @@ export default function SyndicatePresidentUltraPro() {
     // Synchroniser les données réelles avec les états locaux
     useEffect(() => {
         if (realBureauInfo) {
-            setBureauInfo(realBureauInfo);
+            setBureauInfo(realBureauInfo as any);
         }
         if (realMembers) {
-            setMembers(realMembers);
+            setMembers(realMembers as any);
         }
         if (realVehicles) {
-            setVehicles(realVehicles);
+            setVehicles(realVehicles as any);
         }
         if (realTransactions) {
-            setTransactions(realTransactions);
+            setTransactions(realTransactions as any);
         }
         if (realSosAlerts) {
-            setSOSAlerts(realSosAlerts);
+            setSOSAlerts(realSosAlerts as any);
         }
     }, [realBureauInfo, realMembers, realVehicles, realTransactions, realSosAlerts]);
     const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
