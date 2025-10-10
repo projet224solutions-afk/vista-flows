@@ -49,11 +49,11 @@ router.post('/register-token', authMiddleware, [
     try {
         const userId = req.user.id;
         const { fcmToken } = req.body;
-        
+
         // Mettre à jour le token FCM de l'utilisateur
         const { error } = await supabase
             .from('users')
-            .update({ 
+            .update({
                 fcm_token: fcmToken,
                 updated_at: new Date().toISOString()
             })
@@ -91,11 +91,11 @@ router.post('/register-token', authMiddleware, [
 router.delete('/unregister-token', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
-        
+
         // Supprimer le token FCM de l'utilisateur
         const { error } = await supabase
             .from('users')
-            .update({ 
+            .update({
                 fcm_token: null,
                 updated_at: new Date().toISOString()
             })
@@ -138,7 +138,7 @@ router.post('/send', [
 ], handleValidationErrors, async (req, res) => {
     try {
         const { userId, title, body, type, data = {} } = req.body;
-        
+
         // Récupérer le token FCM de l'utilisateur
         const user = await getUserById(userId);
         if (!user || !user.fcm_token) {
@@ -194,7 +194,7 @@ router.post('/send-topic', [
 ], handleValidationErrors, async (req, res) => {
     try {
         const { topic, title, body, type, data = {} } = req.body;
-        
+
         // Vérifier que l'utilisateur a les permissions pour envoyer à ce topic
         if (!canSendToTopic(req.user.role, topic)) {
             return res.status(403).json({
@@ -246,11 +246,11 @@ router.post('/send-batch', [
 ], handleValidationErrors, async (req, res) => {
     try {
         const { notifications } = req.body;
-        
+
         // Préparer les messages FCM
         const messages = [];
         const dbNotifications = [];
-        
+
         for (const notif of notifications) {
             const user = await getUserById(notif.userId);
             if (user && user.fcm_token) {
@@ -265,7 +265,7 @@ router.post('/send-batch', [
                         ...(notif.data || {})
                     }
                 });
-                
+
                 dbNotifications.push({
                     user_id: notif.userId,
                     title: notif.title,
@@ -324,20 +324,20 @@ router.get('/', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
         const { limit = 50, offset = 0, unreadOnly = false } = req.query;
-        
+
         let query = supabase
             .from('notifications')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
-        
+
         if (unreadOnly === 'true') {
             query = query.eq('is_read', false);
         }
-        
+
         const { data, error } = await query;
-        
+
         if (error) {
             throw error;
         }
@@ -368,10 +368,10 @@ router.put('/:id/read', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        
+
         const { error } = await supabase
             .from('notifications')
-            .update({ 
+            .update({
                 is_read: true,
                 read_at: new Date().toISOString()
             })
@@ -402,10 +402,10 @@ router.put('/:id/read', authMiddleware, async (req, res) => {
 router.put('/read-all', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
-        
+
         const { error } = await supabase
             .from('notifications')
-            .update({ 
+            .update({
                 is_read: true,
                 read_at: new Date().toISOString()
             })
@@ -436,7 +436,7 @@ router.put('/read-all', authMiddleware, async (req, res) => {
 router.get('/unread-count', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
-        
+
         const { count, error } = await supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
@@ -493,7 +493,7 @@ async function getUserById(userId) {
 async function subscribeUserToTopics(fcmToken, userRole) {
     try {
         const topics = ['all_users']; // Topic pour tous les utilisateurs
-        
+
         // Ajouter des topics spécifiques selon le rôle
         switch (userRole) {
             case 'client':
@@ -533,14 +533,14 @@ function canSendToTopic(userRole, topic) {
     if (userRole === 'pdg' || userRole === 'admin') {
         return true;
     }
-    
+
     // Les autres rôles ont des restrictions
     const allowedTopics = {
         'vendeur': ['clients'],
         'transitaire': ['clients', 'vendeurs'],
         'syndicat_president': ['syndicats']
     };
-    
+
     return allowedTopics[userRole]?.includes(topic) || false;
 }
 

@@ -52,6 +52,7 @@ const CommunicationTestPage = lazy(() => import("./pages/CommunicationTestPage")
 const LovableTestPage = lazy(() => import("./pages/LovableTestPage"));
 const UltraSimpleTestPage = lazy(() => import("./pages/UltraSimpleTestPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AgentSystem = lazy(() => import("./pages/AgentSystem"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -189,6 +190,10 @@ const App = () => (
               <Route
                 path="/pdg224solutionssoulbah"
                 element={<PDG224Solutions />}
+              />
+              <Route
+                path="/agent-system"
+                element={<AgentSystem />}
               />
               {/* PDG routes removed - being refactored */}
               <Route
