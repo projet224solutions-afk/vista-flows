@@ -295,6 +295,7 @@ export default function VendeurDashboard() {
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
+              <Route index element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
               <Route path="analytics" element={<VendorAnalytics />} />
               <Route path="pos" element={<POSSystemWrapper />} />
