@@ -93,6 +93,11 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              {/* Accès direct pour diagnostic si besoin */}
+              <Route
+                path="/vendeur-open"
+                element={<VendeurDashboard />}
+              />
               <Route
                 path="/vendeur-optimized"
                 element={
