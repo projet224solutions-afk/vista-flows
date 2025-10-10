@@ -11,7 +11,7 @@ try {
 } catch (_) {
     firebaseService = null;
 }
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -43,8 +43,7 @@ const handleValidationErrors = (req, res, next) => {
 /**
  * POST /api/notifications/register-token - Enregistrer un token FCM
  */
-router.post('/register-token', [
-    authMiddleware,
+router.post('/register-token', authMiddleware, [
     body('fcmToken').isString().isLength({ min: 10 }).withMessage('Token FCM invalide')
 ], handleValidationErrors, async (req, res) => {
     try {
