@@ -15,6 +15,7 @@ import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 export default function WalletDashboard() {
   const { user } = useAuth();
   const userId = user?.id;
+  const { session } = useAuth();
   const { wallet, transactions, loading, refetch } = useWallet(userId);
 
   const [depositAmount, setDepositAmount] = useState("");
@@ -47,6 +48,8 @@ export default function WalletDashboard() {
     return data.id as string | null;
   }, [userId]);
 
+  const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
   const handleDeposit = useCallback(async () => {
     if (!userId) return;
     const amount = parseFloat(depositAmount);
@@ -54,34 +57,35 @@ export default function WalletDashboard() {
       toast.error('Montant invalide');
       return;
     }
+    if (amount < 1000) {
+      toast.error('Montant minimum 1000 GNF');
+      return;
+    }
+    const token = (session as any)?.access_token;
+    if (!token) {
+      toast.error('Session invalide');
+      return;
+    }
     try {
       setBusy(true);
-      const id = walletId || await ensureWallet();
-      if (!id) throw new Error('Wallet introuvable');
+      await ensureWallet();
 
-      // Insérer la transaction de dépôt
-      const txId = `DEP_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      const { error: txError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: txId,
-          transaction_type: 'deposit',
+      const res = await fetch(`${API_BASE}/wallet/deposit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
           amount,
-          net_amount: amount,
-          fee: 0,
-          currency: wallet?.currency || 'GNF',
-          receiver_wallet_id: id,
-          status: 'completed',
-          description: 'Dépôt manuel'
-        });
-      if (txError) throw txError;
-
-      // Mettre à jour le solde
-      const { error: upErr } = await supabase
-        .from('wallets')
-        .update({ balance: (wallet?.balance || 0) + amount })
-        .eq('id', id);
-      if (upErr) throw upErr;
+          paymentMethod: 'mobile_money',
+          reference: `UI_${Date.now()}`
+        })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.error || json?.message || 'Erreur dépôt');
+      }
 
       setDepositAmount("");
       toast.success('Dépôt effectué');
@@ -91,7 +95,7 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [depositAmount, userId, walletId, wallet, ensureWallet, refetch]);
+  }, [depositAmount, userId, ensureWallet, refetch, session]);
 
   const handleWithdraw = useCallback(async () => {
     if (!userId) return;
@@ -100,36 +104,35 @@ export default function WalletDashboard() {
       toast.error('Montant invalide');
       return;
     }
-    if (!wallet || wallet.balance < amount) {
-      toast.error('Solde insuffisant');
+    if (amount < 5000) {
+      toast.error('Montant minimum 5000 GNF');
+      return;
+    }
+    const token = (session as any)?.access_token;
+    if (!token) {
+      toast.error('Session invalide');
       return;
     }
     try {
       setBusy(true);
-      const id = walletId || await ensureWallet();
-      if (!id) throw new Error('Wallet introuvable');
+      await ensureWallet();
 
-      const txId = `WDR_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      const { error: txError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: txId,
-          transaction_type: 'withdrawal',
+      const res = await fetch(`${API_BASE}/wallet/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
           amount,
-          net_amount: amount,
-          fee: 0,
-          currency: wallet.currency || 'GNF',
-          sender_wallet_id: id,
-          status: 'completed',
-          description: 'Retrait manuel'
-        });
-      if (txError) throw txError;
-
-      const { error: upErr } = await supabase
-        .from('wallets')
-        .update({ balance: wallet.balance - amount })
-        .eq('id', id);
-      if (upErr) throw upErr;
+          paymentMethod: 'mobile_money',
+          paymentDetails: { provider: 'orange_money', phone: '620000000' }
+        })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.error || json?.message || 'Erreur retrait');
+      }
 
       setWithdrawAmount("");
       toast.success('Retrait effectué');
@@ -139,7 +142,7 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [withdrawAmount, userId, walletId, wallet, ensureWallet, refetch]);
+  }, [withdrawAmount, userId, ensureWallet, refetch, session]);
 
   return (
     <Card className="h-full">
