@@ -66,10 +66,7 @@ class WalletService {
         try {
             const { data, error } = await this.supabase
                 .from('wallets')
-                .select(`
-                    *,
-                    users!inner(id, first_name, last_name, email, phone)
-                `)
+                .select('*')
                 .eq('user_id', userId)
                 .single();
 
@@ -154,31 +151,21 @@ class WalletService {
             const transactionId = result?.transaction_id;
 
             // Envoyer notifications
-            if (sender.fcm_token) {
-                await firebaseService.sendTransactionSuccessNotification(
-                    sender.fcm_token,
-                    {
-                        id: transactionId,
-                        amount,
-                        currency: 'GNF',
-                        type: 'transfer',
-                        recipientName: `${receiver.first_name} ${receiver.last_name}`
-                    }
-                );
-            }
+            await this.notifyUserTransaction(senderId, {
+                id: transactionId,
+                amount,
+                currency: 'GNF',
+                type: 'transfer',
+                recipientName: receiver ? `${receiver.prenom || ''} ${receiver.nom || ''}`.trim() : undefined
+            });
 
-            if (receiver.fcm_token) {
-                await firebaseService.sendTransactionSuccessNotification(
-                    receiver.fcm_token,
-                    {
-                        id: transactionId,
-                        amount,
-                        currency: 'GNF',
-                        type: 'received',
-                        senderName: `${sender.first_name} ${sender.last_name}`
-                    }
-                );
-            }
+            await this.notifyUserTransaction(receiverId, {
+                id: transactionId,
+                amount,
+                currency: 'GNF',
+                type: 'received',
+                senderName: sender ? `${sender.prenom || ''} ${sender.nom || ''}`.trim() : undefined
+            });
 
             console.log('✅ Transfert réussi, transaction ID:', transactionId);
 
@@ -250,14 +237,23 @@ class WalletService {
                 .eq('id', tx.id);
             if (statusUpdateError) throw statusUpdateError;
 
-            // Notifications
-            if (user.fcm_token) {
-                if (withdrawalResult.success) {
-                    await firebaseService.sendWithdrawalApprovedNotification(user.fcm_token, { id: tx.id, amount, currency: 'GNF', method: paymentMethod });
-                } else {
-                    await firebaseService.sendWithdrawalRejectedNotification(user.fcm_token, { id: tx.id, amount, currency: 'GNF', reason: withdrawalResult.error });
-                }
+            // En cas d'échec, rembourser le débit
+            if (!withdrawalResult.success) {
+                await this.supabase
+                    .from('wallets')
+                    .update({ balance: userWallet.wallet.balance, updated_at: new Date().toISOString() })
+                    .eq('id', userWallet.wallet.id);
             }
+
+            // Notifications
+            await this.notifyUserWithdrawal(userId, {
+                id: tx.id,
+                amount,
+                currency: 'GNF',
+                method: paymentMethod,
+                success: !!withdrawalResult.success,
+                reason: withdrawalResult.success ? undefined : withdrawalResult.error
+            });
 
             console.log('✅ Retrait traité, transaction ID:', tx.id);
             return { success: withdrawalResult.success, transactionId: tx.id, amount, fees: totalFees, netAmount };
@@ -309,18 +305,12 @@ class WalletService {
             if (creditError) throw creditError;
 
             // Notification
-            const user = await this.getUserById(userId);
-            if (user && user.fcm_token) {
-                await firebaseService.sendTransactionSuccessNotification(
-                    user.fcm_token,
-                    {
-                        id: tx.id,
-                        amount,
-                        currency: 'GNF',
-                        type: 'deposit'
-                    }
-                );
-            }
+            await this.notifyUserTransaction(userId, {
+                id: tx.id,
+                amount,
+                currency: 'GNF',
+                type: 'deposit'
+            });
 
             console.log('✅ Dépôt réussi, transaction ID:', tx.id);
 
@@ -381,7 +371,7 @@ class WalletService {
             if (success) {
                 // Mettre à jour la transaction avec la référence PayPal
                 await this.supabase
-                    .from('transactions')
+                    .from('wallet_transactions')
                     .update({
                         reference_id: `PP_${Date.now()}`,
                         status: 'completed',
@@ -411,7 +401,7 @@ class WalletService {
             
             if (success) {
                 await this.supabase
-                    .from('transactions')
+                    .from('wallet_transactions')
                     .update({
                         reference_id: `ST_${Date.now()}`,
                         status: 'completed',
@@ -441,7 +431,7 @@ class WalletService {
             
             if (success) {
                 await this.supabase
-                    .from('transactions')
+                    .from('wallet_transactions')
                     .update({
                         reference_id: `MM_${Date.now()}`,
                         status: 'completed',
@@ -471,7 +461,7 @@ class WalletService {
             
             if (success) {
                 await this.supabase
-                    .from('transactions')
+                    .from('wallet_transactions')
                     .update({
                         reference_id: `BC_${Date.now()}`,
                         status: 'completed',
@@ -560,8 +550,8 @@ class WalletService {
     async getUserById(userId) {
         try {
             const { data, error } = await this.supabase
-                .from('users')
-                .select('*')
+                .from('profiles')
+                .select('id, email, nom, prenom')
                 .eq('id', userId)
                 .single();
 
@@ -573,6 +563,52 @@ class WalletService {
         } catch (error) {
             console.error('❌ Erreur récupération utilisateur:', error);
             return null;
+        }
+    }
+
+    /**
+     * Récupère les tokens FCM d'un utilisateur (optionnel)
+     */
+    async getUserFcmTokens(userId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('user_devices')
+                .select('fcm_token')
+                .eq('user_id', userId)
+                .neq('fcm_token', null);
+            if (error) return [];
+            return (data || []).map((d) => d.fcm_token).filter(Boolean);
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Envoie une notification de transaction à un utilisateur si possible
+     */
+    async notifyUserTransaction(userId, payload) {
+        try {
+            const tokens = await this.getUserFcmTokens(userId);
+            await Promise.all(tokens.map((t) => firebaseService.sendTransactionSuccessNotification(t, payload)));
+        } catch (_) {
+            // Ignorer les erreurs de notification
+        }
+    }
+
+    /**
+     * Envoie une notification de retrait (succès/échec)
+     */
+    async notifyUserWithdrawal(userId, payload) {
+        try {
+            const tokens = await this.getUserFcmTokens(userId);
+            await Promise.all(tokens.map((t) => {
+                if (payload.success) {
+                    return firebaseService.sendWithdrawalApprovedNotification(t, payload);
+                }
+                return firebaseService.sendWithdrawalRejectedNotification(t, payload);
+            }));
+        } catch (_) {
+            // Ignorer
         }
     }
 

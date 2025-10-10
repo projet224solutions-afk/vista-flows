@@ -142,6 +142,60 @@ export const useWallet = (userId?: string) => {
     }
   }, []);
 
+  // Temps réel: écoute des changements de transactions et de solde
+  useEffect(() => {
+    if (!userId) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupRealtime = async () => {
+      try {
+        // Récupérer l'id de wallet pour filtrer les événements
+        const { data: walletRow } = await supabase
+          .from('wallets')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+
+        const walletId = walletRow?.id;
+
+        channel = supabase
+          .channel(`wallet_${userId}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'wallet_transactions',
+            filter: walletId ? `or(sender_wallet_id.eq.${walletId},receiver_wallet_id.eq.${walletId})` : undefined
+          }, () => {
+            // Recharger les transactions
+            loadTransactions(userId);
+          })
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'wallets',
+            filter: `user_id.eq.${userId}`
+          }, (payload) => {
+            // Appliquer mise à jour du solde si présent
+            const newBalance = (payload.new as any)?.balance;
+            if (typeof newBalance === 'number') {
+              setWallet(prev => prev ? { ...prev, balance: newBalance } : prev);
+            } else {
+              // Sinon rechargement pour cohérence
+              loadWallet(userId);
+            }
+          })
+          .subscribe();
+      } catch (e) {
+        console.error('❌ Erreur configuration temps réel Wallet:', e);
+      }
+    };
+
+    setupRealtime();
+    return () => {
+      if (channel) channel.unsubscribe();
+    };
+  }, [userId, loadTransactions, loadWallet]);
+
   // Créer une carte virtuelle
   const createVirtualCard = useCallback(async (userId: string) => {
     try {
@@ -189,7 +243,7 @@ export const useWallet = (userId?: string) => {
         .from('wallet_transactions')
         .insert({
           user_id: userId,
-          order_id: orderId,
+      order_id: orderId,
           amount: amount,
           transaction_type: method,
           status: 'pending',
