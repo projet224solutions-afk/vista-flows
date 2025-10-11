@@ -12,9 +12,9 @@ const rateLimit = require('express-rate-limit');
 
 // Import des services et middlewares
 const logger = require('./src/utils/logger');
-const authMiddleware = require('./src/middleware/auth');
+const { authMiddleware } = require('./src/middleware/auth');
 const permissionMiddleware = require('./src/middleware/permissions');
-const errorHandler = require('./src/middleware/errorHandler');
+const { errorHandler } = require('./src/middleware/errorHandler');
 
 // Import des routes
 const openaiRoutes = require('./src/routes/openai');

@@ -23,6 +23,7 @@ import { VendorSidebar } from "@/components/vendor/VendorSidebar";
 import ProductManagement from "@/components/vendor/ProductManagement";
 import OrderManagement from "@/components/vendor/OrderManagement";
 import ClientManagement from "@/components/vendor/ClientManagement";
+import AgentManagement from "@/components/vendor/AgentManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
@@ -34,6 +35,7 @@ import SupportTickets from "@/components/vendor/SupportTickets";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
+import DebtManagement from "@/components/vendor/DebtManagement";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
 export default function VendeurDashboard() {
@@ -304,12 +306,14 @@ export default function VendeurDashboard() {
               <Route path="inventory" element={<InventoryManagement />} />
               <Route path="warehouse" element={<WarehouseManagement />} />
               <Route path="clients" element={<ClientManagement />} />
+              <Route path="agents" element={<AgentManagement />} />
               <Route path="prospects" element={<ProspectManagement />} />
               <Route path="marketing" element={<MarketingManagement />} />
               <Route path="wallet" element={<WalletDashboard />} />
               <Route path="payments" element={<PaymentManagement />} />
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
+              <Route path="debts" element={<DebtManagement />} />
               <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<SimpleCommunicationInterface />} />

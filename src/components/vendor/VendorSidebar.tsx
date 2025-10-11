@@ -81,6 +81,12 @@ const menuSections = [
     label: "Clients & Marketing",
     items: [
       { 
+        title: "Agents", 
+        icon: Users, 
+        path: "agents",
+        badge: null
+      },
+      { 
         title: "Clients", 
         icon: Users, 
         path: "clients",
@@ -126,6 +132,12 @@ const menuSections = [
         icon: Receipt, 
         path: "expenses",
         badge: "3"
+      },
+      {
+        title: "Dettes",
+        icon: AlertTriangle,
+        path: "debts",
+        badge: null
       },
     ]
   },

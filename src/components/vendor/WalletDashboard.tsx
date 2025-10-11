@@ -20,6 +20,8 @@ export default function WalletDashboard() {
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [receiverId, setReceiverId] = useState("");
   const [busy, setBusy] = useState(false);
 
   const walletId = useMemo(() => wallet?.id, [wallet]);
@@ -144,6 +146,50 @@ export default function WalletDashboard() {
     }
   }, [withdrawAmount, userId, ensureWallet, refetch, session]);
 
+  const handleTransfer = useCallback(async () => {
+    if (!userId) return;
+    const amount = parseFloat(transferAmount);
+    if (!amount || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+    if (!receiverId) {
+      toast.error('Destinataire requis');
+      return;
+    }
+    const token = (session as any)?.access_token;
+    if (!token) {
+      toast.error('Session invalide');
+      return;
+    }
+    try {
+      setBusy(true);
+      await ensureWallet();
+
+      const res = await fetch(`${API_BASE}/wallet/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ receiverId, amount })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) {
+        throw new Error(json?.error || json?.message || 'Erreur transfert');
+      }
+
+      setTransferAmount("");
+      setReceiverId("");
+      toast.success('Transfert effectué');
+      await refetch(userId);
+    } catch (e: any) {
+      toast.error(e?.message || 'Erreur transfert');
+    } finally {
+      setBusy(false);
+    }
+  }, [transferAmount, receiverId, userId, ensureWallet, refetch, session]);
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -165,9 +211,10 @@ export default function WalletDashboard() {
         </div>
 
         <Tabs defaultValue="deposit">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="deposit">Dépôt</TabsTrigger>
             <TabsTrigger value="withdraw">Retrait</TabsTrigger>
+            <TabsTrigger value="transfer">Transfert</TabsTrigger>
             <TabsTrigger value="history">Historique</TabsTrigger>
           </TabsList>
 
@@ -196,6 +243,26 @@ export default function WalletDashboard() {
                     <ArrowUpCircle className="w-4 h-4 mr-2" />
                     Retirer
                   </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="transfer" className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 space-y-2">
+                <div>
+                  <Label>ID Destinataire</Label>
+                  <Input placeholder="UUID du destinataire" value={receiverId} onChange={(e) => setReceiverId(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Montant à transférer</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input type="number" placeholder="0" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
+                    <Button onClick={handleTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
+                      Transférer
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
