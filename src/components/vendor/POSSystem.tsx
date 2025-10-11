@@ -229,67 +229,19 @@ export function POSSystem() {
     }
 
     try {
-      // 1) Créer la commande
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          vendor_id: vendorId,
-          total_amount: total,
-          payment_status: 'paid',
-          created_at: new Date().toISOString()
-        })
-        .select('id')
-        .single();
-      if (orderErr) throw orderErr;
-
-      // 2) Insérer les items
-      const itemsPayload = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.total
-      }));
-      const { error: itemsErr } = await supabase.from('order_items').insert(itemsPayload);
-      if (itemsErr) throw itemsErr;
-
-      // 3) Décrémenter le stock (priorité: table inventory, sinon products)
-      for (const item of cart) {
-        // a) Essayer sur inventory.quantity (si schéma inventaire est utilisé)
-        try {
-          const { data: invRow, error: invSelErr } = await supabase
-            .from('inventory')
-            .select('id, quantity')
-            .eq('product_id', item.id)
-            .limit(1)
-            .maybeSingle();
-          if (!invSelErr && invRow) {
-            const nextQty = Math.max(0, Number(invRow.quantity || 0) - item.quantity);
-            const { error: invUpdErr } = await supabase
-              .from('inventory')
-              .update({ quantity: nextQty })
-              .eq('id', invRow.id);
-            if (invUpdErr) throw invUpdErr;
-            continue; // inventory géré, passe au suivant
-          }
-        } catch (_) {
-          // ignore, fallback to products
-        }
-
-        // b) Fallback: products.stock_quantity
-        const { data: prod } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.id)
-          .single();
-        const current = Number((prod as any)?.stock_quantity || 0);
-        const next = Math.max(0, current - item.quantity);
-        const { error: upErr } = await supabase
-          .from('products')
-          .update({ stock_quantity: next, updated_at: new Date().toISOString() })
-          .eq('id', item.id);
-        if (upErr) throw upErr;
-      }
+      // Appel backend (service role) pour gérer RLS et transaction
+      const payload = {
+        vendorId,
+        totalAmount: total,
+        items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
+      };
+      const resp = await fetch('/api/orders/pos-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok || json?.success === false) throw new Error(json?.message || 'Erreur checkout');
 
       toast.success('Paiement effectué avec succès!', {
         description: `Commande de ${total.toFixed(0)} FCFA validée`

@@ -24,6 +24,7 @@ const agoraRoutes = require('./routes/agora');
 const walletRoutes = require('./src/routes/wallet'); // Nouveau
 const notificationsRoutes = require('./src/routes/notifications'); // Nouveau
 const healthRoutes = require('./src/routes/health');
+const ordersRoutes = require('./src/routes/orders');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -157,6 +158,9 @@ app.use('/api/wallet', walletRoutes);
 
 // Routes Notifications (avec authentification)
 app.use('/api/notifications', notificationsRoutes);
+
+// Routes Orders (POS)
+app.use('/api/orders', ordersRoutes);
 
 // Route racine
 app.get('/', (req, res) => {
