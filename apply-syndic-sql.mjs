@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  console.error('❌ DATABASE_URL manquant. Ex: postgres://user:pass@host:port/db');
+  console.error('[ERROR] DATABASE_URL is missing. Example: postgres://user:pass@host:port/db');
   process.exit(1);
 }
 
@@ -30,8 +30,13 @@ const sqlPath = process.env.SYNDIC_SCHEMA_PATH
   : path.join(__dirname, 'sql', 'syndic-schema.sql');
 
 if (!existsSync(sqlPath)) {
-  console.error(`❌ Fichier SQL introuvable: ${sqlPath}`);
+  console.error(`[ERROR] SQL file not found: ${sqlPath}`);
   process.exit(1);
+}
+
+function logError(message, error) {
+  const details = error?.stack || error?.message || String(error);
+  console.error(`[ERROR] ${message}\n- details: ${details}`);
 }
 
 async function run() {
@@ -44,20 +49,20 @@ async function run() {
     await client.query(sql);
     console.log('✅ OK');
   } catch (e) {
-    console.error(`❌ Erreur ${path.basename(sqlPath)}:`, e.message);
+    logError(`Failed applying ${path.basename(sqlPath)}`, e);
     process.exitCode = 1;
   } finally {
     await client.end();
   }
 
   if (process.exitCode === 1) {
-    console.error('\n❌ Application échouée.');
+    console.error('\n[ERROR] SQL application failed.');
   } else {
     console.log('\n🎉 Schéma Bureau Syndical appliqué.');
   }
 }
 
 run().catch((e) => {
-  console.error('❌ Erreur application SQL:', e.message);
+  logError('Unhandled SQL application error', e);
   process.exit(1);
 });
