@@ -71,14 +71,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Séparer les dépendances vendor
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
-          supabase: ['@supabase/supabase-js'],
-          charts: ['recharts'],
-          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.match(/react|react-dom|react-router-dom/)) return 'vendor-react';
+            if (id.includes('@radix-ui')) return 'vendor-radix';
+            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.match(/react-hook-form|@hookform\/resolvers|zod/)) return 'vendor-forms';
+            if (id.match(/date-fns|clsx|tailwind-merge/)) return 'vendor-utils';
+          }
         }
       }
     },
