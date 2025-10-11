@@ -4,7 +4,24 @@
  */
 
 const OpenAI = require('openai');
+const { RateLimiterMemory } = require('rate-limiter-flexible');
+const { createClient } = require('@supabase/supabase-js');
 const logger = require('../utils/logger');
+
+// Supabase (service role) for logging/metrics
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Configuration par défaut
+const CONFIG = {
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000', 10),
+    temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+    maxRetries: 3,
+    timeout: 30000 // 30s
+};
 
 class OpenAIService {
     constructor() {
@@ -15,12 +32,25 @@ class OpenAIService {
         } else {
             this.client = new OpenAI({
                 apiKey: process.env.OPENAI_API_KEY,
+                timeout: CONFIG.timeout,
             });
         }
 
-        this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-        this.maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS) || 1000;
-        this.temperature = parseFloat(process.env.OPENAI_TEMPERATURE) || 0.7;
+        this.model = CONFIG.model;
+        this.maxTokens = CONFIG.maxTokens;
+        this.temperature = CONFIG.temperature;
+
+        // Rate limiter: 50 req / heure par utilisateur
+        this.userLimiter = new RateLimiterMemory({ points: 50, duration: 3600 });
+
+        // Stats internes (indicatif)
+        this.stats = {
+            totalRequests: 0,
+            totalTokensUsed: 0,
+            totalCost: 0,
+            errors: 0,
+            averageResponseTime: 0
+        };
 
         logger.info('Service OpenAI initialisé', {
             model: this.model,
@@ -42,18 +72,10 @@ class OpenAIService {
             if (!this.enabled || !this.client) {
                 throw new Error('Service OpenAI non configuré');
             }
+            // Rate limit par utilisateur
+            await this.checkRateLimit(user?.id);
             // Validation des entrées
-            if (!projectText || typeof projectText !== 'string') {
-                throw new Error('Le texte du projet est requis et doit être une chaîne de caractères');
-            }
-
-            if (projectText.length < 10) {
-                throw new Error('Le texte du projet doit contenir au moins 10 caractères');
-            }
-
-            if (projectText.length > 50000) {
-                throw new Error('Le texte du projet ne peut pas dépasser 50 000 caractères');
-            }
+            this.validatePrompt(projectText);
 
             // Logging de la requête
             logger.info('Début analyse projet OpenAI', {
@@ -62,6 +84,7 @@ class OpenAIService {
                 textLength: projectText.length,
                 model: this.model
             });
+            this.logRequest(user.id, 'analyze_project', projectText.length).catch(() => {});
 
             // Construction du prompt système optimisé pour 224Solutions
             const systemPrompt = this.buildSystemPrompt();
@@ -96,11 +119,16 @@ class OpenAIService {
             // Extraction et formatage de la réponse
             const analysis = this.formatResponse(completion);
 
+            // Stats
+            const tokensUsed = completion.usage?.total_tokens || 0;
+            this.updateStats(duration, tokensUsed);
+            this.logMetric(user.id, 'openai_analyze_project', { duration_ms: duration, tokens: tokensUsed }).catch(() => {});
+
             // Logging du succès
             logger.info('Analyse projet OpenAI terminée', {
                 userId: user.id,
                 duration: `${duration}ms`,
-                tokensUsed: completion.usage?.total_tokens || 0,
+                tokensUsed,
                 model: completion.model
             });
 
@@ -125,6 +153,7 @@ class OpenAIService {
                 error: error.message,
                 stack: error.stack
             });
+            this.stats.errors++;
 
             // Gestion des erreurs spécifiques OpenAI
             if (error.code === 'insufficient_quota') {
@@ -142,6 +171,67 @@ class OpenAIService {
             // Erreur générique
             throw new Error(`Erreur lors de l'analyse: ${error.message}`);
         }
+    }
+
+    // Vérifie le quota utilisateur
+    async checkRateLimit(userId) {
+        if (!userId) return;
+        try {
+            await this.userLimiter.consume(String(userId), 1);
+        } catch (e) {
+            throw new Error('Limite de requêtes OpenAI dépassée');
+        }
+    }
+
+    // Valide le prompt
+    validatePrompt(projectText) {
+        if (!projectText || typeof projectText !== 'string') {
+            throw new Error('Le texte du projet est requis et doit être une chaîne de caractères');
+        }
+        if (projectText.length < 10) {
+            throw new Error('Le texte du projet doit contenir au moins 10 caractères');
+        }
+        if (projectText.length > 50000) {
+            throw new Error('Le texte du projet ne peut pas dépasser 50 000 caractères');
+        }
+    }
+
+    // Log la requête dans Supabase (table ai_logs si disponible)
+    async logRequest(userId, action, promptLength) {
+        try {
+            await supabase.from('ai_logs').insert({
+                id: crypto.randomUUID ? crypto.randomUUID() : undefined,
+                user_id: userId,
+                action,
+                prompt_length: promptLength,
+                created_at: new Date().toISOString()
+            });
+        } catch (_) {
+            // Ignore si table absente
+        }
+    }
+
+    // Log métriques
+    async logMetric(userId, event, data) {
+        try {
+            await supabase.from('system_metrics').insert({
+                id: crypto.randomUUID ? crypto.randomUUID() : undefined,
+                user_id: userId,
+                event,
+                data,
+                created_at: new Date().toISOString()
+            });
+        } catch (_) {
+            // Ignore si table absente
+        }
+    }
+
+    // Met à jour les stats internes
+    updateStats(durationMs, tokensUsed) {
+        this.stats.totalRequests += 1;
+        this.stats.totalTokensUsed += tokensUsed;
+        const n = this.stats.totalRequests;
+        this.stats.averageResponseTime = ((this.stats.averageResponseTime * (n - 1)) + durationMs) / n;
     }
 
     /**
