@@ -253,8 +253,30 @@ export function POSSystem() {
       const { error: itemsErr } = await supabase.from('order_items').insert(itemsPayload);
       if (itemsErr) throw itemsErr;
 
-      // 3) Décrémenter le stock de chaque produit
+      // 3) Décrémenter le stock (priorité: table inventory, sinon products)
       for (const item of cart) {
+        // a) Essayer sur inventory.quantity (si schéma inventaire est utilisé)
+        try {
+          const { data: invRow, error: invSelErr } = await supabase
+            .from('inventory')
+            .select('id, quantity')
+            .eq('product_id', item.id)
+            .limit(1)
+            .maybeSingle();
+          if (!invSelErr && invRow) {
+            const nextQty = Math.max(0, Number(invRow.quantity || 0) - item.quantity);
+            const { error: invUpdErr } = await supabase
+              .from('inventory')
+              .update({ quantity: nextQty })
+              .eq('id', invRow.id);
+            if (invUpdErr) throw invUpdErr;
+            continue; // inventory géré, passe au suivant
+          }
+        } catch (_) {
+          // ignore, fallback to products
+        }
+
+        // b) Fallback: products.stock_quantity
         const { data: prod } = await supabase
           .from('products')
           .select('stock_quantity')

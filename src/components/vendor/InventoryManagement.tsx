@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/hooks/use-toast";
 
 interface InventoryItem {
@@ -139,6 +140,33 @@ export default function InventoryManagement() {
 
   if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
 
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQty, setAddQty] = useState('');
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  const addStock = async () => {
+    if (!selectedItem) return;
+    const qty = parseInt(addQty || '0', 10);
+    if (qty <= 0) {
+      toast({ title: 'Quantité invalide', variant: 'destructive' });
+      return;
+    }
+    try {
+      const newQty = selectedItem.quantity + qty;
+      const { error } = await supabase
+        .from('inventory')
+        .update({ quantity: newQty })
+        .eq('id', selectedItem.id);
+      if (error) throw error;
+      setInventory(prev => prev.map(i => i.id === selectedItem.id ? { ...i, quantity: newQty } : i));
+      setAddOpen(false);
+      setAddQty('');
+      toast({ title: 'Stock ajouté' });
+    } catch (e: any) {
+      toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -147,10 +175,29 @@ export default function InventoryManagement() {
           <p className="text-muted-foreground">Gérez votre inventaire et optimisez vos approvisionnements</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter stock
-          </Button>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={!selectedItem}>
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter stock
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter du stock</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground">
+                  Produit: <span className="font-medium">{selectedItem?.product.name}</span>
+                </div>
+                <Input type="number" placeholder="Quantité" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+                  <Button onClick={addStock}>Ajouter</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button variant="outline">
             <Warehouse className="w-4 h-4 mr-2" />
             Entrepôts
@@ -273,7 +320,7 @@ export default function InventoryManagement() {
                 : 100;
               
               return (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg" onClick={() => setSelectedItem(item)}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-medium">{item.product.name}</h4>
