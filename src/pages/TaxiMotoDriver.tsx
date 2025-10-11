@@ -29,6 +29,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
 
 interface RideRequest {
     id: string;
@@ -116,9 +117,19 @@ export default function TaxiMotoDriver() {
     /**
      * Bascule le statut en ligne/hors ligne
      */
-    const toggleOnlineStatus = () => {
-        setIsOnline(!isOnline);
-        if (!isOnline) {
+    const toggleOnlineStatus = async () => {
+        const next = !isOnline;
+        setIsOnline(next);
+        try {
+            const coords = location ? { lat: location.coords.latitude, lng: location.coords.longitude } : ({} as any);
+            await fetch(`${API_BASE}/api/taxiMoto/driver/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ isOnline: next, ...coords })
+            });
+        } catch {}
+        if (next) {
             toast.success('🟢 Vous êtes maintenant en ligne');
         } else {
             toast.info('🔴 Vous êtes maintenant hors ligne');
@@ -129,14 +140,20 @@ export default function TaxiMotoDriver() {
      * Charge les statistiques du conducteur
      */
     const loadDriverStats = async () => {
-        // Simuler le chargement depuis Supabase
-        setDriverStats({
-            todayEarnings: 25600,
-            todayRides: 8,
-            rating: 4.8,
-            totalRides: 247,
-            onlineTime: '6h 30m'
-        });
+        try {
+            const resp = await fetch(`${API_BASE}/api/taxiMoto/driver/status`, { credentials: 'include' });
+            if (!resp.ok) throw new Error('Status fetch failed');
+            const json = await resp.json();
+            const balance = json.wallet?.balance || 0;
+            setDriverStats(prev => ({
+                ...prev,
+                todayEarnings: balance,
+                rating: 4.8,
+                totalRides: prev.totalRides
+            }));
+        } catch {
+            // ignore fallback
+        }
     };
 
     /**
@@ -173,7 +190,7 @@ export default function TaxiMotoDriver() {
     /**
      * Accepte une demande de course
      */
-    const acceptRideRequest = (request: RideRequest) => {
+    const acceptRideRequest = async (request: RideRequest) => {
         const newActiveRide: ActiveRide = {
             id: request.id,
             customer: {
@@ -199,6 +216,12 @@ export default function TaxiMotoDriver() {
         setNavigationActive(true);
         setActiveTab('navigation');
 
+        try {
+            await fetch(`${API_BASE}/api/taxiMoto/driver/acceptTrip`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                body: JSON.stringify({ tripId: request.id })
+            });
+        } catch {}
         toast.success('Course acceptée ! Navigation vers le client...');
 
         // Simuler la navigation
@@ -271,7 +294,7 @@ export default function TaxiMotoDriver() {
     /**
      * Termine la course
      */
-    const completeRide = () => {
+    const completeRide = async () => {
         if (!activeRide) return;
 
         // Mettre à jour les statistiques
@@ -285,6 +308,12 @@ export default function TaxiMotoDriver() {
         setNavigationActive(false);
         setActiveTab('dashboard');
 
+        try {
+            await fetch(`${API_BASE}/api/taxiMoto/driver/completeTrip`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                body: JSON.stringify({ tripId: activeRide.id, distanceKm: 3.2, durationMin: 10 })
+            });
+        } catch {}
         toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} FCFA`);
     };
 
