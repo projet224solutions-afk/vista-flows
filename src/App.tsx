@@ -29,6 +29,7 @@ const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
 const TaxiMoto = lazy(() => import("./pages/TaxiMoto"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
+const SyndicatePresidentDashboard = lazy(() => import("./pages/SyndicatePresidentDashboard"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const SyndicatePresident = lazy(() => import("./pages/SyndicatePresident"));
 const SyndicatePresidentNew = lazy(() => import("./pages/SyndicatePresidentNew"));
