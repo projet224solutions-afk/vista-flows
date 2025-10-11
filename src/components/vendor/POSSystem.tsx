@@ -235,7 +235,8 @@ export function POSSystem() {
         totalAmount: total,
         items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
       };
-      const resp = await fetch('/api/orders/pos-checkout', {
+      const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      const resp = await fetch(`${API_BASE}/api/orders/pos-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
