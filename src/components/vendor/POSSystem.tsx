@@ -88,7 +88,7 @@ export function POSSystem() {
   }, [user?.id]);
   
   // Charger tous les produits actifs du marketplace (sans filtrer par vendor)
-  const { data: productsData, loading: productsLoading } = useProducts();
+  const { data: productsData, loading: productsLoading, refetch: refetchProducts } = useProducts();
   
   // Transformer les données des produits pour le format POS
   const products = productsData?.map(p => ({
@@ -222,19 +222,65 @@ export function POSSystem() {
     setShowOrderSummary(true);
   };
 
-  const processPayment = () => {
+  const processPayment = async () => {
     if (paymentMethod === 'cash' && receivedAmount < total) {
       toast.error('Montant insuffisant');
       return;
     }
 
-    toast.success('Paiement effectué avec succès!', {
-      description: `Commande de ${total.toFixed(0)} FCFA validée`
-    });
-    
-    clearCart();
-    setShowOrderSummary(false);
-    setReceivedAmount(0);
+    try {
+      // 1) Créer la commande
+      const { data: order, error: orderErr } = await supabase
+        .from('orders')
+        .insert({
+          vendor_id: vendorId,
+          total_amount: total,
+          payment_status: 'paid',
+          created_at: new Date().toISOString()
+        })
+        .select('id')
+        .single();
+      if (orderErr) throw orderErr;
+
+      // 2) Insérer les items
+      const itemsPayload = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.total
+      }));
+      const { error: itemsErr } = await supabase.from('order_items').insert(itemsPayload);
+      if (itemsErr) throw itemsErr;
+
+      // 3) Décrémenter le stock de chaque produit
+      for (const item of cart) {
+        const { data: prod } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id)
+          .single();
+        const current = Number((prod as any)?.stock_quantity || 0);
+        const next = Math.max(0, current - item.quantity);
+        const { error: upErr } = await supabase
+          .from('products')
+          .update({ stock_quantity: next, updated_at: new Date().toISOString() })
+          .eq('id', item.id);
+        if (upErr) throw upErr;
+      }
+
+      toast.success('Paiement effectué avec succès!', {
+        description: `Commande de ${total.toFixed(0)} FCFA validée`
+      });
+
+      clearCart();
+      setShowOrderSummary(false);
+      setReceivedAmount(0);
+      // Recharger la liste des produits pour refléter le stock
+      await refetchProducts?.();
+    } catch (e: any) {
+      toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
+    }
   };
 
   const handleBarcodeSearch = (barcode: string) => {
