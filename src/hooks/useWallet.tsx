@@ -209,7 +209,7 @@ export const useWallet = (userId?: string) => {
           user_id: userId,
           card_number: cardNumber,
           expiry_date: expiryDate.toISOString().split('T')[0],
-          cvv: Math.floor(Math.random() * 900) + 100,
+          cvv: String(Math.floor(Math.random() * 900) + 100),
           status: 'active'
         })
         .select()
@@ -239,16 +239,30 @@ export const useWallet = (userId?: string) => {
     try {
       const referenceNumber = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
+      // Récupérer l'id du wallet de l'utilisateur
+      const { data: walletRow } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!walletRow?.id) {
+        throw new Error('Wallet introuvable');
+      }
+
       const { data: transactionData, error: transactionError } = await supabase
         .from('wallet_transactions')
         .insert({
-          user_id: userId,
-      order_id: orderId,
-          amount: amount,
+          transaction_id: referenceNumber,
           transaction_type: method,
+          amount: amount,
+          net_amount: amount,
+          fee: 0,
+          currency: 'GNF',
           status: 'pending',
-          reference_number: referenceNumber,
-          description: description
+          description: description,
+          sender_wallet_id: method === 'debit' ? walletRow.id : null,
+          receiver_wallet_id: method === 'credit' ? walletRow.id : null
         })
         .select()
         .single();
