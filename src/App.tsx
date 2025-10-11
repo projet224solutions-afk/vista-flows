@@ -28,6 +28,7 @@ const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionn
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
 const TaxiMoto = lazy(() => import("./pages/TaxiMoto"));
+const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
 const SyndicatDashboard = lazy(() => import("./pages/SyndicatDashboard"));
 const SyndicatePresidentDashboard = lazy(() => import("./pages/SyndicatePresidentDashboard"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
@@ -83,6 +84,14 @@ const App = () => (
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/taxi-moto" element={<TaxiMoto />} />
+              <Route
+                path="/taxi-moto/driver"
+                element={
+                  <ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}>
+                    <TaxiMotoDriver />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
 
