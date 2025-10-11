@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MapPin, User, Bike } from "lucide-react";
+import { Home, ShoppingBag, MapPin, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,7 @@ export default function QuickFooter() {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // Navigation principale - 5 boutons essentiels avec Taxi-Moto
+  // Navigation principale - Taxi-Moto retiré
   const navigationItems = [
     {
       id: 'home',
@@ -23,13 +23,6 @@ export default function QuickFooter() {
       icon: ShoppingBag,
       path: '/marketplace',
       description: 'Interface marketplace et toutes ses fonctionnalités'
-    },
-    {
-      id: 'taxi-moto',
-      label: 'Taxi-Moto',
-      icon: Bike,
-      path: '/taxi-moto',
-      description: 'Service de transport urbain - Réservation de taxi-moto'
     },
     {
       id: 'tracking',
