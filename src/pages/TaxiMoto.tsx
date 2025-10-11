@@ -32,6 +32,7 @@ import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { mapService } from "@/services/mapService";
 import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // Composants
 import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
@@ -42,6 +43,7 @@ import SimpleCommunicationInterface from "@/components/communication/SimpleCommu
 import MotoSecurityDashboard from "@/components/security/MotoSecurityDashboard";
 
 export default function TaxiMoto() {
+    const navigate = useNavigate();
     const { user, profile } = useAuth();
     const { location, loading: locationLoading, error: locationError } = useCurrentLocation();
 
@@ -181,6 +183,15 @@ export default function TaxiMoto() {
                             >
                                 <Shield className="w-4 h-4 mr-1" />
                                 SOS
+                            </Button>
+
+                            {/* Accès conducteur */}
+                            <Button
+                                onClick={() => navigate('/taxi-moto/driver')}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                Mode conducteur
                             </Button>
                         </div>
                     </div>
