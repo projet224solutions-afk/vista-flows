@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bike, MapPin, Clock, TrendingUp, Star, Navigation, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
 
@@ -11,21 +12,22 @@ export default function TaxiDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   useRoleRedirect(); // S'assurer que seuls les taxis/admins accèdent à cette page
-  useRoleRedirect(); // S'assurer que seuls les taxis/admins accèdent à cette page
 
-  const handleSignOut = async () => {
+  // ✅ Correction : stabiliser le callback pour éviter re-renders inutiles
+  const handleSignOut = useCallback(async () => {
     await signOut();
     navigate('/');
-  };
+  }, [signOut, navigate]);
 
-  const stats = [
+  // ✅ Correction : mémoïser les données statiques
+  const stats = useMemo(() => [
     { label: "Courses aujourd'hui", value: "12", icon: Navigation, color: "text-blue-500" },
     { label: "Gains du jour", value: "45,000 FCFA", icon: TrendingUp, color: "text-green-500" },
     { label: "Note moyenne", value: "4.8", icon: Star, color: "text-yellow-500" },
     { label: "Temps en ligne", value: "8h 30m", icon: Clock, color: "text-purple-500" }
-  ];
+  ], []);
 
-  const recentRides = [
+  const recentRides = useMemo(() => [
     {
       id: 'RIDE-2024-156',
       pickup: 'Plateau, Conakry',
@@ -44,14 +46,14 @@ export default function TaxiDashboard() {
       time: '12:15',
       rating: 4
     }
-  ];
+  ], []);
 
-  const todayEarnings = [
+  const todayEarnings = useMemo(() => [
     { time: '08:00', amount: 4500, rides: 2 },
     { time: '12:00', amount: 8200, rides: 3 },
     { time: '16:00', amount: 12800, rides: 4 },
     { time: '20:00', amount: 15600, rides: 3 }
-  ];
+  ], []);
 
   return (
     <div className="min-h-screen bg-background pb-20">
