@@ -14,6 +14,7 @@
     "syndic:apply-sql": "node apply-syndic-sql.mjs",
     "security:apply-sql": "node apply-security-sql.mjs",
     "security:apply-all": "node apply-security-unified.mjs",
+    "taxi:apply-sql": "node apply-taxi-sql.mjs",
     "wallet:apply-sql": "node apply-wallet-sql.mjs",
     "wallet:test": "node test-wallet.mjs"
   },
