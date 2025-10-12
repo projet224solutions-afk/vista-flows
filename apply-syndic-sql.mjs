@@ -40,6 +40,15 @@ function logError(message, error) {
 }
 
 async function run() {
+  // Relax TLS for Supabase hosts to avoid self-signed cert issues during apply
+  try {
+    const u = new URL(DATABASE_URL);
+    const isSupabase = /supabase\.co$/i.test(u.hostname) || /supabase/i.test(u.hostname);
+    if (isSupabase) {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    }
+  } catch { }
+
   const client = new Client({ connectionString: DATABASE_URL, ssl: buildSslConfig(DATABASE_URL) });
   await client.connect();
 
