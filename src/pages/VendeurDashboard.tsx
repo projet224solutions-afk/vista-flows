@@ -36,7 +36,7 @@ import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import VendorCommunication from "@/components/vendor/VendorCommunication";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -316,7 +316,7 @@ export default function VendeurDashboard() {
               <Route path="debts" element={<DebtManagement />} />
               <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
               <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<SimpleCommunicationInterface />} />
+              <Route path="communication" element={<VendorCommunication />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
