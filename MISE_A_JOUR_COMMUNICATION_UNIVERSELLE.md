@@ -32,7 +32,6 @@ Suite à vos instructions, j'ai mis à jour le système de communication 224Solu
 - ✅ **Wallet créé automatiquement** lors de chaque inscription
 - ✅ **ID unique** généré pour chaque utilisateur
 - ✅ **Adresse wallet** unique au format `224SOL_XXXXXXXX_TIMESTAMP_RANDOM`
-- ✅ **Bonus de bienvenue** : 1000 FCFA offerts automatiquement
 
 ### 🏦 **Fonctionnalités Wallet**
 - **Solde en temps réel** avec devise FCFA

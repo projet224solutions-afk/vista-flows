@@ -84,7 +84,7 @@ class OpenAIService {
                 textLength: projectText.length,
                 model: this.model
             });
-            this.logRequest(user.id, 'analyze_project', projectText.length).catch(() => {});
+            this.logRequest(user.id, 'analyze_project', projectText.length).catch(() => { });
 
             // Construction du prompt système optimisé pour 224Solutions
             const systemPrompt = this.buildSystemPrompt();
@@ -122,7 +122,7 @@ class OpenAIService {
             // Stats
             const tokensUsed = completion.usage?.total_tokens || 0;
             this.updateStats(duration, tokensUsed);
-            this.logMetric(user.id, 'openai_analyze_project', { duration_ms: duration, tokens: tokensUsed }).catch(() => {});
+            this.logMetric(user.id, 'openai_analyze_project', { duration_ms: duration, tokens: tokensUsed }).catch(() => { });
 
             // Logging du succès
             logger.info('Analyse projet OpenAI terminée', {
