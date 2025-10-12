@@ -6,65 +6,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import UltraSimpleCommunication from "@/components/communication/UltraSimpleCommunication";
+import { useSyndicatData } from "@/hooks/useSyndicatData";
 
 export default function SyndicatDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   useRoleRedirect(); // S'assurer que seuls les syndicats/admins accèdent à cette page
-  useRoleRedirect(); // S'assurer que seuls les syndicats/admins accèdent à cette page
+
+  // ✅ Correction : données dynamiques simulées via hook dédié
+  const { loading, stats, activeBadges, securityAlerts, markAlertTreated, markAlertUrgent } = useSyndicatData();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
-  const stats = [
-    { label: "Mototaxis actifs", value: "156", icon: Users, color: "text-blue-500" },
-    { label: "Missions en cours", value: "89", icon: Activity, color: "text-green-500" },
-    { label: "Alertes sécurité", value: "3", icon: AlertTriangle, color: "text-red-500" },
-    { label: "Badges valides", value: "142", icon: CheckCircle, color: "text-purple-500" }
-  ];
-
-  const activeBadges = [
-    {
-      driver: 'Mamadou Diallo',
-      badgeNumber: 'SYN-2024-001',
-      vestNumber: 'V-156',
-      status: 'Actif',
-      expires: '31 Déc 2024',
-      zone: 'Plateau'
-    },
-    {
-      driver: 'Fatou Sall',
-      badgeNumber: 'SYN-2024-002',
-      vestNumber: 'V-157',
-      status: 'Actif',
-      expires: '31 Déc 2024',
-      zone: 'Médina'
-    }
-  ];
-
-  const securityAlerts = [
-    {
-      id: 'ALT-001',
-      driver: 'Abdou Ba',
-      type: 'Badge expiré',
-      zone: 'Almadies',
-      time: '14:30',
-      priority: 'Haute'
-    },
-    {
-      id: 'ALT-002',
-      driver: 'Omar Ndiaye',
-      type: 'SOS activé',
-      zone: 'Yoff',
-      time: '13:15',
-      priority: 'Urgente'
-    }
-  ];
+  // ✅ Correction : les données sont désormais fournies par useSyndicatData
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {loading && (
+        <div className="px-4 py-2 text-sm text-muted-foreground">Chargement des données du syndicat…</div>
+      )}
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
@@ -181,8 +144,8 @@ export default function SyndicatDashboard() {
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Traiter</Button>
-                      <Button size="sm" className="bg-red-500 hover:bg-red-600">Urgence</Button>
+                      <Button variant="outline" size="sm" onClick={() => markAlertTreated(alert.id)}>Traiter</Button>
+                      <Button size="sm" className="bg-red-500 hover:bg-red-600" onClick={() => markAlertUrgent(alert.id)}>Urgence</Button>
                     </div>
                   </div>
                   
