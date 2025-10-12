@@ -81,8 +81,8 @@ export default function RealCommunicationInterface() {
     useEffect(() => {
         if (user?.id && !isInitialized) {
             const agoraConfig = {
-                appId: process.env.REACT_APP_AGORA_APP_ID || 'your-app-id',
-                appCertificate: process.env.REACT_APP_AGORA_APP_CERTIFICATE || 'your-app-certificate'
+                appId: import.meta.env.VITE_AGORA_APP_ID || '',
+                appCertificate: import.meta.env.VITE_AGORA_APP_CERTIFICATE || ''
             };
 
             initializeAgora(agoraConfig);
