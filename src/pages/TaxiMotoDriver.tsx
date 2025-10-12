@@ -121,7 +121,7 @@ export default function TaxiMotoDriver() {
         const next = !isOnline;
         setIsOnline(next);
         try {
-            const coords = location ? { lat: location.coords.latitude, lng: location.coords.longitude } : ({} as any);
+            const coords = location ? { lat: location.latitude, lng: location.longitude } : ({} as any);
             await fetch(`${API_BASE}/api/taxiMoto/driver/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
