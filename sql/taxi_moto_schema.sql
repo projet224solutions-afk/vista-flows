@@ -1,8 +1,24 @@
 -- Taxi/Moto core schema for 224SOLUTIONS
 
 create extension if not exists pgcrypto;
-create extension if not exists cube;
-create extension if not exists earthdistance;
+
+-- ✅ Correction: déplacer les extensions hors du schéma public
+create schema if not exists extensions;
+do $$ begin
+  if exists (select 1 from pg_extension where extname = 'cube') then
+    alter extension cube set schema extensions;
+  else
+    create extension if not exists cube with schema extensions;
+  end if;
+end $$;
+
+do $$ begin
+  if exists (select 1 from pg_extension where extname = 'earthdistance') then
+    alter extension earthdistance set schema extensions;
+  else
+    create extension if not exists earthdistance with schema extensions;
+  end if;
+end $$;
 
 -- Drivers
 create table if not exists public.taxi_drivers (
@@ -77,12 +93,16 @@ create table if not exists public.taxi_ratings (
 
 -- Basic triggers
 create or replace function public.set_updated_at()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$;
 
 drop trigger if exists set_updated_at_taxi_drivers on public.taxi_drivers;
 create trigger set_updated_at_taxi_drivers before update on public.taxi_drivers
