@@ -100,6 +100,39 @@ const registerValidation = [
 ];
 
 // =====================================================
+// HIBP PASSWORD LEAK CHECK
+// =====================================================
+async function isPasswordPwned(password) {
+    // K-anonymity check with HaveIBeenPwned Pwned Passwords
+    // Hash SHA1, send first 5 chars, check suffix in response
+    const crypto = require('crypto');
+    const sha1 = crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
+    const prefix = sha1.slice(0, 5);
+    const suffix = sha1.slice(5);
+    const url = `https://api.pwnedpasswords.com/range/${prefix}`;
+    const res = await fetch(url, {
+        headers: {
+            'Add-Padding': 'true',
+            'User-Agent': '224Solutions-Password-Checker'
+        },
+        // Avoid long hangs
+        signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined
+    });
+    if (!res.ok) return false; // if service unavailable, do not block
+    const text = await res.text();
+    const lines = text.split('\n');
+    for (const line of lines) {
+        const [hashSuffix, countStr] = line.trim().split(':');
+        if (!hashSuffix || !countStr) continue;
+        if (hashSuffix.toUpperCase() === suffix) {
+            const count = parseInt(countStr, 10) || 0;
+            return count > 0;
+        }
+    }
+    return false;
+}
+
+// =====================================================
 // ROUTES
 // =====================================================
 
@@ -236,6 +269,21 @@ router.post('/register',
         }
 
         const { email, password, nom, prenom, role } = req.body;
+
+        // Check against HaveIBeenPwned (non-bloquant si l'API est indisponible)
+        try {
+            const pwned = await isPasswordPwned(password);
+            if (pwned) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Mot de passe compromis',
+                    message: 'Ce mot de passe a été trouvé dans des fuites publiques. Veuillez en choisir un autre.'
+                });
+            }
+        } catch (e) {
+            // Log as warn but do not block the registration flow
+            logger.warn('HIBP indisponible', { error: e?.message });
+        }
 
         // Vérification si l'email existe déjà
         const { data: existingUser } = await supabase

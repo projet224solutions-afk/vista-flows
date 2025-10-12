@@ -3,7 +3,7 @@
  * Interface complète avec sidebar et tous les modules
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,32 +46,8 @@ export default function VendeurDashboard() {
   useRoleRedirect();
   const { userInfo } = useUserInfo();
 
-  // Rediriger vers dashboard par défaut
-  useEffect(() => {
-    if (location.pathname === '/vendeur' || location.pathname === '/vendeur/') {
-      navigate('/vendeur/dashboard', { replace: true });
-    }
-  }, [location.pathname, navigate]);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
-      });
-      navigate('/');
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      toast({
-        title: "Erreur de déconnexion",
-        description: "Une erreur est survenue lors de la déconnexion",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const mainStats = [
+  // ✅ Correction : Évite les re-renders inutiles en recalculant une seule fois les stats statiques
+  const mainStats = useMemo(() => ([
     {
       label: "Chiffre d'affaires",
       value: "2.4M GNF",
@@ -100,7 +76,51 @@ export default function VendeurDashboard() {
       icon: Target,
       color: "bg-orange-50 text-orange-600"
     }
-  ];
+  ]), []);
+
+  // Rediriger vers dashboard par défaut
+  useEffect(() => {
+    // ✅ Correction : Garde-fou de redirection pour éviter toute boucle
+    if (location.pathname === '/vendeur' || location.pathname === '/vendeur/') {
+      navigate('/vendeur/dashboard', { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  // ✅ Correction : Stabilise la référence et empêche re-renders des enfants qui recevraient cette fonction
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      toast({
+        title: "Erreur de déconnexion",
+        description: "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive"
+      });
+    }
+  }, [signOut, toast, navigate]);
+
+  // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
+  const isLoading = !user || typeof profile === 'undefined';
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex items-center gap-3 text-slate-700">
+          <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
+          <div className="w-3 h-3 rounded-full bg-indigo-600 animate-pulse [animation-delay:150ms]"></div>
+          <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse [animation-delay:300ms]"></div>
+          <span className="text-sm font-medium">Chargement de votre espace vendeur…</span>
+        </div>
+      </div>
+    );
+  }
+
+  // (stats déplacées plus haut via useMemo)
 
   // Composant Dashboard principal
   const DashboardHome = () => (
@@ -253,12 +273,12 @@ export default function VendeurDashboard() {
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
         <VendorSidebar />
-        
+
         <div className="flex-1 flex flex-col w-full">
           {/* Header global avec trigger */}
           <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-6">
             <SidebarTrigger className="mr-4" />
-            
+
             <div className="flex items-center justify-between flex-1">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
