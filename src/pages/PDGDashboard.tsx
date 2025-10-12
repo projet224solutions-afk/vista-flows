@@ -895,18 +895,33 @@ export default function PDGDashboard() {
                   <Button
                     onClick={async () => {
                       try {
+                        toast({
+                          title: "Création en cours...",
+                          description: "Configuration de votre profil PDG"
+                        });
                         await createPDG({
                           name: profile?.first_name + ' ' + profile?.last_name || 'PDG 224Solutions',
                           email: profile?.email || user?.email || '',
                           phone: profile?.phone || '',
                           permissions: ['all']
                         });
+                        toast({
+                          title: "Succès ! 🎉",
+                          description: "Votre profil PDG a été créé avec succès"
+                        });
                       } catch (error) {
                         console.error('Erreur création PDG:', error);
+                        toast({
+                          title: "Erreur",
+                          description: "Impossible de créer le profil PDG",
+                          variant: "destructive"
+                        });
                       }
                     }}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    disabled={!profile || !user}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
                   >
+                    <Crown className="mr-2 h-4 w-4" />
                     Configurer le profil PDG
                   </Button>
                 </div>
