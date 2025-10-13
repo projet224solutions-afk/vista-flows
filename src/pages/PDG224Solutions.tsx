@@ -29,8 +29,14 @@ export default function PDG224Solutions() {
         return;
       }
 
+      // Attendre le chargement du profil
+      if (!profile) {
+        setLoading(true);
+        return;
+      }
+
       // Vérifier le rôle admin
-      if (profile?.role !== 'admin') {
+      if (profile.role !== 'admin') {
         toast.error('Accès refusé - Réservé au PDG');
         navigate('/');
         return;
@@ -73,7 +79,7 @@ export default function PDG224Solutions() {
     }
   };
 
-  if (loading) {
+  if (loading || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -148,7 +154,8 @@ export default function PDG224Solutions() {
           <Tabs defaultValue="finance" className="space-y-8" aria-label="Navigation PDG 224Solutions">
             <TabsList className="inline-flex h-auto p-1.5 bg-muted/50 backdrop-blur-xl border border-border/40 rounded-2xl shadow-lg" role="tablist">
               <TabsTrigger 
-                value="finance" 
+                value="finance"
+                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Finances"
               >
@@ -156,7 +163,8 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Finances</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="users" 
+                value="users"
+                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Utilisateurs"
               >
@@ -164,7 +172,8 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Utilisateurs</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="security" 
+                value="security"
+                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Sécurité"
               >
@@ -172,7 +181,8 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Sécurité</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="config" 
+                value="config"
+                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Configuration"
               >
