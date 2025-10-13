@@ -3,15 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  BarChart3, Users, DollarSign, Shield, Menu, Moon, Sun, 
+import {
+  BarChart3, Users, DollarSign, Shield, Menu, Moon, Sun,
   Bot, Settings, LogOut, Crown, Activity, TrendingUp,
   Server, AlertTriangle, CheckCircle, Clock, Globe,
   Zap, FileText, Download, Bell, Search, Filter,
   MoreVertical, XCircle, Eye, RotateCcw, Trash2,
   Brain, Sparkles, Package, Truck, MessageSquare,
-  CreditCard, Wallet, Lock, Unlock, MapPin, 
-  ShoppingCart, Star, Ban, CheckCircle2, 
+  CreditCard, Wallet, Lock, Unlock, MapPin,
+  ShoppingCart, Star, Ban, CheckCircle2,
   UserCheck, Mail, Phone, Database, Key,
   HardDrive, RefreshCw, ArrowUpDown, TrendingDown
 } from "lucide-react";
@@ -62,14 +62,14 @@ interface RealTransactionStats {
 export default function AdvancedPDGDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  
+
   // États pour les vraies données
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [copilotVisible, setCopilotVisible] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  
+
   // Données réelles de l'application
   const [userStats, setUserStats] = useState<RealUserStats>({
     totalUsers: 0,
@@ -77,49 +77,27 @@ export default function AdvancedPDGDashboard() {
     usersByRole: { clients: 0, vendors: 0, drivers: 0, agents: 0, admins: 0 },
     usersByRegion: []
   });
-  
+
   const [productStats, setProductStats] = useState<RealProductStats>({
     totalProducts: 0,
     activeProducts: 0,
     totalVendors: 0,
     activeVendors: 0
   });
-  
+
   const [transactionStats, setTransactionStats] = useState<RealTransactionStats>({
     totalTransactions: 0,
     totalRevenue: 0,
     totalCommissions: 0,
     recentTransactions: []
   });
-  
-  // Authentification PDG en mode test
+
+  // Removed PDG test mode
   const [pdgAuth, setPdgAuth] = useState(false);
-  
+
   useEffect(() => {
-    // Vérifier l'authentification PDG depuis sessionStorage
-    const pdgSession = sessionStorage.getItem("pdg_auth");
-    if (pdgSession) {
-      try {
-        const authData = JSON.parse(pdgSession);
-        setPdgAuth(true);
-        console.log("🎯 Authentification PDG détectée:", authData);
-      } catch (error) {
-        console.log("❌ Erreur parsing PDG auth");
-      }
-    }
-    
-    // Mode test : Permettre l'accès même sans authentification
-    if (!pdgAuth && !profile?.role) {
-      console.log("🧪 Mode test PDG activé");
-      setPdgAuth(true);
-      sessionStorage.setItem("pdg_auth", JSON.stringify({
-        userCode: "TEST",
-        name: "Mode Test",
-        level: "PDG_TEST",
-        timestamp: Date.now()
-      }));
-    }
-    
+    // Removed PDG test session bootstrap
+
     // Charger les vraies données
     loadRealData();
   }, [pdgAuth, profile]);
@@ -282,7 +260,7 @@ export default function AdvancedPDGDashboard() {
   };
 
   // ================= FONCTIONS D'ACTIONS RÉELLES =================
-  
+
   const handleUserAction = async (userId: string, action: 'activate' | 'suspend') => {
     try {
       const { error } = await supabase
@@ -291,7 +269,7 @@ export default function AdvancedPDGDashboard() {
         .eq('id', userId);
 
       if (error) throw error;
-      
+
       toast.success(`Utilisateur ${action === 'activate' ? 'activé' : 'suspendu'} avec succès`);
       await loadUserStats(); // Recharger les données
     } catch (error) {
@@ -308,7 +286,7 @@ export default function AdvancedPDGDashboard() {
         .eq('id', productId);
 
       if (error) throw error;
-      
+
       toast.success(`Produit ${action === 'activate' ? 'activé' : 'désactivé'} avec succès`);
       await loadProductStats(); // Recharger les données
     } catch (error) {
@@ -526,7 +504,7 @@ export default function AdvancedPDGDashboard() {
         <h2 className="text-2xl font-bold">Gestion des Utilisateurs</h2>
         <Badge variant="outline">{userStats.totalUsers} utilisateurs</Badge>
       </div>
-      
+
       <div className="grid gap-4">
         {users.map((user) => (
           <Card key={user.id}>
@@ -563,7 +541,7 @@ export default function AdvancedPDGDashboard() {
         <h2 className="text-2xl font-bold">Gestion des Produits</h2>
         <Badge variant="outline">{productStats.totalProducts} produits</Badge>
       </div>
-      
+
       <div className="grid gap-4">
         {products.map((product) => (
           <Card key={product.id}>
@@ -593,7 +571,7 @@ export default function AdvancedPDGDashboard() {
         <h2 className="text-2xl font-bold">Historique des Transactions</h2>
         <Badge variant="outline">{transactionStats.totalTransactions} transactions</Badge>
       </div>
-      
+
       <Card>
         <CardContent className="p-4">
           <div className="space-y-4">
@@ -620,7 +598,7 @@ export default function AdvancedPDGDashboard() {
   const renderSettingsContent = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Configuration Système</h2>
-      
+
       <div className="grid gap-4">
         <Card>
           <CardHeader>
@@ -684,11 +662,10 @@ export default function AdvancedPDGDashboard() {
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-background`}>
       <div className="flex h-screen overflow-hidden">
-        
+
         {/* ======================= SIDEBAR ======================= */}
-        <div className={`bg-card border-r border-border transition-all duration-300 ${
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        }`}>
+        <div className={`bg-card border-r border-border transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'
+          }`}>
           {/* Logo */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-3">
@@ -731,9 +708,8 @@ export default function AdvancedPDGDashboard() {
               <div className="mt-6 pt-4 border-t border-border">
                 <Button
                   variant="outline"
-                  className={`w-full justify-start border-blue-300 text-blue-600 hover:bg-blue-50 ${
-                    sidebarCollapsed ? 'px-2' : 'px-4'
-                  }`}
+                  className={`w-full justify-start border-blue-300 text-blue-600 hover:bg-blue-50 ${sidebarCollapsed ? 'px-2' : 'px-4'
+                    }`}
                   onClick={() => setCopilotVisible(!copilotVisible)}
                 >
                   <Brain className="w-5 h-5" />
@@ -751,7 +727,7 @@ export default function AdvancedPDGDashboard() {
 
         {/* ======================= MAIN CONTENT ======================= */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          
+
           {/* Header */}
           <header className="bg-card border-b border-border p-4">
             <div className="flex items-center justify-between">
@@ -802,7 +778,7 @@ export default function AdvancedPDGDashboard() {
                 >
                   {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </Button>
-                
+
                 <Button variant="ghost" size="sm">
                   <Bell className="w-5 h-5" />
                 </Button>
@@ -822,12 +798,11 @@ export default function AdvancedPDGDashboard() {
           {/* Dashboard Content */}
           <div className="flex-1 overflow-hidden">
             <div className={`flex h-full ${copilotVisible && pdgAuth ? '' : ''}`}>
-              
+
               {/* Central Dashboard Area - Navigation par onglets */}
-              <div className={`flex-1 p-6 overflow-y-auto ${
-                copilotVisible && pdgAuth ? 'mr-[400px]' : ''
-              }`}>
-                
+              <div className={`flex-1 p-6 overflow-y-auto ${copilotVisible && pdgAuth ? 'mr-[400px]' : ''
+                }`}>
+
                 {/* Breadcrumb/Navigation actuelle */}
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -863,7 +838,7 @@ export default function AdvancedPDGDashboard() {
                       </Button>
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <IntelligentChatInterface 
+                      <IntelligentChatInterface
                         context={{
                           userRole: 'PDG',
                           companyData: {

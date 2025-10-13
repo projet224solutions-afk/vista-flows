@@ -2,7 +2,6 @@ import { Header } from "@/components/Header";
 import { InterfaceCard } from "@/components/InterfaceCard";
 import { Button } from "@/components/ui/button";
 import { PDGAuthButton } from "@/components/PDGAuthButton";
-import { PDGTestButton } from "@/components/PDGTestButton";
 import QuickFooter from "@/components/QuickFooter";
 import {
   Home,
@@ -34,7 +33,7 @@ const Index = () => {
       roleType: "client" as const,
       features: [
         "Dashboard personnalisé selon votre rôle",
-        "Notifications et alertes importantes", 
+        "Notifications et alertes importantes",
         "Raccourcis vers vos outils favoris",
         "Statistiques et métriques clés",
         "Actualités et mises à jour système"
@@ -144,7 +143,7 @@ const Index = () => {
 
         {/* Bouton de test PDG pour Lovable */}
         <div className="mt-12 max-w-md mx-auto animate-fade-in" style={{ animationDelay: "0.7s" }}>
-          <PDGTestButton />
+          {/* Removed PDGTestButton */}
         </div>
 
         <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: "0.8s" }}>

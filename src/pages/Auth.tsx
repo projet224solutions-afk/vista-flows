@@ -421,22 +421,7 @@ export default function Auth() {
         >
           🔧 Test PDG Debug
         </Button>
-        <Button
-          onClick={() => {
-            // Forcer l'auth PDG
-            sessionStorage.setItem("pdg_auth", JSON.stringify({
-              userCode: "PDG001",
-              name: "Directeur Général",
-              level: "PDG_SUPREME",
-              timestamp: Date.now()
-            }));
-            navigate('/pdg-advanced');
-          }}
-          variant="outline"
-          className="bg-red-500 hover:bg-red-600 text-white border-none"
-        >
-          🚀 Accès PDG Direct
-        </Button>
+        {/* Removed PDG test direct access button */}
         <Button
           onClick={() => navigate('/pdg-basic')}
           variant="outline"
