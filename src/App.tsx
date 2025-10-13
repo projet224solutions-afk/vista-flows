@@ -15,6 +15,8 @@ const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const Profil = lazy(() => import("./pages/Profil"));
+const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
+const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const ClientDashboardPro = lazy(() => import("./pages/ClientDashboardPro"));
 const ClientDashboardUltimate = lazy(() => import("./pages/ClientDashboardUltimate"));
@@ -79,6 +81,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/google" element={<LoginGoogle />} />
+              <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
 
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
