@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Shield, DollarSign, Users, Settings, MessageSquare, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 
 // ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
@@ -21,6 +22,7 @@ export default function PDG224Solutions() {
   const [mfaVerified, setMfaVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [verifyingMfa, setVerifyingMfa] = useState(false);
+  const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
 
   useEffect(() => {
     const checkPDGAccess = async () => {
