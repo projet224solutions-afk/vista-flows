@@ -26,6 +26,7 @@ const notificationsRoutes = require('./src/routes/notifications'); // Nouveau
 const healthRoutes = require('./src/routes/health');
 const ordersRoutes = require('./src/routes/orders');
 const taxiMotoDriverRoutes = require('./src/routes/taxiMotoDriver');
+const authGoogleRoutes = require('./src/routes/authGoogle');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -133,6 +134,8 @@ app.use('/api/health', healthRoutes);
 
 // Routes d'authentification
 app.use('/api/auth', authRoutes);
+// OAuth Google
+app.use('/auth', authGoogleRoutes);
 
 // Routes OpenAI (avec authentification et permissions)
 app.use('/api/openai', authMiddleware, openaiRoutes);

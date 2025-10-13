@@ -177,7 +177,7 @@ export default function TaxiDashboard() {
                         <p className="text-sm text-muted-foreground">{earning.rides} courses</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-green-600">+{earning.amount.toLocaleString()} FCFA</p>
+                        <p className="font-semibold text-green-600">+{earning.amount.toLocaleString()} GNF</p>
                       </div>
                     </div>
                   ))}

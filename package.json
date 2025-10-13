@@ -63,6 +63,7 @@
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
     "express-validator": "^7.2.1",
+    "firebase-admin": "^13.5.0",
     "idb": "^8.0.3",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
