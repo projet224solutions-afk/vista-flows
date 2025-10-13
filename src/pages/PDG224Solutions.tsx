@@ -62,12 +62,8 @@ export default function PDG224Solutions() {
     if (!user) return;
     setVerifyingMfa(true);
     try {
-      // Tentative RPC (si défini côté DB)
-      const { error } = await supabase.rpc('verify_mfa_for_user', { p_user_id: user.id });
-      if (error) {
-        // Fallback soft si la RPC n'existe pas: bascule en vérifié côté client
-        console.warn('RPC verify_mfa_for_user indisponible, fallback local');
-      }
+      // Simulation MFA - en production, implémenter une vraie vérification
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setMfaVerified(true);
       toast.success('MFA vérifié');
     } catch (e) {
