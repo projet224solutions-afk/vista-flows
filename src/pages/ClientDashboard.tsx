@@ -86,6 +86,8 @@ export default function ClientDashboard() {
   const [userLevel, setUserLevel] = useState('Gold');
   const [isFixingAccount, setIsFixingAccount] = useState(false);
   const [loadingWallet, setLoadingWallet] = useState(false);
+  const [isEnsured, setIsEnsured] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState<number>(0);
 
   // ================= FONCTION DE RÉPARATION COMPTE =================
   const repareCompteClient = async () => {
@@ -132,9 +134,9 @@ export default function ClientDashboard() {
 
   // ================= VÉRIFICATION SETUP UTILISATEUR =================
   useEffect(() => {
-    if (!user?.id) return;
-    ensureUserSetup();
-  }, [user?.id, ensureUserSetup]);
+    if (!user?.id || isEnsured) return;
+    ensureUserSetup().finally(() => setIsEnsured(true));
+  }, [user?.id, isEnsured, ensureUserSetup]);
 
   // ================= PERSISTENCE ONGLET ACTIF =================
   useEffect(() => {
@@ -168,6 +170,28 @@ export default function ClientDashboard() {
   }, [user?.id]);
 
   useEffect(() => { ensureWallet(); }, [ensureWallet]);
+
+  // ================= FAVORIS COUNT =================
+  useEffect(() => {
+    const loadFavoritesCount = async () => {
+      if (!user?.id) { setFavoritesCount(0); return; }
+      try {
+        const { count, error } = await (supabase
+          .from('favorites') as any)
+          .select('id', { count: 'exact', head: true })
+          .eq('customer_id', user.id);
+        if (error) throw error;
+        setFavoritesCount(count || 0);
+      } catch (e) {
+        setFavoritesCount(0);
+      }
+    };
+    loadFavoritesCount();
+  }, [user?.id]);
+
+  // ================= DÉRIVÉS DYNAMIQUES =================
+  const activeOrdersCount = (orders || []).filter((o: any) => o?.status === 'active').length || 0;
+  const loyaltyPoints = ((orders || []).length * 500) || 0;
 
   // ================= FONCTIONS UTILITAIRES =================
   const formatPrice = useCallback((price: number) => {
@@ -248,13 +272,13 @@ export default function ClientDashboard() {
       // validation basique
       const prod = products.find(p => p.id === productId);
       if (!prod) return toast.error('Produit introuvable');
-      const { error } = await supabase.from('favorites').insert({ user_id: user.id, product_id: productId });
+      const { error } = await supabase.from('favorites').insert({ customer_id: user.id, product_id: productId } as any);
       if (error) throw error;
       toast.success('Produit ajouté aux favoris');
     } catch (e: any) {
       // toggle si déjà présent
       if (String(e?.message || '').includes('duplicate')) {
-        await supabase.from('favorites').delete().eq('user_id', user!.id).eq('product_id', productId);
+        await supabase.from('favorites').delete().eq('customer_id', user!.id).eq('product_id', productId);
         toast.info('Retiré des favoris');
       } else {
         console.error('Favorite error:', e);
@@ -472,8 +496,8 @@ export default function ClientDashboard() {
                   <VirtualCardButton className="w-full" />
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <p className="text-sm text-green-600">
-                      ✅ <strong>Transfert Multi-Devises</strong><br/>
-                      💡 Intégré dans votre wallet<br/>
+                      ✅ <strong>Transfert Multi-Devises</strong><br />
+                      💡 Intégré dans votre wallet<br />
                       🎯 Sélectionnez votre devise
                     </p>
                   </div>
@@ -498,7 +522,7 @@ export default function ClientDashboard() {
                   <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
                     <Package className="w-6 h-6 text-blue-600" />
                   </div>
-                  <p className="text-2xl font-bold text-blue-600">3</p>
+                  <p className="text-2xl font-bold text-blue-600">{activeOrdersCount}</p>
                   <p className="text-sm text-gray-600">Commandes actives</p>
                 </CardContent>
               </Card>
@@ -524,7 +548,7 @@ export default function ClientDashboard() {
                   <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
                     <Heart className="w-6 h-6 text-red-600" />
                   </div>
-                  <p className="text-2xl font-bold text-red-600">87</p>
+                  <p className="text-2xl font-bold text-red-600">{favoritesCount}</p>
                   <p className="text-sm text-gray-600">Favoris</p>
                 </CardContent>
               </Card>
@@ -537,7 +561,7 @@ export default function ClientDashboard() {
                   <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-green-600" />
                   </div>
-                  <p className="text-2xl font-bold text-green-600">15K</p>
+                  <p className="text-2xl font-bold text-green-600">{new Intl.NumberFormat('fr-FR').format(loyaltyPoints)}</p>
                   <p className="text-sm text-gray-600">Points fidélité</p>
                 </CardContent>
               </Card>

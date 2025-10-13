@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { Shield, DollarSign, Users, Settings, MessageSquare, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -22,9 +21,11 @@ export default function PDG224Solutions() {
   const [mfaVerified, setMfaVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [verifyingMfa, setVerifyingMfa] = useState(false);
+  const [isEnsured, setIsEnsured] = useState(false);
   const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
 
   useEffect(() => {
+    if (isEnsured) return;
     const checkPDGAccess = async () => {
       if (!user) {
         navigate('/auth');
@@ -61,10 +62,11 @@ export default function PDG224Solutions() {
       }
 
       setLoading(false);
+      setIsEnsured(true);
     };
 
     checkPDGAccess();
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, isEnsured]);
 
   const handleVerifyMfa = async () => {
     if (!user) return;
