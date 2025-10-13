@@ -43,7 +43,6 @@ const UserActivationPage = lazy(() => import("./components/agent-system/UserActi
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
-const AdvancedPDGDashboard = lazy(() => import("./pages/AdvancedPDGDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 // Removed deprecated PDG agent pages - being refactored
 // Removed PDG test pages
@@ -150,7 +149,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route path="/pdg-advanced" element={<AdvancedPDGDashboard />} />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route
                 path="/agent-system"
@@ -162,12 +160,12 @@ const App = () => (
                 path="/vendeur-simple"
                 element={<VendeurDashboard />}
               />
-              
+
               <Route
                 path="/diagnostic-fonctionnalites"
                 element={<DiagnosticFonctionnalites />}
               />
-              
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
