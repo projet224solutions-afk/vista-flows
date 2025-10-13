@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useSyndicatUltraProData } from '@/hooks/useSyndicatUltraProData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,111 +92,17 @@ export default function SyndicatDashboardUltraPro() {
     const [showGestionDialog, setShowGestionDialog] = useState(false);
 
     // Données du bureau
-    const [syndicateMembers, setSyndicateMembers] = useState<SyndicateMember[]>([]);
-    const [taxiMotards, setTaxiMotards] = useState<TaxiMotard[]>([]);
-    const [syndicateStats, setSyndicateStats] = useState({
-        total_members: 0,
-        active_members: 0,
-        total_taxi_motards: 0,
-        active_taxi_motards: 0,
-        total_balance: 0,
-        monthly_revenue: 0,
-        pending_validations: 0,
-        active_alerts: 0
-    });
+    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh } = useSyndicatUltraProData();
 
     useEffect(() => {
-        loadSyndicateData();
-        // Actualiser toutes les 30 secondes
-        const interval = setInterval(loadSyndicateData, 30000);
-        return () => clearInterval(interval);
+        // Data is managed by hook; keep UI loading state in sync
+        setLoading(dataLoading);
     }, []);
 
     /**
      * Charge les données du bureau syndicat
      */
-    const loadSyndicateData = async () => {
-        try {
-            setLoading(true);
-
-            // Simulation de données (à remplacer par vraie API Supabase)
-            const mockMembers: SyndicateMember[] = [
-                {
-                    id: '1',
-                    name: 'Mamadou Diallo',
-                    email: 'mamadou.diallo@email.com',
-                    phone: '+221 77 123 45 67',
-                    role: 'president',
-                    badge_number: 'SM-2025-001',
-                    wallet_balance: 25000,
-                    status: 'active',
-                    joined_date: '2024-01-15'
-                },
-                {
-                    id: '2',
-                    name: 'Fatou Sall',
-                    email: 'fatou.sall@email.com',
-                    phone: '+221 76 987 65 43',
-                    role: 'secretary',
-                    badge_number: 'SM-2025-002',
-                    wallet_balance: 15000,
-                    status: 'active',
-                    joined_date: '2024-02-20'
-                }
-            ];
-
-            const mockTaxiMotards: TaxiMotard[] = [
-                {
-                    id: '1',
-                    name: 'Amadou Ba',
-                    phone: '+221 77 555 11 22',
-                    email: 'amadou.ba@email.com',
-                    gilet_number: 'G-001',
-                    plate_number: 'DK-123-AB',
-                    moto_serial: 'HND123456789',
-                    badge_number: 'TM-2025-001',
-                    badge_code: 'abc123def456',
-                    wallet_balance: 12500,
-                    status: 'active',
-                    created_date: '2024-03-10'
-                },
-                {
-                    id: '2',
-                    name: 'Ibrahima Ndiaye',
-                    phone: '+221 76 444 33 55',
-                    plate_number: 'DK-456-CD',
-                    moto_serial: 'YMH987654321',
-                    badge_number: 'TM-2025-002',
-                    badge_code: 'xyz789uvw012',
-                    wallet_balance: 8750,
-                    status: 'active',
-                    created_date: '2024-03-15'
-                }
-            ];
-
-            const mockStats = {
-                total_members: mockMembers.length,
-                active_members: mockMembers.filter(m => m.status === 'active').length,
-                total_taxi_motards: mockTaxiMotards.length,
-                active_taxi_motards: mockTaxiMotards.filter(t => t.status === 'active').length,
-                total_balance: mockMembers.reduce((sum, m) => sum + m.wallet_balance, 0) +
-                    mockTaxiMotards.reduce((sum, t) => sum + t.wallet_balance, 0),
-                monthly_revenue: 125000,
-                pending_validations: 3,
-                active_alerts: 1
-            };
-
-            setSyndicateMembers(mockMembers);
-            setTaxiMotards(mockTaxiMotards);
-            setSyndicateStats(mockStats);
-
-        } catch (error) {
-            console.error('Erreur chargement données syndicat:', error);
-            toast.error('Erreur lors du chargement des données');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const loadSyndicateData = async () => { await refresh(); };
 
     /**
      * Déconnexion
