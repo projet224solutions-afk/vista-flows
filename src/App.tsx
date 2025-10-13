@@ -134,38 +134,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/syndicat"
-                element={
-                  <ProtectedRoute allowedRoles={['syndicat', 'admin']}>
-                    <SyndicatDashboardUltraPro />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/syndicat/president/:accessToken"
-                element={<SyndicatePresidentUltraPro />}
-              />
-              <Route
-                path="/syndicat/install/:token"
-                element={<SyndicatInstall />}
-              />
-              <Route
-                path="/syndicat/president-new/:accessToken"
-                element={<SyndicatePresidentNew />}
-              />
-              <Route
-                path="/syndicat/president-new"
-                element={<SyndicatePresidentNew />}
-              />
-              <Route
-                path="/syndicat/president-simple"
-                element={<SyndicatePresidentSimple />}
-              />
-              <Route
-                path="/syndicat/president-ultra-simple"
-                element={<SyndicatePresidentUltraSimple />}
-              />
+              <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
               <Route
                 path="/invite/:invitationToken"
                 element={<UserActivationPage />}
