@@ -82,12 +82,14 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('home');
   const [walletBalance, setWalletBalance] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
   const [userLevel, setUserLevel] = useState('Gold');
   const [isFixingAccount, setIsFixingAccount] = useState(false);
+  const [loadingWallet, setLoadingWallet] = useState(false);
 
   // ================= FONCTION DE RÉPARATION COMPTE =================
   const repareCompteClient = async () => {
-    if (!user) return;
+    if (!user?.id) return;
 
     setIsFixingAccount(true);
     toast.info('🔧 Réparation du compte en cours...');
@@ -130,10 +132,42 @@ export default function ClientDashboard() {
 
   // ================= VÉRIFICATION SETUP UTILISATEUR =================
   useEffect(() => {
-    if (user) {
-      ensureUserSetup();
+    if (!user?.id) return;
+    ensureUserSetup();
+  }, [user?.id, ensureUserSetup]);
+
+  // ================= PERSISTENCE ONGLET ACTIF =================
+  useEffect(() => {
+    const savedTab = localStorage.getItem('clientActiveTab');
+    if (savedTab) setActiveTab(savedTab);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem('clientActiveTab', activeTab);
+  }, [activeTab]);
+
+  // ================= WALLET INIT & LECTURE =================
+  const ensureWallet = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingWallet(true);
+    try {
+      const { data: w, error } = await supabase.from('wallets').select('*').eq('user_id', user.id).maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      if (!w) {
+        const { error: insErr } = await supabase.from('wallets').insert({ user_id: user.id, balance: 0 });
+        if (insErr) throw insErr;
+        setWalletBalance(0);
+      } else {
+        setWalletBalance(w.balance || 0);
+      }
+    } catch (e: any) {
+      console.error('Wallet init/read error:', e);
+      toast.error("Erreur wallet");
+    } finally {
+      setLoadingWallet(false);
     }
-  }, [user, ensureUserSetup]);
+  }, [user?.id]);
+
+  useEffect(() => { ensureWallet(); }, [ensureWallet]);
 
   // ================= FONCTIONS UTILITAIRES =================
   const formatPrice = useCallback((price: number) => {
@@ -182,18 +216,52 @@ export default function ClientDashboard() {
   }, []);
 
   // Fonction pour gérer la recherche
-  const handleSearch = useCallback(() => {
-    if (searchQuery.trim()) {
-      toast.success(`Recherche pour: ${searchQuery}`);
-    } else {
+  const handleSearch = useCallback(async () => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults(null);
       toast.info('Entrez un terme de recherche');
+      return;
     }
-  }, [searchQuery]);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .ilike('name', `%${q}%`)
+        .limit(50);
+      if (error) throw error;
+      if (data && data.length > 0) setSearchResults(data as any);
+      else {
+        // fallback local: filtre les produits présents
+        setSearchResults(products.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+      }
+    } catch (e) {
+      console.error('Search error:', e);
+      setSearchResults(products.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+    }
+  }, [searchQuery, products]);
 
   // Fonction pour ajouter aux favoris
-  const addToFavorites = useCallback((productId: string) => {
-    toast.success('Produit ajouté aux favoris');
-  }, []);
+  const addToFavorites = useCallback(async (productId: string) => {
+    if (!user?.id) return toast.error('Utilisateur non connecté');
+    try {
+      // validation basique
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return toast.error('Produit introuvable');
+      const { error } = await supabase.from('favorites').insert({ user_id: user.id, product_id: productId });
+      if (error) throw error;
+      toast.success('Produit ajouté aux favoris');
+    } catch (e: any) {
+      // toggle si déjà présent
+      if (String(e?.message || '').includes('duplicate')) {
+        await supabase.from('favorites').delete().eq('user_id', user!.id).eq('product_id', productId);
+        toast.info('Retiré des favoris');
+      } else {
+        console.error('Favorite error:', e);
+        toast.error('Erreur favoris');
+      }
+    }
+  }, [user?.id, products]);
 
   // Fonction pour voir les détails d'un produit
   const viewProductDetails = useCallback((productId: string) => {

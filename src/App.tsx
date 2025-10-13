@@ -160,38 +160,7 @@ const App = () => (
                 element={<AgentSystem />}
               />
               {/* PDG routes removed - being refactored */}
-              <Route
-                path="/client"
-                element={
-                  <ProtectedRoute allowedRoles={['client', 'admin']}>
-                    <ClientDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/client-pro"
-                element={
-                  <ProtectedRoute allowedRoles={['client', 'admin']}>
-                    <ClientDashboardPro />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/client-ultimate"
-                element={
-                  <ProtectedRoute allowedRoles={['client', 'admin']}>
-                    <ClientDashboardUltimate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/test-client"
-                element={<TestClient />}
-              />
-              <Route
-                path="/client-simple"
-                element={<ClientDashboardSimple />}
-              />
+              <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"
                 element={<VendeurDashboardSimple />}
