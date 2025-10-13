@@ -47,10 +47,7 @@ const PDGDashboard = lazy(() => import("./pages/PDGDashboard"));
 const AdvancedPDGDashboard = lazy(() => import("./pages/AdvancedPDGDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 // Removed deprecated PDG agent pages - being refactored
-const PDGTest = lazy(() => import("./pages/PDGTest")); // Test PDG
-const PDGSimple = lazy(() => import("./pages/PDGSimple")); // PDG Simple
-const PDGBasic = lazy(() => import("./pages/PDGBasic")); // PDG Basic
-const PDGMinimal = lazy(() => import("./pages/PDGMinimal")); // PDG Minimal
+// Removed PDG test pages
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const CommunicationTestPage = lazy(() => import("./pages/CommunicationTestPage"));
 const LovableTestPage = lazy(() => import("./pages/LovableTestPage"));
@@ -193,18 +190,8 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/pdg"
-                element={<PDGDashboard />}
-              />
-              <Route
-                path="/pdg-advanced"
-                element={<AdvancedPDGDashboard />}
-              />
-              <Route
-                path="/pdg224solutionssoulbah"
-                element={<PDG224Solutions />}
-              />
+              <Route path="/pdg-advanced" element={<AdvancedPDGDashboard />} />
+              <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route
                 path="/agent-system"
                 element={<AgentSystem />}
