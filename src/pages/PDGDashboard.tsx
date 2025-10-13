@@ -76,6 +76,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { usePDGData } from "@/hooks/usePDGData";
 
+import SyndicateBureauManagement from "@/components/syndicate/SyndicateBureauManagement";
 import IntelligentChatInterface from "@/components/IntelligentChatInterface";
 import CopilotTest from "@/components/CopilotTest";
 import MotoSecurityDashboard from "@/components/security/MotoSecurityDashboard";
@@ -1009,6 +1010,8 @@ export default function PDGDashboard() {
                 </Card>
               </div>
 
+              {/* Interface de gestion des bureaux syndicats */}
+              <SyndicateBureauManagement />
             </div>
           </TabsContent>
 
