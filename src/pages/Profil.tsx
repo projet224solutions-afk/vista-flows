@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import QuickFooter from "@/components/QuickFooter";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const userTypes = {
   client: {
@@ -58,37 +60,15 @@ const menuItems = [
   }
 ];
 
-const recentActivity = [
-  {
-    id: 1,
-    type: 'order',
-    title: 'Commande #ORD-2024-000123',
-    description: 'Casque Audio Bluetooth - 45 000 FCFA',
-    timestamp: '2024-01-15 14:30',
-    status: 'En livraison'
-  },
-  {
-    id: 2,
-    type: 'review',
-    title: 'Avis laissé',
-    description: 'TechStore Conakry - 5 étoiles',
-    timestamp: '2024-01-14 09:15',
-    status: 'Publié'
-  },
-  {
-    id: 3,
-    type: 'favorite',
-    title: 'Ajouté aux favoris',
-    description: 'Montre Connectée Samsung',
-    timestamp: '2024-01-13 16:45',
-    status: 'Sauvegardé'
-  }
-];
+type ActivityItem = { id: string | number; type?: string; title: string; description?: string; timestamp: string; status?: string };
 
 export default function Profil() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [mfaVerified, setMfaVerified] = useState<boolean>(true);
 
   // Authentication check
   if (!user) {
@@ -128,6 +108,87 @@ export default function Profil() {
     navigate('/');
   };
 
+  const handleNavigate = useCallback((itemId: string) => {
+    if (itemId === 'settings' && !mfaVerified) {
+      toast.error('MFA requis pour accéder aux paramètres');
+      return;
+    }
+    const route = itemId === 'orders' ? '/profil/orders' : itemId === 'history' ? '/profil/history' : '/profil/settings';
+    navigate(route);
+  }, [navigate, mfaVerified]);
+
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!user) return;
+      // Essayer une table d'audit générique, fallback si absente
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('id, action, created_at, target_type')
+        .eq('actor_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) {
+        // Fallback: tenter orders
+        const { data: orders, error: e2 } = await supabase
+          .from('orders')
+          .select('id, status, created_at, total_amount')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (!e2 && orders) {
+          setActivities(
+            orders.map((o: any) => ({
+              id: o.id,
+              title: `Commande #${o.id}`,
+              description: `Montant: ${o.total_amount?.toLocaleString?.() || o.total_amount} GNF`,
+              timestamp: o.created_at,
+              status: o.status
+            }))
+          );
+        }
+        return;
+      }
+      setActivities(
+        (data || []).map((a: any) => ({
+          id: a.id,
+          title: a.action || 'Activité',
+          description: a.target_type || '',
+          timestamp: a.created_at
+        }))
+      );
+    };
+    loadActivity();
+  }, [user]);
+
+  const onAvatarClick = async () => {
+    if (!isEditing) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file || !user) return;
+      try {
+        setUploading(true);
+        const fileExt = file.name.split('.').pop();
+        const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('public-assets').upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: publicUrl } = supabase.storage.from('public-assets').getPublicUrl(filePath);
+        const avatarUrl = publicUrl.publicUrl;
+        const { error: updErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+        if (updErr) throw updErr;
+        toast.success('Avatar mis à jour');
+        // Optionnel: rafraîchir localement
+        window.location.reload();
+      } catch (e: any) {
+        toast.error(e?.message || 'Erreur upload avatar');
+      } finally {
+        setUploading(false);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -163,7 +224,7 @@ export default function Profil() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="relative">
+              <div className="relative" onClick={onAvatarClick}>
                 <Avatar className="w-20 h-20">
                   <AvatarImage src={profile?.avatar_url || ""} />
                   <AvatarFallback className="text-xl">
@@ -215,7 +276,7 @@ export default function Profil() {
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Card key={item.id} className="cursor-pointer hover:shadow-elegant transition-all">
+              <Card key={item.id} className="cursor-pointer hover:shadow-elegant transition-all" onClick={() => handleNavigate(item.id)}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-accent rounded-lg">
@@ -248,7 +309,10 @@ export default function Profil() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivity.map((activity) => (
+              {activities.length === 0 && (
+                <div className="text-sm text-muted-foreground">Aucune activité récente.</div>
+              )}
+              {activities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3 p-3 bg-accent rounded-lg">
                   <div className="w-2 h-2 bg-vendeur-primary rounded-full mt-2"></div>
                   <div className="flex-1">
