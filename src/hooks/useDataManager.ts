@@ -177,7 +177,7 @@ export function useProducts(vendorId?: string, categoryId?: string) {
 export function useTransactions(userId?: string) {
   return useData({
     table: 'enhanced_transactions',
-    select: 'id, amount, type, status, description, created_at, sender_id, receiver_id',
+    select: 'id, amount, status, method, currency, created_at, sender_id, receiver_id, custom_id, metadata',
     filters: userId ? {
       or: `sender_id.eq.${userId},receiver_id.eq.${userId}`
     } : undefined,
