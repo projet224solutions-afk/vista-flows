@@ -84,15 +84,8 @@ const App = () => (
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/taxi-moto" element={<TaxiMoto />} />
-              <Route
-                path="/taxi-moto/driver"
-                element={
-                  <ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}>
-                    <TaxiMotoDriver />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/taxi-moto" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+              <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
 
@@ -126,14 +119,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/taxi"
-                element={
-                  <ProtectedRoute allowedRoles={['taxi', 'admin']}>
-                    <TaxiDashboard />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Removed legacy TaxiDashboard */}
               <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
               <Route
                 path="/invite/:invitationToken"
