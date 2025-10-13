@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { toast } from 'sonner';
+import { initiateEscrow, releaseEscrow, refundEscrow } from '@/services/EscrowClient';
 import { usePaymentSchedules, useCustomerCredits } from "@/hooks/useVendorData";
 import { CreditCard, AlertTriangle, CheckCircle, Clock, Filter, Download } from "lucide-react";
 import { useState } from "react";
@@ -64,6 +66,7 @@ export default function PaymentManagement() {
             <Download className="w-4 h-4 mr-2" />
             Exporter
           </Button>
+          <Button onClick={() => toast.info('Utilisez les actions escrow sur les commandes')}>Escrow</Button>
         </div>
       </div>
 

@@ -157,7 +157,7 @@ export default function PDG224Solutions() {
         <div className="max-w-[1600px] mx-auto px-6 py-8">
           <Tabs defaultValue="finance" className="space-y-8" aria-label="Navigation PDG 224Solutions">
             <TabsList className="inline-flex h-auto p-1.5 bg-muted/50 backdrop-blur-xl border border-border/40 rounded-2xl shadow-lg" role="tablist">
-              <TabsTrigger 
+              <TabsTrigger
                 value="finance"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -166,7 +166,7 @@ export default function PDG224Solutions() {
                 <DollarSign className="w-4 h-4" />
                 <span className="font-medium">Finances</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="users"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -175,7 +175,7 @@ export default function PDG224Solutions() {
                 <Users className="w-4 h-4" />
                 <span className="font-medium">Utilisateurs</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="security"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -184,7 +184,7 @@ export default function PDG224Solutions() {
                 <Shield className="w-4 h-4" />
                 <span className="font-medium">Sécurité</span>
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="config"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -193,8 +193,8 @@ export default function PDG224Solutions() {
                 <Settings className="w-4 h-4" />
                 <span className="font-medium">Configuration</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="copilot" 
+              <TabsTrigger
+                value="copilot"
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Copilote IA"
               >

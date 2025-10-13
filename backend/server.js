@@ -26,6 +26,7 @@ const notificationsRoutes = require('./src/routes/notifications'); // Nouveau
 const healthRoutes = require('./src/routes/health');
 const ordersRoutes = require('./src/routes/orders');
 const taxiMotoDriverRoutes = require('./src/routes/taxiMotoDriver');
+const escrowRoutes = require('./src/routes/escrow');
 const authGoogleRoutes = require('./src/routes/authGoogle');
 
 const app = express();
@@ -168,6 +169,9 @@ app.use('/api/orders', ordersRoutes);
 
 // Routes Taxi Moto Driver (auth requise)
 app.use('/api/taxiMoto/driver', authMiddleware, taxiMotoDriverRoutes);
+
+// Routes Escrow
+app.use('/api/escrow', escrowRoutes);
 
 // Route racine
 app.get('/', (req, res) => {
