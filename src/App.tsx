@@ -23,9 +23,8 @@ const ClientDashboardUltimate = lazy(() => import("./pages/ClientDashboardUltima
 const TestClient = lazy(() => import("./pages/TestClient"));
 const ClientDashboardSimple = lazy(() => import("./pages/ClientDashboardSimple"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
-const VendeurDashboardOptimized = lazy(() => import("./pages/VendeurDashboardOptimized"));
-const VendeurDashboardSimple = lazy(() => import("./pages/VendeurDashboardSimple"));
-const TestUltraBasic = lazy(() => import("./pages/TestUltraBasic"));
+// const VendeurDashboardOptimized = lazy(() => import("./pages/VendeurDashboardOptimized"));
+// const VendeurDashboardSimple = lazy(() => import("./pages/VendeurDashboardSimple"));
 const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiDashboard = lazy(() => import("./pages/TaxiDashboard"));
@@ -49,9 +48,7 @@ const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 // Removed deprecated PDG agent pages - being refactored
 // Removed PDG test pages
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
-const CommunicationTestPage = lazy(() => import("./pages/CommunicationTestPage"));
-const LovableTestPage = lazy(() => import("./pages/LovableTestPage"));
-const UltraSimpleTestPage = lazy(() => import("./pages/UltraSimpleTestPage"));
+// Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentSystem = lazy(() => import("./pages/AgentSystem"));
 
@@ -107,7 +104,7 @@ const App = () => (
                 path="/vendeur-optimized"
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                    <VendeurDashboardOptimized />
+                    <VendeurDashboard />
                   </ProtectedRoute>
                 }
               />
@@ -163,28 +160,14 @@ const App = () => (
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"
-                element={<VendeurDashboardSimple />}
+                element={<VendeurDashboard />}
               />
-              <Route
-                path="/test-ultra-basic"
-                element={<TestUltraBasic />}
-              />
+              
               <Route
                 path="/diagnostic-fonctionnalites"
                 element={<DiagnosticFonctionnalites />}
               />
-              <Route
-                path="/communication-test"
-                element={<CommunicationTestPage />}
-              />
-              <Route
-                path="/lovable-test"
-                element={<LovableTestPage />}
-              />
-              <Route
-                path="/ultra-simple-test"
-                element={<UltraSimpleTestPage />}
-              />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
