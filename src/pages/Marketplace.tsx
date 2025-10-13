@@ -1,95 +1,64 @@
-import { useState } from "react";
-import { Grid, List, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Grid, List, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
-
-const categories = [
-  { id: 'all', label: 'Tout', count: 1250 },
-  { id: 'electronics', label: 'Électronique', count: 340 },
-  { id: 'fashion', label: 'Mode', count: 280 },
-  { id: 'food', label: 'Alimentation', count: 190 },
-  { id: 'home', label: 'Maison', count: 150 },
-  { id: 'services', label: 'Services', count: 290 }
-];
-
-const products = [
-  {
-    id: '1',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-    title: 'Casque Audio Bluetooth Premium avec Réduction de Bruit',
-    price: 45000,
-    originalPrice: 55000,
-    vendor: 'TechStore Conakry',
-    rating: 4.8,
-    reviewCount: 234,
-    isPremium: true
-  },
-  {
-    id: '2',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop',
-    title: 'Chaussures de Sport Nike Air Max',
-    price: 85000,
-    vendor: 'SportWorld',
-    rating: 4.6,
-    reviewCount: 189
-  },
-  {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=300&h=300&fit=crop',
-    title: 'Montre Connectée Samsung Galaxy Watch',
-    price: 125000,
-    vendor: 'ElectroPlus',
-    rating: 4.7,
-    reviewCount: 156,
-    isPremium: true
-  },
-  {
-    id: '4',
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=300&fit=crop',
-    title: 'Sac à Main en Cuir Véritable',
-    price: 35000,
-    originalPrice: 45000,
-    vendor: 'Fashion Boutique',
-    rating: 4.4,
-    reviewCount: 98
-  },
-  {
-    id: '5',
-    image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=300&h=300&fit=crop',
-    title: 'Ensemble de Casseroles Antiadhésives',
-    price: 28000,
-    vendor: 'Kitchen Pro',
-    rating: 4.5,
-    reviewCount: 145
-  },
-  {
-    id: '6',
-    image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=300&fit=crop',
-    title: 'Lunettes de Soleil Ray-Ban',
-    price: 65000,
-    vendor: 'Optical Center',
-    rating: 4.9,
-    reviewCount: 312,
-    isPremium: true
-  }
-];
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const PAGE_LIMIT = 12;
 
 export default function Marketplace() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [categories, setCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState("popular");
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-    // Add category filtering logic here
-    return matchesSearch;
-  });
+  useEffect(() => {
+    fetch(`${API_BASE}/api/categories`)
+      .then(res => res.json())
+      .then(data => setCategories(data.categories || []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  const fetchProducts = async (reset = false) => {
+    if (reset) setPage(1);
+    const currentPage = reset ? 1 : page;
+    const params = new URLSearchParams({
+      search: searchQuery,
+      category: selectedCategory !== 'all' ? selectedCategory : '',
+      minPrice: String(filters.minPrice || 0),
+      maxPrice: String(filters.maxPrice || 0),
+      minRating: String(filters.minRating || 0),
+      sort: sortBy,
+      page: String(currentPage),
+      limit: String(PAGE_LIMIT)
+    });
+
+    try {
+      if (reset) setLoading(true); else setLoadingMore(true);
+      const res = await fetch(`${API_BASE}/api/products?${params.toString()}`);
+      const data = await res.json();
+      if (reset) setProducts(data.products || []); else setProducts(prev => [...prev, ...(data.products || [])]);
+      setTotal(data.total || 0);
+    } catch {
+      if (reset) setProducts([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => { fetchProducts(true); }, [searchQuery, selectedCategory, filters, sortBy]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -97,7 +66,7 @@ export default function Marketplace() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-foreground mb-4">Marketplace</h1>
-          <SearchBar 
+          <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Rechercher des produits..."
@@ -110,18 +79,18 @@ export default function Marketplace() {
       {/* Categories */}
       <section className="px-4 py-4 border-b border-border">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {categories.map((category) => (
+          {categories.map((category: any) => (
             <Badge
               key={category.id}
-              variant={selectedCategory === category.id ? "default" : "secondary"}
+              variant={selectedCategory === (category.id || category.label) ? "default" : "secondary"}
               className={`cursor-pointer whitespace-nowrap ${
-                selectedCategory === category.id 
+                selectedCategory === (category.id || category.label)
                   ? "bg-vendeur-primary text-white" 
                   : "hover:bg-accent"
               }`}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => setSelectedCategory(category.id || category.label)}
             >
-              {category.label} ({category.count})
+              {(category.name || category.label)} {(category.count ? `(${category.count})` : '')}
             </Badge>
           ))}
         </div>
@@ -176,17 +145,19 @@ export default function Marketplace() {
                     type="number"
                     placeholder="Min"
                     className="flex-1 px-3 py-2 border border-border rounded-md text-sm"
+                    onChange={e => setFilters(prev => ({ ...prev, minPrice: parseInt(e.target.value) || 0 }))}
                   />
                   <input
                     type="number"
                     placeholder="Max"
                     className="flex-1 px-3 py-2 border border-border rounded-md text-sm"
+                    onChange={e => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) || 0 }))}
                   />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Note minimum</label>
-                <Select>
+                <Select onValueChange={(val) => setFilters(prev => ({ ...prev, minRating: parseInt(val) || 0 }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choisir" />
                   </SelectTrigger>
@@ -205,25 +176,22 @@ export default function Marketplace() {
       {/* Results */}
       <section className="px-4 py-4">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-muted-foreground">
-            {filteredProducts.length} résultats trouvés
-          </p>
+          <p className="text-sm text-muted-foreground">{products.length} / {total} résultats</p>
         </div>
 
-        <div className={
-          viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            : "space-y-4"
-        }>
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              {...product}
-              onBuy={() => console.log('Buy', product.id)}
-              onContact={() => console.log('Contact', product.id)}
-            />
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+          {products.map((p: any) => (
+            <ProductCard key={p.id} {...p} onBuy={() => {}} onContact={() => {}} />
           ))}
         </div>
+
+        {products.length < total && !loading && (
+          <div className="text-center mt-4">
+            <Button onClick={() => { setPage(prev => prev + 1); fetchProducts(); }} disabled={loadingMore}>
+              {loadingMore ? 'Chargement...' : 'Voir plus'}
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Footer de navigation */}
