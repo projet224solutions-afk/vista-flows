@@ -109,6 +109,7 @@ export function POSSystem() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
+  const [discount, setDiscount] = useState<number>(0);
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   
@@ -130,7 +131,8 @@ export function POSSystem() {
   const taxRate = settings?.tax_rate || 0.18;
   const taxEnabled = settings?.tax_enabled ?? true;
   const tax = taxEnabled ? subtotal * taxRate : 0;
-  const total = subtotal + tax;
+  const totalBeforeDiscount = subtotal + tax;
+  const total = Math.max(0, totalBeforeDiscount - (totalBeforeDiscount * (discount || 0)) / 100);
   const change = receivedAmount - total;
 
   // Fonction d'ajout au panier avec calcul automatique
@@ -414,10 +416,10 @@ export function POSSystem() {
                       />
                     </div>
                     
-                    <div className="bg-muted/30 p-3 rounded-lg">
+                <div className="bg-muted/30 p-3 rounded-lg">
                       <div className="text-xs text-muted-foreground">
                         <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
-                        <strong>Devise:</strong> {settings?.currency || 'FCFA'}
+                    <strong>Devise:</strong> {settings?.currency || 'FCFA'}
                       </div>
                     </div>
                   </div>
@@ -701,6 +703,10 @@ export function POSSystem() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold">TOTAL</span>
                       <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} FCFA</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <label className="text-sm text-muted-foreground">Remise (%)</label>
+                      <Input type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} className="w-24" />
                     </div>
                   </div>
 

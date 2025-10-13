@@ -8,7 +8,7 @@ import {
   Package, ShoppingCart, Users, BarChart3, CreditCard, 
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
-  Store, DollarSign, Boxes, AlertTriangle
+  Store, DollarSign, Boxes, AlertTriangle, Link
 } from "lucide-react";
 
 import {
@@ -137,6 +137,12 @@ const menuSections = [
         title: "Dettes",
         icon: AlertTriangle,
         path: "debts",
+        badge: null
+      },
+      {
+        title: "Affiliation",
+        icon: Link,
+        path: "affiliate",
         badge: null
       },
     ]

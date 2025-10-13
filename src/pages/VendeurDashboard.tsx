@@ -37,6 +37,7 @@ import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
 import VendorCommunication from "@/components/vendor/VendorCommunication";
+import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -334,6 +335,7 @@ export default function VendeurDashboard() {
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
               <Route path="debts" element={<DebtManagement />} />
+              <Route path="affiliate" element={<AffiliateManagement shopId={(profile as any)?.shop_id} />} />
               <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<VendorCommunication />} />
