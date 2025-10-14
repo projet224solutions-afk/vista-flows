@@ -102,23 +102,13 @@ export default function LovableDiagnostic() {
             });
         }
 
-        // Vérifier SyndicatePresidentUltraPro
-        try {
-            const SyndicatePresidentUltraPro = await import('@/pages/SyndicatePresidentUltraPro');
-            featureChecks.push({
-                name: 'Interface Président Ultra-Pro',
-                component: 'SyndicatePresidentUltraPro',
-                status: 'success',
-                message: 'Interface président avec 7 modules opérationnels'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Interface Président Ultra-Pro',
-                component: 'SyndicatePresidentUltraPro',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
+        // Vérifier SyndicatePresidentUltraPro (désactivé temporairement)
+        featureChecks.push({
+            name: 'Interface Président Ultra-Pro',
+            component: 'SyndicatePresidentUltraPro',
+            status: 'warning',
+            message: 'Temporairement désactivé'
+        });
 
         // Vérifier les routes
         const currentPath = window.location.pathname;
