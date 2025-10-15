@@ -29,17 +29,49 @@ jobs:
           npm run build
           echo "React app built successfully"
           
-      - name: Install Electron
+      - name: Verify desktop assets (Windows)
+        shell: pwsh
         run: |
-          npm install -g electron-builder
-          npm install electron --save-dev
+          if (-not (Test-Path assets)) { New-Item -ItemType Directory -Path assets | Out-Null }
+          if (-not (Test-Path assets/icon.ico)) {
+            Write-Host 'assets/icon.ico not found. Generating placeholder icon...'
+            Add-Type -AssemblyName System.Drawing
+            $bmp = New-Object System.Drawing.Bitmap 256,256
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $bg = [System.Drawing.Color]::FromArgb(0,102,204) # 224 blue
+            $g.Clear($bg)
+            $bmp.Save('assets/icon.png', [System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose()
+            $bmp.Dispose()
+
+            # Build ICO (PNG-in-ICO format)
+            $pngBytes = [System.IO.File]::ReadAllBytes('assets/icon.png')
+            $ms = New-Object System.IO.MemoryStream
+            $bw = New-Object System.IO.BinaryWriter($ms)
+            # ICONDIR
+            $bw.Write([UInt16]0) # reserved
+            $bw.Write([UInt16]1) # type = icon
+            $bw.Write([UInt16]1) # count
+            # ICONDIRENTRY
+            $bw.Write([Byte]0)   # width 0 => 256
+            $bw.Write([Byte]0)   # height 0 => 256
+            $bw.Write([Byte]0)   # color count
+            $bw.Write([Byte]0)   # reserved
+            $bw.Write([UInt16]0) # planes
+            $bw.Write([UInt16]32) # bit count
+            $bw.Write([UInt32]$pngBytes.Length) # bytes in res
+            $bw.Write([UInt32]22) # image offset (6 + 16)
+            $bw.Write($pngBytes)
+            $bw.Flush()
+            [System.IO.File]::WriteAllBytes('assets/icon.ico', $ms.ToArray())
+            $bw.Close(); $ms.Close()
+          }
           
       - name: Create Electron main process
         run: |
           cat > electron-main.js << 'EOF'
           const { app, BrowserWindow, Menu } = require('electron');
           const path = require('path');
-          const isDev = process.env.NODE_ENV === 'development';
           
           function createWindow() {
             const mainWindow = new BrowserWindow({
@@ -48,18 +80,15 @@ jobs:
               webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true,
-                enableRemoteModule: false
+                enableRemoteModule: false,
+                sandbox: true
               },
-              icon: path.join(__dirname, 'assets/icon.png'),
+              icon: path.join(__dirname, 'assets/icon.ico'),
               title: '224Solutions - Bureau Syndicat',
               show: false
             });
-            
-            const startUrl = isDev 
-              ? 'http://localhost:3000' 
-              : `file://${path.join(__dirname, '../dist/index.html')}`;
-              
-            mainWindow.loadURL(startUrl);
+
+            mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
             
             mainWindow.once('ready-to-show', () => {
               mainWindow.show();
@@ -101,6 +130,10 @@ jobs:
             Menu.setApplicationMenu(menu);
           }
           
+          if (process.platform === 'win32') {
+            app.setAppUserModelId('com.224solutions.bureau-syndicat');
+          }
+
           app.whenReady().then(createWindow);
           
           app.on('window-all-closed', () => {
@@ -136,6 +169,7 @@ jobs:
               "files": [
                 "electron-main.js",
                 "dist/**/*",
+                "assets/**/*",
                 "node_modules/**/*"
               ],
               "win": {
@@ -188,10 +222,22 @@ jobs:
       - name: Build React app
         run: npm run build
         
-      - name: Install Electron
+      - name: Verify desktop assets (macOS)
         run: |
-          npm install -g electron-builder
-          npm install electron --save-dev
+          mkdir -p assets
+          if [ ! -f assets/icon.icns ]; then
+            echo "assets/icon.icns not found. Generating placeholder ICNS..."
+            # Generate 1024x1024 PNG placeholder using sips (macOS)
+            if [ ! -f assets/icon.png ]; then
+              convert -size 1024x1024 canvas:'#0066CC' assets/icon.png || sips -s format png --resampleWidth 1024 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ToolbarAdvanced.icns --out assets/icon.png || echo "Placeholder base icon created"
+            fi
+            mkdir -p assets/Icon.iconset
+            for size in 16 32 64 128 256 512; do
+              sips -z $size $size assets/icon.png --out assets/Icon.iconset/icon_${size}x${size}.png || true
+              sips -z $((size*2)) $((size*2)) assets/icon.png --out assets/Icon.iconset/icon_${size}x${size}@2x.png || true
+            done
+            iconutil -c icns assets/Icon.iconset -o assets/icon.icns || echo "::warning::Failed to generate ICNS; please provide a real assets/icon.icns"
+          fi
           
       - name: Create Electron main process
         run: |
@@ -205,7 +251,8 @@ jobs:
               height: 900,
               webPreferences: {
                 nodeIntegration: false,
-                contextIsolation: true
+                contextIsolation: true,
+                sandbox: true
               },
               title: '224Solutions - Bureau Syndicat',
               show: false
@@ -240,9 +287,16 @@ jobs:
               "directories": {
                 "output": "electron-dist"
               },
+              "files": [
+                "electron-main.js",
+                "dist/**/*",
+                "assets/**/*",
+                "node_modules/**/*"
+              ],
               "mac": {
                 "target": "dmg",
-                "category": "public.app-category.business"
+                "category": "public.app-category.business",
+                "icon": "assets/icon.icns"
               }
             }
           }
