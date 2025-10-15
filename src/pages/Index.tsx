@@ -26,6 +26,7 @@ import {
   Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 
 // Services principaux comme dans l'image
 const mainServices = [
@@ -154,6 +155,7 @@ const trendingProducts = [
 export default function IndexAlibaba() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  useRoleRedirect(); // Active la redirection automatique vers l'interface de rôle
   const { profile } = useAuth();
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
