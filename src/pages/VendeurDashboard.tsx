@@ -16,28 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { VendorSidebar } from "@/components/vendor/VendorSidebar";
-
-// Import des modules vendeur
-import ProductManagement from "@/components/vendor/ProductManagement";
-import OrderManagement from "@/components/vendor/OrderManagement";
-import ClientManagement from "@/components/vendor/ClientManagement";
-import AgentManagement from "@/components/vendor/AgentManagement";
-import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
-import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
-import VendorAnalytics from "@/components/vendor/VendorAnalytics";
-import InventoryManagement from "@/components/vendor/InventoryManagement";
-import MarketingManagement from "@/components/vendor/MarketingManagement";
-import WalletDashboard from "@/components/vendor/WalletDashboard";
-import ProspectManagement from "@/components/vendor/ProspectManagement";
-import SupportTickets from "@/components/vendor/SupportTickets";
-import WarehouseManagement from "@/components/vendor/WarehouseManagement";
-import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
-import PaymentManagement from "@/components/vendor/PaymentManagement";
-import DebtManagement from "@/components/vendor/DebtManagement";
-import VendorCommunication from "@/components/vendor/VendorCommunication";
-import AffiliateManagement from "@/components/vendor/AffiliateManagement";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -273,12 +252,11 @@ export default function VendeurDashboard() {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
-        <VendorSidebar />
+        {/* Sidebar supprimée avec les modules vendeur */}
 
         <div className="flex-1 flex flex-col w-full">
           {/* Header global avec trigger */}
           <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-6">
-            <SidebarTrigger className="mr-4" />
 
             <div className="flex items-center justify-between flex-1">
               <div className="flex items-center gap-4">
@@ -320,27 +298,7 @@ export default function VendeurDashboard() {
             <Routes>
               <Route index element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
-              <Route path="analytics" element={<VendorAnalytics />} />
-              <Route path="pos" element={<POSSystemWrapper />} />
-              <Route path="products" element={<ProductManagement />} />
-              <Route path="orders" element={<OrderManagement />} />
-              <Route path="inventory" element={<InventoryManagement />} />
-              <Route path="warehouse" element={<WarehouseManagement />} />
-              <Route path="clients" element={<ClientManagement />} />
-              <Route path="agents" element={<AgentManagement />} />
-              <Route path="prospects" element={<ProspectManagement />} />
-              <Route path="marketing" element={<MarketingManagement />} />
-              <Route path="wallet" element={<WalletDashboard />} />
-              <Route path="payments" element={<PaymentManagement />} />
-              <Route path="payment-links" element={<PaymentLinksManager />} />
-              <Route path="expenses" element={<ExpenseManagementDashboard />} />
-              <Route path="debts" element={<DebtManagement />} />
-              <Route path="affiliate" element={<AffiliateManagement shopId={(profile as any)?.shop_id} />} />
-              <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
-              <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<VendorCommunication />} />
-              <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
-              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<DashboardHome />} />
             </Routes>
           </main>
         </div>
