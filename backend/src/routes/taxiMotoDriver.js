@@ -80,6 +80,88 @@ router.get('/nearbyDrivers', async (req, res) => {
   }
 });
 
+/**
+ * @route POST /updateDriverStatus
+ * @desc Met à jour le statut en ligne et la position du conducteur
+ */
+router.post('/updateDriverStatus', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { online, lat, lng } = req.body;
+    const status = online ? 'available' : 'offline';
+
+    const { data, error } = await supabase
+      .from('taxi_drivers')
+      .upsert({
+        user_id: userId,
+        is_online: !!online,
+        status,
+        last_lat: lat ?? null,
+        last_lng: lng ?? null,
+        last_seen: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' })
+      .select('id, is_online, status')
+      .single();
+    if (error) throw error;
+
+    return res.json({ success: true, driver: data });
+  } catch (err) {
+    console.error('❌ Error updateDriverStatus:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @route POST /track/update
+ * @desc Ajoute un point de tracking pour une course
+ */
+router.post('/track/update', authMiddleware, async (req, res) => {
+  try {
+    const { rideId, latitude, longitude, eventType, notes } = req.body;
+    if (!rideId || latitude == null || longitude == null) {
+      return res.status(400).json({ success: false, message: 'rideId, latitude et longitude requis' });
+    }
+
+    const { error } = await supabase
+      .from('ride_tracking')
+      .insert({
+        ride_id: rideId,
+        latitude,
+        longitude,
+        event_type: eventType ?? null,
+        notes: notes ?? null
+      });
+    if (error) throw error;
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error track/update:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @route GET /ride/:id/track
+ * @desc Récupère l'historique de tracking d'une course
+ */
+router.get('/ride/:id/track', authMiddleware, async (req, res) => {
+  try {
+    const rideId = req.params.id;
+    const { data, error } = await supabase
+      .from('ride_tracking')
+      .select('latitude, longitude, timestamp, event_type, notes')
+      .eq('ride_id', rideId)
+      .order('timestamp', { ascending: true });
+    if (error) throw error;
+
+    return res.json({ success: true, positions: data });
+  } catch (err) {
+    console.error('❌ Error get ride track:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /status - obtenir le statut driver + solde wallet
 router.get('/status', authMiddleware, async (req, res) => {
   try {
