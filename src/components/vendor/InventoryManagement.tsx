@@ -377,10 +377,10 @@ export default function InventoryManagement() {
 
                   <div className="text-right ml-6">
                     <p className="font-semibold text-lg">
-                      {(item.quantity * item.product.price).toLocaleString()} FCFA
+                      {(item.quantity * item.product.price).toLocaleString()} GNF
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.price.toLocaleString()} FCFA/unité
+                      {item.product.price.toLocaleString()} GNF/unité
                     </p>
                   </div>
 

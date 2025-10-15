@@ -391,7 +391,7 @@ export default function ClientManagement() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Panier moyen:</span>
                       <span className="text-sm font-medium">
-                        {Math.round(clientRevenue / orderCount).toLocaleString()} FCFA
+                        {Math.round(clientRevenue / orderCount).toLocaleString()} GNF
                       </span>
                     </div>
                   )}

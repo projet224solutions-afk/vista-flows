@@ -79,7 +79,7 @@ export default function PaymentManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">Paiements en retard</p>
                 <p className="text-2xl font-bold">{overduepayments.length}</p>
-                <p className="text-sm text-red-600">{totalOverdueAmount.toLocaleString()} FCFA</p>
+                <p className="text-sm text-red-600">{totalOverdueAmount.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -91,7 +91,7 @@ export default function PaymentManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">En attente</p>
                 <p className="text-2xl font-bold">{pendingPayments.length}</p>
-                <p className="text-sm text-orange-600">{totalPendingAmount.toLocaleString()} FCFA</p>
+                <p className="text-sm text-orange-600">{totalPendingAmount.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -103,7 +103,7 @@ export default function PaymentManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">Crédit utilisé</p>
                 <p className="text-2xl font-bold">{totalCreditUsed.toLocaleString()}</p>
-                <p className="text-sm text-blue-600">sur {totalCreditLimit.toLocaleString()} FCFA</p>
+                <p className="text-sm text-blue-600">sur {totalCreditLimit.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -176,7 +176,7 @@ export default function PaymentManagement() {
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-lg">{schedule.amount.toLocaleString()} FCFA</p>
+                  <p className="font-semibold text-lg">{schedule.amount.toLocaleString()} GNF</p>
                   {schedule.status === 'overdue' && (
                     <p className="text-sm text-red-600">
                       Retard: {Math.floor((Date.now() - new Date(schedule.due_date).getTime()) / (1000 * 60 * 60 * 24))} jours
@@ -236,7 +236,7 @@ export default function PaymentManagement() {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
-                    {credit.current_balance.toLocaleString()} / {credit.credit_limit.toLocaleString()} FCFA
+                    {credit.current_balance.toLocaleString()} / {credit.credit_limit.toLocaleString()} GNF
                   </p>
                   <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
                     <div 

@@ -418,7 +418,7 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
                                     </div>
 
                                     <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-                                        <span>Prix moyen: {driver.averagePrice.toLocaleString()} FCFA</span>
+                                        <span>Prix moyen: {driver.averagePrice.toLocaleString()} GNF</span>
                                         <span>Dernière course: {formatDate(driver.lastRide)}</span>
                                     </div>
 

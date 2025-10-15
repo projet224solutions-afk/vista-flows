@@ -113,8 +113,8 @@ const trendingProducts = [
   {
     id: 1,
     name: 'Smartphone Samsung Galaxy A54',
-    price: '285,000 FCFA',
-    originalPrice: '320,000 FCFA',
+    price: '285,000 GNF',
+    originalPrice: '320,000 GNF',
     image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop',
     rating: 4.5,
     reviews: 128,
@@ -123,8 +123,8 @@ const trendingProducts = [
   {
     id: 2,
     name: 'Ordinateur Portable HP',
-    price: '450,000 FCFA',
-    originalPrice: '500,000 FCFA',
+    price: '450,000 GNF',
+    originalPrice: '500,000 GNF',
     image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop',
     rating: 4.8,
     reviews: 89,
@@ -133,8 +133,8 @@ const trendingProducts = [
   {
     id: 3,
     name: 'Robe Africaine Traditionnelle',
-    price: '45,000 FCFA',
-    originalPrice: '60,000 FCFA',
+    price: '45,000 GNF',
+    originalPrice: '60,000 GNF',
     image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=300&fit=crop',
     rating: 4.7,
     reviews: 156,
@@ -143,8 +143,8 @@ const trendingProducts = [
   {
     id: 4,
     name: 'Casque Audio Bluetooth',
-    price: '35,000 FCFA',
-    originalPrice: '45,000 FCFA',
+    price: '35,000 GNF',
+    originalPrice: '45,000 GNF',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
     rating: 4.6,
     reviews: 203,

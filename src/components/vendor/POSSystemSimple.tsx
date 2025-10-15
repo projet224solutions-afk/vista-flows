@@ -143,7 +143,7 @@ export default function POSSystemSimple() {
         }
 
         toast.success('Paiement effectué avec succès!', {
-            description: `Commande de ${total.toLocaleString()} FCFA validée`
+            description: `Commande de ${total.toLocaleString()} GNF validée`
         });
 
         clearCart();
@@ -228,7 +228,7 @@ export default function POSSystemSimple() {
                                                     <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
                                                         {product.name}
                                                     </h3>
-                                                    <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} FCFA</p>
+                                                    <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} GNF</p>
 
                                                     <Badge
                                                         variant={product.stock > 10 ? 'default' : 'destructive'}
@@ -327,7 +327,7 @@ export default function POSSystemSimple() {
                                                     <div className="flex justify-between items-start mb-3">
                                                         <div className="flex-1 min-w-0">
                                                             <h4 className="font-semibold text-sm line-clamp-2 mb-1">{item.name}</h4>
-                                                            <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} FCFA × {item.quantity}</p>
+                                                            <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} GNF × {item.quantity}</p>
                                                         </div>
                                                         <Button
                                                             variant="ghost"
@@ -360,7 +360,7 @@ export default function POSSystemSimple() {
                                                             </Button>
                                                         </div>
                                                         <div className="font-bold text-primary text-right">
-                                                            {item.total.toLocaleString()} FCFA
+                                                            {item.total.toLocaleString()} GNF
                                                         </div>
                                                     </div>
                                                 </CardContent>
@@ -379,22 +379,11 @@ export default function POSSystemSimple() {
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-muted-foreground">Sous-total</span>
-                                            <span className="font-mono">{subtotal.toLocaleString()} FCFA</span>
-                                        </div>
-
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-muted-foreground flex items-center gap-2">
-                                                TVA (18%)
-                                                <Badge variant="default" className="text-xs px-1.5 py-0.5">ON</Badge>
-                                            </span>
-                                            <span className="font-mono">{tax.toLocaleString()} FCFA</span>
-                                        </div>
-
-                                        <Separator className="my-2" />
-
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-lg font-bold">TOTAL</span>
-                                            <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} FCFA</span>
+                                            <span className="font-mono">{subtotal.toLocaleString()} GNF</span>
+...
+                                            <span className="font-mono">{tax.toLocaleString()} GNF</span>
+...
+                                            <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} GNF</span>
                                         </div>
                                     </div>
 
@@ -446,7 +435,7 @@ export default function POSSystemSimple() {
                                             {receivedAmount > 0 && (
                                                 <div className="text-sm text-muted-foreground">
                                                     Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                                                        {change.toLocaleString()} FCFA
+                                                        {change.toLocaleString()} GNF
                                                     </span>
                                                 </div>
                                             )}

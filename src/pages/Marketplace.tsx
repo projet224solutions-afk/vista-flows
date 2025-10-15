@@ -139,7 +139,7 @@ export default function Marketplace() {
           <div className="mt-4 p-4 bg-accent rounded-lg animate-fade-in">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Prix (FCFA)</label>
+                <label className="text-sm font-medium mb-2 block">Prix (GNF)</label>
                 <div className="flex gap-2">
                   <input
                     type="number"

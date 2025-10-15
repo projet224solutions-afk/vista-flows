@@ -12,7 +12,7 @@ export default function VendorAnalyticsSimple() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Revenus Total</p>
-                <p className="text-2xl font-bold">2.4M FCFA</p>
+                <p className="text-2xl font-bold">2.4M GNF</p>
               </div>
               <DollarSign className="w-8 h-8 text-green-600" />
             </div>

@@ -249,7 +249,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 ride.destinationAddress,
                 `${ride.distance}km`,
                 `${ride.duration}min`,
-                `${ride.price} FCFA`,
+                `${ride.price} GNF`,
                 getStatusLabel(ride.status),
                 ride.driver.name,
                 ride.rating || 'N/A'
@@ -348,7 +348,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                 {filteredRides
                                     .filter(r => r.status === 'completed')
                                     .reduce((sum, r) => sum + r.price, 0)
-                                    .toLocaleString()} FCFA
+                                    .toLocaleString()} GNF
                             </div>
                             <div className="text-xs text-gray-600">Total dépensé</div>
                         </div>
@@ -400,7 +400,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
 
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-green-600">
-                                            {ride.price.toLocaleString()} FCFA
+                                            {ride.price.toLocaleString()} GNF
                                         </p>
                                         {ride.rating && (
                                             <div className="flex items-center gap-1 text-xs text-gray-600">

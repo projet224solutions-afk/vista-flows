@@ -177,7 +177,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Dépenses</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {safeStats.total_expenses?.toLocaleString() || 0} XAF
+                  {safeStats.total_expenses?.toLocaleString() || 0} GNF
                 </p>
                 <div className="flex items-center mt-2">
                   {metrics.monthlyChange >= 0 ? (
@@ -222,10 +222,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Dépense Moyenne</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()} XAF
+                  {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()} GNF
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {metrics.averageExpense.toLocaleString()} XAF ce mois
+                  {metrics.averageExpense.toLocaleString()} GNF ce mois
                 </p>
               </div>
               <div className="p-3 bg-green-50 rounded-full">
@@ -305,7 +305,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
+                      formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
                       labelStyle={{ color: '#374151' }}
                     />
                     <Bar
@@ -346,7 +346,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
+                      formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -369,7 +369,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   <XAxis dataKey="month" />
                   <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
                   <Tooltip
-                    formatter={(value: number) => [`${value.toLocaleString()} XAF`, 'Montant']}
+                    formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
                     labelStyle={{ color: '#374151' }}
                   />
                   <Area

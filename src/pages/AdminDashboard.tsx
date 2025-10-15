@@ -17,7 +17,7 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Utilisateurs totaux", value: "12,534", icon: Users, color: "text-blue-500", change: "+12%" },
-    { label: "Revenus mensuels", value: "45.2M FCFA", icon: TrendingUp, color: "text-green-500", change: "+8%" },
+    { label: "Revenus mensuels", value: "45.2M GNF", icon: TrendingUp, color: "text-green-500", change: "+8%" },
     { label: "Transactions", value: "2,847", icon: ShoppingCart, color: "text-purple-500", change: "+15%" },
     { label: "Produits actifs", value: "8,923", icon: Package, color: "text-orange-500", change: "+5%" }
   ];
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
       type: 'transaction',
       description: 'Transaction importante',
       user: 'Amadou Tech Store',
-      amount: '125,000 FCFA',
+      amount: '125,000 GNF',
       time: '5 min',
       status: 'info'
     },

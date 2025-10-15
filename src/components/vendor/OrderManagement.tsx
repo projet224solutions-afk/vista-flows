@@ -321,7 +321,7 @@ export default function OrderManagement() {
               <CreditCard className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Chiffre d'affaires</p>
-                <p className="text-2xl font-bold">{totalRevenue.toLocaleString()} FCFA</p>
+                <p className="text-2xl font-bold">{totalRevenue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -405,11 +405,11 @@ export default function OrderManagement() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                     <p className="text-xl font-bold text-vendeur-primary">
-                      {order.total_amount.toLocaleString()} FCFA
+                      {order.total_amount.toLocaleString()} GNF
                     </p>
                     {order.discount_amount > 0 && (
                       <p className="text-sm text-green-600">
-                        Remise: -{order.discount_amount.toLocaleString()} FCFA
+                        Remise: -{order.discount_amount.toLocaleString()} GNF
                       </p>
                     )}
                   </div>
@@ -494,29 +494,29 @@ export default function OrderManagement() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Sous-total:</span>
-                      <span>{selectedOrder.subtotal.toLocaleString()} FCFA</span>
+                      <span>{selectedOrder.subtotal.toLocaleString()} GNF</span>
                     </div>
                     {selectedOrder.tax_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Taxes:</span>
-                        <span>{selectedOrder.tax_amount.toLocaleString()} FCFA</span>
+                        <span>{selectedOrder.tax_amount.toLocaleString()} GNF</span>
                       </div>
                     )}
                     {selectedOrder.shipping_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Livraison:</span>
-                        <span>{selectedOrder.shipping_amount.toLocaleString()} FCFA</span>
+                        <span>{selectedOrder.shipping_amount.toLocaleString()} GNF</span>
                       </div>
                     )}
                     {selectedOrder.discount_amount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Remise:</span>
-                        <span>-{selectedOrder.discount_amount.toLocaleString()} FCFA</span>
+                        <span>-{selectedOrder.discount_amount.toLocaleString()} GNF</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
-                      <span>{selectedOrder.total_amount.toLocaleString()} FCFA</span>
+                      <span>{selectedOrder.total_amount.toLocaleString()} GNF</span>
                     </div>
                   </div>
                 </div>
@@ -535,8 +535,8 @@ export default function OrderManagement() {
                         )}
                       </div>
                       <div className="text-right">
-                        <div>{item.quantity} x {item.unit_price.toLocaleString()} FCFA</div>
-                        <div className="font-semibold">{item.total_price.toLocaleString()} FCFA</div>
+                        <div>{item.quantity} x {item.unit_price.toLocaleString()} GNF</div>
+                        <div className="font-semibold">{item.total_price.toLocaleString()} GNF</div>
                       </div>
                     </div>
                   ))}

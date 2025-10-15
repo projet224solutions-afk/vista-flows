@@ -38,7 +38,7 @@ export const WalletTransactionHistory = ({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState<number>(0);
-  const [walletCurrency, setWalletCurrency] = useState<string>('XAF');
+  const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
 
   useEffect(() => {
     if (user) {

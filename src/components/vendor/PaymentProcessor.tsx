@@ -43,7 +43,7 @@ const paymentMethods: PaymentMethod[] = [
     type: 'card',
     icon: CreditCard,
     available: true,
-    fees: '2.9% + 100 FCFA',
+    fees: '2.9% + 100 GNF',
     processing_time: 'Instantané'
   },
   {
@@ -79,7 +79,7 @@ const paymentMethods: PaymentMethod[] = [
     type: 'bank_transfer',
     icon: Building,
     available: true,
-    fees: '500 FCFA',
+    fees: '500 GNF',
     processing_time: '1-3 jours ouvrés'
   },
   {
@@ -88,7 +88,7 @@ const paymentMethods: PaymentMethod[] = [
     type: 'card',
     icon: Globe,
     available: false,
-    fees: '3.4% + 200 FCFA',
+    fees: '3.4% + 200 GNF',
     processing_time: 'Instantané'
   }
 ];
@@ -331,7 +331,7 @@ export default function PaymentProcessor() {
                 />
               </div>
               <div>
-                <Label htmlFor="amount">Montant (FCFA)</Label>
+                <Label htmlFor="amount">Montant (GNF)</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -417,7 +417,7 @@ export default function PaymentProcessor() {
               <div className="w-5 h-5 bg-green-600 rounded-full" />
               <div>
                 <p className="text-sm text-muted-foreground">Montant total</p>
-                <p className="text-2xl font-bold">{totalAmount.toLocaleString()} FCFA</p>
+                <p className="text-2xl font-bold">{totalAmount.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -495,7 +495,7 @@ export default function PaymentProcessor() {
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-lg">{transaction.amount.toLocaleString()} FCFA</p>
+                  <p className="font-semibold text-lg">{transaction.amount.toLocaleString()} GNF</p>
                 </div>
                 <div className="flex gap-2 ml-4">
                   {transaction.status === 'failed' && (

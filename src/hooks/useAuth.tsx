@@ -101,14 +101,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .upsert({
               user_id: user.id,
               balance: 10000, // Bonus de bienvenue
-              currency: 'XAF',
+              currency: 'GNF',
               status: 'active'
             });
 
           if (walletError) {
             console.error('❌ Erreur création wallet:', walletError);
           } else {
-            console.log('✅ Wallet créé avec bonus de 10,000 XAF');
+            console.log('✅ Wallet créé avec bonus de 10,000 GNF');
           }
         }
 

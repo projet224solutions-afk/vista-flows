@@ -336,7 +336,7 @@ export default function SyndicateRoadTickets({ bureauId }: SyndicateRoadTicketsP
                                         <div className="text-sm text-gray-600 space-y-1">
                                             <div>Ticket: {ticket.ticketNumber}</div>
                                             <div>Véhicule: {ticket.vehicleSerial}</div>
-                                            <div>Montant: {ticket.amount.toLocaleString()} FCFA</div>
+                                            <div>Montant: {ticket.amount.toLocaleString()} GNF</div>
                                             <div>Expire le: {new Date(ticket.expiryDate).toLocaleDateString()}</div>
                                         </div>
                                     </div>

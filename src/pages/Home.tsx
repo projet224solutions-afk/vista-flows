@@ -11,7 +11,7 @@ const promotions = [
   {
     id: 1,
     title: "Livraison gratuite",
-    description: "Pour toute commande supérieure à 25 000 FCFA",
+    description: "Pour toute commande supérieure à 25 000 GNF",
     image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=300&fit=crop",
     color: "bg-vendeur-gradient"
   },
@@ -101,7 +101,7 @@ const recommendedServices = [
     reviewCount: 1250,
     distance: '2.5 km',
     estimatedTime: '30 min',
-    price: '2 500 FCFA'
+    price: '2 500 GNF'
   },
   {
     id: '2',
@@ -113,7 +113,7 @@ const recommendedServices = [
     reviewCount: 890,
     distance: '1.2 km',
     estimatedTime: '15 min',
-    price: '1 800 FCFA'
+    price: '1 800 GNF'
   }
 ];
 

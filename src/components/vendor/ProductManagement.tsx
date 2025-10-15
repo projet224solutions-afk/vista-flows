@@ -376,7 +376,7 @@ export default function ProductManagement() {
                 <h4 className="font-medium text-sm text-muted-foreground">PRIX ET COÛTS</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Prix de vente * (FCFA)</Label>
+                    <Label htmlFor="price">Prix de vente * (GNF)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -389,7 +389,7 @@ export default function ProductManagement() {
                     {!formData.price && <p className="text-xs text-red-500">Le prix est obligatoire</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="compare_price">Prix comparatif (FCFA)</Label>
+                    <Label htmlFor="compare_price">Prix comparatif (GNF)</Label>
                     <Input
                       id="compare_price"
                       type="number"
@@ -400,7 +400,7 @@ export default function ProductManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cost_price">Prix de revient (FCFA)</Label>
+                    <Label htmlFor="cost_price">Prix de revient (GNF)</Label>
                     <Input
                       id="cost_price"
                       type="number"
@@ -601,7 +601,7 @@ export default function ProductManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">Valeur totale</p>
                 <p className="text-2xl font-bold">
-                  {products.reduce((acc, p) => acc + (p.price * p.stock_quantity), 0).toLocaleString()} FCFA
+                  {products.reduce((acc, p) => acc + (p.price * p.stock_quantity), 0).toLocaleString()} GNF
                 </p>
               </div>
             </div>
@@ -666,11 +666,11 @@ export default function ProductManagement() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-vendeur-primary">
-                    {product.price.toLocaleString()} FCFA
+                    {product.price.toLocaleString()} GNF
                   </span>
                   {product.compare_price && product.compare_price > product.price && (
                     <span className="text-sm text-muted-foreground line-through">
-                      {product.compare_price.toLocaleString()} FCFA
+                      {product.compare_price.toLocaleString()} GNF
                     </span>
                   )}
                 </div>

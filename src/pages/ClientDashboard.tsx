@@ -195,7 +195,7 @@ export default function ClientDashboard() {
 
   // ================= FONCTIONS UTILITAIRES =================
   const formatPrice = useCallback((price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   }, []);
 
   // Utiliser la fonction addToCart du hook useClientData

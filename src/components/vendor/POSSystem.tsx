@@ -247,7 +247,7 @@ export function POSSystem() {
       if (!resp.ok || json?.success === false) throw new Error(json?.message || 'Erreur checkout');
 
       toast.success('Paiement effectué avec succès!', {
-        description: `Commande de ${total.toFixed(0)} FCFA validée`
+        description: `Commande de ${total.toFixed(0)} GNF validée`
       });
 
       clearCart();
@@ -419,7 +419,7 @@ export function POSSystem() {
                 <div className="bg-muted/30 p-3 rounded-lg">
                       <div className="text-xs text-muted-foreground">
                         <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
-                    <strong>Devise:</strong> {settings?.currency || 'FCFA'}
+                    <strong>Devise:</strong> {settings?.currency || 'GNF'}
                       </div>
                     </div>
                   </div>
@@ -633,7 +633,7 @@ export function POSSystem() {
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold text-sm line-clamp-2 mb-1">{item.name}</h4>
-                              <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} FCFA × {item.quantity}</p>
+                              <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} GNF × {item.quantity}</p>
                             </div>
                             <Button 
                               variant="ghost" 
@@ -666,7 +666,7 @@ export function POSSystem() {
                               </Button>
                             </div>
                             <div className="font-bold text-primary text-right">
-                              {item.total.toLocaleString()} FCFA
+                              {item.total.toLocaleString()} GNF
                             </div>
                           </div>
                         </CardContent>
@@ -685,7 +685,7 @@ export function POSSystem() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">Sous-total</span>
-                      <span className="font-mono">{subtotal.toLocaleString()} FCFA</span>
+                      <span className="font-mono">{subtotal.toLocaleString()} GNF</span>
                     </div>
                     
                     <div className="flex justify-between items-center text-sm">
@@ -695,14 +695,14 @@ export function POSSystem() {
                           {taxEnabled ? 'ON' : 'OFF'}
                         </Badge>
                       </span>
-                      <span className="font-mono">{tax.toLocaleString()} FCFA</span>
+                      <span className="font-mono">{tax.toLocaleString()} GNF</span>
                     </div>
                     
                     <Separator className="my-2" />
                     
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold">TOTAL</span>
-                      <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} FCFA</span>
+                      <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} GNF</span>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <label className="text-sm text-muted-foreground">Remise (%)</label>
@@ -758,7 +758,7 @@ export function POSSystem() {
                       {receivedAmount > 0 && (
                         <div className="text-sm text-muted-foreground">
                           Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                            {change.toLocaleString()} FCFA
+                            {change.toLocaleString()} GNF
                           </span>
                         </div>
                       )}
@@ -798,7 +798,7 @@ export function POSSystem() {
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.name} × {item.quantity}</span>
-                    <span>{item.total.toLocaleString()} FCFA</span>
+                    <span>{item.total.toLocaleString()} GNF</span>
                   </div>
                 ))}
               </div>
@@ -808,15 +808,15 @@ export function POSSystem() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Sous-total</span>
-                  <span>{subtotal.toLocaleString()} FCFA</span>
+                  <span>{subtotal.toLocaleString()} GNF</span>
                 </div>
                 <div className="flex justify-between">
                   <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
-                  <span>{tax.toLocaleString()} FCFA</span>
+                  <span>{tax.toLocaleString()} GNF</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                   <span>TOTAL</span>
-                  <span className="text-primary">{total.toLocaleString()} FCFA</span>
+                  <span className="text-primary">{total.toLocaleString()} GNF</span>
                 </div>
               </div>
             </div>
@@ -830,8 +830,8 @@ export function POSSystem() {
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
                 <div className="text-sm mt-1">
-                  <strong>Montant reçu:</strong> {receivedAmount.toLocaleString()} FCFA<br/>
-                  <strong>Rendu:</strong> {change.toLocaleString()} FCFA
+                  <strong>Montant reçu:</strong> {receivedAmount.toLocaleString()} GNF<br/>
+                  <strong>Rendu:</strong> {change.toLocaleString()} GNF
                 </div>
               )}
             </div>

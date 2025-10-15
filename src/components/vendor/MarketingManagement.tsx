@@ -283,7 +283,7 @@ export default function MarketingManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="minimum_order">Commande minimum (FCFA)</Label>
+                    <Label htmlFor="minimum_order">Commande minimum (GNF)</Label>
                     <Input
                       id="minimum_order"
                       type="number"
@@ -468,7 +468,7 @@ export default function MarketingManagement() {
                       <p className="font-medium">
                         {promo.discount_type === 'percentage' 
                           ? `${promo.discount_value}%` 
-                          : `${promo.discount_value.toLocaleString()} FCFA`}
+                          : `${promo.discount_value.toLocaleString()} GNF`}
                       </p>
                     </div>
                     <div>
@@ -479,7 +479,7 @@ export default function MarketingManagement() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Commande min.</p>
-                      <p className="font-medium">{promo.minimum_order_amount.toLocaleString()} FCFA</p>
+                      <p className="font-medium">{promo.minimum_order_amount.toLocaleString()} GNF</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Expire le</p>

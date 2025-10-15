@@ -309,7 +309,7 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                     <div className="flex items-center justify-between pt-4 border-t">
                         <span className="font-medium">Prix estimé</span>
                         <span className="text-lg font-bold text-green-600">
-                            {currentRide.estimatedPrice.toLocaleString()} FCFA
+                            {currentRide.estimatedPrice.toLocaleString()} GNF
                         </span>
                     </div>
                 </CardContent>

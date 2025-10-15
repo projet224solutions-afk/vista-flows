@@ -183,7 +183,7 @@ export default function ProspectManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="value">Valeur estimée (FCFA)</Label>
+                  <Label htmlFor="value">Valeur estimée (GNF)</Label>
                   <Input
                     id="value"
                     type="number"
@@ -260,7 +260,7 @@ export default function ProspectManagement() {
               <TrendingUp className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Valeur pipeline</p>
-                <p className="text-2xl font-bold">{totalValue.toLocaleString()} FCFA</p>
+                <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -309,7 +309,7 @@ export default function ProspectManagement() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Valeur estimée</span>
                 <span className="font-semibold text-green-600">
-                  {prospect.estimated_value.toLocaleString()} FCFA
+                  {prospect.estimated_value.toLocaleString()} GNF
                 </span>
               </div>
               

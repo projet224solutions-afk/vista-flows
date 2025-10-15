@@ -290,8 +290,8 @@ export const VirtualCardButton = ({
                 <h4 className="font-semibold mb-2">Avantages de la carte virtuelle :</h4>
                 <ul className="text-sm space-y-1 text-gray-600">
                   <li>• Paiements en ligne sécurisés</li>
-                  <li>• Limite quotidienne : 500,000 XAF</li>
-                  <li>• Limite mensuelle : 10,000,000 XAF</li>
+                  <li>• Limite quotidienne : 500,000 GNF</li>
+                  <li>• Limite mensuelle : 10,000,000 GNF</li>
                   <li>• Activation immédiate</li>
                 </ul>
               </div>

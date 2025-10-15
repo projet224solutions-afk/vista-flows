@@ -59,7 +59,7 @@ export const usePOSSettings = () => {
           company_name: 'Mon Commerce',
           tax_enabled: true,
           tax_rate: 0.18,
-          currency: 'FCFA',
+          currency: 'GNF',
           receipt_footer: 'Merci de votre visite !',
           auto_print_receipt: false
         };
@@ -86,7 +86,7 @@ export const usePOSSettings = () => {
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
-        currency: 'FCFA',
+        currency: 'GNF',
         receipt_footer: 'Merci de votre visite !',
         auto_print_receipt: false
       });
@@ -151,7 +151,7 @@ export const usePOSSettings = () => {
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
-        currency: 'FCFA',
+        currency: 'GNF',
         receipt_footer: 'Merci de votre visite !',
         auto_print_receipt: false
       };
