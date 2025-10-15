@@ -266,7 +266,7 @@ export default function IndexAlibaba() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold mb-4">🎯 Interface PDG - Gestion Complète</h2>
           <p className="mb-6">Accédez à votre tableau de bord de gestion principal</p>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             <Button
               onClick={() => navigate('/pdg')}
               className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
@@ -274,6 +274,13 @@ export default function IndexAlibaba() {
             >
               <Crown className="w-6 h-6 mr-2" />
               Interface PDG Standard
+            </Button>
+            <Button
+              onClick={() => navigate('/taxi-moto')}
+              className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 font-bold text-lg px-8 py-4 shadow-lg"
+              size="lg"
+            >
+              🏍️ Taxi Moto
             </Button>
           </div>
         </div>
