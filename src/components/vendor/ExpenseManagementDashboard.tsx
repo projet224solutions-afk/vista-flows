@@ -57,6 +57,13 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     refetch,
   } = expenseData;
 
+  // Valeurs par défaut pour éviter les erreurs de null
+  const safeStats = stats || {
+    total_expenses: 0,
+    expense_count: 0,
+    average_expense: 0
+  };
+
   // Calculs pour les métriques
   const metrics = useMemo(() => {
     const currentMonth = new Date().getMonth();
@@ -170,7 +177,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Dépenses</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats.total_expenses?.toLocaleString() || 0} XAF
+                  {safeStats.total_expenses?.toLocaleString() || 0} XAF
                 </p>
                 <div className="flex items-center mt-2">
                   {metrics.monthlyChange >= 0 ? (
@@ -215,7 +222,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <div>
                 <p className="text-sm font-medium text-gray-600">Dépense Moyenne</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {(expenses.length > 0 ? (stats.total_expenses || 0) / expenses.length : 0).toLocaleString()} XAF
+                  {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()} XAF
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   {metrics.averageExpense.toLocaleString()} XAF ce mois
