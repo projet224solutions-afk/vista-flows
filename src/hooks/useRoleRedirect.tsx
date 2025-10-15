@@ -17,15 +17,17 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // REDIRECTIONS AUTOMATIQUES DÉSACTIVÉES POUR PERMETTRE LE TEST DES INTERFACES
-    // L'utilisateur peut naviguer librement sans être forcé sur son dashboard
-    console.log("🧪 Redirections automatiques désactivées - Navigation libre autorisée");
-
-    // Gardons juste la logique de base pour référence
     if (!loading && user && profile) {
-      console.log("👤 Utilisateur connecté:", profile.role);
+      const currentPath = window.location.pathname;
+      const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
+      
+      // Rediriger automatiquement vers l'interface correspondant au rôle
+      if (currentPath === '/' && expectedRoute) {
+        console.log(`🔄 Redirection automatique vers ${expectedRoute} pour le rôle ${profile.role}`);
+        navigate(expectedRoute);
+      }
     }
-  }, [user, profile, loading]);
+  }, [user, profile, loading, navigate]);
 
   return { user, profile, loading };
 };
