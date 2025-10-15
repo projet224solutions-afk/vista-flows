@@ -17,18 +17,19 @@ async function checkGCP() {
   log('## ☁️ Vérification Google Cloud Platform (GCP)');
   try {
     const projectId = process.env.GCP_PROJECT_ID;
-    const keyFile = process.env.GCP_KEY_FILE || './serviceAccount.json';
+    const adc = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const keyFile = process.env.GCP_KEY_FILE || adc || undefined;
     const bucketName = process.env.GCP_BUCKET || 'solutions224-storage';
     if (!projectId) throw new Error('GCP_PROJECT_ID manquant');
     const { Storage } = await import('@google-cloud/storage').catch(() => ({ Storage: null }));
     if (!Storage) throw new Error("@google-cloud/storage non installé");
-    const storage = new Storage({ projectId, keyFilename: keyFile });
+    const storage = keyFile ? new Storage({ projectId, keyFilename: keyFile }) : new Storage({ projectId });
     const bucket = storage.bucket(bucketName);
     const testFile = bucket.file('test_connection.txt');
     await testFile.save('Audit 224Solutions OK', { resumable: false });
     log('✅ Google Cloud Storage : Connexion réussie');
     log(`📦 Bucket : ${bucketName}`);
-    await testFile.delete().catch(() => {});
+    await testFile.delete().catch(() => { });
   } catch (e) {
     log(`❌ Google Cloud : ${e.message}`);
   }

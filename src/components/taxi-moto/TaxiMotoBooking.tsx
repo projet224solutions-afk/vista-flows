@@ -28,6 +28,8 @@ import { mapService } from "@/services/mapService";
 import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || "";
+
 interface LocationCoordinates {
     latitude: number;
     longitude: number;
@@ -179,25 +181,30 @@ export default function TaxiMotoBooking({
         setBookingInProgress(true);
 
         try {
-            // Simuler la création de la réservation
-            const rideData = {
-                id: `RIDE-${Date.now()}`,
-                customerId: user.id,
-                pickupAddress,
-                destinationAddress,
-                pickupCoords,
-                destinationCoords,
-                vehicleType: selectedVehicleType,
-                estimatedPrice: priceEstimate.totalPrice,
-                scheduledFor: isScheduled ? scheduledTime : null,
-                status: 'pending',
-                createdAt: new Date().toISOString()
-            };
+            const response = await fetch(`${API_BASE}/taxiMotoDriver/createRide`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pickup: {
+                        lat: pickupCoords.latitude,
+                        lng: pickupCoords.longitude,
+                        address: pickupAddress || 'Point de départ'
+                    },
+                    dropoff: {
+                        lat: destinationCoords.latitude,
+                        lng: destinationCoords.longitude,
+                        address: destinationAddress || 'Destination'
+                    },
+                    estimated_price: priceEstimate.totalPrice
+                })
+            });
 
-            // En production: appel à l'API Supabase pour créer la course
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulation
+            const data = await response.json();
+            if (!response.ok || !data?.success) {
+                throw new Error(data?.message || 'Erreur de réservation');
+            }
 
-            onRideCreated(rideData);
+            onRideCreated(data.ride);
             toast.success('🚀 Réservation confirmée ! Recherche d\'un conducteur...');
 
             // Réinitialiser le formulaire
@@ -382,8 +389,8 @@ export default function TaxiMotoBooking({
                                     key={option.vehicleType}
                                     onClick={() => setSelectedVehicleType(option.vehicleType as any)}
                                     className={`w-full p-4 rounded-lg border-2 transition-all ${isSelected
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">

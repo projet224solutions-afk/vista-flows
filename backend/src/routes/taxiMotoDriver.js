@@ -6,6 +6,80 @@ const router = express.Router();
 // Service role client (server-side privileged)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+// === Nouveau : Création et recherche de courses ===
+/**
+ * @route POST /createRide
+ * @desc Crée une nouvelle course Taxi Moto
+ */
+router.post('/createRide', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { pickup, dropoff, estimated_price } = req.body;
+
+    if (!pickup || !dropoff) {
+      return res.status(400).json({ success: false, message: 'pickup et dropoff requis' });
+    }
+
+    // Insère dans le schéma existant taxi_trips pour compatibilité avec les autres endpoints
+    const { data, error } = await supabase
+      .from('taxi_trips')
+      .insert([
+        {
+          customer_id: userId,
+          pickup_lat: pickup.lat ?? null,
+          pickup_lng: pickup.lng ?? null,
+          dropoff_lat: dropoff.lat ?? null,
+          dropoff_lng: dropoff.lng ?? null,
+          pickup_address: pickup.address ?? null,
+          dropoff_address: dropoff.address ?? null,
+          price_total: estimated_price ?? null,
+          status: 'requested',
+          requested_at: new Date().toISOString()
+        }
+      ])
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    return res.status(201).json({
+      success: true,
+      ride: data
+    });
+  } catch (err) {
+    console.error('❌ Error creating ride:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @route GET /nearbyDrivers
+ * @desc Retourne les chauffeurs disponibles dans un rayon donné
+ */
+router.get('/nearbyDrivers', async (req, res) => {
+  try {
+    const { lat, lng, radius = 5, vehicleType } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, message: 'lat et lng requis' });
+    }
+
+    const { data, error } = await supabase.rpc('find_nearby_drivers', {
+      pickup_lat: parseFloat(lat),
+      pickup_lon: parseFloat(lng),
+      radius_km: parseFloat(radius),
+      vehicle_type_filter: vehicleType ?? null
+    });
+
+    if (error) throw error;
+
+    res.json({ success: true, drivers: data });
+  } catch (err) {
+    console.error('❌ Error fetching nearby drivers:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /status - obtenir le statut driver + solde wallet
 router.get('/status', authMiddleware, async (req, res) => {
   try {
