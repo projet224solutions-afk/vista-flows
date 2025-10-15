@@ -6,7 +6,7 @@ const roleRoutes = {
   admin: '/admin',
   vendeur: '/vendeur',
   livreur: '/livreur',
-  taxi: '/taxi',
+  taxi: '/taxi-moto/driver',
   syndicat: '/syndicat',
   transitaire: '/transitaire',
   client: '/client'
