@@ -40,4 +40,42 @@ async function createProduct(req, res) {
 
 module.exports = { getProducts, createProduct };
 
+async function updateProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, price, sku } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'id requis' });
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({ name, price: Number(price) || 0, sku })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur update produit' });
+  }
+}
+
+async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur suppression produit' });
+  }
+}
+
+module.exports.updateProduct = updateProduct;
+module.exports.deleteProduct = deleteProduct;
+
 

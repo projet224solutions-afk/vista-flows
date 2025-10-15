@@ -33,6 +33,7 @@ const authMeRoutes = require('./src/routes/authMe');
 const chatRoutes = require('./src/routes/chat');
 const vendorProductsRoutes = require('./src/routes/vendor/products');
 const vendorDashboardRoutes = require('./src/routes/vendor/dashboard');
+const vendorOrdersRoutes = require('./src/routes/vendor/orders');
 const authGoogleRoutes = require('./src/routes/authGoogle');
 
 const app = express();
@@ -188,6 +189,7 @@ app.use('/api', marketplaceRoutes);
 // Routes Vendor (produits)
 app.use('/api/vendor/products', authMiddleware, vendorProductsRoutes);
 app.use('/api/vendor', authMiddleware, vendorDashboardRoutes);
+app.use('/api/vendor/orders', authMiddleware, vendorOrdersRoutes);
 
 // Routes Auth current user
 app.use('/api/auth', authMeRoutes);
