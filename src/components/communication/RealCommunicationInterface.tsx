@@ -43,7 +43,7 @@ export default function RealCommunicationInterface() {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState('chat');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedContact, setSelectedContact] = useState<any>(null);
+    const [selectedContact, setSelectedContact] = useState<unknown>(null);
     const [showCallDialog, setShowCallDialog] = useState(false);
     const [callType, setCallType] = useState<'audio' | 'video'>('audio');
     const [newMessage, setNewMessage] = useState('');
@@ -96,7 +96,7 @@ export default function RealCommunicationInterface() {
         }
     }, [user?.id, loadConversations]);
 
-    const handleStartCall = async (contact: any, type: 'audio' | 'video') => {
+    const handleStartCall = async (contact: unknown, type: 'audio' | 'video') => {
         if (!isInitialized) {
             toast({
                 title: "❌ Erreur",
@@ -138,7 +138,7 @@ export default function RealCommunicationInterface() {
         }
     };
 
-    const handleCreateConversation = async (contact: any) => {
+    const handleCreateConversation = async (contact: unknown) => {
         try {
             const conversation = await createConversation([contact.id], `Chat avec ${contact.first_name} ${contact.last_name}`);
             setActiveConversation(conversation);
@@ -158,7 +158,7 @@ export default function RealCommunicationInterface() {
         }
     };
 
-    const handleAddContact = async (contact: any) => {
+    const handleAddContact = async (contact: unknown) => {
         try {
             await addContact(contact.id);
             toast({

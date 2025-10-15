@@ -11,7 +11,7 @@ export interface NotificationData {
   message: string;
   user_id: string;
   payment_link_id?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class NotificationService {
@@ -183,7 +183,7 @@ export class NotificationService {
   /**
    * Obtenir le contenu de l'email selon le type
    */
-  private static getEmailContent(data: NotificationData, user: any) {
+  private static getEmailContent(data: NotificationData, user: unknown) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     switch (data.type) {

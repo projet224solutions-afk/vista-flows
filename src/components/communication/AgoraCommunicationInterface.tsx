@@ -51,7 +51,7 @@ export default function AgoraCommunicationInterface() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('chat');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [selectedContact, setSelectedContact] = useState<unknown>(null);
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   const [newMessage, setNewMessage] = useState('');
@@ -100,7 +100,7 @@ export default function AgoraCommunicationInterface() {
     }
   }, [user?.id, loadConversations]);
 
-  const handleStartCall = async (contact: any, type: 'audio' | 'video') => {
+  const handleStartCall = async (contact: unknown, type: 'audio' | 'video') => {
     if (!isInitialized) {
       toast({
         title: "❌ Erreur",

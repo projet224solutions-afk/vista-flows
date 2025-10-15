@@ -60,16 +60,16 @@ export function useSyndicatUltraProData() {
       setError(null);
       
       // Temporairement désactivé - tables non disponibles dans les types Supabase
-      const mData: any[] = [];
-      const dData: any[] = [];
+      const mData: unknown[] = [];
+      const dData: unknown[] = [];
 
-      setMembers(mData as any);
-      setDrivers(dData as any);
+      setMembers(mData as unknown);
+      setDrivers(dData as unknown);
 
       const totalMembers = mData.length;
-      const activeMembers = mData.filter((m: any) => m.status === 'active').length;
+      const activeMembers = mData.filter((m: unknown) => m.status === 'active').length;
       const totalDrivers = dData.length;
-      const activeDrivers = dData.filter((t: any) => t.status === 'active').length;
+      const activeDrivers = dData.filter((t: unknown) => t.status === 'active').length;
       const totalBalance = 0;
       const monthlyRevenue = 0;
       const activeAlerts = 0;
@@ -84,7 +84,7 @@ export function useSyndicatUltraProData() {
         pending_validations: 0,
         active_alerts: activeAlerts,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e?.message || String(e));
     } finally {
       setLoading(false);

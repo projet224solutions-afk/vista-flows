@@ -6,8 +6,8 @@ import { Shield, AlertTriangle, Activity, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PDGSecurity() {
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [fraudLogs, setFraudLogs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<unknown[]>([]);
+  const [fraudLogs, setFraudLogs] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

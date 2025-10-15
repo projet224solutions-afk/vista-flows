@@ -71,7 +71,7 @@ class ExpenseService {
   /**
    * Obtenir les dépenses d'un vendeur
    */
-  async getExpenses(vendorId: string, filters?: any): Promise<VendorExpense[]> {
+  async getExpenses(vendorId: string, filters?: unknown): Promise<VendorExpense[]> {
     try {
       let query = supabase
         .from('vendor_expenses')
@@ -212,7 +212,7 @@ class ExpenseService {
 
       if (categoryError) throw categoryError;
 
-      const categoryBreakdown = categoryData?.reduce((acc, expense: any) => {
+      const categoryBreakdown = categoryData?.reduce((acc, expense: unknown) => {
         const category = expense.category;
         const categoryName = category?.name || 'Autres';
         if (!acc[categoryName]) {

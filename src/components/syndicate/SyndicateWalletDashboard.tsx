@@ -387,7 +387,7 @@ export default function SyndicateWalletDashboard({ syndicateId, bureauName }: Sy
                                 <Label htmlFor="transaction_type">Type de Transaction</Label>
                                 <Select 
                                     value={newTransaction.type} 
-                                    onValueChange={(value: any) => setNewTransaction(prev => ({ ...prev, type: value }))}
+                                    onValueChange={(value: unknown) => setNewTransaction(prev => ({ ...prev, type: value }))}
                                 >
                                     <SelectTrigger className="rounded-xl">
                                         <SelectValue />

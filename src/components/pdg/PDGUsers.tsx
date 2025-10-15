@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/select';
 
 export default function PDGUsers() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<unknown[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');

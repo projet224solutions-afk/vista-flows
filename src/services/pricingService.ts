@@ -36,7 +36,7 @@ class PricingService {
   }
 
   // Compare prices (stub pour compatibilité)
-  async comparePrices(input: any): Promise<any[]> {
+  async comparePrices(input: unknown): Promise<unknown[]> {
     return [];
   }
 }

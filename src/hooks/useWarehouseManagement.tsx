@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -53,7 +52,7 @@ export const useWarehouseManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWarehouses((data as any[])?.map((warehouse: any) => ({
+      setWarehouses((data as unknown[])?.map((warehouse: unknown) => ({
         id: warehouse.id,
         vendor_id: warehouse.vendor_id,
         name: warehouse.name,

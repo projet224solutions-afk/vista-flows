@@ -1,0 +1,63 @@
+  25:11  error    An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
+  19:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:38  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  19:54  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   71:60  error    Unexpected any. Specify a different type                                                                                                                            @typescript-eslint/no-explicit-any
+   79:64  error    Unexpected any. Specify a different type                                                                                                                            @typescript-eslint/no-explicit-any
+   80:74  error    Unexpected any. Specify a different type                                                                                                                            @typescript-eslint/no-explicit-any
+  359:56  error  React Hook "useRoute" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+   7:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    1:1  error    Do not use "@ts-nocheck" because it alters compilation errors                                                      @typescript-eslint/ban-ts-comment
+  27:54  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  29:35  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  93:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:54  error  Empty block statement  no-empty
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+    1:1  error    Do not use "@ts-nocheck" because it alters compilation errors                                                                                                            @typescript-eslint/ban-ts-comment
+  13:44  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  15:48  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  111:26  error  React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  120:3   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?    react-hooks/rules-of-hooks
+  131:17  error    Empty block statement                                                                                                                                  no-empty
+  224:17  error    Empty block statement                                                                                                                                  no-empty
+  316:17  error    Empty block statement                                                                                                                                  no-empty
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+   38:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   12:16   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:103  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:86  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   2:57  error  Empty block statement  no-empty
+  10:53  error  Empty block statement  no-empty
+  38:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   4:13  error  An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
+  10:23  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  14:18  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any

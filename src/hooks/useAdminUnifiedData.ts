@@ -4,22 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 type LoadState<T> = { data: T | null; loading: boolean; error?: string | null };
 
 export interface AdminUnifiedData {
-  profiles: LoadState<any[]>;
-  products: LoadState<any[]>;
-  orders: LoadState<any[]>;
-  transactions: LoadState<any[]>;
-  pdgManagement: LoadState<any[]>;
-  agentsManagement: LoadState<any[]>;
+  profiles: LoadState<unknown[]>;
+  products: LoadState<unknown[]>;
+  orders: LoadState<unknown[]>;
+  transactions: LoadState<unknown[]>;
+  pdgManagement: LoadState<unknown[]>;
+  agentsManagement: LoadState<unknown[]>;
   refresh: () => Promise<void>;
 }
 
 export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
-  const [profiles, setProfiles] = useState<LoadState<any[]>>({ data: null, loading: true });
-  const [products, setProducts] = useState<LoadState<any[]>>({ data: null, loading: true });
-  const [orders, setOrders] = useState<LoadState<any[]>>({ data: null, loading: true });
-  const [transactions, setTransactions] = useState<LoadState<any[]>>({ data: null, loading: true });
-  const [pdgManagement, setPdgManagement] = useState<LoadState<any[]>>({ data: null, loading: true });
-  const [agentsManagement, setAgentsManagement] = useState<LoadState<any[]>>({ data: null, loading: true });
+  const [profiles, setProfiles] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [products, setProducts] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [orders, setOrders] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [transactions, setTransactions] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [pdgManagement, setPdgManagement] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [agentsManagement, setAgentsManagement] = useState<LoadState<unknown[]>>({ data: null, loading: true });
 
   const load = async () => {
     if (!enabled) return;
@@ -46,7 +46,7 @@ export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
       setTransactions({ data: txnRes.data || [], loading: false, error: txnRes.error?.message });
       setPdgManagement({ data: pdgRes.data || [], loading: false, error: pdgRes.error?.message });
       setAgentsManagement({ data: agRes.data || [], loading: false, error: agRes.error?.message });
-    } catch (e: any) {
+    } catch (e: unknown) {
       const msg = e?.message || String(e);
       setProfiles({ data: [], loading: false, error: msg });
       setProducts({ data: [], loading: false, error: msg });

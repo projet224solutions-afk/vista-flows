@@ -474,7 +474,7 @@ export default function SyndicateMemberManagement({ bureauId }: SyndicateMemberM
                                         <Label htmlFor="member_type">Type de Membre *</Label>
                                         <Select
                                             value={formData.member_type}
-                                            onValueChange={(value: any) => setFormData(prev => ({ ...prev, member_type: value }))}
+                                            onValueChange={(value: unknown) => setFormData(prev => ({ ...prev, member_type: value }))}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />

@@ -23,7 +23,7 @@ export default function UserActivationPage() {
   const { activateUser, loading, error } = useUserActivation();
   
   const [selectedDevice, setSelectedDevice] = useState<'mobile' | 'pc' | 'tablet' | null>(null);
-  const [activationResult, setActivationResult] = useState<any>(null);
+  const [activationResult, setActivationResult] = useState<unknown>(null);
   const [isActivated, setIsActivated] = useState(false);
 
   // Détecter automatiquement le type d'appareil
@@ -53,7 +53,7 @@ export default function UserActivationPage() {
 
     try {
       const result = await activateUser(invitationToken, selectedDevice);
-      setActivationResult(result as any || {});
+      setActivationResult(result as unknown || {});
       setIsActivated(true);
       
       // Redirection automatique après 5 secondes
@@ -213,7 +213,7 @@ export default function UserActivationPage() {
                       ? 'ring-2 ring-blue-500 bg-blue-50' 
                       : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setSelectedDevice(device.type as any)}
+                  onClick={() => setSelectedDevice(device.type as unknown)}
                 >
                   <CardContent className="p-4 text-center">
                     <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${

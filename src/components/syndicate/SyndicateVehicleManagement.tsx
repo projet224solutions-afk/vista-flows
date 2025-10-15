@@ -534,7 +534,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                         <Label htmlFor="vehicle_type">Type de Véhicule *</Label>
                                         <Select
                                             value={formData.vehicle_type}
-                                            onValueChange={(value: any) => setFormData(prev => ({ ...prev, vehicle_type: value }))}
+                                            onValueChange={(value: unknown) => setFormData(prev => ({ ...prev, vehicle_type: value }))}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />

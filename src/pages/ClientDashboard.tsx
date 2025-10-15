@@ -161,7 +161,7 @@ export default function ClientDashboard() {
       } else {
         setWalletBalance(w.balance || 0);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Wallet init/read error:', e);
       toast.error("Erreur wallet");
     } finally {
@@ -177,7 +177,7 @@ export default function ClientDashboard() {
       if (!user?.id) { setFavoritesCount(0); return; }
       try {
         const { count, error } = await (supabase
-          .from('favorites') as any)
+          .from('favorites') as unknown)
           .select('id', { count: 'exact', head: true })
           .eq('customer_id', user.id);
         if (error) throw error;
@@ -190,7 +190,7 @@ export default function ClientDashboard() {
   }, [user?.id]);
 
   // ================= DÉRIVÉS DYNAMIQUES =================
-  const activeOrdersCount = (orders || []).filter((o: any) => o?.status === 'active').length || 0;
+  const activeOrdersCount = (orders || []).filter((o: unknown) => o?.status === 'active').length || 0;
   const loyaltyPoints = ((orders || []).length * 500) || 0;
 
   // ================= FONCTIONS UTILITAIRES =================
@@ -254,7 +254,7 @@ export default function ClientDashboard() {
         .ilike('name', `%${q}%`)
         .limit(50);
       if (error) throw error;
-      if (data && data.length > 0) setSearchResults(data as any);
+      if (data && data.length > 0) setSearchResults(data as unknown);
       else {
         // fallback local: filtre les produits présents
         setSearchResults(products.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
@@ -272,10 +272,10 @@ export default function ClientDashboard() {
       // validation basique
       const prod = products.find(p => p.id === productId);
       if (!prod) return toast.error('Produit introuvable');
-      const { error } = await supabase.from('favorites').insert({ customer_id: user.id, product_id: productId } as any);
+      const { error } = await supabase.from('favorites').insert({ customer_id: user.id, product_id: productId } as unknown);
       if (error) throw error;
       toast.success('Produit ajouté aux favoris');
-    } catch (e: any) {
+    } catch (e: unknown) {
       // toggle si déjà présent
       if (String(e?.message || '').includes('duplicate')) {
         await supabase.from('favorites').delete().eq('customer_id', user!.id).eq('product_id', productId);

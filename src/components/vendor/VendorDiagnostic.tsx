@@ -100,7 +100,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
 
                 for (const table of tables) {
                     const { error } = await supabase
-                        .from(table as any)
+                        .from(table as unknown)
                         .select('id')
                         .limit(1);
 

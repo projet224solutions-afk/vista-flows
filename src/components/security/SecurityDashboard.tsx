@@ -309,7 +309,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                                                     {alert.alert_type}
                                                 </Badge>
                                                 <span className="text-xs text-gray-500">
-                                                    {new Date((alert as any).created_at || new Date()).toLocaleTimeString()}
+                                                    {new Date((alert as unknown).created_at || new Date()).toLocaleTimeString()}
                                                 </span>
                                             </div>
                                         </div>
@@ -493,7 +493,7 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
 function ThreatManagement() {
     const { blockIP, analyzeThreat } = useSecurity();
     const [ipToAnalyze, setIpToAnalyze] = useState('');
-    const [analysisResult, setAnalysisResult] = useState<any>(null);
+    const [analysisResult, setAnalysisResult] = useState<unknown>(null);
     const [loading, setLoading] = useState(false);
 
     const handleAnalyze = async () => {
@@ -955,7 +955,7 @@ function SecurityReports() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {analysisData.topThreats.map((threat: any, index: number) => (
+                                    {analysisData.topThreats.map((threat: unknown, index: number) => (
                                         <div key={index} className="flex items-center justify-between">
                                             <div>
                                                 <p className="font-medium">{threat.type}</p>

@@ -11,8 +11,8 @@ interface UseDataOptions {
   enabled?: boolean;
   refetchOnMount?: boolean;
   realtime?: boolean;
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: unknown) => void;
+  onError?: (error: unknown) => void;
 }
 
 /**
@@ -90,7 +90,7 @@ export function useData<T>(
 /**
  * ✏️ Hook pour les mutations
  */
-export function useMutation<T = any>(
+export function useMutation<T = unknown>(
   options: {
     onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
@@ -140,7 +140,7 @@ export function useMutation<T = any>(
 /**
  * 👥 Hook spécialisé pour les utilisateurs
  */
-export function useUsers(filters?: Record<string, any>) {
+export function useUsers(filters?: Record<string, unknown>) {
   return useData({
     table: 'profiles',
     select: 'id, email, first_name, last_name, role, is_active, created_at',
@@ -154,7 +154,7 @@ export function useUsers(filters?: Record<string, any>) {
  * 🛍️ Hook spécialisé pour les produits
  */
 export function useProducts(vendorId?: string, categoryId?: string) {
-  const filters: Record<string, any> = {};
+  const filters: Record<string, unknown> = {};
   if (vendorId) filters.vendor_id = vendorId;
   if (categoryId) filters.category_id = categoryId;
 
@@ -207,7 +207,7 @@ export function useVendors(isActive?: boolean) {
  * 🚗 Hook spécialisé pour les courses Taxi-Moto
  */
 export function useRides(userId?: string, status?: string) {
-  const filters: Record<string, any> = {};
+  const filters: Record<string, unknown> = {};
   if (userId) filters.user_id = userId;
   if (status) filters.status = status;
 
@@ -267,16 +267,16 @@ export function useGlobalStats() {
           })
         ]);
 
-        const totalRevenue = (transactions as any[])?.reduce(
+        const totalRevenue = (transactions as unknown[])?.reduce(
           (sum, t) => sum + (t.amount || 0), 0
         ) || 0;
 
         setStats({
-          totalUsers: (users as any[])?.length || 0,
-          totalProducts: (products as any[])?.length || 0,
-          totalTransactions: (transactions as any[])?.length || 0,
+          totalUsers: (users as unknown[])?.length || 0,
+          totalProducts: (products as unknown[])?.length || 0,
+          totalTransactions: (transactions as unknown[])?.length || 0,
           totalRevenue,
-          activeVendors: (vendors as any[])?.length || 0
+          activeVendors: (vendors as unknown[])?.length || 0
         });
       } catch (error) {
         console.error('❌ Error fetching global stats:', error);

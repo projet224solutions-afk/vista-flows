@@ -5,7 +5,7 @@ import { Users, Activity, AlertTriangle, CheckCircle } from "lucide-react";
 export type SyndicatStat = {
   label: string;
   value: string;
-  icon: any;
+  icon: unknown;
   color: string;
 };
 
@@ -92,7 +92,7 @@ export function useSyndicatData(initial?: Partial<UseSyndicatDataResult>): UseSy
           { driver: 'Mamadou Diallo', badgeNumber: 'SYN-2024-001', vestNumber: 'V-156', status: 'Actif', expires: '31 Déc 2024', zone: 'Plateau' },
           { driver: 'Fatou Sall', badgeNumber: 'SYN-2024-002', vestNumber: 'V-157', status: 'Actif', expires: '31 Déc 2024', zone: 'Médina' }
         ];
-        const mappedBadges: ActiveBadge[] = badgesError || !badgesData ? simulatedBadges : badgesData.map((b: any, idx: number) => ({
+        const mappedBadges: ActiveBadge[] = badgesError || !badgesData ? simulatedBadges : badgesData.map((b: unknown, idx: number) => ({
           driver: `Conducteur ${idx + 1}`,
           badgeNumber: b?.license_number ?? 'N/A',
           vestNumber: `V-${String(idx + 1).padStart(3, '0')}`,
@@ -105,7 +105,7 @@ export function useSyndicatData(initial?: Partial<UseSyndicatDataResult>): UseSy
           { id: 'ALT-001', driver: 'Abdou Ba', type: 'Badge expiré', zone: 'Almadies', time: '14:30', priority: 'Haute' },
           { id: 'ALT-002', driver: 'Omar Ndiaye', type: 'SOS activé', zone: 'Yoff', time: '13:15', priority: 'Urgente' }
         ];
-        const mappedAlerts: SecurityAlert[] = alertsError || !alertsData ? simulatedAlerts : alertsData.map((a: any) => ({
+        const mappedAlerts: SecurityAlert[] = alertsError || !alertsData ? simulatedAlerts : alertsData.map((a: unknown) => ({
           id: String(a.id),
           driver: `User ${String(a.user_id).slice(0, 8)}`,
           type: a.title ?? 'Alerte',
@@ -165,7 +165,7 @@ export function useSyndicatData(initial?: Partial<UseSyndicatDataResult>): UseSy
           type: 'SYNDICAT_URGENCE',
           payload: { alert_id: id },
           status: 'sent'
-        } as any);
+        } as unknown);
       } catch (e) {
         console.warn('Notification urgence (fallback):', id, e);
       } finally {

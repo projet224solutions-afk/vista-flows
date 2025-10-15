@@ -29,7 +29,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
+const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
 
 interface RideRequest {
     id: string;
@@ -121,7 +121,7 @@ export default function TaxiMotoDriver() {
         const next = !isOnline;
         setIsOnline(next);
         try {
-            const coords = location ? { lat: location.latitude, lng: location.longitude } : ({} as any);
+            const coords = location ? { lat: location.latitude, lng: location.longitude } : ({} as unknown);
             await fetch(`${API_BASE}/api/taxiMoto/driver/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

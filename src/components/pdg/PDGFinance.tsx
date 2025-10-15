@@ -37,7 +37,7 @@ export default function PDGFinance() {
     pending_payments: 0,
     active_wallets: 0
   });
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 

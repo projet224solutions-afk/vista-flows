@@ -34,8 +34,8 @@ export interface CopiloteResponse {
 
 export interface BusinessAction {
   type: 'wallet_balance' | 'transaction_history' | 'finance_simulation' | 'rate_show' | 'rate_edit';
-  data: any;
-  result?: any;
+  data: Record<string, unknown>;
+  result?: unknown;
 }
 
 class CopiloteService {
@@ -135,7 +135,7 @@ class CopiloteService {
   /**
    * Vérifier le statut du service Copilote
    */
-  async getStatus(): Promise<any> {
+  async getStatus(): Promise<unknown> {
     try {
       const response = await fetch(`${this.baseURL}/api/copilot/status`);
       
@@ -153,7 +153,7 @@ class CopiloteService {
   /**
    * Actions métiers intégrées
    */
-  async executeBusinessAction(action: BusinessAction): Promise<any> {
+  async executeBusinessAction(action: BusinessAction): Promise<unknown> {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -202,7 +202,7 @@ class CopiloteService {
   /**
    * Obtenir l'historique des transactions
    */
-  async getTransactionHistory(limit: number = 10): Promise<any[]> {
+  async getTransactionHistory(limit: number = 10): Promise<unknown[]> {
     try {
       const { data: transactions, error } = await supabase
         .from('transactions')
@@ -267,7 +267,7 @@ class CopiloteService {
   /**
    * Obtenir les taux de change actuels
    */
-  async getExchangeRates(): Promise<any[]> {
+  async getExchangeRates(): Promise<unknown[]> {
     try {
       const { data: rates, error } = await supabase
         .from('exchange_rates')
@@ -306,7 +306,7 @@ class CopiloteService {
   /**
    * Obtenir les statistiques de l'IA
    */
-  async getAIStats(): Promise<any> {
+  async getAIStats(): Promise<unknown> {
     try {
       const { data, error } = await supabase
         .rpc('get_ai_stats', {

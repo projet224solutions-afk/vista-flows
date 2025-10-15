@@ -10,7 +10,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 export interface DataQuery {
   table: string;
   select?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   orderBy?: { column: string; ascending?: boolean };
   limit?: number;
   realtime?: boolean;
@@ -19,8 +19,8 @@ export interface DataQuery {
 export interface DataMutation {
   table: string;
   operation: 'insert' | 'update' | 'delete';
-  data?: any;
-  filters?: Record<string, any>;
+  data?: unknown;
+  filters?: Record<string, unknown>;
 }
 
 export interface CacheEntry<T> {
@@ -31,9 +31,9 @@ export interface CacheEntry<T> {
 
 export class DataManager {
   private static instance: DataManager;
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
   private subscriptions = new Map<string, RealtimeChannel>();
-  private listeners = new Map<string, Set<(data: any) => void>>();
+  private listeners = new Map<string, Set<(data: unknown) => void>>();
 
   // Singleton pattern
   static getInstance(): DataManager {
@@ -61,20 +61,20 @@ export class DataManager {
       
       // Construire la requête
       let query = supabase
-        .from(queryConfig.table as any)
+        .from(queryConfig.table as unknown)
         .select(queryConfig.select || '*');
 
       // Appliquer les filtres
       if (queryConfig.filters) {
         Object.entries(queryConfig.filters).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            query = query.in(key, value as any);
+            query = query.in(key, value as unknown);
           } else if (typeof value === 'object' && value.operator) {
             // Filtres avancés : { operator: 'gte', value: 100 }
-            const operator = value.operator as any;
-            query = (query as any)[operator](key, value.value);
+            const operator = value.operator as unknown;
+            query = (query as unknown)[operator](key, value.value);
           } else {
-            query = query.eq(key, value as any);
+            query = query.eq(key, value as unknown);
           }
         });
       }
@@ -116,11 +116,11 @@ export class DataManager {
   /**
    * ✏️ Mutation unifiée avec optimistic updates
    */
-  async mutate(mutationConfig: DataMutation): Promise<any> {
+  async mutate(mutationConfig: DataMutation): Promise<unknown> {
     try {
       console.log(`✏️ Mutating ${mutationConfig.table} - ${mutationConfig.operation}`);
 
-      let query = supabase.from(mutationConfig.table as any);
+      let query = supabase.from(mutationConfig.table as unknown);
       let result;
 
       switch (mutationConfig.operation) {
@@ -201,7 +201,7 @@ export class DataManager {
   /**
    * 👂 Écouter les changements
    */
-  subscribe(table: string, callback: (data: any) => void): () => void {
+  subscribe(table: string, callback: (data: unknown) => void): () => void {
     if (!this.listeners.has(table)) {
       this.listeners.set(table, new Set());
     }
@@ -217,7 +217,7 @@ export class DataManager {
   /**
    * 🔔 Notifier les listeners
    */
-  private notifyListeners(table: string, data: any) {
+  private notifyListeners(table: string, data: Record<string, unknown>) {
     const listeners = this.listeners.get(table);
     if (listeners) {
       listeners.forEach(callback => callback(data));
@@ -265,7 +265,7 @@ export class DataManager {
   /**
    * 🔧 Utilitaires
    */
-  private applyFilters(query: any, filters: Record<string, any>) {
+  private applyFilters(query: Record<string, unknown>, filters: Record<string, unknown>) {
     Object.entries(filters).forEach(([key, value]) => {
       query = query.eq(key, value);
     });

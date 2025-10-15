@@ -524,7 +524,7 @@ export class DeliveryService {
     /**
      * Notifier un client
      */
-    private async notifyClient(clientId: string, notification: any): Promise<void> {
+    private async notifyClient(clientId: string, notification: unknown): Promise<void> {
         try {
             await fetch('/api/notifications/send', {
                 method: 'POST',
@@ -544,7 +544,7 @@ export class DeliveryService {
     /**
      * Envoyer une notification push
      */
-    private async sendPushNotification(userId: string, notification: any): Promise<void> {
+    private async sendPushNotification(userId: string, notification: unknown): Promise<void> {
         try {
             await fetch('/api/notifications/push', {
                 method: 'POST',
@@ -624,7 +624,7 @@ export class DeliveryService {
     /**
      * Gérer les demandes de livraison
      */
-    private handleDeliveryRequest(data: any): void {
+    private handleDeliveryRequest(data: unknown): void {
         console.log('🚚 Nouvelle demande de livraison reçue:', data.delivery.id);
         // Émettre un événement pour l'interface utilisateur
         window.dispatchEvent(new CustomEvent('deliveryRequest', { detail: data }));
@@ -633,7 +633,7 @@ export class DeliveryService {
     /**
      * Gérer les mises à jour de livraison
      */
-    private handleDeliveryUpdate(data: any): void {
+    private handleDeliveryUpdate(data: unknown): void {
         console.log('🚚 Mise à jour livraison:', data.deliveryId);
         // Émettre un événement pour l'interface utilisateur
         window.dispatchEvent(new CustomEvent('deliveryUpdate', { detail: data }));
@@ -642,7 +642,7 @@ export class DeliveryService {
     /**
      * Gérer les mises à jour de statut des livreurs
      */
-    private handleDeliveryUserStatus(data: any): void {
+    private handleDeliveryUserStatus(data: unknown): void {
         const { userId, status, position } = data;
         const user = this.onlineDeliveryUsers.get(userId);
         if (user) {
@@ -660,7 +660,7 @@ export class DeliveryService {
     /**
      * Gérer les mises à jour de position
      */
-    private handlePositionUpdate(data: any): void {
+    private handlePositionUpdate(data: unknown): void {
         const { userId, position } = data;
         const user = this.onlineDeliveryUsers.get(userId);
         if (user) {

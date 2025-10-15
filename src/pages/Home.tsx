@@ -203,8 +203,8 @@ export default function Home() {
             <ProductCard
               key={product.id}
               {...product}
-              onBuy={() => console.log('Buy', product.id)}
-              onContact={() => console.log('Contact', product.id)}
+              onBuy={() => { console.log('Buy', product.id); }}
+              onContact={() => { console.log('Contact', product.id); }}
             />
           ))}
         </div>
@@ -218,7 +218,7 @@ export default function Home() {
             <ServiceCard
               key={service.id}
               {...service}
-              onBook={() => console.log('Book', service.id)}
+              onBook={() => { console.log('Book', service.id); }}
             />
           ))}
         </div>
@@ -228,4 +228,4 @@ export default function Home() {
       <QuickFooter />
     </div>
   );
-}
+};

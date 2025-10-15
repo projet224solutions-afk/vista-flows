@@ -34,7 +34,7 @@ export interface SystemAlert {
 
 export interface ThreatAnalysis {
     score: number;
-    threats: any[];
+    threats: unknown[];
 }
 
 export function useSecurity() {
@@ -68,7 +68,7 @@ export function useSecurity() {
         loading,
         error,
         loadStats,
-        logEvent: async (event: any) => { },
+        logEvent: async (event: unknown) => { },
         blockIP: async (ip: string, reason: string) => true,
         analyzeThreat: async (ip: string) => null
     };
@@ -98,7 +98,7 @@ export function useSecurityAlerts() {
 }
 
 export function useSecurityIncidents() {
-    const [incidents, setIncidents] = useState<any[]>([]);
+    const [incidents, setIncidents] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadIncidents = useCallback(async () => {
@@ -124,7 +124,7 @@ export function useSecurityIncidents() {
         loadIncidents();
     }, [loadIncidents]);
 
-    const createIncident = useCallback(async (incident: any) => {
+    const createIncident = useCallback(async (incident: unknown) => {
         try {
             const { data, error } = await supabase
                 .from('moto_security_audit')
@@ -155,7 +155,7 @@ export function useSecurityIncidents() {
 }
 
 export function useSecurityEvents() {
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadEvents = useCallback(async () => {
@@ -213,7 +213,7 @@ export function useRealTimeProtection() {
         threats: [],
         protectionStatus: 'active',
         threatLevel: 'low',
-        toggleProtection: async (enabled: any) => { }
+        toggleProtection: async (enabled: unknown) => { }
     };
 }
 
@@ -223,7 +223,7 @@ export function useSecurityAudit() {
         loading: false,
         auditLogs: [],
         filters: { dateRange: '', severity: '' },
-        updateFilters: (filters: any) => { },
-        exportLogs: async (format: any) => { }
+        updateFilters: (filters: unknown) => { },
+        exportLogs: async (format: unknown) => { }
     };
 }

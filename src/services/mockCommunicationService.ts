@@ -74,7 +74,7 @@ const DEMO_USERS = [
 ];
 
 class MockCommunicationService {
-  async searchUsers(query: string, limit: number = 10): Promise<any[]> {
+  async searchUsers(query: string, limit: number = 10): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     const filteredUsers = DEMO_USERS.filter(user =>
@@ -87,12 +87,12 @@ class MockCommunicationService {
     return filteredUsers.slice(0, limit);
   }
 
-  async getAllUsers(limit: number = 50, offset: number = 0): Promise<any[]> {
+  async getAllUsers(limit: number = 50, offset: number = 0): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 200));
     return DEMO_USERS.slice(offset, offset + limit);
   }
 
-  async getUsersByRole(role: string, limit: number = 20): Promise<any[]> {
+  async getUsersByRole(role: string, limit: number = 20): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 250));
     
     const filteredUsers = DEMO_USERS.filter(user =>
@@ -102,7 +102,7 @@ class MockCommunicationService {
     return filteredUsers.slice(0, limit);
   }
 
-  async createConversation(participantIds: string[], isGroup: boolean = false): Promise<any> {
+  async createConversation(participantIds: string[], isGroup: boolean = false): Promise<unknown> {
     await new Promise(resolve => setTimeout(resolve, 400));
     
     return {
@@ -114,7 +114,7 @@ class MockCommunicationService {
     };
   }
 
-  async getUserConversations(userId: string): Promise<any[]> {
+  async getUserConversations(userId: string): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     // Retourner des conversations de démonstration
@@ -140,7 +140,7 @@ class MockCommunicationService {
     ];
   }
 
-  async sendMessage(conversationId: string, senderId: string, content: string, type: string = 'text'): Promise<any> {
+  async sendMessage(conversationId: string, senderId: string, content: string, type: string = 'text'): Promise<unknown> {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     return {
@@ -153,7 +153,7 @@ class MockCommunicationService {
     };
   }
 
-  async getConversationMessages(conversationId: string, limit: number = 50): Promise<any[]> {
+  async getConversationMessages(conversationId: string, limit: number = 50): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     // Retourner des messages de démonstration
@@ -182,7 +182,7 @@ class MockCommunicationService {
     console.log(`🎭 Statut démo mis à jour: ${userId} -> ${status}`);
   }
 
-  async getUserPresence(userIds: string[]): Promise<any[]> {
+  async getUserPresence(userIds: string[]): Promise<unknown[]> {
     await new Promise(resolve => setTimeout(resolve, 150));
     
     return userIds.map(userId => ({

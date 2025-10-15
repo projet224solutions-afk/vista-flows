@@ -43,7 +43,7 @@ export const useAgentManagement = () => {
         .order('name');
         
       if (error) throw error;
-      setRoles((data as any[])?.map((role: any) => ({
+      setRoles((data as unknown[])?.map((role: unknown) => ({
         id: role.id,
         name: role.name,
         description: role.description,
@@ -61,7 +61,7 @@ export const useAgentManagement = () => {
         .select('*');
 
       if (error) throw error;
-      setPermissions((data as any[])?.map((permission: any) => ({
+      setPermissions((data as unknown[])?.map((permission: unknown) => ({
         id: permission.id,
         role_id: permission.role_id,
         action: permission.action,
@@ -88,7 +88,7 @@ export const useAgentManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-        setAgents((data as any[])?.map((agent: any) => ({
+        setAgents((data as unknown[])?.map((agent: unknown) => ({
           id: agent.id,
           seller_id: agent.seller_id,
           user_id: agent.user_id,

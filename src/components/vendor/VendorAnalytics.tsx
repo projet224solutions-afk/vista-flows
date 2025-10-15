@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, BarChart3, TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
 

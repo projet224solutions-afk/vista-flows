@@ -306,7 +306,7 @@ export default function MotoSecurityAlerts({
                                     key={status}
                                     variant={filter === status ? 'default' : 'outline'}
                                     size="sm"
-                                    onClick={() => setFilter(status as any)}
+                                    onClick={() => setFilter(status as unknown)}
                                 >
                                     {status === 'all' ? 'Toutes' : 
                                      status === 'en_cours' ? 'En cours' :

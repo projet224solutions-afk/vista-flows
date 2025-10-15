@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 export default function LoginGoogle() {
   const backendBase = useMemo(() => {
-    const env = (import.meta as any).env || {};
+    const env = (import.meta as unknown).env || {};
     return env.VITE_API_BASE_URL || 'http://localhost:3001';
   }, []);
 

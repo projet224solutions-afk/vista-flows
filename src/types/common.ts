@@ -8,7 +8,7 @@ export interface Address {
 
 export interface Metadata {
   description?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Fonction utilitaire pour le typage sécurisé

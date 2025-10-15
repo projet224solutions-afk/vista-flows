@@ -50,7 +50,7 @@ export default function WalletDashboard() {
     return data.id as string | null;
   }, [userId]);
 
-  const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
+  const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
   const handleDeposit = useCallback(async () => {
     if (!userId) return;
@@ -63,7 +63,7 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 1000 GNF');
       return;
     }
-    const token = (session as any)?.access_token;
+    const token = (session as unknown)?.access_token;
     if (!token) {
       toast.error('Session invalide');
       return;
@@ -92,7 +92,7 @@ export default function WalletDashboard() {
       setDepositAmount("");
       toast.success('Dépôt effectué');
       await refetch(userId);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || 'Erreur dépôt');
     } finally {
       setBusy(false);
@@ -110,7 +110,7 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 5000 GNF');
       return;
     }
-    const token = (session as any)?.access_token;
+    const token = (session as unknown)?.access_token;
     if (!token) {
       toast.error('Session invalide');
       return;
@@ -139,7 +139,7 @@ export default function WalletDashboard() {
       setWithdrawAmount("");
       toast.success('Retrait effectué');
       await refetch(userId);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || 'Erreur retrait');
     } finally {
       setBusy(false);
@@ -157,7 +157,7 @@ export default function WalletDashboard() {
       toast.error('Destinataire requis');
       return;
     }
-    const token = (session as any)?.access_token;
+    const token = (session as unknown)?.access_token;
     if (!token) {
       toast.error('Session invalide');
       return;
@@ -183,7 +183,7 @@ export default function WalletDashboard() {
       setReceiverId("");
       toast.success('Transfert effectué');
       await refetch(userId);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || 'Erreur transfert');
     } finally {
       setBusy(false);

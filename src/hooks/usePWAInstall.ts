@@ -28,7 +28,7 @@ export function usePWAInstall() {
         const checkInstalled = () => {
             // Mode standalone signifie que l'app est installée
             const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-            const isInIosStandaloneMode = (window.navigator as any).standalone === true;
+            const isInIosStandaloneMode = (window.navigator as unknown).standalone === true;
             
             setIsInstalled(isInStandaloneMode || isInIosStandaloneMode);
         };

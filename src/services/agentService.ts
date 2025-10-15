@@ -23,7 +23,7 @@ export interface AgentManagement extends Omit<AgentRow, 'permissions'> {
 }
 
 // Types additionnels
-export interface SubAgentManagement extends AgentManagement {}
+export type SubAgentManagement = AgentManagement
 export interface AgentCreatedUser {
   id: string;
   name: string;
@@ -236,15 +236,15 @@ export class AgentService {
 
   async updateCommissionSetting(settings: Partial<CommissionSettings>): Promise<void> {}
   
-  async processTransaction(data: any): Promise<void> {}
+  async processTransaction(data: unknown): Promise<void> {}
   
-  async createUserByAgent(agentId: string, userData: any): Promise<AgentCreatedUser | null> {
+  async createUserByAgent(agentId: string, userData: unknown): Promise<AgentCreatedUser | null> {
     return null;
   }
 
   async activateUser(userId: string): Promise<void> {}
   
-  async createSubAgent(data: any): Promise<SubAgentManagement> {
+  async createSubAgent(data: unknown): Promise<SubAgentManagement> {
     throw new Error('Not implemented');
   }
 }

@@ -237,7 +237,7 @@ export function POSSystem() {
         totalAmount: total,
         items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
       };
-      const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
       const resp = await fetch(`${API_BASE}/api/orders/pos-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -255,7 +255,7 @@ export function POSSystem() {
       setReceivedAmount(0);
       // Recharger la liste des produits pour refléter le stock
       await refetchProducts?.();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
     }
   };

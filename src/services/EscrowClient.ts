@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '';
+const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
 
 export async function initiateEscrow(orderId: string, payerId: string, receiverId: string, amount: number, currency = 'GNF') {
   const resp = await fetch(`${API_BASE}/api/escrow/initiate`, {

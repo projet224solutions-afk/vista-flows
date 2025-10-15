@@ -305,7 +305,7 @@ export default function SyndicateRoadTickets({ bureauId }: SyndicateRoadTicketsP
                                 className="pl-10"
                             />
                         </div>
-                        <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                        <Select value={filterStatus} onValueChange={(value: unknown) => setFilterStatus(value)}>
                             <SelectTrigger className="w-48">
                                 <SelectValue placeholder="Filtrer par statut" />
                             </SelectTrigger>

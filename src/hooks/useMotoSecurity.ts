@@ -16,7 +16,7 @@ interface SecurityNotification {
     target_bureau_origin?: string;
     target_bureau_detection?: string;
     target_pdg: boolean;
-    metadata: any;
+    metadata: Record<string, unknown>;
     read_at?: string;
     created_at: string;
 }
@@ -138,7 +138,7 @@ export function useMotoSecurity(bureauId?: string, isPDG: boolean = false) {
 
     // Configurer la synchronisation temps réel
     useEffect(() => {
-        let subscription: any = null;
+        let subscription: unknown = null;
 
         const setupRealtimeSync = async () => {
             try {

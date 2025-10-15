@@ -29,7 +29,7 @@ interface PaymentMethod {
     id: string;
     type: 'mobile_money' | 'card' | 'wallet_224' | 'cash';
     name: string;
-    icon: any;
+    icon: unknown;
     description: string;
     processingFee: number;
     isAvailable: boolean;
@@ -50,7 +50,7 @@ interface PaymentDetails {
 
 interface TaxiMotoPaymentProps {
     paymentDetails: PaymentDetails;
-    onPaymentComplete: (paymentData: any) => void;
+    onPaymentComplete: (paymentData: unknown) => void;
     onPaymentCancel: () => void;
 }
 
@@ -188,7 +188,7 @@ export default function TaxiMotoPayment({
                 onPaymentComplete(paymentData);
             }, 2000);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             setPaymentError(error.message);
             setPaymentStep('error');
         } finally {

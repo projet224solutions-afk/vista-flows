@@ -15,7 +15,7 @@ interface DeliveryMapProps {
     deliveryRequest?: DeliveryRequest;
     deliveryUsers?: DeliveryUser[];
     onUserClick?: (user: DeliveryUser) => void;
-    onRouteClick?: (route: any) => void;
+    onRouteClick?: (route: unknown) => void;
     showRoute?: boolean;
     showUsers?: boolean;
     height?: string;
@@ -37,7 +37,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
-    const [route, setRoute] = useState<any>(null);
+    const [route, setRoute] = useState<unknown>(null);
 
     // Initialiser la carte
     useEffect(() => {
@@ -155,7 +155,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         });
 
         // Fonction globale pour les clics
-        (window as any).deliveryUserClick = (userId: string) => {
+        (window as unknown).deliveryUserClick = (userId: string) => {
             const user = deliveryUsers.find(u => u.id === userId);
             if (user && onUserClick) {
                 onUserClick(user);
@@ -296,7 +296,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
 
                     // Ajuster la vue pour inclure l'itinéraire
                     const coordinates = route.geometry.coordinates;
-                    const bounds = coordinates.reduce((bounds: any, coord: any) => {
+                    const bounds = coordinates.reduce((bounds: unknown, coord: unknown) => {
                         return bounds.extend(coord);
                     }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 

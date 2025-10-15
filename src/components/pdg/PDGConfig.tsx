@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 
 export default function PDGConfig() {
-  const [configs, setConfigs] = useState<any[]>([]);
+  const [configs, setConfigs] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [newConfig, setNewConfig] = useState({
     service_name: '',

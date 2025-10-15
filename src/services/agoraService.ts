@@ -34,7 +34,7 @@ export interface UserInfo {
 
 class AgoraService {
   private client: IAgoraRTCClient | null = null;
-  private rtmClient: any = null;
+  private rtmClient: unknown = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private isConnected = false;

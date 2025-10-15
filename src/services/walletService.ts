@@ -35,7 +35,7 @@ export interface Transaction {
   status: string;
   sender_wallet_id: string | null;
   receiver_wallet_id: string | null;
-  metadata?: any;
+  metadata?: unknown;
   created_at: string;
   completed_at: string | null;
 }

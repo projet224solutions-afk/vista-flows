@@ -253,7 +253,7 @@ export function useSyndicateData(bureauId?: string) {
             }
 
             const formattedTransactions: Transaction[] = transactionsData?.map(transaction => {
-                const member = (transaction.members as any);
+                const member = (transaction.members as unknown);
                 return {
                     id: transaction.id,
                     type: transaction.transaction_type || 'Transaction',

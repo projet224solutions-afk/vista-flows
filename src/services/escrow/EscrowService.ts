@@ -78,7 +78,7 @@ export interface EscrowDispute {
     evidence?: {
         photos: string[];
         messages: string[];
-        coordinates: any[];
+        coordinates: unknown[];
     };
 }
 
@@ -224,7 +224,7 @@ export class EscrowService {
         invoiceId: string,
         clientId: string,
         paymentMethod: string,
-        paymentData: any
+        paymentData: unknown
     ): Promise<EscrowTransaction> {
         try {
             const invoice = this.activeInvoices.get(invoiceId);
@@ -411,7 +411,7 @@ export class EscrowService {
         evidence?: {
             photos: string[];
             messages: string[];
-            coordinates: any[];
+            coordinates: unknown[];
         }
     ): Promise<EscrowDispute> {
         try {
@@ -732,7 +732,7 @@ export class EscrowService {
     /**
      * Envoyer une notification
      */
-    private async sendNotification(notification: any): Promise<void> {
+    private async sendNotification(notification: unknown): Promise<void> {
         try {
             await fetch('/api/notifications/send', {
                 method: 'POST',
@@ -749,22 +749,22 @@ export class EscrowService {
     /**
      * Gestionnaires d'événements WebSocket
      */
-    private handleEscrowInitiated(data: any): void {
+    private handleEscrowInitiated(data: unknown): void {
         console.log('🛡️ Escrow initié:', data.transactionId);
         window.dispatchEvent(new CustomEvent('escrowInitiated', { detail: data }));
     }
 
-    private handleEscrowReleased(data: any): void {
+    private handleEscrowReleased(data: unknown): void {
         console.log('🛡️ Escrow libéré:', data.transactionId);
         window.dispatchEvent(new CustomEvent('escrowReleased', { detail: data }));
     }
 
-    private handleEscrowRefunded(data: any): void {
+    private handleEscrowRefunded(data: unknown): void {
         console.log('🛡️ Escrow remboursé:', data.transactionId);
         window.dispatchEvent(new CustomEvent('escrowRefunded', { detail: data }));
     }
 
-    private handleEscrowDisputed(data: any): void {
+    private handleEscrowDisputed(data: unknown): void {
         console.log('🛡️ Escrow en litige:', data.disputeId);
         window.dispatchEvent(new CustomEvent('escrowDisputed', { detail: data }));
     }

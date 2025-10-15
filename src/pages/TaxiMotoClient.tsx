@@ -111,7 +111,7 @@ export default function TaxiMotoClient() {
   /**
    * Gère la création d'une nouvelle course
    */
-  const handleRideCreated = (rideData: any) => {
+  const handleRideCreated = (rideData: unknown) => {
     // Créer un objet de course avec conducteur assigné
     const assignedDriver = nearbyDrivers[0]; // Simuler l'assignation du conducteur le plus proche
     

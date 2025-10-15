@@ -33,7 +33,7 @@ export class MockExpenseService {
     return [];
   }
 
-  static getExpenses(filters?: any): { expenses: ExpenseWithDetails[]; total: number } {
+  static getExpenses(filters?: unknown): { expenses: ExpenseWithDetails[]; total: number } {
     return { expenses: [], total: 0 };
   }
 
@@ -48,19 +48,19 @@ export class MockExpenseService {
     };
   }
 
-  static getAlerts(): any[] {
+  static getAlerts(): unknown[] {
     return [];
   }
 
-  static getBudgets(): any[] {
+  static getBudgets(): unknown[] {
     return [];
   }
 
-  static getAnalytics(): { anomalies: any[] } {
+  static getAnalytics(): { anomalies: unknown[] } {
     return { anomalies: [] };
   }
 
-  static getNotifications(): any[] {
+  static getNotifications(): unknown[] {
     return [];
   }
 
@@ -74,11 +74,11 @@ export class MockExpenseService {
     };
   }
 
-  static createCategory(data: any): void {
+  static createCategory(data: unknown): void {
     // Mock implementation
   }
 
-  static createExpense(data: any): void {
+  static createExpense(data: unknown): void {
     // Mock implementation
   }
 

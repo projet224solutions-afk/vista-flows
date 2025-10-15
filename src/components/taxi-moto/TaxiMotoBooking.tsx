@@ -28,7 +28,7 @@ import { mapService } from "@/services/mapService";
 import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || "";
+const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || "";
 
 interface LocationCoordinates {
     latitude: number;
@@ -48,7 +48,7 @@ interface Driver {
 interface TaxiMotoBookingProps {
     userLocation: LocationCoordinates | null;
     nearbyDrivers: Driver[];
-    onRideCreated: (ride: any) => void;
+    onRideCreated: (ride: unknown) => void;
 }
 
 export default function TaxiMotoBooking({
@@ -66,9 +66,9 @@ export default function TaxiMotoBooking({
     const [isScheduled, setIsScheduled] = useState(false);
 
     // États de calcul
-    const [routeInfo, setRouteInfo] = useState<any>(null);
-    const [priceEstimate, setPriceEstimate] = useState<any>(null);
-    const [priceComparison, setPriceComparison] = useState<any[]>([]);
+    const [routeInfo, setRouteInfo] = useState<unknown>(null);
+    const [priceEstimate, setPriceEstimate] = useState<unknown>(null);
+    const [priceComparison, setPriceComparison] = useState<unknown[]>([]);
 
     // États de chargement
     const [loadingRoute, setLoadingRoute] = useState(false);
@@ -76,8 +76,8 @@ export default function TaxiMotoBooking({
     const [bookingInProgress, setBookingInProgress] = useState(false);
 
     // États de géocodage
-    const [pickupSuggestions, setPickupSuggestions] = useState<any[]>([]);
-    const [destinationSuggestions, setDestinationSuggestions] = useState<any[]>([]);
+    const [pickupSuggestions, setPickupSuggestions] = useState<unknown[]>([]);
+    const [destinationSuggestions, setDestinationSuggestions] = useState<unknown[]>([]);
     const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
     const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 
@@ -122,7 +122,7 @@ export default function TaxiMotoBooking({
     /**
      * Sélectionne une suggestion d'adresse
      */
-    const selectAddressSuggestion = (suggestion: any, isPickup: boolean) => {
+    const selectAddressSuggestion = (suggestion: unknown, isPickup: boolean) => {
         if (isPickup) {
             setPickupAddress(suggestion.address);
             setPickupCoords(suggestion.coordinates);
@@ -387,7 +387,7 @@ export default function TaxiMotoBooking({
                             return (
                                 <button
                                     key={option.vehicleType}
-                                    onClick={() => setSelectedVehicleType(option.vehicleType as any)}
+                                    onClick={() => setSelectedVehicleType(option.vehicleType as unknown)}
                                     className={`w-full p-4 rounded-lg border-2 transition-all ${isSelected
                                         ? 'border-blue-500 bg-blue-50'
                                         : 'border-gray-200 hover:border-gray-300'

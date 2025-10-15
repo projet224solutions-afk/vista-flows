@@ -45,7 +45,7 @@ export default function SyndicateBureauManagement() {
     setLoading(true);
     try {
       const { data: bureauxData, error: bureauxError } = await supabase
-        .from('bureaus' as any)
+        .from('bureaus' as unknown)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -53,7 +53,7 @@ export default function SyndicateBureauManagement() {
       setBureaus((bureauxData as unknown as Bureau[]) || []);
 
       toast.success('Données chargées');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur chargement:', error);
       toast.error('Erreur de chargement: ' + error.message);
     } finally {
@@ -64,7 +64,7 @@ export default function SyndicateBureauManagement() {
   const updateBureauStatus = async (bureauId: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from('bureaus' as any)
+        .from('bureaus' as unknown)
         .update({ status: newStatus, validated_at: new Date().toISOString() })
         .eq('id', bureauId);
 
@@ -72,7 +72,7 @@ export default function SyndicateBureauManagement() {
       
       toast.success('Statut mis à jour');
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erreur: ' + error.message);
     }
   };

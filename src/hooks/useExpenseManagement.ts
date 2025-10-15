@@ -30,7 +30,7 @@ export function useExpenseManagement(vendorId?: string) {
   }, []);
 
   // Charger les dépenses
-  const loadExpenses = useCallback(async (filters?: any) => {
+  const loadExpenses = useCallback(async (filters?: unknown) => {
     if (!vendorId) return;
 
     try {

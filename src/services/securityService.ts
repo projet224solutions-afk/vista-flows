@@ -28,7 +28,7 @@ export interface SecurityAudit {
   bureauId?: string;
   ipAddress?: string;
   userAgent?: string;
-  details: any;
+  details: unknown;
   timestamp: string;
 }
 
@@ -249,7 +249,7 @@ class SecurityService {
    */
   private async logSecurityAction(
     action: string,
-    details: any
+    details: unknown
   ): Promise<void> {
     try {
       await supabase

@@ -138,11 +138,11 @@ export default function InventoryManagement() {
     }
   };
 
-  if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
-
   const [addOpen, setAddOpen] = useState(false);
   const [addQty, setAddQty] = useState('');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
 
   const addStock = async () => {
     if (!selectedItem) return;
@@ -162,7 +162,7 @@ export default function InventoryManagement() {
       setAddOpen(false);
       setAddQty('');
       toast({ title: 'Stock ajouté' });
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
     }
   };

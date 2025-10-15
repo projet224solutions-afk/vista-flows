@@ -10,9 +10,9 @@ import { MockExpenseService } from '@/services/mockExpenseService';
  * 🎯 Hook principal pour la gestion complète des dépenses (version simulée)
  */
 export function useMockExpenseManagement() {
-    const [currentFilters, setCurrentFilters] = useState<any>({});
+    const [currentFilters, setCurrentFilters] = useState<unknown>({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedExpense, setSelectedExpense] = useState<any>(null);
+    const [selectedExpense, setSelectedExpense] = useState<unknown>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Données simulées - synchrones
@@ -26,7 +26,7 @@ export function useMockExpenseManagement() {
     const quickStats = useMemo(() => MockExpenseService.getQuickStats(), []);
 
     // Fonctions utilitaires
-    const applyFilters = useCallback((filters: any) => {
+    const applyFilters = useCallback((filters: unknown) => {
         setCurrentFilters(filters);
         setCurrentPage(1);
     }, []);
@@ -40,12 +40,12 @@ export function useMockExpenseManagement() {
         setCurrentPage(page);
     }, []);
 
-    const selectExpense = useCallback((expense: any) => {
+    const selectExpense = useCallback((expense: unknown) => {
         setSelectedExpense(expense);
     }, []);
 
     // Actions simulées
-    const createCategory = useCallback((categoryData: any) => {
+    const createCategory = useCallback((categoryData: unknown) => {
         setIsLoading(true);
         setTimeout(() => {
             MockExpenseService.createCategory(categoryData);
@@ -53,7 +53,7 @@ export function useMockExpenseManagement() {
         }, 500);
     }, []);
 
-    const createExpense = useCallback((expenseData: any) => {
+    const createExpense = useCallback((expenseData: unknown) => {
         setIsLoading(true);
         setTimeout(() => {
             MockExpenseService.createExpense(expenseData);

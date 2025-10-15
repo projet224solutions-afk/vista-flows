@@ -176,7 +176,7 @@ export const useWallet = (userId?: string) => {
             filter: `user_id.eq.${userId}`
           }, (payload) => {
             // Appliquer mise à jour du solde si présent
-            const newBalance = (payload.new as any)?.balance;
+            const newBalance = (payload.new as unknown)?.balance;
             if (typeof newBalance === 'number') {
               setWallet(prev => prev ? { ...prev, balance: newBalance } : prev);
             } else {

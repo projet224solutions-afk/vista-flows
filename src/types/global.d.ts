@@ -7,11 +7,11 @@ declare global {
 }
 
 // Types d'assertion sécurisés
-export type SafeAny = any;
+export type SafeAny = unknown;
 
 // Interface pour les données Supabase non typées
 export interface SupabaseData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export {};

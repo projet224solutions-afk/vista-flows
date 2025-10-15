@@ -90,7 +90,7 @@ export function useVendorOptimized() {
                 .single();
 
             if (error) throw error;
-            setProfile(data as any);
+            setProfile(data as unknown);
         } catch (err) {
             setProfileError(err as Error);
         } finally {

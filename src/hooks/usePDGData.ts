@@ -130,7 +130,7 @@ export function usePDGData() {
       }
 
       const formattedTransactions: Transaction[] = walletTransactions?.map(tx => {
-        const profile = (tx.profiles as any);
+        const profile = (tx.profiles as unknown);
         return {
           id: tx.id,
           type: tx.transaction_type || 'Transaction',
@@ -172,7 +172,7 @@ export function usePDGData() {
       }
 
       const formattedProducts: Product[] = productsData?.map(product => {
-        const vendor = (product.vendors as any);
+        const vendor = (product.vendors as unknown);
         return {
           id: product.id,
           name: product.name,

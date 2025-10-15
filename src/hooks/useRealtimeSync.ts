@@ -21,7 +21,7 @@ export interface BureauUpdate {
     bureauId: string;
     bureauCode: string;
     updateType: 'member_added' | 'revenue_update' | 'sos_alert' | 'status_change';
-    data: any;
+    data: Record<string, unknown>;
     timestamp: string;
 }
 
@@ -85,7 +85,7 @@ export function useRealtimeSync(bureauId?: string) {
 
     // Configurer la synchronisation temps réel
     useEffect(() => {
-        let subscription: any = null;
+        let subscription: unknown = null;
 
         const setupRealtimeSync = async () => {
             try {
@@ -151,7 +151,7 @@ export function useRealtimeSync(bureauId?: string) {
     }, [loadInitialStats]);
 
     // Gérer les mises à jour des bureaux
-    const handleBureauUpdate = (payload: any) => {
+    const handleBureauUpdate = (payload: unknown) => {
         const { eventType, new: newRecord, old: oldRecord } = payload;
 
         // Mettre à jour les statistiques
@@ -181,7 +181,7 @@ export function useRealtimeSync(bureauId?: string) {
     };
 
     // Gérer les mises à jour des membres
-    const handleMemberUpdate = (payload: any) => {
+    const handleMemberUpdate = (payload: unknown) => {
         const { eventType, new: newRecord } = payload;
 
         // Mettre à jour les statistiques
@@ -207,7 +207,7 @@ export function useRealtimeSync(bureauId?: string) {
     };
 
     // Gérer les mises à jour SOS
-    const handleSOSUpdate = (payload: any) => {
+    const handleSOSUpdate = (payload: unknown) => {
         const { eventType, new: newRecord } = payload;
 
         // Mettre à jour les statistiques

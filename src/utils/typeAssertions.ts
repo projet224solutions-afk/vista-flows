@@ -1,5 +1,5 @@
 // Utilitaires pour les assertions de type sécurisées
-export const safeGet = (obj: any, key: string, fallback: any = null) => {
+export const safeGet = (obj: Record<string, unknown>, key: string, fallback: unknown = null) => {
   return obj && typeof obj === 'object' && key in obj ? obj[key] : fallback;
 };
 
@@ -20,7 +20,7 @@ export const safeBoolean = (value: unknown, fallback: boolean = false): boolean 
 };
 
 // Fonction pour mapper les données Supabase de manière sécurisée
-export const mapSupabaseData = <T>(data: unknown[], mapper: (item: any) => T): T[] => {
+export const mapSupabaseData = <T>(data: unknown[], mapper: (item: unknown) => T): T[] => {
   if (!Array.isArray(data)) {
     return [];
   }

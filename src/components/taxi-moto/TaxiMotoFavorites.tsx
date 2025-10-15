@@ -195,7 +195,7 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
     /**
      * Utilise un trajet favori pour une nouvelle réservation
      */
-    const useRoute = (route: FavoriteRoute) => {
+    const handleUseRoute = (route: FavoriteRoute) => {
         toast.info(`Redirection vers réservation: ${route.name}`);
         // En production: rediriger vers l'onglet réservation avec les données pré-remplies
     };
@@ -356,7 +356,7 @@ export default function TaxiMotoFavorites({ userId }: TaxiMotoFavoritesProps) {
                                     </div>
 
                                     <Button
-                                        onClick={() => useRoute(route)}
+                                        onClick={() => handleUseRoute(route)}
                                         className="w-full"
                                     >
                                         <Navigation className="w-4 h-4 mr-2" />

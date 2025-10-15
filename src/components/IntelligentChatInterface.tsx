@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 interface IntelligentChatInterfaceProps {
     context?: AIContext;
-    onActionRequest?: (action: string, data?: any) => void;
+    onActionRequest?: (action: string, data?: unknown) => void;
 }
 
 export default function IntelligentChatInterface({
@@ -395,7 +395,7 @@ Je suis là pour vous aider à prendre les meilleures décisions ! Que souhaitez
 // Déclaration pour TypeScript (reconnaissance vocale)
 declare global {
     interface Window {
-        webkitSpeechRecognition: any;
-        SpeechRecognition: any;
+        webkitSpeechRecognition: unknown;
+        SpeechRecognition: unknown;
     }
 }

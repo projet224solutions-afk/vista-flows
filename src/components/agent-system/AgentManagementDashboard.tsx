@@ -514,7 +514,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {settings && settings.length > 0 && settings.map((setting: any) => (
+              {settings && settings.length > 0 && settings.map((setting: unknown) => (
                 <div key={setting.id || Math.random()} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h4 className="font-medium">{setting.description || 'Configuration'}</h4>

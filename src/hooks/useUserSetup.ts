@@ -103,7 +103,7 @@ export const useUserSetup = () => {
     };
 
     // Fonction pour créer les éléments manquants
-    const createMissingElements = async (userId: string, currentInfo: any) => {
+    const createMissingElements = async (userId: string, currentInfo: unknown) => {
         try {
             // Créer l'ID utilisateur s'il manque
             if (!currentInfo?.custom_id) {
@@ -159,7 +159,7 @@ export const useUserSetup = () => {
     };
 
     // Fonction pour créer une carte virtuelle
-    const createVirtualCard = async (userId: string, walletId: string, userInfo: any) => {
+    const createVirtualCard = async (userId: string, walletId: string, userInfo: unknown) => {
         try {
             const cardNumber = generateVirtualCardNumber();
             const cvv = generateCVV();

@@ -315,7 +315,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     <div className="flex gap-2 flex-wrap">
                         <select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value as any)}
+                            onChange={(e) => setStatusFilter(e.target.value as unknown)}
                             className="px-3 py-2 border rounded-md text-sm"
                         >
                             <option value="all">Tous les statuts</option>
@@ -325,7 +325,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
 
                         <select
                             value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value as any)}
+                            onChange={(e) => setDateFilter(e.target.value as unknown)}
                             className="px-3 py-2 border rounded-md text-sm"
                         >
                             <option value="all">Toutes les dates</option>

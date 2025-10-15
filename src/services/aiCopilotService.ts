@@ -9,16 +9,16 @@ export interface Message {
     metadata?: {
         context?: string;
         actions?: string[];
-        data?: any;
+        data?: unknown;
     };
 }
 
 export interface AIContext {
     userRole: string;
-    companyData: any;
+    companyData: unknown;
     recentActions: string[];
     currentPage: string;
-    businessMetrics: any;
+    businessMetrics: unknown;
 }
 
 export class AICopilotService {
@@ -101,7 +101,7 @@ export class AICopilotService {
         return assistantMsg;
     }
 
-    private async generateIntelligentResponse(message: string): Promise<{ content: string, metadata?: any }> {
+    private async generateIntelligentResponse(message: string): Promise<{ content: string, metadata?: unknown }> {
         const lowerMessage = message.toLowerCase();
 
         // Détection des intentions
@@ -360,7 +360,7 @@ Que souhaitez-vous explorer maintenant ?`,
         }
     }
 
-    private generateContextualResponse(message: string, intent: any) {
+    private generateContextualResponse(message: string, intent: unknown) {
         const responses = {
             optimization: [
                 "Excellente question ! Pour optimiser cela, je recommande plusieurs approches stratégiques...",

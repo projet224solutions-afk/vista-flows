@@ -462,7 +462,7 @@ export class TransportService {
     evidence?: {
       photos: string[];
       messages: string[];
-      coordinates: any[];
+      coordinates: unknown[];
     }
   ): Promise<void> {
     try {
@@ -661,7 +661,7 @@ export class TransportService {
   /**
    * Notifier un client
    */
-  private async notifyClient(clientId: string, notification: any): Promise<void> {
+  private async notifyClient(clientId: string, notification: unknown): Promise<void> {
     try {
       await fetch('/api/notifications/send', {
         method: 'POST',
@@ -681,7 +681,7 @@ export class TransportService {
   /**
    * Notifier un transporteur
    */
-  private async notifyTransportUser(transportUserId: string, notification: any): Promise<void> {
+  private async notifyTransportUser(transportUserId: string, notification: unknown): Promise<void> {
     try {
       await fetch('/api/notifications/send', {
         method: 'POST',
@@ -701,7 +701,7 @@ export class TransportService {
   /**
    * Envoyer une notification push
    */
-  private async sendPushNotification(userId: string, notification: any): Promise<void> {
+  private async sendPushNotification(userId: string, notification: unknown): Promise<void> {
     try {
       await fetch('/api/notifications/push', {
         method: 'POST',
@@ -785,17 +785,17 @@ export class TransportService {
   /**
    * Gestionnaires d'événements WebSocket
    */
-  private handleTransportRequest(data: any): void {
+  private handleTransportRequest(data: unknown): void {
     console.log('🚚 Nouvelle demande de transport reçue:', data.request.id);
     window.dispatchEvent(new CustomEvent('transportRequest', { detail: data }));
   }
 
-  private handleTransportUpdate(data: any): void {
+  private handleTransportUpdate(data: unknown): void {
     console.log('🚚 Mise à jour transport:', data.requestId);
     window.dispatchEvent(new CustomEvent('transportUpdate', { detail: data }));
   }
 
-  private handleTransportUserStatus(data: any): void {
+  private handleTransportUserStatus(data: unknown): void {
     const { userId, status, position } = data;
     const user = this.onlineTransportUsers.get(userId);
     if (user) {
@@ -810,7 +810,7 @@ export class TransportService {
     }
   }
 
-  private handlePositionUpdate(data: any): void {
+  private handlePositionUpdate(data: unknown): void {
     const { userId, position } = data;
     const user = this.onlineTransportUsers.get(userId);
     if (user) {

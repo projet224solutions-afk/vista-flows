@@ -58,7 +58,7 @@ interface TaxiMotardResult {
         balance: number;
         currency: string;
     };
-    taxi_motard: any;
+    taxi_motard: unknown;
     badge: {
         id: string;
         number: string;

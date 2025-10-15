@@ -10,9 +10,9 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const PAGE_LIMIT = 12;
 
 export default function Marketplace() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<unknown[]>([]);
   const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<unknown[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -79,7 +79,7 @@ export default function Marketplace() {
       {/* Categories */}
       <section className="px-4 py-4 border-b border-border">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {categories.map((category: any) => (
+          {categories.map((category: unknown) => (
             <Badge
               key={category.id}
               variant={selectedCategory === (category.id || category.label) ? "default" : "secondary"}
@@ -180,7 +180,7 @@ export default function Marketplace() {
         </div>
 
         <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
-          {products.map((p: any) => (
+          {products.map((p: unknown) => (
             <ProductCard key={p.id} {...p} onBuy={() => {}} onContact={() => {}} />
           ))}
         </div>

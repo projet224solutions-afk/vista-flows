@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import EscrowService, { EscrowInvoice, EscrowTransaction } from '../../services/escrow/EscrowService';
 
-interface PaymentPageProps { }
+type PaymentPageProps = Record<string, never>
 
 const PaymentPage: React.FC<PaymentPageProps> = () => {
     const { invoiceId } = useParams<{ invoiceId: string }>();

@@ -8,7 +8,7 @@ export interface SecurityEvent {
   event_type: string;
   severity_level: string;
   source_module: string;
-  event_data: any;
+  event_data: Record<string, unknown>;
   created_at: string;
   ip_address?: string;
   threat_level?: string;

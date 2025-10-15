@@ -265,7 +265,7 @@ export function useCommissionManagement(recipientId?: string, recipientType?: 'a
 
   const fetchSettings = useCallback(async () => {
     try {
-      const data: any = await agentService.getCommissionSettings();
+      const data: Record<string, unknown> = await agentService.getCommissionSettings();
       setSettings(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -278,7 +278,7 @@ export function useCommissionManagement(recipientId?: string, recipientType?: 'a
     fetchSettings();
   }, [fetchCommissions, fetchSettings]);
 
-  const updateSetting = useCallback(async (settingKey: string, value?: any) => {
+  const updateSetting = useCallback(async (settingKey: string, value?: unknown) => {
     try {
       // Mock update - do nothing for now
       console.log('Mise à jour simulée:', settingKey, value);
@@ -292,7 +292,7 @@ export function useCommissionManagement(recipientId?: string, recipientType?: 'a
     transactionAmount: number;
     netRevenue: number;
     transactionType: string;
-    metadata?: any;
+    metadata?: unknown;
   }) => {
     const result = await agentService.processTransaction(data);
     // Rafraîchir les commissions après traitement
@@ -331,7 +331,7 @@ export function useAgentStats(agentId?: string) {
 
     try {
       setLoading(true);
-      const data: any = await agentService.getAgentStats(agentId);
+      const data: Record<string, unknown> = await agentService.getAgentStats(agentId);
       setStats({
         totalUsers: data?.totalUsers || 0,
         activeUsers: data?.activeUsers || data?.totalUsers || 0,
@@ -379,7 +379,7 @@ export function useUserActivation() {
       setLoading(true);
       setError(null);
       
-      const result: any = await agentService.activateUser(invitationToken);
+      const result: unknown = await agentService.activateUser(invitationToken);
       
       // Retourner un objet par défaut
       return result || { success: true };
@@ -423,7 +423,7 @@ export function useAgentSystemOverview(pdgId?: string) {
       const totalUsers = agents.reduce((sum, a) => sum + (a.total_users_created || 0), 0);
       const totalCommissions = agents.reduce((sum, a) => sum + (a.total_commissions_earned || 0), 0);
       
-      const baseCommissionSetting: any = settings.find((s: any) => (s.setting_key || s.key) === 'base_user_commission');
+      const baseCommissionSetting: unknown = settings.find((s: unknown) => (s.setting_key || s.key) === 'base_user_commission');
       const averageCommissionRate = baseCommissionSetting ? ((baseCommissionSetting.setting_value || baseCommissionSetting.value || 0.2) * 100) : 20;
 
       setOverview({

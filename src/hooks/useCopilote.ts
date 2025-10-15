@@ -20,14 +20,14 @@ interface UseCopiloteReturn {
   sendMessage: (message: string) => Promise<void>;
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;
-  executeBusinessAction: (action: BusinessAction) => Promise<any>;
+  executeBusinessAction: (action: BusinessAction) => Promise<unknown>;
   
   // Utilitaires
   getWalletBalance: () => Promise<{ balance: number; currency: string }>;
-  getTransactionHistory: (limit?: number) => Promise<any[]>;
-  simulateConversion: (amount: number, from: string, to: string) => Promise<any>;
-  getExchangeRates: () => Promise<any[]>;
-  getAIStats: () => Promise<any>;
+  getTransactionHistory: (limit?: number) => Promise<unknown[]>;
+  simulateConversion: (amount: number, from: string, to: string) => Promise<unknown>;
+  getExchangeRates: () => Promise<unknown[]>;
+  getAIStats: () => Promise<unknown>;
 }
 
 export function useCopilote(): UseCopiloteReturn {

@@ -292,7 +292,7 @@ export const cacheUtils = {
   /**
    * Génère une clé de cache à partir d'un objet
    */
-  generateKey(prefix: string, params: Record<string, any>): string {
+  generateKey(prefix: string, params: Record<string, unknown>): string {
     const sortedParams = Object.keys(params)
       .sort()
       .map(key => `${key}:${params[key]}`)

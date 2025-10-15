@@ -417,7 +417,7 @@ export default function OrderManagement() {
                     <p className="text-sm font-medium text-muted-foreground">Adresse de livraison</p>
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 inline mr-1" />
-                      {(order.shipping_address as any)?.city || 'Non spécifiée'}
+                      {(order.shipping_address as unknown)?.city || 'Non spécifiée'}
                     </div>
                   </div>
                 </div>
@@ -550,10 +550,10 @@ export default function OrderManagement() {
                   <div className="text-sm text-muted-foreground">
                     {selectedOrder.shipping_address ? (
                       <div>
-                        {(selectedOrder.shipping_address as any).street && <div>{(selectedOrder.shipping_address as any).street}</div>}
-                        {(selectedOrder.shipping_address as any).city && <div>{(selectedOrder.shipping_address as any).city}</div>}
-                        {(selectedOrder.shipping_address as any).postal_code && <div>{(selectedOrder.shipping_address as any).postal_code}</div>}
-                        {(selectedOrder.shipping_address as any).country && <div>{(selectedOrder.shipping_address as any).country}</div>}
+                        {(selectedOrder.shipping_address as unknown).street && <div>{(selectedOrder.shipping_address as unknown).street}</div>}
+                        {(selectedOrder.shipping_address as unknown).city && <div>{(selectedOrder.shipping_address as unknown).city}</div>}
+                        {(selectedOrder.shipping_address as unknown).postal_code && <div>{(selectedOrder.shipping_address as unknown).postal_code}</div>}
+                        {(selectedOrder.shipping_address as unknown).country && <div>{(selectedOrder.shipping_address as unknown).country}</div>}
                       </div>
                     ) : (
                       <span>Non spécifiée</span>
@@ -564,10 +564,10 @@ export default function OrderManagement() {
                   <div>
                     <h4 className="font-semibold mb-2">Adresse de facturation</h4>
                     <div className="text-sm text-muted-foreground">
-                      {(selectedOrder.billing_address as any)?.street && <div>{(selectedOrder.billing_address as any).street}</div>}
-                      {(selectedOrder.billing_address as any)?.city && <div>{(selectedOrder.billing_address as any).city}</div>}
-                      {(selectedOrder.billing_address as any)?.postal_code && <div>{(selectedOrder.billing_address as any).postal_code}</div>}
-                      {(selectedOrder.billing_address as any)?.country && <div>{(selectedOrder.billing_address as any).country}</div>}
+                      {(selectedOrder.billing_address as unknown)?.street && <div>{(selectedOrder.billing_address as unknown).street}</div>}
+                      {(selectedOrder.billing_address as unknown)?.city && <div>{(selectedOrder.billing_address as unknown).city}</div>}
+                      {(selectedOrder.billing_address as unknown)?.postal_code && <div>{(selectedOrder.billing_address as unknown).postal_code}</div>}
+                      {(selectedOrder.billing_address as unknown)?.country && <div>{(selectedOrder.billing_address as unknown).country}</div>}
                     </div>
                   </div>
                 )}

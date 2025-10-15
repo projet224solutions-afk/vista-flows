@@ -12,7 +12,7 @@ export interface AuditResult {
   description: string;
   recommendation: string;
   affectedCount?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PaymentAuditReport {

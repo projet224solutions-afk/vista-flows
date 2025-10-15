@@ -84,8 +84,8 @@ export function useCommunicationData() {
           minute: '2-digit'
         }),
         unreadCount: conv.unread_count || 0,
-        status: (conv.participants?.[0] as any)?.profiles?.status || 'offline',
-        avatar: (conv.participants?.[0] as any)?.profiles?.avatar_url
+        status: (conv.participants?.[0] as unknown)?.profiles?.status || 'offline',
+        avatar: (conv.participants?.[0] as unknown)?.profiles?.avatar_url
       })) || [];
 
       setConversations(formattedConversations);
@@ -124,7 +124,7 @@ export function useCommunicationData() {
       }
 
       const formattedMessages: Message[] = messagesData?.map(msg => {
-        const profile = (msg.profiles as any);
+        const profile = (msg.profiles as unknown);
         return {
           id: msg.id,
           sender: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Utilisateur',

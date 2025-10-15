@@ -29,7 +29,7 @@ interface Product {
 interface Category {
   id: string;
   name: string;
-  icon: any;
+  icon: unknown;
   color: string;
   itemCount: number;
 }
@@ -90,8 +90,8 @@ export function useClientData() {
         category: product.category || 'general',
         discount: product.discount,
         inStock: product.in_stock,
-        seller: (product.vendors as any)?.business_name || (product.vendors as any)?.brand || 'Vendeur',
-        brand: (product.vendors as any)?.brand || (product.vendors as any)?.business_name || 'Marque',
+        seller: (product.vendors as unknown)?.business_name || (product.vendors as unknown)?.brand || 'Vendeur',
+        brand: (product.vendors as unknown)?.brand || (product.vendors as unknown)?.business_name || 'Marque',
         isHot: Math.random() > 0.7,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         isFreeShipping: Math.random() > 0.5
@@ -168,8 +168,8 @@ export function useClientData() {
 
       const formattedOrders: Order[] = ordersData?.map(order => {
         const firstItem = order.order_items?.[0];
-        const productData = firstItem?.products as any;
-        const vendorData = firstItem?.vendors as any;
+        const productData = firstItem?.products as unknown;
+        const vendorData = firstItem?.vendors as unknown;
         
         return {
           id: order.id,
