@@ -120,7 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .upsert({
               user_id: user.id,
               card_number: cardNumber,
-              cardholder_name: `${user.user_metadata?.first_name || 'Client'} ${user.user_metadata?.last_name || customId}`,
               expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
               cvv: Math.floor(Math.random() * 900 + 100).toString(),
               daily_limit: 500000,
