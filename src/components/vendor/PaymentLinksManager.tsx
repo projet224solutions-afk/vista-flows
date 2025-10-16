@@ -64,7 +64,7 @@ export default function PaymentLinksManager() {
 
   // Filtres
   const [filters, setFilters] = useState({
-    status: '',
+    status: 'all',
     search: ''
   });
 
@@ -77,7 +77,7 @@ export default function PaymentLinksManager() {
     try {
       setLoading(true);
       const response = await fetch(`/api/payments/vendor/${user?.id}?${new URLSearchParams({
-        status: filters.status,
+        status: filters.status === 'all' ? '' : filters.status,
         search: filters.search
       })}`);
       
@@ -286,7 +286,7 @@ export default function PaymentLinksManager() {
               <SelectValue placeholder="Filtrer par statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous les statuts</SelectItem>
+              <SelectItem value="all">Tous les statuts</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
               <SelectItem value="success">Réussi</SelectItem>
               <SelectItem value="failed">Échoué</SelectItem>
