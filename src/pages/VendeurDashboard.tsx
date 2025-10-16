@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { VendorSidebar } from "@/components/vendor/VendorSidebar";
+import { useVendorStats } from "@/hooks/useVendorData";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import des modules vendeur
 import ProductManagement from "@/components/vendor/ProductManagement";
@@ -46,38 +48,53 @@ export default function VendeurDashboard() {
   const location = useLocation();
   useRoleRedirect();
   const { userInfo } = useUserInfo();
+  const { stats, loading: statsLoading } = useVendorStats();
+  const [recentOrders, setRecentOrders] = useState<{
+    order_number: string;
+    customer_label: string;
+    status: string;
+    total_amount: number;
+    created_at: string;
+  }[]>([]);
 
-  // ✅ Correction : Évite les re-renders inutiles en recalculant une seule fois les stats statiques
-  const mainStats = useMemo(() => ([
-    {
-      label: "Chiffre d'affaires",
-      value: "2.4M GNF",
-      change: "+12%",
-      icon: DollarSign,
-      color: "bg-green-50 text-green-600"
-    },
-    {
-      label: "Commandes",
-      value: "156",
-      change: "+8%",
-      icon: ShoppingCart,
-      color: "bg-blue-50 text-blue-600"
-    },
-    {
-      label: "Clients actifs",
-      value: "89",
-      change: "+15%",
-      icon: Users,
-      color: "bg-purple-50 text-purple-600"
-    },
-    {
-      label: "Taux conversion",
-      value: "3.2%",
-      change: "+0.5%",
-      icon: Target,
-      color: "bg-orange-50 text-orange-600"
-    }
-  ]), []);
+  // Stats dynamiques réelles (dérivées de useVendorStats)
+  const mainStats = useMemo(() => {
+    const revenue = stats?.revenue ?? 0;
+    const ordersCount = stats?.orders_count ?? 0;
+    const customersCount = stats?.customers_count ?? 0;
+    const conversion = customersCount > 0 ? (ordersCount / customersCount) * 100 : 0;
+
+    return [
+      {
+        label: "Chiffre d'affaires",
+        value: `${Math.round(revenue).toLocaleString()} GNF`,
+        change: "",
+        icon: DollarSign,
+        color: "bg-green-50 text-green-600"
+      },
+      {
+        label: "Commandes",
+        value: `${ordersCount.toLocaleString()}`,
+        change: "",
+        icon: ShoppingCart,
+        color: "bg-blue-50 text-blue-600"
+      },
+      {
+        label: "Clients actifs",
+        value: `${customersCount.toLocaleString()}`,
+        change: "",
+        icon: Users,
+        color: "bg-purple-50 text-purple-600"
+      },
+      {
+        label: "Taux conversion",
+        value: `${conversion.toFixed(1)}%`,
+        change: "",
+        icon: Target,
+        color: "bg-orange-50 text-orange-600"
+      }
+    ];
+  }, [stats]);
 
   // Rediriger vers dashboard par défaut
   useEffect(() => {
@@ -86,6 +103,37 @@ export default function VendeurDashboard() {
       navigate('/vendeur/dashboard', { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  // Charger les 5 dernières commandes réelles du vendeur
+  useEffect(() => {
+    const loadRecentOrders = async () => {
+      if (!user) return;
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (!vendor) return;
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`order_number,total_amount,status,created_at,customer:customers(user_id)`)
+        .eq('vendor_id', vendor.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) return;
+
+      const formatted = (data || []).map((o: any) => ({
+        order_number: o.order_number,
+        customer_label: o.customer?.user_id ? `Client ${(o.customer.user_id as string).slice(0, 6)}` : 'Client',
+        status: o.status || 'pending',
+        total_amount: o.total_amount || 0,
+        created_at: o.created_at
+      }));
+      setRecentOrders(formatted);
+    };
+    loadRecentOrders();
+  }, [user]);
 
   // ✅ Correction : Stabilise la référence et empêche re-renders des enfants qui recevraient cette fonction
   const handleSignOut = useCallback(async () => {
@@ -107,7 +155,7 @@ export default function VendeurDashboard() {
   }, [signOut, toast, navigate]);
 
   // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
-  const isLoading = !user || typeof profile === 'undefined';
+  const isLoading = !user || typeof profile === 'undefined' || statsLoading;
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -126,7 +174,7 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
-      {/* Stats principales */}
+      {/* Stats principales (réelles) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {mainStats.map((stat, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow">
@@ -135,10 +183,12 @@ export default function VendeurDashboard() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
                   <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
-                  <div className="flex items-center gap-1 mt-2">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                  </div>
+                  {stat.change && (
+                    <div className="flex items-center gap-1 mt-2">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-600">{stat.change}</span>
+                    </div>
+                  )}
                 </div>
                 <div className={`p-3 rounded-xl ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
@@ -158,20 +208,26 @@ export default function VendeurDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              {recentOrders.map((o) => (
+                <div key={o.order_number} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <Package className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium">Commande #{1000 + i}</p>
-                      <p className="text-sm text-muted-foreground">Client {i}</p>
+                      <p className="font-medium">Commande #{o.order_number}</p>
+                      <p className="text-sm text-muted-foreground">{o.customer_label}</p>
                     </div>
                   </div>
-                  <Badge variant="secondary">En cours</Badge>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">{o.total_amount.toLocaleString()} GNF</span>
+                    <Badge variant="secondary">{o.status}</Badge>
+                  </div>
                 </div>
               ))}
+              {recentOrders.length === 0 && (
+                <div className="text-sm text-muted-foreground">Aucune commande récente.</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -187,14 +243,14 @@ export default function VendeurDashboard() {
                 <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
                 <div>
                   <p className="font-medium text-yellow-900">Stock faible</p>
-                  <p className="text-sm text-yellow-700">3 produits nécessitent un réapprovisionnement</p>
+                  <p className="text-sm text-yellow-700">{stats?.low_stock_count ?? 0} produits nécessitent un réapprovisionnement</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
                   <p className="font-medium text-blue-900">Nouvelles commandes</p>
-                  <p className="text-sm text-blue-700">12 nouvelles commandes à traiter</p>
+                  <p className="text-sm text-blue-700">{stats?.orders_pending ?? 0} nouvelles commandes à traiter</p>
                 </div>
               </div>
             </div>
@@ -348,3 +404,4 @@ export default function VendeurDashboard() {
     </SidebarProvider>
   );
 }
+

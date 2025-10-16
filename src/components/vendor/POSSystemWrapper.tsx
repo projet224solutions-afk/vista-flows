@@ -9,10 +9,8 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, CreditCard, ShoppingCart, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import dynamique du POS avec fallback vers la version simplifiée
-const POSSystem = React.lazy(() =>
-  import('./POSSystem').catch(() => import('./POSSystemSimple'))
-);
+// Import dynamique du POS (suppression du fallback démo)
+const POSSystem = React.lazy(() => import('./POSSystem'));
 
 // Composant de chargement
 const POSLoading = () => (

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   CreditCard, Smartphone, Building, Globe, CheckCircle, XCircle,
   Clock, AlertTriangle, Plus, Download, Eye, RefreshCw, Send
 } from "lucide-react";
@@ -130,51 +130,39 @@ export default function PaymentProcessor() {
 
   const fetchTransactions = async () => {
     try {
-      // Get vendor ID
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user?.id)
         .single();
-
       if (!vendor) return;
 
-      // Simulation de données de transactions
-      const mockTransactions: Transaction[] = [
-        {
-          id: '1',
-          order_id: 'CMD-2024-001',
-          amount: 75000,
-          method: 'Orange Money',
-          status: 'completed',
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          reference: 'OM789123456',
-          customer_email: 'client@example.com'
-        },
-        {
-          id: '2',
-          order_id: 'CMD-2024-002',
-          amount: 125000,
-          method: 'Visa',
-          status: 'processing',
-          created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          reference: 'VISA456789',
-          customer_email: 'client2@example.com'
-        },
-        {
-          id: '3',
-          order_id: 'CMD-2024-003',
-          amount: 50000,
-          method: 'Wave',
-          status: 'failed',
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          reference: 'WAVE123789',
-          customer_email: 'client3@example.com',
-          notes: 'Solde insuffisant'
-        }
-      ];
+      const { data: vendorOrders } = await supabase
+        .from('orders')
+        .select('id, order_number')
+        .eq('vendor_id', vendor.id);
+      const orderById = new Map((vendorOrders || []).map((o: any) => [o.id, o.order_number]));
 
-      setTransactions(mockTransactions);
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('id, order_id, amount, method, status, created_at, reference_number')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+
+      const formatted: Transaction[] = (data || [])
+        .filter((t: any) => !t.order_id || orderById.has(t.order_id))
+        .map((t: any) => ({
+          id: t.id,
+          order_id: (t.order_id && orderById.get(t.order_id)) ? orderById.get(t.order_id) : (t.order_id || '—'),
+          amount: Number(t.amount || 0),
+          method: String(t.method || ''),
+          status: String(t.status || 'pending') as Transaction['status'],
+          created_at: t.created_at,
+          reference: t.reference_number || undefined,
+        }));
+
+      setTransactions(formatted);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -188,43 +176,66 @@ export default function PaymentProcessor() {
 
   const processPayment = async () => {
     try {
-      // Simulation du traitement de paiement
+      const amountNumber = parseFloat(paymentData.amount);
+      if (!selectedOrder || !amountNumber || !paymentData.method) return;
+
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+      if (!vendor) return;
+
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id, order_number')
+        .eq('vendor_id', vendor.id)
+        .or(`order_number.eq.${selectedOrder},id.eq.${selectedOrder}`)
+        .maybeSingle();
+      const orderId = order?.id || null;
+
+      const normalizeMethod = (name: string) => {
+        const n = (name || '').toLowerCase();
+        if (n.includes('orange')) return 'orange_money';
+        if (n.includes('mtn')) return 'mtn';
+        if (n.includes('wave')) return 'wave';
+        if (n.includes('visa') || n.includes('mastercard') || n.includes('card')) return 'card';
+        if (n.includes('virement') || n.includes('bank')) return 'wallet';
+        return 'wallet';
+      };
+
+      const { data: inserted, error } = await supabase
+        .from('transactions')
+        .insert({
+          amount: amountNumber,
+          method: normalizeMethod(paymentData.method) as any,
+          status: 'processing' as any,
+          order_id: orderId,
+          reference_number: `REF${Date.now()}`,
+          user_id: user?.id,
+          description: paymentData.notes || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
       const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        order_id: selectedOrder,
-        amount: parseFloat(paymentData.amount),
-        method: paymentData.method,
-        status: 'processing',
-        created_at: new Date().toISOString(),
-        reference: `REF${Date.now()}`,
+        id: inserted.id,
+        order_id: order?.order_number || inserted.order_id || '—',
+        amount: inserted.amount,
+        method: inserted.method,
+        status: inserted.status,
+        created_at: inserted.created_at,
+        reference: inserted.reference_number || undefined,
         customer_email: paymentData.customer_email,
-        notes: paymentData.notes
+        notes: paymentData.notes,
       };
 
       setTransactions(prev => [newTransaction, ...prev]);
 
-      // Simulation du succès après 3 secondes
-      setTimeout(() => {
-        setTransactions(prev => prev.map(t => 
-          t.id === newTransaction.id 
-            ? { ...t, status: 'completed' as const }
-            : t
-        ));
-        
-        toast({
-          title: "Paiement traité",
-          description: "Le paiement a été traité avec succès."
-        });
-      }, 3000);
-
       setShowPaymentDialog(false);
       setPaymentData({ amount: '', method: '', customer_email: '', notes: '' });
-      
-      toast({
-        title: "Paiement initié",
-        description: "Le traitement du paiement a été initié."
-      });
-
+      toast({ title: "Paiement initié", description: "Le traitement du paiement a été initié." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -236,31 +247,13 @@ export default function PaymentProcessor() {
 
   const retryPayment = async (transactionId: string) => {
     try {
-      setTransactions(prev => prev.map(t => 
-        t.id === transactionId 
-          ? { ...t, status: 'processing' as const }
-          : t
-      ));
-
-      // Simulation du retry
-      setTimeout(() => {
-        setTransactions(prev => prev.map(t => 
-          t.id === transactionId 
-            ? { ...t, status: 'completed' as const }
-            : t
-        ));
-        
-        toast({
-          title: "Paiement réussi",
-          description: "Le paiement a été traité avec succès lors de la nouvelle tentative."
-        });
-      }, 2000);
-
-      toast({
-        title: "Nouvelle tentative",
-        description: "Une nouvelle tentative de paiement a été initiée."
-      });
-
+      const { error } = await supabase
+        .from('transactions')
+        .update({ status: 'processing' as any })
+        .eq('id', transactionId);
+      if (error) throw error;
+      setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'processing' } : t));
+      toast({ title: "Nouvelle tentative", description: "Une nouvelle tentative de paiement a été initiée." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -272,17 +265,13 @@ export default function PaymentProcessor() {
 
   const refundPayment = async (transactionId: string) => {
     try {
-      setTransactions(prev => prev.map(t => 
-        t.id === transactionId 
-          ? { ...t, status: 'refunded' as const }
-          : t
-      ));
-
-      toast({
-        title: "Remboursement effectué",
-        description: "Le remboursement a été traité avec succès."
-      });
-
+      const { error } = await supabase
+        .from('transactions')
+        .update({ status: 'refunded' as any })
+        .eq('id', transactionId);
+      if (error) throw error;
+      setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'refunded' } : t));
+      toast({ title: "Remboursement effectué", description: "Le remboursement a été traité avec succès." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -292,7 +281,6 @@ export default function PaymentProcessor() {
     }
   };
 
-  // Calculs statistiques
   const totalTransactions = transactions.length;
   const completedTransactions = transactions.filter(t => t.status === 'completed').length;
   const totalAmount = transactions
@@ -374,8 +362,8 @@ export default function PaymentProcessor() {
                   onChange={(e) => setPaymentData(prev => ({ ...prev, notes: e.target.value }))}
                 />
               </div>
-              <Button 
-                onClick={processPayment} 
+              <Button
+                onClick={processPayment}
                 className="w-full bg-vendeur-gradient hover:opacity-90"
                 disabled={!selectedOrder || !paymentData.amount || !paymentData.method}
               >

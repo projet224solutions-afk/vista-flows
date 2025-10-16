@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
 import WalletDashboard from '@/components/vendor/WalletDashboard';
-import { useMockExpenseManagement } from '@/hooks/useMockExpenseManagement';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
