@@ -57,6 +57,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     loading,
     error,
     refetch,
+    createCategory
   } = expenseData;
 
   // Valeurs par défaut pour éviter les erreurs de null
@@ -525,17 +526,76 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           </Card>
         </TabsContent>
 
-        <TabsContent value="categories">
+        {/* Catégories - Opérationnel */}
+        <TabsContent value="categories" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Gestion des Catégories</CardTitle>
+              <CardTitle>Créer une Catégorie</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Interface de gestion des catégories en cours de développement...</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Nom</Label>
+                  <Input id="cat-name" placeholder="Ex: Logistique" />
+                </div>
+                <div>
+                  <Label>Budget Mensuel (GNF)</Label>
+                  <Input id="cat-budget" type="number" placeholder="0" />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={async () => {
+                    const nameEl = document.getElementById('cat-name') as HTMLInputElement | null;
+                    const budgetEl = document.getElementById('cat-budget') as HTMLInputElement | null;
+                    const name = nameEl?.value?.trim() || '';
+                    const budget = Number(budgetEl?.value || 0);
+                    if (!name) { toast({ title: 'Nom requis', variant: 'destructive' }); return; }
+                    try {
+                      await createCategory({ name, monthly_budget: budget } as any);
+                      toast({ title: 'Catégorie créée' });
+                      await refetch();
+                      if (nameEl) nameEl.value = '';
+                      if (budgetEl) budgetEl.value = '';
+                    } catch (e) {
+                      toast({ title: 'Erreur', description: 'Impossible de créer la catégorie', variant: 'destructive' });
+                    }
+                  }}>Créer</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des Catégories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(!categories || categories.length === 0) ? (
+                <p className="text-gray-500">Aucune catégorie</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="py-2 pr-4">Nom</th>
+                        <th className="py-2 pr-4">Budget Mensuel</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map((c: any) => (
+                        <tr key={c?.id} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{c?.name || '—'}</td>
+                          <td className="py-2 pr-4">{Number(c?.monthly_budget || 0).toLocaleString()} GNF</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Analytics et Wallet restent placeholders */}
         <TabsContent value="analytics">
           <Card>
             <CardHeader>
