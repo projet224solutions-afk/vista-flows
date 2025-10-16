@@ -12,6 +12,7 @@ interface DebtRow {
   id: string;
   customer_name: string;
   amount: number;
+  description?: string;
   status: 'pending' | 'paid' | 'cancelled';
   created_at: string;
 }
@@ -20,6 +21,7 @@ export default function DebtManagement() {
   const [debts, setDebts] = useState<DebtRow[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
 
   const addDebt = () => {
     const amt = parseFloat(amount);
@@ -32,6 +34,7 @@ export default function DebtManagement() {
       id: `debt-${Date.now()}`,
       customer_name: customerName,
       amount: amt,
+      description: description || undefined,
       status: 'pending',
       created_at: new Date().toISOString()
     };
@@ -39,6 +42,7 @@ export default function DebtManagement() {
     setDebts(prev => [newDebt, ...prev]);
     setCustomerName('');
     setAmount('');
+    setDescription('');
     toast.success('Dette ajoutée (données locales)');
   };
 
@@ -77,6 +81,14 @@ export default function DebtManagement() {
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)} 
                 placeholder="0" 
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Input 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Notes sur la dette (optionnel)" 
               />
             </div>
             <div className="flex items-end">
