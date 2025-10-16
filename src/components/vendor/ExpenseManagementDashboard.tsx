@@ -23,6 +23,7 @@ import {
   MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
+import WalletDashboard from '@/components/vendor/WalletDashboard';
 import { useMockExpenseManagement } from '@/hooks/useMockExpenseManagement';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -718,14 +719,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
         </TabsContent>
 
         <TabsContent value="wallet">
-          <Card>
-            <CardHeader>
-              <CardTitle>Intégration Wallet</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">Interface d'intégration wallet en cours de développement...</p>
-            </CardContent>
-          </Card>
+          <WalletDashboard />
         </TabsContent>
       </Tabs>
     </div>
