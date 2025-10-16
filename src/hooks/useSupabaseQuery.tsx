@@ -111,12 +111,22 @@ export const useSupabaseQuery = <T,>(
 export const useProducts = (vendorId?: string) => {
   return useSupabaseQuery(
     async () => {
+      // Joindre inventory (quantity) pour refléter la décrémentation côté backend
+      // Fallback: products.stock_quantity
       let query = supabase
         .from('products')
         .select(`
-          *,
+          id,
+          name,
+          price,
+          stock_quantity,
+          barcode,
+          ean,
+          sku,
+          images,
           category:categories(name),
-          vendor:vendors(business_name)
+          vendor:vendors(business_name),
+          inventory:inventory(quantity)
         `)
         .eq('is_active', true);
 
@@ -124,7 +134,16 @@ export const useProducts = (vendorId?: string) => {
         query = query.eq('vendor_id', vendorId);
       }
 
-      return await query;
+      const result = await query;
+      if (result?.data) {
+        // Normaliser le stock pour la consommation UI
+        // @ts-ignore - enrich data in place
+        result.data = result.data.map((p: any) => ({
+          ...p,
+          stock_quantity: (p?.inventory?.quantity ?? p?.stock_quantity ?? 0)
+        }));
+      }
+      return result;
     },
     [vendorId]
   );
