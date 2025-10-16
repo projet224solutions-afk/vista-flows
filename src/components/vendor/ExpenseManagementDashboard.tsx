@@ -595,14 +595,124 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           </Card>
         </TabsContent>
 
-        {/* Analytics et Wallet restent placeholders */}
-        <TabsContent value="analytics">
+        {/* Analyses IA - Insights et recommandations */}
+        <TabsContent value="analytics" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Analyses IA Avancées</CardTitle>
+              <CardTitle>Insights Automatiques</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Analyses IA et recommandations en cours de développement...</p>
+              {(() => {
+                const now = new Date();
+                const month = now.getMonth();
+                const year = now.getFullYear();
+                const currentMonthExpenses = expenses.filter((e: any) => {
+                  const d = new Date(e?.created_at);
+                  return d.getMonth() === month && d.getFullYear() === year;
+                });
+                const total = currentMonthExpenses.reduce((s: number, e: any) => s + Number(e?.amount || 0), 0);
+                const byCategory = new Map<string, number>();
+                currentMonthExpenses.forEach((e: any) => {
+                  const key = String(e?.category_id ?? e?.category ?? 'unknown');
+                  byCategory.set(key, (byCategory.get(key) || 0) + Number(e?.amount || 0));
+                });
+
+                const ranked = Array.from(byCategory.entries())
+                  .map(([id, sum]) => ({ id, sum }))
+                  .sort((a, b) => b.sum - a.sum)
+                  .slice(0, 5);
+
+                return (
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-700">
+                      <strong>Total du mois:</strong> {total.toLocaleString()} GNF
+                    </div>
+                    <div>
+                      <div className="font-medium mb-2">Top catégories du mois</div>
+                      <div className="space-y-2">
+                        {ranked.length === 0 ? (
+                          <p className="text-gray-500">Aucune dépense ce mois.</p>
+                        ) : ranked.map((r) => {
+                          const cat = categories?.find((c: any) => String(c?.id) === String(r.id));
+                          return (
+                            <div key={r.id} className="flex items-center justify-between p-2 rounded border">
+                              <span>{cat?.name || `Catégorie #${r.id}`}</span>
+                              <span className="font-semibold">{r.sum.toLocaleString()} GNF</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Détection de Dépassement de Budget</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const now = new Date();
+                const month = now.getMonth();
+                const year = now.getFullYear();
+                const currentMonthExpenses = expenses.filter((e: any) => {
+                  const d = new Date(e?.created_at);
+                  return d.getMonth() === month && d.getFullYear() === year;
+                });
+                const byCategory = new Map<string, number>();
+                currentMonthExpenses.forEach((e: any) => {
+                  const key = String(e?.category_id ?? e?.category ?? 'unknown');
+                  byCategory.set(key, (byCategory.get(key) || 0) + Number(e?.amount || 0));
+                });
+                const over = categories
+                  ?.map((c: any) => {
+                    const spent = byCategory.get(String(c?.id)) || 0;
+                    const budget = Number(c?.monthly_budget || 0);
+                    return { id: c?.id, name: c?.name, spent, budget, over: budget > 0 && spent > budget };
+                  })
+                  .filter((x: any) => x?.over) || [];
+
+                return (
+                  <div className="space-y-2">
+                    {over.length === 0 ? (
+                      <p className="text-green-700 bg-green-50 p-2 rounded">Aucun dépassement détecté ce mois.</p>
+                    ) : (
+                      over.map((o: any) => (
+                        <div key={o.id} className="p-2 rounded border border-red-200 bg-red-50">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-red-800">{o.name}</span>
+                            <span className="text-red-700">{o.spent.toLocaleString()} / {o.budget.toLocaleString()} GNF</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recommandations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const recs: string[] = [];
+                if (metrics.monthlyChange > 10) recs.push('Les dépenses ont augmenté de plus de 10% vs le mois dernier. Envisagez un audit des catégories principales.');
+                if ((categories?.length || 0) === 0) recs.push('Aucune catégorie configurée. Créez des catégories avec un budget mensuel pour un meilleur contrôle.');
+                if ((expenses?.length || 0) === 0) recs.push('Aucune dépense saisie. Ajoutez vos premières dépenses pour démarrer le suivi.');
+                return (
+                  <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                    {recs.length === 0 ? (
+                      <li>Tendance stable. Continuez le suivi mensuel.</li>
+                    ) : recs.map((r, idx) => <li key={idx}>{r}</li>)}
+                  </ul>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
