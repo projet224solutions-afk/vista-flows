@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
@@ -416,14 +418,109 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           )}
         </TabsContent>
 
-        {/* Autres onglets - Placeholders pour l'instant */}
-        <TabsContent value="expenses">
+        {/* Dépenses - Opérationnel */}
+        <TabsContent value="expenses" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Nouvelle Dépense</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Libellé</Label>
+                  <Input placeholder="Ex: Achat fournitures" id="expense-label" />
+                </div>
+                <div>
+                  <Label>Montant</Label>
+                  <Input type="number" placeholder="0" id="expense-amount" />
+                </div>
+                <div>
+                  <Label>Catégorie</Label>
+                  <select id="expense-category" className="w-full h-10 px-3 border rounded-md bg-white">
+                    <option value="">Sélectionner</option>
+                    {categories?.map((c: any) => (
+                      <option key={c?.id} value={c?.id}>{c?.name || c?.label || `Catégorie #${c?.id}`}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    disabled={loading}
+                    onClick={async () => {
+                      const labelEl = document.getElementById('expense-label') as HTMLInputElement | null;
+                      const amountEl = document.getElementById('expense-amount') as HTMLInputElement | null;
+                      const catEl = document.getElementById('expense-category') as HTMLSelectElement | null;
+                      const label = labelEl?.value?.trim() || '';
+                      const amount = Number(amountEl?.value || 0);
+                      const category_id = catEl?.value || '';
+                      if (!label || !amount || !category_id) {
+                        toast({ title: 'Champs requis', description: 'Libellé, montant et catégorie sont requis', variant: 'destructive' });
+                        return;
+                      }
+                      try {
+                        await createExpense({ label, amount, category_id });
+                        toast({ title: 'Dépense ajoutée' });
+                        await refetch();
+                        if (labelEl) labelEl.value = '';
+                        if (amountEl) amountEl.value = '';
+                        if (catEl) catEl.value = '';
+                      } catch (e) {
+                        toast({ title: 'Erreur', description: 'Impossible d\'ajouter la dépense', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Liste des Dépenses</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Interface de gestion des dépenses en cours de développement...</p>
+              {expenses.length === 0 ? (
+                <p className="text-gray-500">Aucune dépense enregistrée</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="py-2 pr-4">Libellé</th>
+                        <th className="py-2 pr-4">Catégorie</th>
+                        <th className="py-2 pr-4">Montant</th>
+                        <th className="py-2 pr-4">Date</th>
+                        <th className="py-2 pr-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.map((e: any) => (
+                        <tr key={e?.id} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{e?.label || e?.name || '—'}</td>
+                          <td className="py-2 pr-4">{categories?.find((c: any) => c?.id === (e?.category_id || e?.category))?.name || '—'}</td>
+                          <td className="py-2 pr-4">{Number(e?.amount || 0).toLocaleString()} GNF</td>
+                          <td className="py-2 pr-4">{e?.created_at ? new Date(e.created_at).toLocaleString('fr-FR') : '—'}</td>
+                          <td className="py-2 pr-0 text-right">
+                            <Button variant="ghost" size="sm" onClick={async () => {
+                              try {
+                                await deleteExpense(e?.id);
+                                toast({ title: 'Dépense supprimée' });
+                                await refetch();
+                              } catch (err) {
+                                toast({ title: 'Erreur suppression', variant: 'destructive' });
+                              }
+                            }}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
