@@ -64,7 +64,7 @@ interface Customer {
 
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   
   // Récupérer le vendor_id de l'utilisateur connecté
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -91,15 +91,15 @@ export function POSSystem() {
   const { data: productsData, loading: productsLoading, refetch: refetchProducts } = useProducts();
   
   // Transformer les données des produits pour le format POS
-  const products = productsData?.map(p => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    category: p.category_id || 'Divers',
-    stock: p.stock_quantity || 0,
-    barcode: p.barcode,
-    images: p.images
-  })) || [];
+  const products = (productsData || []).map((p: any) => ({
+    id: p?.id,
+    name: p?.name ?? 'Produit',
+    price: Number(p?.price || 0),
+    category: p?.category_id || 'Divers',
+    stock: Number(p?.stock_quantity || 0),
+    barcode: p?.barcode || p?.ean || p?.sku || undefined,
+    images: p?.images || []
+  }));
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -237,10 +237,14 @@ export function POSSystem() {
         totalAmount: total,
         items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
       };
-      const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
+      const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001';
+      const token = (session as unknown as { access_token?: string })?.access_token;
       const resp = await fetch(`${API_BASE}/api/orders/pos-checkout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       });
       const json = await resp.json().catch(() => ({}));
@@ -254,7 +258,7 @@ export function POSSystem() {
       setShowOrderSummary(false);
       setReceivedAmount(0);
       // Recharger la liste des produits pour refléter le stock
-      await refetchProducts?.();
+      try { await refetchProducts?.(); } catch {}
     } catch (e: unknown) {
       toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
     }
