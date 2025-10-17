@@ -17,13 +17,23 @@ export default function PDGSecurity() {
   const loadSecurityData = async () => {
     setLoading(true);
     try {
-      const [{ data: audit }, { data: fraud }] = await Promise.all([
-        supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('fraud_detection_logs').select('*').order('created_at', { ascending: false }).limit(20)
-      ]);
+      // Essayer d'abord l'API backend
+      const response = await fetch('/api/admin/security/audit');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAuditLogs(data.audit_logs || []);
+        setFraudLogs(data.fraud_logs || []);
+      } else {
+        // Fallback vers Supabase direct
+        const [{ data: audit }, { data: fraud }] = await Promise.all([
+          supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('fraud_detection_logs').select('*').order('created_at', { ascending: false }).limit(20)
+        ]);
 
-      setAuditLogs(audit || []);
-      setFraudLogs(fraud || []);
+        setAuditLogs(audit || []);
+        setFraudLogs(fraud || []);
+      }
     } catch (error) {
       console.error('Erreur chargement sécurité:', error);
       toast.error('Erreur lors du chargement des données de sécurité');

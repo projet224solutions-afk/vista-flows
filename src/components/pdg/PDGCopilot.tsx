@@ -57,32 +57,58 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
   };
 
   const generateAIResponse = async (query: string): Promise<string> => {
-    // Analyse des commandes courantes
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes('utilisateur') || lowerQuery.includes('user')) {
-      const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-      return `Il y a actuellement ${count || 0} utilisateurs enregistrés sur la plateforme.`;
-    }
-    
-    if (lowerQuery.includes('transaction') || lowerQuery.includes('paiement')) {
-      const { data: trans } = await supabase
-        .from('wallet_transactions')
-        .select('amount')
-        .eq('status', 'completed');
-      const total = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
-      return `Le montant total des transactions complétées est de ${total.toLocaleString()} GNF.`;
-    }
-    
-    if (lowerQuery.includes('fraude') || lowerQuery.includes('sécurité')) {
-      const { data: fraud } = await supabase
-        .from('fraud_detection_logs')
-        .select('*')
-        .eq('reviewed', false);
-      return `Il y a ${fraud?.length || 0} alertes de fraude non traitées. ${fraud?.filter(f => f.risk_level === 'critical').length || 0} sont critiques.`;
-    }
+    try {
+      const lowerQuery = query.toLowerCase();
+      
+      if (lowerQuery.includes('utilisateur') || lowerQuery.includes('user')) {
+        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        return `Il y a actuellement ${count || 0} utilisateurs enregistrés sur la plateforme.`;
+      }
+      
+      if (lowerQuery.includes('transaction') || lowerQuery.includes('paiement')) {
+        const { data: trans } = await supabase
+          .from('wallet_transactions')
+          .select('amount, status')
+          .eq('status', 'completed');
+        const total = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
+        return `Le montant total des transactions complétées est de ${total.toLocaleString()} GNF.`;
+      }
+      
+      if (lowerQuery.includes('vendeur') || lowerQuery.includes('vendor')) {
+        const { data: vendors } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'vendeur');
+        return `Il y a ${vendors?.length || 0} vendeurs actifs sur la plateforme.`;
+      }
+      
+      if (lowerQuery.includes('produit') || lowerQuery.includes('product')) {
+        const { count } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
+        return `Il y a ${count || 0} produits dans le catalogue.`;
+      }
+      
+      if (lowerQuery.includes('commande') || lowerQuery.includes('order')) {
+        const { count } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true });
+        return `Il y a ${count || 0} commandes au total.`;
+      }
+      
+      if (lowerQuery.includes('fraude') || lowerQuery.includes('sécurité')) {
+        const { data: fraud } = await supabase
+          .from('fraud_detection_logs')
+          .select('*')
+          .eq('reviewed', false);
+        return `Il y a ${fraud?.length || 0} alertes de fraude non traitées. ${fraud?.filter(f => f.risk_level === 'critical').length || 0} sont critiques.`;
+      }
 
-    return 'Je peux vous aider avec les statistiques, la gestion des utilisateurs, les transactions et la sécurité. Posez-moi une question spécifique !';
+      return 'Je peux vous aider avec les statistiques, la gestion des utilisateurs, les transactions, les produits, les commandes et la sécurité. Posez-moi une question spécifique !';
+    } catch (error) {
+      console.error('Erreur génération réponse IA:', error);
+      return 'Désolé, je rencontre une erreur technique. Veuillez réessayer.';
+    }
   };
 
   return (

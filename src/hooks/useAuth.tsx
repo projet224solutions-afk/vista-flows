@@ -121,9 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               user_id: user.id,
               card_number: cardNumber,
               expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
-              cvv: Math.floor(Math.random() * 900 + 100).toString(),
-              daily_limit: 500000,
-              monthly_limit: 2000000
+              cvv: Math.floor(Math.random() * 900 + 100).toString()
             });
 
           if (cardError) {

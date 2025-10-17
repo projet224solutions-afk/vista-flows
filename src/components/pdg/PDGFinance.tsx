@@ -48,28 +48,52 @@ export default function PDGFinance() {
   const loadFinanceData = async () => {
     setLoading(true);
     try {
-      const { data: trans } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // Essayer d'abord l'API backend
+      const response = await fetch('/api/admin/finance/stats');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+        setTransactions(data.transactions || []);
+      } else {
+        // Fallback vers Supabase direct
+        const { data: trans, error: transError } = await supabase
+          .from('wallet_transactions')
+          .select(`
+            *,
+            sender:profiles!wallet_transactions_sender_id_fkey(id, first_name, last_name, business_name),
+            receiver:profiles!wallet_transactions_receiver_id_fkey(id, first_name, last_name, business_name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(100);
 
-      setTransactions(trans || []);
+        if (transError) throw transError;
 
-      const revenue = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
-      const commissions = trans?.reduce((sum, t) => sum + Number(t.fee || 0), 0) || 0;
-      const pending = trans?.filter(t => t.status === 'pending').reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
+        setTransactions(trans || []);
 
-      const { count: walletCount } = await supabase
-        .from('wallets')
-        .select('*', { count: 'exact', head: true });
+        // Calculer les statistiques réelles
+        const completedTrans = trans?.filter(t => t.status === 'completed') || [];
+        const pendingTrans = trans?.filter(t => t.status === 'pending') || [];
+        
+        const revenue = completedTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        const commissions = completedTrans.reduce((sum, t) => sum + Number(t.fee || 0), 0);
+        const pending = pendingTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-      setStats({
-        total_revenue: revenue,
-        total_commissions: commissions,
-        pending_payments: pending,
-        active_wallets: walletCount || 0
-      });
+        // Compter les portefeuilles actifs
+        const { count: walletCount, error: walletError } = await supabase
+          .from('wallets')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+
+        if (walletError) throw walletError;
+
+        setStats({
+          total_revenue: revenue,
+          total_commissions: commissions,
+          pending_payments: pending,
+          active_wallets: walletCount || 0
+        });
+      }
     } catch (error) {
       console.error('Erreur chargement finances:', error);
       toast.error('Erreur lors du chargement des données financières');
@@ -80,19 +104,33 @@ export default function PDGFinance() {
 
   const exportData = async () => {
     try {
-      const csvContent = transactions.map(t => 
-        `${t.transaction_id},${t.amount},${t.fee},${t.status},${t.created_at}`
-      ).join('\n');
+      const csvData = transactions.map(t => ({
+        'ID Transaction': t.transaction_id,
+        'Montant': t.amount,
+        'Frais': t.fee,
+        'Statut': t.status,
+        'Expéditeur': t.sender?.business_name || t.sender?.first_name || 'N/A',
+        'Destinataire': t.receiver?.business_name || t.receiver?.first_name || 'N/A',
+        'Date': new Date(t.created_at).toLocaleDateString('fr-FR'),
+        'Description': t.description || 'N/A'
+      }));
+
+      const csvContent = [
+        Object.keys(csvData[0] || {}).join(','),
+        ...csvData.map(row => Object.values(row).join(','))
+      ].join('\n');
       
-      const blob = new Blob([`Transaction ID,Amount,Fee,Status,Date\n${csvContent}`], { type: 'text/csv' });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
+      window.URL.revokeObjectURL(url);
       
       toast.success('Export réussi');
     } catch (error) {
+      console.error('Erreur export:', error);
       toast.error('Erreur lors de l\'export');
     }
   };

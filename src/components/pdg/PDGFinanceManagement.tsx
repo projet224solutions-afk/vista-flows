@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 import {
-  DollarSign, Link, TrendingUp, Users, CreditCard, 
+  DollarSign, Link, TrendingUp, Users, CreditCard,
   Download, RefreshCw, Eye, Calendar, Filter, Search,
   CheckCircle, Clock, XCircle, AlertCircle, BarChart3,
   PieChart, Activity, ExternalLink
@@ -66,6 +67,51 @@ export default function PDGFinanceManagement() {
     loadPaymentData();
   }, [filters]);
 
+  const loadRealPaymentData = async () => {
+    try {
+      // Charger les données réelles depuis Supabase
+      const { data: paymentLinks, error: linksError } = await supabase
+        .from('payment_links')
+        .select(`
+          *,
+          vendeur:profiles!payment_links_vendeur_id_fkey(id, first_name, last_name, business_name),
+          client:profiles!payment_links_client_id_fkey(id, first_name, last_name, email)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (linksError) throw linksError;
+
+      setPaymentLinks(paymentLinks || []);
+
+      // Calculer les statistiques
+      const totalLinks = paymentLinks?.length || 0;
+      const successfulPayments = paymentLinks?.filter(p => p.status === 'success').length || 0;
+      const pendingPayments = paymentLinks?.filter(p => p.status === 'pending').length || 0;
+      const failedPayments = paymentLinks?.filter(p => p.status === 'failed').length || 0;
+      const expiredPayments = paymentLinks?.filter(p => p.status === 'expired').length || 0;
+      
+      const totalRevenue = paymentLinks?.filter(p => p.status === 'success')
+        .reduce((sum, p) => sum + (p.montant || 0), 0) || 0;
+      const totalFees = paymentLinks?.filter(p => p.status === 'success')
+        .reduce((sum, p) => sum + (p.frais || 0), 0) || 0;
+      const avgPaymentAmount = successfulPayments > 0 ? totalRevenue / successfulPayments : 0;
+
+      setStats({
+        total_links: totalLinks,
+        successful_payments: successfulPayments,
+        pending_payments: pendingPayments,
+        failed_payments: failedPayments,
+        expired_payments: expiredPayments,
+        total_revenue: totalRevenue,
+        total_fees: totalFees,
+        avg_payment_amount: avgPaymentAmount
+      });
+    } catch (error) {
+      console.error('Erreur chargement données réelles:', error);
+      throw error;
+    }
+  };
+
   const loadPaymentData = async () => {
     try {
       setLoading(true);
@@ -77,37 +123,76 @@ export default function PDGFinanceManagement() {
         setPaymentLinks(data.payment_links || []);
         setStats(data.stats || null);
       } else {
-        // Fallback avec des données mockées pour la démo
-        setPaymentLinks([]);
-        setStats({
-          total_links: 0,
-          successful_payments: 0,
-          pending_payments: 0,
-          failed_payments: 0,
-          expired_payments: 0,
-          total_revenue: 0,
-          total_fees: 0,
-          avg_payment_amount: 0
-        });
+        // Charger les données réelles depuis Supabase
+        await loadRealPaymentData();
       }
     } catch (error) {
       console.error('Erreur chargement données financières:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données financières",
-        variant: "destructive"
-      });
+      // Fallback vers les données Supabase
+      try {
+        await loadRealPaymentData();
+      } catch (fallbackError) {
+        console.error('Erreur fallback:', fallbackError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données financières",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const exportData = (format: 'csv' | 'pdf') => {
-    toast({
-      title: "Export en cours",
-      description: `Export des données au format ${format.toUpperCase()}...`,
-    });
-    // TODO: Implémenter l'export
+  const exportData = async (format: 'csv' | 'pdf') => {
+    try {
+      if (format === 'csv') {
+        // Export CSV
+        const csvData = paymentLinks.map(link => ({
+          'ID': link.id,
+          'Produit': link.produit,
+          'Vendeur': link.vendeur?.business_name || link.vendeur?.name || 'N/A',
+          'Client': link.client?.name || 'N/A',
+          'Montant': link.montant,
+          'Frais': link.frais,
+          'Total': link.total,
+          'Statut': link.status,
+          'Date Création': new Date(link.created_at).toLocaleDateString('fr-FR'),
+          'Date Paiement': link.paid_at ? new Date(link.paid_at).toLocaleDateString('fr-FR') : 'N/A'
+        }));
+
+        const csvContent = [
+          Object.keys(csvData[0] || {}).join(','),
+          ...csvData.map(row => Object.values(row).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `payment_links_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Export réussi",
+          description: "Fichier CSV téléchargé avec succès",
+        });
+      } else if (format === 'pdf') {
+        // Pour l'export PDF, on pourrait utiliser une librairie comme jsPDF
+        toast({
+          title: "Export PDF",
+          description: "Fonctionnalité PDF en cours de développement",
+        });
+      }
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter les données",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatCurrency = (amount: number, currency: string) => {
@@ -152,7 +237,7 @@ export default function PDGFinanceManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Gestion Financière</h2>
           <p className="text-gray-600">Suivi des liens de paiement et revenus</p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button onClick={() => exportData('csv')} variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
@@ -182,7 +267,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -194,7 +279,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -208,7 +293,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -247,7 +332,7 @@ export default function PDGFinanceManagement() {
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   />
                 </div>
-                
+
                 <div className="w-full sm:w-48">
                   <Label htmlFor="status">Statut</Label>
                   <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
@@ -263,7 +348,7 @@ export default function PDGFinanceManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="w-full sm:w-48">
                   <Label htmlFor="dateRange">Période</Label>
                   <Select value={filters.dateRange} onValueChange={(value) => setFilters({ ...filters, dateRange: value })}>
@@ -407,7 +492,7 @@ export default function PDGFinanceManagement() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -445,7 +530,7 @@ export default function PDGFinanceManagement() {
                   Pourcentage de frais prélevés sur chaque transaction
                 </p>
               </div>
-              
+
               <div>
                 <Label htmlFor="expiry">Durée d'expiration (jours)</Label>
                 <Input
@@ -458,7 +543,7 @@ export default function PDGFinanceManagement() {
                   Nombre de jours avant expiration d'un lien
                 </p>
               </div>
-              
+
               <Button>
                 <Activity className="w-4 h-4 mr-2" />
                 Sauvegarder les paramètres

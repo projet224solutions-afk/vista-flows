@@ -1,3 +1,8 @@
+/**
+ * 🔐 API ADMIN - TOUS LES LIENS DE PAIEMENT
+ * Endpoint pour récupérer tous les liens de paiement (PDG/Admin uniquement)
+ */
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -11,100 +16,62 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Récupérer tous les liens de paiement avec les détails des utilisateurs
-    const { data: paymentLinks, error } = await supabase
+    // Vérifier l'authentification (à implémenter selon votre système)
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Non autorisé' });
+    }
+
+    // Récupérer tous les liens de paiement avec les détails
+    const { data: paymentLinks, error: linksError } = await supabase
       .from('payment_links')
       .select(`
         *,
-        vendeur:user_profiles!payment_links_vendeur_id_fkey(
-          first_name,
-          last_name,
-          business_name,
-          avatar_url
-        ),
-        client:user_profiles!payment_links_client_id_fkey(
-          first_name,
-          last_name,
-          email
-        )
+        vendeur:profiles!payment_links_vendeur_id_fkey(id, first_name, last_name, business_name, email),
+        client:profiles!payment_links_client_id_fkey(id, first_name, last_name, email)
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Erreur récupération liens paiement:', error);
-      return res.status(500).json({ 
-        error: 'Erreur lors de la récupération des liens de paiement' 
-      });
+    if (linksError) {
+      console.error('Erreur récupération liens:', linksError);
+      return res.status(500).json({ error: 'Erreur serveur' });
     }
 
-    // Récupérer les statistiques globales
-    const { data: stats } = await supabase
-      .from('payment_stats')
-      .select('*');
+    // Calculer les statistiques
+    const totalLinks = paymentLinks?.length || 0;
+    const successfulPayments = paymentLinks?.filter(p => p.status === 'success').length || 0;
+    const pendingPayments = paymentLinks?.filter(p => p.status === 'pending').length || 0;
+    const failedPayments = paymentLinks?.filter(p => p.status === 'failed').length || 0;
+    const expiredPayments = paymentLinks?.filter(p => p.status === 'expired').length || 0;
+    
+    const totalRevenue = paymentLinks?.filter(p => p.status === 'success')
+      .reduce((sum, p) => sum + (p.montant || 0), 0) || 0;
+    const totalFees = paymentLinks?.filter(p => p.status === 'success')
+      .reduce((sum, p) => sum + (p.frais || 0), 0) || 0;
+    const avgPaymentAmount = successfulPayments > 0 ? totalRevenue / successfulPayments : 0;
 
-    // Calculer les statistiques globales
-    const globalStats = {
-      total_links: paymentLinks?.length || 0,
-      successful_payments: paymentLinks?.filter(p => p.status === 'success').length || 0,
-      pending_payments: paymentLinks?.filter(p => p.status === 'pending').length || 0,
-      failed_payments: paymentLinks?.filter(p => p.status === 'failed').length || 0,
-      expired_payments: paymentLinks?.filter(p => p.status === 'expired').length || 0,
-      total_revenue: paymentLinks?.filter(p => p.status === 'success').reduce((sum, p) => sum + p.total, 0) || 0,
-      total_fees: paymentLinks?.filter(p => p.status === 'success').reduce((sum, p) => sum + p.frais, 0) || 0,
-      avg_payment_amount: 0
+    const stats = {
+      total_links: totalLinks,
+      successful_payments: successfulPayments,
+      pending_payments: pendingPayments,
+      failed_payments: failedPayments,
+      expired_payments: expiredPayments,
+      total_revenue: totalRevenue,
+      total_fees: totalFees,
+      avg_payment_amount: avgPaymentAmount
     };
 
-    // Calculer la moyenne
-    if (globalStats.successful_payments > 0) {
-      globalStats.avg_payment_amount = globalStats.total_revenue / globalStats.successful_payments;
-    }
-
-    // Formater les données pour l'affichage
-    const formattedLinks = paymentLinks?.map(link => ({
-      id: link.id,
-      payment_id: link.payment_id,
-      vendeur_id: link.vendeur_id,
-      client_id: link.client_id,
-      produit: link.produit,
-      description: link.description,
-      montant: link.montant,
-      frais: link.frais,
-      total: link.total,
-      devise: link.devise,
-      status: link.status,
-      expires_at: link.expires_at,
-      created_at: link.created_at,
-      paid_at: link.paid_at,
-      vendeur: {
-        name: link.vendeur?.business_name || 
-              `${link.vendeur?.first_name} ${link.vendeur?.last_name}`,
-        business_name: link.vendeur?.business_name,
-        avatar: link.vendeur?.avatar_url
-      },
-      client: link.client ? {
-        name: `${link.client.first_name} ${link.client.last_name}`,
-        email: link.client.email
-      } : null
-    })) || [];
-
-    console.log(`📊 PDG Dashboard: ${globalStats.total_links} liens, ${globalStats.successful_payments} réussis`);
-
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      payment_links: formattedLinks,
-      stats: globalStats,
-      pagination: {
-        total: globalStats.total_links,
-        page: 1,
-        limit: 1000
-      }
+      payment_links: paymentLinks || [],
+      stats
     });
 
   } catch (error) {
     console.error('Erreur API admin payments:', error);
-    return res.status(500).json({ 
-      error: 'Erreur interne du serveur',
-      details: error.message
+    res.status(500).json({ 
+      success: false,
+      error: 'Erreur serveur interne' 
     });
   }
 }
