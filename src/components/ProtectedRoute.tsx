@@ -12,13 +12,28 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Vérifier si l'utilisateur est authentifié en tant qu'admin local
+  const isLocalAdmin = () => {
+    const adminAuth = sessionStorage.getItem('admin_authenticated');
+    return adminAuth === 'true' && allowedRoles.includes('admin');
+  };
+
   // Vérification d'authentification réactivée
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isLocalAdmin()) {
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Si admin local authentifié, autoriser l'accès
+  if (isLocalAdmin()) {
+    return (
+      <div className="min-h-screen pb-20">
+        {children}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
