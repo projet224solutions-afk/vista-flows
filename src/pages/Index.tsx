@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
-import { PDGAuthButton } from "@/components/PDGAuthButton";
 import {
   Search,
   Grid3X3,
@@ -276,14 +275,6 @@ export default function IndexAlibaba() {
             >
               <Store className="w-6 h-6 mr-2" />
               Interface Vendeur
-            </Button>
-            <Button
-              onClick={() => navigate('/pdg')}
-              className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              <Crown className="w-6 h-6 mr-2" />
-              Interface PDG
             </Button>
             <Button
               onClick={() => navigate('/taxi-moto')}
