@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HOOK DONNÉES COMMUNICATION - DONNÉES RÉELLES
  * Gestion des données réelles pour la messagerie

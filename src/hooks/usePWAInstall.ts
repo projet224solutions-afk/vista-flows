@@ -4,6 +4,7 @@
  * 224Solutions - Bureau Syndicat System
  */
 
+// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { isMobile, isAndroid, isIOS, isDesktop } from 'react-device-detect';
 

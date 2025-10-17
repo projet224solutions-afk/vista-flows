@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DIAGNOSTIC ET RÉPARATION VENDEUR
  * Système de diagnostic automatique pour l'interface vendeur

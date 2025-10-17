@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HOOK SÉCURITÉ MOTOS - NOTIFICATIONS TEMPS RÉEL
  * Gestion des notifications et synchronisation

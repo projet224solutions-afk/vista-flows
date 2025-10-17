@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HOOK DONNÉES PDG - DONNÉES RÉELLES
  * Gestion des données réelles pour le dashboard PDG

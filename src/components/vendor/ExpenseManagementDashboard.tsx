@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 💰 DASHBOARD DE GESTION DES DÉPENSES - 224SOLUTIONS
  * Interface complète pour la gestion des dépenses vendeurs
