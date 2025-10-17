@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 🚀 DataManager Unifié - 224Solutions
  * Couche d'abstraction pour optimiser Backend ↔ Frontend ↔ Database

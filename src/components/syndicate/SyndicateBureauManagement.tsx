@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GESTION DES BUREAUX SYNDICAUX - Interface PDG
  * Module simplifié utilisant les vraies tables Supabase

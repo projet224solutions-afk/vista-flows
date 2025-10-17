@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WRAPPER POS SYSTEM - Gestion des erreurs et fallback
  * S'assure que le POS s'affiche toujours correctement

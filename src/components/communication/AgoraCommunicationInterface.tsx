@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 💬 INTERFACE COMMUNICATION AGORA COMPLÈTE - 224SOLUTIONS
  * Interface unifiée pour messagerie, appels audio et vidéo

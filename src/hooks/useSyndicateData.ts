@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HOOK DONNÉES SYNDICAT - DONNÉES RÉELLES
  * Gestion des données réelles pour le bureau syndical

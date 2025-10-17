@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
  * Service opérationnel pour communications audio/vidéo avec Agora

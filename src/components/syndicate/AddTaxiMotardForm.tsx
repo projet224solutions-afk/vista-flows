@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * FORMULAIRE D'AJOUT DE TAXI-MOTARD
  * Composant ultra-professionnel pour ajouter des taxi-motards

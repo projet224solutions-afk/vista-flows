@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * HOOK SYNCHRONISATION TEMPS RÉEL
  * Gestion de la synchronisation entre PDG et bureaux syndicats

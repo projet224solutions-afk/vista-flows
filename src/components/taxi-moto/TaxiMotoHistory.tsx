@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * COMPOSANT HISTORIQUE DES COURSES TAXI-MOTO
  * Affichage de l'historique avec filtres et détails

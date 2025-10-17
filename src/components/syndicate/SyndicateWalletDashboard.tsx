@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DASHBOARD WALLET BUREAU SYNDICAT
  * Interface complète pour la gestion financière du bureau

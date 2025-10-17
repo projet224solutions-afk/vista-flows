@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
-import { PDGAuthButton } from "@/components/PDGAuthButton";
 import {
   Search,
   Grid3X3,
@@ -263,23 +262,23 @@ export default function IndexAlibaba() {
         </div>
       </section>
 
-      {/* Accès Interface PDG Standard */}
+      {/* Accès Interfaces Professionnelles */}
       <section className="py-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🎯 Interface PDG - Gestion Complète</h2>
-          <p className="mb-6">Accédez à votre tableau de bord de gestion principal</p>
-          <div className="flex justify-center gap-4">
+          <h2 className="text-2xl font-bold mb-4">🎯 Interfaces Professionnelles</h2>
+          <p className="mb-6">Accédez à vos tableaux de bord de gestion</p>
+          <div className="flex justify-center gap-4 flex-wrap">
             <Button
-              onClick={() => navigate('/pdg')}
+              onClick={() => navigate('/vendeur-open')}
               className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
               size="lg"
             >
-              <Crown className="w-6 h-6 mr-2" />
-              Interface PDG Standard
+              <Store className="w-6 h-6 mr-2" />
+              Interface Vendeur
             </Button>
             <Button
               onClick={() => navigate('/taxi-moto')}
-              className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 font-bold text-lg px-8 py-4 shadow-lg"
+              className="bg-green-400 text-gray-900 hover:bg-green-300 font-bold text-lg px-8 py-4 shadow-lg"
               size="lg"
             >
               🏍️ Taxi Moto

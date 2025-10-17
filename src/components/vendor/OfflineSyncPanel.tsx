@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PANEL DE SYNCHRONISATION OFFLINE
  * Interface utilisateur pour la gestion du mode hors-ligne

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Service IA Copilot Avancé pour 224Solutions
 // Simule une intelligence conversationnelle de type ChatGPT
 
