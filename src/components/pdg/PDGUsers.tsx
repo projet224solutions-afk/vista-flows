@@ -41,12 +41,12 @@ export default function PDGUsers() {
         setUsers(data.users || []);
       } else {
         // Fallback vers Supabase direct
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        setUsers(profiles || []);
+      setUsers(profiles || []);
       }
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);

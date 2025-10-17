@@ -10,22 +10,63 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-// Codes d'accès PDG sécurisés (en production, ces données seraient dans une base de données chiffrée)
-const PDG_CREDENTIALS = {
-    "PDG001": {
-        code: "224SOLUTIONS2024!",
-        name: "Directeur Général",
-        level: "PDG_SUPREME"
-    },
-    "ADMIN001": {
-        code: "ADMIN@224SOL",
-        name: "Administrateur Principal",
-        level: "ADMIN_PRINCIPAL"
-    },
-    "DEV001": {
-        code: "DEV@224TECH",
-        name: "Développeur Principal",
-        level: "DEV_ACCESS"
+// Codes d'accès PDG sécurisés - Récupérés depuis le secrets manager
+import { getSecret, SECRET_KEYS } from '@/config/secrets';
+
+// Interface pour les credentials PDG
+interface PDGCredential {
+    code: string;
+    name: string;
+    level: string;
+}
+
+// Fonction pour récupérer les credentials depuis le secrets manager
+const getPDGCredentials = async (): Promise<Record<string, PDGCredential>> => {
+    try {
+        // Récupération des secrets depuis le secrets manager
+        const [pdgCode, adminCode, devCode] = await Promise.all([
+            getSecret(SECRET_KEYS.PDG_ACCESS_CODE),
+            getSecret(SECRET_KEYS.ADMIN_ACCESS_CODE),
+            getSecret(SECRET_KEYS.DEV_ACCESS_CODE)
+        ]);
+
+        return {
+            [process.env.PDG_USER_CODE || 'PDG001']: {
+                code: pdgCode,
+                name: "Directeur Général",
+                level: "PDG_SUPREME"
+            },
+            [process.env.ADMIN_USER_CODE || 'ADMIN001']: {
+                code: adminCode,
+                name: "Administrateur Principal",
+                level: "ADMIN_PRINCIPAL"
+            },
+            [process.env.DEV_USER_CODE || 'DEV001']: {
+                code: devCode,
+                name: "Développeur Principal",
+                level: "DEV_ACCESS"
+            }
+        };
+    } catch (error) {
+        console.error('Erreur récupération credentials:', error);
+        // Fallback pour le développement
+        return {
+            "PDG001": {
+                code: "SECRET_MANAGER://pdg/access_code",
+                name: "Directeur Général",
+                level: "PDG_SUPREME"
+            },
+            "ADMIN001": {
+                code: "SECRET_MANAGER://admin/access_code",
+                name: "Administrateur Principal",
+                level: "ADMIN_PRINCIPAL"
+            },
+            "DEV001": {
+                code: "SECRET_MANAGER://dev/access_code",
+                name: "Développeur Principal",
+                level: "DEV_ACCESS"
+            }
+        };
     }
 };
 
@@ -43,50 +84,59 @@ export const PDGAuthButton = () => {
         setIsLoading(true);
         setError("");
 
-        // Debug des valeurs saisies
-        console.log("🔍 DEBUG AUTH PDG:", {
-            userCode: `'${userCode}'`,
-            accessCode: `'${accessCode}'`,
-            credential: PDG_CREDENTIALS[userCode as keyof typeof PDG_CREDENTIALS]
-        });
+        try {
+            // Récupération des credentials depuis le secrets manager
+            const credentials = await getPDGCredentials();
+            
+            // Debug des valeurs saisies
+            console.log("🔍 DEBUG AUTH PDG:", {
+                userCode: `'${userCode}'`,
+                accessCode: `'${accessCode}'`,
+                credential: credentials[userCode]
+            });
 
-        // Simulation d'une vérification sécurisée
-        await new Promise(resolve => setTimeout(resolve, 1500));
+            // Simulation d'une vérification sécurisée
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const credential = PDG_CREDENTIALS[userCode as keyof typeof PDG_CREDENTIALS];
+            const credential = credentials[userCode];
 
-        if (!credential) {
-            setError(`Code utilisateur invalide: '${userCode}'`);
+            if (!credential) {
+                setError(`Code utilisateur invalide: '${userCode}'`);
+                setIsLoading(false);
+                return;
+            }
+
+            if (credential.code !== accessCode) {
+                setError(`Code d'accès incorrect. Vérifiez vos credentials.`);
+                setIsLoading(false);
+                return;
+            }
+
+            // Authentification réussie
+            toast({
+                title: "🎉 Accès autorisé",
+                description: `Bienvenue ${credential.name}`,
+                duration: 3000,
+            });
+
+            // Stocker les informations d'authentification PDG
+            sessionStorage.setItem("pdg_auth", JSON.stringify({
+                userCode,
+                name: credential.name,
+                level: credential.level,
+                timestamp: Date.now()
+            }));
+
             setIsLoading(false);
-            return;
-        }
+            setIsOpen(false);
 
-        if (credential.code !== accessCode) {
-            setError(`Code d'accès incorrect. Attendu: '${credential.code}', Reçu: '${accessCode}'`);
+            // Redirection vers l'interface PDG avancée
+            navigate("/pdg-advanced", { state: { pdgAccess: true, level: credential.level } });
+        } catch (error) {
+            console.error('Erreur authentification PDG:', error);
+            setError('Erreur de connexion au système de sécurité. Veuillez réessayer.');
             setIsLoading(false);
-            return;
         }
-
-        // Authentification réussie
-        toast({
-            title: "🎉 Accès autorisé",
-            description: `Bienvenue ${credential.name}`,
-            duration: 3000,
-        });
-
-        // Stocker les informations d'authentification PDG
-        sessionStorage.setItem("pdg_auth", JSON.stringify({
-            userCode,
-            name: credential.name,
-            level: credential.level,
-            timestamp: Date.now()
-        }));
-
-        setIsLoading(false);
-        setIsOpen(false);
-
-        // Redirection vers l'interface PDG avancée
-        navigate("/pdg-advanced", { state: { pdgAccess: true, level: credential.level } });
     };
 
     const resetForm = () => {
@@ -216,11 +266,11 @@ export const PDGAuthButton = () => {
                         </Button>
 
                         <div className="text-xs text-gray-500 text-center space-y-1">
-                            <p>🔐 Codes d'accès disponibles pour test :</p>
+                            <p>🔐 Credentials stockés dans le secrets manager</p>
                             <div className="bg-gray-100 p-2 rounded font-mono text-xs">
-                                <p><strong>PDG001</strong> | 224SOLUTIONS2024!</p>
-                                <p><strong>ADMIN001</strong> | ADMIN@224SOL</p>
-                                <p><strong>DEV001</strong> | DEV@224TECH</p>
+                                <p><strong>PDG001</strong> | SECRET_MANAGER://pdg/access_code</p>
+                                <p><strong>ADMIN001</strong> | SECRET_MANAGER://admin/access_code</p>
+                                <p><strong>DEV001</strong> | SECRET_MANAGER://dev/access_code</p>
                             </div>
                         </div>
                     </CardContent>

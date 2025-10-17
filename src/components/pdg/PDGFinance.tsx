@@ -59,18 +59,18 @@ export default function PDGFinance() {
       } else {
         // Fallback vers Supabase direct
         const { data: trans, error: transError } = await supabase
-          .from('wallet_transactions')
+        .from('wallet_transactions')
           .select(`
             *,
             sender:profiles!wallet_transactions_sender_id_fkey(id, first_name, last_name, business_name),
             receiver:profiles!wallet_transactions_receiver_id_fkey(id, first_name, last_name, business_name)
           `)
-          .order('created_at', { ascending: false })
-          .limit(100);
+        .order('created_at', { ascending: false })
+        .limit(100);
 
         if (transError) throw transError;
 
-        setTransactions(trans || []);
+      setTransactions(trans || []);
 
         // Calculer les statistiques réelles
         const completedTrans = trans?.filter(t => t.status === 'completed') || [];
@@ -82,18 +82,18 @@ export default function PDGFinance() {
 
         // Compter les portefeuilles actifs
         const { count: walletCount, error: walletError } = await supabase
-          .from('wallets')
+        .from('wallets')
           .select('*', { count: 'exact', head: true })
           .eq('is_active', true);
 
         if (walletError) throw walletError;
 
-        setStats({
-          total_revenue: revenue,
-          total_commissions: commissions,
-          pending_payments: pending,
-          active_wallets: walletCount || 0
-        });
+      setStats({
+        total_revenue: revenue,
+        total_commissions: commissions,
+        pending_payments: pending,
+        active_wallets: walletCount || 0
+      });
       }
     } catch (error) {
       console.error('Erreur chargement finances:', error);

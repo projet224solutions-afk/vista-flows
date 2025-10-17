@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import {
-  DollarSign, Link, TrendingUp, Users, CreditCard,
+  DollarSign, Link, TrendingUp, Users, CreditCard, 
   Download, RefreshCw, Eye, Calendar, Filter, Search,
   CheckCircle, Clock, XCircle, AlertCircle, BarChart3,
   PieChart, Activity, ExternalLink
@@ -134,11 +134,11 @@ export default function PDGFinanceManagement() {
         await loadRealPaymentData();
       } catch (fallbackError) {
         console.error('Erreur fallback:', fallbackError);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les données financières",
-          variant: "destructive"
-        });
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les données financières",
+        variant: "destructive"
+      });
       }
     } finally {
       setLoading(false);
@@ -188,11 +188,11 @@ export default function PDGFinanceManagement() {
       }
     } catch (error) {
       console.error('Erreur export:', error);
-      toast({
+    toast({
         title: "Erreur",
         description: "Impossible d'exporter les données",
         variant: "destructive"
-      });
+    });
     }
   };
 
@@ -238,7 +238,7 @@ export default function PDGFinanceManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Gestion Financière</h2>
           <p className="text-gray-600">Suivi des liens de paiement et revenus</p>
         </div>
-
+        
         <div className="flex gap-2">
           <Button onClick={() => exportData('csv')} variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
@@ -268,7 +268,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -280,7 +280,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -294,7 +294,7 @@ export default function PDGFinanceManagement() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -333,7 +333,7 @@ export default function PDGFinanceManagement() {
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="w-full sm:w-48">
                   <Label htmlFor="status">Statut</Label>
                   <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
@@ -349,7 +349,7 @@ export default function PDGFinanceManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="w-full sm:w-48">
                   <Label htmlFor="dateRange">Période</Label>
                   <Select value={filters.dateRange} onValueChange={(value) => setFilters({ ...filters, dateRange: value })}>
@@ -493,7 +493,7 @@ export default function PDGFinanceManagement() {
                 </div>
               </CardContent>
             </Card>
-
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -531,7 +531,7 @@ export default function PDGFinanceManagement() {
                   Pourcentage de frais prélevés sur chaque transaction
                 </p>
               </div>
-
+              
               <div>
                 <Label htmlFor="expiry">Durée d'expiration (jours)</Label>
                 <Input
@@ -544,7 +544,7 @@ export default function PDGFinanceManagement() {
                   Nombre de jours avant expiration d'un lien
                 </p>
               </div>
-
+              
               <Button>
                 <Activity className="w-4 h-4 mr-2" />
                 Sauvegarder les paramètres
