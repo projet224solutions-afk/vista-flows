@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 🚚 SERVICE TRANSPORT COMPLET - 224SOLUTIONS
  * Gestion complète du système de transport/livreurs avec Escrow

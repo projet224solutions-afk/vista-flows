@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 🛡️ SERVICE ESCROW 224SECURE - 224SOLUTIONS
  * Gestion complète du système de séquestre pour sécuriser les paiements

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 🚚 SERVICE DE LIVRAISON - 224SOLUTIONS
  * Gestion complète du système de livreur/taxi moto

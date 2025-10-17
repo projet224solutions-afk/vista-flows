@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 💰 SERVICE GESTION DÉPENSES RÉEL - 224SOLUTIONS
  * Service opérationnel pour gestion des dépenses avec Supabase

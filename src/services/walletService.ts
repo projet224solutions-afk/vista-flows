@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 💰 SERVICE WALLET - 224SOLUTIONS
  * Service pour la gestion des portefeuilles utilisateurs

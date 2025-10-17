@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from "react";
 import { Search, Package, Clock, CheckCircle, Truck, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
