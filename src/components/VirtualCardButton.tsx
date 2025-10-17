@@ -24,6 +24,13 @@ interface VirtualCardInfo {
   cvv?: string;
 }
 
+interface WalletInfo {
+  id: string;
+  balance: number;
+  currency: string;
+  status?: string;
+}
+
 interface VirtualCardButtonProps {
   className?: string;
   variant?: 'default' | 'outline' | 'ghost';
@@ -37,7 +44,7 @@ export const VirtualCardButton = ({
 }: VirtualCardButtonProps) => {
   const { user, profile } = useAuth();
   const [virtualCard, setVirtualCard] = useState<VirtualCardInfo | null>(null);
-  const [wallet, setWallet] = useState<unknown>(null);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
