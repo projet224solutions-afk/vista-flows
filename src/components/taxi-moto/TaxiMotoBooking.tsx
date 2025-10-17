@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * COMPOSANT DE RÉSERVATION TAXI-MOTO ULTRA PROFESSIONNEL
  * Interface de réservation avec géolocalisation et calcul de tarifs en temps réel

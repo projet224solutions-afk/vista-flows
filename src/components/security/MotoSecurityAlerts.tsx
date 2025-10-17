@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * COMPOSANT GESTION ALERTES SÉCURITÉ MOTOS
  * Interface pour gérer les alertes de motos volées

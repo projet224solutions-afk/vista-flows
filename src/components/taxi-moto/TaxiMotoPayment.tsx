@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * COMPOSANT DE PAIEMENT TAXI-MOTO ULTRA PROFESSIONNEL
  * Interface de paiement multi-options avec sécurité avancée

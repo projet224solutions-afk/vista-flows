@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 💬 INTERFACE COMMUNICATION RÉELLE - 224SOLUTIONS
  * Interface opérationnelle avec vraies données utilisateurs

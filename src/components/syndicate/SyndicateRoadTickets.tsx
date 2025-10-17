@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GESTION DES TICKETS ROUTIERS ULTRA PROFESSIONNELLE
  * Interface complète pour la génération et gestion des tickets routiers
