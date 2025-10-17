@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface Product {
@@ -170,7 +170,7 @@ export function useClientData() {
         const firstItem = order.order_items?.[0];
         const productData = firstItem?.products as unknown;
         const vendorData = firstItem?.vendors as unknown;
-        
+
         return {
           id: order.id,
           productName: productData?.name || 'Produit',
@@ -221,7 +221,7 @@ export function useClientData() {
 
     try {
       const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
-      
+
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -243,10 +243,10 @@ export function useClientData() {
 
       // Vider le panier après commande
       clearCart();
-      
+
       // Recharger les commandes
       await loadOrders(userId);
-      
+
       toast.success('Commande créée avec succès');
       return orderData;
     } catch (error) {
