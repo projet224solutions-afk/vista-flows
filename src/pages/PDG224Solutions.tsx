@@ -39,6 +39,7 @@ export default function PDG224Solutions() {
       if (isLocalAdmin()) {
         setLoading(false);
         setIsEnsured(true);
+        setMfaVerified(true); // Auto-vérifier MFA pour admin local
         return;
       }
 
