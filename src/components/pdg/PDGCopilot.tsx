@@ -61,17 +61,47 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
       const lowerQuery = query.toLowerCase();
       
       if (lowerQuery.includes('utilisateur') || lowerQuery.includes('user')) {
-        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-        return `Il y a actuellement ${count || 0} utilisateurs enregistrés sur la plateforme.`;
+        const { data: users, count } = await supabase
+          .from('profiles')
+          .select('role, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        const roleStats = users?.reduce((acc, user) => {
+          acc[user.role] = (acc[user.role] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>) || {};
+        
+        return `👥 **Analyse des utilisateurs :**
+        
+📈 **Total** : ${count || 0} utilisateurs
+👤 **Clients** : ${roleStats.client || 0}
+🏪 **Vendeurs** : ${roleStats.vendeur || 0}
+🚚 **Livreurs** : ${roleStats.livreur || 0}
+👑 **Admins** : ${roleStats.admin || 0}
+
+Les derniers inscrits sont principalement des ${Object.keys(roleStats)[0] || 'clients'}.`;
       }
       
-      if (lowerQuery.includes('transaction') || lowerQuery.includes('paiement')) {
-        const { data: trans } = await supabase
+      if (lowerQuery.includes('transaction') || lowerQuery.includes('paiement') || lowerQuery.includes('revenu')) {
+        const { data: recentTrans } = await supabase
           .from('wallet_transactions')
-          .select('amount, status')
-          .eq('status', 'completed');
-        const total = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
-        return `Le montant total des transactions complétées est de ${total.toLocaleString()} GNF.`;
+          .select('amount, status, created_at, transaction_type')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        
+        const completed = recentTrans?.filter(t => t.status === 'completed') || [];
+        const pending = recentTrans?.filter(t => t.status === 'pending') || [];
+        const totalCompleted = completed.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        const totalPending = pending.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        
+        return `💰 **Analyse financière :**
+        
+✅ **Transactions complétées** : ${totalCompleted.toLocaleString()} GNF
+⏳ **En attente** : ${totalPending.toLocaleString()} GNF
+📊 **Taux de succès** : ${completed.length}/${recentTrans?.length || 1} (${Math.round((completed.length / (recentTrans?.length || 1)) * 100)}%)
+
+${totalPending > 0 ? '⚠️ **Attention** : Des paiements sont en attente depuis plus de 24h.' : '✅ Tous les paiements sont traités.'}`;
       }
       
       if (lowerQuery.includes('vendeur') || lowerQuery.includes('vendor')) {
@@ -103,8 +133,44 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
           .eq('reviewed', false);
         return `Il y a ${fraud?.length || 0} alertes de fraude non traitées. ${fraud?.filter(f => f.risk_level === 'critical').length || 0} sont critiques.`;
       }
+      
+      // Bureaux syndicaux
+      if (lowerQuery.includes('bureau') || lowerQuery.includes('syndicat') || lowerQuery.includes('syndical')) {
+        const { data: bureaux } = await supabase
+          .from('bureaux_syndicaux')
+          .select('*');
+        
+        const { data: travailleurs } = await supabase
+          .from('travailleurs')
+          .select('*');
+        
+        const { data: motos } = await supabase
+          .from('motos')
+          .select('*');
+        
+        return `🏢 **Bureaux syndicaux :**
+        
+🏛️ **Bureaux créés** : ${bureaux?.length || 0}
+👷 **Travailleurs** : ${travailleurs?.length || 0}
+🏍️ **Motos enregistrées** : ${motos?.length || 0}
 
-      return 'Je peux vous aider avec les statistiques, la gestion des utilisateurs, les transactions, les produits, les commandes et la sécurité. Posez-moi une question spécifique !';
+${bureaux?.length === 0 ? '⚠️ Aucun bureau syndical créé.' : '✅ Le système syndical fonctionne bien !'}`;
+      }
+
+      // Réponse par défaut intelligente
+      return `🤖 **Copilote IA PDG - 224Solutions**
+
+Je peux vous aider avec :
+📊 **Statistiques** - Utilisateurs, transactions, revenus
+👥 **Gestion** - Vendeurs, clients, livreurs  
+💰 **Finance** - Paiements, commissions, alertes
+🏢 **Bureaux** - Syndicats, travailleurs, motos
+🛡️ **Sécurité** - Fraude, audit, monitoring
+
+**Posez-moi une question spécifique !** Par exemple :
+- "Combien d'utilisateurs avons-nous ?"
+- "Quel est notre chiffre d'affaires ?"
+- "Y a-t-il des problèmes de sécurité ?"`;
     } catch (error) {
       console.error('Erreur génération réponse IA:', error);
       return 'Désolé, je rencontre une erreur technique. Veuillez réessayer.';
