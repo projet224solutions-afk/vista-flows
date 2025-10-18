@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Package, 
   ShoppingCart, 
@@ -67,111 +68,99 @@ export default function PDGProductsManagement() {
   // Charger les produits
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/admin/products/all');
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.products || []);
-      } else {
-        // Données de démonstration
-        setProducts([
-          {
-            id: '1',
-            name: 'iPhone 15 Pro',
-            category: 'Électronique',
-            price: 1200000,
-            status: 'active',
-            vendor: 'TechStore Conakry',
-            created_at: '2024-10-01',
-            compliance_score: 95,
-            sales_count: 45,
-            revenue: 54000000
-          },
-          {
-            id: '2',
-            name: 'Samsung Galaxy S24',
-            category: 'Électronique',
-            price: 950000,
-            status: 'blocked',
-            vendor: 'Mobile World',
-            created_at: '2024-09-28',
-            compliance_score: 60,
-            sales_count: 0,
-            revenue: 0
-          },
-          {
-            id: '3',
-            name: 'Laptop Dell XPS 13',
-            category: 'Informatique',
-            price: 2500000,
-            status: 'pending',
-            vendor: 'Computer Center',
-            created_at: '2024-10-03',
-            compliance_score: 85,
-            sales_count: 12,
-            revenue: 30000000
-          }
-        ]);
-      }
+      // Charger les données réelles depuis Supabase
+      const { data: products, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          vendor:profiles!products_vendor_id_fkey(id, first_name, last_name, business_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données pour correspondre à l'interface
+      const transformedProducts = products?.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        status: product.status || 'pending',
+        vendor: product.vendor?.business_name || product.vendor?.first_name + ' ' + product.vendor?.last_name || 'Vendeur inconnu',
+        created_at: product.created_at,
+        compliance_score: product.compliance_score || 85,
+        sales_count: product.sales_count || 0,
+        revenue: product.revenue || 0
+      })) || [];
+
+      setProducts(transformedProducts);
     } catch (error) {
       console.error('Erreur chargement produits:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les produits",
+        variant: "destructive"
+      });
     }
   };
 
   // Charger les commandes
   const loadOrders = async () => {
     try {
-      const response = await fetch('/api/admin/orders/all');
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data.orders || []);
-      } else {
-        // Données de démonstration
-        setOrders([
-          {
-            id: '1',
-            order_number: 'CMD-2024-001',
-            customer: 'Mamadou Diallo',
-            product: 'iPhone 15 Pro',
-            quantity: 1,
-            total: 1200000,
-            status: 'pending',
-            created_at: '2024-10-05',
-            vendor: 'TechStore Conakry'
-          },
-          {
-            id: '2',
-            order_number: 'CMD-2024-002',
-            customer: 'Fatoumata Camara',
-            product: 'Laptop Dell XPS 13',
-            quantity: 1,
-            total: 2500000,
-            status: 'processing',
-            created_at: '2024-10-04',
-            vendor: 'Computer Center'
-          }
-        ]);
-      }
+      // Charger les données réelles depuis Supabase
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          customer:profiles!orders_customer_id_fkey(id, first_name, last_name, email),
+          vendor:profiles!orders_vendor_id_fkey(id, first_name, last_name, business_name),
+          product:products!orders_product_id_fkey(id, name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données pour correspondre à l'interface
+      const transformedOrders = orders?.map(order => ({
+        id: order.id,
+        order_number: order.order_number || `CMD-${order.id.slice(0, 8)}`,
+        customer: order.customer?.first_name + ' ' + order.customer?.last_name || 'Client inconnu',
+        product: order.product?.name || 'Produit inconnu',
+        quantity: order.quantity || 1,
+        total: order.total || 0,
+        status: order.status || 'pending',
+        created_at: order.created_at,
+        vendor: order.vendor?.business_name || order.vendor?.first_name + ' ' + order.vendor?.last_name || 'Vendeur inconnu'
+      })) || [];
+
+      setOrders(transformedOrders);
     } catch (error) {
       console.error('Erreur chargement commandes:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les commandes",
+        variant: "destructive"
+      });
     }
   };
 
   // Bloquer un produit
   const blockProduct = async (productId: string) => {
     try {
-      const response = await fetch(`/api/admin/products/${productId}/block`, {
-        method: 'POST'
-      });
+      const { error } = await supabase
+        .from('products')
+        .update({ status: 'blocked' })
+        .eq('id', productId);
 
-      if (response.ok) {
-        setProducts(prev => prev.map(p => 
-          p.id === productId ? { ...p, status: 'blocked' } : p
-        ));
-        toast({
-          title: "🚫 Produit bloqué",
-          description: "Le produit a été bloqué avec succès",
-        });
-      }
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => 
+        p.id === productId ? { ...p, status: 'blocked' } : p
+      ));
+      toast({
+        title: "🚫 Produit bloqué",
+        description: "Le produit a été bloqué avec succès",
+      });
     } catch (error) {
       console.error('Erreur blocage produit:', error);
       toast({
@@ -185,19 +174,20 @@ export default function PDGProductsManagement() {
   // Valider un produit
   const validateProduct = async (productId: string) => {
     try {
-      const response = await fetch(`/api/admin/products/${productId}/validate`, {
-        method: 'POST'
-      });
+      const { error } = await supabase
+        .from('products')
+        .update({ status: 'active' })
+        .eq('id', productId);
 
-      if (response.ok) {
-        setProducts(prev => prev.map(p => 
-          p.id === productId ? { ...p, status: 'active' } : p
-        ));
-        toast({
-          title: "✅ Produit validé",
-          description: "Le produit a été validé avec succès",
-        });
-      }
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => 
+        p.id === productId ? { ...p, status: 'active' } : p
+      ));
+      toast({
+        title: "✅ Produit validé",
+        description: "Le produit a été validé avec succès",
+      });
     } catch (error) {
       console.error('Erreur validation produit:', error);
       toast({

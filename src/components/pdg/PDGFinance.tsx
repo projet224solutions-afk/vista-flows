@@ -49,44 +49,36 @@ export default function PDGFinance() {
   const loadFinanceData = async () => {
     setLoading(true);
     try {
-      // Essayer d'abord l'API backend
-      const response = await fetch('/api/admin/finance/stats');
-      
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
-        setTransactions(data.transactions || []);
-      } else {
-        // Fallback vers Supabase direct
-        const { data: trans, error: transError } = await supabase
+      // Charger les données réelles depuis Supabase
+      const { data: trans, error: transError } = await supabase
         .from('wallet_transactions')
-          .select(`
-            *,
-            sender:profiles!wallet_transactions_sender_id_fkey(id, first_name, last_name, business_name),
-            receiver:profiles!wallet_transactions_receiver_id_fkey(id, first_name, last_name, business_name)
-          `)
+        .select(`
+          *,
+          sender:profiles!wallet_transactions_sender_id_fkey(id, first_name, last_name, business_name),
+          receiver:profiles!wallet_transactions_receiver_id_fkey(id, first_name, last_name, business_name)
+        `)
         .order('created_at', { ascending: false })
         .limit(100);
 
-        if (transError) throw transError;
+      if (transError) throw transError;
 
       setTransactions(trans || []);
 
-        // Calculer les statistiques réelles
-        const completedTrans = trans?.filter(t => t.status === 'completed') || [];
-        const pendingTrans = trans?.filter(t => t.status === 'pending') || [];
-        
-        const revenue = completedTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-        const commissions = completedTrans.reduce((sum, t) => sum + Number(t.fee || 0), 0);
-        const pending = pendingTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      // Calculer les statistiques réelles
+      const completedTrans = trans?.filter(t => t.status === 'completed') || [];
+      const pendingTrans = trans?.filter(t => t.status === 'pending') || [];
+      
+      const revenue = completedTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const commissions = completedTrans.reduce((sum, t) => sum + Number(t.fee || 0), 0);
+      const pending = pendingTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-        // Compter les portefeuilles actifs
-        const { count: walletCount, error: walletError } = await supabase
+      // Compter les portefeuilles actifs
+      const { count: walletCount, error: walletError } = await supabase
         .from('wallets')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true);
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
 
-        if (walletError) throw walletError;
+      if (walletError) throw walletError;
 
       setStats({
         total_revenue: revenue,
@@ -94,7 +86,6 @@ export default function PDGFinance() {
         pending_payments: pending,
         active_wallets: walletCount || 0
       });
-      }
     } catch (error) {
       console.error('Erreur chargement finances:', error);
       toast.error('Erreur lors du chargement des données financières');

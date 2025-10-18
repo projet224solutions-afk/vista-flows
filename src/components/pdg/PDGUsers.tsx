@@ -33,21 +33,15 @@ export default function PDGUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Essayer d'abord l'API backend
-      const response = await fetch('/api/admin/users/all');
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-      } else {
-        // Fallback vers Supabase direct
-      const { data: profiles } = await supabase
+      // Charger les données réelles depuis Supabase
+      const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (error) throw error;
+
       setUsers(profiles || []);
-      }
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');

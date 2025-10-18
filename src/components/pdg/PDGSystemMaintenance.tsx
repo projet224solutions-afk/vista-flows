@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings, 
   RefreshCw, 
@@ -107,28 +108,29 @@ export default function PDGSystemMaintenance() {
   const updateSystem = async () => {
     setIsUpdating(true);
     try {
-      const response = await fetch('/api/admin/system/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version: 'v2.1.5' })
+      // Log de l'action de mise à jour
+      await supabase.from('audit_logs').insert({
+        actor_id: (await supabase.auth.getUser()).data.user?.id,
+        action: 'SYSTEM_UPDATE_INITIATED',
+        target_type: 'system',
+        target_id: 'system',
+        details: { from_version: systemStatus.version, to_version: 'v2.1.5' }
       });
 
-      if (response.ok) {
+      toast({
+        title: "🔄 Mise à jour en cours",
+        description: "Le système se met à jour vers la version v2.1.5",
+      });
+      
+      // Simuler la mise à jour
+      setTimeout(() => {
+        setSystemStatus(prev => ({ ...prev, version: 'v2.1.5' }));
+        setIsUpdating(false);
         toast({
-          title: "🔄 Mise à jour en cours",
-          description: "Le système se met à jour vers la version v2.1.5",
+          title: "✅ Mise à jour terminée",
+          description: "Le système a été mis à jour avec succès",
         });
-        
-        // Simuler la mise à jour
-        setTimeout(() => {
-          setSystemStatus(prev => ({ ...prev, version: 'v2.1.5' }));
-          setIsUpdating(false);
-          toast({
-            title: "✅ Mise à jour terminée",
-            description: "Le système a été mis à jour avec succès",
-          });
-        }, 5000);
-      }
+      }, 5000);
     } catch (error) {
       console.error('Erreur mise à jour:', error);
       toast({

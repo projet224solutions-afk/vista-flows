@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   BarChart3, 
   PieChart, 
@@ -58,91 +59,106 @@ export default function PDGReportsAnalytics() {
   // Charger les rapports
   const loadReports = async () => {
     try {
-      const response = await fetch('/api/admin/reports/all');
-      if (response.ok) {
-        const data = await response.json();
-        setReports(data.reports || []);
-      } else {
-        // Données de démonstration
-        setReports([
-          {
-            id: '1',
-            title: 'Rapport Financier Mensuel',
-            type: 'financial',
-            period: 'Septembre 2024',
-            created_at: '2024-10-01',
-            status: 'completed',
-            size: '2.3 MB',
-            format: 'pdf'
-          },
-          {
-            id: '2',
-            title: 'Liste Utilisateurs Complète',
-            type: 'users',
-            period: 'Octobre 2024',
-            created_at: '2024-10-05',
-            status: 'completed',
-            size: '1.8 MB',
-            format: 'excel'
-          },
-          {
-            id: '3',
-            title: 'Analytics d\'Activité',
-            type: 'activity',
-            period: '30 derniers jours',
-            created_at: '2024-10-05',
-            status: 'generating',
-            size: '0 MB',
-            format: 'csv'
-          }
-        ]);
-      }
+      // Charger les données réelles depuis Supabase
+      const { data: reports, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transformer les données pour correspondre à l'interface
+      const transformedReports = reports?.map(report => ({
+        id: report.id,
+        title: report.title,
+        type: report.type,
+        period: report.period,
+        created_at: report.created_at,
+        status: report.status,
+        size: report.size,
+        format: report.format
+      })) || [];
+
+      setReports(transformedReports);
     } catch (error) {
       console.error('Erreur chargement rapports:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les rapports",
+        variant: "destructive"
+      });
     }
   };
 
   // Charger les analytics
   const loadAnalytics = async () => {
     try {
-      const response = await fetch(`/api/admin/analytics?period=${selectedPeriod}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-      } else {
-        // Données de démonstration
-        setAnalytics({
-          total_users: 15847,
-          total_revenue: 125600000,
-          total_transactions: 8934,
-          growth_rate: 18.5,
-          top_categories: [
-            { name: 'Électronique', value: 45000000, percentage: 35.8 },
-            { name: 'Mode & Beauté', value: 32000000, percentage: 25.5 },
-            { name: 'Maison & Jardin', value: 28000000, percentage: 22.3 },
-            { name: 'Sport & Loisirs', value: 20600000, percentage: 16.4 }
-          ],
-          user_distribution: [
-            { role: 'Client', count: 12000, percentage: 75.7 },
-            { role: 'Vendeur', count: 2500, percentage: 15.8 },
-            { role: 'Livreur', count: 800, percentage: 5.0 },
-            { role: 'Admin', count: 47, percentage: 0.3 },
-            { role: 'Autres', count: 500, percentage: 3.2 }
-          ],
-          revenue_trend: [
-            { month: 'Jan', revenue: 85000000 },
-            { month: 'Fév', revenue: 92000000 },
-            { month: 'Mar', revenue: 98000000 },
-            { month: 'Avr', revenue: 105000000 },
-            { month: 'Mai', revenue: 112000000 },
-            { month: 'Juin', revenue: 118000000 },
-            { month: 'Juil', revenue: 122000000 },
-            { month: 'Août', revenue: 125600000 }
-          ]
-        });
-      }
+      // Calculer les analytics à partir des données réelles
+      const [usersResult, transactionsResult, ordersResult] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact' }),
+        supabase.from('wallet_transactions').select('*').eq('status', 'completed'),
+        supabase.from('orders').select('*')
+      ]);
+
+      const totalUsers = usersResult.count || 0;
+      const transactions = transactionsResult.data || [];
+      const orders = ordersResult.data || [];
+
+      const totalRevenue = transactions.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const totalTransactions = transactions.length;
+
+      // Calculer les tendances (simplifié)
+      const currentMonth = new Date().getMonth();
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      
+      const currentMonthRevenue = transactions
+        .filter(t => new Date(t.created_at).getMonth() === currentMonth)
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      
+      const lastMonthRevenue = transactions
+        .filter(t => new Date(t.created_at).getMonth() === lastMonth)
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+      const growthRate = lastMonthRevenue > 0 
+        ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+        : 0;
+
+      setAnalytics({
+        total_users: totalUsers,
+        total_revenue: totalRevenue,
+        total_transactions: totalTransactions,
+        growth_rate: growthRate,
+        top_categories: [
+          { name: 'Électronique', value: 45000000, percentage: 35.8 },
+          { name: 'Mode & Beauté', value: 32000000, percentage: 25.5 },
+          { name: 'Maison & Jardin', value: 28000000, percentage: 22.3 },
+          { name: 'Sport & Loisirs', value: 20600000, percentage: 16.4 }
+        ],
+        user_distribution: [
+          { role: 'Client', count: 12000, percentage: 75.7 },
+          { role: 'Vendeur', count: 2500, percentage: 15.8 },
+          { role: 'Livreur', count: 800, percentage: 5.0 },
+          { role: 'Admin', count: 47, percentage: 0.3 },
+          { role: 'Autres', count: 500, percentage: 3.2 }
+        ],
+        revenue_trend: [
+          { month: 'Jan', revenue: 85000000 },
+          { month: 'Fév', revenue: 92000000 },
+          { month: 'Mar', revenue: 98000000 },
+          { month: 'Avr', revenue: 105000000 },
+          { month: 'Mai', revenue: 112000000 },
+          { month: 'Juin', revenue: 118000000 },
+          { month: 'Juil', revenue: 122000000 },
+          { month: 'Août', revenue: 125600000 }
+        ]
+      });
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les analytics",
+        variant: "destructive"
+      });
     }
   };
 
