@@ -27,6 +27,8 @@ const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUl
 const UserActivation = lazy(() => import("./pages/UserActivation"));
 const AgentDashboardPage = lazy(() => import("./pages/AgentDashboardPage"));
 const SubAgentDashboardPage = lazy(() => import("./pages/SubAgentDashboardPage"));
+const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
+const TravailleurDashboard = lazy(() => import("./pages/TravailleurDashboard"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
@@ -150,6 +152,14 @@ const App = () => (
                     <SubAgentDashboardPage />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/bureau/:token"
+                element={<BureauDashboard />}
+              />
+              <Route
+                path="/travailleur/:token"
+                element={<TravailleurDashboard />}
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route

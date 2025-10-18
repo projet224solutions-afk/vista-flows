@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck } from 'lucide-react';
+import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
@@ -19,6 +19,7 @@ const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMainte
 const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
 const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalytics'));
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
+const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile } = useAuth();
@@ -238,6 +239,15 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Agents</span>
               </TabsTrigger>
               <TabsTrigger
+                value="syndicat"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Bureaux Syndicaux"
+              >
+                <Building2 className="w-4 h-4" />
+                <span className="font-medium">Bureaux Syndicaux</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="reports"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -296,6 +306,12 @@ export default function PDG224Solutions() {
               <TabsContent value="agents" className="animate-fade-in">
                 <ErrorBoundary>
                   <PDGAgentsManagement />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="syndicat" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGSyndicatManagement />
                 </ErrorBoundary>
               </TabsContent>
 
