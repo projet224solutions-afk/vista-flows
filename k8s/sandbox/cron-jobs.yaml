@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: payments-monitor
+  namespace: sandbox-pdg
+  labels:
+    app: payments-monitor
+    environment: sandbox
+spec:
+  schedule: "0 */2 * * *"  # Every 2 hours
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: payments-monitor
+            environment: sandbox
+        spec:
+          containers:
+          - name: payments-monitor
+            image: 224solutions:latest
+            command: ["node", "backend/src/jobs/payments-monitor.js"]
+            envFrom:
+            - configMapRef:
+                name: 224solutions-config
+            - secretRef:
+                name: 224solutions-secrets
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "50m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ai-insights-generator
+  namespace: sandbox-pdg
+  labels:
+    app: ai-insights-generator
+    environment: sandbox
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ai-insights-generator
+            environment: sandbox
+        spec:
+          containers:
+          - name: ai-insights-generator
+            image: 224solutions:latest
+            command: ["node", "backend/src/jobs/ai-insights-generator.js"]
+            envFrom:
+            - configMapRef:
+                name: 224solutions-config
+            - secretRef:
+                name: 224solutions-secrets
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          restartPolicy: OnFailure
