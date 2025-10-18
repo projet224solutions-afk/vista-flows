@@ -23,7 +23,6 @@ const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionn
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
-const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const UserActivation = lazy(() => import("./pages/UserActivation"));
 const AgentDashboardPage = lazy(() => import("./pages/AgentDashboardPage"));
 const SubAgentDashboardPage = lazy(() => import("./pages/SubAgentDashboardPage"));
@@ -104,7 +103,6 @@ const App = () => (
                 }
               />
               {/* Removed legacy TaxiDashboard */}
-              <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
               <Route
                 path="/invite/:token"
                 element={<UserActivation />}
