@@ -29,7 +29,6 @@ const SubAgentDashboardPage = lazy(() => import("./pages/SubAgentDashboardPage")
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const TravailleurDashboard = lazy(() => import("./pages/TravailleurDashboard"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 // Removed deprecated PDG agent pages - being refactored
 // Removed PDG test pages
@@ -116,14 +115,6 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['transitaire', 'admin']}>
                     <TransitaireDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
                   </ProtectedRoute>
                 }
               />
