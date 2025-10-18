@@ -32,7 +32,7 @@ export default function PDG224Solutions() {
   const [isEnsured, setIsEnsured] = useState(false);
   const [activeTab, setActiveTab] = useState('finance');
   const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
-  
+
   // Hook IA Assistant
   const { aiActive, insights } = usePDGAIAssistant();
 
@@ -85,7 +85,7 @@ export default function PDG224Solutions() {
     setVerifyingMfa(true);
     try {
       // Vérification MFA avec timeout et gestion d'erreur améliorée
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout MFA')), 10000)
       );
 
@@ -192,11 +192,11 @@ export default function PDG224Solutions() {
 
         {/* Main Content */}
         <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <Tabs 
-            defaultValue="finance" 
+          <Tabs
+            defaultValue="finance"
             value={activeTab}
             onValueChange={setActiveTab}
-            className="space-y-8" 
+            className="space-y-8"
             aria-label="Navigation PDG 224Solutions"
           >
             <TabsList className="inline-flex h-auto p-1.5 bg-muted/50 backdrop-blur-xl border border-border/40 rounded-2xl shadow-lg" role="tablist">

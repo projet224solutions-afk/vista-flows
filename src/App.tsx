@@ -24,7 +24,6 @@ const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
 const UserActivation = lazy(() => import("./pages/UserActivation"));
-const AgentDashboardPage = lazy(() => import("./pages/AgentDashboardPage"));
 const SubAgentDashboardPage = lazy(() => import("./pages/SubAgentDashboardPage"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const TravailleurDashboard = lazy(() => import("./pages/TravailleurDashboard"));
@@ -147,14 +146,6 @@ const App = () => (
               <Route path="/pdg/reports" element={<PDGRedirect targetTab="reports" />} />
               <Route path="/pdg/ai" element={<PDGRedirect targetTab="ai-assistant" />} />
               <Route path="/pdg/copilot" element={<PDGRedirect targetTab="copilot" />} />
-              <Route
-                path="/agent"
-                element={
-                  <ProtectedRoute allowedRoles={['agent']}>
-                    <AgentDashboardPage />
-                  </ProtectedRoute>
-                }
-              />
               <Route
                 path="/sub-agent"
                 element={
