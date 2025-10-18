@@ -6,6 +6,7 @@ import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import QuickFooter from "@/components/QuickFooter";
+import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 const promotions = [
   {
@@ -226,6 +227,11 @@ export default function Home() {
 
       {/* Footer de navigation */}
       <QuickFooter />
+
+      {/* Bouton Admin en bas à droite */}
+      <div className="fixed bottom-24 right-4 z-50">
+        <AdminAuthButton />
+      </div>
     </div>
   );
 };

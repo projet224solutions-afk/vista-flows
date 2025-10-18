@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 // Services principaux comme dans l'image
 const mainServices = [
@@ -479,6 +480,11 @@ export default function IndexAlibaba() {
 
       {/* Footer de navigation */}
       <QuickFooter />
+
+      {/* Bouton Admin en bas à droite */}
+      <div className="fixed bottom-24 right-4 z-50">
+        <AdminAuthButton />
+      </div>
     </div>
   );
 }

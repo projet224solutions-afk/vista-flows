@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import QuickFooter from "@/components/QuickFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 const userTypes = {
   client: {
@@ -346,6 +347,11 @@ export default function Profil() {
 
       {/* Footer de navigation */}
       <QuickFooter />
+
+      {/* Bouton Admin en bas à droite */}
+      <div className="fixed bottom-24 right-4 z-50">
+        <AdminAuthButton />
+      </div>
     </div>
   );
 }
