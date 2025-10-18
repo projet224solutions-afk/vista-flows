@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, DollarSign, Users, Settings, MessageSquare, Lock } from 'lucide-react';
+import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
@@ -15,6 +15,9 @@ const PDGUsers = lazy(() => import('@/components/pdg/PDGUsers'));
 const PDGSecurity = lazy(() => import('@/components/pdg/PDGSecurity'));
 const PDGConfig = lazy(() => import('@/components/pdg/PDGConfig'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
+const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMaintenance'));
+const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
+const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalytics'));
 
 export default function PDG224Solutions() {
   const { user, profile } = useAuth();
@@ -207,6 +210,33 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Configuration</span>
               </TabsTrigger>
               <TabsTrigger
+                value="products"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Produits"
+              >
+                <Package className="w-4 h-4" />
+                <span className="font-medium">Produits</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="maintenance"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Maintenance"
+              >
+                <Wrench className="w-4 h-4" />
+                <span className="font-medium">Maintenance</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Rapports"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="font-medium">Rapports</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="copilot"
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Copilote IA"
@@ -238,6 +268,24 @@ export default function PDG224Solutions() {
               <TabsContent value="config" className="animate-fade-in">
                 <ErrorBoundary>
                   <PDGConfig />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="products" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGProductsManagement />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="maintenance" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGSystemMaintenance />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="reports" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGReportsAnalytics />
                 </ErrorBoundary>
               </TabsContent>
 
