@@ -30,6 +30,7 @@ const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const TravailleurDashboard = lazy(() => import("./pages/TravailleurDashboard"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
+const PDGRedirect = lazy(() => import("./components/pdg/PDGRedirect"));
 // Removed deprecated PDG agent pages - being refactored
 // Removed PDG test pages
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
@@ -118,6 +119,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              {/* Hub PDG Principal */}
               <Route
                 path="/pdg"
                 element={
@@ -126,6 +128,25 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              
+              {/* Redirections PDG vers le hub principal */}
+              <Route path="/admin" element={<PDGRedirect targetTab="finance" />} />
+              <Route path="/admin-dashboard" element={<PDGRedirect targetTab="finance" />} />
+              <Route path="/pdg-dashboard" element={<PDGRedirect targetTab="finance" />} />
+              <Route path="/executive" element={<PDGRedirect targetTab="finance" />} />
+              
+              {/* Redirections avec onglets spécifiques */}
+              <Route path="/pdg/finance" element={<PDGRedirect targetTab="finance" />} />
+              <Route path="/pdg/users" element={<PDGRedirect targetTab="users" />} />
+              <Route path="/pdg/security" element={<PDGRedirect targetTab="security" />} />
+              <Route path="/pdg/config" element={<PDGRedirect targetTab="config" />} />
+              <Route path="/pdg/products" element={<PDGRedirect targetTab="products" />} />
+              <Route path="/pdg/maintenance" element={<PDGRedirect targetTab="maintenance" />} />
+              <Route path="/pdg/agents" element={<PDGRedirect targetTab="agents" />} />
+              <Route path="/pdg/syndicat" element={<PDGRedirect targetTab="syndicat" />} />
+              <Route path="/pdg/reports" element={<PDGRedirect targetTab="reports" />} />
+              <Route path="/pdg/ai" element={<PDGRedirect targetTab="ai-assistant" />} />
+              <Route path="/pdg/copilot" element={<PDGRedirect targetTab="copilot" />} />
               <Route
                 path="/agent"
                 element={
