@@ -23,11 +23,25 @@ export default function PDG224Solutions() {
   const [loading, setLoading] = useState(true);
   const [verifyingMfa, setVerifyingMfa] = useState(false);
   const [isEnsured, setIsEnsured] = useState(false);
-  const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
+  const adminData = useAdminUnifiedData((!!profile && profile.role === 'admin') || isLocalAdmin());
+
+  // Vérifier si l'utilisateur est authentifié en tant qu'admin local
+  const isLocalAdmin = () => {
+    const adminAuth = sessionStorage.getItem('admin_authenticated');
+    return adminAuth === 'true';
+  };
 
   useEffect(() => {
     if (isEnsured) return;
     const checkPDGAccess = async () => {
+      // Si admin local, autoriser l'accès immédiatement
+      if (isLocalAdmin()) {
+        setLoading(false);
+        setIsEnsured(true);
+        return;
+      }
+
+      // Sinon vérifier l'authentification Supabase
       if (!user) {
         navigate('/auth');
         return;
@@ -96,7 +110,7 @@ export default function PDG224Solutions() {
     }
   };
 
-  if (loading || !profile) {
+  if (loading || (!profile && !isLocalAdmin())) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
