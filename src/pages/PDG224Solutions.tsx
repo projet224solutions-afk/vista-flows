@@ -23,13 +23,14 @@ export default function PDG224Solutions() {
   const [loading, setLoading] = useState(true);
   const [verifyingMfa, setVerifyingMfa] = useState(false);
   const [isEnsured, setIsEnsured] = useState(false);
-  const adminData = useAdminUnifiedData((!!profile && profile.role === 'admin') || isLocalAdmin());
 
   // Vérifier si l'utilisateur est authentifié en tant qu'admin local
   const isLocalAdmin = () => {
     const adminAuth = sessionStorage.getItem('admin_authenticated');
     return adminAuth === 'true';
   };
+
+  const adminData = useAdminUnifiedData((!!profile && profile.role === 'admin') || isLocalAdmin());
 
   useEffect(() => {
     if (isEnsured) return;
