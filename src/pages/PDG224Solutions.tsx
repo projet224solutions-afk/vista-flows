@@ -228,32 +228,32 @@ export default function PDG224Solutions() {
                 <Wrench className="w-4 h-4" />
                 <span className="font-medium">Maintenance</span>
               </TabsTrigger>
-                     <TabsTrigger
-                       value="reports"
-                       disabled={!mfaVerified}
-                       className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                       aria-label="Onglet Rapports"
-                     >
-                       <BarChart3 className="w-4 h-4" />
-                       <span className="font-medium">Rapports</span>
-                     </TabsTrigger>
-                     <TabsTrigger
-                       value="agents"
-                       disabled={!mfaVerified}
-                       className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                       aria-label="Onglet Agents"
-                     >
-                       <UserCheck className="w-4 h-4" />
-                       <span className="font-medium">Agents</span>
-                     </TabsTrigger>
-                     <TabsTrigger
-                       value="copilot"
-                       className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                       aria-label="Onglet Copilote IA"
-                     >
-                       <MessageSquare className="w-4 h-4" />
-                       <span className="font-medium">Copilote IA</span>
-                     </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Rapports"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="font-medium">Rapports</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="agents"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Agents"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span className="font-medium">Agents</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="copilot"
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Copilote IA"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span className="font-medium">Copilote IA</span>
+              </TabsTrigger>
             </TabsList>
 
             <Suspense fallback={<div className="text-center py-6">Chargement…</div>}>
@@ -293,23 +293,23 @@ export default function PDG224Solutions() {
                 </ErrorBoundary>
               </TabsContent>
 
-                     <TabsContent value="reports" className="animate-fade-in">
-                       <ErrorBoundary>
-                         <PDGReportsAnalytics />
-                       </ErrorBoundary>
-                     </TabsContent>
+              <TabsContent value="reports" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGReportsAnalytics />
+                </ErrorBoundary>
+              </TabsContent>
 
-                     <TabsContent value="agents" className="animate-fade-in">
-                       <ErrorBoundary>
-                         <PDGAgentsManagement />
-                       </ErrorBoundary>
-                     </TabsContent>
+              <TabsContent value="agents" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGAgentsManagement />
+                </ErrorBoundary>
+              </TabsContent>
 
-                     <TabsContent value="copilot" className="animate-fade-in">
-                       <ErrorBoundary>
-                         <PDGCopilot mfaVerified={mfaVerified} />
-                       </ErrorBoundary>
-                     </TabsContent>
+              <TabsContent value="copilot" className="animate-fade-in">
+                <ErrorBoundary>
+                  <PDGCopilot mfaVerified={mfaVerified} />
+                </ErrorBoundary>
+              </TabsContent>
             </Suspense>
           </Tabs>
         </div>
