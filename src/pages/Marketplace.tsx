@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Grid, List, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,15 +8,38 @@ import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
 const PAGE_LIMIT = 12;
 
+interface Category {
+  id: string;
+  name: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  images?: string[];
+  vendor_id: string;
+  vendors?: {
+    business_name: string;
+  };
+}
+
 export default function Marketplace() {
-  const [products, setProducts] = useState<unknown[]>([]);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState<unknown[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState("popular");
   const [showFilters, setShowFilters] = useState(false);
@@ -24,34 +48,112 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Charger les catégories
   useEffect(() => {
-    fetch(`${API_BASE}/api/categories`)
-      .then(res => res.json())
-      .then(data => setCategories(data.categories || []))
-      .catch(() => setCategories([]));
+    loadCategories();
   }, []);
 
+  // Charger les produits quand les filtres changent
+  useEffect(() => {
+    fetchProducts(true);
+  }, [searchQuery, selectedCategory, filters, sortBy]);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, image_url, is_active')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      
+      const allCategory = { id: 'all', name: 'Toutes', is_active: true };
+      setCategories([allCategory, ...(data || [])]);
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+      setCategories([{ id: 'all', name: 'Toutes', is_active: true }]);
+    }
+  };
+
   const fetchProducts = async (reset = false) => {
-    if (reset) setPage(1);
+    if (reset) {
+      setPage(1);
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     const currentPage = reset ? 1 : page;
-    const params = new URLSearchParams({
-      search: searchQuery,
-      category: selectedCategory !== 'all' ? selectedCategory : '',
-      minPrice: String(filters.minPrice || 0),
-      maxPrice: String(filters.maxPrice || 0),
-      minRating: String(filters.minRating || 0),
-      sort: sortBy,
-      page: String(currentPage),
-      limit: String(PAGE_LIMIT)
-    });
 
     try {
-      if (reset) setLoading(true); else setLoadingMore(true);
-      const res = await fetch(`${API_BASE}/api/products?${params.toString()}`);
-      const data = await res.json();
-      if (reset) setProducts(data.products || []); else setProducts(prev => [...prev, ...(data.products || [])]);
-      setTotal(data.total || 0);
-    } catch {
+      let query = supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          price,
+          description,
+          images,
+          vendor_id,
+          vendors (
+            business_name
+          )
+        `, { count: 'exact' })
+        .eq('is_active', true);
+
+      // Filtres de recherche
+      if (searchQuery) {
+        query = query.ilike('name', `%${searchQuery}%`);
+      }
+
+      // Filtre par catégorie
+      if (selectedCategory && selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
+      }
+
+      // Filtres de prix
+      if (filters.minPrice > 0) {
+        query = query.gte('price', filters.minPrice);
+      }
+      if (filters.maxPrice > 0) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      // Tri
+      switch (sortBy) {
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+
+      // Pagination
+      const start = (currentPage - 1) * PAGE_LIMIT;
+      const end = start + PAGE_LIMIT - 1;
+      query = query.range(start, end);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      if (reset) {
+        setProducts(data || []);
+      } else {
+        setProducts(prev => [...prev, ...(data || [])]);
+      }
+      
+      setTotal(count || 0);
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+      toast.error('Erreur lors du chargement des produits');
       if (reset) setProducts([]);
     } finally {
       setLoading(false);
@@ -59,7 +161,13 @@ export default function Marketplace() {
     }
   };
 
-  useEffect(() => { fetchProducts(true); }, [searchQuery, selectedCategory, filters, sortBy]);
+  const handleProductClick = (productId: string) => {
+    navigate(`/marketplace?product=${productId}`);
+  };
+
+  const handleProductContact = (productId: string) => {
+    navigate(`/marketplace?product=${productId}`);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -80,18 +188,18 @@ export default function Marketplace() {
       {/* Categories */}
       <section className="px-4 py-4 border-b border-border">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {categories.map((category: unknown) => (
+          {categories.map((category) => (
             <Badge
               key={category.id}
-              variant={selectedCategory === (category.id || category.label) ? "default" : "secondary"}
+              variant={selectedCategory === category.id ? "default" : "secondary"}
               className={`cursor-pointer whitespace-nowrap ${
-                selectedCategory === (category.id || category.label)
-                  ? "bg-vendeur-primary text-white" 
+                selectedCategory === category.id
+                  ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
               }`}
-              onClick={() => setSelectedCategory(category.id || category.label)}
+              onClick={() => setSelectedCategory(category.id)}
             >
-              {(category.name || category.label)} {(category.count ? `(${category.count})` : '')}
+              {category.name}
             </Badge>
           ))}
         </div>
@@ -180,15 +288,40 @@ export default function Marketplace() {
           <p className="text-sm text-muted-foreground">{products.length} / {total} résultats</p>
         </div>
 
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
-          {products.map((p: unknown) => (
-            <ProductCard key={p.id} {...p} onBuy={() => {}} onContact={() => {}} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Aucun produit trouvé</p>
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+            {products.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                id={product.id}
+                image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                title={product.name}
+                price={product.price}
+                vendor={product.vendors?.business_name || 'Vendeur'}
+                rating={0}
+                reviewCount={0}
+                onBuy={() => handleProductClick(product.id)}
+                onContact={() => handleProductContact(product.id)}
+              />
+            ))}
+          </div>
+        )}
 
         {products.length < total && !loading && (
           <div className="text-center mt-4">
-            <Button onClick={() => { setPage(prev => prev + 1); fetchProducts(); }} disabled={loadingMore}>
+            <Button 
+              onClick={() => { 
+                setPage(prev => prev + 1); 
+                fetchProducts(); 
+              }} 
+              disabled={loadingMore}
+            >
               {loadingMore ? 'Chargement...' : 'Voir plus'}
             </Button>
           </div>
