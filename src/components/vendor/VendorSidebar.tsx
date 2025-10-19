@@ -8,7 +8,7 @@ import {
   Package, ShoppingCart, Users, BarChart3, CreditCard, 
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
-  Store, DollarSign, Boxes, AlertTriangle, Link
+  Store, DollarSign, Boxes, AlertTriangle, Link, Building2
 } from "lucide-react";
 
 import {
@@ -102,6 +102,11 @@ export function VendorSidebar() {
           title: "Entrepôts", 
           icon: Boxes, 
           path: "warehouse"
+        },
+        { 
+          title: "Fournisseurs", 
+          icon: Building2, 
+          path: "suppliers"
         },
       ]
     },

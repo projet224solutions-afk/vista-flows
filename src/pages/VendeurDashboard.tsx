@@ -40,6 +40,7 @@ import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
+import SupplierManagement from "@/components/vendor/SupplierManagement";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -382,6 +383,7 @@ export default function VendeurDashboard() {
               <Route path="orders" element={<OrderManagement />} />
               <Route path="inventory" element={<InventoryManagement />} />
               <Route path="warehouse" element={<WarehouseManagement />} />
+              <Route path="suppliers" element={<SupplierManagement />} />
               <Route path="clients" element={<ClientManagement />} />
               <Route path="agents" element={<AgentManagement />} />
               <Route path="prospects" element={<ProspectManagement />} />

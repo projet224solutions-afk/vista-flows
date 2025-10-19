@@ -144,6 +144,111 @@ export type Database = {
         }
         Relationships: []
       }
+      bureau_transactions: {
+        Row: {
+          amount: number
+          bureau_id: string | null
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          member_id: string | null
+          status: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          bureau_id?: string | null
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          member_id?: string | null
+          status?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          bureau_id?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          member_id?: string | null
+          status?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bureau_transactions_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bureau_transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bureaus: {
+        Row: {
+          bureau_code: string
+          commune: string
+          created_at: string | null
+          full_location: string | null
+          id: string
+          last_activity: string | null
+          prefecture: string
+          president_email: string | null
+          president_name: string | null
+          president_phone: string | null
+          status: string | null
+          total_cotisations: number | null
+          total_members: number | null
+          total_vehicles: number | null
+          validated_at: string | null
+        }
+        Insert: {
+          bureau_code: string
+          commune: string
+          created_at?: string | null
+          full_location?: string | null
+          id?: string
+          last_activity?: string | null
+          prefecture: string
+          president_email?: string | null
+          president_name?: string | null
+          president_phone?: string | null
+          status?: string | null
+          total_cotisations?: number | null
+          total_members?: number | null
+          total_vehicles?: number | null
+          validated_at?: string | null
+        }
+        Update: {
+          bureau_code?: string
+          commune?: string
+          created_at?: string | null
+          full_location?: string | null
+          id?: string
+          last_activity?: string | null
+          prefecture?: string
+          president_email?: string | null
+          president_name?: string | null
+          president_phone?: string | null
+          status?: string | null
+          total_cotisations?: number | null
+          total_members?: number | null
+          total_vehicles?: number | null
+          validated_at?: string | null
+        }
+        Relationships: []
+      }
       calls: {
         Row: {
           call_type: string
@@ -1047,40 +1152,64 @@ export type Database = {
       }
       inventory: {
         Row: {
+          barcode: string | null
+          cost_price: number | null
           expiry_date: string | null
           id: string
           last_updated: string | null
+          location_details: string | null
           lot_number: string | null
           minimum_stock: number | null
+          notes: string | null
           product_id: string
           quantity: number
+          reorder_point: number | null
+          reorder_quantity: number | null
           reserved_quantity: number | null
+          sku: string | null
+          supplier_id: string | null
           variant_id: string | null
           warehouse_id: string | null
           warehouse_location: string | null
         }
         Insert: {
+          barcode?: string | null
+          cost_price?: number | null
           expiry_date?: string | null
           id?: string
           last_updated?: string | null
+          location_details?: string | null
           lot_number?: string | null
           minimum_stock?: number | null
+          notes?: string | null
           product_id: string
           quantity?: number
+          reorder_point?: number | null
+          reorder_quantity?: number | null
           reserved_quantity?: number | null
+          sku?: string | null
+          supplier_id?: string | null
           variant_id?: string | null
           warehouse_id?: string | null
           warehouse_location?: string | null
         }
         Update: {
+          barcode?: string | null
+          cost_price?: number | null
           expiry_date?: string | null
           id?: string
           last_updated?: string | null
+          location_details?: string | null
           lot_number?: string | null
           minimum_stock?: number | null
+          notes?: string | null
           product_id?: string
           quantity?: number
+          reorder_point?: number | null
+          reorder_quantity?: number | null
           reserved_quantity?: number | null
+          sku?: string | null
+          supplier_id?: string | null
           variant_id?: string | null
           warehouse_id?: string | null
           warehouse_location?: string | null
@@ -1094,6 +1223,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inventory_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
@@ -1102,6 +1238,134 @@ export type Database = {
           },
           {
             foreignKeyName: "inventory_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          is_resolved: boolean | null
+          message: string
+          product_id: string
+          resolved_at: string | null
+          severity: string | null
+          vendor_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message: string
+          product_id: string
+          resolved_at?: string | null
+          severity?: string | null
+          vendor_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message?: string
+          product_id?: string
+          resolved_at?: string | null
+          severity?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          movement_type: string
+          new_quantity: number
+          notes: string | null
+          order_id: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+          user_id: string | null
+          vendor_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movement_type: string
+          new_quantity: number
+          notes?: string | null
+          order_id?: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+          user_id?: string | null
+          vendor_id: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movement_type?: string
+          new_quantity?: number
+          notes?: string | null
+          order_id?: string | null
+          previous_quantity?: number
+          product_id?: string
+          quantity_change?: number
+          user_id?: string | null
+          vendor_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_history_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_history_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
@@ -1158,6 +1422,65 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          bureau_id: string | null
+          cotisation_status: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          join_date: string | null
+          last_cotisation_date: string | null
+          license_number: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          total_cotisations: number | null
+          vehicle_serial: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          bureau_id?: string | null
+          cotisation_status?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          join_date?: string | null
+          last_cotisation_date?: string | null
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_cotisations?: number | null
+          vehicle_serial?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          bureau_id?: string | null
+          cotisation_status?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          join_date?: string | null
+          last_cotisation_date?: string | null
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_cotisations?: number | null
+          vehicle_serial?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
         ]
@@ -2083,6 +2406,59 @@ export type Database = {
         }
         Relationships: []
       }
+      sos_alerts: {
+        Row: {
+          address: string | null
+          alert_type: string | null
+          bureau_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          member_name: string | null
+          severity: string | null
+          status: string | null
+          vehicle_serial: string | null
+        }
+        Insert: {
+          address?: string | null
+          alert_type?: string | null
+          bureau_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          member_name?: string | null
+          severity?: string | null
+          status?: string | null
+          vehicle_serial?: string | null
+        }
+        Update: {
+          address?: string | null
+          alert_type?: string | null
+          bureau_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          member_name?: string | null
+          severity?: string | null
+          status?: string | null
+          vehicle_serial?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -2127,6 +2503,56 @@ export type Database = {
             columns: ["to_warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          payment_terms: number | null
+          phone: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          payment_terms?: number | null
+          phone?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          payment_terms?: number | null
+          phone?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -2261,6 +2687,245 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxi_driver_locations: {
+        Row: {
+          driver_id: string
+          lat: number
+          lng: number
+          updated_at: string | null
+        }
+        Insert: {
+          driver_id: string
+          lat: number
+          lng: number
+          updated_at?: string | null
+        }
+        Update: {
+          driver_id?: string
+          lat?: number
+          lng?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_driver_locations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "taxi_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxi_drivers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_online: boolean | null
+          rating: number | null
+          total_earnings: number | null
+          total_rides: number | null
+          updated_at: string | null
+          user_id: string
+          vehicle: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_online?: boolean | null
+          rating?: number | null
+          total_earnings?: number | null
+          total_rides?: number | null
+          updated_at?: string | null
+          user_id: string
+          vehicle?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_online?: boolean | null
+          rating?: number | null
+          total_earnings?: number | null
+          total_rides?: number | null
+          updated_at?: string | null
+          user_id?: string
+          vehicle?: Json | null
+        }
+        Relationships: []
+      }
+      taxi_notifications: {
+        Row: {
+          created_at: string | null
+          driver_id: string | null
+          id: string
+          payload: Json | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          payload?: Json | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          payload?: Json | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_notifications_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxi_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          method: string
+          ride_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          method: string
+          ride_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          method?: string
+          ride_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_payments_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxi_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          driver_id: string
+          id: string
+          ride_id: string
+          stars: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          driver_id: string
+          id?: string
+          ride_id: string
+          stars: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          driver_id?: string
+          id?: string
+          ride_id?: string
+          stars?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_ratings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxi_ratings_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxi_rides: {
+        Row: {
+          commission_rate: number | null
+          completed_at: string | null
+          created_at: string | null
+          distance_km: number | null
+          driver_id: string | null
+          dropoff: Json
+          duration_min: number | null
+          id: string
+          pickup: Json
+          price: number | null
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          commission_rate?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          driver_id?: string | null
+          dropoff: Json
+          duration_min?: number | null
+          id?: string
+          pickup: Json
+          price?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          commission_rate?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          distance_km?: number | null
+          driver_id?: string | null
+          dropoff?: Json
+          duration_min?: number | null
+          id?: string
+          pickup?: Json
+          price?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_drivers"
             referencedColumns: ["id"]
           },
         ]
@@ -2412,6 +3077,66 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand: string | null
+          bureau_id: string | null
+          created_at: string | null
+          id: string
+          insurance_expiry: string | null
+          last_inspection: string | null
+          model: string | null
+          owner_member_id: string | null
+          serial_number: string | null
+          status: string | null
+          type: string | null
+          year: number | null
+        }
+        Insert: {
+          brand?: string | null
+          bureau_id?: string | null
+          created_at?: string | null
+          id?: string
+          insurance_expiry?: string | null
+          last_inspection?: string | null
+          model?: string | null
+          owner_member_id?: string | null
+          serial_number?: string | null
+          status?: string | null
+          type?: string | null
+          year?: number | null
+        }
+        Update: {
+          brand?: string | null
+          bureau_id?: string | null
+          created_at?: string | null
+          id?: string
+          insurance_expiry?: string | null
+          last_inspection?: string | null
+          model?: string | null
+          owner_member_id?: string | null
+          serial_number?: string | null
+          status?: string | null
+          type?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_owner_member_id_fkey"
+            columns: ["owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]
@@ -2802,6 +3527,10 @@ export type Database = {
       generate_transaction_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_inventory_stats: {
+        Args: { p_vendor_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {

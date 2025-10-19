@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/hooks/use-toast";
+import { useInventoryService } from "@/hooks/useInventoryService";
+import InventoryAlerts from "./InventoryAlerts";
+import InventoryHistory from "./InventoryHistory";
 
 interface InventoryItem {
   id: string;
@@ -37,20 +41,29 @@ interface Warehouse {
 export default function InventoryManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const {
+    inventory,
+    alerts,
+    history,
+    stats,
+    loading,
+    updateStock,
+    markAlertAsRead,
+    resolveAlert,
+    refresh
+  } = useInventoryService();
+  
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
 
   useEffect(() => {
     if (!user) return;
-    fetchData();
+    fetchWarehouses();
   }, [user]);
 
-  const fetchData = async () => {
+  const fetchWarehouses = async () => {
     try {
-      // Get vendor ID
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
@@ -59,39 +72,15 @@ export default function InventoryManagement() {
 
       if (!vendor) return;
 
-      // Fetch inventory with product details
-      const { data: inventoryData, error: inventoryError } = await supabase
-        .from('inventory')
-        .select(`
-          *,
-          product:products(
-            name,
-            price,
-            sku
-          )
-        `)
-        .eq('products.vendor_id', vendor.id);
-
-      if (inventoryError) throw inventoryError;
-
-      // Fetch warehouses
-      const { data: warehousesData, error: warehousesError } = await supabase
+      const { data: warehousesData, error } = await supabase
         .from('warehouses')
         .select('*')
         .eq('vendor_id', vendor.id);
 
-      if (warehousesError) throw warehousesError;
-
-      setInventory(inventoryData || []);
+      if (error) throw error;
       setWarehouses(warehousesData || []);
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données d'inventaire.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error fetching warehouses:', error);
     }
   };
 
@@ -110,34 +99,11 @@ export default function InventoryManagement() {
 
   const lowStockItems = inventory.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = inventory.filter(item => item.quantity === 0);
-  const totalProducts = inventory.length;
-  const totalValue = inventory.reduce((acc, item) => acc + (item.quantity * item.product.price), 0);
+  const totalProducts = stats?.total_products || inventory.length;
+  const totalValue = stats?.total_value || inventory.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
+  const totalCost = stats?.total_cost || 0;
+  const potentialProfit = stats?.potential_profit || 0;
 
-  const updateStock = async (itemId: string, newQuantity: number) => {
-    try {
-      const { error } = await supabase
-        .from('inventory')
-        .update({ quantity: newQuantity })
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      setInventory(prev => prev.map(item => 
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
-
-      toast({
-        title: "Stock mis à jour",
-        description: "La quantité a été mise à jour avec succès."
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le stock.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const [addOpen, setAddOpen] = useState(false);
   const [addQty, setAddQty] = useState('');
@@ -154,16 +120,10 @@ export default function InventoryManagement() {
     }
     try {
       const newQty = selectedItem.quantity + qty;
-      const { error } = await supabase
-        .from('inventory')
-        .update({ quantity: newQty })
-        .eq('id', selectedItem.id);
-      if (error) throw error;
-      setInventory(prev => prev.map(i => i.id === selectedItem.id ? { ...i, quantity: newQty } : i));
+      await updateStock(selectedItem.id, newQty);
       setAddOpen(false);
       setAddQty('');
-      toast({ title: 'Stock ajouté' });
-    } catch (e: unknown) {
+    } catch (e: any) {
       toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
     }
   };
@@ -172,8 +132,8 @@ export default function InventoryManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Gestion des Stocks</h2>
-          <p className="text-muted-foreground">Gérez votre inventaire et optimisez vos approvisionnements</p>
+          <h2 className="text-2xl font-bold">📦 Gestion Intelligente des Stocks</h2>
+          <p className="text-muted-foreground">Inventaire connecté et synchronisé en temps réel</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -206,8 +166,8 @@ export default function InventoryManagement() {
         </div>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Statistiques améliorées */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
@@ -235,7 +195,7 @@ export default function InventoryManagement() {
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-red-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Rupture de stock</p>
+                <p className="text-sm text-muted-foreground">Rupture</p>
                 <p className="text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
               </div>
             </div>
@@ -244,71 +204,74 @@ export default function InventoryManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-green-600 rounded-full" />
+              <DollarSign className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Valeur inventaire</p>
-                <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-sm text-muted-foreground">Valeur stock</p>
+                <p className="text-xl font-bold">{totalValue.toLocaleString()} GNF</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-purple-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Profit potentiel</p>
+                <p className="text-xl font-bold">{potentialProfit.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alertes urgentes */}
-      {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <AlertTriangle className="w-5 h-5" />
-              Alertes stock
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {outOfStockItems.length > 0 && (
-                <p className="text-red-600 font-medium">
-                  ⚠️ {outOfStockItems.length} produit(s) en rupture de stock
-                </p>
-              )}
-              {lowStockItems.length > 0 && (
-                <p className="text-orange-600 font-medium">
-                  📉 {lowStockItems.length} produit(s) avec un stock faible
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs pour organiser le contenu */}
+      <Tabs defaultValue="inventory" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="inventory">
+            <Package className="w-4 h-4 mr-2" />
+            Inventaire
+          </TabsTrigger>
+          <TabsTrigger value="alerts">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Alertes ({alerts.length})
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="w-4 h-4 mr-2" />
+            Historique
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filtres */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un produit..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">Tous les produits</option>
-              <option value="low">Stock faible</option>
-              <option value="out">Rupture de stock</option>
-            </select>
-            <Filter className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="inventory" className="space-y-4">
+          {/* Filtres */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex gap-4 items-center">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher un produit..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <select
+                  value={stockFilter}
+                  onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
+                  className="px-3 py-2 border rounded-md"
+                >
+                  <option value="all">Tous les produits</option>
+                  <option value="low">Stock faible</option>
+                  <option value="out">Rupture de stock</option>
+                </select>
+                <Filter className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Liste d'inventaire */}
-      <Card>
+          {/* Liste d'inventaire */}
+          <Card>
         <CardHeader>
           <CardTitle>Inventaire détaillé</CardTitle>
         </CardHeader>
@@ -412,9 +375,9 @@ export default function InventoryManagement() {
             </div>
           )}
         </CardContent>
-      </Card>
+          </Card>
 
-      {/* Entrepôts */}
+          {/* Entrepôts */}
       {warehouses.length > 0 && (
         <Card>
           <CardHeader>
@@ -440,8 +403,22 @@ export default function InventoryManagement() {
               ))}
             </div>
           </CardContent>
-        </Card>
-      )}
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <InventoryAlerts 
+            alerts={alerts}
+            onMarkAsRead={markAlertAsRead}
+            onResolve={resolveAlert}
+          />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <InventoryHistory history={history} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
