@@ -22,6 +22,7 @@ export default function WalletDashboard() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [receiverId, setReceiverId] = useState("");
+  const [transferReason, setTransferReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   const walletId = useMemo(() => wallet?.id, [wallet]);
@@ -183,7 +184,7 @@ export default function WalletDashboard() {
           fee: 0,
           currency: 'GNF',
           status: 'completed',
-          description: `Transfert vers ${receiverId.substring(0, 8)}...`,
+          description: transferReason || `Transfert vers ${receiverId.substring(0, 8)}...`,
           sender_wallet_id: wallet.id,
           receiver_wallet_id: receiverWallet.id
         });
@@ -216,6 +217,7 @@ export default function WalletDashboard() {
 
       setTransferAmount("");
       setReceiverId("");
+      setTransferReason("");
       toast.success(`Transfert de ${amount.toLocaleString()} GNF effectué avec succès`);
       await refetch(userId);
     } catch (e: any) {
@@ -286,10 +288,14 @@ export default function WalletDashboard() {
 
           <TabsContent value="transfer" className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 space-y-2">
+              <div className="md:col-span-2 space-y-3">
                 <div>
                   <Label>ID Destinataire</Label>
                   <Input placeholder="UUID du destinataire" value={receiverId} onChange={(e) => setReceiverId(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Motif du transfert</Label>
+                  <Input placeholder="Ex: Paiement marchandise, Remboursement..." value={transferReason} onChange={(e) => setTransferReason(e.target.value)} />
                 </div>
                 <div>
                   <Label>Montant à transférer</Label>
