@@ -292,13 +292,19 @@ export default function ProductManagement() {
           });
         } else {
           console.log('✅ Inventaire créé:', inventoryData);
-          toast({
-            title: "✅ Succès",
-            description: "Produit et inventaire créés! L'inventaire va se mettre à jour automatiquement.",
-          });
         }
 
         setProducts(prev => [data, ...prev]);
+
+        toast({
+          title: "✅ Produit créé",
+          description: "Redirection vers le stock...",
+        });
+
+        // Attendre un peu puis rediriger vers la page stock
+        setTimeout(() => {
+          window.location.href = '/vendeur/warehouse';
+        }, 1500);
       }
 
       setShowDialog(false);

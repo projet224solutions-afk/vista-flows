@@ -60,9 +60,12 @@ export default function InventoryManagement() {
 
   useEffect(() => {
     if (!user) return;
+    
+    console.log('🔄 Chargement initial InventoryManagement');
     fetchWarehouses();
     fetchProducts();
-  }, [user]);
+    refresh(); // Forcer le rechargement de l'inventaire
+  }, [user, refresh]);
 
   const fetchWarehouses = async () => {
     try {
@@ -104,6 +107,7 @@ export default function InventoryManagement() {
         .order('name');
 
       if (error) throw error;
+      console.log('📦 Produits chargés dans InventoryManagement:', productsData?.length);
       setProducts(productsData || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -126,10 +130,14 @@ export default function InventoryManagement() {
 
   const lowStockItems = inventory.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = inventory.filter(item => item.quantity === 0);
-  const totalProducts = stats?.total_products || inventory.length;
+  const totalProducts = inventory.length; // Nombre réel de produits dans l'inventaire
   const totalValue = stats?.total_value || inventory.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
   const totalCost = stats?.total_cost || 0;
   const potentialProfit = stats?.potential_profit || 0;
+
+  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
+
+  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
 
   const [addOpen, setAddOpen] = useState(false);
