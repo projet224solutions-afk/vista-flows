@@ -4,24 +4,18 @@ import { useAuth } from './useAuth';
 
 export interface VendorBadges {
   pendingOrders: number;
-  activeProspects: number;
   unreadExpenseAlerts: number;
-  openTickets: number;
   totalProducts: number;
   lowStockProducts: number;
-  activeWarehouses: number;
 }
 
 export function useVendorBadges() {
   const { user } = useAuth();
   const [badges, setBadges] = useState<VendorBadges>({
     pendingOrders: 0,
-    activeProspects: 0,
     unreadExpenseAlerts: 0,
-    openTickets: 0,
     totalProducts: 0,
-    lowStockProducts: 0,
-    activeWarehouses: 0
+    lowStockProducts: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -43,67 +37,57 @@ export function useVendorBadges() {
         }
 
         // Fetch pending orders count
-        const { count: pendingOrdersCount } = await supabase
+        const { count: pendingOrdersCount, error: ordersError } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('vendor_id', vendor.id)
           .eq('status', 'pending');
 
-        // Fetch active prospects count
-        const { count: activeProspectsCount } = await supabase
-          .from('prospects')
-          .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
-          .in('status', ['new', 'contacted', 'qualified']);
+        if (ordersError) {
+          console.error('Error fetching orders:', ordersError);
+        }
 
         // Fetch unread expense alerts count
-        const { count: unreadAlertsCount } = await supabase
+        const { count: unreadAlertsCount, error: alertsError } = await supabase
           .from('expense_alerts')
           .select('*', { count: 'exact', head: true })
           .eq('vendor_id', vendor.id)
           .eq('is_read', false);
 
-        // Fetch open support tickets count
-        const { count: openTicketsCount } = await supabase
-          .from('support_tickets')
-          .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
-          .in('status', ['open', 'in_progress']);
+        if (alertsError) {
+          console.error('Error fetching expense alerts:', alertsError);
+        }
 
-        // Fetch products count (from products table directly)
-        const { count: productsCount } = await supabase
+        // Fetch products count
+        const { count: productsCount, error: productsError } = await supabase
           .from('products')
           .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id);
+          .eq('vendor_id', vendor.id)
+          .eq('is_active', true);
 
-        // Fetch low stock products count (from inventory with proper join)
-        const { data: inventoryData } = await supabase
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+        }
+
+        // Fetch low stock products count
+        const { data: inventoryData, error: inventoryError } = await supabase
           .from('inventory')
           .select('id, quantity, minimum_stock, product_id, products!inner(vendor_id)')
           .eq('products.vendor_id', vendor.id);
+
+        if (inventoryError) {
+          console.error('Error fetching inventory:', inventoryError);
+        }
 
         const lowStockCount = inventoryData?.filter(item => 
           item.quantity <= item.minimum_stock && item.quantity > 0
         ).length || 0;
 
-        // Count products with inventory entries
-        const productsWithInventory = new Set(inventoryData?.map(i => i.product_id) || []).size;
-
-        // Fetch active warehouses count
-        const { count: warehousesCount } = await supabase
-          .from('warehouses')
-          .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
-          .eq('is_active', true);
-
         setBadges({
           pendingOrders: pendingOrdersCount || 0,
-          activeProspects: activeProspectsCount || 0,
           unreadExpenseAlerts: unreadAlertsCount || 0,
-          openTickets: openTicketsCount || 0,
           totalProducts: productsCount || 0,
-          lowStockProducts: lowStockCount,
-          activeWarehouses: warehousesCount || 0
+          lowStockProducts: lowStockCount
         });
       } catch (error) {
         console.error('Error fetching vendor badges:', error);
@@ -122,15 +106,7 @@ export function useVendorBadges() {
         () => fetchBadges()
       )
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'prospects' }, 
-        () => fetchBadges()
-      )
-      .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'expense_alerts' }, 
-        () => fetchBadges()
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'support_tickets' }, 
         () => fetchBadges()
       )
       .on('postgres_changes', 
@@ -141,19 +117,10 @@ export function useVendorBadges() {
         { event: '*', schema: 'public', table: 'products' }, 
         () => fetchBadges()
       )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'warehouses' }, 
-        () => fetchBadges()
-      )
       .subscribe();
-
-    // Écouter les événements custom pour les entrepôts
-    const handleWarehouseUpdate = () => fetchBadges();
-    window.addEventListener('warehouseUpdated', handleWarehouseUpdate);
 
     return () => {
       supabase.removeChannel(channel);
-      window.removeEventListener('warehouseUpdated', handleWarehouseUpdate);
     };
   }, [user]);
 

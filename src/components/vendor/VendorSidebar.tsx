@@ -52,14 +52,8 @@ export function VendorSidebar() {
         return badges.lowStockProducts > 0 ? badges.lowStockProducts.toString() : null;
       case 'orders':
         return badges.pendingOrders > 0 ? badges.pendingOrders.toString() : null;
-      case 'prospects':
-        return badges.activeProspects > 0 ? badges.activeProspects.toString() : null;
       case 'expenses':
         return badges.unreadExpenseAlerts > 0 ? badges.unreadExpenseAlerts.toString() : null;
-      case 'support':
-        return badges.openTickets > 0 ? badges.openTickets.toString() : null;
-      case 'warehouse':
-        return badges.activeWarehouses > 0 ? badges.activeWarehouses.toString() : null;
       default:
         return null;
     }
