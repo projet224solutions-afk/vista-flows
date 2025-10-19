@@ -180,16 +180,24 @@ export default function OrderManagement() {
   });
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
+    console.log('Updating order status:', { orderId, newStatus });
+    
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('orders')
         .update({ 
           status: newStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating order status:', error);
+        throw error;
+      }
+
+      console.log('Order status updated successfully:', data);
 
       setOrders(prev => prev.map(order => 
         order.id === orderId 
@@ -202,6 +210,7 @@ export default function OrderManagement() {
         description: `La commande a été marquée comme ${statusLabels[newStatus as keyof typeof statusLabels]}.`
       });
     } catch (error) {
+      console.error('Failed to update order status:', error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut de la commande.",
@@ -215,7 +224,14 @@ export default function OrderManagement() {
     
     if (order.status === 'pending') {
       actions.push(
-        <Button key="confirm" size="sm" onClick={() => updateOrderStatus(order.id, 'confirmed')}>
+        <Button 
+          key="confirm" 
+          size="sm"
+          onClick={() => {
+            console.log('Confirming order:', order.id);
+            updateOrderStatus(order.id, 'confirmed');
+          }}
+        >
           <CheckCircle className="w-4 h-4 mr-1" />
           Confirmer
         </Button>
@@ -224,7 +240,15 @@ export default function OrderManagement() {
     
     if (order.status === 'confirmed') {
       actions.push(
-        <Button key="process" size="sm" onClick={() => updateOrderStatus(order.id, 'preparing')}>
+        <Button 
+          key="process" 
+          size="sm" 
+          variant="default"
+          onClick={() => {
+            console.log('Preparing order:', order.id);
+            updateOrderStatus(order.id, 'preparing');
+          }}
+        >
           <Package className="w-4 h-4 mr-1" />
           Préparer
         </Button>
@@ -233,16 +257,47 @@ export default function OrderManagement() {
     
     if (order.status === 'preparing') {
       actions.push(
-        <Button key="ship" size="sm" onClick={() => updateOrderStatus(order.id, 'in_transit')}>
+        <Button 
+          key="ship" 
+          size="sm"
+          onClick={() => {
+            console.log('Shipping order:', order.id);
+            updateOrderStatus(order.id, 'in_transit');
+          }}
+        >
           <Truck className="w-4 h-4 mr-1" />
           Expédier
         </Button>
       );
     }
     
-    if (['pending', 'confirmed'].includes(order.status)) {
+    if (order.status === 'in_transit') {
       actions.push(
-        <Button key="cancel" size="sm" variant="destructive" onClick={() => updateOrderStatus(order.id, 'cancelled')}>
+        <Button 
+          key="deliver" 
+          size="sm"
+          onClick={() => {
+            console.log('Delivering order:', order.id);
+            updateOrderStatus(order.id, 'delivered');
+          }}
+        >
+          <CheckCircle className="w-4 h-4 mr-1" />
+          Livrer
+        </Button>
+      );
+    }
+    
+    if (!['cancelled', 'delivered'].includes(order.status)) {
+      actions.push(
+        <Button 
+          key="cancel" 
+          size="sm" 
+          variant="destructive"
+          onClick={() => {
+            console.log('Cancelling order:', order.id);
+            updateOrderStatus(order.id, 'cancelled');
+          }}
+        >
           <XCircle className="w-4 h-4 mr-1" />
           Annuler
         </Button>
