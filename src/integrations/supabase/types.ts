@@ -2017,12 +2017,17 @@ export type Database = {
           created_at: string | null
           description: string | null
           dimensions: Json | null
+          free_shipping: boolean | null
           id: string
           images: string[] | null
           is_active: boolean | null
+          is_featured: boolean | null
+          is_hot: boolean | null
           low_stock_threshold: number | null
           name: string
           price: number
+          rating: number | null
+          reviews_count: number | null
           seo_description: string | null
           seo_title: string | null
           sku: string | null
@@ -2040,12 +2045,17 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           dimensions?: Json | null
+          free_shipping?: boolean | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          is_featured?: boolean | null
+          is_hot?: boolean | null
           low_stock_threshold?: number | null
           name: string
           price: number
+          rating?: number | null
+          reviews_count?: number | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
@@ -2063,12 +2073,17 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           dimensions?: Json | null
+          free_shipping?: boolean | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          is_featured?: boolean | null
+          is_hot?: boolean | null
           low_stock_threshold?: number | null
           name?: string
           price?: number
+          rating?: number | null
+          reviews_count?: number | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
