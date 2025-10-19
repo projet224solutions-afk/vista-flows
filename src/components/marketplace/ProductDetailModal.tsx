@@ -121,9 +121,34 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         return;
       }
 
-      // Créer une conversation ou naviguer vers la messagerie
-      toast.info('Fonctionnalité de messagerie en développement');
-      // TODO: Implémenter la navigation vers la messagerie avec le vendeur
+      // Créer un message initial dans la base de données
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { data: messageData, error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendors.user_id,
+          content: initialMessage,
+          type: 'text'
+        })
+        .select()
+        .single();
+
+      if (messageError) {
+        console.error('Erreur création message:', messageError);
+        throw messageError;
+      }
+
+      console.log('Message créé avec succès:', messageData);
+
+      toast.success('Message envoyé au vendeur avec succès!');
+      
+      // Fermer le modal après l'envoi
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+      
     } catch (error) {
       console.error('Erreur lors du contact:', error);
       toast.error('Impossible de contacter le vendeur');
