@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Building2, Search, Eye, CheckCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +28,16 @@ export default function PDGSyndicatManagement() {
   const [bureaus, setBureaus] = useState<Bureau[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    bureau_code: '',
+    prefecture: '',
+    commune: '',
+    president_name: '',
+    president_email: '',
+    president_phone: '',
+    full_location: ''
+  });
 
   useEffect(() => {
     loadBureaus();
@@ -70,6 +82,46 @@ export default function PDGSyndicatManagement() {
     }
   };
 
+  const handleCreateBureau = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const { error } = await supabase
+        .from('bureaus')
+        .insert([{
+          bureau_code: formData.bureau_code,
+          prefecture: formData.prefecture,
+          commune: formData.commune,
+          president_name: formData.president_name,
+          president_email: formData.president_email,
+          president_phone: formData.president_phone,
+          full_location: formData.full_location,
+          status: 'active',
+          total_members: 0,
+          total_vehicles: 0,
+          total_cotisations: 0
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Bureau créé avec succès');
+      setIsDialogOpen(false);
+      setFormData({
+        bureau_code: '',
+        prefecture: '',
+        commune: '',
+        president_name: '',
+        president_email: '',
+        president_phone: '',
+        full_location: ''
+      });
+      await loadBureaus();
+    } catch (error) {
+      console.error('Erreur création bureau:', error);
+      toast.error('Erreur lors de la création du bureau');
+    }
+  };
+
   const filteredBureaus = bureaus.filter(bureau =>
     bureau.bureau_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     bureau.prefecture.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,10 +144,111 @@ export default function PDGSyndicatManagement() {
           <h2 className="text-3xl font-bold">Gestion des Bureaux Syndicaux</h2>
           <p className="text-muted-foreground mt-1">Administration des bureaux syndicaux de taxi-motos</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau Bureau
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau Bureau
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Créer un nouveau bureau syndical</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateBureau} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bureau_code">Code Bureau *</Label>
+                  <Input
+                    id="bureau_code"
+                    required
+                    value={formData.bureau_code}
+                    onChange={(e) => setFormData({ ...formData, bureau_code: e.target.value })}
+                    placeholder="Ex: BUR-CON-001"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="prefecture">Préfecture *</Label>
+                  <Input
+                    id="prefecture"
+                    required
+                    value={formData.prefecture}
+                    onChange={(e) => setFormData({ ...formData, prefecture: e.target.value })}
+                    placeholder="Ex: Conakry"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="commune">Commune *</Label>
+                <Input
+                  id="commune"
+                  required
+                  value={formData.commune}
+                  onChange={(e) => setFormData({ ...formData, commune: e.target.value })}
+                  placeholder="Ex: Kaloum"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="full_location">Adresse complète</Label>
+                <Input
+                  id="full_location"
+                  value={formData.full_location}
+                  onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
+                  placeholder="Ex: Avenue de la République, près du marché central"
+                />
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Informations du Président</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="president_name">Nom complet du président</Label>
+                    <Input
+                      id="president_name"
+                      value={formData.president_name}
+                      onChange={(e) => setFormData({ ...formData, president_name: e.target.value })}
+                      placeholder="Ex: Mohamed Camara"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="president_email">Email</Label>
+                      <Input
+                        id="president_email"
+                        type="email"
+                        value={formData.president_email}
+                        onChange={(e) => setFormData({ ...formData, president_email: e.target.value })}
+                        placeholder="president@bureau.gn"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="president_phone">Téléphone</Label>
+                      <Input
+                        id="president_phone"
+                        type="tel"
+                        value={formData.president_phone}
+                        onChange={(e) => setFormData({ ...formData, president_phone: e.target.value })}
+                        placeholder="+224 XXX XX XX XX"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer le bureau
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Statistiques */}
