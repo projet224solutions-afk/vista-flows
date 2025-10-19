@@ -253,6 +253,9 @@ export default function InventoryManagement() {
       setWarehouseOpen(false);
       setNewWarehouse({ country: '', city: '', name: '', address: '', manager_name: '', manager_phone: '', manager_email: '' });
       await fetchWarehouses();
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
     }
@@ -269,6 +272,9 @@ export default function InventoryManagement() {
 
       toast({ title: '✅ Statut mis à jour' });
       await fetchWarehouses();
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
     }
@@ -317,6 +323,9 @@ export default function InventoryManagement() {
       setEditingWarehouse(null);
       await fetchWarehouses();
       toast({ title: '✅ Entrepôt modifié avec succès' });
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur modification', description: e?.message, variant: 'destructive' });
     }
@@ -336,6 +345,9 @@ export default function InventoryManagement() {
       setDeletingWarehouse(null);
       await fetchWarehouses();
       toast({ title: '✅ Entrepôt supprimé avec succès' });
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur suppression', description: e?.message, variant: 'destructive' });
     }

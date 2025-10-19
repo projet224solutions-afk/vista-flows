@@ -122,6 +122,20 @@ export default function WarehouseStockManagement() {
     }
   }, [selectedWarehouse]);
 
+  // Écouter les événements de mise à jour des entrepôts
+  useEffect(() => {
+    const handleWarehouseUpdate = () => {
+      fetchWarehouses();
+      if (selectedWarehouse) {
+        fetchStocks();
+        fetchMovements();
+      }
+    };
+
+    window.addEventListener('warehouseUpdated', handleWarehouseUpdate);
+    return () => window.removeEventListener('warehouseUpdated', handleWarehouseUpdate);
+  }, [selectedWarehouse]);
+
   const fetchWarehouses = async () => {
     try {
       const { data: vendor } = await supabase
@@ -327,6 +341,9 @@ export default function WarehouseStockManagement() {
       setTransferData({ product_id: '', from_warehouse_id: '', to_warehouse_id: '', quantity: 0, notes: '' });
       fetchStocks();
       fetchMovements();
+      
+      // Déclencher un événement pour synchroniser
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (error: any) {
       console.error('Transfer error:', error);
       toast({ title: 'Erreur transfert', description: error.message, variant: 'destructive' });
@@ -381,6 +398,9 @@ export default function WarehouseStockManagement() {
       setAdjustmentData({ product_id: '', warehouse_id: '', quantity_change: 0, notes: '' });
       fetchStocks();
       fetchMovements();
+      
+      // Déclencher un événement pour synchroniser
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     }
