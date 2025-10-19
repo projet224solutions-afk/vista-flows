@@ -3444,6 +3444,9 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          manager_email: string | null
+          manager_name: string | null
+          manager_phone: string | null
           name: string
           vendor_id: string
         }
@@ -3456,6 +3459,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
           name: string
           vendor_id: string
         }
@@ -3468,6 +3474,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
           name?: string
           vendor_id?: string
         }

@@ -8,6 +8,11 @@ export interface Warehouse {
   vendor_id: string;
   name: string;
   address?: string | null;
+  country?: string | null;
+  city?: string | null;
+  manager_name?: string | null;
+  manager_phone?: string | null;
+  manager_email?: string | null;
   contact_person?: string | null;
   contact_phone?: string | null;
   is_active?: boolean;
@@ -58,6 +63,11 @@ export const useWarehouseManagement = () => {
         vendor_id: warehouse.vendor_id,
         name: warehouse.name,
         address: warehouse.address,
+        country: warehouse.country,
+        city: warehouse.city,
+        manager_name: warehouse.manager_name,
+        manager_phone: warehouse.manager_phone,
+        manager_email: warehouse.manager_email,
         contact_person: warehouse.contact_person,
         contact_phone: warehouse.contact_phone,
         is_active: warehouse.is_active,

@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/hooks/use-toast";
 import { useInventoryService } from "@/hooks/useInventoryService";
@@ -148,8 +148,13 @@ export default function InventoryManagement() {
     country: '', 
     city: '', 
     name: '', 
-    address: '' 
+    address: '',
+    manager_name: '',
+    manager_phone: '',
+    manager_email: ''
   });
+  const [editingWarehouse, setEditingWarehouse] = useState<any>(null);
+  const [deletingWarehouse, setDeletingWarehouse] = useState<any>(null);
   const [restockOpen, setRestockOpen] = useState(false);
   const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
   const [restockQty, setRestockQty] = useState('');
@@ -235,6 +240,9 @@ export default function InventoryManagement() {
           city: newWarehouse.city.trim(),
           name: newWarehouse.name.trim(),
           address: newWarehouse.address.trim(),
+          manager_name: newWarehouse.manager_name.trim() || null,
+          manager_phone: newWarehouse.manager_phone.trim() || null,
+          manager_email: newWarehouse.manager_email.trim() || null,
           is_active: true
         }]);
 
@@ -242,7 +250,7 @@ export default function InventoryManagement() {
 
       toast({ title: '✅ Entrepôt créé avec succès' });
       setWarehouseOpen(false);
-      setNewWarehouse({ country: '', city: '', name: '', address: '' });
+      setNewWarehouse({ country: '', city: '', name: '', address: '', manager_name: '', manager_phone: '', manager_email: '' });
       await fetchWarehouses();
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
@@ -283,6 +291,52 @@ export default function InventoryManagement() {
       toast({ title: '✅ Stock réapprovisionné avec succès' });
     } catch (e: any) {
       toast({ title: 'Erreur réapprovisionnement', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateWarehouse = async () => {
+    if (!editingWarehouse) return;
+
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .update({
+          name: editingWarehouse.name,
+          address: editingWarehouse.address,
+          country: editingWarehouse.country,
+          city: editingWarehouse.city,
+          manager_name: editingWarehouse.manager_name || null,
+          manager_phone: editingWarehouse.manager_phone || null,
+          manager_email: editingWarehouse.manager_email || null
+        })
+        .eq('id', editingWarehouse.id);
+
+      if (error) throw error;
+      
+      setEditingWarehouse(null);
+      await fetchWarehouses();
+      toast({ title: '✅ Entrepôt modifié avec succès' });
+    } catch (e: any) {
+      toast({ title: 'Erreur modification', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteWarehouse = async () => {
+    if (!deletingWarehouse) return;
+
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .delete()
+        .eq('id', deletingWarehouse.id);
+
+      if (error) throw error;
+      
+      setDeletingWarehouse(null);
+      await fetchWarehouses();
+      toast({ title: '✅ Entrepôt supprimé avec succès' });
+    } catch (e: any) {
+      toast({ title: 'Erreur suppression', description: e?.message, variant: 'destructive' });
     }
   };
 
@@ -383,6 +437,25 @@ export default function InventoryManagement() {
                       onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
                       maxLength={255}
                     />
+                    <Input
+                      placeholder="Nom du responsable"
+                      value={newWarehouse.manager_name}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_name: e.target.value })}
+                      maxLength={100}
+                    />
+                    <Input
+                      placeholder="Téléphone du responsable"
+                      value={newWarehouse.manager_phone}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_phone: e.target.value })}
+                      maxLength={20}
+                    />
+                    <Input
+                      placeholder="Email du responsable"
+                      type="email"
+                      value={newWarehouse.manager_email}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_email: e.target.value })}
+                      maxLength={100}
+                    />
                   </div>
                   <Button onClick={addWarehouse} className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
@@ -393,31 +466,63 @@ export default function InventoryManagement() {
                 <div className="border-t pt-4">
                   <h3 className="font-medium mb-3">Entrepôts existants ({warehouses.length})</h3>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {warehouses.map((warehouse) => (
-                      <div key={warehouse.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{warehouse.name}</h4>
-                            <Badge variant={warehouse.is_active ? "default" : "secondary"}>
-                              {warehouse.is_active ? "Actif" : "Inactif"}
-                            </Badge>
+                     {warehouses.map((warehouse) => (
+                      <div key={warehouse.id} className="space-y-2 p-3 border rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{warehouse.name}</h4>
+                              <Badge variant={warehouse.is_active ? "default" : "secondary"}>
+                                {warehouse.is_active ? "Actif" : "Inactif"}
+                              </Badge>
+                            </div>
+                            {(warehouse as any).city && (warehouse as any).country && (
+                              <p className="text-sm text-muted-foreground">
+                                {(warehouse as any).city}, {(warehouse as any).country}
+                              </p>
+                            )}
+                            {warehouse.address && (
+                              <p className="text-sm text-muted-foreground">{warehouse.address}</p>
+                            )}
                           </div>
-                          {(warehouse as any).city && (warehouse as any).country && (
-                            <p className="text-sm text-muted-foreground">
-                              {(warehouse as any).city}, {(warehouse as any).country}
-                            </p>
-                          )}
-                          {warehouse.address && (
-                            <p className="text-sm text-muted-foreground">{warehouse.address}</p>
-                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingWarehouse(warehouse)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeletingWarehouse(warehouse)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleWarehouseStatus(warehouse.id, warehouse.is_active)}
+                            >
+                              {warehouse.is_active ? 'Désactiver' : 'Activer'}
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toggleWarehouseStatus(warehouse.id, warehouse.is_active)}
-                        >
-                          {warehouse.is_active ? 'Désactiver' : 'Activer'}
-                        </Button>
+                        {((warehouse as any).manager_name || (warehouse as any).manager_phone || (warehouse as any).manager_email) && (
+                          <div className="border-t pt-2 mt-2">
+                            <p className="text-sm font-medium mb-1">Responsable:</p>
+                            {(warehouse as any).manager_name && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_name}</p>
+                            )}
+                            {(warehouse as any).manager_phone && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_phone}</p>
+                            )}
+                            {(warehouse as any).manager_email && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_email}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {warehouses.length === 0 && (
@@ -743,6 +848,93 @@ export default function InventoryManagement() {
           <InventoryHistory history={history} />
         </TabsContent>
       </Tabs>
+
+      {/* Edit Warehouse Dialog */}
+      <Dialog open={!!editingWarehouse} onOpenChange={() => setEditingWarehouse(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier l'entrepôt</DialogTitle>
+          </DialogHeader>
+          {editingWarehouse && (
+            <div className="space-y-4">
+              <Input
+                placeholder="Pays *"
+                value={(editingWarehouse as any).country || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, country: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Ville *"
+                value={(editingWarehouse as any).city || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, city: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Nom de l'entrepôt *"
+                value={editingWarehouse.name || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, name: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Adresse"
+                value={editingWarehouse.address || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, address: e.target.value })}
+                maxLength={255}
+              />
+              <Input
+                placeholder="Nom du responsable"
+                value={(editingWarehouse as any).manager_name || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_name: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Téléphone du responsable"
+                value={(editingWarehouse as any).manager_phone || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_phone: e.target.value })}
+                maxLength={20}
+              />
+              <Input
+                placeholder="Email du responsable"
+                type="email"
+                value={(editingWarehouse as any).manager_email || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_email: e.target.value })}
+                maxLength={100}
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setEditingWarehouse(null)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleUpdateWarehouse}>
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Warehouse Dialog */}
+      <Dialog open={!!deletingWarehouse} onOpenChange={() => setDeletingWarehouse(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer l'entrepôt</DialogTitle>
+          </DialogHeader>
+          {deletingWarehouse && (
+            <div className="space-y-4">
+              <p>Êtes-vous sûr de vouloir supprimer l'entrepôt <strong>{deletingWarehouse.name}</strong> ?</p>
+              <p className="text-sm text-muted-foreground">Cette action est irréversible.</p>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setDeletingWarehouse(null)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteWarehouse}>
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
