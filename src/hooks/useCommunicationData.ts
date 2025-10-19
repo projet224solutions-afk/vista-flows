@@ -254,12 +254,13 @@ export function useCommunicationData() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) throw new Error('Non authentifié');
 
-      // Créer la conversation
+      // Créer la conversation avec creator_id
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
         .insert({
           name: name || 'Nouvelle conversation',
-          type: participantIds.length > 1 ? 'group' : 'private'
+          type: participantIds.length > 1 ? 'group' : 'private',
+          creator_id: currentUser.id
         })
         .select()
         .single();

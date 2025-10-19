@@ -453,6 +453,7 @@ export type Database = {
         Row: {
           agora_channel: string | null
           created_at: string | null
+          creator_id: string | null
           id: string
           last_message: string | null
           name: string | null
@@ -463,6 +464,7 @@ export type Database = {
         Insert: {
           agora_channel?: string | null
           created_at?: string | null
+          creator_id?: string | null
           id?: string
           last_message?: string | null
           name?: string | null
@@ -473,6 +475,7 @@ export type Database = {
         Update: {
           agora_channel?: string | null
           created_at?: string | null
+          creator_id?: string | null
           id?: string
           last_message?: string | null
           name?: string | null
