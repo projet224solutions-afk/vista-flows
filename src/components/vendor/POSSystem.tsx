@@ -46,6 +46,7 @@ interface Product {
   price: number;
   image?: string;
   category: string;
+  categoryId?: string | null;
   stock: number;
   barcode?: string;
 }
@@ -91,6 +92,34 @@ export function POSSystem() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   
+  // Charger les catégories depuis la base de données
+  const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  const loadCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const { data: categoriesData, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      setCategories(categoriesData || []);
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+      toast.error('Erreur lors du chargement des catégories');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+  
   const loadVendorProducts = async () => {
     if (!vendorId) return;
     
@@ -107,7 +136,7 @@ export function POSSystem() {
           sku,
           images,
           category_id,
-          categories(name)
+          categories(id, name)
         `)
         .eq('vendor_id', vendorId)
         .eq('is_active', true)
@@ -120,6 +149,7 @@ export function POSSystem() {
         name: p.name ?? 'Produit',
         price: Number(p.price || 0),
         category: p.categories?.name || 'Divers',
+        categoryId: p.categories?.id || null,
         stock: Number(p.stock_quantity || 0),
         barcode: p.barcode || p.sku || undefined,
         images: p.images || []
@@ -155,13 +185,11 @@ export function POSSystem() {
   // États pour personnalisation
   const [companyName] = useState('Vista Commerce Pro');
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
   
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.barcode?.includes(searchTerm);
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -616,17 +644,31 @@ export function POSSystem() {
               
               {/* Filtres par catégorie */}
               <div className="flex gap-2 mt-4 flex-wrap">
-                {categories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="shadow-sm transition-all duration-200 hover:shadow-md"
-                  >
-                    {category === 'all' ? 'Tous les produits' : category}
-                  </Button>
-                ))}
+                {categoriesLoading ? (
+                  <div className="text-sm text-muted-foreground">Chargement des catégories...</div>
+                ) : (
+                  <>
+                    <Button
+                      variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory('all')}
+                      className="shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      Tous les produits
+                    </Button>
+                    {categories.map(category => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategory === category.id ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category.id)}
+                        className="shadow-sm transition-all duration-200 hover:shadow-md"
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
