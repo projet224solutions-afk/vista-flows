@@ -511,12 +511,10 @@ export default function ProductManagement() {
                   <div className="space-y-2">
                     <Label htmlFor="category">
                       Catégorie
-                      {categories.length === 0 && (
-                        <span className="text-xs text-muted-foreground ml-2">(Optionnel)</span>
-                      )}
+                      <span className="text-xs text-muted-foreground ml-2">(Optionnel)</span>
                     </Label>
                     <Select 
-                      value={formData.category_id} 
+                      value={formData.category_id || undefined} 
                       onValueChange={(value) => {
                         console.log('Catégorie sélectionnée:', value);
                         setFormData(prev => ({ ...prev, category_id: value }));
@@ -528,7 +526,7 @@ export default function ProductManagement() {
                             ? "Chargement des catégories..." 
                             : categories.length === 0 
                               ? "Aucune catégorie disponible" 
-                              : "Sélectionner une catégorie"
+                              : "Sélectionner une catégorie (optionnel)"
                         } />
                       </SelectTrigger>
                       <SelectContent className="bg-background">
@@ -539,14 +537,11 @@ export default function ProductManagement() {
                             Créez d'abord des catégories dans les paramètres.
                           </div>
                         ) : (
-                          <>
-                            <SelectItem value="">Sans catégorie</SelectItem>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </>
+                          categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
                         )}
                       </SelectContent>
                     </Select>
