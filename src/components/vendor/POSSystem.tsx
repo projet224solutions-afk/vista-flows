@@ -318,7 +318,7 @@ export function POSSystem() {
           tax_amount: tax,
           discount_amount: (totalBeforeDiscount * (discount || 0)) / 100,
           payment_status: 'paid',
-          status: 'completed',
+          status: 'confirmed',
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`
