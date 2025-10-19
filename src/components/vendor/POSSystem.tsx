@@ -271,37 +271,111 @@ export function POSSystem() {
       return;
     }
 
+    if (!vendorId) {
+      toast.error('Vendeur non identifié');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('Utilisateur non connecté');
+      return;
+    }
+
     try {
-      // Appel backend (service role) pour gérer RLS et transaction
-      const payload = {
-        vendorId,
-        totalAmount: total,
-        items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
-      };
-      const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001';
-      const token = (session as unknown as { access_token?: string })?.access_token;
-      const resp = await fetch(`${API_BASE}/api/orders/pos-checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(payload)
-      });
-      const json = await resp.json().catch(() => ({}));
-      if (!resp.ok || json?.success === false) throw new Error(json?.message || 'Erreur checkout');
+      // 1. Créer la commande
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          vendor_id: vendorId,
+          customer_id: user.id, // Utiliser l'ID de l'utilisateur connecté comme customer
+          total_amount: total,
+          subtotal: subtotal,
+          tax_amount: tax,
+          discount_amount: (totalBeforeDiscount * (discount || 0)) / 100,
+          payment_status: 'paid',
+          status: 'completed',
+          payment_method: paymentMethod,
+          shipping_address: { address: 'Point de vente' },
+          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`
+        })
+        .select('id')
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Créer les items de commande
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.total
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // 3. Mettre à jour le stock pour chaque produit
+      for (const item of cart) {
+        // Vérifier d'abord dans inventory
+        const { data: inventoryItem } = await supabase
+          .from('inventory')
+          .select('id, quantity')
+          .eq('product_id', item.id)
+          .maybeSingle();
+
+        if (inventoryItem) {
+          // Mettre à jour inventory
+          const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
+          const { error: invUpdateError } = await supabase
+            .from('inventory')
+            .update({ quantity: newQuantity })
+            .eq('id', inventoryItem.id);
+
+          if (invUpdateError) throw invUpdateError;
+        }
+
+        // Mettre à jour aussi products.stock_quantity
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id)
+          .single();
+
+        if (product) {
+          const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+          const { error: prodUpdateError } = await supabase
+            .from('products')
+            .update({ 
+              stock_quantity: newStock,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', item.id);
+
+          if (prodUpdateError) throw prodUpdateError;
+        }
+      }
 
       toast.success('Paiement effectué avec succès!', {
-        description: `Commande de ${total.toFixed(0)} GNF validée`
+        description: `Commande #${order.id.substring(0, 8)} de ${total.toFixed(0)} GNF validée`
       });
 
       clearCart();
       setShowOrderSummary(false);
       setReceivedAmount(0);
+      setDiscount(0);
+      setNumericInput('');
+      
       // Recharger la liste des produits pour refléter le stock
       await loadVendorProducts();
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
+    } catch (error: any) {
+      console.error('Erreur paiement:', error);
+      toast.error('Erreur lors du paiement', {
+        description: error.message || 'Une erreur est survenue'
+      });
     }
   };
 
