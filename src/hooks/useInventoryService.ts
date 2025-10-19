@@ -130,18 +130,24 @@ export const useInventoryService = () => {
     try {
       setLoading(true);
 
-      // Charger l'inventaire
+      // Charger l'inventaire avec jointure interne pour filtrer par vendor
       const { data: inventoryData, error: invError } = await supabase
         .from('inventory')
         .select(`
           *,
-          product:products(id, name, price, sku),
+          product:products!inner(id, name, price, sku, vendor_id),
           warehouse:warehouses(id, name),
           supplier:suppliers(id, name)
         `)
-        .eq('products.vendor_id', vendorId);
+        .eq('product.vendor_id', vendorId)
+        .order('last_updated', { ascending: false });
 
-      if (invError) throw invError;
+      if (invError) {
+        console.error('Erreur chargement inventaire:', invError);
+        throw invError;
+      }
+
+      console.log('📦 Inventaire chargé:', inventoryData?.length, 'items');
 
       // Charger les alertes
       const { data: alertsData, error: alertError } = await supabase
@@ -275,9 +281,14 @@ export const useInventoryService = () => {
   // Actions
   const updateStock = async (itemId: string, newQuantity: number) => {
     try {
+      console.log('📝 Mise à jour stock:', itemId, 'nouvelle quantité:', newQuantity);
+      
       const { error } = await supabase
         .from('inventory')
-        .update({ quantity: newQuantity })
+        .update({ 
+          quantity: newQuantity,
+          last_updated: new Date().toISOString()
+        })
         .eq('id', itemId);
 
       if (error) throw error;
@@ -289,6 +300,7 @@ export const useInventoryService = () => {
 
       await loadData();
     } catch (error: any) {
+      console.error('❌ Erreur mise à jour stock:', error);
       toast({
         title: "Erreur",
         description: error.message,

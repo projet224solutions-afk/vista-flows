@@ -265,18 +265,33 @@ export default function ProductManagement() {
 
         if (error) throw error;
 
+        console.log('✅ Produit créé:', data);
+
         // Créer une entrée dans l'inventaire pour ce nouveau produit
-        const { error: inventoryError } = await supabase
+        console.log('📦 Création entrée inventaire pour produit:', data.id);
+        const { data: inventoryData, error: inventoryError } = await supabase
           .from('inventory')
           .insert([{
             product_id: data.id,
             quantity: productData.stock_quantity,
             minimum_stock: productData.low_stock_threshold,
-            cost_price: productData.cost_price || 0
-          }]);
+            cost_price: productData.cost_price || 0,
+            reorder_point: productData.low_stock_threshold,
+            reorder_quantity: 0,
+            reserved_quantity: 0
+          }])
+          .select()
+          .single();
 
         if (inventoryError) {
-          console.error('Erreur création inventaire:', inventoryError);
+          console.error('❌ Erreur création inventaire:', inventoryError);
+          toast({
+            title: "Avertissement",
+            description: "Le produit a été créé mais l'inventaire n'a pas pu être initialisé.",
+            variant: "destructive"
+          });
+        } else {
+          console.log('✅ Inventaire créé:', inventoryData);
         }
 
         setProducts(prev => [data, ...prev]);
