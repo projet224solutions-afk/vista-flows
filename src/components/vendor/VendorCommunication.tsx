@@ -47,16 +47,46 @@ export default function VendorCommunication() {
 
   // Initialiser Agora au chargement
   useEffect(() => {
-    const appId = import.meta.env.VITE_AGORA_APP_ID;
-    const appCertificate = import.meta.env.VITE_AGORA_APP_CERTIFICATE;
+    const initAgora = async () => {
+      try {
+        console.log('Initialisation Agora via Edge Function...');
+        
+        const { data, error } = await supabase.functions.invoke('agora-token', {
+          body: { 
+            channel: 'init',
+            uid: user?.id || 'temp',
+            role: 'publisher'
+          }
+        });
 
-    if (appId && appCertificate && !isInitialized) {
-      initializeAgora({
-        appId,
-        appCertificate
-      });
+        if (error) {
+          console.error('Erreur récupération config Agora:', error);
+          throw error;
+        }
+
+        console.log('Config Agora récupérée:', { appId: data.appId });
+
+        if (data.appId && !isInitialized) {
+          await initializeAgora({
+            appId: data.appId,
+            appCertificate: '', // Non nécessaire côté client
+            tempToken: data.token
+          });
+        }
+      } catch (error) {
+        console.error('Erreur initialisation Agora:', error);
+        toast({
+          title: "Erreur Agora",
+          description: "Impossible d'initialiser la communication. Vérifiez la configuration.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    if (!isInitialized && user) {
+      initAgora();
     }
-  }, [isInitialized, initializeAgora]);
+  }, [isInitialized, initializeAgora, user, toast]);
 
   // Charger les contacts
   useEffect(() => {
