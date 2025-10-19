@@ -2462,6 +2462,7 @@ export type Database = {
       stock_movements: {
         Row: {
           created_at: string
+          created_by: string | null
           from_warehouse_id: string | null
           id: string
           movement_type: string
@@ -2472,6 +2473,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           from_warehouse_id?: string | null
           id?: string
           movement_type: string
@@ -2482,6 +2484,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           from_warehouse_id?: string | null
           id?: string
           movement_type?: string
@@ -3401,6 +3404,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      warehouse_permissions: {
+        Row: {
+          can_edit: boolean | null
+          can_manage_stock: boolean | null
+          can_transfer: boolean | null
+          can_view: boolean | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          warehouse_id: string
+        }
+        Insert: {
+          can_edit?: boolean | null
+          can_manage_stock?: boolean | null
+          can_transfer?: boolean | null
+          can_view?: boolean | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          warehouse_id: string
+        }
+        Update: {
+          can_edit?: boolean | null
+          can_manage_stock?: boolean | null
+          can_transfer?: boolean | null
+          can_view?: boolean | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_permissions_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warehouse_stocks: {
         Row: {

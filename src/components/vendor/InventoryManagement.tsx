@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useInventoryService } from "@/hooks/useInventoryService";
 import InventoryAlerts from "./InventoryAlerts";
 import InventoryHistory from "./InventoryHistory";
+import WarehouseStockManagement from "./WarehouseStockManagement";
 
 interface InventoryItem {
   id: string;
@@ -650,10 +651,14 @@ export default function InventoryManagement() {
 
       {/* Tabs pour organiser le contenu */}
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="inventory">
             <Package className="w-4 h-4 mr-2" />
             Inventaire
+          </TabsTrigger>
+          <TabsTrigger value="warehouse">
+            <Warehouse className="w-4 h-4 mr-2" />
+            Entrepôts
           </TabsTrigger>
           <TabsTrigger value="alerts">
             <AlertTriangle className="w-4 h-4 mr-2" />
@@ -834,6 +839,10 @@ export default function InventoryManagement() {
           </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="warehouse">
+          <WarehouseStockManagement />
         </TabsContent>
 
         <TabsContent value="alerts">
