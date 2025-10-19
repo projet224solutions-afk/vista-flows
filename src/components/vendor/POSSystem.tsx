@@ -655,81 +655,122 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
+                  <div className="grid grid-cols-2 gap-5 max-w-5xl mx-auto p-2">
                     {filteredProducts.map(product => (
                       <Card 
                         key={product.id} 
-                        className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-border/40 hover:border-primary/50 bg-gradient-to-br from-card via-card/98 to-card/95 overflow-hidden"
+                        className="group relative cursor-pointer overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-border/60 hover:border-primary/60 bg-card backdrop-blur-sm"
                         onClick={() => addToCart(product)}
                       >
-                        <CardContent className="p-5">
-                          {/* Image produit avec effet premium */}
-                          <div className="relative w-full h-40 bg-gradient-to-br from-muted/50 via-muted/40 to-muted/30 rounded-xl flex items-center justify-center group-hover:from-primary/15 group-hover:via-primary/10 group-hover:to-primary/5 transition-all duration-300 mb-4 shadow-inner">
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent rounded-xl" />
-                            <Smartphone className="h-16 w-16 text-muted-foreground/50 group-hover:text-primary/70 transition-all duration-300 group-hover:scale-110" />
+                        {/* Badge stock en position absolue */}
+                        <div className="absolute top-3 right-3 z-10">
+                          <Badge 
+                            variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
+                            className="shadow-lg backdrop-blur-sm bg-opacity-95 font-semibold px-3 py-1"
+                          >
+                            {product.stock} en stock
+                          </Badge>
+                        </div>
+
+                        <CardContent className="p-0">
+                          {/* Image produit avec overlay gradient */}
+                          <div className="relative w-full h-48 bg-gradient-to-br from-muted/80 via-muted/60 to-muted/40 overflow-hidden">
+                            {/* Overlay gradient au survol */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            
+                            {/* Icône produit centrée */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="relative">
+                                {/* Cercle de fond animé */}
+                                <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl scale-75 group-hover:scale-100 transition-transform duration-500" />
+                                <Smartphone className="relative h-20 w-20 text-muted-foreground/60 group-hover:text-primary transition-all duration-500 group-hover:scale-110 drop-shadow-lg" />
+                              </div>
+                            </div>
+
+                            {/* Effet de brillance au survol */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                           </div>
                           
-                          {/* Informations produit */}
-                          <div className="space-y-3">
-                            {/* Nom et catégorie */}
-                            <div>
-                              <h3 className="font-bold text-base mb-1 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors leading-tight">
-                                {product.name}
-                              </h3>
-                              <p className="text-xs text-muted-foreground">{product.category}</p>
+                          {/* Contenu de la carte */}
+                          <div className="p-5 space-y-4">
+                            {/* Catégorie */}
+                            <div className="flex items-center gap-2">
+                              <div className="h-1 w-8 bg-primary/60 rounded-full" />
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                {product.category}
+                              </span>
+                            </div>
+
+                            {/* Nom du produit */}
+                            <h3 className="font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] group-hover:text-primary transition-colors duration-300">
+                              {product.name}
+                            </h3>
+                            
+                            {/* Prix */}
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl blur-sm" />
+                              <div className="relative bg-gradient-to-br from-card via-muted/20 to-card border border-primary/30 rounded-xl p-4 flex items-baseline justify-center gap-2">
+                                <span className="text-3xl font-black text-primary tracking-tight">
+                                  {product.price.toLocaleString()}
+                                </span>
+                                <span className="text-sm font-semibold text-muted-foreground">
+                                  GNF
+                                </span>
+                              </div>
                             </div>
                             
-                            {/* Prix avec design premium */}
-                            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-3 border border-primary/20">
-                              <p className="text-2xl font-black text-primary">
-                                {product.price.toLocaleString()}
-                                <span className="text-sm font-normal ml-1">GNF</span>
-                              </p>
-                            </div>
-                            
-                            {/* Badge stock avec style amélioré */}
-                            <div className="flex items-center justify-between gap-2">
-                              <Badge 
-                                variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
-                                className="flex-1 justify-center py-1.5 font-semibold"
-                              >
-                                <ShoppingBag className="h-3 w-3 mr-1" />
-                                Stock: {product.stock}
-                              </Badge>
-                            </div>
-                            
-                            {/* Contrôles quantité professionnels */}
-                            <div className="flex items-center justify-center gap-3 bg-muted/30 rounded-lg p-2">
+                            {/* Séparateur */}
+                            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+                            {/* Contrôles de quantité */}
+                            <div className="flex items-center justify-between gap-4 bg-muted/40 rounded-xl p-3 border border-border/50">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
                                 }}
-                                className="h-9 w-9 p-0 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/50 transition-all"
+                                className="h-10 w-10 rounded-lg hover:bg-destructive/20 hover:text-destructive transition-all duration-300 border border-transparent hover:border-destructive/30"
                               >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-5 w-5" />
                               </Button>
                               
-                              <div className="flex items-center justify-center min-w-[60px] bg-card rounded-md border border-border px-3 py-1.5">
-                                <span className="font-mono font-bold text-xl text-primary">
-                                  {cart.find(item => item.id === product.id)?.quantity || 0}
-                                </span>
+                              <div className="flex-1 flex items-center justify-center">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-primary/10 blur-md rounded-lg" />
+                                  <div className="relative bg-card border-2 border-primary/40 rounded-lg px-4 py-2 min-w-[70px] flex items-center justify-center">
+                                    <span className="font-mono font-black text-2xl text-primary">
+                                      {cart.find(item => item.id === product.id)?.quantity || 0}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                               
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   addToCart(product);
                                 }}
-                                className="h-9 w-9 p-0 hover:bg-primary/20 hover:text-primary hover:border-primary/50 transition-all"
+                                className="h-10 w-10 rounded-lg hover:bg-primary/20 hover:text-primary transition-all duration-300 border border-transparent hover:border-primary/30"
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-5 w-5" />
                               </Button>
                             </div>
+
+                            {/* Bouton d'action principal */}
+                            <Button
+                              className="w-full h-11 bg-gradient-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              Ajouter au panier
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
