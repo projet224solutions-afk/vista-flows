@@ -77,14 +77,43 @@ export default function ProductManagement() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+      
       // Get vendor ID
-      const { data: vendor } = await supabase
+      const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (!vendor) return;
+      if (vendorError) throw vendorError;
+      if (!vendor) {
+        toast({
+          title: "Erreur",
+          description: "Aucun compte vendeur trouvé.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch categories first (needed for product form)
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Erreur chargement catégories:', categoriesError);
+        toast({
+          title: "Avertissement",
+          description: "Impossible de charger les catégories. Vous pourrez toujours créer des produits sans catégorie.",
+          variant: "destructive"
+        });
+      } else {
+        setCategories(categoriesData || []);
+        console.log('Catégories chargées:', categoriesData?.length || 0);
+      }
 
       // Fetch products
       const { data: productsData, error: productsError } = await supabase
@@ -95,20 +124,13 @@ export default function ProductManagement() {
 
       if (productsError) throw productsError;
 
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true);
-
-      if (categoriesError) throw categoriesError;
-
       setProducts(productsData || []);
-      setCategories(categoriesData || []);
-    } catch (error) {
+      console.log('Produits chargés:', productsData?.length || 0);
+    } catch (error: any) {
+      console.error('Erreur fetchData:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger les données des produits.",
+        description: error.message || "Impossible de charger les données des produits.",
         variant: "destructive"
       });
     } finally {
@@ -487,19 +509,52 @@ export default function ProductManagement() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Catégorie</Label>
-                    <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
+                    <Label htmlFor="category">
+                      Catégorie
+                      {categories.length === 0 && (
+                        <span className="text-xs text-muted-foreground ml-2">(Optionnel)</span>
+                      )}
+                    </Label>
+                    <Select 
+                      value={formData.category_id} 
+                      onValueChange={(value) => {
+                        console.log('Catégorie sélectionnée:', value);
+                        setFormData(prev => ({ ...prev, category_id: value }));
+                      }}
+                    >
+                      <SelectTrigger className="bg-background border-2">
+                        <SelectValue placeholder={
+                          loading 
+                            ? "Chargement des catégories..." 
+                            : categories.length === 0 
+                              ? "Aucune catégorie disponible" 
+                              : "Sélectionner une catégorie"
+                        } />
                       </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="bg-background">
+                        {categories.length === 0 ? (
+                          <div className="p-4 text-sm text-muted-foreground text-center">
+                            Aucune catégorie disponible.
+                            <br />
+                            Créez d'abord des catégories dans les paramètres.
+                          </div>
+                        ) : (
+                          <>
+                            <SelectItem value="">Sans catégorie</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
+                    {formData.category_id && (
+                      <p className="text-xs text-muted-foreground">
+                        Catégorie: {categories.find(c => c.id === formData.category_id)?.name || 'Inconnue'}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="barcode">Code-barres</Label>
