@@ -107,24 +107,84 @@ export default function InventoryManagement() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [addQty, setAddQty] = useState('');
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [warehouseOpen, setWarehouseOpen] = useState(false);
+  const [newWarehouse, setNewWarehouse] = useState({ name: '', address: '' });
 
   if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
 
   const addStock = async () => {
-    if (!selectedItem) return;
+    if (!selectedProductId) {
+      toast({ title: 'Sélectionnez un produit', variant: 'destructive' });
+      return;
+    }
     const qty = parseInt(addQty || '0', 10);
     if (qty <= 0) {
       toast({ title: 'Quantité invalide', variant: 'destructive' });
       return;
     }
     try {
-      const newQty = selectedItem.quantity + qty;
-      await updateStock(selectedItem.id, newQty);
+      const inventoryItem = inventory.find(item => item.product_id === selectedProductId);
+      if (inventoryItem) {
+        const newQty = inventoryItem.quantity + qty;
+        await updateStock(inventoryItem.id, newQty);
+      }
       setAddOpen(false);
       setAddQty('');
+      setSelectedProductId('');
+      toast({ title: '✅ Stock ajouté avec succès' });
     } catch (e: any) {
       toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const addWarehouse = async () => {
+    if (!newWarehouse.name.trim()) {
+      toast({ title: 'Nom requis', variant: 'destructive' });
+      return;
+    }
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!vendor) return;
+
+      const { error } = await supabase
+        .from('warehouses')
+        .insert([{
+          vendor_id: vendor.id,
+          name: newWarehouse.name,
+          address: newWarehouse.address,
+          is_active: true
+        }]);
+
+      if (error) throw error;
+
+      toast({ title: '✅ Entrepôt créé avec succès' });
+      setWarehouseOpen(false);
+      setNewWarehouse({ name: '', address: '' });
+      await fetchWarehouses();
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const toggleWarehouseStatus = async (warehouseId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .update({ is_active: !currentStatus })
+        .eq('id', warehouseId);
+
+      if (error) throw error;
+
+      toast({ title: '✅ Statut mis à jour' });
+      await fetchWarehouses();
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
     }
   };
 
@@ -138,7 +198,7 @@ export default function InventoryManagement() {
         <div className="flex gap-2">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!selectedItem}>
+              <Button variant="outline">
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter stock
               </Button>
@@ -147,11 +207,32 @@ export default function InventoryManagement() {
               <DialogHeader>
                 <DialogTitle>Ajouter du stock</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
-                <div className="text-sm text-muted-foreground">
-                  Produit: <span className="font-medium">{selectedItem?.product.name}</span>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Produit</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md bg-background"
+                  >
+                    <option value="">Sélectionner un produit</option>
+                    {inventory.map((item) => (
+                      <option key={item.product_id} value={item.product_id}>
+                        {item.product.name} (Stock actuel: {item.quantity})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <Input type="number" placeholder="Quantité" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                  <Input 
+                    type="number" 
+                    placeholder="Quantité" 
+                    value={addQty} 
+                    onChange={(e) => setAddQty(e.target.value)}
+                    min="1"
+                  />
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
                   <Button onClick={addStock}>Ajouter</Button>
@@ -159,10 +240,73 @@ export default function InventoryManagement() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
-            <Warehouse className="w-4 h-4 mr-2" />
-            Entrepôts
-          </Button>
+          <Dialog open={warehouseOpen} onOpenChange={setWarehouseOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Warehouse className="w-4 h-4 mr-2" />
+                Entrepôts
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Gestion des entrepôts</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <h3 className="font-medium">Ajouter un entrepôt</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      placeholder="Nom de l'entrepôt"
+                      value={newWarehouse.name}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Adresse"
+                      value={newWarehouse.address}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
+                    />
+                  </div>
+                  <Button onClick={addWarehouse} className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Créer l'entrepôt
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="font-medium mb-3">Entrepôts existants ({warehouses.length})</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {warehouses.map((warehouse) => (
+                      <div key={warehouse.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{warehouse.name}</h4>
+                            <Badge variant={warehouse.is_active ? "default" : "secondary"}>
+                              {warehouse.is_active ? "Actif" : "Inactif"}
+                            </Badge>
+                          </div>
+                          {warehouse.address && (
+                            <p className="text-sm text-muted-foreground">{warehouse.address}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => toggleWarehouseStatus(warehouse.id, warehouse.is_active)}
+                        >
+                          {warehouse.is_active ? 'Désactiver' : 'Activer'}
+                        </Button>
+                      </div>
+                    ))}
+                    {warehouses.length === 0 && (
+                      <p className="text-center text-muted-foreground py-4">
+                        Aucun entrepôt configuré
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -284,7 +428,7 @@ export default function InventoryManagement() {
                 : 100;
               
               return (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg" onClick={() => setSelectedItem(item)}>
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-medium">{item.product.name}</h4>
