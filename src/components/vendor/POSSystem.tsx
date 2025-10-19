@@ -282,12 +282,37 @@ export function POSSystem() {
     }
 
     try {
-      // 1. Créer la commande
+      // 1. Vérifier/créer un enregistrement customer pour l'utilisateur
+      let customerId: string;
+      
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Créer un nouveau customer pour les ventes POS
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: user.id
+          })
+          .select('id')
+          .single();
+
+        if (customerError) throw customerError;
+        customerId = newCustomer.id;
+      }
+
+      // 2. Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           vendor_id: vendorId,
-          customer_id: user.id, // Utiliser l'ID de l'utilisateur connecté comme customer
+          customer_id: customerId,
           total_amount: total,
           subtotal: subtotal,
           tax_amount: tax,
@@ -298,12 +323,12 @@ export function POSSystem() {
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`
         })
-        .select('id')
+        .select('id, order_number')
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Créer les items de commande
+      // 3. Créer les items de commande
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -318,7 +343,7 @@ export function POSSystem() {
 
       if (itemsError) throw itemsError;
 
-      // 3. Mettre à jour le stock pour chaque produit
+      // 4. Mettre à jour le stock pour chaque produit
       for (const item of cart) {
         // Vérifier d'abord dans inventory
         const { data: inventoryItem } = await supabase
@@ -330,12 +355,10 @@ export function POSSystem() {
         if (inventoryItem) {
           // Mettre à jour inventory
           const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
-          const { error: invUpdateError } = await supabase
+          await supabase
             .from('inventory')
             .update({ quantity: newQuantity })
             .eq('id', inventoryItem.id);
-
-          if (invUpdateError) throw invUpdateError;
         }
 
         // Mettre à jour aussi products.stock_quantity
@@ -343,24 +366,22 @@ export function POSSystem() {
           .from('products')
           .select('stock_quantity')
           .eq('id', item.id)
-          .single();
+          .maybeSingle();
 
         if (product) {
           const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
-          const { error: prodUpdateError } = await supabase
+          await supabase
             .from('products')
             .update({ 
               stock_quantity: newStock,
               updated_at: new Date().toISOString()
             })
             .eq('id', item.id);
-
-          if (prodUpdateError) throw prodUpdateError;
         }
       }
 
       toast.success('Paiement effectué avec succès!', {
-        description: `Commande #${order.id.substring(0, 8)} de ${total.toFixed(0)} GNF validée`
+        description: `Commande ${order.order_number || '#' + order.id.substring(0, 8)} de ${total.toFixed(0)} ${settings?.currency || 'GNF'} validée`
       });
 
       clearCart();
