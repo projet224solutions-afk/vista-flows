@@ -223,9 +223,9 @@ export const useInventoryService = () => {
   useEffect(() => {
     if (!vendorId) return;
 
-    console.log('🔄 Setting up realtime subscriptions');
+    console.log('🔄 Configuration synchronisation temps réel pour vendorId:', vendorId);
 
-    // Channel pour l'inventaire
+    // Channel pour l'inventaire - écouter TOUS les événements
     const inventoryChannel = supabase
       .channel('inventory-changes')
       .on(
@@ -236,11 +236,14 @@ export const useInventoryService = () => {
           table: 'inventory'
         },
         (payload) => {
-          console.log('📦 Inventory change:', payload);
+          console.log('📦 Changement inventaire détecté:', payload.eventType, payload);
+          // Rechargement immédiat
           loadData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Statut channel inventaire:', status);
+      });
 
     // Channel pour les alertes
     const alertsChannel = supabase

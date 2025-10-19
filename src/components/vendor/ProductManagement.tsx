@@ -297,15 +297,14 @@ export default function ProductManagement() {
         setProducts(prev => [data, ...prev]);
 
         toast({
-          title: "✅ Produit ajouté",
-          description: "Le nouveau produit et son inventaire ont été créés avec succès."
+          title: "✅ Succès",
+          description: "Produit et inventaire créés! Actualisation dans 2 secondes...",
         });
 
-        // Déclencher un événement pour forcer le rechargement de l'inventaire
-        console.log('🔄 Déclenchement événement inventory-updated');
-        window.dispatchEvent(new CustomEvent('inventory-updated', { 
-          detail: { productId: data.id, vendorId: productData.vendor_id }
-        }));
+        // Recharger la page complète après un délai pour s'assurer que tout est synchronisé
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
 
       setShowDialog(false);
