@@ -203,7 +203,6 @@ export default function PDG224Solutions() {
             <TabsList className="inline-flex h-auto p-1.5 bg-muted/50 backdrop-blur-xl border border-border/40 rounded-2xl shadow-lg" role="tablist">
               <TabsTrigger
                 value="finance"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Finances"
               >
@@ -212,7 +211,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="users"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Utilisateurs"
               >
@@ -221,7 +219,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Sécurité"
               >
@@ -230,7 +227,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="config"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Configuration"
               >
@@ -239,7 +235,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="products"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Produits"
               >
@@ -248,7 +243,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="maintenance"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Maintenance"
               >
@@ -257,7 +251,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="agents"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Agents"
               >
@@ -266,7 +259,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="syndicat"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Bureaux Syndicaux"
               >
@@ -275,7 +267,6 @@ export default function PDG224Solutions() {
               </TabsTrigger>
               <TabsTrigger
                 value="reports"
-                disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Rapports"
               >
