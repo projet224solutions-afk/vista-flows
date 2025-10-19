@@ -48,6 +48,7 @@ export const UniversalWalletTransactions = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
+  const [transferDescription, setTransferDescription] = useState('');
   
   // États des dialogs
   const [depositOpen, setDepositOpen] = useState(false);
@@ -184,7 +185,7 @@ export const UniversalWalletTransactions = () => {
   };
 
   const handleTransfer = async () => {
-    if (!user?.id || !transferAmount || !recipientId) {
+    if (!user?.id || !transferAmount || !recipientId || !transferDescription) {
       toast.error('Veuillez remplir tous les champs');
       return;
     }
@@ -214,7 +215,7 @@ export const UniversalWalletTransactions = () => {
           operation: 'transfer',
           amount: amount,
           recipient_id: recipientId,
-          description: 'Transfert entre wallets'
+          description: transferDescription
         }
       });
 
@@ -225,6 +226,7 @@ export const UniversalWalletTransactions = () => {
       toast.success(`Transfert de ${formatPrice(amount)} effectué avec succès !`);
       setTransferAmount('');
       setRecipientId('');
+      setTransferDescription('');
       setTransferOpen(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
     } catch (error: any) {
@@ -414,9 +416,18 @@ export const UniversalWalletTransactions = () => {
                     Solde disponible: {wallet ? formatPrice(wallet.balance) : '0 GNF'}
                   </p>
                 </div>
+                <div>
+                  <Label htmlFor="transfer-description">Motif du transfert</Label>
+                  <Input
+                    id="transfer-description"
+                    placeholder="Ex: Paiement facture, Remboursement..."
+                    value={transferDescription}
+                    onChange={(e) => setTransferDescription(e.target.value)}
+                  />
+                </div>
                 <Button 
                   onClick={handleTransfer} 
-                  disabled={processing || !transferAmount || !recipientId}
+                  disabled={processing || !transferAmount || !recipientId || !transferDescription}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   {processing ? 'Traitement...' : 'Confirmer le transfert'}
