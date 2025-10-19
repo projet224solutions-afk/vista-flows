@@ -2103,6 +2103,7 @@ export type Database = {
           last_name: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2115,6 +2116,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2127,6 +2129,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
