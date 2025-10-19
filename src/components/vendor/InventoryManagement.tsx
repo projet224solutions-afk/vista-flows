@@ -137,6 +137,9 @@ export default function InventoryManagement() {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [newWarehouse, setNewWarehouse] = useState({ name: '', address: '' });
+  const [restockOpen, setRestockOpen] = useState(false);
+  const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
+  const [restockQty, setRestockQty] = useState('');
 
   if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
 
@@ -234,6 +237,27 @@ export default function InventoryManagement() {
       await fetchWarehouses();
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleRestock = async () => {
+    if (!restockItem) return;
+    
+    const qty = parseInt(restockQty || '0', 10);
+    if (qty <= 0) {
+      toast({ title: 'Quantité invalide', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const newQty = restockItem.quantity + qty;
+      await updateStock(restockItem.id, newQty);
+      setRestockOpen(false);
+      setRestockItem(null);
+      setRestockQty('');
+      toast({ title: '✅ Stock réapprovisionné avec succès' });
+    } catch (e: any) {
+      toast({ title: 'Erreur réapprovisionnement', description: e?.message, variant: 'destructive' });
     }
   };
 
@@ -361,6 +385,57 @@ export default function InventoryManagement() {
           </Dialog>
         </div>
       </div>
+
+      {/* Dialog Réapprovisionnement */}
+      <Dialog open={restockOpen} onOpenChange={setRestockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Réapprovisionner le stock</DialogTitle>
+          </DialogHeader>
+          {restockItem && (
+            <div className="space-y-4">
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <h4 className="font-medium mb-2">{restockItem.product.name}</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Stock actuel</p>
+                    <p className="font-medium">{restockItem.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Seuil minimum</p>
+                    <p className="font-medium">{restockItem.minimum_stock}</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                <Input 
+                  type="number" 
+                  placeholder="Quantité" 
+                  value={restockQty} 
+                  onChange={(e) => setRestockQty(e.target.value)}
+                  min="1"
+                />
+                {restockQty && parseInt(restockQty) > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Nouveau stock: {restockItem.quantity + parseInt(restockQty)} unités
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => {
+                  setRestockOpen(false);
+                  setRestockItem(null);
+                  setRestockQty('');
+                }}>
+                  Annuler
+                </Button>
+                <Button onClick={handleRestock}>Confirmer</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Statistiques améliorées */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -549,7 +624,13 @@ export default function InventoryManagement() {
                       <Edit className="w-4 h-4" />
                     </Button>
                     {item.quantity <= item.minimum_stock && (
-                      <Button size="sm">
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          setRestockItem(item);
+                          setRestockOpen(true);
+                        }}
+                      >
                         Réapprovisionner
                       </Button>
                     )}
