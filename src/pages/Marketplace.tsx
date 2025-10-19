@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
+import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -47,6 +48,8 @@ export default function Marketplace() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
 
   // Charger les catégories
   useEffect(() => {
@@ -162,11 +165,13 @@ export default function Marketplace() {
   };
 
   const handleProductClick = (productId: string) => {
-    navigate(`/marketplace?product=${productId}`);
+    setSelectedProductId(productId);
+    setShowProductModal(true);
   };
 
   const handleProductContact = (productId: string) => {
-    navigate(`/marketplace?product=${productId}`);
+    setSelectedProductId(productId);
+    setShowProductModal(true);
   };
 
   return (
@@ -330,6 +335,16 @@ export default function Marketplace() {
 
       {/* Footer de navigation */}
       <QuickFooter />
+
+      {/* Modal de détails du produit */}
+      <ProductDetailModal
+        productId={selectedProductId}
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+      />
     </div>
   );
 }
