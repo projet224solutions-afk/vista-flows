@@ -60,7 +60,9 @@ export default function Auth() {
 
           if (profile?.role) {
             // Redirection automatique vers le dashboard approprié
-            if (profile.role === 'client') {
+            if (profile.role === 'admin') {
+              navigate('/pdg');
+            } else if (profile.role === 'client') {
               navigate('/client');
             } else {
               navigate(`/${profile.role}`);
