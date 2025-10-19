@@ -806,25 +806,93 @@ export default function ProductManagement() {
                       onClick={async () => {
                         if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
                           try {
-                            const { error } = await supabase
+                            console.log('Suppression du produit:', editingProduct.id);
+                            
+                            // Supprimer d'abord les entrées liées dans inventory
+                            const { error: inventoryError } = await supabase
+                              .from('inventory')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (inventoryError) {
+                              console.error('Erreur suppression inventaire:', inventoryError);
+                            }
+
+                            // Supprimer les entrées liées dans inventory_alerts
+                            const { error: alertsError } = await supabase
+                              .from('inventory_alerts')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (alertsError) {
+                              console.error('Erreur suppression alertes:', alertsError);
+                            }
+
+                            // Supprimer les entrées liées dans inventory_history
+                            const { error: historyError } = await supabase
+                              .from('inventory_history')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (historyError) {
+                              console.error('Erreur suppression historique:', historyError);
+                            }
+
+                            // Supprimer les entrées dans order_items
+                            const { error: orderItemsError } = await supabase
+                              .from('order_items')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (orderItemsError) {
+                              console.error('Erreur suppression order_items:', orderItemsError);
+                            }
+
+                            // Supprimer les favoris
+                            const { error: favoritesError } = await supabase
+                              .from('favorites')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (favoritesError) {
+                              console.error('Erreur suppression favoris:', favoritesError);
+                            }
+
+                            // Supprimer les entrées dans carts
+                            const { error: cartsError } = await supabase
+                              .from('carts')
+                              .delete()
+                              .eq('product_id', editingProduct.id);
+                            
+                            if (cartsError) {
+                              console.error('Erreur suppression panier:', cartsError);
+                            }
+
+                            // Maintenant supprimer le produit
+                            const { error: productError } = await supabase
                               .from('products')
                               .delete()
                               .eq('id', editingProduct.id);
                             
-                            if (error) throw error;
+                            if (productError) {
+                              console.error('Erreur suppression produit:', productError);
+                              throw productError;
+                            }
                             
+                            console.log('Produit supprimé avec succès');
                             setProducts(prev => prev.filter(p => p.id !== editingProduct.id));
                             setShowDialog(false);
                             resetForm();
                             
                             toast({
                               title: "Produit supprimé",
-                              description: "Le produit a été supprimé avec succès."
+                              description: "Le produit et toutes ses données ont été supprimés avec succès."
                             });
-                          } catch (error) {
+                          } catch (error: any) {
+                            console.error('Erreur complète:', error);
                             toast({
                               title: "Erreur",
-                              description: "Impossible de supprimer le produit.",
+                              description: `Impossible de supprimer le produit: ${error.message || 'Erreur inconnue'}`,
                               variant: "destructive"
                             });
                           }
