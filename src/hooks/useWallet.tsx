@@ -200,7 +200,9 @@ export const useWallet = (userId?: string) => {
   // Créer une carte virtuelle
   const createVirtualCard = useCallback(async (userId: string) => {
     try {
-      const cardNumber = Math.random().toString().slice(2, 18);
+      // Générer un numéro de carte au format "4*** **** **** 1234" (19 caractères max)
+      const last4Digits = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+      const cardNumber = `4*** **** **** ${last4Digits}`;
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 3);
       
@@ -209,8 +211,11 @@ export const useWallet = (userId?: string) => {
         .insert({
           user_id: userId,
           card_number: cardNumber,
-          expiry_date: expiryDate.toISOString().split('T')[0],
+          holder_name: 'Utilisateur 224',
+          expiry_date: expiryDate.toISOString(),
           cvv: String(Math.floor(Math.random() * 900) + 100),
+          daily_limit: 500000,
+          monthly_limit: 2000000,
           status: 'active'
         })
         .select()

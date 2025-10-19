@@ -116,9 +116,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .insert({
           user_id: user.id,
           card_number: cardNumber,
-          cardholder_name: cardHolderName,
+          holder_name: cardHolderName,
           expiry_date: expiryDate.toISOString(),
           cvv: cvv,
+          daily_limit: 500000,
+          monthly_limit: 2000000,
           status: 'active'
         })
         .select()

@@ -3423,6 +3423,7 @@ export type Database = {
           created_at: string
           cvv: string
           expiry_date: string
+          holder_name: string | null
           id: string
           status: string
           user_id: string
@@ -3432,6 +3433,7 @@ export type Database = {
           created_at?: string
           cvv: string
           expiry_date: string
+          holder_name?: string | null
           id?: string
           status?: string
           user_id: string
@@ -3441,6 +3443,7 @@ export type Database = {
           created_at?: string
           cvv?: string
           expiry_date?: string
+          holder_name?: string | null
           id?: string
           status?: string
           user_id?: string

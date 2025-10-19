@@ -114,14 +114,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Créer carte virtuelle si manquante
         if (needsVirtualCard) {
-          const cardNumber = '4*** **** **** ' + Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+          // Générer un numéro de carte au format "4*** **** **** 1234" (19 caractères max)
+          const last4Digits = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+          const cardNumber = `4*** **** **** ${last4Digits}`;
+          
+          // Nom du titulaire
+          const holderName = `${profile?.first_name || ''} ${profile?.last_name || customId}`.trim();
+          
           const { error: cardError } = await supabase
             .from('virtual_cards')
             .upsert({
               user_id: user.id,
               card_number: cardNumber,
+              holder_name: holderName,
               expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
-              cvv: Math.floor(Math.random() * 900 + 100).toString()
+              cvv: Math.floor(Math.random() * 900 + 100).toString(),
+              daily_limit: 500000,
+              monthly_limit: 2000000
             });
 
           if (cardError) {
