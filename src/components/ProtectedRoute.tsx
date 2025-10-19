@@ -35,7 +35,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  if (loading) {
+  // Attendre que le profil soit chargé ou que le chargement soit terminé
+  if (loading || (user && !profile && !isLocalAdmin())) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">

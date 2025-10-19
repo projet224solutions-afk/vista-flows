@@ -50,7 +50,10 @@ export default function Auth() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
+        if (session?.user && event === 'SIGNED_IN') {
+          // Attendre un peu pour que le profil soit créé/chargé
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Récupérer le profil utilisateur pour connaître son rôle
           const { data: profile } = await supabase
             .from('profiles')
@@ -61,6 +64,7 @@ export default function Auth() {
           if (profile?.role) {
             // Redirection automatique vers le dashboard approprié
             if (profile.role === 'admin') {
+              console.log('🎯 Redirection vers interface PDG');
               navigate('/pdg');
             } else if (profile.role === 'client') {
               navigate('/client');
@@ -68,7 +72,7 @@ export default function Auth() {
               navigate(`/${profile.role}`);
             }
           } else {
-            // Si pas de profil trouvé, rediriger vers client par défaut
+            console.warn('⚠️ Profil non trouvé, redirection par défaut');
             navigate('/client');
           }
         }
