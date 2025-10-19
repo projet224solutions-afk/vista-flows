@@ -178,14 +178,28 @@ export default function WarehouseStockManagement() {
     try {
       const { data, error } = await supabase
         .from('warehouse_stocks')
-        .select(`
-          *,
-          product:products(name, sku, price)
-        `)
+        .select('*')
         .eq('warehouse_id', selectedWarehouse);
 
       if (error) throw error;
-      setStocks(data || []);
+
+      // Récupérer les informations des produits séparément
+      if (data && data.length > 0) {
+        const productIds = data.map(s => s.product_id);
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name, sku, price')
+          .in('id', productIds);
+
+        const stocksWithProducts = data.map(stock => ({
+          ...stock,
+          product: productsData?.find(p => p.id === stock.product_id)
+        }));
+
+        setStocks(stocksWithProducts);
+      } else {
+        setStocks([]);
+      }
     } catch (error: any) {
       console.error('Error fetching stocks:', error);
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -196,18 +210,37 @@ export default function WarehouseStockManagement() {
     try {
       const { data, error } = await supabase
         .from('stock_movements')
-        .select(`
-          *,
-          product:products(name),
-          from_warehouse:warehouses!stock_movements_from_warehouse_id_fkey(name),
-          to_warehouse:warehouses!stock_movements_to_warehouse_id_fkey(name)
-        `)
+        .select('*')
         .or(`from_warehouse_id.eq.${selectedWarehouse},to_warehouse_id.eq.${selectedWarehouse}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setMovements(data || []);
+
+      // Récupérer les informations des produits et entrepôts séparément
+      if (data && data.length > 0) {
+        const productIds = [...new Set(data.map(m => m.product_id))];
+        const warehouseIds = [...new Set([
+          ...data.map(m => m.from_warehouse_id).filter(Boolean),
+          ...data.map(m => m.to_warehouse_id).filter(Boolean)
+        ])];
+
+        const [productsData, warehousesData] = await Promise.all([
+          supabase.from('products').select('id, name').in('id', productIds),
+          supabase.from('warehouses').select('id, name').in('id', warehouseIds)
+        ]);
+
+        const movementsWithDetails = data.map(movement => ({
+          ...movement,
+          product: productsData.data?.find(p => p.id === movement.product_id),
+          from_warehouse: warehousesData.data?.find(w => w.id === movement.from_warehouse_id),
+          to_warehouse: warehousesData.data?.find(w => w.id === movement.to_warehouse_id)
+        }));
+
+        setMovements(movementsWithDetails);
+      } else {
+        setMovements([]);
+      }
     } catch (error: any) {
       console.error('Error fetching movements:', error);
     }
