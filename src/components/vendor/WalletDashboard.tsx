@@ -16,8 +16,7 @@ import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 export default function WalletDashboard() {
   const { user } = useAuth();
   const userId = user?.id;
-  const { session } = useAuth();
-  const { wallet, transactions, loading, refetch } = useWallet(userId);
+  const { wallet, transactions, loading, refetch, createTransaction } = useWallet(userId);
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -31,30 +30,8 @@ export default function WalletDashboard() {
     return `${wallet.balance.toLocaleString()} ${wallet.currency}`;
   }, [wallet]);
 
-  const ensureWallet = useCallback(async () => {
-    if (!userId) return null;
-    const { data, error } = await supabase
-      .from('wallets')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) {
-      const { data: created, error: createError } = await supabase
-        .from('wallets')
-        .insert({ user_id: userId, balance: 0, currency: 'GNF', status: 'active' })
-        .select('id')
-        .single();
-      if (createError) throw createError;
-      return created.id;
-    }
-    return data.id as string | null;
-  }, [userId]);
-
-  const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
-
   const handleDeposit = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !wallet) return;
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -64,44 +41,50 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 1000 GNF');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
-      return;
-    }
     try {
       setBusy(true);
-      await ensureWallet();
 
-      const res = await fetch(`${API_BASE}/wallet/deposit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          paymentMethod: 'mobile_money',
-          reference: `UI_${Date.now()}`
-        })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur dépôt');
-      }
+      // Créer une transaction de dépôt
+      const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'deposit',
+          amount: amount,
+          net_amount: amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Dépôt via interface vendeur',
+          receiver_wallet_id: wallet.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Mettre à jour le solde du wallet
+      const newBalance = wallet.balance + amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
 
       setDepositAmount("");
-      toast.success('Dépôt effectué');
+      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
       await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur dépôt');
+    } catch (e: any) {
+      console.error('Erreur dépôt:', e);
+      toast.error(e?.message || 'Erreur lors du dépôt');
     } finally {
       setBusy(false);
     }
-  }, [depositAmount, userId, ensureWallet, refetch, session]);
+  }, [depositAmount, userId, wallet, refetch]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -111,85 +94,137 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 5000 GNF');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
+    if (amount > wallet.balance) {
+      toast.error('Solde insuffisant');
       return;
     }
     try {
       setBusy(true);
-      await ensureWallet();
 
-      const res = await fetch(`${API_BASE}/wallet/withdraw`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          paymentMethod: 'mobile_money',
-          paymentDetails: { provider: 'orange_money', phone: '620000000' }
-        })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur retrait');
-      }
+      // Créer une transaction de retrait
+      const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'withdraw',
+          amount: -amount,
+          net_amount: -amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Retrait via interface vendeur',
+          sender_wallet_id: wallet.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Mettre à jour le solde du wallet
+      const newBalance = wallet.balance - amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
 
       setWithdrawAmount("");
-      toast.success('Retrait effectué');
+      toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
       await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur retrait');
+    } catch (e: any) {
+      console.error('Erreur retrait:', e);
+      toast.error(e?.message || 'Erreur lors du retrait');
     } finally {
       setBusy(false);
     }
-  }, [withdrawAmount, userId, ensureWallet, refetch, session]);
+  }, [withdrawAmount, userId, wallet, refetch]);
 
   const handleTransfer = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !wallet) return;
     const amount = parseFloat(transferAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
       return;
     }
     if (!receiverId) {
-      toast.error('Destinataire requis');
+      toast.error('Destinataire requis (ID utilisateur)');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
+    if (amount > wallet.balance) {
+      toast.error('Solde insuffisant');
       return;
     }
     try {
       setBusy(true);
-      await ensureWallet();
 
-      const res = await fetch(`${API_BASE}/wallet/transfer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ receiverId, amount })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur transfert');
+      // Vérifier que le destinataire existe et récupérer son wallet
+      const { data: receiverWallet, error: receiverError } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', receiverId)
+        .single();
+
+      if (receiverError || !receiverWallet) {
+        toast.error('Destinataire introuvable');
+        return;
       }
+
+      // Créer une transaction de transfert
+      const referenceNumber = `TRF${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'transfer',
+          amount: amount,
+          net_amount: amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: `Transfert vers ${receiverId.substring(0, 8)}...`,
+          sender_wallet_id: wallet.id,
+          receiver_wallet_id: receiverWallet.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Débiter l'expéditeur
+      const newSenderBalance = wallet.balance - amount;
+      const { error: senderUpdateError } = await supabase
+        .from('wallets')
+        .update({ balance: newSenderBalance })
+        .eq('user_id', userId);
+
+      if (senderUpdateError) throw senderUpdateError;
+
+      // Créditer le destinataire
+      const { data: currentReceiverWallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', receiverId)
+        .single();
+
+      const newReceiverBalance = (currentReceiverWallet?.balance || 0) + amount;
+      const { error: receiverUpdateError } = await supabase
+        .from('wallets')
+        .update({ balance: newReceiverBalance })
+        .eq('user_id', receiverId);
+
+      if (receiverUpdateError) throw receiverUpdateError;
 
       setTransferAmount("");
       setReceiverId("");
-      toast.success('Transfert effectué');
+      toast.success(`Transfert de ${amount.toLocaleString()} GNF effectué avec succès`);
       await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur transfert');
+    } catch (e: any) {
+      console.error('Erreur transfert:', e);
+      toast.error(e?.message || 'Erreur lors du transfert');
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, userId, ensureWallet, refetch, session]);
+  }, [transferAmount, receiverId, userId, wallet, refetch]);
 
   return (
     <Card className="h-full">
