@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Package, Plus, Search, Filter, Edit, Trash2, Star, 
-  Eye, ShoppingCart, TrendingUp, Camera, Save, X
+  Eye, ShoppingCart, TrendingUp, Camera, Save, X, Sparkles
 } from "lucide-react";
 
 interface Product {
@@ -51,6 +51,7 @@ export default function ProductManagement() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -247,6 +248,61 @@ export default function ProductManagement() {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const generateDescription = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingDescription(true);
+      
+      // Trouver le nom de la catégorie
+      const categoryName = formData.category_id 
+        ? categories.find(c => c.id === formData.category_id)?.name 
+        : undefined;
+
+      const { data, error } = await supabase.functions.invoke('generate-product-description', {
+        body: {
+          productName: formData.name,
+          category: categoryName,
+          price: formData.price
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('429')) {
+          throw new Error('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
+        }
+        if (error.message.includes('402')) {
+          throw new Error('Crédits IA épuisés. Veuillez recharger votre compte.');
+        }
+        throw error;
+      }
+
+      if (data?.description) {
+        setFormData(prev => ({ ...prev, description: data.description }));
+        toast({
+          title: "Description générée",
+          description: "La description a été générée avec succès par l'IA",
+        });
+      }
+    } catch (error) {
+      console.error('Erreur génération description:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de générer la description",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -407,6 +463,26 @@ export default function ProductManagement() {
                     placeholder="Description détaillée du produit..."
                     rows={3}
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generateDescription}
+                    disabled={generatingDescription || !formData.name}
+                    className="w-full"
+                  >
+                    {generatingDescription ? (
+                      <>
+                        <span className="animate-spin mr-2">⏳</span>
+                        Génération en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Optimiser avec l'IA
+                      </>
+                    )}
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
