@@ -3437,8 +3437,10 @@ export type Database = {
       warehouses: {
         Row: {
           address: string | null
+          city: string | null
           contact_person: string | null
           contact_phone: string | null
+          country: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
@@ -3447,8 +3449,10 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          city?: string | null
           contact_person?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -3457,8 +3461,10 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          city?: string | null
           contact_person?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null

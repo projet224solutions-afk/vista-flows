@@ -144,7 +144,12 @@ export default function InventoryManagement() {
   const [addQty, setAddQty] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [warehouseOpen, setWarehouseOpen] = useState(false);
-  const [newWarehouse, setNewWarehouse] = useState({ name: '', address: '' });
+  const [newWarehouse, setNewWarehouse] = useState({ 
+    country: '', 
+    city: '', 
+    name: '', 
+    address: '' 
+  });
   const [restockOpen, setRestockOpen] = useState(false);
   const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
   const [restockQty, setRestockQty] = useState('');
@@ -199,10 +204,20 @@ export default function InventoryManagement() {
   };
 
   const addWarehouse = async () => {
-    if (!newWarehouse.name.trim()) {
-      toast({ title: 'Nom requis', variant: 'destructive' });
+    // Validation des champs requis
+    if (!newWarehouse.country.trim()) {
+      toast({ title: 'Erreur', description: 'Le pays est requis', variant: 'destructive' });
       return;
     }
+    if (!newWarehouse.city.trim()) {
+      toast({ title: 'Erreur', description: 'La ville est requise', variant: 'destructive' });
+      return;
+    }
+    if (!newWarehouse.name.trim()) {
+      toast({ title: 'Erreur', description: 'Le nom de l\'entrepôt est requis', variant: 'destructive' });
+      return;
+    }
+
     try {
       const { data: vendor } = await supabase
         .from('vendors')
@@ -216,8 +231,10 @@ export default function InventoryManagement() {
         .from('warehouses')
         .insert([{
           vendor_id: vendor.id,
-          name: newWarehouse.name,
-          address: newWarehouse.address,
+          country: newWarehouse.country.trim(),
+          city: newWarehouse.city.trim(),
+          name: newWarehouse.name.trim(),
+          address: newWarehouse.address.trim(),
           is_active: true
         }]);
 
@@ -225,7 +242,7 @@ export default function InventoryManagement() {
 
       toast({ title: '✅ Entrepôt créé avec succès' });
       setWarehouseOpen(false);
-      setNewWarehouse({ name: '', address: '' });
+      setNewWarehouse({ country: '', city: '', name: '', address: '' });
       await fetchWarehouses();
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
@@ -338,16 +355,33 @@ export default function InventoryManagement() {
               <div className="space-y-4">
                 <div className="space-y-3">
                   <h3 className="font-medium">Ajouter un entrepôt</h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <Input
-                      placeholder="Nom de l'entrepôt"
+                      placeholder="Pays *"
+                      value={newWarehouse.country}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
+                      maxLength={100}
+                      required
+                    />
+                    <Input
+                      placeholder="Ville *"
+                      value={newWarehouse.city}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
+                      maxLength={100}
+                      required
+                    />
+                    <Input
+                      placeholder="Nom de l'entrepôt *"
                       value={newWarehouse.name}
                       onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
+                      maxLength={100}
+                      required
                     />
                     <Input
                       placeholder="Adresse"
                       value={newWarehouse.address}
                       onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
+                      maxLength={255}
                     />
                   </div>
                   <Button onClick={addWarehouse} className="w-full">
@@ -368,6 +402,11 @@ export default function InventoryManagement() {
                               {warehouse.is_active ? "Actif" : "Inactif"}
                             </Badge>
                           </div>
+                          {(warehouse as any).city && (warehouse as any).country && (
+                            <p className="text-sm text-muted-foreground">
+                              {(warehouse as any).city}, {(warehouse as any).country}
+                            </p>
+                          )}
                           {warehouse.address && (
                             <p className="text-sm text-muted-foreground">{warehouse.address}</p>
                           )}
