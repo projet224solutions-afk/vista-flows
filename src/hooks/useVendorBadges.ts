@@ -7,6 +7,8 @@ export interface VendorBadges {
   activeProspects: number;
   unreadExpenseAlerts: number;
   openTickets: number;
+  totalProducts: number;
+  lowStockProducts: number;
 }
 
 export function useVendorBadges() {
@@ -15,7 +17,9 @@ export function useVendorBadges() {
     pendingOrders: 0,
     activeProspects: 0,
     unreadExpenseAlerts: 0,
-    openTickets: 0
+    openTickets: 0,
+    totalProducts: 0,
+    lowStockProducts: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -64,11 +68,29 @@ export function useVendorBadges() {
           .eq('vendor_id', vendor.id)
           .in('status', ['open', 'in_progress']);
 
+        // Fetch products count (products that have inventory entries)
+        const { count: productsCount } = await supabase
+          .from('inventory')
+          .select('product_id', { count: 'exact', head: true })
+          .eq('products.vendor_id', vendor.id);
+
+        // Fetch low stock products count
+        const { data: lowStockData } = await supabase
+          .from('inventory')
+          .select('id, quantity, minimum_stock, products!inner(vendor_id)')
+          .eq('products.vendor_id', vendor.id);
+
+        const lowStockCount = lowStockData?.filter(item => 
+          item.quantity <= item.minimum_stock && item.quantity > 0
+        ).length || 0;
+
         setBadges({
           pendingOrders: pendingOrdersCount || 0,
           activeProspects: activeProspectsCount || 0,
           unreadExpenseAlerts: unreadAlertsCount || 0,
-          openTickets: openTicketsCount || 0
+          openTickets: openTicketsCount || 0,
+          totalProducts: productsCount || 0,
+          lowStockProducts: lowStockCount
         });
       } catch (error) {
         console.error('Error fetching vendor badges:', error);
@@ -96,6 +118,14 @@ export function useVendorBadges() {
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'support_tickets' }, 
+        () => fetchBadges()
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'inventory' }, 
+        () => fetchBadges()
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'products' }, 
         () => fetchBadges()
       )
       .subscribe();

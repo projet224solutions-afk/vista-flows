@@ -46,6 +46,10 @@ export function VendorSidebar() {
     switch (path) {
       case 'pos':
         return 'HOT';
+      case 'products':
+        return badges.totalProducts > 0 ? badges.totalProducts.toString() : null;
+      case 'inventory':
+        return badges.lowStockProducts > 0 ? badges.lowStockProducts.toString() : null;
       case 'orders':
         return badges.pendingOrders > 0 ? badges.pendingOrders.toString() : null;
       case 'prospects':
