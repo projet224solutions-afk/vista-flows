@@ -304,10 +304,25 @@ export default function ProductManagement() {
 
       setShowDialog(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erreur complète:', error);
+      
+      let errorMessage = "Impossible de sauvegarder le produit";
+      
+      // Gérer les erreurs spécifiques
+      if (error.code === '23505') {
+        if (error.message.includes('products_sku_key')) {
+          errorMessage = `Le code SKU "${formData.sku}" existe déjà. Veuillez utiliser un code SKU unique.`;
+        } else {
+          errorMessage = "Ce produit existe déjà dans votre catalogue.";
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erreur",
-        description: `Impossible de sauvegarder le produit: ${error.message}`,
+        description: errorMessage,
         variant: "destructive"
       });
     }
