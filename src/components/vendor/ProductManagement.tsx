@@ -292,19 +292,13 @@ export default function ProductManagement() {
           });
         } else {
           console.log('✅ Inventaire créé:', inventoryData);
+          toast({
+            title: "✅ Succès",
+            description: "Produit et inventaire créés! L'inventaire va se mettre à jour automatiquement.",
+          });
         }
 
         setProducts(prev => [data, ...prev]);
-
-        toast({
-          title: "✅ Succès",
-          description: "Produit et inventaire créés! Actualisation dans 2 secondes...",
-        });
-
-        // Recharger la page complète après un délai pour s'assurer que tout est synchronisé
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
       }
 
       setShowDialog(false);

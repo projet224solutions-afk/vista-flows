@@ -125,10 +125,14 @@ export const useInventoryService = () => {
 
   // Charger les données initiales
   const loadData = useCallback(async () => {
-    if (!user || !vendorId) return;
+    if (!user || !vendorId) {
+      console.log('⚠️ loadData annulé - user:', !!user, 'vendorId:', vendorId);
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('🔄 Chargement inventaire pour vendorId:', vendorId);
 
       // Charger l'inventaire avec jointure interne pour filtrer par vendor
       const { data: inventoryData, error: invError } = await supabase
@@ -143,11 +147,12 @@ export const useInventoryService = () => {
         .order('last_updated', { ascending: false });
 
       if (invError) {
-        console.error('Erreur chargement inventaire:', invError);
+        console.error('❌ Erreur chargement inventaire:', invError);
         throw invError;
       }
 
-      console.log('📦 Inventaire chargé:', inventoryData?.length, 'items');
+      console.log('📦 Inventaire chargé:', inventoryData?.length, 'items pour vendorId:', vendorId);
+      console.log('📦 Détail inventaire:', JSON.stringify(inventoryData, null, 2));
 
       // Charger les alertes
       const { data: alertsData, error: alertError } = await supabase
@@ -201,22 +206,6 @@ export const useInventoryService = () => {
 
   useEffect(() => {
     loadData();
-    
-    // Écouter les événements de mise à jour manuels
-    const handleInventoryUpdate = (event: any) => {
-      console.log('🔔 Événement inventory-updated reçu:', event.detail);
-      // Attendre un peu pour que la base de données soit à jour
-      setTimeout(() => {
-        console.log('🔄 Rechargement inventaire...');
-        loadData();
-      }, 500);
-    };
-    
-    window.addEventListener('inventory-updated', handleInventoryUpdate);
-    
-    return () => {
-      window.removeEventListener('inventory-updated', handleInventoryUpdate);
-    };
   }, [loadData]);
 
   // Synchronisation temps réel
