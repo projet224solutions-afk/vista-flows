@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -156,6 +156,11 @@ export default function IndexAlibaba() {
   const navigate = useNavigate();
   useRoleRedirect(); // Active la redirection automatique vers l'interface de rôle
   const { profile } = useAuth();
+
+  // Redirection automatique vers l'interface PDG
+  useEffect(() => {
+    navigate('/pdg');
+  }, [navigate]);
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
     if (service.id === 'vendeur') {
