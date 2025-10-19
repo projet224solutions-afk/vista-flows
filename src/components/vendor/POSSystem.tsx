@@ -655,32 +655,51 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
                     {filteredProducts.map(product => (
                       <Card 
                         key={product.id} 
-                        className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-border/30 hover:border-primary/40 bg-gradient-to-br from-card via-card/95 to-card/90"
+                        className="group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] border-2 border-border/40 hover:border-primary/50 bg-gradient-to-br from-card via-card/98 to-card/95 overflow-hidden"
                         onClick={() => addToCart(product)}
                       >
-                        <CardContent className="p-4 text-center space-y-3">
-                          <div className="w-full h-32 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-lg flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300">
-                            <Smartphone className="h-14 w-14 text-muted-foreground/60 group-hover:text-primary/60 transition-colors" />
+                        <CardContent className="p-5">
+                          {/* Image produit avec effet premium */}
+                          <div className="relative w-full h-40 bg-gradient-to-br from-muted/50 via-muted/40 to-muted/30 rounded-xl flex items-center justify-center group-hover:from-primary/15 group-hover:via-primary/10 group-hover:to-primary/5 transition-all duration-300 mb-4 shadow-inner">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent rounded-xl" />
+                            <Smartphone className="h-16 w-16 text-muted-foreground/50 group-hover:text-primary/70 transition-all duration-300 group-hover:scale-110" />
                           </div>
                           
-                          <div>
-                            <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
-                              {product.name}
-                            </h3>
-                            <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} GNF</p>
+                          {/* Informations produit */}
+                          <div className="space-y-3">
+                            {/* Nom et catégorie */}
+                            <div>
+                              <h3 className="font-bold text-base mb-1 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors leading-tight">
+                                {product.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground">{product.category}</p>
+                            </div>
                             
-                            <Badge 
-                              variant={product.stock > 10 ? 'default' : 'destructive'} 
-                              className="mb-3 w-full justify-center"
-                            >
-                              Stock: {product.stock}
-                            </Badge>
+                            {/* Prix avec design premium */}
+                            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-3 border border-primary/20">
+                              <p className="text-2xl font-black text-primary">
+                                {product.price.toLocaleString()}
+                                <span className="text-sm font-normal ml-1">GNF</span>
+                              </p>
+                            </div>
                             
-                            <div className="flex justify-between items-center">
+                            {/* Badge stock avec style amélioré */}
+                            <div className="flex items-center justify-between gap-2">
+                              <Badge 
+                                variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
+                                className="flex-1 justify-center py-1.5 font-semibold"
+                              >
+                                <ShoppingBag className="h-3 w-3 mr-1" />
+                                Stock: {product.stock}
+                              </Badge>
+                            </div>
+                            
+                            {/* Contrôles quantité professionnels */}
+                            <div className="flex items-center justify-center gap-3 bg-muted/30 rounded-lg p-2">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -688,14 +707,16 @@ export function POSSystem() {
                                   e.stopPropagation();
                                   updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
                                 }}
-                                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                className="h-9 w-9 p-0 hover:bg-destructive/20 hover:text-destructive hover:border-destructive/50 transition-all"
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
                               
-                              <span className="font-mono font-bold text-lg px-2">
-                                {cart.find(item => item.id === product.id)?.quantity || 0}
-                              </span>
+                              <div className="flex items-center justify-center min-w-[60px] bg-card rounded-md border border-border px-3 py-1.5">
+                                <span className="font-mono font-bold text-xl text-primary">
+                                  {cart.find(item => item.id === product.id)?.quantity || 0}
+                                </span>
+                              </div>
                               
                               <Button
                                 variant="outline"
@@ -704,7 +725,7 @@ export function POSSystem() {
                                   e.stopPropagation();
                                   addToCart(product);
                                 }}
-                                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                                className="h-9 w-9 p-0 hover:bg-primary/20 hover:text-primary hover:border-primary/50 transition-all"
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
