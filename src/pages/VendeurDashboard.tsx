@@ -41,6 +41,7 @@ import DebtManagement from "@/components/vendor/DebtManagement";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
+import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -201,7 +202,12 @@ export default function VendeurDashboard() {
       </div>
 
       {/* Activité récente */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Wallet universel */}
+        <div>
+          <UniversalWalletTransactions />
+        </div>
+        
         <Card>
           <CardHeader>
             <CardTitle>Commandes récentes</CardTitle>

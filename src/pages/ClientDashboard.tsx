@@ -17,6 +17,7 @@ import { useClientData } from "@/hooks/useClientData";
 import UserProfileCard from "@/components/UserProfileCard";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
+import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -155,9 +156,16 @@ export default function ClientDashboard() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Profil utilisateur */}
               <div className="lg:col-span-2">
-                <UserProfileCard showWalletDetails={true} />
+                <UserProfileCard showWalletDetails={false} />
               </div>
 
+              {/* Wallet et transactions */}
+              <div>
+                <UniversalWalletTransactions />
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
               {/* Statistiques rapides */}
               <Card className="shadow-elegant">
                 <CardHeader>
