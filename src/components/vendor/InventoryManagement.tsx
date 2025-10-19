@@ -56,10 +56,12 @@ export default function InventoryManagement() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string }>>([]);
 
   useEffect(() => {
     if (!user) return;
     fetchWarehouses();
+    fetchProducts();
   }, [user]);
 
   const fetchWarehouses = async () => {
@@ -81,6 +83,31 @@ export default function InventoryManagement() {
       setWarehouses(warehousesData || []);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!vendor) return;
+
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select('id, name, sku')
+        .eq('vendor_id', vendor.id)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setProducts(productsData || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({ title: 'Erreur', description: 'Impossible de charger les produits', variant: 'destructive' });
     }
   };
 
@@ -126,8 +153,30 @@ export default function InventoryManagement() {
     try {
       const inventoryItem = inventory.find(item => item.product_id === selectedProductId);
       if (inventoryItem) {
+        // Mettre à jour le stock existant
         const newQty = inventoryItem.quantity + qty;
         await updateStock(inventoryItem.id, newQty);
+      } else {
+        // Créer une nouvelle entrée d'inventaire
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user?.id)
+          .single();
+
+        if (vendor) {
+          const { error } = await supabase
+            .from('inventory')
+            .insert([{
+              product_id: selectedProductId,
+              quantity: qty,
+              minimum_stock: 10,
+              reserved_quantity: 0
+            }]);
+
+          if (error) throw error;
+          await refresh();
+        }
       }
       setAddOpen(false);
       setAddQty('');
@@ -216,11 +265,14 @@ export default function InventoryManagement() {
                     className="w-full px-3 py-2 border rounded-md bg-background"
                   >
                     <option value="">Sélectionner un produit</option>
-                    {inventory.map((item) => (
-                      <option key={item.product_id} value={item.product_id}>
-                        {item.product.name} (Stock actuel: {item.quantity})
-                      </option>
-                    ))}
+                    {products.map((product) => {
+                      const inventoryItem = inventory.find(item => item.product_id === product.id);
+                      return (
+                        <option key={product.id} value={product.id}>
+                          {product.name} {product.sku ? `(${product.sku})` : ''} - Stock: {inventoryItem?.quantity || 0}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>
