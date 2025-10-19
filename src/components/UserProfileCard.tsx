@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -14,7 +17,10 @@ import {
   EyeOff, 
   Copy,
   User,
-  IdCard
+  IdCard,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Send
 } from 'lucide-react';
 
 interface UserInfo {
@@ -47,6 +53,16 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   const [loading, setLoading] = useState(true);
   const [showCardNumber, setShowCardNumber] = useState(false);
   const [creatingCard, setCreatingCard] = useState(false);
+  
+  // États pour les opérations wallet
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [recipientId, setRecipientId] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -154,6 +170,138 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     return cardNumber.replace(/(.{4})(.{8})(.{4})/, '$1 **** **** $3');
   };
 
+  // Fonction pour effectuer un dépôt
+  const handleDeposit = async () => {
+    if (!user?.id || !depositAmount) {
+      toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'deposit',
+          amount: amount,
+          description: 'Dépôt sur le wallet'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
+      setDepositAmount('');
+      setDepositOpen(false);
+      await loadUserInfo();
+    } catch (error) {
+      console.error('Erreur dépôt:', error);
+      toast.error('Erreur lors du dépôt');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour effectuer un retrait
+  const handleWithdraw = async () => {
+    if (!user?.id || !withdrawAmount) {
+      toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    if (amount > (userInfo.wallet?.balance || 0)) {
+      toast.error('Solde insuffisant');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'withdraw',
+          amount: amount,
+          description: 'Retrait du wallet'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
+      setWithdrawAmount('');
+      setWithdrawOpen(false);
+      await loadUserInfo();
+    } catch (error) {
+      console.error('Erreur retrait:', error);
+      toast.error('Erreur lors du retrait');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour effectuer un transfert
+  const handleTransfer = async () => {
+    if (!user?.id || !transferAmount || !recipientId) {
+      toast.error('Veuillez remplir tous les champs');
+      return;
+    }
+
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    if (amount > (userInfo.wallet?.balance || 0)) {
+      toast.error('Solde insuffisant');
+      return;
+    }
+
+    if (recipientId === user.id) {
+      toast.error('Vous ne pouvez pas transférer à vous-même');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'transfer',
+          amount: amount,
+          recipient_id: recipientId,
+          description: 'Transfert entre wallets'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Transfert de ${formatPrice(amount)} effectué avec succès !`);
+      setTransferAmount('');
+      setRecipientId('');
+      setTransferOpen(false);
+      await loadUserInfo();
+    } catch (error) {
+      console.error('Erreur transfert:', error);
+      toast.error(error.message || 'Erreur lors du transfert');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' GNF';
+  };
+
   if (loading) {
     return (
       <Card className={className}>
@@ -207,16 +355,147 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 {userInfo.wallet ? 'Actif' : 'Création...'}
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-green-600 mb-3">
               {userInfo.wallet ? 
                 `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` : 
                 'Initialisation...'
               }
             </p>
             {!userInfo.wallet && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 mb-3">
                 Wallet en cours de création automatique...
               </p>
+            )}
+            
+            {/* Boutons d'opérations */}
+            {userInfo.wallet && (
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {/* Bouton Dépôt */}
+                <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <ArrowDownToLine className="w-4 h-4 mb-1 text-green-600" />
+                      <span className="text-xs">Dépôt</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un dépôt</DialogTitle>
+                      <DialogDescription>
+                        Ajoutez des fonds à votre wallet
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="deposit-amount">Montant (GNF)</Label>
+                        <Input
+                          id="deposit-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleDeposit} 
+                        disabled={processing || !depositAmount}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {processing ? 'Traitement...' : 'Confirmer le dépôt'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Bouton Retrait */}
+                <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <ArrowUpFromLine className="w-4 h-4 mb-1 text-orange-600" />
+                      <span className="text-xs">Retrait</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un retrait</DialogTitle>
+                      <DialogDescription>
+                        Retirez des fonds de votre wallet
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="withdraw-amount">Montant (GNF)</Label>
+                        <Input
+                          id="withdraw-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handleWithdraw} 
+                        disabled={processing || !withdrawAmount}
+                        className="w-full bg-orange-600 hover:bg-orange-700"
+                      >
+                        {processing ? 'Traitement...' : 'Confirmer le retrait'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Bouton Transfert */}
+                <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <Send className="w-4 h-4 mb-1 text-blue-600" />
+                      <span className="text-xs">Transfert</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un transfert</DialogTitle>
+                      <DialogDescription>
+                        Transférez des fonds à un autre utilisateur
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="recipient-id">ID du destinataire</Label>
+                        <Input
+                          id="recipient-id"
+                          placeholder="UUID du destinataire"
+                          value={recipientId}
+                          onChange={(e) => setRecipientId(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="transfer-amount">Montant (GNF)</Label>
+                        <Input
+                          id="transfer-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={transferAmount}
+                          onChange={(e) => setTransferAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handleTransfer} 
+                        disabled={processing || !transferAmount || !recipientId}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        {processing ? 'Traitement...' : 'Confirmer le transfert'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             )}
           </div>
         )}
