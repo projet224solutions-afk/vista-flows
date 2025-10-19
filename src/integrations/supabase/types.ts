@@ -414,6 +414,74 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          joined_at: string | null
+          last_read_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          agora_channel: string | null
+          created_at: string | null
+          id: string
+          last_message: string | null
+          name: string | null
+          type: string | null
+          unread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agora_channel?: string | null
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          name?: string | null
+          type?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agora_channel?: string | null
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          name?: string | null
+          type?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       copilot_conversations: {
         Row: {
           actions: Json | null
@@ -1488,35 +1556,48 @@ export type Database = {
       messages: {
         Row: {
           content: string
+          conversation_id: string | null
           created_at: string | null
           file_url: string | null
           id: string
           read_at: string | null
           recipient_id: string
           sender_id: string
+          status: string | null
           type: Database["public"]["Enums"]["message_type"] | null
         }
         Insert: {
           content: string
+          conversation_id?: string | null
           created_at?: string | null
           file_url?: string | null
           id?: string
           read_at?: string | null
           recipient_id: string
           sender_id: string
+          status?: string | null
           type?: Database["public"]["Enums"]["message_type"] | null
         }
         Update: {
           content?: string
+          conversation_id?: string | null
           created_at?: string | null
           file_url?: string | null
           id?: string
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
+          status?: string | null
           type?: Database["public"]["Enums"]["message_type"] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_recipient_id_fkey"
             columns: ["recipient_id"]
@@ -3023,6 +3104,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_ids: {
         Row: {
