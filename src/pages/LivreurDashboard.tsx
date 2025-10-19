@@ -16,7 +16,7 @@ import {
   Star,
   MessageSquare
 } from "lucide-react";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 
 export default function LivreurDashboard() {
   const { profile, signOut } = useAuth();
@@ -203,7 +203,7 @@ export default function LivreurDashboard() {
           </TabsContent>
 
           <TabsContent value="communication" className="space-y-6">
-            <SimpleCommunicationInterface />
+            <RealCommunicationInterface />
           </TabsContent>
         </Tabs>
       </div>

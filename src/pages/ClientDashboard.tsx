@@ -30,7 +30,7 @@ import UserIdDisplay from "@/components/UserIdDisplay";
 import UserProfileCard from "@/components/UserProfileCard";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 
 // ================= INTERFACES TYPESCRIPT =================
@@ -796,7 +796,7 @@ export default function ClientDashboard() {
 
         {activeTab === 'communication' && (
           <div className="space-y-6">
-            <SimpleCommunicationInterface />
+            <RealCommunicationInterface />
           </div>
         )}
 

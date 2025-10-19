@@ -12,7 +12,7 @@ import { Users, UserPlus, Shield, Settings, AlertTriangle, MessageSquare } from 
 import { useAgentManagement } from '@/hooks/useAgentManagement';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import SimpleCommunicationInterface from '@/components/communication/SimpleCommunicationInterface';
+import RealCommunicationInterface from '@/components/communication/RealCommunicationInterface';
 
 export default function AgentManagement() {
   const { 
@@ -433,7 +433,7 @@ export default function AgentManagement() {
         </TabsContent>
 
         <TabsContent value="communication" className="space-y-6">
-          <SimpleCommunicationInterface />
+          <RealCommunicationInterface />
         </TabsContent>
       </Tabs>
     </div>

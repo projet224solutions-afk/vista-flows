@@ -5,7 +5,7 @@ import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "l
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -224,7 +224,7 @@ export default function TransitaireDashboard() {
 
         <TabsContent value="communication" className="space-y-6">
           <div className="px-4 py-6">
-            <SimpleCommunicationInterface />
+            <RealCommunicationInterface />
           </div>
         </TabsContent>
       </Tabs>
