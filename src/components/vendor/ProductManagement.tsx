@@ -163,25 +163,51 @@ export default function ProductManagement() {
 
       // Upload images to storage if any
       let imageUrls: string[] = [];
+      console.log('Images sélectionnées:', selectedImages.length);
+      
       if (selectedImages.length > 0) {
+        toast({
+          title: "Upload en cours...",
+          description: `Upload de ${selectedImages.length} image(s)...`
+        });
+
         for (const file of selectedImages) {
           const fileExt = file.name.split('.').pop();
           const fileName = `${vendor.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
           
-          const { error: uploadError } = await supabase.storage
+          console.log('Upload de:', fileName);
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('product-images')
-            .upload(fileName, file);
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
           if (uploadError) {
-            console.error('Upload error:', uploadError);
+            console.error('Erreur upload:', uploadError);
+            toast({
+              title: "Erreur upload",
+              description: `Impossible d'uploader ${file.name}: ${uploadError.message}`,
+              variant: "destructive"
+            });
             continue;
           }
 
+          console.log('Upload réussi:', uploadData);
+          
           const { data: { publicUrl } } = supabase.storage
             .from('product-images')
             .getPublicUrl(fileName);
 
+          console.log('URL publique:', publicUrl);
           imageUrls.push(publicUrl);
+        }
+        
+        if (imageUrls.length > 0) {
+          toast({
+            title: "Images uploadées",
+            description: `${imageUrls.length} image(s) uploadée(s) avec succès`
+          });
         }
       }
 
@@ -203,16 +229,27 @@ export default function ProductManagement() {
         images: imageUrls.length > 0 ? imageUrls : null
       };
 
+      console.log('Données produit à sauvegarder:', productData);
+
       if (editingProduct) {
+        // Lors de l'édition, combiner les anciennes images avec les nouvelles
+        const existingImages = editingProduct.images || [];
+        const allImages = imageUrls.length > 0 ? [...existingImages, ...imageUrls] : existingImages;
+        
+        const updateData = {
+          ...productData,
+          images: allImages.length > 0 ? allImages : null
+        };
+
         const { error } = await supabase
           .from('products')
-          .update(productData)
+          .update(updateData)
           .eq('id', editingProduct.id);
 
         if (error) throw error;
 
         setProducts(prev => prev.map(p => 
-          p.id === editingProduct.id ? { ...p, ...productData } : p
+          p.id === editingProduct.id ? { ...p, ...updateData } : p
         ));
 
         toast({
@@ -227,6 +264,20 @@ export default function ProductManagement() {
           .single();
 
         if (error) throw error;
+
+        // Créer une entrée dans l'inventaire pour ce nouveau produit
+        const { error: inventoryError } = await supabase
+          .from('inventory')
+          .insert([{
+            product_id: data.id,
+            quantity: productData.stock_quantity,
+            minimum_stock: productData.low_stock_threshold,
+            cost_price: productData.cost_price || 0
+          }]);
+
+        if (inventoryError) {
+          console.error('Erreur création inventaire:', inventoryError);
+        }
 
         setProducts(prev => [data, ...prev]);
 
@@ -367,6 +418,9 @@ export default function ProductManagement() {
       tags: product.tags?.join(', ') || '',
       is_active: product.is_active
     });
+    // Note: Les images existantes ne peuvent pas être chargées dans selectedImages (File[])
+    // car ce sont des URLs. On les affichera séparément dans le formulaire d'édition.
+    setSelectedImages([]);
     setShowDialog(true);
   };
 
@@ -426,11 +480,32 @@ export default function ProductManagement() {
               {/* Section Images */}
               <div className="space-y-3">
                 <Label>Images du produit</Label>
+                
+                {/* Afficher les images existantes lors de l'édition */}
+                {editingProduct && editingProduct.images && editingProduct.images.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm text-muted-foreground mb-2">Images actuelles:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {editingProduct.images.map((url, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={url}
+                            alt={`Image ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="border-2 border-dashed border-muted rounded-lg p-6">
                   <div className="flex flex-col items-center gap-3">
                     <Camera className="w-8 h-8 text-muted-foreground" />
                     <div className="text-center">
-                      <p className="text-sm font-medium">Glissez vos images ici</p>
+                      <p className="text-sm font-medium">
+                        {editingProduct ? 'Ajouter de nouvelles images' : 'Glissez vos images ici'}
+                      </p>
                       <p className="text-xs text-muted-foreground">PNG, JPG jusqu'à 10MB chacune</p>
                     </div>
                     <input
@@ -451,25 +526,28 @@ export default function ProductManagement() {
                     </Button>
                   </div>
                   
-                  {/* Affichage des images sélectionnées */}
+                  {/* Affichage des nouvelles images sélectionnées */}
                   {selectedImages.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      {selectedImages.map((file, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                    <div className="mt-4">
+                      <p className="text-sm text-muted-foreground mb-2">Nouvelles images à ajouter:</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {selectedImages.map((file, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
