@@ -297,9 +297,15 @@ export default function ProductManagement() {
         setProducts(prev => [data, ...prev]);
 
         toast({
-          title: "Produit ajouté",
-          description: "Le nouveau produit a été ajouté avec succès."
+          title: "✅ Produit ajouté",
+          description: "Le nouveau produit et son inventaire ont été créés avec succès."
         });
+
+        // Déclencher un événement pour forcer le rechargement de l'inventaire
+        console.log('🔄 Déclenchement événement inventory-updated');
+        window.dispatchEvent(new CustomEvent('inventory-updated', { 
+          detail: { productId: data.id, vendorId: productData.vendor_id }
+        }));
       }
 
       setShowDialog(false);

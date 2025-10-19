@@ -201,6 +201,22 @@ export const useInventoryService = () => {
 
   useEffect(() => {
     loadData();
+    
+    // Écouter les événements de mise à jour manuels
+    const handleInventoryUpdate = (event: any) => {
+      console.log('🔔 Événement inventory-updated reçu:', event.detail);
+      // Attendre un peu pour que la base de données soit à jour
+      setTimeout(() => {
+        console.log('🔄 Rechargement inventaire...');
+        loadData();
+      }, 500);
+    };
+    
+    window.addEventListener('inventory-updated', handleInventoryUpdate);
+    
+    return () => {
+      window.removeEventListener('inventory-updated', handleInventoryUpdate);
+    };
   }, [loadData]);
 
   // Synchronisation temps réel
