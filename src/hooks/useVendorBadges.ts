@@ -9,6 +9,7 @@ export interface VendorBadges {
   openTickets: number;
   totalProducts: number;
   lowStockProducts: number;
+  activeWarehouses: number;
 }
 
 export function useVendorBadges() {
@@ -19,7 +20,8 @@ export function useVendorBadges() {
     unreadExpenseAlerts: 0,
     openTickets: 0,
     totalProducts: 0,
-    lowStockProducts: 0
+    lowStockProducts: 0,
+    activeWarehouses: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -87,13 +89,21 @@ export function useVendorBadges() {
         // Count products with inventory entries
         const productsWithInventory = new Set(inventoryData?.map(i => i.product_id) || []).size;
 
+        // Fetch active warehouses count
+        const { count: warehousesCount } = await supabase
+          .from('warehouses')
+          .select('*', { count: 'exact', head: true })
+          .eq('vendor_id', vendor.id)
+          .eq('is_active', true);
+
         setBadges({
           pendingOrders: pendingOrdersCount || 0,
           activeProspects: activeProspectsCount || 0,
           unreadExpenseAlerts: unreadAlertsCount || 0,
           openTickets: openTicketsCount || 0,
           totalProducts: productsCount || 0,
-          lowStockProducts: lowStockCount
+          lowStockProducts: lowStockCount,
+          activeWarehouses: warehousesCount || 0
         });
       } catch (error) {
         console.error('Error fetching vendor badges:', error);
@@ -131,10 +141,19 @@ export function useVendorBadges() {
         { event: '*', schema: 'public', table: 'products' }, 
         () => fetchBadges()
       )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'warehouses' }, 
+        () => fetchBadges()
+      )
       .subscribe();
+
+    // Écouter les événements custom pour les entrepôts
+    const handleWarehouseUpdate = () => fetchBadges();
+    window.addEventListener('warehouseUpdated', handleWarehouseUpdate);
 
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('warehouseUpdated', handleWarehouseUpdate);
     };
   }, [user]);
 

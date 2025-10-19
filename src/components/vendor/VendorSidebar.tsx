@@ -58,6 +58,8 @@ export function VendorSidebar() {
         return badges.unreadExpenseAlerts > 0 ? badges.unreadExpenseAlerts.toString() : null;
       case 'support':
         return badges.openTickets > 0 ? badges.openTickets.toString() : null;
+      case 'warehouse':
+        return badges.activeWarehouses > 0 ? badges.activeWarehouses.toString() : null;
       default:
         return null;
     }
