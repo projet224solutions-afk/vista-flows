@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,13 @@ import {
   Calendar, User, MapPin, Download, MoreHorizontal
 } from "lucide-react";
 
+interface Address {
+  street: string;
+  city: string;
+  postal_code?: string;
+  country: string;
+}
+
 interface Order {
   id: string;
   order_number: string;
@@ -25,12 +31,12 @@ interface Order {
   shipping_amount: number;
   discount_amount: number;
   total_amount: number;
-  shipping_address: unknown;
-  billing_address?: unknown;
+  shipping_address: any; // Json from Supabase
+  billing_address?: any; // Json from Supabase
   notes?: string;
   created_at: string;
   updated_at: string;
-  customer?: {
+  customers?: {
     id: string;
     user_id: string;
   };
@@ -41,9 +47,8 @@ interface Order {
     quantity: number;
     unit_price: number;
     total_price: number;
-    product: {
+    products: {
       name: string;
-      sku?: string;
     };
   }[];
 }
@@ -103,38 +108,58 @@ export default function OrderManagement() {
 
   const fetchOrders = async () => {
     try {
+      if (!user?.id) {
+        console.error('User ID not available');
+        setLoading(false);
+        return;
+      }
+
       // Get vendor ID
-      const { data: vendor } = await supabase
+      const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
-        .eq('user_id', user?.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (!vendor) return;
+      if (vendorError) {
+        console.error('Error fetching vendor:', vendorError);
+        throw vendorError;
+      }
+
+      if (!vendor) {
+        console.log('No vendor found for user');
+        setLoading(false);
+        return;
+      }
 
       // Fetch orders with related data
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
           *,
-          customer:customers(id, user_id),
-          order_items:order_items(
+          customers!inner(id, user_id),
+          order_items(
             id,
             product_id,
             variant_id,
             quantity,
             unit_price,
             total_price,
-            product:products(name, sku)
+            products(name)
           )
         `)
         .eq('vendor_id', vendor.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching orders:', error);
+        throw error;
+      }
 
+      console.log('Orders loaded:', ordersData?.length || 0);
       setOrders(ordersData || []);
     } catch (error) {
+      console.error('Error in fetchOrders:', error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les commandes.",
@@ -147,8 +172,7 @@ export default function OrderManagement() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !searchTerm || 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer?.user_id?.toLowerCase().includes(searchTerm.toLowerCase());
+      order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
@@ -377,7 +401,7 @@ export default function OrderManagement() {
                         <Calendar className="w-4 h-4" />
                         {new Date(order.created_at).toLocaleDateString('fr-FR')}
                         <User className="w-4 h-4 ml-2" />
-                        Client ID: {order.customer?.user_id || 'N/A'}
+                        Client ID: {order.customers?.user_id || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -397,7 +421,7 @@ export default function OrderManagement() {
                     <div className="text-sm">
                       {order.order_items?.map((item, index) => (
                         <div key={item.id}>
-                          {item.product.name} x{item.quantity}
+                          {item.products.name} x{item.quantity}
                           {index < (order.order_items?.length || 0) - 1 ? ', ' : ''}
                         </div>
                       ))}
@@ -418,7 +442,7 @@ export default function OrderManagement() {
                     <p className="text-sm font-medium text-muted-foreground">Adresse de livraison</p>
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 inline mr-1" />
-                      {(order.shipping_address as unknown)?.city || 'Non spécifiée'}
+                      {(order.shipping_address as Address)?.city || 'Non spécifiée'}
                     </div>
                   </div>
                 </div>
@@ -530,10 +554,7 @@ export default function OrderManagement() {
                   {selectedOrder.order_items?.map((item) => (
                     <div key={item.id} className="flex justify-between items-center py-2 border-b">
                       <div>
-                        <span className="font-medium">{item.product.name}</span>
-                        {item.product.sku && (
-                          <span className="text-sm text-muted-foreground ml-2">({item.product.sku})</span>
-                        )}
+                        <span className="font-medium">{item.products.name}</span>
                       </div>
                       <div className="text-right">
                         <div>{item.quantity} x {item.unit_price.toLocaleString()} GNF</div>
@@ -551,10 +572,10 @@ export default function OrderManagement() {
                   <div className="text-sm text-muted-foreground">
                     {selectedOrder.shipping_address ? (
                       <div>
-                        {(selectedOrder.shipping_address as unknown).street && <div>{(selectedOrder.shipping_address as unknown).street}</div>}
-                        {(selectedOrder.shipping_address as unknown).city && <div>{(selectedOrder.shipping_address as unknown).city}</div>}
-                        {(selectedOrder.shipping_address as unknown).postal_code && <div>{(selectedOrder.shipping_address as unknown).postal_code}</div>}
-                        {(selectedOrder.shipping_address as unknown).country && <div>{(selectedOrder.shipping_address as unknown).country}</div>}
+                        {(selectedOrder.shipping_address as Address)?.street && <div>{(selectedOrder.shipping_address as Address).street}</div>}
+                        {(selectedOrder.shipping_address as Address)?.city && <div>{(selectedOrder.shipping_address as Address).city}</div>}
+                        {(selectedOrder.shipping_address as Address)?.postal_code && <div>{(selectedOrder.shipping_address as Address).postal_code}</div>}
+                        {(selectedOrder.shipping_address as Address)?.country && <div>{(selectedOrder.shipping_address as Address).country}</div>}
                       </div>
                     ) : (
                       <span>Non spécifiée</span>
@@ -565,10 +586,10 @@ export default function OrderManagement() {
                   <div>
                     <h4 className="font-semibold mb-2">Adresse de facturation</h4>
                     <div className="text-sm text-muted-foreground">
-                      {(selectedOrder.billing_address as unknown)?.street && <div>{(selectedOrder.billing_address as unknown).street}</div>}
-                      {(selectedOrder.billing_address as unknown)?.city && <div>{(selectedOrder.billing_address as unknown).city}</div>}
-                      {(selectedOrder.billing_address as unknown)?.postal_code && <div>{(selectedOrder.billing_address as unknown).postal_code}</div>}
-                      {(selectedOrder.billing_address as unknown)?.country && <div>{(selectedOrder.billing_address as unknown).country}</div>}
+                      {(selectedOrder.billing_address as Address)?.street && <div>{(selectedOrder.billing_address as Address).street}</div>}
+                      {(selectedOrder.billing_address as Address)?.city && <div>{(selectedOrder.billing_address as Address).city}</div>}
+                      {(selectedOrder.billing_address as Address)?.postal_code && <div>{(selectedOrder.billing_address as Address).postal_code}</div>}
+                      {(selectedOrder.billing_address as Address)?.country && <div>{(selectedOrder.billing_address as Address).country}</div>}
                     </div>
                   </div>
                 )}
