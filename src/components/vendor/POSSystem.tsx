@@ -37,7 +37,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
-import { useProducts } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -88,19 +87,58 @@ export function POSSystem() {
     }
   }, [user?.id]);
   
-  // Charger tous les produits actifs du marketplace (sans filtrer par vendor)
-  const { data: productsData, loading: productsLoading, refetch: refetchProducts } = useProducts();
+  // Charger les produits du vendor depuis la base de données
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   
-  // Transformer les données des produits pour le format POS
-  const products = (productsData || []).map((p: any) => ({
-    id: p?.id,
-    name: p?.name ?? 'Produit',
-    price: Number(p?.price || 0),
-    category: p?.category_id || 'Divers',
-    stock: Number(p?.stock_quantity || 0),
-    barcode: p?.barcode || p?.ean || p?.sku || undefined,
-    images: p?.images || []
-  }));
+  const loadVendorProducts = async () => {
+    if (!vendorId) return;
+    
+    try {
+      setProductsLoading(true);
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          price,
+          stock_quantity,
+          barcode,
+          sku,
+          images,
+          category_id,
+          categories(name)
+        `)
+        .eq('vendor_id', vendorId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedProducts = (productsData || []).map((p: any) => ({
+        id: p.id,
+        name: p.name ?? 'Produit',
+        price: Number(p.price || 0),
+        category: p.categories?.name || 'Divers',
+        stock: Number(p.stock_quantity || 0),
+        barcode: p.barcode || p.sku || undefined,
+        images: p.images || []
+      }));
+
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+      toast.error('Erreur lors du chargement des produits');
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (vendorId) {
+      loadVendorProducts();
+    }
+  }, [vendorId]);
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -259,7 +297,7 @@ export function POSSystem() {
       setShowOrderSummary(false);
       setReceivedAmount(0);
       // Recharger la liste des produits pour refléter le stock
-      try { await refetchProducts?.(); } catch {}
+      await loadVendorProducts();
     } catch (e: unknown) {
       toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
     }
@@ -749,24 +787,65 @@ export function POSSystem() {
                     </div>
                   </div>
 
-                  {/* Saisie montant reçu pour espèces */}
+                  {/* Saisie montant reçu pour espèces avec pavé numérique */}
                   {paymentMethod === 'cash' && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Montant reçu</label>
-                      <Input
-                        type="number"
-                        value={receivedAmount}
-                        onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="mb-2"
-                      />
-                      {receivedAmount > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                          Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                            {change.toLocaleString()} GNF
-                          </span>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Montant reçu</label>
+                        <Input
+                          type="text"
+                          value={numericInput || receivedAmount || ''}
+                          readOnly
+                          placeholder="0"
+                          className="mb-2 text-right text-xl font-mono font-bold"
+                        />
+                        {receivedAmount > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {change.toLocaleString()} GNF
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pavé numérique (Calculatrice) */}
+                      <div className="bg-muted/20 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                          <Calculator className="h-3 w-3" />
+                          Pavé numérique
                         </div>
-                      )}
+                        <div className="grid grid-cols-3 gap-2">
+                          {['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '.'].map((num) => (
+                            <Button
+                              key={num}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleNumericInput(num)}
+                              className="h-10 text-base font-bold hover:bg-primary/10"
+                            >
+                              {num}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNumericInput('clear')}
+                            className="h-10 text-destructive hover:bg-destructive/10"
+                          >
+                            Effacer
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleNumericInput('enter')}
+                            className="h-10 bg-primary"
+                          >
+                            Valider
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
 
