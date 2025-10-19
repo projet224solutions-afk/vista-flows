@@ -239,6 +239,8 @@ export function POSSystem() {
   const handleNumericInput = (input: string) => {
     if (input === 'clear') {
       setNumericInput('');
+      setReceivedAmount(0);
+      toast.info('Montant effacé');
       return;
     }
     
