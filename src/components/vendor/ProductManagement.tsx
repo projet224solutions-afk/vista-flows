@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ export default function ProductManagement() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -214,6 +216,35 @@ export default function ProductManagement() {
       is_active: true
     });
     setEditingProduct(null);
+    setSelectedImages([]);
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const imageFiles = Array.from(files).filter(file => 
+      file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024 // 10MB max
+    );
+
+    if (imageFiles.length !== files.length) {
+      toast({
+        title: "Attention",
+        description: "Certains fichiers ont été ignorés (format invalide ou taille > 10MB)",
+        variant: "destructive"
+      });
+    }
+
+    setSelectedImages(prev => [...prev, ...imageFiles]);
+    
+    toast({
+      title: "Images ajoutées",
+      description: `${imageFiles.length} image(s) sélectionnée(s)`,
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleEdit = (product: Product) => {
@@ -299,10 +330,45 @@ export default function ProductManagement() {
                       <p className="text-sm font-medium">Glissez vos images ici</p>
                       <p className="text-xs text-muted-foreground">PNG, JPG jusqu'à 10MB chacune</p>
                     </div>
-                    <Button type="button" variant="outline" size="sm">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       Choisir des fichiers
                     </Button>
                   </div>
+                  
+                  {/* Affichage des images sélectionnées */}
+                  {selectedImages.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {selectedImages.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
