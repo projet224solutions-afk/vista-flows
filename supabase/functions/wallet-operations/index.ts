@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🚀 Wallet operation started');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -23,11 +25,27 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    console.log('👤 User authenticated:', { userId: user?.id });
+    
     if (authError || !user) {
+      console.error('❌ Auth error:', authError);
       throw new Error('Non autorisé');
     }
 
-    const { operation, amount, recipient_id, description } = await req.json();
+    const requestBody = await req.json();
+    const { operation, amount, recipient_id, description } = requestBody;
+    
+    console.log('📝 Request:', { operation, amount, recipient_id, description });
+
+    // Validation
+    if (!operation) {
+      throw new Error('Opération requise');
+    }
+    
+    if (!amount || amount <= 0) {
+      throw new Error('Montant invalide');
+    }
 
     // Vérifier le wallet de l'utilisateur
     const { data: wallet, error: walletError } = await supabaseClient
@@ -35,6 +53,8 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .single();
+
+    console.log('💰 Wallet data:', { wallet, walletError });
 
     if (walletError || !wallet) {
       throw new Error('Wallet introuvable');
@@ -44,6 +64,7 @@ serve(async (req) => {
 
     switch (operation) {
       case 'deposit':
+        console.log('➕ Processing deposit...');
         // Dépôt
         const newBalanceDeposit = wallet.balance + amount;
         
@@ -52,7 +73,10 @@ serve(async (req) => {
           .update({ balance: newBalanceDeposit })
           .eq('user_id', user.id);
 
-        if (depositError) throw depositError;
+        if (depositError) {
+          console.error('❌ Deposit error:', depositError);
+          throw depositError;
+        }
 
         // Créer la transaction
         const { error: depositTxError } = await supabaseClient
@@ -67,12 +91,17 @@ serve(async (req) => {
             metadata: { description: description || 'Dépôt sur le wallet' }
           });
 
-        if (depositTxError) throw depositTxError;
+        if (depositTxError) {
+          console.error('❌ Deposit transaction error:', depositTxError);
+          throw depositTxError;
+        }
 
+        console.log('✅ Deposit successful:', { newBalance: newBalanceDeposit });
         result = { success: true, new_balance: newBalanceDeposit, operation: 'deposit' };
         break;
 
       case 'withdraw':
+        console.log('➖ Processing withdraw...');
         // Retrait
         if (wallet.balance < amount) {
           throw new Error('Solde insuffisant');
@@ -85,7 +114,10 @@ serve(async (req) => {
           .update({ balance: newBalanceWithdraw })
           .eq('user_id', user.id);
 
-        if (withdrawError) throw withdrawError;
+        if (withdrawError) {
+          console.error('❌ Withdraw error:', withdrawError);
+          throw withdrawError;
+        }
 
         // Créer la transaction
         const { error: withdrawTxError } = await supabaseClient
@@ -100,12 +132,17 @@ serve(async (req) => {
             metadata: { description: description || 'Retrait du wallet' }
           });
 
-        if (withdrawTxError) throw withdrawTxError;
+        if (withdrawTxError) {
+          console.error('❌ Withdraw transaction error:', withdrawTxError);
+          throw withdrawTxError;
+        }
 
+        console.log('✅ Withdraw successful:', { newBalance: newBalanceWithdraw });
         result = { success: true, new_balance: newBalanceWithdraw, operation: 'withdraw' };
         break;
 
       case 'transfer':
+        console.log('💸 Processing transfer...');
         // Transfert
         if (!recipient_id) {
           throw new Error('Destinataire requis');
@@ -122,6 +159,8 @@ serve(async (req) => {
           .eq('user_id', recipient_id)
           .single();
 
+        console.log('👥 Recipient wallet:', { recipientWallet, recipientError });
+
         if (recipientError || !recipientWallet) {
           throw new Error('Wallet du destinataire introuvable');
         }
@@ -133,7 +172,10 @@ serve(async (req) => {
           .update({ balance: newBalanceSender })
           .eq('user_id', user.id);
 
-        if (senderUpdateError) throw senderUpdateError;
+        if (senderUpdateError) {
+          console.error('❌ Sender update error:', senderUpdateError);
+          throw senderUpdateError;
+        }
 
         // Créditer le destinataire
         const newBalanceRecipient = recipientWallet.balance + amount;
@@ -142,7 +184,10 @@ serve(async (req) => {
           .update({ balance: newBalanceRecipient })
           .eq('user_id', recipient_id);
 
-        if (recipientUpdateError) throw recipientUpdateError;
+        if (recipientUpdateError) {
+          console.error('❌ Recipient update error:', recipientUpdateError);
+          throw recipientUpdateError;
+        }
 
         // Créer la transaction
         const { error: transferTxError } = await supabaseClient
@@ -157,8 +202,16 @@ serve(async (req) => {
             metadata: { description: description || 'Transfert entre wallets' }
           });
 
-        if (transferTxError) throw transferTxError;
+        if (transferTxError) {
+          console.error('❌ Transfer transaction error:', transferTxError);
+          throw transferTxError;
+        }
 
+        console.log('✅ Transfer successful:', { 
+          newBalanceSender, 
+          newBalanceRecipient 
+        });
+        
         result = { 
           success: true, 
           new_balance: newBalanceSender, 
@@ -171,6 +224,8 @@ serve(async (req) => {
         throw new Error('Opération non supportée');
     }
 
+    console.log('✅ Operation completed successfully:', result);
+
     return new Response(
       JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -178,6 +233,8 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+    console.error('❌ Error in wallet operation:', errorMessage, error);
+    
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { 

@@ -184,6 +184,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
+    console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
+    
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
@@ -193,15 +195,33 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }
       });
 
-      if (error) throw error;
+      console.log('✅ Réponse dépôt:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur dépôt:', error);
+        throw error;
+      }
 
       toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
       setDepositAmount('');
       setDepositOpen(false);
+      
+      // Recharger les données
       await loadUserInfo();
+      
+      // Mettre à jour le wallet balance localement
+      if (userInfo.wallet) {
+        setUserInfo(prev => ({
+          ...prev,
+          wallet: prev.wallet ? {
+            ...prev.wallet,
+            balance: prev.wallet.balance + amount
+          } : null
+        }));
+      }
     } catch (error) {
-      console.error('Erreur dépôt:', error);
-      toast.error('Erreur lors du dépôt');
+      console.error('❌ Erreur dépôt:', error);
+      toast.error(error.message || 'Erreur lors du dépôt');
     } finally {
       setProcessing(false);
     }
@@ -226,6 +246,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
+    console.log('🔄 Retrait en cours:', { amount, userId: user.id });
+    
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
@@ -235,15 +257,33 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }
       });
 
-      if (error) throw error;
+      console.log('✅ Réponse retrait:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur retrait:', error);
+        throw error;
+      }
 
       toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
       setWithdrawAmount('');
       setWithdrawOpen(false);
+      
+      // Recharger les données
       await loadUserInfo();
+      
+      // Mettre à jour le wallet balance localement
+      if (userInfo.wallet) {
+        setUserInfo(prev => ({
+          ...prev,
+          wallet: prev.wallet ? {
+            ...prev.wallet,
+            balance: prev.wallet.balance - amount
+          } : null
+        }));
+      }
     } catch (error) {
-      console.error('Erreur retrait:', error);
-      toast.error('Erreur lors du retrait');
+      console.error('❌ Erreur retrait:', error);
+      toast.error(error.message || 'Erreur lors du retrait');
     } finally {
       setProcessing(false);
     }
@@ -273,6 +313,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
+    console.log('🔄 Transfert en cours:', { amount, recipientId, userId: user.id });
+    
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
@@ -283,15 +325,33 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }
       });
 
-      if (error) throw error;
+      console.log('✅ Réponse transfert:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur transfert:', error);
+        throw error;
+      }
 
       toast.success(`Transfert de ${formatPrice(amount)} effectué avec succès !`);
       setTransferAmount('');
       setRecipientId('');
       setTransferOpen(false);
+      
+      // Recharger les données
       await loadUserInfo();
+      
+      // Mettre à jour le wallet balance localement
+      if (userInfo.wallet) {
+        setUserInfo(prev => ({
+          ...prev,
+          wallet: prev.wallet ? {
+            ...prev.wallet,
+            balance: prev.wallet.balance - amount
+          } : null
+        }));
+      }
     } catch (error) {
-      console.error('Erreur transfert:', error);
+      console.error('❌ Erreur transfert:', error);
       toast.error(error.message || 'Erreur lors du transfert');
     } finally {
       setProcessing(false);
