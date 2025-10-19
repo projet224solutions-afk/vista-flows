@@ -33,24 +33,15 @@ export default function PDGSyndicatManagement() {
 
   const loadBureaus = async () => {
     try {
-      // Mock data pour la démo
-      const mockData: Bureau[] = [
-        {
-          id: '1',
-          bureau_code: 'BUR-001',
-          prefecture: 'Conakry',
-          commune: 'Matam',
-          president_name: 'Alpha Diallo',
-          president_email: 'alpha@example.com',
-          president_phone: '+224 620 00 00 01',
-          total_members: 150,
-          total_vehicles: 120,
-          total_cotisations: 5000000,
-          status: 'active',
-          created_at: new Date().toISOString()
-        }
-      ];
-      setBureaus(mockData);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('bureaus')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setBureaus(data || []);
     } catch (error) {
       console.error('Erreur chargement bureaux:', error);
       toast.error('Erreur lors du chargement des bureaux syndicaux');
@@ -61,8 +52,16 @@ export default function PDGSyndicatManagement() {
 
   const handleValidate = async (bureauId: string) => {
     try {
-      // Simuler validation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('bureaus')
+        .update({ 
+          status: 'active',
+          validated_at: new Date().toISOString()
+        })
+        .eq('id', bureauId);
+
+      if (error) throw error;
+
       toast.success('Bureau validé avec succès');
       await loadBureaus();
     } catch (error) {

@@ -25,35 +25,63 @@ export default function PDGReportsAnalytics() {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      // Charger les données depuis la base de données
       const daysAgo = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
 
+      // Charger les vraies données depuis Supabase
       const { data: transactions } = await supabase
         .from('wallet_transactions')
-        .select('*')
-        .gte('created_at', startDate.toISOString());
+        .select('amount, created_at, status')
+        .gte('created_at', startDate.toISOString())
+        .eq('status', 'completed');
 
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('*')
+        .select('created_at')
         .gte('created_at', startDate.toISOString());
 
-      // Générer des données mockées pour la démo
-      const mockData: AnalyticsData[] = [];
+      // Grouper les données par jour
+      const dataByDay = new Map<string, { revenue: number; transactions: number; users: number }>();
+
+      // Initialiser tous les jours avec des valeurs à 0
       for (let i = 0; i < daysAgo; i++) {
         const date = new Date();
-        date.setDate(date.getDate() - (daysAgo - i));
-        mockData.push({
-          period: date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }),
-          revenue: Math.floor(Math.random() * 10000000) + 5000000,
-          transactions: Math.floor(Math.random() * 500) + 100,
-          users: Math.floor(Math.random() * 50) + 10
-        });
+        date.setDate(date.getDate() - (daysAgo - i - 1));
+        const dateKey = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+        dataByDay.set(dateKey, { revenue: 0, transactions: 0, users: 0 });
       }
 
-      setAnalyticsData(mockData);
+      // Agréger les transactions
+      transactions?.forEach(tx => {
+        const date = new Date(tx.created_at);
+        const dateKey = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+        const data = dataByDay.get(dateKey);
+        if (data) {
+          data.revenue += Number(tx.amount || 0);
+          data.transactions += 1;
+        }
+      });
+
+      // Agréger les nouveaux utilisateurs
+      profiles?.forEach(profile => {
+        const date = new Date(profile.created_at);
+        const dateKey = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+        const data = dataByDay.get(dateKey);
+        if (data) {
+          data.users += 1;
+        }
+      });
+
+      // Convertir en tableau
+      const analyticsArray: AnalyticsData[] = Array.from(dataByDay.entries()).map(([period, data]) => ({
+        period,
+        revenue: data.revenue,
+        transactions: data.transactions,
+        users: data.users
+      }));
+
+      setAnalyticsData(analyticsArray);
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
       toast.error('Erreur lors du chargement des analytics');
