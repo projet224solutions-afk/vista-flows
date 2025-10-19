@@ -68,21 +68,24 @@ export function useVendorBadges() {
           .eq('vendor_id', vendor.id)
           .in('status', ['open', 'in_progress']);
 
-        // Fetch products count (products that have inventory entries)
+        // Fetch products count (from products table directly)
         const { count: productsCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('vendor_id', vendor.id);
+
+        // Fetch low stock products count (from inventory with proper join)
+        const { data: inventoryData } = await supabase
           .from('inventory')
-          .select('product_id', { count: 'exact', head: true })
+          .select('id, quantity, minimum_stock, product_id, products!inner(vendor_id)')
           .eq('products.vendor_id', vendor.id);
 
-        // Fetch low stock products count
-        const { data: lowStockData } = await supabase
-          .from('inventory')
-          .select('id, quantity, minimum_stock, products!inner(vendor_id)')
-          .eq('products.vendor_id', vendor.id);
-
-        const lowStockCount = lowStockData?.filter(item => 
+        const lowStockCount = inventoryData?.filter(item => 
           item.quantity <= item.minimum_stock && item.quantity > 0
         ).length || 0;
+
+        // Count products with inventory entries
+        const productsWithInventory = new Set(inventoryData?.map(i => i.product_id) || []).size;
 
         setBadges({
           pendingOrders: pendingOrdersCount || 0,

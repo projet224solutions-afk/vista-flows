@@ -161,6 +161,30 @@ export default function ProductManagement() {
 
       if (!vendor) throw new Error('Vendor not found');
 
+      // Upload images to storage if any
+      let imageUrls: string[] = [];
+      if (selectedImages.length > 0) {
+        for (const file of selectedImages) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${vendor.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(fileName);
+
+          imageUrls.push(publicUrl);
+        }
+      }
+
       const productData = {
         name: formData.name,
         description: formData.description || null,
@@ -175,7 +199,8 @@ export default function ProductManagement() {
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         is_active: formData.is_active,
-        vendor_id: vendor.id
+        vendor_id: vendor.id,
+        images: imageUrls.length > 0 ? imageUrls : null
       };
 
       if (editingProduct) {
@@ -833,6 +858,17 @@ export default function ProductManagement() {
         {filteredProducts.map((product) => (
           <Card key={product.id} className="hover:shadow-lg transition-shadow duration-300">
             <CardContent className="p-6">
+              {/* Image du produit */}
+              {product.images && product.images.length > 0 && (
+                <div className="mb-4 rounded-lg overflow-hidden bg-muted">
+                  <img 
+                    src={product.images[0]} 
+                    alt={product.name}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+              )}
+              
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1 line-clamp-2">{product.name}</h3>
