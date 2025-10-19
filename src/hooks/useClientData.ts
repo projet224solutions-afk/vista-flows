@@ -68,6 +68,9 @@ export function useClientData() {
           category,
           discount,
           in_stock,
+          is_hot,
+          is_featured,
+          free_shipping,
           created_at,
           vendors!inner(business_name, brand)
         `)
@@ -85,17 +88,17 @@ export function useClientData() {
         name: product.name,
         price: product.price,
         originalPrice: product.discount ? product.price / (1 - product.discount / 100) : undefined,
-        image: product.image_url || 'https://via.placeholder.com/400x300?text=Produit',
-        rating: product.rating || 4.5,
+        image: product.image_url || '/placeholder.svg',
+        rating: product.rating || 0,
         reviews: product.reviews_count || 0,
         category: product.category || 'general',
         discount: product.discount,
         inStock: product.in_stock,
         seller: (product.vendors as unknown)?.business_name || (product.vendors as unknown)?.brand || 'Vendeur',
         brand: (product.vendors as unknown)?.brand || (product.vendors as unknown)?.business_name || 'Marque',
-        isHot: Math.random() > 0.7,
+        isHot: product.is_hot || false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        isFreeShipping: Math.random() > 0.5
+        isFreeShipping: product.free_shipping || false
       })) || [];
 
       setProducts(formattedProducts);
@@ -113,13 +116,7 @@ export function useClientData() {
     try {
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
-        .select(`
-          id,
-          name,
-          icon,
-          color,
-          products_count
-        `)
+        .select('id, name, description, image_url')
         .eq('is_active', true)
         .order('name');
 
@@ -128,15 +125,27 @@ export function useClientData() {
         throw categoriesError;
       }
 
-      const formattedCategories: Category[] = categoriesData?.map(category => ({
-        id: category.id,
-        name: category.name,
-        icon: null, // TODO: Implémenter vraies icônes
-        color: category.color || 'bg-blue-500',
-        itemCount: category.products_count || 0
-      })) || [];
+      // Compter les produits par catégorie
+      const categoriesWithCount = await Promise.all(
+        (categoriesData || []).map(async (category) => {
+          const { count } = await supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .eq('category', category.name)
+            .eq('status', 'active');
 
-      setCategories(formattedCategories);
+          return {
+            id: category.id,
+            name: category.name,
+            icon: null,
+            color: 'bg-blue-500',
+            itemCount: count || 0
+          };
+        })
+      );
+
+      setCategories(categoriesWithCount);
+
     } catch (error) {
       console.error('❌ Erreur chargement catégories:', error);
       setError('Erreur lors du chargement des catégories');
@@ -153,12 +162,9 @@ export function useClientData() {
           total_amount,
           status,
           created_at,
-          order_items!inner(
-            products!inner(name),
-            vendors!inner(business_name)
-          )
+          vendor_id
         `)
-        .eq('user_id', userId)
+        .eq('customer_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -167,20 +173,37 @@ export function useClientData() {
         throw ordersError;
       }
 
-      const formattedOrders: Order[] = ordersData?.map(order => {
-        const firstItem = order.order_items?.[0];
-        const productData = firstItem?.products as unknown;
-        const vendorData = firstItem?.vendors as unknown;
-        
-        return {
-          id: order.id,
-          productName: productData?.name || 'Produit',
-          status: order.status,
-          total: order.total_amount,
-          date: new Date(order.created_at).toISOString().split('T')[0],
-          seller: vendorData?.business_name || 'Vendeur'
-        };
-      }) || [];
+      // Récupérer les détails des commandes avec les items
+      const formattedOrders: Order[] = await Promise.all(
+        (ordersData || []).map(async (order) => {
+          // Récupérer les items de la commande
+          const { data: items } = await supabase
+            .from('order_items')
+            .select(`
+              product_id,
+              products(name)
+            `)
+            .eq('order_id', order.id)
+            .limit(1)
+            .single();
+
+          // Récupérer le vendeur
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('business_name')
+            .eq('id', order.vendor_id)
+            .single();
+
+          return {
+            id: order.id,
+            productName: (items?.products as any)?.name || 'Commande',
+            status: order.status,
+            total: order.total_amount,
+            date: new Date(order.created_at).toLocaleDateString('fr-FR'),
+            seller: vendor?.business_name || 'Vendeur'
+          };
+        })
+      );
 
       setOrders(formattedOrders);
     } catch (error) {
@@ -223,23 +246,49 @@ export function useClientData() {
     try {
       const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
       
+      // Récupérer le customer_id à partir de l'user_id
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!customer) {
+        throw new Error('Client introuvable');
+      }
+
+      // Créer la commande
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: userId,
+          customer_id: customer.id,
+          vendor_id: cartItems[0]?.seller, // Utiliser le vendeur du premier item
           total_amount: totalAmount,
           status: 'pending',
-          order_items: cartItems.map(item => ({
-            product_id: item.id,
-            quantity: 1,
-            price: item.price
-          }))
+          payment_status: 'pending'
         })
         .select()
         .single();
 
       if (orderError) {
         throw orderError;
+      }
+
+      // Créer les items de commande
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(
+          cartItems.map(item => ({
+            order_id: orderData.id,
+            product_id: item.id,
+            quantity: 1,
+            unit_price: item.price,
+            total_price: item.price
+          }))
+        );
+
+      if (itemsError) {
+        throw itemsError;
       }
 
       // Vider le panier après commande
