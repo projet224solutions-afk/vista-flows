@@ -221,7 +221,7 @@ export default function TaxiMotoDriver() {
             const rides = await RidesService.getDriverRides(driverId, 100);
             const today = new Date().toDateString();
             const todayRides = rides.filter(r => 
-                new Date(r.created_at).toDateString() === today && 
+                new Date(r.requested_at || r.accepted_at).toDateString() === today && 
                 r.status === 'completed'
             );
             
