@@ -163,6 +163,21 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
             <SelectItem value="suspended">Suspendus</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="default"
+          onClick={() => {
+            if (motos.length > 0) {
+              setMotoForBadge(motos[0]);
+              setShowBadgeGenerator(true);
+            } else {
+              toast.error('Aucune moto disponible pour générer un badge');
+            }
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <CreditCard className="w-4 h-4 mr-2" />
+          Générer Badge
+        </Button>
       </div>
 
       <Card>
