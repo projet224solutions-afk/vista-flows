@@ -32,6 +32,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [activeTab, setActiveTab] = useState('moto');
   const [loading, setLoading] = useState(false);
   const [conducteurSearch, setConducteurSearch] = useState('');
+  const [customBrand, setCustomBrand] = useState('');
   const [form, setForm] = useState<MotoForm>({
     owner_name: '',
     owner_phone: '',
@@ -86,6 +87,11 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       return;
     }
 
+    if (form.brand === 'Autre' && !customBrand.trim()) {
+      toast.error('Veuillez spécifier la marque de la moto');
+      return;
+    }
+
     if (!form.owner_name || !form.owner_phone) {
       toast.error('Informations du propriétaire requises');
       return;
@@ -93,11 +99,14 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
     setLoading(true);
     try {
+      const finalBrand = form.brand === 'Autre' ? customBrand : form.brand;
+      
       const { data, error } = await supabase
         .from('registered_motos')
         .insert([{
           bureau_id: bureauId,
           ...form,
+          brand: finalBrand,
           status: 'pending'
         }])
         .select()
@@ -119,6 +128,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         year: new Date().getFullYear(),
         color: '',
       });
+      setCustomBrand('');
       
       setActiveTab('moto');
       onSuccess?.();
@@ -195,21 +205,33 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="brand">Marque *</Label>
-                  <Select value={form.brand} onValueChange={(val) => updateForm('brand', val)}>
+                  <Select value={form.brand} onValueChange={(val) => {
+                    updateForm('brand', val);
+                    if (val !== 'Autre') {
+                      setCustomBrand('');
+                    }
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Honda">Honda</SelectItem>
-                      <SelectItem value="Yamaha">Yamaha</SelectItem>
-                      <SelectItem value="Suzuki">Suzuki</SelectItem>
-                      <SelectItem value="Kawasaki">Kawasaki</SelectItem>
                       <SelectItem value="TVS">TVS</SelectItem>
-                      <SelectItem value="Bajaj">Bajaj</SelectItem>
                       <SelectItem value="Autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                {form.brand === 'Autre' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="customBrand">Spécifier la marque *</Label>
+                    <Input
+                      id="customBrand"
+                      required
+                      value={customBrand}
+                      onChange={(e) => setCustomBrand(e.target.value)}
+                      placeholder="Ex: Honda, Yamaha, Suzuki..."
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="model">Modèle *</Label>
                   <Input
