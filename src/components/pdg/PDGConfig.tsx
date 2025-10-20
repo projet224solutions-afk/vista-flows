@@ -1,13 +1,11 @@
 // @ts-nocheck
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { Settings, Save, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { Settings, Save, Plus, RefreshCw, Trash2, Database } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,80 +13,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useConfigData } from '@/hooks/useConfigData';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function PDGConfig() {
-  const [configs, setConfigs] = useState<unknown[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { configs, stats, loading, refetch, createConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
   const [newConfig, setNewConfig] = useState({
     service_name: '',
     transaction_type: '',
     commission_type: 'percentage',
-    commission_value: 0
+    commission_value: 0,
+    min_amount: 0,
+    max_amount: null as number | null
   });
 
-  useEffect(() => {
-    loadConfigs();
-  }, []);
-
-  const loadConfigs = async () => {
-    setLoading(true);
-    try {
-      const { data } = await supabase
-        .from('commission_config')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      setConfigs(data || []);
-    } catch (error) {
-      console.error('Erreur chargement config:', error);
-      toast.error('Erreur lors du chargement de la configuration');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveConfig = async () => {
-    try {
-      const { error } = await supabase.from('commission_config').insert(newConfig);
-
-      if (error) throw error;
-
-      // Log action
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('audit_logs').insert({
-        actor_id: user?.id,
-        action: 'COMMISSION_CONFIG_CREATED',
-        target_type: 'commission_config',
-        data_json: newConfig
-      });
-
-      toast.success('Configuration sauvegardée');
-      loadConfigs();
-      setNewConfig({
-        service_name: '',
-        transaction_type: '',
-        commission_type: 'percentage',
-        commission_value: 0
-      });
-    } catch (error) {
-      toast.error('Erreur lors de la sauvegarde');
+    if (!newConfig.service_name || !newConfig.transaction_type || !newConfig.commission_value) {
+      return;
     }
-  };
 
-  const toggleConfig = async (id: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('commission_config')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast.success(currentStatus ? 'Configuration désactivée' : 'Configuration activée');
-      loadConfigs();
-    } catch (error) {
-      toast.error('Erreur lors de la modification');
-    }
+    await createConfig(newConfig);
+    setNewConfig({
+      service_name: '',
+      transaction_type: '',
+      commission_type: 'percentage',
+      commission_value: 0,
+      min_amount: 0,
+      max_amount: null
+    });
   };
 
   if (loading) {
@@ -100,46 +62,102 @@ export default function PDGConfig() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Configuration Système</h2>
+          <p className="text-muted-foreground">Gestion des commissions et paramètres globaux</p>
+        </div>
+        <div className="flex gap-2">
+          {configs.length === 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Database className="w-4 h-4" />
+                  Initialiser
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Initialiser les configurations par défaut?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cela créera des configurations de commission standard pour tous les services.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={initializeDefaultConfigs}>
+                    Initialiser
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button onClick={refetch} variant="outline" className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Actualiser
+          </Button>
+        </div>
+      </div>
+
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Settings className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{configs.length}</p>
-                <p className="text-sm text-muted-foreground">Configurations Totales</p>
+                <p className="text-2xl font-bold">{stats.total_configs}</p>
+                <p className="text-sm text-muted-foreground">Configurations</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
                 <Settings className="w-6 h-6 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{configs.filter(c => c.is_active).length}</p>
-                <p className="text-sm text-muted-foreground">Configurations Actives</p>
+                <p className="text-2xl font-bold">{stats.active_configs}</p>
+                <p className="text-sm text-muted-foreground">Actives</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
                 <Settings className="w-6 h-6 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{configs.filter(c => !c.is_active).length}</p>
-                <p className="text-sm text-muted-foreground">Configurations Inactives</p>
+                <p className="text-2xl font-bold">{stats.inactive_configs}</p>
+                <p className="text-sm text-muted-foreground">Inactives</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="pt-6 relative">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Database className="w-6 h-6 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.services_count}</p>
+                <p className="text-sm text-muted-foreground">Services</p>
               </div>
             </div>
           </CardContent>
@@ -200,8 +218,30 @@ export default function PDGConfig() {
               <Input
                 id="value"
                 type="number"
+                step={newConfig.commission_type === 'percentage' ? '0.1' : '1'}
                 value={newConfig.commission_value}
                 onChange={(e) => setNewConfig({ ...newConfig, commission_value: Number(e.target.value) })}
+                className="bg-background"
+              />
+            </div>
+            <div>
+              <Label htmlFor="min">Montant Minimum (GNF)</Label>
+              <Input
+                id="min"
+                type="number"
+                value={newConfig.min_amount || 0}
+                onChange={(e) => setNewConfig({ ...newConfig, min_amount: Number(e.target.value) })}
+                className="bg-background"
+              />
+            </div>
+            <div>
+              <Label htmlFor="max">Montant Maximum (GNF)</Label>
+              <Input
+                id="max"
+                type="number"
+                placeholder="Illimité si vide"
+                value={newConfig.max_amount || ''}
+                onChange={(e) => setNewConfig({ ...newConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
                 className="bg-background"
               />
             </div>
@@ -237,21 +277,50 @@ export default function PDGConfig() {
                         {config.is_active ? 'Actif' : 'Inactif'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {config.commission_type === 'percentage' 
+                    <p className="text-sm font-medium text-primary">
+                      Commission: {config.commission_type === 'percentage' 
                         ? `${config.commission_value}%`
                         : `${config.commission_value} GNF`
                       }
                     </p>
+                    {(config.min_amount || config.max_amount) && (
+                      <p className="text-xs text-muted-foreground">
+                        Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'} 
+                        {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleConfig(config.id, config.is_active)}
-                    className={config.is_active ? 'border-red-500/50 hover:bg-red-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
-                  >
-                    {config.is_active ? 'Désactiver' : 'Activer'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleActive(config.id, config.is_active)}
+                      className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
+                    >
+                      {config.is_active ? 'Désactiver' : 'Activer'}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="border-red-500/50 hover:bg-red-500/10">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer cette configuration?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Cette action est irréversible.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteConfig(config.id)}>
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               </div>
             ))}
