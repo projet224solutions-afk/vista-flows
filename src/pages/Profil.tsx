@@ -101,7 +101,9 @@ export default function Profil() {
     );
   }
 
-  const userTypeInfo = profile?.role ? userTypes[profile.role as keyof typeof userTypes] : userTypes.client;
+  const userTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
+    ? userTypes[profile.role as keyof typeof userTypes] 
+    : userTypes.client;
 
   const handleSignOut = async () => {
     await signOut();
