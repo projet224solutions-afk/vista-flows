@@ -3,9 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { UserCheck, Search, Eye, Ban, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { agentService } from '@/services/agentService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Agent {
   id: string;
@@ -19,28 +25,108 @@ interface Agent {
 }
 
 export default function PDGAgentsManagement() {
+  const { user } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pdgId, setPdgId] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'agent',
+    commission_rate: 10,
+    permissions: {
+      create_users: true,
+      create_sub_agents: false,
+      view_reports: true,
+      manage_commissions: false
+    }
+  });
 
   useEffect(() => {
-    loadAgents();
-  }, []);
+    if (user) {
+      loadPDGAndAgents();
+    }
+  }, [user]);
 
-  const loadAgents = async () => {
+  const loadPDGAndAgents = async () => {
     try {
-      const { data, error } = await supabase
-        .from('agents_management')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAgents(data || []);
+      setLoading(true);
+      
+      // Récupérer le PDG de l'utilisateur connecté
+      const pdgData = await agentService.getPDGByUserId(user!.id);
+      
+      if (!pdgData) {
+        toast.error('Aucun profil PDG trouvé');
+        return;
+      }
+      
+      setPdgId(pdgData.id);
+      
+      // Charger les agents du PDG
+      const agentsData = await agentService.getAgentsByPDG(pdgData.id);
+      setAgents(agentsData as Agent[]);
     } catch (error) {
-      console.error('Erreur chargement agents:', error);
-      toast.error('Erreur lors du chargement des agents');
+      console.error('Erreur chargement:', error);
+      toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!pdgId) {
+      toast.error('PDG ID manquant');
+      return;
+    }
+
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const permissions = Object.entries(formData.permissions)
+        .filter(([_, value]) => value)
+        .map(([key]) => key);
+
+      await agentService.createAgent({
+        pdg_id: pdgId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        permissions
+      });
+
+      // Réinitialiser le formulaire
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        role: 'agent',
+        commission_rate: 10,
+        permissions: {
+          create_users: true,
+          create_sub_agents: false,
+          view_reports: true,
+          manage_commissions: false
+        }
+      });
+      
+      setIsDialogOpen(false);
+      await loadPDGAndAgents();
+    } catch (error) {
+      console.error('Erreur création agent:', error);
+      toast.error('Erreur lors de la création de l\'agent');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,7 +147,7 @@ export default function PDGAgentsManagement() {
         if (error) throw error;
         toast.success(`Agent ${action === 'activate' ? 'activé' : 'suspendu'}`);
       }
-      await loadAgents();
+      await loadPDGAndAgents();
     } catch (error) {
       console.error('Erreur action agent:', error);
       toast.error('Erreur lors de l\'action sur l\'agent');
@@ -89,10 +175,155 @@ export default function PDGAgentsManagement() {
           <h2 className="text-3xl font-bold">Gestion des Agents</h2>
           <p className="text-muted-foreground mt-1">Administration du réseau d'agents</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvel Agent
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvel Agent
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Créer un Nouvel Agent</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateAgent} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nom Complet *</Label>
+                  <Input
+                    id="name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Ex: Jean Dupont"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone *</Label>
+                  <Input
+                    id="phone"
+                    required
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Ex: 622123456"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Ex: agent@224solutions.com"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role">Rôle</Label>
+                  <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="agent">Agent Principal</SelectItem>
+                      <SelectItem value="sub_agent">Sous-Agent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="commission">Taux Commission (%)</Label>
+                  <Input
+                    id="commission"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.commission_rate}
+                    onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t pt-4">
+                <Label>Permissions</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="create_users"
+                      checked={formData.permissions.create_users}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, create_users: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="create_sub_agents"
+                      checked={formData.permissions.create_sub_agents}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, create_sub_agents: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="view_reports"
+                      checked={formData.permissions.view_reports}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, view_reports: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manage_commissions"
+                      checked={formData.permissions.manage_commissions}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, manage_commissions: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Création...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Créer l'Agent
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Statistiques */}
