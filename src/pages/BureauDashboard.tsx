@@ -458,7 +458,10 @@ export default function BureauDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
-                <MotoManagementDashboard bureauId={bureau.id} />
+                <MotoManagementDashboard 
+                  bureauId={bureau.id} 
+                  bureauName={`${bureau.prefecture || ''} - ${bureau.commune || ''}`}
+                />
               </div>
               <div className="space-y-6">
                 <MotoSecurityNotifications bureauId={bureau.id} />

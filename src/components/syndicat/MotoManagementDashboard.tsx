@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {  AlertCircle, Eye, CheckCircle2, XCircle, AlertTriangle, Download, QrCode } from 'lucide-react';
+import {  AlertCircle, Eye, CheckCircle2, XCircle, AlertTriangle, Download, QrCode, CreditCard } from 'lucide-react';
+import BadgeGenerator from './BadgeGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,13 +25,15 @@ interface Moto {
   color: string;
   status: string;
   registration_date: string;
+  bureau_id: string;
 }
 
 interface Props {
   bureauId: string;
+  bureauName?: string;
 }
 
-export default function MotoManagementDashboard({ bureauId }: Props) {
+export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau Syndicat' }: Props) {
   const [motos, setMotos] = useState<Moto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -38,6 +41,8 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
   const [selectedMoto, setSelectedMoto] = useState<Moto | null>(null);
   const [validationComment, setValidationComment] = useState('');
   const [loadingAction, setLoadingAction] = useState(false);
+  const [showBadgeGenerator, setShowBadgeGenerator] = useState(false);
+  const [motoForBadge, setMotoForBadge] = useState<Moto | null>(null);
 
   const loadMotos = async () => {
     try {
@@ -194,16 +199,17 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
                       <TableCell>{getStatutBadge(moto.status)}</TableCell>
                       <TableCell>{new Date(moto.registration_date).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedMoto(moto)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedMoto(moto)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
                           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>Détails de la Moto</DialogTitle>
@@ -293,6 +299,20 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
                             )}
                           </DialogContent>
                         </Dialog>
+                        
+                        {(moto.status === 'validated' || moto.status === 'active') && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setMotoForBadge(moto);
+                              setShowBadgeGenerator(true);
+                            }}
+                          >
+                            <CreditCard className="w-4 h-4" />
+                          </Button>
+                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -308,6 +328,17 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {showBadgeGenerator && motoForBadge && (
+        <BadgeGenerator
+          moto={motoForBadge}
+          bureauName={bureauName}
+          onClose={() => {
+            setShowBadgeGenerator(false);
+            setMotoForBadge(null);
+          }}
+        />
+      )}
     </div>
   );
 }
