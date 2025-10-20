@@ -183,16 +183,16 @@ export default function TaxiMotoBooking({
 
         try {
             const ride = await RidesService.createRide({
-                customer_id: user.id,
-                pickup_lat: pickupCoords.latitude,
-                pickup_lng: pickupCoords.longitude,
-                pickup_address: pickupAddress || 'Point de départ',
-                dropoff_lat: destinationCoords.latitude,
-                dropoff_lng: destinationCoords.longitude,
-                dropoff_address: destinationAddress || 'Destination',
-                price_total: priceEstimate.totalPrice,
-                vehicle_type: selectedVehicleType,
-                scheduled_time: isScheduled ? scheduledTime : undefined
+                pickupLat: pickupCoords.latitude,
+                pickupLng: pickupCoords.longitude,
+                dropoffLat: destinationCoords.latitude,
+                dropoffLng: destinationCoords.longitude,
+                pickupAddress: pickupAddress || 'Point de départ',
+                dropoffAddress: destinationAddress || 'Destination',
+                distanceKm: routeInfo?.distance || 0,
+                durationMin: routeInfo?.duration || 0,
+                estimatedPrice: priceEstimate.totalPrice,
+                vehicleType: selectedVehicleType
             });
 
             onRideCreated(ride);

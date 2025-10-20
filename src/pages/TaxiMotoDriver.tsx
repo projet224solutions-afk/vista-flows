@@ -35,7 +35,7 @@ import { RidesService, type RideDetails } from "@/services/taxi/ridesService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
-const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
+// API_BASE supprimé - Utilisation directe de Supabase
 
 interface RideRequest {
     id: string;
@@ -149,20 +149,36 @@ export default function TaxiMotoDriver() {
      */
     const toggleOnlineStatus = async () => {
         const next = !isOnline;
-        setIsOnline(next);
+        
+        if (!driverId) {
+            toast.error('Profil conducteur non trouvé');
+            return;
+        }
+
         try {
-            const coords = location ? { lat: location.latitude, lng: location.longitude } : ({} as unknown);
-            await fetch(`${API_BASE}/api/taxiMoto/driver/status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ isOnline: next, ...coords })
-            });
-        } catch {}
-        if (next) {
-            toast.success('🟢 Vous êtes maintenant en ligne');
-        } else {
-            toast.info('🔴 Vous êtes maintenant hors ligne');
+            const { error } = await supabase
+                .from('taxi_drivers')
+                .update({
+                    is_online: next,
+                    status: next ? 'available' : 'offline',
+                    last_location_lat: location?.latitude,
+                    last_location_lng: location?.longitude,
+                    last_seen: new Date().toISOString()
+                })
+                .eq('id', driverId);
+
+            if (error) throw error;
+
+            setIsOnline(next);
+            
+            if (next) {
+                toast.success('🟢 Vous êtes maintenant en ligne');
+            } else {
+                toast.info('🔴 Vous êtes maintenant hors ligne');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error('Erreur lors du changement de statut');
         }
     };
 
@@ -194,6 +210,14 @@ export default function TaxiMotoDriver() {
         if (!driverId) return;
 
         try {
+            // Charger le profil conducteur pour le rating
+            const { data: driverData } = await supabase
+                .from('taxi_drivers')
+                .select('rating, total_rides')
+                .eq('id', driverId)
+                .single();
+
+            // Charger toutes les courses du conducteur
             const rides = await RidesService.getDriverRides(driverId, 100);
             const today = new Date().toDateString();
             const todayRides = rides.filter(r => 
@@ -203,13 +227,13 @@ export default function TaxiMotoDriver() {
             
             const todayEarnings = todayRides.reduce((sum, r) => sum + (r.price_total || 0), 0);
 
-            setDriverStats(prev => ({
-                ...prev,
+            setDriverStats({
                 todayEarnings,
                 todayRides: todayRides.length,
-                rating: 4.8,
-                totalRides: rides.length
-            }));
+                rating: driverData?.rating || 4.5,
+                totalRides: driverData?.total_rides || rides.length,
+                onlineTime: '0h 0m'
+            });
         } catch (error) {
             console.error('Error loading stats:', error);
         }
@@ -226,21 +250,45 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Ajoute une demande de course à la liste
+     * Ajoute une demande de course à la liste avec données réelles
      */
-    const addRideRequest = (ride: RideDetails) => {
+    const addRideRequest = async (ride: RideDetails) => {
+        // Charger les données du client
+        let customerName = 'Client';
+        let customerRating = 4.5;
+        
+        try {
+            const { data: customerProfile } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', ride.customer_id)
+                .single();
+
+            if (customerProfile) {
+                customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim();
+            }
+        } catch (error) {
+            console.error('Error loading customer:', error);
+        }
+
         const request: RideRequest = {
             id: ride.id,
             customerId: ride.customer_id,
-            customerName: 'Client',
-            customerRating: 4.5,
+            customerName,
+            customerRating,
             pickupAddress: ride.pickup_address,
             destinationAddress: ride.dropoff_address,
-            distance: 0,
+            distance: (ride as any).distance_km || 0,
             estimatedEarnings: ride.price_total,
-            estimatedDuration: 0,
-            pickupCoords: { latitude: 0, longitude: 0 },
-            destinationCoords: { latitude: 0, longitude: 0 },
+            estimatedDuration: (ride as any).duration_min || 0,
+            pickupCoords: { 
+                latitude: (ride as any).pickup_lat || 0, 
+                longitude: (ride as any).pickup_lng || 0 
+            },
+            destinationCoords: { 
+                latitude: (ride as any).dropoff_lat || 0, 
+                longitude: (ride as any).dropoff_lng || 0 
+            },
             requestTime: ride.created_at
         };
 
@@ -252,7 +300,7 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Accepte une demande de course
+     * Accepte une demande de course avec chargement des données client réelles
      */
     const acceptRideRequest = async (request: RideRequest) => {
         if (!driverId) {
@@ -264,11 +312,27 @@ export default function TaxiMotoDriver() {
             // Appeler le service d'acceptation
             await RidesService.acceptRide(request.id, driverId);
 
+            // Charger le téléphone réel du client
+            let customerPhone = '+224 600 00 00 00';
+            try {
+                const { data: customerProfile } = await supabase
+                    .from('profiles')
+                    .select('phone')
+                    .eq('id', request.customerId)
+                    .single();
+                
+                if (customerProfile?.phone) {
+                    customerPhone = customerProfile.phone;
+                }
+            } catch (error) {
+                console.error('Error loading customer phone:', error);
+            }
+
             const newActiveRide: ActiveRide = {
                 id: request.id,
                 customer: {
                     name: request.customerName,
-                    phone: '+224 600 00 00 00',
+                    phone: customerPhone,
                     rating: request.customerRating
                 },
                 pickup: {

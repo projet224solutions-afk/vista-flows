@@ -55,6 +55,17 @@ interface TaxiMotoTrackingProps {
     userLocation: LocationCoordinates | null;
 }
 
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Rayon de la Terre en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+};
+
 export default function TaxiMotoTracking({
     currentRide,
     userLocation
@@ -91,14 +102,26 @@ export default function TaxiMotoTracking({
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'taxi_tracking',
+                table: 'taxi_ride_tracking',
                 filter: `ride_id=eq.${currentRide.id}`
             }, (payload) => {
                 if (payload.new) {
                     setDriverLocation({
-                        latitude: payload.new.lat,
-                        longitude: payload.new.lng
+                        latitude: (payload.new as any).latitude,
+                        longitude: (payload.new as any).longitude
                     });
+                    
+                    // Estimer le temps d'arrivée basé sur la distance
+                    if (userLocation) {
+                        const distance = calculateDistance(
+                            userLocation.latitude,
+                            userLocation.longitude,
+                            (payload.new as any).latitude,
+                            (payload.new as any).longitude
+                        );
+                        const eta = Math.ceil(distance / 0.5); // 30 km/h = 0.5 km/min
+                        setEstimatedArrival(`${eta} min`);
+                    }
                 }
             })
             .subscribe();
@@ -106,7 +129,7 @@ export default function TaxiMotoTracking({
         return () => {
             subscription.unsubscribe();
         };
-    }, [currentRide?.id]);
+    }, [currentRide?.id, userLocation]);
 
     const loadRideDetails = async () => {
         if (!currentRide?.id) return;
@@ -114,18 +137,44 @@ export default function TaxiMotoTracking({
             const details = await RidesService.getRideDetails(currentRide.id);
             setRideDetails(details);
             updateRideProgress(details);
+            
+            // Charger les infos du conducteur si assigné
+            if (details.driver_id && !currentRide.driver) {
+                loadDriverInfo(details.driver_id);
+            }
         } catch (error) {
             console.error('Error loading ride details:', error);
         }
     };
 
+    const loadDriverInfo = async (driverId: string) => {
+        try {
+            const { data: driverData } = await supabase
+                .from('taxi_drivers')
+                .select('*, profiles!taxi_drivers_user_id_fkey(first_name, last_name, phone)')
+                .eq('id', driverId)
+                .single();
+
+            if (driverData) {
+                const profile = (driverData as any).profiles;
+                // Mettre à jour currentRide avec les infos du conducteur
+                // Note: Cette partie devrait être gérée par le parent
+                console.log('Driver info loaded:', driverData);
+            }
+        } catch (error) {
+            console.error('Error loading driver info:', error);
+        }
+    };
+
     const updateRideProgress = (ride: any) => {
         const statusProgress = {
-            'pending': 10,
+            'requested': 10,
             'accepted': 25,
             'driver_arriving': 50,
+            'picked_up': 60,
             'in_progress': 75,
-            'completed': 100
+            'completed': 100,
+            'cancelled': 0
         };
         setRideProgress(statusProgress[ride.status as keyof typeof statusProgress] || 0);
     };
@@ -187,8 +236,14 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
      */
     const getStatusInfo = (status: string) => {
         const statusMap = {
-            pending: {
+            requested: {
                 label: 'Recherche de conducteur',
+                color: 'bg-yellow-100 text-yellow-800',
+                icon: Clock,
+                description: 'Nous recherchons un conducteur proche de vous'
+            },
+            pending: {
+                label: 'En attente',
                 color: 'bg-yellow-100 text-yellow-800',
                 icon: Clock,
                 description: 'Nous recherchons un conducteur proche de vous'
@@ -204,6 +259,12 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                 color: 'bg-orange-100 text-orange-800',
                 icon: Navigation,
                 description: 'Le conducteur se dirige vers vous'
+            },
+            picked_up: {
+                label: 'À bord',
+                color: 'bg-purple-100 text-purple-800',
+                icon: Car,
+                description: 'Vous êtes à bord, en route vers la destination'
             },
             in_progress: {
                 label: 'Course en cours',
@@ -230,13 +291,13 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
 
     if (!currentRide) {
         return (
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
-                    <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
                         Aucune course active
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Réservez une course pour voir le suivi en temps réel
                     </p>
                 </CardContent>
@@ -250,28 +311,28 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
     return (
         <div className="space-y-4">
             {/* Statut de la course */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                         <Badge className={`${statusInfo.color} px-3 py-1`}>
                             <StatusIcon className="w-4 h-4 mr-1" />
                             {statusInfo.label}
                         </Badge>
-                        <span className="text-sm text-gray-600">#{currentRide.id}</span>
+                        <span className="text-sm text-muted-foreground">#{currentRide.id.substring(0, 8)}</span>
                     </div>
 
-                    <p className="text-gray-700 mb-4">{statusInfo.description}</p>
+                    <p className="text-foreground mb-4">{statusInfo.description}</p>
 
                     {/* Barre de progression */}
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                    <div className="w-full bg-secondary rounded-full h-2 mb-4">
                         <div
-                            className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-primary to-green-500 h-2 rounded-full transition-all duration-500"
                             style={{ width: `${rideProgress}%` }}
                         ></div>
                     </div>
 
                     {estimatedArrival && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
                             <span>Arrivée estimée dans {estimatedArrival}</span>
                         </div>
@@ -281,13 +342,13 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
 
             {/* Informations du conducteur */}
             {currentRide.driver && (
-                <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-lg">Votre conducteur</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                                 {currentRide.driver.photo ? (
                                     <img
                                         src={currentRide.driver.photo}
@@ -295,19 +356,19 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                                         className="w-16 h-16 rounded-full object-cover"
                                     />
                                 ) : (
-                                    <User className="w-8 h-8 text-blue-600" />
+                                    <User className="w-8 h-8 text-primary" />
                                 )}
                             </div>
 
                             <div className="flex-1">
                                 <h3 className="font-semibold text-lg">{currentRide.driver.name}</h3>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                     <span>{currentRide.driver.rating}</span>
                                     <span>•</span>
                                     <span>{currentRide.driver.vehicleType}</span>
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-muted-foreground">
                                     Plaque: {currentRide.driver.vehicleNumber}
                                 </p>
                             </div>
@@ -336,7 +397,7 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
             )}
 
             {/* Détails du trajet */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="text-lg">Détails du trajet</CardTitle>
                 </CardHeader>
@@ -345,7 +406,7 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                         <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
                         <div>
                             <p className="font-medium">Départ</p>
-                            <p className="text-sm text-gray-600">{currentRide.pickupAddress}</p>
+                            <p className="text-sm text-muted-foreground">{currentRide.pickupAddress}</p>
                         </div>
                     </div>
 
@@ -353,7 +414,7 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                         <div className="w-3 h-3 bg-red-500 rounded-full mt-2"></div>
                         <div>
                             <p className="font-medium">Destination</p>
-                            <p className="text-sm text-gray-600">{currentRide.destinationAddress}</p>
+                            <p className="text-sm text-muted-foreground">{currentRide.destinationAddress}</p>
                         </div>
                     </div>
 
@@ -366,25 +427,25 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                 </CardContent>
             </Card>
 
-            {/* Carte interactive (placeholder) */}
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            {/* Suivi GPS en temps réel */}
+            <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="text-lg">Suivi en temps réel</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-64 bg-gradient-to-br from-blue-100 to-green-100 rounded-lg flex items-center justify-center">
+                    <div className="h-64 bg-gradient-to-br from-primary/10 to-green-500/10 rounded-lg flex items-center justify-center">
                         <div className="text-center">
-                            <MapPin className="w-12 h-12 mx-auto mb-2 text-blue-600" />
-                            <p className="text-gray-700 font-medium">Carte interactive</p>
-                            <p className="text-sm text-gray-600">
+                            <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" />
+                            <p className="text-foreground font-medium">Carte interactive</p>
+                            <p className="text-sm text-muted-foreground">
                                 Position en temps réel du conducteur
                             </p>
                         </div>
                     </div>
 
                     {driverLocation && (
-                        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                            <p className="text-sm text-blue-800">
+                        <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+                            <p className="text-sm text-foreground">
                                 📍 Conducteur à {driverLocation.latitude.toFixed(4)}, {driverLocation.longitude.toFixed(4)}
                             </p>
                         </div>
@@ -403,7 +464,7 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
                     Partager
                 </Button>
 
-                {currentRide.status === 'pending' && (
+                {(currentRide.status === 'pending' || currentRide.status === 'accepted') && (
                     <Button
                         onClick={cancelRide}
                         variant="destructive"
@@ -416,12 +477,12 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
             </div>
 
             {/* Bouton SOS d'urgence */}
-            <Card className="bg-red-50 border-red-200">
+            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium text-red-800">Urgence ?</p>
-                            <p className="text-sm text-red-600">
+                            <p className="font-medium text-red-800 dark:text-red-200">Urgence ?</p>
+                            <p className="text-sm text-red-600 dark:text-red-300">
                                 Activez l'alerte SOS si vous vous sentez en danger
                             </p>
                         </div>
