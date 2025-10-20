@@ -144,6 +144,81 @@ export type Database = {
         }
         Relationships: []
       }
+      bureau_feature_assignments: {
+        Row: {
+          assigned_at: string | null
+          bureau_id: string | null
+          enabled: boolean | null
+          feature_id: string | null
+          id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          bureau_id?: string | null
+          enabled?: boolean | null
+          feature_id?: string | null
+          id?: string
+        }
+        Update: {
+          assigned_at?: string | null
+          bureau_id?: string | null
+          enabled?: boolean | null
+          feature_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bureau_feature_assignments_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bureau_feature_assignments_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bureau_features: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          feature_code: string
+          feature_name: string
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          feature_code: string
+          feature_name: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          feature_code?: string
+          feature_name?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       bureau_transactions: {
         Row: {
           amount: number
@@ -197,11 +272,13 @@ export type Database = {
       }
       bureaus: {
         Row: {
+          access_token: string | null
           bureau_code: string
           commune: string
           created_at: string | null
           full_location: string | null
           id: string
+          interface_url: string | null
           last_activity: string | null
           prefecture: string
           president_email: string | null
@@ -214,11 +291,13 @@ export type Database = {
           validated_at: string | null
         }
         Insert: {
+          access_token?: string | null
           bureau_code: string
           commune: string
           created_at?: string | null
           full_location?: string | null
           id?: string
+          interface_url?: string | null
           last_activity?: string | null
           prefecture: string
           president_email?: string | null
@@ -231,11 +310,13 @@ export type Database = {
           validated_at?: string | null
         }
         Update: {
+          access_token?: string | null
           bureau_code?: string
           commune?: string
           created_at?: string | null
           full_location?: string | null
           id?: string
+          interface_url?: string | null
           last_activity?: string | null
           prefecture?: string
           president_email?: string | null
@@ -2326,6 +2407,63 @@ export type Database = {
           },
         ]
       }
+      registered_motos: {
+        Row: {
+          brand: string | null
+          bureau_id: string | null
+          color: string | null
+          id: string
+          metadata: Json | null
+          model: string | null
+          registration_date: string | null
+          serial_number: string
+          status: string | null
+          worker_id: string | null
+          year: number | null
+        }
+        Insert: {
+          brand?: string | null
+          bureau_id?: string | null
+          color?: string | null
+          id?: string
+          metadata?: Json | null
+          model?: string | null
+          registration_date?: string | null
+          serial_number: string
+          status?: string | null
+          worker_id?: string | null
+          year?: number | null
+        }
+        Update: {
+          brand?: string | null
+          bureau_id?: string | null
+          color?: string | null
+          id?: string
+          metadata?: Json | null
+          model?: string | null
+          registration_date?: string | null
+          serial_number?: string
+          status?: string | null
+          worker_id?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registered_motos_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registered_motos_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -2792,6 +2930,109 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_alerts: {
+        Row: {
+          alert_type: string
+          bureau_id: string | null
+          created_at: string | null
+          id: string
+          is_critical: boolean | null
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          bureau_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_critical?: boolean | null
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          bureau_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_critical?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syndicate_workers: {
+        Row: {
+          access_level: string
+          access_token: string
+          bureau_id: string | null
+          created_at: string | null
+          email: string
+          id: string
+          interface_url: string
+          is_active: boolean | null
+          nom: string
+          permissions: Json | null
+          telephone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_level?: string
+          access_token: string
+          bureau_id?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          interface_url: string
+          is_active?: boolean | null
+          nom: string
+          permissions?: Json | null
+          telephone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_level?: string
+          access_token?: string
+          bureau_id?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          interface_url?: string
+          is_active?: boolean | null
+          nom?: string
+          permissions?: Json | null
+          telephone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_workers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
         ]
