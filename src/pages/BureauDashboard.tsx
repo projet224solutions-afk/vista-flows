@@ -24,17 +24,18 @@ export default function BureauDashboard() {
   const [loading, setLoading] = useState(true);
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
   const [isMotoDialogOpen, setIsMotoDialogOpen] = useState(false);
+  const [isSubmittingWorker, setIsSubmittingWorker] = useState(false);
   const [workerForm, setWorkerForm] = useState({
     nom: '',
     email: '',
     telephone: '',
-    access_level: 'limited' as string,
+    access_level: 'standard' as string,
     permissions: {
-      view_members: false,
-      add_members: false,
-      edit_members: false,
+      view_members: true,
+      add_members: true,
+      edit_members: true,
       view_vehicles: true,
-      add_vehicles: false,
+      add_vehicles: true,
       view_reports: false
     }
   });
@@ -95,55 +96,94 @@ export default function BureauDashboard() {
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation des données
+    if (!workerForm.nom.trim()) {
+      toast.error('Le nom complet est requis');
+      return;
+    }
+    
+    if (!workerForm.email.trim()) {
+      toast.error('L\'email est requis');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workerForm.email)) {
+      toast.error('Format d\'email invalide');
+      return;
+    }
+    
     try {
+      setIsSubmittingWorker(true);
       const access_token = crypto.randomUUID();
+      const interface_url = `${window.location.origin}/worker/${access_token}`;
 
-      const { error } = await supabase
+      console.log('📝 Création travailleur:', { nom: workerForm.nom, email: workerForm.email });
+
+      const { data, error } = await supabase
         .from('syndicate_workers')
         .insert([{
           bureau_id: bureau.id,
-          nom: workerForm.nom,
-          email: workerForm.email,
-          telephone: workerForm.telephone,
+          nom: workerForm.nom.trim(),
+          email: workerForm.email.trim().toLowerCase(),
+          telephone: workerForm.telephone?.trim() || null,
           access_level: workerForm.access_level,
           permissions: workerForm.permissions,
           access_token: access_token,
-          interface_url: `${window.location.origin}/worker/${access_token}`
-        }]);
+          interface_url: interface_url,
+          is_active: true
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur insertion:', error);
+        throw error;
+      }
 
-      // Envoyer l'email
-      await supabase.functions.invoke('send-bureau-access-email', {
-        body: {
-          type: 'worker',
-          email: workerForm.email,
-          name: workerForm.nom,
-          access_token: access_token,
-          permissions: workerForm.permissions
-        }
-      });
+      console.log('✅ Travailleur créé:', data);
 
-      toast.success('Travailleur ajouté et email envoyé');
-      setIsWorkerDialogOpen(false);
+      // Envoyer l'email (ne pas bloquer si ça échoue)
+      try {
+        await supabase.functions.invoke('send-bureau-access-email', {
+          body: {
+            type: 'worker',
+            email: workerForm.email,
+            name: workerForm.nom,
+            access_token: access_token,
+            interface_url: interface_url,
+            bureau_code: bureau.bureau_code,
+            permissions: workerForm.permissions
+          }
+        });
+        toast.success('✅ Travailleur ajouté et email envoyé');
+      } catch (emailError) {
+        console.error('⚠️ Erreur email:', emailError);
+        toast.success('✅ Travailleur ajouté (email non envoyé)');
+      }
+
+      // Réinitialiser le formulaire
       setWorkerForm({
         nom: '',
         email: '',
         telephone: '',
-        access_level: 'limited',
+        access_level: 'standard',
         permissions: {
-          view_members: false,
-          add_members: false,
-          edit_members: false,
+          view_members: true,
+          add_members: true,
+          edit_members: true,
           view_vehicles: true,
-          add_vehicles: false,
+          add_vehicles: true,
           view_reports: false
         }
       });
+      
+      setIsWorkerDialogOpen(false);
       await loadBureauData();
-    } catch (error) {
-      console.error('Erreur ajout travailleur:', error);
-      toast.error('Erreur lors de l\'ajout du travailleur');
+    } catch (error: any) {
+      console.error('❌ Erreur ajout travailleur:', error);
+      toast.error(error.message || 'Erreur lors de l\'ajout du travailleur');
+    } finally {
+      setIsSubmittingWorker(false);
     }
   };
 
@@ -400,12 +440,26 @@ export default function BureauDashboard() {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setIsWorkerDialogOpen(false)}>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsWorkerDialogOpen(false)}
+                        disabled={isSubmittingWorker}
+                      >
                         Annuler
                       </Button>
-                      <Button type="submit">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Ajouter
+                      <Button type="submit" disabled={isSubmittingWorker}>
+                        {isSubmittingWorker ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Ajout en cours...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ajouter
+                          </>
+                        )}
                       </Button>
                     </div>
                   </form>
