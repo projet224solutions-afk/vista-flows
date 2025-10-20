@@ -276,7 +276,7 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
                                   </div>
                                 )}
 
-                                {selectedMoto.status === 'validated' && (
+                                {(selectedMoto.status === 'validated' || selectedMoto.status === 'active') && (
                                   <div className="space-y-4 pt-4 border-t">
                                     <Button
                                       variant="destructive"
@@ -285,7 +285,7 @@ export default function MotoManagementDashboard({ bureauId }: Props) {
                                       className="w-full"
                                     >
                                       <AlertTriangle className="w-4 h-4 mr-2" />
-                                      Signaler Volée
+                                      Signaler comme Volée
                                     </Button>
                                   </div>
                                 )}

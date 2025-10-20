@@ -27,7 +27,6 @@ export default function BureauDashboard() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
-  const [isMotoDialogOpen, setIsMotoDialogOpen] = useState(false);
   const [isSubmittingWorker, setIsSubmittingWorker] = useState(false);
   const [workerForm, setWorkerForm] = useState({
     nom: '',
@@ -42,17 +41,6 @@ export default function BureauDashboard() {
       add_vehicles: true,
       view_reports: false
     }
-  });
-  const [motoForm, setMotoForm] = useState({
-    owner_name: '',
-    owner_phone: '',
-    vest_number: '',
-    plate_number: '',
-    serial_number: '',
-    brand: '',
-    model: '',
-    year: new Date().getFullYear(),
-    color: ''
   });
 
   useEffect(() => {
@@ -195,48 +183,6 @@ export default function BureauDashboard() {
     }
   };
 
-  const handleAddMoto = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const { error } = await supabase
-        .from('registered_motos')
-        .insert([{
-          bureau_id: bureau.id,
-          owner_name: motoForm.owner_name,
-          owner_phone: motoForm.owner_phone,
-          vest_number: motoForm.vest_number,
-          plate_number: motoForm.plate_number,
-          serial_number: motoForm.serial_number,
-          brand: motoForm.brand,
-          model: motoForm.model,
-          year: motoForm.year,
-          color: motoForm.color,
-          status: 'active'
-        }]);
-
-      if (error) throw error;
-
-      toast.success('Moto enregistrée avec succès');
-      setIsMotoDialogOpen(false);
-      setMotoForm({
-        owner_name: '',
-        owner_phone: '',
-        vest_number: '',
-        plate_number: '',
-        serial_number: '',
-        brand: '',
-        model: '',
-        year: new Date().getFullYear(),
-        color: ''
-      });
-      await loadBureauData();
-    } catch (error) {
-      console.error('Erreur enregistrement moto:', error);
-      toast.error('Erreur lors de l\'enregistrement de la moto');
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -318,10 +264,9 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
-          <TabsTrigger value="enregistrement">Enregistrement Motos</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
         </TabsList>
 
@@ -508,155 +453,12 @@ export default function BureauDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="motos" className="space-y-4">
-          {bureau && <MotoManagementDashboard bureauId={bureau.id} />}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Véhicules Enregistrés</CardTitle>
-              <Dialog open={isMotoDialogOpen} onOpenChange={setIsMotoDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Enregistrer Moto
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Enregistrer une moto</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddMoto} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="owner_name">Nom du propriétaire *</Label>
-                      <Input
-                        id="owner_name"
-                        required
-                        value={motoForm.owner_name}
-                        onChange={(e) => setMotoForm({ ...motoForm, owner_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="owner_phone">Téléphone *</Label>
-                        <Input
-                          id="owner_phone"
-                          type="tel"
-                          required
-                          value={motoForm.owner_phone}
-                          onChange={(e) => setMotoForm({ ...motoForm, owner_phone: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="vest_number">Numéro de gilet *</Label>
-                        <Input
-                          id="vest_number"
-                          required
-                          value={motoForm.vest_number}
-                          onChange={(e) => setMotoForm({ ...motoForm, vest_number: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="plate_number">Numéro de plaque *</Label>
-                      <Input
-                        id="plate_number"
-                        required
-                        value={motoForm.plate_number}
-                        onChange={(e) => setMotoForm({ ...motoForm, plate_number: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="serial_number">Numéro de série *</Label>
-                      <Input
-                        id="serial_number"
-                        required
-                        value={motoForm.serial_number}
-                        onChange={(e) => setMotoForm({ ...motoForm, serial_number: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="brand">Marque</Label>
-                        <Input
-                          id="brand"
-                          value={motoForm.brand}
-                          onChange={(e) => setMotoForm({ ...motoForm, brand: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="model">Modèle</Label>
-                        <Input
-                          id="model"
-                          value={motoForm.model}
-                          onChange={(e) => setMotoForm({ ...motoForm, model: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="year">Année</Label>
-                        <Input
-                          id="year"
-                          type="number"
-                          value={motoForm.year}
-                          onChange={(e) => setMotoForm({ ...motoForm, year: parseInt(e.target.value) })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="color">Couleur</Label>
-                        <Input
-                          id="color"
-                          value={motoForm.color}
-                          onChange={(e) => setMotoForm({ ...motoForm, color: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setIsMotoDialogOpen(false)}>
-                        Annuler
-                      </Button>
-                      <Button type="submit">
-                        <Bike className="w-4 h-4 mr-2" />
-                        Enregistrer
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {motos.map((moto) => (
-                  <div key={moto.id} className="p-4 rounded-lg border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">{moto.owner_name}</h3>
-                      <Badge>{moto.status}</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                      <div><span className="font-medium">Tel:</span> {moto.owner_phone}</div>
-                      <div><span className="font-medium">Gilet:</span> {moto.vest_number}</div>
-                      <div><span className="font-medium">Plaque:</span> {moto.plate_number}</div>
-                      <div><span className="font-medium">Série:</span> {moto.serial_number}</div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {moto.brand} {moto.model} • {moto.year} • {moto.color}
-                    </p>
-                  </div>
-                ))}
-                {motos.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    Aucun véhicule enregistré
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="enregistrement" className="space-y-6">
+        <TabsContent value="motos" className="space-y-6">
           {bureau && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 space-y-6">
                 <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
+                <MotoManagementDashboard bureauId={bureau.id} />
               </div>
               <div className="space-y-6">
                 <MotoSecurityNotifications bureauId={bureau.id} />
