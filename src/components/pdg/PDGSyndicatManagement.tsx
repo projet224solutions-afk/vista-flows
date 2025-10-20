@@ -590,7 +590,32 @@ export default function PDGSyndicatManagement() {
                         <Badge className="bg-yellow-500">En attente</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    
+                    {/* Interface URL Display */}
+                    {bureau.access_token && (
+                      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                              🔗 Lien d'accès à l'interface
+                            </p>
+                            <p className="text-xs text-blue-700 dark:text-blue-300 font-mono truncate bg-white dark:bg-blue-950/50 p-2 rounded">
+                              {window.location.origin}/bureau/{bureau.access_token}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+                            onClick={() => window.open(`/bureau/${bureau.access_token}`, '_blank')}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Ouvrir
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 mt-3">
                       <Button variant="ghost" size="sm" onClick={() => handleCopyBureau(bureau)}>
                         <Copy className="w-4 h-4" />
                       </Button>
