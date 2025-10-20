@@ -70,45 +70,9 @@ export default function Profil() {
   const [uploading, setUploading] = useState(false);
   const [mfaVerified, setMfaVerified] = useState<boolean>(true);
 
-  // Authentication check
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background pb-20">
-        <header className="bg-card border-b border-border">
-          <div className="px-4 py-6">
-            <h1 className="text-2xl font-bold text-foreground">Profil</h1>
-          </div>
-        </header>
-
-        <section className="px-4 py-8">
-          <Card>
-            <CardContent className="text-center py-12">
-              <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
-              <p className="text-muted-foreground mb-6">
-                Vous devez vous connecter pour accéder à votre profil
-              </p>
-              <Button 
-                onClick={() => navigate('/auth')}
-                className="bg-vendeur-primary hover:bg-vendeur-primary/90"
-              >
-                Se connecter
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
-      </div>
-    );
-  }
-
   const userTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
     ? userTypes[profile.role as keyof typeof userTypes] 
     : userTypes.client;
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
 
   const handleNavigate = useCallback((itemId: string) => {
     if (itemId === 'settings' && !mfaVerified) {
@@ -122,7 +86,6 @@ export default function Profil() {
   useEffect(() => {
     const loadActivity = async () => {
       if (!user) return;
-      // Essayer une table d'audit générique, fallback si absente
       const { data, error } = await supabase
         .from('audit_logs')
         .select('id, action, created_at, target_type')
@@ -130,7 +93,6 @@ export default function Profil() {
         .order('created_at', { ascending: false })
         .limit(10);
       if (error) {
-        // Fallback: tenter orders
         const { data: orders, error: e2 } = await supabase
           .from('orders')
           .select('id, status, created_at, total_amount')
@@ -180,7 +142,6 @@ export default function Profil() {
         const { error: updErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
         if (updErr) throw updErr;
         toast.success('Avatar mis à jour');
-        // Optionnel: rafraîchir localement
         window.location.reload();
       } catch (e: any) {
         toast.error(e?.message || 'Erreur upload avatar');
@@ -190,6 +151,42 @@ export default function Profil() {
     };
     input.click();
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  // Authentication check
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <header className="bg-card border-b border-border">
+          <div className="px-4 py-6">
+            <h1 className="text-2xl font-bold text-foreground">Profil</h1>
+          </div>
+        </header>
+
+        <section className="px-4 py-8">
+          <Card>
+            <CardContent className="text-center py-12">
+              <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
+              <p className="text-muted-foreground mb-6">
+                Vous devez vous connecter pour accéder à votre profil
+              </p>
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-vendeur-primary hover:bg-vendeur-primary/90"
+              >
+                Se connecter
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
