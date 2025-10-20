@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Eye, Ban, Trash2, Plus } from 'lucide-react';
+import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { agentService } from '@/services/agentService';
+import { agentInvitationService } from '@/services/agentInvitationService';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Agent {
@@ -30,8 +31,10 @@ export default function PDGAgentsManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [pdgId, setPdgId] = useState<string | null>(null);
+  const [pdgName, setPdgName] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -83,6 +86,7 @@ export default function PDGAgentsManagement() {
       }
       
       setPdgId(pdgData.id);
+      setPdgName(pdgData.name);
       
       // Charger les agents du PDG
       const agentsData = await agentService.getAgentsByPDG(pdgData.id);
@@ -115,13 +119,26 @@ export default function PDGAgentsManagement() {
         .filter(([_, value]) => value)
         .map(([key]) => key);
 
-      await agentService.createAgent({
-        pdg_id: pdgId,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        permissions
-      });
+      if (editingAgent) {
+        // Mode édition
+        await agentService.updateAgent(editingAgent.id, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          permissions: permissions as any,
+          commission_rate: formData.commission_rate,
+        });
+        toast.success('Agent modifié avec succès');
+      } else {
+        // Mode création
+        await agentService.createAgent({
+          pdg_id: pdgId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          permissions
+        });
+      }
 
       // Réinitialiser le formulaire
       setFormData({
@@ -138,13 +155,61 @@ export default function PDGAgentsManagement() {
         }
       });
       
+      setEditingAgent(null);
       setIsDialogOpen(false);
       await loadPDGAndAgents();
     } catch (error) {
-      console.error('Erreur création agent:', error);
-      toast.error('Erreur lors de la création de l\'agent');
+      console.error('Erreur gestion agent:', error);
+      toast.error('Erreur lors de la gestion de l\'agent');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditAgent = (agent: Agent) => {
+    setEditingAgent(agent);
+    setFormData({
+      name: agent.name,
+      email: agent.email,
+      phone: agent.phone || '',
+      role: agent.role,
+      commission_rate: agent.commission_rate,
+      permissions: {
+        create_users: true,
+        create_sub_agents: false,
+        view_reports: true,
+        manage_commissions: false
+      }
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSendInvitation = async (agent: Agent) => {
+    if (!pdgId) {
+      toast.error('PDG ID manquant');
+      return;
+    }
+
+    try {
+      const result = await agentInvitationService.createAndSendInvitation({
+        agentId: agent.id,
+        pdgId: pdgId,
+        agentEmail: agent.email,
+        agentName: agent.name,
+        agentPhone: agent.phone,
+        pdgName: pdgName,
+      });
+
+      if (result.success && result.invitationLink) {
+        // Copier le lien dans le presse-papier
+        await navigator.clipboard.writeText(result.invitationLink);
+        toast.success('📋 Lien d\'invitation copié dans le presse-papier');
+      } else {
+        toast.error(result.error || 'Erreur lors de l\'envoi de l\'invitation');
+      }
+    } catch (error) {
+      console.error('Erreur envoi invitation:', error);
+      toast.error('Erreur lors de l\'envoi de l\'invitation');
     }
   };
 
@@ -202,7 +267,9 @@ export default function PDGAgentsManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Créer un Nouvel Agent</DialogTitle>
+              <DialogTitle>
+                {editingAgent ? 'Modifier l\'Agent' : 'Créer un Nouvel Agent'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateAgent} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -331,6 +398,11 @@ export default function PDGAgentsManagement() {
                       <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                       Création...
                     </>
+                  ) : editingAgent ? (
+                    <>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Modifier l'Agent
+                    </>
                   ) : (
                     <>
                       <Plus className="w-4 h-4 mr-2" />
@@ -438,13 +510,27 @@ export default function PDGAgentsManagement() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditAgent(agent)}
+                    title="Modifier l'agent"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleSendInvitation(agent)}
+                    title="Envoyer invitation par email"
+                  >
+                    <Mail className="w-4 h-4 text-blue-500" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleAgentAction(agent.id, agent.is_active ? 'suspend' : 'activate')}
+                    title={agent.is_active ? 'Suspendre' : 'Activer'}
                   >
                     <Ban className="w-4 h-4" />
                   </Button>
@@ -452,6 +538,7 @@ export default function PDGAgentsManagement() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleAgentAction(agent.id, 'delete')}
+                    title="Supprimer"
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>

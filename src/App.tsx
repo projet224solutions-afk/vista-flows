@@ -33,6 +33,8 @@ const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AgentActivation = lazy(() => import("./pages/AgentActivation"));
+const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentSystem = lazy(() => import("./pages/AgentSystem"));
 
 // Composant de loading
@@ -136,6 +138,8 @@ const App = () => (
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route path="/bureau/:token" element={<BureauDashboard />} />
               <Route path="/worker/:token" element={<WorkerDashboard />} />
+              <Route path="/agent/activate/:token" element={<AgentActivation />} />
+              <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route
                 path="/agent-system"
                 element={<AgentSystem />}

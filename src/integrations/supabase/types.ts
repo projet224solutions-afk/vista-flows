@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_invitations: {
+        Row: {
+          accepted_at: string | null
+          agent_id: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          pdg_id: string
+          phone: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          agent_id: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          invitation_token: string
+          pdg_id: string
+          phone?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          agent_id?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          pdg_id?: string
+          phone?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_invitations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_invitations_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string
@@ -4030,6 +4087,10 @@ export type Database = {
         Returns: string
       }
       generate_custom_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_invitation_token: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
