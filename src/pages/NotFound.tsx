@@ -1,12 +1,14 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, ArrowLeft, Search, AlertTriangle } from "lucide-react";
+import { Home, ArrowLeft, AlertTriangle, ShoppingBag, MapPin, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
 
   useEffect(() => {
@@ -37,8 +39,40 @@ const NotFound = () => {
     }
   };
 
+  // Boutons de navigation rapide
+  const navigationItems = [
+    {
+      id: 'home',
+      label: 'Accueil',
+      icon: Home,
+      path: '/home',
+      description: 'Accueil 224Solutions'
+    },
+    {
+      id: 'marketplace',
+      label: 'Marketplace',
+      icon: ShoppingBag,
+      path: '/marketplace',
+      description: 'Achats en ligne'
+    },
+    {
+      id: 'tracking',
+      label: 'Tracking',
+      icon: MapPin,
+      path: '/tracking',
+      description: 'Suivi de commandes'
+    },
+    {
+      id: 'profil',
+      label: 'Profil',
+      icon: User,
+      path: profile ? '/profil' : '/auth',
+      description: profile ? 'Mon profil' : 'Connexion'
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/30 flex items-center justify-center p-4 pb-24">
       <Card className="max-w-2xl w-full shadow-2xl border-border/50">
         <CardHeader className="text-center space-y-4 pb-8">
           <div className="mx-auto w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -68,26 +102,22 @@ const NotFound = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button 
-              asChild 
+              onClick={() => navigate(getHomePath())}
               className="flex-1 h-12 text-base shadow-lg"
               size="lg"
             >
-              <Link to={getHomePath()}>
-                <Home className="w-5 h-5 mr-2" />
-                Retour à l'accueil
-              </Link>
+              <Home className="w-5 h-5 mr-2" />
+              Retour à l'accueil
             </Button>
             
             <Button 
-              asChild 
+              onClick={() => navigate(-1)}
               variant="outline" 
               className="flex-1 h-12 text-base"
               size="lg"
             >
-              <Link to={-1 as any}>
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Page précédente
-              </Link>
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Page précédente
             </Button>
           </div>
 
@@ -108,6 +138,45 @@ const NotFound = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Navigation rapide en bas de page */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 shadow-elegant">
+        <div className="flex items-center justify-around px-2 py-2 max-w-screen-xl mx-auto">
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[70px] group",
+                  isActive
+                    ? "text-primary bg-accent scale-105"
+                    : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
+                )}
+                title={item.description}
+              >
+                <div className={cn(
+                  "p-2 rounded-full transition-all duration-300",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-glow"
+                    : "bg-muted group-hover:bg-accent group-hover:text-primary"
+                )}>
+                  <Icon size={20} />
+                </div>
+                <span className={cn(
+                  "text-xs font-medium mt-1 leading-tight",
+                  isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-primary"
+                )}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
