@@ -278,6 +278,21 @@ export default function Profil() {
     navigate('/');
   };
 
+  const handleGoBack = () => {
+    // Rediriger selon le rôle de l'utilisateur
+    if (profile?.role === 'vendeur') {
+      navigate('/vendeur');
+    } else if (profile?.role === 'admin') {
+      navigate('/admin');
+    } else if (profile?.role === 'livreur') {
+      navigate('/livreur');
+    } else if (profile?.role === 'taxi') {
+      navigate('/taxi-moto-driver');
+    } else {
+      navigate('/');
+    }
+  };
+
   // Authentication check
   if (!user) {
     return (
@@ -319,7 +334,7 @@ export default function Profil() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={handleGoBack}
               className="ml-auto"
             >
               <ArrowLeft className="w-5 h-5" />
