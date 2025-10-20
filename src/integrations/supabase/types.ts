@@ -144,6 +144,72 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          bureau_id: string | null
+          created_at: string | null
+          created_by: string | null
+          file_path: string
+          first_name: string
+          gilet_number: string | null
+          id: string
+          member_id: string | null
+          name: string
+          phone: string | null
+          plate: string | null
+          public_url: string | null
+          serial_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bureau_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          file_path: string
+          first_name: string
+          gilet_number?: string | null
+          id?: string
+          member_id?: string | null
+          name: string
+          phone?: string | null
+          plate?: string | null
+          public_url?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bureau_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          file_path?: string
+          first_name?: string
+          gilet_number?: string | null
+          id?: string
+          member_id?: string | null
+          name?: string
+          phone?: string | null
+          plate?: string | null
+          public_url?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "badges_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "badges_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bureau_feature_assignments: {
         Row: {
           assigned_at: string | null
