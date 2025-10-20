@@ -1,11 +1,10 @@
 // @ts-nocheck
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3 } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -18,90 +17,37 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-
-interface FinanceStats {
-  total_revenue: number;
-  total_commissions: number;
-  pending_payments: number;
-  active_wallets: number;
-}
-
-const chartConfig = {
-  amount: { label: "Montant", color: "hsl(var(--primary))" },
-  commission: { label: "Commission", color: "hsl(var(--chart-2))" }
-};
+import { useFinanceData } from '@/hooks/useFinanceData';
 
 export default function PDGFinance() {
-  const [stats, setStats] = useState<FinanceStats>({
-    total_revenue: 0,
-    total_commissions: 0,
-    pending_payments: 0,
-    active_wallets: 0
-  });
-  const [transactions, setTransactions] = useState<unknown[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { stats, transactions, loading, refetch } = useFinanceData(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
-  useEffect(() => {
-    loadFinanceData();
-  }, []);
-
-  const loadFinanceData = async () => {
-    setLoading(true);
-    try {
-      // Charger directement depuis Supabase
-      const { data: trans, error: transError } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (transError) throw transError;
-
-      setTransactions(trans || []);
-
-      // Calculer les statistiques réelles
-      const completedTrans = trans?.filter(t => t.status === 'completed') || [];
-      const pendingTrans = trans?.filter(t => t.status === 'pending') || [];
-      
-      const revenue = completedTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-      const commissions = completedTrans.reduce((sum, t) => sum + Number(t.fee || 0), 0);
-      const pending = pendingTrans.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-      // Compter les portefeuilles actifs
-      const { count: walletCount, error: walletError } = await supabase
-        .from('wallets')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
-
-      if (walletError) throw walletError;
-
-      setStats({
-        total_revenue: revenue,
-        total_commissions: commissions,
-        pending_payments: pending,
-        active_wallets: walletCount || 0
-      });
-    } catch (error) {
-      console.error('Erreur chargement finances:', error);
-      toast.error('Erreur lors du chargement des données financières');
-    } finally {
-      setLoading(false);
-    }
+  const chartConfig = {
+    amount: { label: "Montant", color: "hsl(var(--primary))" },
+    commission: { label: "Commission", color: "hsl(var(--chart-2))" }
   };
 
   const exportData = async () => {
     try {
-      const csvData = transactions.map(t => ({
-        'ID Transaction': t.transaction_id,
-        'Montant': t.amount,
-        'Frais': t.fee,
-        'Statut': t.status,
-        'Expéditeur': t.sender?.business_name || t.sender?.first_name || 'N/A',
-        'Destinataire': t.receiver?.business_name || t.receiver?.first_name || 'N/A',
-        'Date': new Date(t.created_at).toLocaleDateString('fr-FR'),
-        'Description': t.description || 'N/A'
-      }));
+      const csvData = transactions.map(t => {
+        const senderProfile = t.sender_wallet?.profiles;
+        const receiverProfile = t.receiver_wallet?.profiles;
+        
+        return {
+          'ID Transaction': t.transaction_id,
+          'Type': t.transaction_type || 'N/A',
+          'Montant': t.amount,
+          'Frais': t.fee,
+          'Montant Net': t.net_amount,
+          'Statut': t.status,
+          'Expéditeur': senderProfile?.business_name || `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() || 'Système',
+          'Destinataire': receiverProfile?.business_name || `${receiverProfile?.first_name || ''} ${receiverProfile?.last_name || ''}`.trim() || 'Système',
+          'Date': new Date(t.created_at).toLocaleDateString('fr-FR'),
+          'Description': t.description || 'N/A',
+          'Devise': t.currency || 'GNF'
+        };
+      });
 
       const csvContent = [
         Object.keys(csvData[0] || {}).join(','),
@@ -306,6 +252,10 @@ export default function PDGFinance() {
               <Download className="w-4 h-4" />
               Exporter CSV
             </Button>
+            <Button onClick={refetch} variant="outline" className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Actualiser
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -339,15 +289,22 @@ export default function PDGFinance() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold">
-                        Transaction #{trans.transaction_id}
+                        {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{trans.transaction_id}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(trans.created_at).toLocaleDateString('fr-FR', { 
                           day: '2-digit', 
                           month: 'long', 
-                          year: 'numeric' 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
                         })}
                       </p>
+                      {trans.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {trans.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right space-y-2">
