@@ -1,47 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy, Link2, MessageSquare } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { agentService } from '@/services/agentService';
-import { agentInvitationService } from '@/services/agentInvitationService';
-import { useAuth } from '@/hooks/useAuth';
-
-interface Agent {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role: string;
-  commission_rate: number;
-  is_active: boolean;
-  created_at: string;
-  agent_code?: string;
-}
+import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 
 export default function PDGAgentsManagement() {
-  const { user } = useAuth();
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { agents, pdgProfile, loading, stats, createAgent, updateAgent, deleteAgent, toggleAgentStatus } = usePDGAgentsData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [pdgId, setPdgId] = useState<string | null>(null);
-  const [pdgName, setPdgName] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
-  const [agentLinks, setAgentLinks] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    role: 'agent',
     commission_rate: 10,
     permissions: {
       create_users: true,
@@ -51,60 +29,10 @@ export default function PDGAgentsManagement() {
     }
   });
 
-  useEffect(() => {
-    if (user) {
-      loadPDGAndAgents();
-    }
-  }, [user]);
-
-  const loadPDGAndAgents = async () => {
-    try {
-      setLoading(true);
-      
-      // Récupérer le PDG de l'utilisateur connecté
-      let pdgData = await agentService.getPDGByUserId(user!.id);
-      
-      // Si pas de profil PDG, en créer un automatiquement
-      if (!pdgData) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email, first_name, last_name, phone')
-          .eq('id', user!.id)
-          .single();
-        
-        if (profile) {
-          pdgData = await agentService.createPDG({
-            user_id: user!.id,
-            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
-            email: profile.email,
-            phone: profile.phone || undefined,
-            permissions: ['all']
-          });
-          toast.success('Profil PDG créé automatiquement');
-        } else {
-          toast.error('Impossible de créer le profil PDG');
-          return;
-        }
-      }
-      
-      setPdgId(pdgData.id);
-      setPdgName(pdgData.name);
-      
-      // Charger les agents du PDG
-      const agentsData = await agentService.getAgentsByPDG(pdgData.id);
-      setAgents(agentsData as Agent[]);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-      toast.error('Erreur lors du chargement');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!pdgId) {
+    if (!pdgProfile) {
       toast.error('PDG ID manquant');
       return;
     }
@@ -123,22 +51,22 @@ export default function PDGAgentsManagement() {
 
       if (editingAgent) {
         // Mode édition
-        await agentService.updateAgent(editingAgent.id, {
+        await updateAgent(editingAgent.id, {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          permissions: permissions as any,
+          permissions,
           commission_rate: formData.commission_rate,
-        });
-        toast.success('Agent modifié avec succès');
+        } as any);
       } else {
         // Mode création
-        await agentService.createAgent({
-          pdg_id: pdgId,
+        await createAgent({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          permissions
+          permissions,
+          commission_rate: formData.commission_rate,
+          can_create_sub_agent: formData.permissions.create_sub_agents,
         });
       }
 
@@ -147,7 +75,6 @@ export default function PDGAgentsManagement() {
         name: '',
         email: '',
         phone: '',
-        role: 'agent',
         commission_rate: 10,
         permissions: {
           create_users: true,
@@ -159,7 +86,6 @@ export default function PDGAgentsManagement() {
       
       setEditingAgent(null);
       setIsDialogOpen(false);
-      await loadPDGAndAgents();
     } catch (error) {
       console.error('Erreur gestion agent:', error);
       toast.error('Erreur lors de la gestion de l\'agent');
@@ -174,150 +100,78 @@ export default function PDGAgentsManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone || '',
-      role: agent.role,
       commission_rate: agent.commission_rate,
       permissions: {
-        create_users: true,
-        create_sub_agents: false,
-        view_reports: true,
-        manage_commissions: false
+        create_users: agent.permissions.includes('create_users'),
+        create_sub_agents: agent.can_create_sub_agent,
+        view_reports: agent.permissions.includes('view_reports'),
+        manage_commissions: agent.permissions.includes('manage_commissions')
       }
     });
     setIsDialogOpen(true);
   };
 
-  const handleSendInvitation = async (agent: Agent, method: 'email' | 'sms' | 'both' = 'email') => {
-    if (!pdgId) {
-      toast.error('PDG ID manquant');
-      return;
-    }
-
-    // Vérifier si SMS et pas de téléphone
-    if ((method === 'sms' || method === 'both') && !agent.phone) {
-      toast.error('Numéro de téléphone manquant pour cet agent');
-      return;
-    }
-
-    try {
-      const result = await agentInvitationService.createAndSendInvitation({
-        agentId: agent.id,
-        pdgId: pdgId,
-        agentEmail: agent.email,
-        agentName: agent.name,
-        agentPhone: agent.phone,
-        pdgName: pdgName,
-        sendMethod: method,
-      });
-
-      if (result.success && result.invitationLink) {
-        // Sauvegarder le lien pour cet agent
-        setAgentLinks(prev => ({ ...prev, [agent.id]: result.invitationLink! }));
-        // Copier le lien dans le presse-papier
-        await navigator.clipboard.writeText(result.invitationLink);
-      } else {
-        toast.error(result.error || 'Erreur lors de l\'envoi de l\'invitation');
-      }
-    } catch (error) {
-      console.error('Erreur envoi invitation:', error);
-      toast.error('Erreur lors de l\'envoi de l\'invitation');
-    }
-  };
-
-  const handleCopyLink = async (link: string) => {
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success('📋 Lien copié dans le presse-papier');
-    } catch (error) {
-      toast.error('Erreur lors de la copie du lien');
-    }
-  };
-
-  const handleGenerateAndCopyLink = async (agent: Agent) => {
-    if (!pdgId) {
-      toast.error('PDG ID manquant');
-      return;
-    }
-
-    // Si le lien existe déjà, juste le copier
-    if (agentLinks[agent.id]) {
-      await handleCopyLink(agentLinks[agent.id]);
-      return;
-    }
-
-    // Sinon, générer un nouveau lien
-    try {
-      const result = await agentInvitationService.createAndSendInvitation({
-        agentId: agent.id,
-        pdgId: pdgId,
-        agentEmail: agent.email,
-        agentName: agent.name,
-        agentPhone: agent.phone,
-        pdgName: pdgName,
-      });
-
-      if (result.success && result.invitationLink) {
-        // Sauvegarder le lien pour cet agent
-        setAgentLinks(prev => ({ ...prev, [agent.id]: result.invitationLink! }));
-        // Copier le lien dans le presse-papier
-        await navigator.clipboard.writeText(result.invitationLink);
-        toast.success('🔗 Lien généré et copié dans le presse-papier');
-      } else {
-        toast.error(result.error || 'Erreur lors de la génération du lien');
-      }
-    } catch (error) {
-      console.error('Erreur génération lien:', error);
-      toast.error('Erreur lors de la génération du lien');
-    }
-  };
-
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
     try {
-      if (action === 'delete') {
-        const { error } = await supabase
-          .from('agents_management')
-          .delete()
-          .eq('id', agentId);
-        if (error) throw error;
-        toast.success('Agent supprimé');
-      } else {
-        const { error } = await supabase
-          .from('agents_management')
-          .update({ is_active: action === 'activate' })
-          .eq('id', agentId);
-        if (error) throw error;
-        toast.success(`Agent ${action === 'activate' ? 'activé' : 'suspendu'}`);
+      switch (action) {
+        case 'activate':
+          await toggleAgentStatus(agentId, true);
+          break;
+        case 'suspend':
+          await toggleAgentStatus(agentId, false);
+          break;
+        case 'delete':
+          await deleteAgent(agentId);
+          break;
       }
-      await loadPDGAndAgents();
     } catch (error) {
-      console.error('Erreur action agent:', error);
-      toast.error('Erreur lors de l\'action sur l\'agent');
+      toast.error('Erreur lors de l\'action');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des agents...</p>
+        </div>
+      </div>
+    );
+  }
 
   const filteredAgents = agents.filter(agent =>
     agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     agent.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold">Gestion des Agents</h2>
-          <p className="text-muted-foreground mt-1">Administration du réseau d'agents</p>
+          <h2 className="text-3xl font-bold tracking-tight">Gestion des Agents</h2>
+          <p className="text-muted-foreground mt-1">
+            Gérez votre réseau d'agents - {pdgProfile?.name || 'PDG'}
+          </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => {
+              setEditingAgent(null);
+              setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                commission_rate: 10,
+                permissions: {
+                  create_users: true,
+                  create_sub_agents: false,
+                  view_reports: true,
+                  manage_commissions: false
+                }
+              });
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Nouvel Agent
             </Button>
@@ -364,30 +218,16 @@ export default function PDGAgentsManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Rôle</Label>
-                  <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="agent">Agent Principal</SelectItem>
-                      <SelectItem value="sub_agent">Sous-Agent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="commission">Taux Commission (%)</Label>
-                  <Input
-                    id="commission"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.commission_rate}
-                    onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="commission">Taux Commission (%)</Label>
+                <Input
+                  id="commission"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.commission_rate}
+                  onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
+                />
               </div>
 
               <div className="space-y-3 border-t pt-4">
@@ -453,7 +293,7 @@ export default function PDGAgentsManagement() {
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Création...
+                      {editingAgent ? 'Modification...' : 'Création...'}
                     </>
                   ) : editingAgent ? (
                     <>
@@ -477,61 +317,72 @@ export default function PDGAgentsManagement() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
-            <UserCheck className="w-4 h-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Agents
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agents.length}</div>
+            <div className="text-2xl font-bold">{stats.totalAgents}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.activeAgents} actifs
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Actifs</CardTitle>
-            <UserCheck className="w-4 h-4 text-green-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Agents Actifs
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              {agents.filter(a => a.is_active).length}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.inactiveAgents} inactifs
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Suspendus</CardTitle>
-            <UserCheck className="w-4 h-4 text-red-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Commission Moyenne
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {agents.filter(a => !a.is_active).length}
-            </div>
+            <div className="text-2xl font-bold">{stats.averageCommission.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Taux moyen
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commission Moy.</CardTitle>
-            <UserCheck className="w-4 h-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Commissions Totales
+            </CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">
-              {(agents.reduce((acc, a) => acc + a.commission_rate, 0) / agents.length).toFixed(1)}%
-            </div>
+            <div className="text-2xl font-bold">{stats.totalCommissionsEarned.toLocaleString()} GNF</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Gagnées à ce jour
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recherche */}
+      {/* Barre de recherche */}
       <Card>
-        <CardHeader>
-          <CardTitle>Rechercher un agent</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher par nom ou email..."
+              placeholder="Rechercher un agent par nom ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -541,145 +392,97 @@ export default function PDGAgentsManagement() {
       </Card>
 
       {/* Liste des agents */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des Agents ({filteredAgents.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredAgents.map((agent) => (
-              <div
-                key={agent.id}
-                className="rounded-lg border bg-card overflow-hidden"
-              >
-                {/* En-tête agent */}
-                <div className="flex items-center justify-between p-4 bg-muted/50">
-                  <div className="flex items-center gap-4 flex-1">
-                    <UserCheck className="w-10 h-10 text-primary" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{agent.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {agent.role} • Commission: {agent.commission_rate}%
-                      </p>
-                    </div>
-                    {agent.is_active ? (
-                      <Badge className="bg-green-500">Actif</Badge>
-                    ) : (
-                      <Badge className="bg-red-500">Suspendu</Badge>
-                    )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredAgents.map((agent) => (
+          <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CardTitle className="text-lg">{agent.name}</CardTitle>
+                    <Badge variant={agent.is_active ? 'default' : 'secondary'}>
+                      {agent.is_active ? 'Actif' : 'Inactif'}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditAgent(agent)}
-                      title="Modifier l'agent"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleGenerateAndCopyLink(agent)}
-                      title="Copier le lien d'invitation"
-                    >
-                      <Link2 className="w-4 h-4 text-purple-500" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleSendInvitation(agent, 'email')}
-                      title="Envoyer par email"
-                    >
-                      <Mail className="w-4 h-4 text-blue-500" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleSendInvitation(agent, 'sms')}
-                      title="Envoyer par SMS"
-                      disabled={!agent.phone}
-                    >
-                      <MessageSquare className="w-4 h-4 text-green-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAgentAction(agent.id, agent.is_active ? 'suspend' : 'activate')}
-                      title={agent.is_active ? 'Suspendre' : 'Activer'}
-                    >
-                      <Ban className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAgentAction(agent.id, 'delete')}
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
+                  <p className="text-sm text-muted-foreground">{agent.email}</p>
+                  <p className="text-sm text-muted-foreground">{agent.phone}</p>
                 </div>
-
-                {/* Informations détaillées */}
-                <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">📧 Email</p>
-                      <p className="text-sm font-medium">{agent.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">📱 Téléphone</p>
-                      <p className="text-sm font-medium">{agent.phone || 'Non renseigné'}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">🆔 ID Agent</p>
-                      <p className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                        {agent.id.substring(0, 8)}...
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">🏷️ Code Agent</p>
-                      <p className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                        {agent.agent_code || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Lien d'invitation si disponible */}
-                  {agentLinks[agent.id] && (
-                    <div className="pt-3 border-t">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">🔗 Lien d'activation</p>
-                      <div className="flex gap-2">
-                        <Input
-                          value={agentLinks[agent.id]}
-                          readOnly
-                          className="text-xs font-mono"
-                        />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCopyLink(agentLinks[agent.id])}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Code Agent:</span>
+                  <span className="font-mono font-medium">{agent.agent_code}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Commission:</span>
+                  <span className="font-medium">{agent.commission_rate}%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Utilisateurs créés:</span>
+                  <span className="font-medium">{agent.total_users_created || 0}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Commissions gagnées:</span>
+                  <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
+                </div>
+                
+                <div className="pt-3 flex gap-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditAgent(agent)}
+                    className="flex-1"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Modifier
+                  </Button>
+                  {agent.is_active ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAgentAction(agent.id, 'suspend')}
+                      className="flex-1"
+                    >
+                      <Ban className="w-4 h-4 mr-1" />
+                      Suspendre
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAgentAction(agent.id, 'activate')}
+                      className="flex-1"
+                    >
+                      <UserCheck className="w-4 h-4 mr-1" />
+                      Activer
+                    </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleAgentAction(agent.id, 'delete')}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            ))}
-            {filteredAgents.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                Aucun agent trouvé
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredAgents.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <UserCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {searchTerm ? 'Aucun agent trouvé' : 'Aucun agent pour le moment'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
