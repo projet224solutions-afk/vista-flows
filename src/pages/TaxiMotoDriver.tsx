@@ -25,11 +25,16 @@ import {
     Battery,
     Wifi,
     Settings,
-    LogOut
+    LogOut,
+    Bell
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
+import { RidesService, type RideDetails } from "@/services/taxi/ridesService";
+import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
+import { supabase } from "@/integrations/supabase/client";
+
 const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || '';
 
 interface RideRequest {
@@ -70,6 +75,7 @@ interface ActiveRide {
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
 
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -82,6 +88,7 @@ export default function TaxiMotoDriver() {
         totalRides: 0,
         onlineTime: '0h 0m'
     });
+    const [driverId, setDriverId] = useState<string | null>(null);
 
     // États de navigation
     const [navigationActive, setNavigationActive] = useState(false);
@@ -91,12 +98,34 @@ export default function TaxiMotoDriver() {
     const [timeToDestination, setTimeToDestination] = useState(0);
 
     useEffect(() => {
+        loadDriverProfile();
         loadDriverStats();
-        if (isOnline) {
+        if (isOnline && driverId) {
             startLocationTracking();
-            simulateRideRequests();
+            subscribeToRideRequests();
         }
-    }, [isOnline]);
+    }, [isOnline, driverId]);
+
+    // Écouter les notifications pour les nouvelles courses
+    useEffect(() => {
+        const newRideNotifications = notifications.filter(
+            n => n.type === 'new_ride_request' && !n.is_read
+        );
+        
+        if (newRideNotifications.length > 0 && !activeRide) {
+            // Charger les détails de la course
+            newRideNotifications.forEach(async (notif) => {
+                if (notif.data?.rideId) {
+                    try {
+                        const ride = await RidesService.getRideDetails(notif.data.rideId);
+                        addRideRequest(ride);
+                    } catch (error) {
+                        console.error('Error loading ride:', error);
+                    }
+                }
+            });
+        }
+    }, [notifications, activeRide]);
 
     /**
      * Démarre le suivi de position
@@ -138,103 +167,161 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Charge les statistiques du conducteur
+     * Charge le profil conducteur
      */
-    const loadDriverStats = async () => {
+    const loadDriverProfile = async () => {
+        if (!user) return;
+        
         try {
-            const resp = await fetch(`${API_BASE}/api/taxiMoto/driver/status`, { credentials: 'include' });
-            if (!resp.ok) throw new Error('Status fetch failed');
-            const json = await resp.json();
-            const balance = json.wallet?.balance || 0;
-            setDriverStats(prev => ({
-                ...prev,
-                todayEarnings: balance,
-                rating: 4.8,
-                totalRides: prev.totalRides
-            }));
-        } catch {
-            // ignore fallback
+            const { data, error } = await supabase
+                .from('taxi_drivers')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+
+            if (data) {
+                setDriverId(data.id);
+            }
+        } catch (error) {
+            console.error('Error loading driver profile:', error);
         }
     };
 
     /**
-     * Simule l'arrivée de demandes de course
+     * Charge les statistiques du conducteur
      */
-    const simulateRideRequests = () => {
-        if (!isOnline) return;
+    const loadDriverStats = async () => {
+        if (!driverId) return;
 
-        const mockRequests: RideRequest[] = [
-            {
-                id: 'REQ-001',
-                customerId: 'user-1',
-                customerName: 'Aminata Ba',
-                customerRating: 4.6,
-                pickupAddress: 'Plateau, Conakry',
-                destinationAddress: 'Almadies, Conakry',
-                distance: 12.5,
-                estimatedEarnings: 3200,
-                estimatedDuration: 25,
-                pickupCoords: { latitude: 14.6937, longitude: -17.4441 },
-                destinationCoords: { latitude: 14.7167, longitude: -17.4677 },
-                requestTime: new Date().toISOString()
-            }
-        ];
+        try {
+            const rides = await RidesService.getDriverRides(driverId, 100);
+            const today = new Date().toDateString();
+            const todayRides = rides.filter(r => 
+                new Date(r.created_at).toDateString() === today && 
+                r.status === 'completed'
+            );
+            
+            const todayEarnings = todayRides.reduce((sum, r) => sum + (r.price_total || 0), 0);
 
-        setTimeout(() => {
-            if (isOnline && !activeRide) {
-                setRideRequests(mockRequests);
-                toast.info('🚗 Nouvelle demande de course !');
-            }
-        }, 5000);
+            setDriverStats(prev => ({
+                ...prev,
+                todayEarnings,
+                todayRides: todayRides.length,
+                rating: 4.8,
+                totalRides: rides.length
+            }));
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    };
+
+    /**
+     * S'abonne aux demandes de course temps réel
+     */
+    const subscribeToRideRequests = () => {
+        if (!user) return;
+
+        console.log('Subscribing to ride requests...');
+        // Les notifications arrivent déjà via useTaxiNotifications
+    };
+
+    /**
+     * Ajoute une demande de course à la liste
+     */
+    const addRideRequest = (ride: RideDetails) => {
+        const request: RideRequest = {
+            id: ride.id,
+            customerId: ride.customer_id,
+            customerName: 'Client',
+            customerRating: 4.5,
+            pickupAddress: ride.pickup_address,
+            destinationAddress: ride.dropoff_address,
+            distance: 0,
+            estimatedEarnings: ride.price_total,
+            estimatedDuration: 0,
+            pickupCoords: { latitude: 0, longitude: 0 },
+            destinationCoords: { latitude: 0, longitude: 0 },
+            requestTime: ride.created_at
+        };
+
+        setRideRequests(prev => {
+            // Éviter les doublons
+            if (prev.some(r => r.id === request.id)) return prev;
+            return [...prev, request];
+        });
     };
 
     /**
      * Accepte une demande de course
      */
     const acceptRideRequest = async (request: RideRequest) => {
-        const newActiveRide: ActiveRide = {
-            id: request.id,
-            customer: {
-                name: request.customerName,
-                phone: '+221 77 123 45 67', // Simulé
-                rating: request.customerRating
-            },
-            pickup: {
-                address: request.pickupAddress,
-                coords: request.pickupCoords
-            },
-            destination: {
-                address: request.destinationAddress,
-                coords: request.destinationCoords
-            },
-            status: 'accepted',
-            startTime: new Date().toISOString(),
-            estimatedEarnings: request.estimatedEarnings
-        };
-
-        setActiveRide(newActiveRide);
-        setRideRequests([]);
-        setNavigationActive(true);
-        setActiveTab('navigation');
+        if (!driverId) {
+            toast.error('Profil conducteur non trouvé');
+            return;
+        }
 
         try {
-            await fetch(`${API_BASE}/api/taxiMoto/driver/acceptTrip`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ tripId: request.id })
-            });
-        } catch {}
-        toast.success('Course acceptée ! Navigation vers le client...');
+            // Appeler le service d'acceptation
+            await RidesService.acceptRide(request.id, driverId);
 
-        // Simuler la navigation
-        simulateNavigation(request.pickupCoords);
+            const newActiveRide: ActiveRide = {
+                id: request.id,
+                customer: {
+                    name: request.customerName,
+                    phone: '+224 600 00 00 00',
+                    rating: request.customerRating
+                },
+                pickup: {
+                    address: request.pickupAddress,
+                    coords: request.pickupCoords
+                },
+                destination: {
+                    address: request.destinationAddress,
+                    coords: request.destinationCoords
+                },
+                status: 'accepted',
+                startTime: new Date().toISOString(),
+                estimatedEarnings: request.estimatedEarnings
+            };
+
+            setActiveRide(newActiveRide);
+            setRideRequests([]);
+            setNavigationActive(true);
+            setActiveTab('navigation');
+
+            toast.success('✅ Course acceptée ! Navigation vers le client...');
+
+            // Marquer les notifications comme lues
+            const relatedNotifs = notifications.filter(n => n.data?.rideId === request.id);
+            relatedNotifs.forEach(n => markAsRead(n.id));
+
+            // Simuler la navigation
+            simulateNavigation(request.pickupCoords);
+        } catch (error) {
+            console.error('Error accepting ride:', error);
+            toast.error('Impossible d\'accepter la course. Elle a peut-être déjà été prise.');
+        }
     };
 
     /**
      * Refuse une demande de course
      */
-    const declineRideRequest = (requestId: string) => {
-        setRideRequests(prev => prev.filter(req => req.id !== requestId));
-        toast.info('Demande refusée');
+    const declineRideRequest = async (requestId: string) => {
+        if (!driverId) return;
+
+        try {
+            await RidesService.refuseRide(requestId, driverId);
+            setRideRequests(prev => prev.filter(req => req.id !== requestId));
+            
+            // Marquer les notifications comme lues
+            const relatedNotifs = notifications.filter(n => n.data?.rideId === requestId);
+            relatedNotifs.forEach(n => markAsRead(n.id));
+            
+            toast.info('❌ Demande refusée');
+        } catch (error) {
+            console.error('Error declining ride:', error);
+            toast.error('Erreur lors du refus');
+        }
     };
 
     /**
@@ -270,25 +357,44 @@ export default function TaxiMotoDriver() {
     /**
      * Met à jour le statut de la course
      */
-    const updateRideStatus = (newStatus: ActiveRide['status']) => {
+    const updateRideStatus = async (newStatus: ActiveRide['status']) => {
         if (!activeRide) return;
 
-        setActiveRide(prev => prev ? { ...prev, status: newStatus } : null);
+        try {
+            let dbStatus = newStatus;
+            if (newStatus === 'arriving') dbStatus = 'accepted';
+            if (newStatus === 'in_progress') dbStatus = 'completed';
 
-        switch (newStatus) {
-            case 'arriving':
-                toast.success('🎯 Vous êtes arrivé au point de rendez-vous');
-                break;
-            case 'picked_up':
-                toast.success('🚗 Client à bord, navigation vers la destination...');
-                if (activeRide) {
-                    simulateNavigation(activeRide.destination.coords);
-                }
-                break;
-            case 'in_progress':
-                toast.success('🏁 Course terminée !');
-                completeRide();
-                break;
+            await RidesService.updateRideStatus(activeRide.id, dbStatus);
+            setActiveRide(prev => prev ? { ...prev, status: newStatus } : null);
+
+            switch (newStatus) {
+                case 'arriving':
+                    toast.success('🎯 Vous êtes arrivé au point de rendez-vous');
+                    break;
+                case 'picked_up':
+                    toast.success('🚗 Client à bord, navigation vers la destination...');
+                    if (activeRide && driverId) {
+                        simulateNavigation(activeRide.destination.coords);
+                        // Tracker la position
+                        if (location) {
+                            RidesService.trackPosition(
+                                activeRide.id,
+                                driverId,
+                                location.latitude,
+                                location.longitude
+                            );
+                        }
+                    }
+                    break;
+                case 'in_progress':
+                    toast.success('🏁 Course terminée !');
+                    completeRide();
+                    break;
+            }
+        } catch (error) {
+            console.error('Error updating ride status:', error);
+            toast.error('Erreur lors de la mise à jour');
         }
     };
 
@@ -359,6 +465,14 @@ export default function TaxiMotoDriver() {
                         </div>
 
                         <div className="flex items-center gap-2">
+                            {unreadCount > 0 && (
+                                <div className="relative">
+                                    <Bell className="w-5 h-5 text-gray-600" />
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                        {unreadCount}
+                                    </span>
+                                </div>
+                            )}
                             <Button
                                 onClick={toggleOnlineStatus}
                                 variant={isOnline ? "destructive" : "default"}
