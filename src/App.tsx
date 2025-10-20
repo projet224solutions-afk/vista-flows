@@ -70,6 +70,7 @@ const App = () => (
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+              <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
 
