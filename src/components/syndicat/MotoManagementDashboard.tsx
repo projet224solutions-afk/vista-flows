@@ -301,20 +301,18 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                           </DialogContent>
                         </Dialog>
                         
-                        {(moto.status === 'validated' || moto.status === 'active' || moto.status === 'pending') && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => {
-                              setMotoForBadge(moto);
-                              setShowBadgeGenerator(true);
-                            }}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <CreditCard className="w-4 h-4 mr-1" />
-                            Badge
-                          </Button>
-                        )}
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            setMotoForBadge(moto);
+                            setShowBadgeGenerator(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <CreditCard className="w-4 h-4 mr-1" />
+                          Badge
+                        </Button>
                         </div>
                       </TableCell>
                     </TableRow>
