@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,66 +7,24 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Bureau {
-  id: string;
-  bureau_code: string;
-  prefecture: string;
-  commune: string;
-  president_name?: string;
-  president_email?: string;
-  president_phone?: string;
-  full_location?: string;
-  total_members: number;
-  total_vehicles: number;
-  total_cotisations: number;
-  status: string;
-  created_at: string;
-  access_token?: string;
-  interface_url?: string;
-}
-
-interface SyndicateWorker {
-  id: string;
-  bureau_id: string;
-  nom: string;
-  email: string;
-  telephone?: string;
-  access_level: string;
-  permissions: any;
-  is_active: boolean;
-  created_at: string;
-}
-
-interface SyndicateAlert {
-  id: string;
-  bureau_id: string;
-  alert_type: string;
-  severity: string;
-  title: string;
-  message: string;
-  is_critical: boolean;
-  is_read: boolean;
-  created_at: string;
-}
-
-interface BureauFeature {
-  id: string;
-  feature_name: string;
-  feature_code: string;
-  description: string;
-  version: string;
-  is_active: boolean;
-}
+import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
 
 export default function PDGSyndicatManagement() {
-  const [bureaus, setBureaus] = useState<Bureau[]>([]);
-  const [workers, setWorkers] = useState<SyndicateWorker[]>([]);
-  const [alerts, setAlerts] = useState<SyndicateAlert[]>([]);
-  const [features, setFeatures] = useState<BureauFeature[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    bureaus,
+    workers,
+    alerts,
+    features,
+    loading,
+    stats,
+    validateBureau,
+    createBureau,
+    updateBureau,
+    deleteBureau,
+    copyBureauLink,
+    resendBureauLink,
+  } = usePDGSyndicatData();
+
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -83,101 +41,16 @@ export default function PDGSyndicatManagement() {
     full_location: ''
   });
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      
-      const [bureausRes, workersRes, alertsRes, featuresRes] = await Promise.all([
-        supabase.from('bureaus').select('*').order('created_at', { ascending: false }),
-        supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }),
-        supabase.from('syndicate_alerts').select('*').eq('is_critical', true).order('created_at', { ascending: false }).limit(10),
-        supabase.from('bureau_features').select('*').eq('is_active', true)
-      ]);
-
-      if (bureausRes.error) throw bureausRes.error;
-      if (workersRes.error) throw workersRes.error;
-      if (alertsRes.error) throw alertsRes.error;
-      if (featuresRes.error) throw featuresRes.error;
-
-      setBureaus(bureausRes.data || []);
-      setWorkers(workersRes.data as any || []);
-      setAlerts(alertsRes.data as any || []);
-      setFeatures(featuresRes.data as any || []);
-    } catch (error) {
-      console.error('Erreur chargement données:', error);
-      toast.error('Erreur lors du chargement des données');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleValidate = async (bureauId: string) => {
-    try {
-      const { error } = await supabase
-        .from('bureaus')
-        .update({ 
-          status: 'active',
-          validated_at: new Date().toISOString()
-        })
-        .eq('id', bureauId);
-
-      if (error) throw error;
-
-      toast.success('Bureau validé avec succès');
-      await loadAllData();
-    } catch (error) {
-      console.error('Erreur validation bureau:', error);
-      toast.error('Erreur lors de la validation du bureau');
-    }
+    await validateBureau(bureauId);
   };
 
   const handleCreateBureau = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      const access_token = crypto.randomUUID();
-      
-      const { data: bureau, error } = await supabase
-        .from('bureaus')
-        .insert([{
-          bureau_code: formData.bureau_code,
-          prefecture: formData.prefecture,
-          commune: formData.commune,
-          president_name: formData.president_name,
-          president_email: formData.president_email,
-          president_phone: formData.president_phone,
-          full_location: formData.full_location,
-          status: 'active',
-          total_members: 0,
-          total_vehicles: 0,
-          total_cotisations: 0,
-          access_token: access_token
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Envoyer l'email avec le lien permanent
-      if (formData.president_email) {
-        await supabase.functions.invoke('send-bureau-access-email', {
-          body: {
-            type: 'bureau',
-            email: formData.president_email,
-            name: formData.president_name || formData.bureau_code,
-            bureau_code: formData.bureau_code,
-            access_token: access_token
-          }
-        });
-        toast.success('Bureau créé et email envoyé avec le lien d\'accès');
-      } else {
-        toast.success('Bureau créé avec succès');
-      }
-
+    const result = await createBureau(formData);
+    
+    if (result) {
       setIsDialogOpen(false);
       setFormData({
         bureau_code: '',
@@ -188,43 +61,11 @@ export default function PDGSyndicatManagement() {
         president_phone: '',
         full_location: ''
       });
-      await loadAllData();
-    } catch (error) {
-      console.error('Erreur création bureau:', error);
-      toast.error('Erreur lors de la création du bureau');
     }
   };
 
   const handleCopyBureau = async (bureau: Bureau) => {
-    try {
-      let urlToCopy = bureau.interface_url;
-
-      // Si l'URL n'existe pas, la générer et la sauvegarder
-      if (!urlToCopy && bureau.access_token) {
-        urlToCopy = `${window.location.origin}/bureau/${bureau.access_token}`;
-        
-        // Mettre à jour le bureau avec l'URL générée
-        const { error } = await supabase
-          .from('bureaus')
-          .update({ interface_url: urlToCopy })
-          .eq('id', bureau.id);
-
-        if (error) {
-          console.error('Erreur mise à jour URL:', error);
-        }
-      }
-
-      if (!urlToCopy) {
-        toast.error('Impossible de générer le lien d\'accès');
-        return;
-      }
-
-      // Copier le lien dans le presse-papier
-      await navigator.clipboard.writeText(urlToCopy);
-      toast.success("Lien d'accès copié dans le presse-papier");
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la copie du lien");
-    }
+    await copyBureauLink(bureau);
   };
 
   const handleEditBureau = (bureau: Bureau) => {
@@ -235,107 +76,32 @@ export default function PDGSyndicatManagement() {
   const handleSaveEdit = async () => {
     if (!editingBureau) return;
 
-    try {
-      const { error } = await supabase
-        .from('bureaus')
-        .update({
-          bureau_code: editingBureau.bureau_code,
-          commune: editingBureau.commune,
-          prefecture: editingBureau.prefecture,
-          president_name: editingBureau.president_name,
-          president_email: editingBureau.president_email,
-          president_phone: editingBureau.president_phone,
-          full_location: editingBureau.full_location,
-          status: editingBureau.status
-        })
-        .eq('id', editingBureau.id);
+    const success = await updateBureau(editingBureau.id, {
+      bureau_code: editingBureau.bureau_code,
+      commune: editingBureau.commune,
+      prefecture: editingBureau.prefecture,
+      president_name: editingBureau.president_name,
+      president_email: editingBureau.president_email,
+      president_phone: editingBureau.president_phone,
+      full_location: editingBureau.full_location,
+      status: editingBureau.status
+    });
 
-      if (error) throw error;
-
-      toast.success("Le bureau a été modifié avec succès");
-      
+    if (success) {
       setIsEditDialogOpen(false);
       setEditingBureau(null);
-      await loadAllData();
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la modification du bureau");
     }
   };
 
   const handleDeleteBureau = async (bureauId: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ? Cette action supprimera également tous les travailleurs, membres et véhicules associés.")) return;
-
-    try {
-      // Supprimer d'abord les enregistrements liés
-      await Promise.all([
-        supabase.from('syndicate_workers').delete().eq('bureau_id', bureauId),
-        supabase.from('members').delete().eq('bureau_id', bureauId),
-        supabase.from('registered_motos').delete().eq('bureau_id', bureauId),
-        supabase.from('syndicate_alerts').delete().eq('bureau_id', bureauId),
-        supabase.from('bureau_transactions').delete().eq('bureau_id', bureauId),
-        supabase.from('bureau_feature_assignments').delete().eq('bureau_id', bureauId)
-      ]);
-
-      // Ensuite supprimer le bureau
-      const { error } = await supabase
-        .from('bureaus')
-        .delete()
-        .eq('id', bureauId);
-
-      if (error) throw error;
-
-      toast.success("Le bureau et toutes ses données ont été supprimés avec succès");
-      
-      await loadAllData();
-    } catch (error: any) {
-      console.error('Erreur suppression bureau:', error);
-      toast.error(error.message || "Erreur lors de la suppression du bureau");
-    }
+    await deleteBureau(bureauId);
   };
 
   const handleResendLink = async (bureau: Bureau) => {
-    if (!bureau.president_email) {
-      toast.error('Aucun email de président renseigné');
-      return;
-    }
-
-    if (!bureau.access_token) {
-      toast.error('Aucun token d\'accès disponible pour ce bureau');
-      return;
-    }
-
     setSendingEmail(bureau.id);
-    
-    try {
-      toast.info('Envoi de l\'email en cours...');
-
-      const { data, error } = await supabase.functions.invoke('send-bureau-access-email', {
-        body: {
-          type: 'bureau',
-          email: bureau.president_email,
-          name: bureau.president_name || bureau.bureau_code,
-          bureau_code: bureau.bureau_code,
-          access_token: bureau.access_token
-        }
-      });
-
-      if (error) {
-        console.error('Erreur fonction edge:', error);
-        throw new Error(error.message || 'Erreur lors de l\'appel de la fonction');
-      }
-
-      if (data?.error) {
-        console.error('Erreur envoi email:', data.error);
-        throw new Error(data.error);
-      }
-      
-      toast.success(`✓ Email envoyé avec succès à ${bureau.president_email}`);
-    } catch (error: any) {
-      console.error('Erreur renvoi lien:', error);
-      toast.error(`Erreur: ${error.message || 'Erreur lors du renvoi du lien'}`);
-    } finally {
-      setSendingEmail(null);
-    }
+    await resendBureauLink(bureau);
+    setSendingEmail(null);
   };
 
   const filteredBureaus = bureaus.filter(bureau =>
@@ -351,9 +117,6 @@ export default function PDGSyndicatManagement() {
       </div>
     );
   }
-
-  const totalWorkers = workers.length;
-  const criticalAlerts = alerts.filter(a => a.is_critical).length;
 
   return (
     <div className="space-y-6">
@@ -478,7 +241,7 @@ export default function PDGSyndicatManagement() {
             <Building2 className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{bureaus.length}</div>
+            <div className="text-2xl font-bold">{stats.totalBureaus}</div>
           </CardContent>
         </Card>
 
@@ -488,7 +251,7 @@ export default function PDGSyndicatManagement() {
             <Users className="w-4 h-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">{totalWorkers}</div>
+            <div className="text-2xl font-bold text-blue-500">{stats.totalWorkers}</div>
           </CardContent>
         </Card>
 
@@ -522,7 +285,7 @@ export default function PDGSyndicatManagement() {
             <AlertCircle className="w-4 h-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{criticalAlerts}</div>
+            <div className="text-2xl font-bold text-red-500">{stats.criticalAlerts}</div>
           </CardContent>
         </Card>
       </div>
@@ -532,15 +295,15 @@ export default function PDGSyndicatManagement() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="bureaus">
             <Building2 className="w-4 h-4 mr-2" />
-            Bureaux ({bureaus.length})
+            Bureaux ({stats.totalBureaus})
           </TabsTrigger>
           <TabsTrigger value="workers">
             <Users className="w-4 h-4 mr-2" />
-            Travailleurs ({totalWorkers})
+            Travailleurs ({stats.totalWorkers})
           </TabsTrigger>
           <TabsTrigger value="alerts">
             <AlertCircle className="w-4 h-4 mr-2" />
-            Alertes ({criticalAlerts})
+            Alertes ({stats.criticalAlerts})
           </TabsTrigger>
           <TabsTrigger value="features">
             <Settings className="w-4 h-4 mr-2" />
