@@ -315,25 +315,15 @@ export default function Profil() {
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                <Edit className="w-5 h-5" />
-              </Button>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="ml-auto"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </header>
