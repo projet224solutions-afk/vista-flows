@@ -295,8 +295,8 @@ export default function TaxiMotoDriver() {
             const relatedNotifs = notifications.filter(n => n.data?.rideId === request.id);
             relatedNotifs.forEach(n => markAsRead(n.id));
 
-            // Simuler la navigation
-            simulateNavigation(request.pickupCoords);
+            // Démarrer la navigation
+            startNavigation(request.pickupCoords);
         } catch (error) {
             console.error('Error accepting ride:', error);
             toast.error('Impossible d\'accepter la course. Elle a peut-être déjà été prise.');
@@ -325,33 +325,35 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Simule la navigation GPS
+     * Démarre la navigation GPS vers une destination
      */
-    const simulateNavigation = (destination: { latitude: number; longitude: number }) => {
-        const instructions = [
-            'Continuez tout droit sur 500m',
-            'Tournez à droite dans 200m',
-            'Au rond-point, prenez la 2ème sortie',
-            'Tournez à gauche sur Avenue Bourguiba',
-            'Destination atteinte'
-        ];
+    const startNavigation = (destination: { latitude: number; longitude: number }) => {
+        setNavigationActive(true);
+        setNextInstruction('Navigation démarrée');
+        
+        // En production, utiliser une vraie API de navigation (Google Maps, Mapbox, etc.)
+        // Ici on initialise juste l'état de navigation
+        if (location) {
+            const distance = calculateDistance(
+                location.latitude,
+                location.longitude,
+                destination.latitude,
+                destination.longitude
+            );
+            setDistanceToDestination(distance * 1000);
+            setTimeToDestination(Math.ceil(distance / 30 * 60)); // Estimation à 30km/h
+        }
+    };
 
-        let stepIndex = 0;
-        const interval = setInterval(() => {
-            if (stepIndex < instructions.length) {
-                setNextInstruction(instructions[stepIndex]);
-                setDistanceToDestination(Math.max(0, 2000 - (stepIndex * 400)));
-                setTimeToDestination(Math.max(0, 8 - (stepIndex * 2)));
-                stepIndex++;
-            } else {
-                clearInterval(interval);
-                if (activeRide?.status === 'accepted') {
-                    updateRideStatus('arriving');
-                } else if (activeRide?.status === 'picked_up') {
-                    updateRideStatus('in_progress');
-                }
-            }
-        }, 3000);
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Rayon de la Terre en km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
     };
 
     /**
@@ -375,8 +377,8 @@ export default function TaxiMotoDriver() {
                 case 'picked_up':
                     toast.success('🚗 Client à bord, navigation vers la destination...');
                     if (activeRide && driverId) {
-                        simulateNavigation(activeRide.destination.coords);
-                        // Tracker la position
+                        startNavigation(activeRide.destination.coords);
+                        // Tracker la position en temps réel
                         if (location) {
                             RidesService.trackPosition(
                                 activeRide.id,
@@ -402,26 +404,30 @@ export default function TaxiMotoDriver() {
      * Termine la course
      */
     const completeRide = async () => {
-        if (!activeRide) return;
-
-        // Mettre à jour les statistiques
-        setDriverStats(prev => ({
-            ...prev,
-            todayEarnings: prev.todayEarnings + activeRide.estimatedEarnings,
-            todayRides: prev.todayRides + 1
-        }));
-
-        setActiveRide(null);
-        setNavigationActive(false);
-        setActiveTab('dashboard');
+        if (!activeRide || !driverId) return;
 
         try {
-            await fetch(`${API_BASE}/api/taxiMoto/driver/completeTrip`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-                body: JSON.stringify({ tripId: activeRide.id, distanceKm: 3.2, durationMin: 10 })
-            });
-        } catch {}
-        toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} FCFA`);
+            await RidesService.updateRideStatus(activeRide.id, 'completed');
+            
+            // Mettre à jour les statistiques
+            setDriverStats(prev => ({
+                ...prev,
+                todayEarnings: prev.todayEarnings + activeRide.estimatedEarnings,
+                todayRides: prev.todayRides + 1
+            }));
+
+            toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} GNF`);
+
+            setActiveRide(null);
+            setNavigationActive(false);
+            setActiveTab('dashboard');
+            
+            // Recharger les statistiques
+            loadDriverStats();
+        } catch (error) {
+            console.error('Error completing ride:', error);
+            toast.error('Erreur lors de la finalisation');
+        }
     };
 
     /**

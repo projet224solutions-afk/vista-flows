@@ -28,8 +28,8 @@ import { toast } from "sonner";
 import { mapService } from "@/services/mapService";
 import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
-
-const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || "";
+import { RidesService } from "@/services/taxi/ridesService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LocationCoordinates {
     latitude: number;
@@ -182,30 +182,20 @@ export default function TaxiMotoBooking({
         setBookingInProgress(true);
 
         try {
-            const response = await fetch(`${API_BASE}/taxiMotoDriver/createRide`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pickup: {
-                        lat: pickupCoords.latitude,
-                        lng: pickupCoords.longitude,
-                        address: pickupAddress || 'Point de départ'
-                    },
-                    dropoff: {
-                        lat: destinationCoords.latitude,
-                        lng: destinationCoords.longitude,
-                        address: destinationAddress || 'Destination'
-                    },
-                    estimated_price: priceEstimate.totalPrice
-                })
+            const ride = await RidesService.createRide({
+                customer_id: user.id,
+                pickup_lat: pickupCoords.latitude,
+                pickup_lng: pickupCoords.longitude,
+                pickup_address: pickupAddress || 'Point de départ',
+                dropoff_lat: destinationCoords.latitude,
+                dropoff_lng: destinationCoords.longitude,
+                dropoff_address: destinationAddress || 'Destination',
+                price_total: priceEstimate.totalPrice,
+                vehicle_type: selectedVehicleType,
+                scheduled_time: isScheduled ? scheduledTime : undefined
             });
 
-            const data = await response.json();
-            if (!response.ok || !data?.success) {
-                throw new Error(data?.message || 'Erreur de réservation');
-            }
-
-            onRideCreated(data.ride);
+            onRideCreated(ride);
             toast.success('🚀 Réservation confirmée ! Recherche d\'un conducteur...');
 
             // Réinitialiser le formulaire

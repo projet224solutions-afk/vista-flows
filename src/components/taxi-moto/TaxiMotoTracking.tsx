@@ -22,6 +22,8 @@ import {
     MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { RidesService } from "@/services/taxi/ridesService";
 
 interface LocationCoordinates {
     latitude: number;
@@ -60,28 +62,73 @@ export default function TaxiMotoTracking({
     const [driverLocation, setDriverLocation] = useState<LocationCoordinates | null>(null);
     const [estimatedArrival, setEstimatedArrival] = useState<string>('');
     const [rideProgress, setRideProgress] = useState(0);
+    const [rideDetails, setRideDetails] = useState<any>(null);
 
-    // Simuler la mise à jour de la position du conducteur
+    // Charger les détails de la course
     useEffect(() => {
-        if (currentRide && currentRide.status !== 'pending') {
-            const interval = setInterval(() => {
-                // Simuler le mouvement du conducteur
-                setDriverLocation({
-                    latitude: 14.6937 + (Math.random() - 0.5) * 0.01,
-                    longitude: -17.4441 + (Math.random() - 0.5) * 0.01
-                });
-
-                // Mettre à jour l'estimation d'arrivée
-                const minutes = Math.max(1, Math.floor(Math.random() * 15));
-                setEstimatedArrival(`${minutes} min`);
-
-                // Simuler la progression
-                setRideProgress(prev => Math.min(100, prev + Math.random() * 5));
-            }, 3000);
-
-            return () => clearInterval(interval);
+        if (currentRide?.id) {
+            loadRideDetails();
         }
-    }, [currentRide]);
+    }, [currentRide?.id]);
+
+    // Écouter les mises à jour en temps réel
+    useEffect(() => {
+        if (!currentRide?.id) return;
+
+        const subscription = supabase
+            .channel(`ride_${currentRide.id}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'taxi_trips',
+                filter: `id=eq.${currentRide.id}`
+            }, (payload) => {
+                console.log('Ride updated:', payload);
+                if (payload.new) {
+                    updateRideProgress(payload.new);
+                }
+            })
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'taxi_tracking',
+                filter: `ride_id=eq.${currentRide.id}`
+            }, (payload) => {
+                if (payload.new) {
+                    setDriverLocation({
+                        latitude: payload.new.lat,
+                        longitude: payload.new.lng
+                    });
+                }
+            })
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [currentRide?.id]);
+
+    const loadRideDetails = async () => {
+        if (!currentRide?.id) return;
+        try {
+            const details = await RidesService.getRideDetails(currentRide.id);
+            setRideDetails(details);
+            updateRideProgress(details);
+        } catch (error) {
+            console.error('Error loading ride details:', error);
+        }
+    };
+
+    const updateRideProgress = (ride: any) => {
+        const statusProgress = {
+            'pending': 10,
+            'accepted': 25,
+            'driver_arriving': 50,
+            'in_progress': 75,
+            'completed': 100
+        };
+        setRideProgress(statusProgress[ride.status as keyof typeof statusProgress] || 0);
+    };
 
     /**
      * Partage le trajet avec un proche
@@ -121,13 +168,17 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
     /**
      * Annule la course
      */
-    const cancelRide = () => {
+    const cancelRide = async () => {
         if (!currentRide) return;
 
-        // Confirmation avant annulation
         if (window.confirm('Êtes-vous sûr de vouloir annuler cette course ?')) {
-            toast.success('Course annulée');
-            // En production: appel API pour annuler
+            try {
+                await RidesService.updateRideStatus(currentRide.id, 'cancelled');
+                toast.success('Course annulée');
+            } catch (error) {
+                console.error('Error cancelling ride:', error);
+                toast.error('Erreur lors de l\'annulation');
+            }
         }
     };
 

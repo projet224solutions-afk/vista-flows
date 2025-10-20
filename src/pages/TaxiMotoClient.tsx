@@ -24,6 +24,7 @@ import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Driver {
   id: string;
@@ -64,82 +65,91 @@ export default function TaxiMotoClient() {
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
   useEffect(() => {
-    // Obtenir la position
     getCurrentLocation();
-    
-    // Charger les conducteurs à proximité
     loadNearbyDrivers();
   }, []);
+
+  // Écouter les mises à jour de course
+  useEffect(() => {
+    if (!currentRide?.id) return;
+
+    const subscription = supabase
+      .channel(`ride_updates_${currentRide.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'taxi_trips',
+        filter: `id=eq.${currentRide.id}`
+      }, (payload) => {
+        if (payload.new) {
+          updateCurrentRide(payload.new);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [currentRide?.id]);
+
+  const updateCurrentRide = (trip: any) => {
+    if (trip.status === 'accepted') {
+      setCurrentRide(prev => prev ? { ...prev, status: 'accepted' } : null);
+    } else if (trip.status === 'in_progress') {
+      setCurrentRide(prev => prev ? { ...prev, status: 'in_progress' } : null);
+    } else if (trip.status === 'completed') {
+      toast.success('Course terminée !');
+      setCurrentRide(null);
+      setActiveTab('history');
+    }
+  };
 
   /**
    * Charge les conducteurs disponibles à proximité
    */
-  const loadNearbyDrivers = () => {
-    // Simuler des conducteurs à proximité
-    const mockDrivers: Driver[] = [
-      {
-        id: 'driver-1',
-        name: 'Mamadou Diallo',
-        rating: 4.8,
-        distance: 0.5,
-        vehicleType: 'moto_rapide',
-        eta: '2 min',
-        rides: 450
-      },
-      {
-        id: 'driver-2',
-        name: 'Fatou Sall',
-        rating: 4.9,
-        distance: 0.8,
-        vehicleType: 'moto_premium',
-        eta: '3 min',
-        rides: 620
-      },
-      {
-        id: 'driver-3',
-        name: 'Ibrahima Ndiaye',
-        rating: 4.7,
-        distance: 1.2,
-        vehicleType: 'moto_economique',
-        eta: '5 min',
-        rides: 380
-      }
-    ];
+  const loadNearbyDrivers = async () => {
+    try {
+      const { data: drivers, error } = await supabase
+        .from('taxi_drivers')
+        .select('*')
+        .eq('status', 'available')
+        .eq('is_online', true)
+        .limit(10);
 
-    setNearbyDrivers(mockDrivers);
+      if (error) throw error;
+
+      const formattedDrivers: Driver[] = (drivers || []).map((d, index) => ({
+        id: d.id,
+        name: `Conducteur ${index + 1}`,
+        rating: d.rating || 4.5,
+        distance: Math.random() * 2,
+        vehicleType: d.vehicle_type || 'moto_rapide',
+        eta: `${Math.floor(Math.random() * 5) + 1} min`,
+        rides: d.total_rides || 0
+      }));
+
+      setNearbyDrivers(formattedDrivers);
+    } catch (error) {
+      console.error('Error loading drivers:', error);
+    }
   };
 
   /**
    * Gère la création d'une nouvelle course
    */
-  const handleRideCreated = (rideData: unknown) => {
-    // Créer un objet de course avec conducteur assigné
-    const assignedDriver = nearbyDrivers[0]; // Simuler l'assignation du conducteur le plus proche
-    
+  const handleRideCreated = (rideData: any) => {
     const newRide: CurrentRide = {
-      ...rideData,
-      status: 'accepted',
-      driver: {
-        id: assignedDriver.id,
-        name: assignedDriver.name,
-        rating: assignedDriver.rating,
-        phone: '+224 622 00 00 00',
-        vehicleType: assignedDriver.vehicleType,
-        vehicleNumber: 'CKY-1234-TM'
-      },
-      estimatedArrival: assignedDriver.eta
+      id: rideData.id,
+      status: 'pending',
+      pickupAddress: rideData.pickup_address,
+      destinationAddress: rideData.dropoff_address,
+      estimatedPrice: rideData.price_total,
+      createdAt: rideData.created_at
     };
 
     setCurrentRide(newRide);
     setActiveTab('tracking');
-    toast.success(`Course acceptée par ${assignedDriver.name}`);
-
-    // Simuler la progression de la course
-    setTimeout(() => {
-      if (newRide) {
-        setCurrentRide(prev => prev ? { ...prev, status: 'driver_arriving' } : null);
-      }
-    }, 3000);
+    toast.success('Course créée ! Recherche de conducteur en cours...');
   };
 
   /**
