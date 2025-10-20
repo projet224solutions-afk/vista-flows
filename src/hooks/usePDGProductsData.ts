@@ -57,29 +57,23 @@ export function usePDGProductsData() {
 
       if (productsError) throw productsError;
 
-      // Récupérer le stock par produit en utilisant une requête raw SQL via RPC
-      // On va faire une agrégation simple côté client pour l'instant
-      const productsWithStock = await Promise.all(
-        (productsData || []).map(async (product) => {
-          // Essayer de récupérer le stock pour ce produit (si la table existe)
-          try {
-            const { data: stockData } = await supabase
-              .rpc('get_product_stock_total', { p_product_id: product.id })
-              .single();
-            
-            return {
-              ...product,
-              total_stock: stockData?.total || 0
-            };
-          } catch {
-            // Si la fonction n'existe pas ou erreur, on met 0
-            return {
-              ...product,
-              total_stock: 0
-            };
-          }
-        })
-      );
+      // Récupérer tout l'inventaire
+      const { data: inventoryData } = await supabase
+        .from('inventory')
+        .select('product_id, quantity');
+
+      // Créer un map pour le stock par produit
+      const stockMap = new Map<string, number>();
+      (inventoryData || []).forEach(inv => {
+        const current = stockMap.get(inv.product_id) || 0;
+        stockMap.set(inv.product_id, current + (inv.quantity || 0));
+      });
+
+      // Ajouter le stock à chaque produit
+      const productsWithStock = (productsData || []).map(product => ({
+        ...product,
+        total_stock: stockMap.get(product.id) || 0
+      }));
 
       setProducts(productsWithStock);
 
