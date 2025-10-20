@@ -100,10 +100,20 @@ export default function TaxiMotoDriver() {
     useEffect(() => {
         loadDriverProfile();
         loadDriverStats();
+        
+        // Recharger les stats toutes les 30 secondes
+        const statsInterval = setInterval(() => {
+            if (driverId) {
+                loadDriverStats();
+            }
+        }, 30000);
+        
         if (isOnline && driverId) {
             startLocationTracking();
             subscribeToRideRequests();
         }
+        
+        return () => clearInterval(statsInterval);
     }, [isOnline, driverId]);
 
     // Écouter les notifications pour les nouvelles courses
@@ -210,32 +220,53 @@ export default function TaxiMotoDriver() {
         if (!driverId) return;
 
         try {
-            // Charger le profil conducteur pour le rating
+            // Charger le profil conducteur complet
             const { data: driverData } = await supabase
                 .from('taxi_drivers')
-                .select('rating, total_rides')
+                .select('rating, total_rides, total_earnings, is_online, last_seen, created_at')
                 .eq('id', driverId)
                 .single();
 
             // Charger toutes les courses du conducteur
             const rides = await RidesService.getDriverRides(driverId, 100);
-            const today = new Date().toDateString();
-            const todayRides = rides.filter(r => 
-                new Date(r.requested_at || r.accepted_at).toDateString() === today && 
-                r.status === 'completed'
-            );
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             
-            const todayEarnings = todayRides.reduce((sum, r) => sum + (r.price_total || 0), 0);
+            const todayRides = rides.filter(r => {
+                const rideDate = new Date(r.requested_at || r.accepted_at);
+                return rideDate >= today && r.status === 'completed';
+            });
+            
+            const todayEarnings = todayRides.reduce((sum, r) => sum + (r.driver_share || r.price_total * 0.85 || 0), 0);
+            
+            // Calculer le temps en ligne aujourd'hui
+            const todayOnlineRides = rides.filter(r => {
+                const rideDate = new Date(r.requested_at || r.accepted_at);
+                return rideDate >= today;
+            });
+            
+            let onlineMinutes = 0;
+            todayOnlineRides.forEach(ride => {
+                if (ride.completed_at && ride.accepted_at) {
+                    const start = new Date(ride.accepted_at);
+                    const end = new Date(ride.completed_at);
+                    onlineMinutes += Math.floor((end.getTime() - start.getTime()) / 60000);
+                }
+            });
+            
+            const hours = Math.floor(onlineMinutes / 60);
+            const mins = onlineMinutes % 60;
 
             setDriverStats({
-                todayEarnings,
+                todayEarnings: Math.round(todayEarnings),
                 todayRides: todayRides.length,
-                rating: driverData?.rating || 4.5,
-                totalRides: driverData?.total_rides || rides.length,
-                onlineTime: '0h 0m'
+                rating: Number(driverData?.rating) || 5.0,
+                totalRides: driverData?.total_rides || 0,
+                onlineTime: `${hours}h ${mins}m`
             });
         } catch (error) {
             console.error('Error loading stats:', error);
+            toast.error('Erreur de chargement des statistiques');
         }
     };
 
@@ -471,13 +502,33 @@ export default function TaxiMotoDriver() {
         if (!activeRide || !driverId) return;
 
         try {
+            // Marquer la course comme complétée
             await RidesService.updateRideStatus(activeRide.id, 'completed');
             
-            // Mettre à jour les statistiques
+            // Mettre à jour les statistiques du conducteur dans la DB
+            const { data: currentDriver } = await supabase
+                .from('taxi_drivers')
+                .select('total_rides, total_earnings')
+                .eq('id', driverId)
+                .single();
+            
+            if (currentDriver) {
+                await supabase
+                    .from('taxi_drivers')
+                    .update({
+                        total_rides: (currentDriver.total_rides || 0) + 1,
+                        total_earnings: (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings,
+                        status: 'available'
+                    })
+                    .eq('id', driverId);
+            }
+            
+            // Mettre à jour les statistiques locales
             setDriverStats(prev => ({
                 ...prev,
                 todayEarnings: prev.todayEarnings + activeRide.estimatedEarnings,
-                todayRides: prev.todayRides + 1
+                todayRides: prev.todayRides + 1,
+                totalRides: prev.totalRides + 1
             }));
 
             toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} GNF`);
