@@ -314,9 +314,8 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
-          <TabsTrigger value="members">Membres Syndicat</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
         </TabsList>
@@ -497,32 +496,6 @@ export default function BureauDashboard() {
                 {workers.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
                     Aucun membre du bureau ajouté
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="members" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Membres du Bureau</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {members.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <h3 className="font-medium">{member.name}</h3>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
-                    </div>
-                    <Badge>{member.status}</Badge>
-                  </div>
-                ))}
-                {members.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    Aucun membre enregistré
                   </div>
                 )}
               </div>
