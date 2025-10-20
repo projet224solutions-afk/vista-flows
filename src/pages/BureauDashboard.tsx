@@ -40,6 +40,10 @@ export default function BureauDashboard() {
     }
   });
   const [motoForm, setMotoForm] = useState({
+    owner_name: '',
+    owner_phone: '',
+    vest_number: '',
+    plate_number: '',
     serial_number: '',
     brand: '',
     model: '',
@@ -140,7 +144,7 @@ export default function BureauDashboard() {
         throw error;
       }
 
-      console.log('✅ Travailleur créé:', data);
+      console.log('✅ Membre du bureau créé:', data);
 
       // Envoyer l'email (ne pas bloquer si ça échoue)
       try {
@@ -155,10 +159,10 @@ export default function BureauDashboard() {
             permissions: workerForm.permissions
           }
         });
-        toast.success('✅ Travailleur ajouté et email envoyé');
+        toast.success('✅ Membre du bureau ajouté et email envoyé');
       } catch (emailError) {
         console.error('⚠️ Erreur email:', emailError);
-        toast.success('✅ Travailleur ajouté (email non envoyé)');
+        toast.success('✅ Membre du bureau ajouté (email non envoyé)');
       }
 
       // Réinitialiser le formulaire
@@ -180,8 +184,8 @@ export default function BureauDashboard() {
       setIsWorkerDialogOpen(false);
       await loadBureauData();
     } catch (error: any) {
-      console.error('❌ Erreur ajout travailleur:', error);
-      toast.error(error.message || 'Erreur lors de l\'ajout du travailleur');
+      console.error('❌ Erreur ajout membre du bureau:', error);
+      toast.error(error.message || 'Erreur lors de l\'ajout du membre du bureau');
     } finally {
       setIsSubmittingWorker(false);
     }
@@ -195,6 +199,10 @@ export default function BureauDashboard() {
         .from('registered_motos')
         .insert([{
           bureau_id: bureau.id,
+          owner_name: motoForm.owner_name,
+          owner_phone: motoForm.owner_phone,
+          vest_number: motoForm.vest_number,
+          plate_number: motoForm.plate_number,
           serial_number: motoForm.serial_number,
           brand: motoForm.brand,
           model: motoForm.model,
@@ -208,6 +216,10 @@ export default function BureauDashboard() {
       toast.success('Moto enregistrée avec succès');
       setIsMotoDialogOpen(false);
       setMotoForm({
+        owner_name: '',
+        owner_phone: '',
+        vest_number: '',
+        plate_number: '',
         serial_number: '',
         brand: '',
         model: '',
@@ -268,7 +280,7 @@ export default function BureauDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Travailleurs</CardTitle>
+            <CardTitle className="text-sm font-medium">Membres du Bureau</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{workers.length}</div>
@@ -303,8 +315,8 @@ export default function BureauDashboard() {
       {/* Tabs */}
       <Tabs defaultValue="workers">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="workers">Travailleurs</TabsTrigger>
-          <TabsTrigger value="members">Membres</TabsTrigger>
+          <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
+          <TabsTrigger value="members">Membres Syndicat</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
         </TabsList>
@@ -312,17 +324,17 @@ export default function BureauDashboard() {
         <TabsContent value="workers" className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Gestion des Travailleurs</CardTitle>
+              <CardTitle>Gestion des Membres du Bureau</CardTitle>
               <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
-                    Ajouter Travailleur
+                    Ajouter un Membre
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Ajouter un travailleur</DialogTitle>
+                    <DialogTitle>Ajouter un membre du bureau</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddWorker} className="space-y-4">
                     <div className="space-y-2">
@@ -484,7 +496,7 @@ export default function BureauDashboard() {
                 ))}
                 {workers.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucun travailleur ajouté
+                    Aucun membre du bureau ajouté
                   </div>
                 )}
               </div>
@@ -534,6 +546,45 @@ export default function BureauDashboard() {
                     <DialogTitle>Enregistrer une moto</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddMoto} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="owner_name">Nom du propriétaire *</Label>
+                      <Input
+                        id="owner_name"
+                        required
+                        value={motoForm.owner_name}
+                        onChange={(e) => setMotoForm({ ...motoForm, owner_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="owner_phone">Téléphone *</Label>
+                        <Input
+                          id="owner_phone"
+                          type="tel"
+                          required
+                          value={motoForm.owner_phone}
+                          onChange={(e) => setMotoForm({ ...motoForm, owner_phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="vest_number">Numéro de gilet *</Label>
+                        <Input
+                          id="vest_number"
+                          required
+                          value={motoForm.vest_number}
+                          onChange={(e) => setMotoForm({ ...motoForm, vest_number: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="plate_number">Numéro de plaque *</Label>
+                      <Input
+                        id="plate_number"
+                        required
+                        value={motoForm.plate_number}
+                        onChange={(e) => setMotoForm({ ...motoForm, plate_number: e.target.value })}
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="serial_number">Numéro de série *</Label>
                       <Input
@@ -596,14 +647,20 @@ export default function BureauDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {motos.map((moto) => (
-                  <div key={moto.id} className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <h3 className="font-medium">{moto.serial_number}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {moto.brand} {moto.model} • {moto.year} • {moto.color}
-                      </p>
+                  <div key={moto.id} className="p-4 rounded-lg border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{moto.owner_name}</h3>
+                      <Badge>{moto.status}</Badge>
                     </div>
-                    <Badge>{moto.status}</Badge>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                      <div><span className="font-medium">Tel:</span> {moto.owner_phone}</div>
+                      <div><span className="font-medium">Gilet:</span> {moto.vest_number}</div>
+                      <div><span className="font-medium">Plaque:</span> {moto.plate_number}</div>
+                      <div><span className="font-medium">Série:</span> {moto.serial_number}</div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {moto.brand} {moto.model} • {moto.year} • {moto.color}
+                    </p>
                   </div>
                 ))}
                 {motos.length === 0 && (

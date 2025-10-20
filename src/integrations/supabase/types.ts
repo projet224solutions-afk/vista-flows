@@ -2415,9 +2415,13 @@ export type Database = {
           id: string
           metadata: Json | null
           model: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          plate_number: string | null
           registration_date: string | null
           serial_number: string
           status: string | null
+          vest_number: string | null
           worker_id: string | null
           year: number | null
         }
@@ -2428,9 +2432,13 @@ export type Database = {
           id?: string
           metadata?: Json | null
           model?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          plate_number?: string | null
           registration_date?: string | null
           serial_number: string
           status?: string | null
+          vest_number?: string | null
           worker_id?: string | null
           year?: number | null
         }
@@ -2441,9 +2449,13 @@ export type Database = {
           id?: string
           metadata?: Json | null
           model?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          plate_number?: string | null
           registration_date?: string | null
           serial_number?: string
           status?: string | null
+          vest_number?: string | null
           worker_id?: string | null
           year?: number | null
         }
