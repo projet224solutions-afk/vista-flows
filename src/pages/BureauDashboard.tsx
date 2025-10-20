@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
+import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -314,9 +316,10 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
+          <TabsTrigger value="enregistrement">Enregistrement Motos</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
         </TabsList>
 
@@ -504,6 +507,7 @@ export default function BureauDashboard() {
         </TabsContent>
 
         <TabsContent value="motos" className="space-y-4">
+          {bureau && <MotoManagementDashboard bureauId={bureau.id} />}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Véhicules Enregistrés</CardTitle>
@@ -644,6 +648,10 @@ export default function BureauDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="enregistrement" className="space-y-4">
+          {bureau && <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />}
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
