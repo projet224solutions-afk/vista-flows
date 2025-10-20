@@ -74,13 +74,10 @@ export function useSecurityData(autoLoad: boolean = true) {
     setError(null);
     
     try {
-      // Charger les logs d'audit avec les profils des acteurs
+      // Charger les logs d'audit sans jointures complexes
       const { data: audit, error: auditError } = await supabase
         .from('audit_logs')
-        .select(`
-          *,
-          actor_profile:actor_id(first_name, last_name, email, role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -89,13 +86,10 @@ export function useSecurityData(autoLoad: boolean = true) {
         throw new Error(`Erreur audit logs: ${auditError.message}`);
       }
 
-      // Charger les logs de fraude avec les profils des utilisateurs
+      // Charger les logs de fraude sans jointures complexes
       const { data: fraud, error: fraudError } = await supabase
         .from('fraud_detection_logs')
-        .select(`
-          *,
-          user_profile:user_id(first_name, last_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 

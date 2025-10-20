@@ -65,20 +65,10 @@ export function useFinanceData(autoLoad: boolean = true) {
     setError(null);
     
     try {
-      // Charger les transactions avec les informations des wallets et utilisateurs
+      // Charger les transactions directement sans jointures complexes
       const { data: trans, error: transError } = await supabase
         .from('wallet_transactions')
-        .select(`
-          *,
-          sender_wallet:sender_wallet_id(
-            user_id,
-            profiles(first_name, last_name, business_name)
-          ),
-          receiver_wallet:receiver_wallet_id(
-            user_id,
-            profiles(first_name, last_name, business_name)
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 

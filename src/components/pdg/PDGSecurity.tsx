@@ -176,9 +176,9 @@ export default function PDGSecurity() {
                             </Badge>
                           )}
                         </div>
-                        {fraud.user_profile && (
-                          <p className="text-sm">
-                            Utilisateur: {fraud.user_profile.first_name} {fraud.user_profile.last_name}
+                        {fraud.user_id && (
+                          <p className="text-sm text-muted-foreground">
+                            User ID: {fraud.user_id.substring(0, 8)}...
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
@@ -251,14 +251,9 @@ export default function PDGSecurity() {
                           </span>
                         )}
                       </div>
-                      {log.actor_profile && (
-                        <p className="text-sm mb-1">
-                          Par: {log.actor_profile.first_name} {log.actor_profile.last_name}
-                          {log.actor_profile.role && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              {log.actor_profile.role}
-                            </Badge>
-                          )}
+                      {log.actor_id && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Actor: {log.actor_id.substring(0, 8)}...
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
