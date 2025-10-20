@@ -57,11 +57,29 @@ export default function PDGAgentsManagement() {
       setLoading(true);
       
       // Récupérer le PDG de l'utilisateur connecté
-      const pdgData = await agentService.getPDGByUserId(user!.id);
+      let pdgData = await agentService.getPDGByUserId(user!.id);
       
+      // Si pas de profil PDG, en créer un automatiquement
       if (!pdgData) {
-        toast.error('Aucun profil PDG trouvé');
-        return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, first_name, last_name, phone')
+          .eq('id', user!.id)
+          .single();
+        
+        if (profile) {
+          pdgData = await agentService.createPDG({
+            user_id: user!.id,
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
+            email: profile.email,
+            phone: profile.phone || undefined,
+            permissions: ['all']
+          });
+          toast.success('Profil PDG créé automatiquement');
+        } else {
+          toast.error('Impossible de créer le profil PDG');
+          return;
+        }
       }
       
       setPdgId(pdgData.id);
