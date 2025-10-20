@@ -569,53 +569,69 @@ export default function PDGSyndicatManagement() {
                 {filteredBureaus.map((bureau) => (
                   <div
                     key={bureau.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                    className="p-6 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-4"
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <Building2 className="w-10 h-10 text-muted-foreground" />
-                      <div className="flex-1">
-                        <h3 className="font-medium">{bureau.bureau_code}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {bureau.prefecture} - {bureau.commune} • {bureau.total_members} membres • {bureau.total_vehicles} véhicules
-                        </p>
-                        {bureau.president_name && (
-                          <p className="text-xs text-muted-foreground">
-                            Président: {bureau.president_name}
+                    {/* En-tête avec infos principales */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="p-3 rounded-lg bg-primary/10">
+                          <Building2 className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-semibold text-lg">{bureau.bureau_code}</h3>
+                            {bureau.status === 'active' ? (
+                              <Badge variant="default" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                                Actif
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20">
+                                En attente
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            📍 {bureau.prefecture} - {bureau.commune}
                           </p>
-                        )}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                            <span>👥 {bureau.total_members} membres</span>
+                            <span>🏍️ {bureau.total_vehicles} véhicules</span>
+                          </div>
+                          {bureau.president_name && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              👤 Président: <span className="font-medium">{bureau.president_name}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      {bureau.status === 'active' ? (
-                        <Badge className="bg-green-500">Actif</Badge>
-                      ) : (
-                        <Badge className="bg-yellow-500">En attente</Badge>
-                      )}
                     </div>
                     
-                    {/* Interface URL Display */}
+                    {/* Lien d'accès à l'interface */}
                     {bureau.access_token && (
-                      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                              🔗 Lien d'accès à l'interface
+                      <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className="text-xs font-semibold text-foreground flex items-center gap-2">
+                              <span className="text-primary">🔗</span> Lien d'accès à l'interface
                             </p>
-                            <p className="text-xs text-blue-700 dark:text-blue-300 font-mono truncate bg-white dark:bg-blue-950/50 p-2 rounded">
+                            <p className="text-xs font-mono text-muted-foreground truncate bg-background p-2 rounded border">
                               {window.location.origin}/bureau/{bureau.access_token}
                             </p>
                           </div>
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+                            className="shrink-0"
                             onClick={() => window.open(`/bureau/${bureau.access_token}`, '_blank')}
                           >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Ouvrir
+                            <Eye className="w-4 h-4 mr-2" />
+                            Ouvrir l'interface
                           </Button>
                         </div>
                       </div>
                     )}
                     
-                    <div className="flex items-center gap-2 mt-3">
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t">
                       <Button variant="ghost" size="sm" onClick={() => handleCopyBureau(bureau)}>
                         <Copy className="w-4 h-4" />
                       </Button>
