@@ -5053,6 +5053,10 @@ export type Database = {
         Args: { "": string }
         Returns: unknown
       }
+      get_finance_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_inventory_stats: {
         Args: { p_vendor_id: string }
         Returns: Json
