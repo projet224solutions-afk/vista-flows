@@ -15,7 +15,7 @@ interface Props {
   onUnblock: (ip: string) => void;
 }
 
-export const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnblock }) => {
+const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnblock }) => {
   const [isBlockOpen, setIsBlockOpen] = useState(false);
   const [newBlock, setNewBlock] = useState({ ip: '', reason: '', hours: 24 });
 
@@ -132,3 +132,5 @@ export const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, o
     </div>
   );
 };
+
+export default SecurityBlockedIPsList;

@@ -11,7 +11,7 @@ interface Props {
   onAcknowledge: (id: string) => void;
 }
 
-export const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
+const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'destructive';
@@ -81,3 +81,5 @@ export const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) =
     </div>
   );
 };
+
+export default SecurityAlertsList;

@@ -4,7 +4,7 @@ import { FileSearch, Database, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-export const SecurityForensics: React.FC = () => {
+const SecurityForensics: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
@@ -67,3 +67,5 @@ export const SecurityForensics: React.FC = () => {
     </div>
   );
 };
+
+export default SecurityForensics;

@@ -17,7 +17,7 @@ interface Props {
   onCreate: (type: string, severity: string, title: string, description: string, sourceIp?: string, targetService?: string) => void;
 }
 
-export const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolve, onCreate }) => {
+const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolve, onCreate }) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newIncident, setNewIncident] = useState({
     type: 'brute_force',
@@ -207,3 +207,5 @@ export const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, o
     </div>
   );
 };
+
+export default SecurityIncidentsList;

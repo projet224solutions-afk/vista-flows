@@ -6,13 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSecurityOps } from '@/hooks/useSecurityOps';
-import { SecurityIncidentsList } from './SecurityIncidentsList';
-import { SecurityAlertsList } from './SecurityAlertsList';
-import { SecurityBlockedIPsList } from './SecurityBlockedIPsList';
-import { SecurityForensics } from './SecurityForensics';
-import { SecurityPlaybooks } from './SecurityPlaybooks';
+import SecurityIncidentsList from './SecurityIncidentsList';
+import SecurityAlertsList from './SecurityAlertsList';
+import SecurityBlockedIPsList from './SecurityBlockedIPsList';
+import SecurityForensics from './SecurityForensics';
+import SecurityPlaybooks from './SecurityPlaybooks';
 
-export const SecurityOpsPanel: React.FC = () => {
+const SecurityOpsPanel: React.FC = () => {
   const {
     incidents,
     alerts,
@@ -286,3 +286,5 @@ export const SecurityOpsPanel: React.FC = () => {
     </div>
   );
 };
+
+export default SecurityOpsPanel;

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-export const SecurityPlaybooks: React.FC = () => {
+const SecurityPlaybooks: React.FC = () => {
   const playbooks = [
     {
       name: 'Réponse Brute Force',
@@ -92,3 +92,5 @@ const Plus = ({ className }: { className?: string }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
   </svg>
 );
+
+export default SecurityPlaybooks;
