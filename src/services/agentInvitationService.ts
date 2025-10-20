@@ -40,6 +40,7 @@ export class AgentInvitationService {
     agentName: string;
     agentPhone?: string;
     pdgName: string;
+    sendMethod?: 'email' | 'sms' | 'both';
   }): Promise<{ success: boolean; invitationLink?: string; error?: string }> {
     try {
       // 1. Générer le token d'invitation
@@ -76,25 +77,67 @@ export class AgentInvitationService {
       // 3. Créer le lien d'invitation
       const invitationLink = `${window.location.origin}/agent/activate/${token}`;
 
-      // 4. Envoyer l'email via l'edge function
-      const { error: emailError } = await supabase.functions.invoke(
-        'send-agent-invitation',
-        {
-          body: {
-            agentName: data.agentName,
-            agentEmail: data.agentEmail,
-            invitationLink,
-            pdgName: data.pdgName,
-          },
-        }
-      );
+      const sendMethod = data.sendMethod || 'email';
 
-      if (emailError) {
-        console.error('Erreur envoi email:', emailError);
-        // Ne pas bloquer si l'email échoue, on peut toujours copier le lien
-        toast.warning('Invitation créée, mais email non envoyé');
-      } else {
-        toast.success(`✅ Invitation envoyée à ${data.agentEmail}`);
+      // 4. Envoyer l'email si demandé
+      if (sendMethod === 'email' || sendMethod === 'both') {
+        const { error: emailError } = await supabase.functions.invoke(
+          'send-agent-invitation',
+          {
+            body: {
+              agentName: data.agentName,
+              agentEmail: data.agentEmail,
+              invitationLink,
+              pdgName: data.pdgName,
+            },
+          }
+        );
+
+        if (emailError) {
+          console.error('Erreur envoi email:', emailError);
+          if (sendMethod === 'email') {
+            toast.warning('Invitation créée, mais email non envoyé');
+          }
+        } else {
+          if (sendMethod === 'email') {
+            toast.success(`✅ Email envoyé à ${data.agentEmail}`);
+          }
+        }
+      }
+
+      // 5. Envoyer le SMS si demandé
+      if ((sendMethod === 'sms' || sendMethod === 'both') && data.agentPhone) {
+        const smsMessage = `🎉 ${data.pdgName} vous invite à rejoindre 224Solutions!\n\n` +
+          `Activez votre compte agent ici:\n${invitationLink}\n\n` +
+          `Ce lien expire dans 7 jours.`;
+
+        const { error: smsError } = await supabase.functions.invoke(
+          'send-sms',
+          {
+            body: {
+              to: data.agentPhone,
+              message: smsMessage,
+            },
+          }
+        );
+
+        if (smsError) {
+          console.error('Erreur envoi SMS:', smsError);
+          if (sendMethod === 'sms') {
+            toast.warning('Invitation créée, mais SMS non envoyé');
+          }
+        } else {
+          if (sendMethod === 'sms') {
+            toast.success(`✅ SMS envoyé au ${data.agentPhone}`);
+          } else if (sendMethod === 'both') {
+            toast.success(`✅ Email et SMS envoyés`);
+          }
+        }
+      }
+
+      // 6. Message de succès pour both
+      if (sendMethod === 'both') {
+        toast.success(`✅ Invitation envoyée par email et SMS`);
       }
 
       return {

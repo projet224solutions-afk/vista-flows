@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy, Link2 } from 'lucide-react';
+import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy, Link2, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { agentService } from '@/services/agentService';
@@ -186,9 +186,15 @@ export default function PDGAgentsManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleSendInvitation = async (agent: Agent) => {
+  const handleSendInvitation = async (agent: Agent, method: 'email' | 'sms' | 'both' = 'email') => {
     if (!pdgId) {
       toast.error('PDG ID manquant');
+      return;
+    }
+
+    // Vérifier si SMS et pas de téléphone
+    if ((method === 'sms' || method === 'both') && !agent.phone) {
+      toast.error('Numéro de téléphone manquant pour cet agent');
       return;
     }
 
@@ -200,6 +206,7 @@ export default function PDGAgentsManagement() {
         agentName: agent.name,
         agentPhone: agent.phone,
         pdgName: pdgName,
+        sendMethod: method,
       });
 
       if (result.success && result.invitationLink) {
@@ -207,7 +214,6 @@ export default function PDGAgentsManagement() {
         setAgentLinks(prev => ({ ...prev, [agent.id]: result.invitationLink! }));
         // Copier le lien dans le presse-papier
         await navigator.clipboard.writeText(result.invitationLink);
-        toast.success('📧 Email envoyé et lien copié dans le presse-papier');
       } else {
         toast.error(result.error || 'Erreur lors de l\'envoi de l\'invitation');
       }
@@ -582,10 +588,19 @@ export default function PDGAgentsManagement() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => handleSendInvitation(agent)}
-                      title="Envoyer invitation par email"
+                      onClick={() => handleSendInvitation(agent, 'email')}
+                      title="Envoyer par email"
                     >
                       <Mail className="w-4 h-4 text-blue-500" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleSendInvitation(agent, 'sms')}
+                      title="Envoyer par SMS"
+                      disabled={!agent.phone}
+                    >
+                      <MessageSquare className="w-4 h-4 text-green-500" />
                     </Button>
                     <Button
                       variant="ghost"
