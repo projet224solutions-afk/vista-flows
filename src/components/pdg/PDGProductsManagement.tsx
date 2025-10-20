@@ -1,75 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Package, Search, Eye, Ban, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Product {
-  id: string;
-  name: string;
-  vendor_id: string;
-  price: number;
-  is_active: boolean;
-  created_at: string;
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { usePDGProductsData } from '@/hooks/usePDGProductsData';
 
 export default function PDGProductsManagement() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
+  
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleProductAction = async (productId: string, action: 'block' | 'unblock' | 'delete') => {
-    try {
-      if (action === 'delete') {
-        const { error } = await supabase
-          .from('products')
-          .delete()
-          .eq('id', productId);
-        if (error) throw error;
-        toast.success('Produit supprimé');
-      } else {
-        const { error } = await supabase
-          .from('products')
-          .update({ is_active: action === 'unblock' })
-          .eq('id', productId);
-        if (error) throw error;
-        toast.success(`Produit ${action === 'block' ? 'bloqué' : 'débloqué'}`);
-      }
-      await loadProducts();
-    } catch (error) {
-      console.error('Erreur action produit:', error);
-      toast.error('Erreur lors de l\'action sur le produit');
-    }
-  };
+  const [viewProduct, setViewProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDelete = async (productId: string) => {
+    await deleteProduct(productId);
+    setShowDeleteConfirm(null);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingProduct) return;
+    
+    const success = await updateProduct(editingProduct.id, {
+      name: editingProduct.name,
+      description: editingProduct.description,
+      price: parseFloat(editingProduct.price) || 0,
+      sku: editingProduct.sku,
+      is_active: editingProduct.is_active
+    });
+
+    if (success) {
+      setEditingProduct(null);
+    }
+  };
+
+  const getVendorInfo = (vendorId: string) => {
+    const vendor = vendors.find(v => v.id === vendorId);
+    return vendor ? `ID: ${vendor.user_id.slice(0, 8)}...` : 'Vendeur inconnu';
+  };
 
   if (loading) {
     return (
@@ -90,25 +67,25 @@ export default function PDGProductsManagement() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Produits</CardTitle>
             <Package className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Actifs</CardTitle>
-            <Package className="w-4 h-4 text-green-500" />
+            <TrendingUp className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-500">
-              {products.filter(p => p.is_active).length}
+              {stats.active}
             </div>
           </CardContent>
         </Card>
@@ -116,11 +93,23 @@ export default function PDGProductsManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Inactifs</CardTitle>
-            <Package className="w-4 h-4 text-red-500" />
+            <TrendingDown className="w-4 h-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
-              {products.filter(p => !p.is_active).length}
+              {stats.inactive}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Stock Bas</CardTitle>
+            <AlertTriangle className="w-4 h-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-500">
+              {stats.lowStock}
             </div>
           </CardContent>
         </Card>
@@ -128,11 +117,11 @@ export default function PDGProductsManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Valeur Totale</CardTitle>
-            <Package className="w-4 h-4 text-blue-500" />
+            <DollarSign className="w-4 h-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-500">
-              {products.reduce((acc, p) => acc + p.price, 0).toLocaleString()} GNF
+              {stats.totalValue.toLocaleString()} GNF
             </div>
           </CardContent>
         </Card>
@@ -162,41 +151,64 @@ export default function PDGProductsManagement() {
           <CardTitle>Liste des Produits ({filteredProducts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1">
-                  <Package className="w-10 h-10 text-muted-foreground" />
-                  <div className="flex-1">
-                    <h3 className="font-medium">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Prix: {product.price} GNF
-                    </p>
+                  <div className="relative">
+                    <Package className="w-10 h-10 text-primary" />
                   </div>
-                  {product.is_active ? (
-                    <Badge className="bg-green-500">Actif</Badge>
-                  ) : (
-                    <Badge className="bg-red-500">Inactif</Badge>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium truncate">{product.name}</h3>
+                      {product.sku && (
+                        <Badge variant="outline" className="text-xs">
+                          {product.sku}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      <span>Prix: {product.price.toLocaleString()} GNF</span>
+                      <span className="text-xs">Vendeur: {getVendorInfo(product.vendor_id)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {product.is_active ? (
+                      <Badge className="bg-green-500">Actif</Badge>
+                    ) : (
+                      <Badge className="bg-red-500">Inactif</Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
+                <div className="flex items-center gap-2 ml-4">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setViewProduct(product)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleProductAction(product.id, product.is_active ? 'block' : 'unblock')}
+                    onClick={() => setEditingProduct({ ...product })}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleProductStatus(product.id, product.is_active)}
                   >
                     <Ban className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleProductAction(product.id, 'delete')}
+                    onClick={() => setShowDeleteConfirm(product.id)}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
@@ -205,12 +217,146 @@ export default function PDGProductsManagement() {
             ))}
             {filteredProducts.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
-                Aucun produit trouvé
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Aucun produit trouvé</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog Détails Produit */}
+      <Dialog open={!!viewProduct} onOpenChange={() => setViewProduct(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Détails du Produit</DialogTitle>
+          </DialogHeader>
+          {viewProduct && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Nom</Label>
+                  <p className="font-medium">{viewProduct.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">SKU</Label>
+                  <p className="font-medium">{viewProduct.sku || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Prix</Label>
+                  <p className="font-medium">{viewProduct.price.toLocaleString()} GNF</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Vendeur</Label>
+                  <p className="font-medium">{getVendorInfo(viewProduct.vendor_id)}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Statut</Label>
+                  <Badge className={viewProduct.is_active ? "bg-green-500" : "bg-red-500"}>
+                    {viewProduct.is_active ? "Actif" : "Inactif"}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Date de création</Label>
+                  <p className="font-medium">
+                    {new Date(viewProduct.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+              </div>
+              {viewProduct.description && (
+                <div>
+                  <Label className="text-muted-foreground">Description</Label>
+                  <p className="mt-1">{viewProduct.description}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Édition Produit */}
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifier le Produit</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Nom</Label>
+                  <Input
+                    value={editingProduct.name}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>SKU</Label>
+                  <Input
+                    value={editingProduct.sku || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Prix (GNF)</Label>
+                  <Input
+                    type="number"
+                    value={editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={editingProduct.is_active}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="is_active" className="cursor-pointer">Produit actif</Label>
+                </div>
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  value={editingProduct.description || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingProduct(null)}>
+              Annuler
+            </Button>
+            <Button onClick={handleUpdate}>
+              Sauvegarder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Confirmation Suppression */}
+      <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+          </DialogHeader>
+          <p>Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
+            >
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
