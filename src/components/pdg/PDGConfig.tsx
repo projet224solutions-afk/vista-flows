@@ -1,11 +1,12 @@
 // @ts-nocheck
+// @ts-nocheck
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Save, Plus, RefreshCw, Trash2, Database } from 'lucide-react';
+import { Settings, Save, Plus, RefreshCw, Trash2, Database, Edit } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -27,8 +28,17 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function PDGConfig() {
-  const { configs, stats, loading, refetch, createConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
+  const { configs, stats, loading, refetch, createConfig, updateConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
   const [newConfig, setNewConfig] = useState({
+    service_name: '',
+    transaction_type: '',
+    commission_type: 'percentage',
+    commission_value: 0,
+    min_amount: 0,
+    max_amount: null as number | null
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editConfig, setEditConfig] = useState({
     service_name: '',
     transaction_type: '',
     commission_type: 'percentage',
@@ -51,6 +61,29 @@ export default function PDGConfig() {
       min_amount: 0,
       max_amount: null
     });
+  };
+
+  const startEdit = (config: any) => {
+    setEditingId(config.id);
+    setEditConfig({
+      service_name: config.service_name,
+      transaction_type: config.transaction_type,
+      commission_type: config.commission_type,
+      commission_value: config.commission_value,
+      min_amount: config.min_amount || 0,
+      max_amount: config.max_amount
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    
+    await updateConfig(editingId, editConfig);
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
   };
 
   if (loading) {
@@ -267,61 +300,153 @@ export default function PDGConfig() {
                 className="p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200 animate-fade-in"
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-semibold">
-                        {config.service_name} - {config.transaction_type}
-                      </h4>
-                      <Badge variant="outline" className={config.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
-                        {config.is_active ? 'Actif' : 'Inactif'}
-                      </Badge>
+                {editingId === config.id ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`edit-service-${config.id}`}>Service</Label>
+                        <Input
+                          id={`edit-service-${config.id}`}
+                          value={editConfig.service_name}
+                          onChange={(e) => setEditConfig({ ...editConfig, service_name: e.target.value })}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-transaction-${config.id}`}>Type de Transaction</Label>
+                        <Input
+                          id={`edit-transaction-${config.id}`}
+                          value={editConfig.transaction_type}
+                          onChange={(e) => setEditConfig({ ...editConfig, transaction_type: e.target.value })}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-type-${config.id}`}>Type de Commission</Label>
+                        <Select
+                          value={editConfig.commission_type}
+                          onValueChange={(value) => setEditConfig({ ...editConfig, commission_type: value })}
+                        >
+                          <SelectTrigger className="bg-background">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">Pourcentage</SelectItem>
+                            <SelectItem value="fixed">Montant Fixe</SelectItem>
+                            <SelectItem value="hybrid">Hybride</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-value-${config.id}`}>
+                          Valeur ({editConfig.commission_type === 'percentage' ? '%' : 'GNF'})
+                        </Label>
+                        <Input
+                          id={`edit-value-${config.id}`}
+                          type="number"
+                          step={editConfig.commission_type === 'percentage' ? '0.1' : '1'}
+                          value={editConfig.commission_value}
+                          onChange={(e) => setEditConfig({ ...editConfig, commission_value: Number(e.target.value) })}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-min-${config.id}`}>Montant Minimum (GNF)</Label>
+                        <Input
+                          id={`edit-min-${config.id}`}
+                          type="number"
+                          value={editConfig.min_amount || 0}
+                          onChange={(e) => setEditConfig({ ...editConfig, min_amount: Number(e.target.value) })}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-max-${config.id}`}>Montant Maximum (GNF)</Label>
+                        <Input
+                          id={`edit-max-${config.id}`}
+                          type="number"
+                          placeholder="Illimité si vide"
+                          value={editConfig.max_amount || ''}
+                          onChange={(e) => setEditConfig({ ...editConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
+                          className="bg-background"
+                        />
+                      </div>
                     </div>
-                    <p className="text-sm font-medium text-primary">
-                      Commission: {config.commission_type === 'percentage' 
-                        ? `${config.commission_value}%`
-                        : `${config.commission_value} GNF`
-                      }
-                    </p>
-                    {(config.min_amount || config.max_amount) && (
-                      <p className="text-xs text-muted-foreground">
-                        Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'} 
-                        {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
+                    <div className="flex gap-2">
+                      <Button onClick={saveEdit} className="gap-2">
+                        <Save className="w-4 h-4" />
+                        Enregistrer
+                      </Button>
+                      <Button onClick={cancelEdit} variant="outline">
+                        Annuler
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-semibold">
+                          {config.service_name} - {config.transaction_type}
+                        </h4>
+                        <Badge variant="outline" className={config.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
+                          {config.is_active ? 'Actif' : 'Inactif'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-medium text-primary">
+                        Commission: {config.commission_type === 'percentage' 
+                          ? `${config.commission_value}%`
+                          : `${config.commission_value} GNF`
+                        }
                       </p>
-                    )}
+                      {(config.min_amount || config.max_amount) && (
+                        <p className="text-xs text-muted-foreground">
+                          Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'} 
+                          {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(config)}
+                        className="border-blue-500/50 hover:bg-blue-500/10"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleActive(config.id, config.is_active)}
+                        className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
+                      >
+                        {config.is_active ? 'Désactiver' : 'Activer'}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="border-red-500/50 hover:bg-red-500/10">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer cette configuration?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Cette action est irréversible.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteConfig(config.id)}>
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleActive(config.id, config.is_active)}
-                      className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
-                    >
-                      {config.is_active ? 'Désactiver' : 'Activer'}
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="border-red-500/50 hover:bg-red-500/10">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Supprimer cette configuration?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Cette action est irréversible.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteConfig(config.id)}>
-                            Supprimer
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
+                )}
               </div>
             ))}
             {configs.length === 0 && (
