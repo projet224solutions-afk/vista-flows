@@ -38,7 +38,7 @@ import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
-import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
@@ -402,7 +402,7 @@ export default function VendeurDashboard() {
               <Route path="affiliate" element={<AffiliateManagement shopId={undefined} />} />
               <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
               <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<RealCommunicationInterface />} />
+              <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>

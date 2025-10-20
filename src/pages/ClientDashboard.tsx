@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useClientData } from "@/hooks/useClientData";
 import UserProfileCard from "@/components/UserProfileCard";
-import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 
@@ -443,15 +443,7 @@ export default function ClientDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="animate-fade-in">
-            <Card className="shadow-elegant">
-              <CardHeader>
-                <CardTitle>Messages</CardTitle>
-                <CardDescription>Communiquez avec les vendeurs</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RealCommunicationInterface />
-              </CardContent>
-            </Card>
+            <UniversalCommunicationHub />
           </TabsContent>
 
           {/* Copilote */}

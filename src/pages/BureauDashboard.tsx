@@ -16,6 +16,7 @@ import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
 import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
 import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
+import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -264,10 +265,11 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
+          <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
 
         <TabsContent value="workers" className="space-y-4">
@@ -510,6 +512,10 @@ export default function BureauDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="communication" className="space-y-4">
+          <UniversalCommunicationHub />
         </TabsContent>
       </Tabs>
     </div>

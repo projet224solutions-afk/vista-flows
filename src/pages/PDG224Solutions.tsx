@@ -22,6 +22,7 @@ const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalyt
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
+const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 
 export default function PDG224Solutions() {
   const { user, profile } = useAuth();
@@ -289,6 +290,14 @@ export default function PDG224Solutions() {
                 <MessageSquare className="w-4 h-4" />
                 <span className="font-medium">Copilote IA</span>
               </TabsTrigger>
+              <TabsTrigger
+                value="communication"
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Communication"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span className="font-medium">Communication</span>
+              </TabsTrigger>
             </TabsList>
 
             <Suspense fallback={
@@ -362,6 +371,12 @@ export default function PDG224Solutions() {
               <TabsContent value="copilot" className="animate-fade-in transition-all duration-300">
                 <ErrorBoundary>
                   <PDGCopilot mfaVerified={mfaVerified} />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="communication" className="animate-fade-in transition-all duration-300">
+                <ErrorBoundary>
+                  <UniversalCommunicationHub />
                 </ErrorBoundary>
               </TabsContent>
             </Suspense>
