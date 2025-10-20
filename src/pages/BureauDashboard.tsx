@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
+import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
+import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -650,8 +652,18 @@ export default function BureauDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="enregistrement" className="space-y-4">
-          {bureau && <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />}
+        <TabsContent value="enregistrement" className="space-y-6">
+          {bureau && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
+              </div>
+              <div className="space-y-6">
+                <MotoSecurityNotifications bureauId={bureau.id} />
+                <MotoSecurityAlerts bureauId={bureau.id} />
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
