@@ -196,6 +196,9 @@ export default function PDGSyndicatManagement() {
 
   const handleCopyBureau = async (bureau: Bureau) => {
     try {
+      const access_token = crypto.randomUUID();
+      const interface_url = `${window.location.origin}/bureau/${access_token}`;
+
       const { data, error } = await supabase
         .from('bureaus')
         .insert({
@@ -206,14 +209,18 @@ export default function PDGSyndicatManagement() {
           president_email: bureau.president_email,
           president_phone: bureau.president_phone,
           full_location: bureau.full_location,
-          status: 'active'
+          status: 'active',
+          access_token: access_token,
+          interface_url: interface_url
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      toast.success("Le bureau a été copié avec succès");
+      // Copier le lien dans le presse-papier
+      await navigator.clipboard.writeText(interface_url);
+      toast.success("Bureau copié avec succès et lien copié dans le presse-papier");
       
       await loadAllData();
     } catch (error: any) {
@@ -257,9 +264,20 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteBureau = async (bureauId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ?")) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ? Cette action supprimera également tous les travailleurs, membres et véhicules associés.")) return;
 
     try {
+      // Supprimer d'abord les enregistrements liés
+      await Promise.all([
+        supabase.from('syndicate_workers').delete().eq('bureau_id', bureauId),
+        supabase.from('members').delete().eq('bureau_id', bureauId),
+        supabase.from('registered_motos').delete().eq('bureau_id', bureauId),
+        supabase.from('syndicate_alerts').delete().eq('bureau_id', bureauId),
+        supabase.from('bureau_transactions').delete().eq('bureau_id', bureauId),
+        supabase.from('bureau_feature_assignments').delete().eq('bureau_id', bureauId)
+      ]);
+
+      // Ensuite supprimer le bureau
       const { error } = await supabase
         .from('bureaus')
         .delete()
@@ -267,10 +285,11 @@ export default function PDGSyndicatManagement() {
 
       if (error) throw error;
 
-      toast.success("Le bureau a été supprimé avec succès");
+      toast.success("Le bureau et toutes ses données ont été supprimés avec succès");
       
       await loadAllData();
     } catch (error: any) {
+      console.error('Erreur suppression bureau:', error);
       toast.error(error.message || "Erreur lors de la suppression du bureau");
     }
   };
