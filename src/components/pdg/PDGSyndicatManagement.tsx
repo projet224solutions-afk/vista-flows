@@ -67,6 +67,7 @@ export default function PDGSyndicatManagement() {
   const [alerts, setAlerts] = useState<SyndicateAlert[]>([]);
   const [features, setFeatures] = useState<BureauFeature[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
@@ -295,11 +296,20 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleResendLink = async (bureau: Bureau) => {
+    if (!bureau.president_email) {
+      toast.error('Aucun email de président renseigné');
+      return;
+    }
+
+    if (!bureau.access_token) {
+      toast.error('Aucun token d\'accès disponible pour ce bureau');
+      return;
+    }
+
+    setSendingEmail(bureau.id);
+    
     try {
-      if (!bureau.president_email) {
-        toast.error('Aucun email de président renseigné');
-        return;
-      }
+      toast.info('Envoi de l\'email en cours...');
 
       const { data, error } = await supabase.functions.invoke('send-bureau-access-email', {
         body: {
@@ -313,20 +323,20 @@ export default function PDGSyndicatManagement() {
 
       if (error) {
         console.error('Erreur fonction edge:', error);
-        toast.error(`Erreur: ${error.message}`);
-        return;
+        throw new Error(error.message || 'Erreur lors de l\'appel de la fonction');
       }
 
       if (data?.error) {
         console.error('Erreur envoi email:', data.error);
-        toast.error(`Erreur envoi email: ${data.error}`);
-        return;
+        throw new Error(data.error);
       }
       
-      toast.success(`Email envoyé à ${bureau.president_email}`);
+      toast.success(`✓ Email envoyé avec succès à ${bureau.president_email}`);
     } catch (error: any) {
       console.error('Erreur renvoi lien:', error);
       toast.error(`Erreur: ${error.message || 'Erreur lors du renvoi du lien'}`);
+    } finally {
+      setSendingEmail(null);
     }
   };
 
@@ -645,8 +655,15 @@ export default function PDGSyndicatManagement() {
                         <Eye className="w-4 h-4" />
                       </Button>
                       {bureau.president_email && (
-                        <Button variant="ghost" size="sm" onClick={() => handleResendLink(bureau)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleResendLink(bureau)}
+                          disabled={sendingEmail === bureau.id}
+                          className="gap-2"
+                        >
                           <Mail className="w-4 h-4" />
+                          {sendingEmail === bureau.id ? 'Envoi...' : 'Renvoyer'}
                         </Button>
                       )}
                       {bureau.status !== 'active' && (
