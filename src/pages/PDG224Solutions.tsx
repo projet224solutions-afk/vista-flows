@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap } from 'lucide-react';
+import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
@@ -25,7 +26,7 @@ const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 
 export default function PDG224Solutions() {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [mfaVerified, setMfaVerified] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -174,6 +175,16 @@ export default function PDG224Solutions() {
                     <span className="text-sm text-purple-500 font-medium">IA Active</span>
                   </div>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={signOut}
+                  className="gap-2"
+                  aria-label="Se déconnecter"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Déconnexion</span>
+                </Button>
               </div>
             </div>
             {!mfaVerified && (
