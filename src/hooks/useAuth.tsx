@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (needsVirtualCard) missing.push('Carte virtuelle');
 
         console.log('⚠️ Éléments manquants:', missing);
-        toast.info(`Configuration automatique en cours: ${missing.join(', ')}`);
+        // Ne plus afficher de toast info pour éviter les notifications répétées
 
         let customId = '';
 
@@ -121,13 +121,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Nom du titulaire
           const holderName = `${profile?.first_name || ''} ${profile?.last_name || customId}`.trim();
           
+          // Générer date d'expiration au format MM/YY (5 caractères)
+          const futureDate = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000);
+          const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
+          const year = futureDate.getFullYear().toString().slice(-2);
+          const expiryDate = `${month}/${year}`;
+          
           const { error: cardError } = await supabase
             .from('virtual_cards')
             .upsert({
               user_id: user.id,
               card_number: cardNumber,
               holder_name: holderName,
-              expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
+              expiry_date: expiryDate,
               cvv: Math.floor(Math.random() * 900 + 100).toString(),
               daily_limit: 500000,
               monthly_limit: 2000000
@@ -135,12 +141,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (cardError) {
             console.error('❌ Erreur création carte virtuelle:', cardError);
+            // Ne pas afficher de toast d'erreur pour éviter les notifications répétées
           } else {
             console.log('✅ Carte virtuelle créée:', cardNumber);
           }
         }
 
-        toast.success('✅ Configuration client complétée ! Wallet, ID et carte virtuelle créés.');
+        // Afficher le toast de succès seulement une fois, silencieusement en logs
+        if (missing.length > 0) {
+          console.log('✅ Configuration client complétée !');
+        }
       } else {
         console.log('✅ Setup utilisateur complet');
       }
