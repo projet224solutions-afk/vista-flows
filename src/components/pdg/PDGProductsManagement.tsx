@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Box } from 'lucide-react';
 import { usePDGProductsData } from '@/hooks/usePDGProductsData';
 
 export default function PDGProductsManagement() {
@@ -67,7 +67,7 @@ export default function PDGProductsManagement() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Produits</CardTitle>
@@ -75,6 +75,7 @@ export default function PDGProductsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">produits enregistrés</p>
           </CardContent>
         </Card>
 
@@ -87,6 +88,7 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-green-500">
               {stats.active}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">en vente</p>
           </CardContent>
         </Card>
 
@@ -99,6 +101,20 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-red-500">
               {stats.inactive}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">suspendus</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Stock Total</CardTitle>
+            <Box className="w-4 h-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-500">
+              {stats.totalStock.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
           </CardContent>
         </Card>
 
@@ -111,18 +127,20 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-orange-500">
               {stats.lowStock}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">produits concernés</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Valeur Totale</CardTitle>
-            <DollarSign className="w-4 h-4 text-blue-500" />
+            <DollarSign className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">
-              {stats.totalValue.toLocaleString()} GNF
+            <div className="text-2xl font-bold text-primary">
+              {stats.totalValue.toLocaleString('fr-FR')} GNF
             </div>
+            <p className="text-xs text-muted-foreground mt-1">valeur catalogue</p>
           </CardContent>
         </Card>
       </div>

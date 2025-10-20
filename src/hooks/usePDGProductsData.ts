@@ -27,6 +27,7 @@ export interface ProductStats {
   inactive: number;
   lowStock: number;
   totalValue: number;
+  totalStock: number;
 }
 
 export interface VendorInfo {
@@ -43,7 +44,8 @@ export function usePDGProductsData() {
     active: 0,
     inactive: 0,
     lowStock: 0,
-    totalValue: 0
+    totalValue: 0,
+    totalStock: 0
   });
 
   // Charger les produits
@@ -62,15 +64,15 @@ export function usePDGProductsData() {
 
       // Calculer les statistiques
       const activeProducts = productsData.filter(p => p.is_active);
-      const lowStockProducts: any[] = []; // À implémenter avec la table stock séparée si nécessaire
       const totalValue = productsData.reduce((sum, p) => sum + (p.price || 0), 0);
 
       setStats({
         total: productsData.length,
         active: activeProducts.length,
         inactive: productsData.length - activeProducts.length,
-        lowStock: lowStockProducts.length,
-        totalValue
+        lowStock: 0, // À calculer si la table stock existe
+        totalValue,
+        totalStock: productsData.length // Nombre de produits = stock (catalogue)
       });
     } catch (error) {
       console.error('Erreur chargement produits:', error);
