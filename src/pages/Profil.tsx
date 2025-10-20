@@ -1,11 +1,13 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback } from "react";
-import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera } from "lucide-react";
+import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import QuickFooter from "@/components/QuickFooter";
@@ -73,6 +75,10 @@ export default function Profil() {
   const [orders, setOrders] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const userTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
     ? userTypes[profile.role as keyof typeof userTypes] 
@@ -155,8 +161,47 @@ export default function Profil() {
       await loadOrders();
     } else if (itemId === 'history') {
       await loadTransactions();
+    } else if (itemId === 'settings') {
+      setEditEmail(user?.email || '');
+      setEditPhone(profile?.phone || '');
+      setEditMode(false);
     }
     setOpenDialog(itemId);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // Mise à jour de l'email
+      if (editEmail !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: editEmail
+        });
+        if (emailError) throw emailError;
+        toast.success('Email mis à jour. Vérifiez votre boîte mail pour confirmer.');
+      }
+
+      // Mise à jour du téléphone dans le profil
+      if (editPhone !== profile?.phone) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ phone: editPhone })
+          .eq('id', user.id);
+        
+        if (profileError) throw profileError;
+        toast.success('Numéro de téléphone mis à jour');
+      }
+
+      setEditMode(false);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error updating settings:', error);
+      toast.error(error?.message || 'Erreur lors de la mise à jour');
+    } finally {
+      setSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -270,18 +315,17 @@ export default function Profil() {
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
+            </div>
             <div className="flex items-center gap-2">
-              {profile?.role === 'vendeur' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/vendeur')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                  Retour
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -457,25 +501,78 @@ export default function Profil() {
       </Dialog>
 
       {/* Settings Dialog */}
-      <Dialog open={openDialog === 'settings'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+      <Dialog open={openDialog === 'settings'} onOpenChange={(open) => {
+        if (!open) {
+          setOpenDialog(null);
+          setEditMode(false);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Paramètres du Compte</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Email</label>
-              <p className="text-muted-foreground">{user?.email}</p>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              {editMode ? (
+                <Input
+                  id="email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-muted-foreground mt-1">{user?.email}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+              {editMode ? (
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+224 XXX XX XX XX"
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-muted-foreground mt-1">{profile?.phone || 'Non renseigné'}</p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium">Rôle</label>
-              <p className="text-muted-foreground">{profile?.role || 'client'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Téléphone</label>
-              <p className="text-muted-foreground">{profile?.phone || 'Non renseigné'}</p>
+              <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
             </div>
           </div>
+          <DialogFooter>
+            {editMode ? (
+              <>
+                <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveSettings} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Enregistrer
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditMode(true)}>
+                <Edit className="w-4 h-4 mr-2" />
+                Modifier
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
