@@ -457,8 +457,11 @@ export type Database = {
         Row: {
           call_type: string
           caller_id: string
+          duration: number | null
           ended_at: string | null
           id: string
+          metadata: Json | null
+          quality_rating: number | null
           receiver_id: string
           started_at: string
           status: Database["public"]["Enums"]["call_status_type"]
@@ -466,8 +469,11 @@ export type Database = {
         Insert: {
           call_type?: string
           caller_id: string
+          duration?: number | null
           ended_at?: string | null
           id?: string
+          metadata?: Json | null
+          quality_rating?: number | null
           receiver_id: string
           started_at?: string
           status?: Database["public"]["Enums"]["call_status_type"]
@@ -475,8 +481,11 @@ export type Database = {
         Update: {
           call_type?: string
           caller_id?: string
+          duration?: number | null
           ended_at?: string | null
           id?: string
+          metadata?: Json | null
+          quality_rating?: number | null
           receiver_id?: string
           started_at?: string
           status?: Database["public"]["Enums"]["call_status_type"]
@@ -618,6 +627,103 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      communication_notifications: {
+        Row: {
+          body: string
+          call_id: string | null
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message_id: string | null
+          metadata: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id?: string | null
+          metadata?: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id?: string | null
+          metadata?: Json | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_notifications_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_notifications_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -660,6 +766,8 @@ export type Database = {
           creator_id: string | null
           id: string
           last_message: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
           name: string | null
           type: string | null
           unread_count: number | null
@@ -671,6 +779,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           last_message?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
           name?: string | null
           type?: string | null
           unread_count?: number | null
@@ -682,6 +792,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           last_message?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
           name?: string | null
           type?: string | null
           unread_count?: number | null
@@ -1765,8 +1877,11 @@ export type Database = {
           content: string
           conversation_id: string | null
           created_at: string | null
+          file_name: string | null
+          file_size: number | null
           file_url: string | null
           id: string
+          metadata: Json | null
           read_at: string | null
           recipient_id: string
           sender_id: string
@@ -1777,8 +1892,11 @@ export type Database = {
           content: string
           conversation_id?: string | null
           created_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           read_at?: string | null
           recipient_id: string
           sender_id: string
@@ -1789,8 +1907,11 @@ export type Database = {
           content?: string
           conversation_id?: string | null
           created_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
@@ -4062,6 +4183,19 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
         Returns: Json
       }
+      create_communication_notification: {
+        Args: {
+          p_body: string
+          p_call_id?: string
+          p_conversation_id?: string
+          p_message_id?: string
+          p_metadata?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_default_expense_categories: {
         Args: { p_vendor_id: string }
         Returns: undefined
@@ -4106,12 +4240,30 @@ export type Database = {
         Args: { p_vendor_id: string }
         Returns: Json
       }
+      get_user_conversations: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          creator_id: string
+          id: string
+          last_message_at: string
+          last_message_preview: string
+          name: string
+          participants: Json
+          type: string
+          unread_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_messages_as_read: {
+        Args: { p_conversation_id: string; p_user_id: string }
+        Returns: undefined
       }
       process_wallet_transaction: {
         Args: {
