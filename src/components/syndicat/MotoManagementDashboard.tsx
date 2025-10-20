@@ -207,7 +207,8 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                 size="sm"
                                 onClick={() => setSelectedMoto(moto)}
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-4 h-4 mr-1" />
+                                Voir
                               </Button>
                             </DialogTrigger>
                           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -300,7 +301,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                           </DialogContent>
                         </Dialog>
                         
-                        {(moto.status === 'validated' || moto.status === 'active') && (
+                        {(moto.status === 'validated' || moto.status === 'active' || moto.status === 'pending') && (
                           <Button
                             variant="default"
                             size="sm"
@@ -308,8 +309,10 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                               setMotoForBadge(moto);
                               setShowBadgeGenerator(true);
                             }}
+                            className="bg-blue-600 hover:bg-blue-700"
                           >
-                            <CreditCard className="w-4 h-4" />
+                            <CreditCard className="w-4 h-4 mr-1" />
+                            Badge
                           </Button>
                         )}
                         </div>
