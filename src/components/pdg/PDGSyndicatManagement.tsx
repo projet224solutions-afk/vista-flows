@@ -197,14 +197,30 @@ export default function PDGSyndicatManagement() {
 
   const handleCopyBureau = async (bureau: Bureau) => {
     try {
-      // Copier simplement le lien existant sans créer de nouveau bureau
-      if (!bureau.interface_url) {
-        toast.error('Ce bureau n\'a pas de lien d\'accès');
+      let urlToCopy = bureau.interface_url;
+
+      // Si l'URL n'existe pas, la générer et la sauvegarder
+      if (!urlToCopy && bureau.access_token) {
+        urlToCopy = `${window.location.origin}/bureau/${bureau.access_token}`;
+        
+        // Mettre à jour le bureau avec l'URL générée
+        const { error } = await supabase
+          .from('bureaus')
+          .update({ interface_url: urlToCopy })
+          .eq('id', bureau.id);
+
+        if (error) {
+          console.error('Erreur mise à jour URL:', error);
+        }
+      }
+
+      if (!urlToCopy) {
+        toast.error('Impossible de générer le lien d\'accès');
         return;
       }
 
       // Copier le lien dans le presse-papier
-      await navigator.clipboard.writeText(bureau.interface_url);
+      await navigator.clipboard.writeText(urlToCopy);
       toast.success("Lien d'accès copié dans le presse-papier");
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la copie du lien");
