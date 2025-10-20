@@ -28,7 +28,10 @@ export interface RideDetails {
   price_total: number;
   payment_status: string;
   payment_method?: string;
-  created_at: string;
+  requested_at: string;
+  accepted_at?: string;
+  started_at?: string;
+  completed_at?: string;
 }
 
 export class RidesService {
@@ -212,7 +215,7 @@ export class RidesService {
       .from('taxi_trips')
       .select('*')
       .eq('customer_id', userId)
-      .order('created_at', { ascending: false })
+      .order('requested_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -227,7 +230,7 @@ export class RidesService {
       .from('taxi_trips')
       .select('*')
       .eq('driver_id', driverId)
-      .order('created_at', { ascending: false })
+      .order('requested_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
