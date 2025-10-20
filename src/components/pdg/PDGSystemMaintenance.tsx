@@ -1,85 +1,21 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-interface SystemStatus {
-  service: string;
-  status: 'operational' | 'degraded' | 'down';
-  uptime: string;
-  lastCheck: string;
-}
+import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText } from 'lucide-react';
+import { usePDGMaintenanceData } from '@/hooks/usePDGMaintenanceData';
 
 export default function PDGSystemMaintenance() {
-  const [loading, setLoading] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<SystemStatus[]>([
-    { service: 'Base de données', status: 'operational', uptime: '99.9%', lastCheck: 'Il y a 2 min' },
-    { service: 'Serveur principal', status: 'operational', uptime: '99.8%', lastCheck: 'Il y a 1 min' },
-    { service: 'Stockage fichiers', status: 'operational', uptime: '100%', lastCheck: 'Il y a 5 min' },
-    { service: 'API externe', status: 'degraded', uptime: '95.5%', lastCheck: 'Il y a 10 min' }
-  ]);
+  const { 
+    services, 
+    dbStats, 
+    logs, 
+    loading, 
+    checkServicesStatus,
+    cleanupOldData,
+    optimizeDatabase,
+    createBackup
+  } = usePDGMaintenanceData();
 
-  const handleRefreshStatus = async () => {
-    setLoading(true);
-    try {
-      // Vérifier l'état réel des services en interrogeant Supabase
-      const statusChecks = await Promise.allSettled([
-        supabase.from('profiles').select('count').limit(1).single(),
-        supabase.from('wallet_transactions').select('count').limit(1).single(),
-        supabase.from('products').select('count').limit(1).single()
-      ]);
-
-      const updatedStatus: SystemStatus[] = systemStatus.map((service, index) => {
-        const check = statusChecks[index];
-        return {
-          ...service,
-          status: (check.status === 'fulfilled' ? 'operational' : 'degraded') as 'operational' | 'degraded' | 'down',
-          lastCheck: 'À l\'instant'
-        };
-      });
-
-      setSystemStatus(updatedStatus);
-      toast.success('Statut système mis à jour');
-    } catch (error) {
-      console.error('Erreur refresh status:', error);
-      toast.error('Erreur lors de la mise à jour du statut');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMaintenance = async (action: string) => {
-    setLoading(true);
-    try {
-      // Vérifier les permissions et effectuer les actions de maintenance
-      if (action.includes('nettoyage DB')) {
-        // Nettoyer les anciennes données
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        await supabase
-          .from('audit_logs')
-          .delete()
-          .lt('created_at', thirtyDaysAgo.toISOString());
-      } else if (action.includes('backup DB')) {
-        // Log l'action de backup
-        toast.info('Backup DB lancé en arrière-plan');
-      } else if (action.includes('optimisation DB')) {
-        // Vérifier les indexes et optimiser
-        toast.info('Optimisation DB lancée');
-      }
-
-      toast.success(`Maintenance ${action} effectuée avec succès`);
-    } catch (error) {
-      console.error('Erreur maintenance:', error);
-      toast.error(`Erreur lors de la maintenance ${action}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -115,10 +51,57 @@ export default function PDGSystemMaintenance() {
           <h2 className="text-3xl font-bold">Maintenance Système</h2>
           <p className="text-muted-foreground mt-1">Surveillance et gestion de l'infrastructure</p>
         </div>
-        <Button onClick={handleRefreshStatus} disabled={loading}>
+        <Button onClick={checkServicesStatus} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Actualiser
         </Button>
+      </div>
+
+      {/* Statistiques Base de Données */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Tables</CardTitle>
+            <Database className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dbStats.totalTables}</div>
+            <p className="text-xs text-muted-foreground mt-1">tables principales</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Enregistrements</CardTitle>
+            <FileText className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dbStats.totalRecords.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">enregistrements totaux</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Stockage</CardTitle>
+            <HardDrive className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dbStats.storageUsed}</div>
+            <p className="text-xs text-muted-foreground mt-1">espace utilisé</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Dernier Backup</CardTitle>
+            <Clock className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-bold">{dbStats.lastBackup || 'Jamais'}</div>
+            <p className="text-xs text-muted-foreground mt-1">sauvegarde système</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Statut des services */}
@@ -131,7 +114,7 @@ export default function PDGSystemMaintenance() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {systemStatus.map((service, index) => (
+            {services.map((service, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card"
@@ -139,15 +122,22 @@ export default function PDGSystemMaintenance() {
                 <div className="flex items-center gap-4">
                   {getStatusIcon(service.status)}
                   <div>
-                    <h3 className="font-medium">{service.service}</h3>
+                    <h3 className="font-medium">{service.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       Uptime: {service.uptime} • {service.lastCheck}
+                      {service.responseTime && ` • ${service.responseTime}ms`}
                     </p>
                   </div>
                 </div>
                 {getStatusBadge(service.status)}
               </div>
             ))}
+            {services.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Server className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Aucun service surveillé</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -165,15 +155,15 @@ export default function PDGSystemMaintenance() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('nettoyage DB')}
+              onClick={() => cleanupOldData(30)}
               disabled={loading}
             >
-              Nettoyage
+              Nettoyage (30j)
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('optimisation DB')}
+              onClick={optimizeDatabase}
               disabled={loading}
             >
               Optimisation
@@ -181,7 +171,7 @@ export default function PDGSystemMaintenance() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('backup DB')}
+              onClick={createBackup}
               disabled={loading}
             >
               Sauvegarde
@@ -200,26 +190,25 @@ export default function PDGSystemMaintenance() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('redémarrage serveurs')}
+              onClick={checkServicesStatus}
               disabled={loading}
             >
-              Redémarrer
+              Vérifier Statut
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('mise à jour serveurs')}
+              onClick={optimizeDatabase}
               disabled={loading}
             >
-              Mettre à jour
+              Rafraîchir Stats
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('monitoring serveurs')}
-              disabled={loading}
+              disabled={true}
             >
-              Surveiller
+              Surveiller (Pro)
             </Button>
           </CardContent>
         </Card>
@@ -235,30 +224,60 @@ export default function PDGSystemMaintenance() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('nettoyage stockage')}
+              onClick={() => cleanupOldData(60)}
               disabled={loading}
             >
-              Nettoyer
+              Nettoyer (60j)
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('analyse stockage')}
+              onClick={optimizeDatabase}
               disabled={loading}
             >
-              Analyser
+              Analyser DB
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleMaintenance('compression stockage')}
-              disabled={loading}
+              disabled={true}
             >
-              Compresser
+              Compresser (Pro)
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Logs de Maintenance */}
+      {logs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Historique des Maintenances
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {logs.slice(0, 5).map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card text-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{log.action}</p>
+                      <p className="text-xs text-muted-foreground">{log.timestamp}</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-500">Succès</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
