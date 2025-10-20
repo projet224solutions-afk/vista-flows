@@ -84,16 +84,31 @@ export default function Profil() {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          customer_id,
+          vendor_id,
+          total_amount,
+          status,
+          created_at,
+          delivery_address,
+          delivery_city
+        `)
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20) as any;
+        .limit(20);
       
-      if (!error && data) {
-        setOrders(data);
+      if (error) {
+        console.error('Error loading orders:', error);
+        toast.error('Erreur lors du chargement des commandes');
+        setOrders([]);
+      } else {
+        setOrders(data || []);
       }
     } catch (error) {
       console.error('Error loading orders:', error);
+      toast.error('Erreur lors du chargement des commandes');
+      setOrders([]);
     } finally {
       setLoadingData(false);
     }
@@ -105,16 +120,31 @@ export default function Profil() {
     try {
       const { data, error } = await supabase
         .from('wallet_transactions')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          amount,
+          type,
+          status,
+          description,
+          created_at,
+          currency
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50) as any;
+        .limit(50);
       
-      if (!error && data) {
-        setTransactions(data);
+      if (error) {
+        console.error('Error loading transactions:', error);
+        toast.error('Erreur lors du chargement des transactions');
+        setTransactions([]);
+      } else {
+        setTransactions(data || []);
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
+      toast.error('Erreur lors du chargement des transactions');
+      setTransactions([]);
     } finally {
       setLoadingData(false);
     }
@@ -365,7 +395,15 @@ export default function Profil() {
                       </div>
                       <Badge>{order.status}</Badge>
                     </div>
-                    <p className="text-lg font-bold">{order.total_amount?.toLocaleString()} GNF</p>
+                    <p className="text-lg font-bold">
+                      {order.total_amount ? `${order.total_amount.toLocaleString()} GNF` : 'N/A'}
+                    </p>
+                    {order.delivery_address && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        📍 {order.delivery_address}
+                        {order.delivery_city ? `, ${order.delivery_city}` : ''}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -403,10 +441,10 @@ export default function Profil() {
                       </div>
                       <div className="text-right">
                         <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {tx.amount > 0 ? '+' : ''}{tx.amount?.toLocaleString()} GNF
+                          {tx.amount > 0 ? '+' : ''}{tx.amount ? tx.amount.toLocaleString() : '0'} {tx.currency || 'GNF'}
                         </p>
                         <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
-                          {tx.status}
+                          {tx.status || 'pending'}
                         </Badge>
                       </div>
                     </div>
