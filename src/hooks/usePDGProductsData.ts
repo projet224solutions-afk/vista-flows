@@ -79,7 +79,7 @@ export function usePDGProductsData() {
 
       // Calculer les statistiques
       const activeProducts = productsWithStock.filter(p => p.is_active);
-      const totalValue = productsWithStock.reduce((sum, p) => sum + (p.price || 0), 0);
+      const totalValue = productsWithStock.reduce((sum, p) => sum + ((p.price || 0) * (p.total_stock || 0)), 0);
       const totalStock = productsWithStock.reduce((sum, p) => sum + (p.total_stock || 0), 0);
 
       setStats({
