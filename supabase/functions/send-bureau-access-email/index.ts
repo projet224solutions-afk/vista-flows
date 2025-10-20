@@ -31,6 +31,9 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        // ⚠️ IMPORTANT: Remplacez "onboarding@resend.dev" par votre domaine vérifié sur Resend
+        // Par exemple: "224Solutions <noreply@votredomaine.com>"
+        // Tant que le domaine n'est pas vérifié, les emails ne peuvent être envoyés qu'à bahthiernosouleymane00@gmail.com
         from: "224Solutions <onboarding@resend.dev>",
         to: [email],
         subject: type === 'bureau' ? `Votre bureau syndical ${bureau_code || ''} est prêt` : `Votre accès au bureau syndical`,
