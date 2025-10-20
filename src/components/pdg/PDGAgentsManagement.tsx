@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy } from 'lucide-react';
+import { UserCheck, Search, Eye, Ban, Trash2, Plus, Mail, Edit, Copy, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { agentService } from '@/services/agentService';
@@ -23,6 +23,7 @@ interface Agent {
   commission_rate: number;
   is_active: boolean;
   created_at: string;
+  agent_code?: string;
 }
 
 export default function PDGAgentsManagement() {
@@ -35,6 +36,7 @@ export default function PDGAgentsManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
+  const [agentLinks, setAgentLinks] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -201,15 +203,26 @@ export default function PDGAgentsManagement() {
       });
 
       if (result.success && result.invitationLink) {
+        // Sauvegarder le lien pour cet agent
+        setAgentLinks(prev => ({ ...prev, [agent.id]: result.invitationLink! }));
         // Copier le lien dans le presse-papier
         await navigator.clipboard.writeText(result.invitationLink);
-        toast.success('📋 Lien d\'invitation copié dans le presse-papier');
+        toast.success('📧 Email envoyé et lien copié dans le presse-papier');
       } else {
         toast.error(result.error || 'Erreur lors de l\'envoi de l\'invitation');
       }
     } catch (error) {
       console.error('Erreur envoi invitation:', error);
       toast.error('Erreur lors de l\'envoi de l\'invitation');
+    }
+  };
+
+  const handleCopyLink = async (link: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('📋 Lien copié dans le presse-papier');
+    } catch (error) {
+      toast.error('Erreur lors de la copie du lien');
     }
   };
 
@@ -493,55 +506,108 @@ export default function PDGAgentsManagement() {
             {filteredAgents.map((agent) => (
               <div
                 key={agent.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                className="rounded-lg border bg-card overflow-hidden"
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <UserCheck className="w-10 h-10 text-muted-foreground" />
-                  <div className="flex-1">
-                    <h3 className="font-medium">{agent.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {agent.email} • {agent.role} • Commission: {agent.commission_rate}%
-                    </p>
+                {/* En-tête agent */}
+                <div className="flex items-center justify-between p-4 bg-muted/50">
+                  <div className="flex items-center gap-4 flex-1">
+                    <UserCheck className="w-10 h-10 text-primary" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{agent.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {agent.role} • Commission: {agent.commission_rate}%
+                      </p>
+                    </div>
+                    {agent.is_active ? (
+                      <Badge className="bg-green-500">Actif</Badge>
+                    ) : (
+                      <Badge className="bg-red-500">Suspendu</Badge>
+                    )}
                   </div>
-                  {agent.is_active ? (
-                    <Badge className="bg-green-500">Actif</Badge>
-                  ) : (
-                    <Badge className="bg-red-500">Suspendu</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditAgent(agent)}
+                      title="Modifier l'agent"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleSendInvitation(agent)}
+                      title="Envoyer invitation par email"
+                    >
+                      <Mail className="w-4 h-4 text-blue-500" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAgentAction(agent.id, agent.is_active ? 'suspend' : 'activate')}
+                      title={agent.is_active ? 'Suspendre' : 'Activer'}
+                    >
+                      <Ban className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAgentAction(agent.id, 'delete')}
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditAgent(agent)}
-                    title="Modifier l'agent"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleSendInvitation(agent)}
-                    title="Envoyer invitation par email"
-                  >
-                    <Mail className="w-4 h-4 text-blue-500" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAgentAction(agent.id, agent.is_active ? 'suspend' : 'activate')}
-                    title={agent.is_active ? 'Suspendre' : 'Activer'}
-                  >
-                    <Ban className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAgentAction(agent.id, 'delete')}
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
+
+                {/* Informations détaillées */}
+                <div className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">📧 Email</p>
+                      <p className="text-sm font-medium">{agent.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">📱 Téléphone</p>
+                      <p className="text-sm font-medium">{agent.phone || 'Non renseigné'}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">🆔 ID Agent</p>
+                      <p className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                        {agent.id.substring(0, 8)}...
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">🏷️ Code Agent</p>
+                      <p className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                        {agent.agent_code || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lien d'invitation si disponible */}
+                  {agentLinks[agent.id] && (
+                    <div className="pt-3 border-t">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">🔗 Lien d'activation</p>
+                      <div className="flex gap-2">
+                        <Input
+                          value={agentLinks[agent.id]}
+                          readOnly
+                          className="text-xs font-mono"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCopyLink(agentLinks[agent.id])}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
