@@ -23,6 +23,8 @@ export default function PDGSyndicatManagement() {
     deleteBureau,
     copyBureauLink,
     resendBureauLink,
+    updateWorker,
+    deleteWorker,
   } = usePDGSyndicatData();
 
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
@@ -31,6 +33,8 @@ export default function PDGSyndicatManagement() {
   const [selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
   const [editingBureau, setEditingBureau] = useState<Bureau | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<any>(null);
+  const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     bureau_code: '',
     prefecture: '',
@@ -102,6 +106,33 @@ export default function PDGSyndicatManagement() {
     setSendingEmail(bureau.id);
     await resendBureauLink(bureau);
     setSendingEmail(null);
+  };
+
+  const handleEditWorker = (worker: any) => {
+    setEditingWorker(worker);
+    setIsWorkerDialogOpen(true);
+  };
+
+  const handleSaveWorker = async () => {
+    if (!editingWorker) return;
+
+    const success = await updateWorker(editingWorker.id, {
+      nom: editingWorker.nom,
+      email: editingWorker.email,
+      telephone: editingWorker.telephone,
+      access_level: editingWorker.access_level,
+      is_active: editingWorker.is_active
+    });
+
+    if (success) {
+      setIsWorkerDialogOpen(false);
+      setEditingWorker(null);
+    }
+  };
+
+  const handleDeleteWorker = async (workerId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce travailleur ?")) return;
+    await deleteWorker(workerId);
   };
 
   const filteredBureaus = bureaus.filter(bureau =>
@@ -460,7 +491,7 @@ export default function PDGSyndicatManagement() {
                   const bureau = bureaus.find(b => b.id === worker.bureau_id);
                   return (
                     <div key={worker.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium">{worker.nom}</h3>
                         <p className="text-sm text-muted-foreground">
                           {worker.email} • Bureau: {bureau?.bureau_code || 'N/A'}
@@ -469,11 +500,27 @@ export default function PDGSyndicatManagement() {
                           Accès: {worker.access_level}
                         </p>
                       </div>
-                      {worker.is_active ? (
-                        <Badge className="bg-green-500">Actif</Badge>
-                      ) : (
-                        <Badge className="bg-gray-500">Inactif</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {worker.is_active ? (
+                          <Badge className="bg-green-500">Actif</Badge>
+                        ) : (
+                          <Badge className="bg-gray-500">Inactif</Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditWorker(worker)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteWorker(worker.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -486,6 +533,70 @@ export default function PDGSyndicatManagement() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Dialog pour modifier un travailleur */}
+        <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier le travailleur</DialogTitle>
+            </DialogHeader>
+            {editingWorker && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="worker_nom">Nom</Label>
+                  <Input
+                    id="worker_nom"
+                    value={editingWorker.nom}
+                    onChange={(e) => setEditingWorker({ ...editingWorker, nom: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="worker_email">Email</Label>
+                  <Input
+                    id="worker_email"
+                    type="email"
+                    value={editingWorker.email}
+                    onChange={(e) => setEditingWorker({ ...editingWorker, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="worker_phone">Téléphone</Label>
+                  <Input
+                    id="worker_phone"
+                    value={editingWorker.telephone || ''}
+                    onChange={(e) => setEditingWorker({ ...editingWorker, telephone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="worker_access">Niveau d'accès</Label>
+                  <Input
+                    id="worker_access"
+                    value={editingWorker.access_level}
+                    onChange={(e) => setEditingWorker({ ...editingWorker, access_level: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="worker_active"
+                    checked={editingWorker.is_active}
+                    onChange={(e) => setEditingWorker({ ...editingWorker, is_active: e.target.checked })}
+                    className="rounded"
+                  />
+                  <Label htmlFor="worker_active">Actif</Label>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsWorkerDialogOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={handleSaveWorker}>
+                    Sauvegarder
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="alerts" className="space-y-4">
           <Card>

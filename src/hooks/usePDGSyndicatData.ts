@@ -340,6 +340,46 @@ export const usePDGSyndicatData = () => {
     }
   }, []);
 
+  // Mettre à jour un travailleur
+  const updateWorker = useCallback(async (workerId: string, updates: Partial<SyndicateWorker>) => {
+    try {
+      const { error } = await supabase
+        .from('syndicate_workers')
+        .update(updates)
+        .eq('id', workerId);
+
+      if (error) throw error;
+
+      toast.success('Travailleur mis à jour avec succès');
+      await loadAllData();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur mise à jour travailleur:', error);
+      toast.error(error.message || 'Erreur lors de la mise à jour du travailleur');
+      return false;
+    }
+  }, [loadAllData]);
+
+  // Supprimer un travailleur
+  const deleteWorker = useCallback(async (workerId: string) => {
+    try {
+      const { error } = await supabase
+        .from('syndicate_workers')
+        .delete()
+        .eq('id', workerId);
+
+      if (error) throw error;
+
+      toast.success('Travailleur supprimé avec succès');
+      await loadAllData();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur suppression travailleur:', error);
+      toast.error(error.message || 'Erreur lors de la suppression du travailleur');
+      return false;
+    }
+  }, [loadAllData]);
+
   // Charger les données au montage
   useEffect(() => {
     loadAllData();
@@ -358,6 +398,8 @@ export const usePDGSyndicatData = () => {
     deleteBureau,
     copyBureauLink,
     resendBureauLink,
+    updateWorker,
+    deleteWorker,
     refetch: loadAllData,
   };
 };
