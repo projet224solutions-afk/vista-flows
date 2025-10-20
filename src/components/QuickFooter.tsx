@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, Bike, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,11 +25,11 @@ export default function QuickFooter() {
       description: 'Achats en ligne - Produits et vendeurs'
     },
     {
-      id: 'taxi-moto',
-      label: 'Taxi-Moto',
-      icon: Bike,
-      path: '/taxi-moto',
-      description: 'Service de transport rapide'
+      id: 'tracking',
+      label: 'Tracking',
+      icon: MapPin,
+      path: '/tracking',
+      description: 'Suivi de commandes en temps réel'
     },
     {
       id: 'profil',
