@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown } from "lucide-react";
-import { AdminAuthButton } from "@/components/AdminAuthButton";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 
@@ -407,11 +406,6 @@ export default function Auth() {
 
       {/* Footer de navigation */}
       <QuickFooter />
-
-      {/* Bouton Admin en bas à droite */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <AdminAuthButton />
-      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap, AlertTriangle } from 'lucide-react';
+import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
@@ -22,7 +22,6 @@ const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalyt
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
-const PDGTestSuite = lazy(() => import('@/components/pdg/PDGTestSuite'));
 
 export default function PDG224Solutions() {
   const { user, profile } = useAuth();
@@ -40,12 +39,8 @@ export default function PDG224Solutions() {
   useEffect(() => {
     if (isEnsured) return;
     const checkPDGAccess = async () => {
-      // Mode démo : Permettre l'accès même sans authentification
       if (!user) {
-        console.log('🎭 Mode démo PDG activé');
-        toast.info('Mode démo activé - Fonctionnalités limitées');
-        setLoading(false);
-        setIsEnsured(true);
+        navigate('/auth');
         return;
       }
 
@@ -55,10 +50,11 @@ export default function PDG224Solutions() {
         return;
       }
 
-      // Vérifier le rôle admin (mais permettre le mode démo)
+      // Vérifier le rôle admin
       if (profile.role !== 'admin') {
-        console.log('🎭 Accès PDG en mode démo pour utilisateur non-admin');
-        toast.info('Mode démo activé - Certaines fonctionnalités sont limitées');
+        toast.error('Accès refusé - Réservé au PDG');
+        navigate('/');
+        return;
       }
 
       // ✅ Log de l'accès PDG avec timeout/fallback
@@ -118,13 +114,10 @@ export default function PDG224Solutions() {
     }
   }, [user]);
 
-  if (loading) {
+  if (loading || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement de l'interface PDG...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -296,14 +289,6 @@ export default function PDG224Solutions() {
                 <MessageSquare className="w-4 h-4" />
                 <span className="font-medium">Copilote IA</span>
               </TabsTrigger>
-              <TabsTrigger
-                value="tests"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Tests"
-              >
-                <AlertTriangle className="w-4 h-4" />
-                <span className="font-medium">Tests</span>
-              </TabsTrigger>
             </TabsList>
 
             <Suspense fallback={
@@ -377,12 +362,6 @@ export default function PDG224Solutions() {
               <TabsContent value="copilot" className="animate-fade-in transition-all duration-300">
                 <ErrorBoundary>
                   <PDGCopilot mfaVerified={mfaVerified} />
-                </ErrorBoundary>
-              </TabsContent>
-
-              <TabsContent value="tests" className="animate-fade-in transition-all duration-300">
-                <ErrorBoundary>
-                  <PDGTestSuite mfaVerified={mfaVerified} />
                 </ErrorBoundary>
               </TabsContent>
             </Suspense>

@@ -26,8 +26,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
-import { PDGTestButton } from "@/components/PDGTestButton";
-import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 // Services principaux comme dans l'image
 const mainServices = [
@@ -275,14 +273,6 @@ export default function IndexAlibaba() {
           <h2 className="text-2xl font-bold mb-4">🎯 Interfaces Professionnelles</h2>
           <p className="mb-6">Accédez à vos tableaux de bord de gestion</p>
           <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => navigate('/pdg')}
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 hover:from-yellow-500 hover:to-orange-600 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              <Shield className="w-6 h-6 mr-2" />
-              Interface PDG
-            </Button>
             <Button
               onClick={() => navigate('/vendeur-open')}
               className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
