@@ -28,8 +28,8 @@ const UserActivationPage = lazy(() => import("./components/agent-system/UserActi
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
-// Removed deprecated PDG agent pages - being refactored
-// Removed PDG test pages
+const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
+const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -134,11 +134,12 @@ const App = () => (
                 }
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
+              <Route path="/bureau/:token" element={<BureauDashboard />} />
+              <Route path="/worker/:token" element={<WorkerDashboard />} />
               <Route
                 path="/agent-system"
                 element={<AgentSystem />}
               />
-              {/* PDG routes removed - being refactored */}
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"

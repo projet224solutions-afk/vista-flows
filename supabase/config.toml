@@ -2,3 +2,6 @@ project_id = "uakkxaibujzxdiqzpnpr"
 
 [functions.wallet-operations]
 verify_jwt = true
+
+[functions.send-bureau-access-email]
+verify_jwt = false

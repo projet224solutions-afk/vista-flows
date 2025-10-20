@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Building2, Search, Eye, CheckCircle, Plus } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -22,13 +23,52 @@ interface Bureau {
   total_cotisations: number;
   status: string;
   created_at: string;
+  access_token?: string;
+  interface_url?: string;
+}
+
+interface SyndicateWorker {
+  id: string;
+  bureau_id: string;
+  nom: string;
+  email: string;
+  telephone?: string;
+  access_level: string;
+  permissions: any;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface SyndicateAlert {
+  id: string;
+  bureau_id: string;
+  alert_type: string;
+  severity: string;
+  title: string;
+  message: string;
+  is_critical: boolean;
+  is_read: boolean;
+  created_at: string;
+}
+
+interface BureauFeature {
+  id: string;
+  feature_name: string;
+  feature_code: string;
+  description: string;
+  version: string;
+  is_active: boolean;
 }
 
 export default function PDGSyndicatManagement() {
   const [bureaus, setBureaus] = useState<Bureau[]>([]);
+  const [workers, setWorkers] = useState<SyndicateWorker[]>([]);
+  const [alerts, setAlerts] = useState<SyndicateAlert[]>([]);
+  const [features, setFeatures] = useState<BureauFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
   const [formData, setFormData] = useState({
     bureau_code: '',
     prefecture: '',
@@ -40,23 +80,32 @@ export default function PDGSyndicatManagement() {
   });
 
   useEffect(() => {
-    loadBureaus();
+    loadAllData();
   }, []);
 
-  const loadBureaus = async () => {
+  const loadAllData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('bureaus')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      const [bureausRes, workersRes, alertsRes, featuresRes] = await Promise.all([
+        supabase.from('bureaus').select('*').order('created_at', { ascending: false }),
+        supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }),
+        supabase.from('syndicate_alerts').select('*').eq('is_critical', true).order('created_at', { ascending: false }).limit(10),
+        supabase.from('bureau_features').select('*').eq('is_active', true)
+      ]);
 
-      if (error) throw error;
+      if (bureausRes.error) throw bureausRes.error;
+      if (workersRes.error) throw workersRes.error;
+      if (alertsRes.error) throw alertsRes.error;
+      if (featuresRes.error) throw featuresRes.error;
 
-      setBureaus(data || []);
+      setBureaus(bureausRes.data || []);
+      setWorkers(workersRes.data as any || []);
+      setAlerts(alertsRes.data as any || []);
+      setFeatures(featuresRes.data as any || []);
     } catch (error) {
-      console.error('Erreur chargement bureaux:', error);
-      toast.error('Erreur lors du chargement des bureaux syndicaux');
+      console.error('Erreur chargement données:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -75,7 +124,7 @@ export default function PDGSyndicatManagement() {
       if (error) throw error;
 
       toast.success('Bureau validé avec succès');
-      await loadBureaus();
+      await loadAllData();
     } catch (error) {
       console.error('Erreur validation bureau:', error);
       toast.error('Erreur lors de la validation du bureau');
@@ -86,7 +135,9 @@ export default function PDGSyndicatManagement() {
     e.preventDefault();
     
     try {
-      const { error } = await supabase
+      const access_token = crypto.randomUUID();
+      
+      const { data: bureau, error } = await supabase
         .from('bureaus')
         .insert([{
           bureau_code: formData.bureau_code,
@@ -99,12 +150,30 @@ export default function PDGSyndicatManagement() {
           status: 'active',
           total_members: 0,
           total_vehicles: 0,
-          total_cotisations: 0
-        }]);
+          total_cotisations: 0,
+          access_token: access_token
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast.success('Bureau créé avec succès');
+      // Envoyer l'email avec le lien permanent
+      if (formData.president_email) {
+        await supabase.functions.invoke('send-bureau-access-email', {
+          body: {
+            type: 'bureau',
+            email: formData.president_email,
+            name: formData.president_name || formData.bureau_code,
+            bureau_code: formData.bureau_code,
+            access_token: access_token
+          }
+        });
+        toast.success('Bureau créé et email envoyé avec le lien d\'accès');
+      } else {
+        toast.success('Bureau créé avec succès');
+      }
+
       setIsDialogOpen(false);
       setFormData({
         bureau_code: '',
@@ -115,10 +184,34 @@ export default function PDGSyndicatManagement() {
         president_phone: '',
         full_location: ''
       });
-      await loadBureaus();
+      await loadAllData();
     } catch (error) {
       console.error('Erreur création bureau:', error);
       toast.error('Erreur lors de la création du bureau');
+    }
+  };
+
+  const handleResendLink = async (bureau: Bureau) => {
+    try {
+      if (!bureau.president_email) {
+        toast.error('Aucun email de président renseigné');
+        return;
+      }
+
+      await supabase.functions.invoke('send-bureau-access-email', {
+        body: {
+          type: 'bureau',
+          email: bureau.president_email,
+          name: bureau.president_name || bureau.bureau_code,
+          bureau_code: bureau.bureau_code,
+          access_token: bureau.access_token
+        }
+      });
+      
+      toast.success('Lien renvoyé par email');
+    } catch (error) {
+      console.error('Erreur renvoi lien:', error);
+      toast.error('Erreur lors du renvoi du lien');
     }
   };
 
@@ -135,6 +228,9 @@ export default function PDGSyndicatManagement() {
       </div>
     );
   }
+
+  const totalWorkers = workers.length;
+  const criticalAlerts = alerts.filter(a => a.is_critical).length;
 
   return (
     <div className="space-y-6">
@@ -252,7 +348,7 @@ export default function PDGSyndicatManagement() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Bureaux</CardTitle>
@@ -265,8 +361,18 @@ export default function PDGSyndicatManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Travailleurs</CardTitle>
+            <Users className="w-4 h-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-500">{totalWorkers}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Membres</CardTitle>
-            <Building2 className="w-4 h-4 text-green-500" />
+            <Users className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-500">
@@ -278,10 +384,10 @@ export default function PDGSyndicatManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Véhicules</CardTitle>
-            <Building2 className="w-4 h-4 text-blue-500" />
+            <Bike className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">
+            <div className="text-2xl font-bold text-purple-500">
               {bureaus.reduce((acc, b) => acc + b.total_vehicles, 0)}
             </div>
           </CardContent>
@@ -289,90 +395,221 @@ export default function PDGSyndicatManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Cotisations Totales</CardTitle>
-            <Building2 className="w-4 h-4 text-purple-500" />
+            <CardTitle className="text-sm font-medium">Alertes Critiques</CardTitle>
+            <AlertCircle className="w-4 h-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
-              {bureaus.reduce((acc, b) => acc + b.total_cotisations, 0).toLocaleString()} GNF
-            </div>
+            <div className="text-2xl font-bold text-red-500">{criticalAlerts}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recherche */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Rechercher un bureau</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par code, préfecture ou commune..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs pour les différentes sections */}
+      <Tabs defaultValue="bureaus" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="bureaus">
+            <Building2 className="w-4 h-4 mr-2" />
+            Bureaux ({bureaus.length})
+          </TabsTrigger>
+          <TabsTrigger value="workers">
+            <Users className="w-4 h-4 mr-2" />
+            Travailleurs ({totalWorkers})
+          </TabsTrigger>
+          <TabsTrigger value="alerts">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Alertes ({criticalAlerts})
+          </TabsTrigger>
+          <TabsTrigger value="features">
+            <Settings className="w-4 h-4 mr-2" />
+            Fonctionnalités ({features.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Liste des bureaux */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des Bureaux ({filteredBureaus.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredBureaus.map((bureau) => (
-              <div
-                key={bureau.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <Building2 className="w-10 h-10 text-muted-foreground" />
-                  <div className="flex-1">
-                    <h3 className="font-medium">{bureau.bureau_code}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {bureau.prefecture} - {bureau.commune} • {bureau.total_members} membres • {bureau.total_vehicles} véhicules
-                    </p>
-                    {bureau.president_name && (
-                      <p className="text-xs text-muted-foreground">
-                        Président: {bureau.president_name}
+        <TabsContent value="bureaus" className="space-y-4">
+          {/* Recherche */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Rechercher un bureau</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher par code, préfecture ou commune..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Liste des bureaux */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des Bureaux ({filteredBureaus.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {filteredBureaus.map((bureau) => (
+                  <div
+                    key={bureau.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <Building2 className="w-10 h-10 text-muted-foreground" />
+                      <div className="flex-1">
+                        <h3 className="font-medium">{bureau.bureau_code}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {bureau.prefecture} - {bureau.commune} • {bureau.total_members} membres • {bureau.total_vehicles} véhicules
+                        </p>
+                        {bureau.president_name && (
+                          <p className="text-xs text-muted-foreground">
+                            Président: {bureau.president_name}
+                          </p>
+                        )}
+                      </div>
+                      {bureau.status === 'active' ? (
+                        <Badge className="bg-green-500">Actif</Badge>
+                      ) : (
+                        <Badge className="bg-yellow-500">En attente</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedBureau(bureau)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      {bureau.president_email && (
+                        <Button variant="ghost" size="sm" onClick={() => handleResendLink(bureau)}>
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {bureau.status !== 'active' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleValidate(bureau.id)}
+                        >
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {filteredBureaus.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucun bureau trouvé
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="workers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des Travailleurs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {workers.map((worker) => {
+                  const bureau = bureaus.find(b => b.id === worker.bureau_id);
+                  return (
+                    <div key={worker.id} className="flex items-center justify-between p-4 rounded-lg border">
+                      <div>
+                        <h3 className="font-medium">{worker.nom}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {worker.email} • Bureau: {bureau?.bureau_code || 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Accès: {worker.access_level}
+                        </p>
+                      </div>
+                      {worker.is_active ? (
+                        <Badge className="bg-green-500">Actif</Badge>
+                      ) : (
+                        <Badge className="bg-gray-500">Inactif</Badge>
+                      )}
+                    </div>
+                  );
+                })}
+                {workers.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucun travailleur trouvé
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="alerts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Alertes Critiques</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {alerts.filter(a => a.is_critical).map((alert) => {
+                  const bureau = bureaus.find(b => b.id === alert.bureau_id);
+                  return (
+                    <div key={alert.id} className="flex items-start gap-4 p-4 rounded-lg border border-red-200 bg-red-50">
+                      <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-red-900">{alert.title}</h3>
+                        <p className="text-sm text-red-700 mt-1">{alert.message}</p>
+                        <p className="text-xs text-red-600 mt-2">
+                          Bureau: {bureau?.bureau_code || 'N/A'} • {new Date(alert.created_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                      <Badge className="bg-red-500">{alert.severity}</Badge>
+                    </div>
+                  );
+                })}
+                {alerts.filter(a => a.is_critical).length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucune alerte critique
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="features" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fonctionnalités Disponibles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                {features.map((feature) => (
+                  <div key={feature.id} className="flex items-start justify-between p-4 rounded-lg border">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{feature.feature_name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Version: {feature.version} • Code: {feature.feature_code}
                       </p>
+                    </div>
+                    {feature.is_active ? (
+                      <Badge className="bg-green-500">Active</Badge>
+                    ) : (
+                      <Badge className="bg-gray-500">Inactive</Badge>
                     )}
                   </div>
-                  {bureau.status === 'active' ? (
-                    <Badge className="bg-green-500">Actif</Badge>
-                  ) : (
-                    <Badge className="bg-yellow-500">En attente</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  {bureau.status !== 'active' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleValidate(bureau.id)}
-                    >
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    </Button>
-                  )}
-                </div>
+                ))}
+                {features.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucune fonctionnalité trouvée
+                  </div>
+                )}
               </div>
-            ))}
-            {filteredBureaus.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                Aucun bureau trouvé
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
