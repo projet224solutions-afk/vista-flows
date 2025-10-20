@@ -301,7 +301,7 @@ export default function PDGSyndicatManagement() {
         return;
       }
 
-      await supabase.functions.invoke('send-bureau-access-email', {
+      const { data, error } = await supabase.functions.invoke('send-bureau-access-email', {
         body: {
           type: 'bureau',
           email: bureau.president_email,
@@ -310,11 +310,23 @@ export default function PDGSyndicatManagement() {
           access_token: bureau.access_token
         }
       });
+
+      if (error) {
+        console.error('Erreur fonction edge:', error);
+        toast.error(`Erreur: ${error.message}`);
+        return;
+      }
+
+      if (data?.error) {
+        console.error('Erreur envoi email:', data.error);
+        toast.error(`Erreur envoi email: ${data.error}`);
+        return;
+      }
       
-      toast.success('Lien renvoyé par email');
-    } catch (error) {
+      toast.success(`Email envoyé à ${bureau.president_email}`);
+    } catch (error: any) {
       console.error('Erreur renvoi lien:', error);
-      toast.error('Erreur lors du renvoi du lien');
+      toast.error(`Erreur: ${error.message || 'Erreur lors du renvoi du lien'}`);
     }
   };
 
