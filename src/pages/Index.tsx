@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { PDGTestButton } from "@/components/PDGTestButton";
+import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 // Services principaux comme dans l'image
 const mainServices = [

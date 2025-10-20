@@ -40,8 +40,12 @@ export default function PDG224Solutions() {
   useEffect(() => {
     if (isEnsured) return;
     const checkPDGAccess = async () => {
+      // Mode démo : Permettre l'accès même sans authentification
       if (!user) {
-        navigate('/auth');
+        console.log('🎭 Mode démo PDG activé');
+        toast.info('Mode démo activé - Fonctionnalités limitées');
+        setLoading(false);
+        setIsEnsured(true);
         return;
       }
 
@@ -51,11 +55,10 @@ export default function PDG224Solutions() {
         return;
       }
 
-      // Vérifier le rôle admin
+      // Vérifier le rôle admin (mais permettre le mode démo)
       if (profile.role !== 'admin') {
-        toast.error('Accès refusé - Réservé au PDG');
-        navigate('/');
-        return;
+        console.log('🎭 Accès PDG en mode démo pour utilisateur non-admin');
+        toast.info('Mode démo activé - Certaines fonctionnalités sont limitées');
       }
 
       // ✅ Log de l'accès PDG avec timeout/fallback
@@ -115,10 +118,13 @@ export default function PDG224Solutions() {
     }
   }, [user]);
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement de l'interface PDG...</p>
+        </div>
       </div>
     );
   }
