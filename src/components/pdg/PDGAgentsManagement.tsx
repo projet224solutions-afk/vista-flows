@@ -226,6 +226,44 @@ export default function PDGAgentsManagement() {
     }
   };
 
+  const handleGenerateAndCopyLink = async (agent: Agent) => {
+    if (!pdgId) {
+      toast.error('PDG ID manquant');
+      return;
+    }
+
+    // Si le lien existe déjà, juste le copier
+    if (agentLinks[agent.id]) {
+      await handleCopyLink(agentLinks[agent.id]);
+      return;
+    }
+
+    // Sinon, générer un nouveau lien
+    try {
+      const result = await agentInvitationService.createAndSendInvitation({
+        agentId: agent.id,
+        pdgId: pdgId,
+        agentEmail: agent.email,
+        agentName: agent.name,
+        agentPhone: agent.phone,
+        pdgName: pdgName,
+      });
+
+      if (result.success && result.invitationLink) {
+        // Sauvegarder le lien pour cet agent
+        setAgentLinks(prev => ({ ...prev, [agent.id]: result.invitationLink! }));
+        // Copier le lien dans le presse-papier
+        await navigator.clipboard.writeText(result.invitationLink);
+        toast.success('🔗 Lien généré et copié dans le presse-papier');
+      } else {
+        toast.error(result.error || 'Erreur lors de la génération du lien');
+      }
+    } catch (error) {
+      console.error('Erreur génération lien:', error);
+      toast.error('Erreur lors de la génération du lien');
+    }
+  };
+
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
     try {
       if (action === 'delete') {
@@ -532,6 +570,14 @@ export default function PDGAgentsManagement() {
                       title="Modifier l'agent"
                     >
                       <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleGenerateAndCopyLink(agent)}
+                      title="Copier le lien d'invitation"
+                    >
+                      <Link2 className="w-4 h-4 text-purple-500" />
                     </Button>
                     <Button 
                       variant="ghost" 
