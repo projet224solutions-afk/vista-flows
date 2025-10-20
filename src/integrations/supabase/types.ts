@@ -3384,34 +3384,52 @@ export type Database = {
           created_at: string | null
           id: string
           is_online: boolean | null
+          last_lat: number | null
+          last_lng: number | null
+          last_seen: string | null
           rating: number | null
+          status: string | null
           total_earnings: number | null
           total_rides: number | null
           updated_at: string | null
           user_id: string
           vehicle: Json | null
+          vehicle_plate: string | null
+          vehicle_type: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           is_online?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen?: string | null
           rating?: number | null
+          status?: string | null
           total_earnings?: number | null
           total_rides?: number | null
           updated_at?: string | null
           user_id: string
           vehicle?: Json | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           is_online?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen?: string | null
           rating?: number | null
+          status?: string | null
           total_earnings?: number | null
           total_rides?: number | null
           updated_at?: string | null
           user_id?: string
           vehicle?: Json | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
         }
         Relationships: []
       }
@@ -3720,6 +3738,8 @@ export type Database = {
           idempotency_key: string | null
           lock_version: number | null
           metadata: Json | null
+          payment_method: string | null
+          payment_status: string | null
           pickup_address: string | null
           pickup_lat: number | null
           pickup_lng: number | null
@@ -3745,6 +3765,8 @@ export type Database = {
           idempotency_key?: string | null
           lock_version?: number | null
           metadata?: Json | null
+          payment_method?: string | null
+          payment_status?: string | null
           pickup_address?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
@@ -3770,6 +3792,8 @@ export type Database = {
           idempotency_key?: string | null
           lock_version?: number | null
           metadata?: Json | null
+          payment_method?: string | null
+          payment_status?: string | null
           pickup_address?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
@@ -4675,6 +4699,14 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
         Returns: Json
       }
+      calculate_taxi_fare: {
+        Args: {
+          p_distance_km: number
+          p_duration_min: number
+          p_surge_multiplier?: number
+        }
+        Returns: Json
+      }
       create_communication_notification: {
         Args: {
           p_body: string
@@ -4749,6 +4781,23 @@ export type Database = {
       equals: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
+      }
+      find_nearby_taxi_drivers: {
+        Args: {
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_radius_km?: number
+        }
+        Returns: {
+          distance_km: number
+          driver_id: string
+          is_online: boolean
+          last_lat: number
+          last_lng: number
+          status: string
+          user_id: string
+        }[]
       }
       generate_card_number: {
         Args: Record<PropertyKey, never>

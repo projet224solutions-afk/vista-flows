@@ -5,3 +5,12 @@ verify_jwt = true
 
 [functions.send-bureau-access-email]
 verify_jwt = false
+
+[functions.taxi-accept-ride]
+verify_jwt = true
+
+[functions.taxi-refuse-ride]
+verify_jwt = true
+
+[functions.taxi-payment]
+verify_jwt = true
