@@ -53,6 +53,17 @@ export interface BureauFeature {
   is_active: boolean;
 }
 
+export interface Member {
+  id: string;
+  bureau_id: string;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  member_code: string;
+  status: string;
+  created_at: string;
+}
+
 export interface SyndicatStats {
   totalBureaus: number;
   activeBureaus: number;
@@ -61,6 +72,7 @@ export interface SyndicatStats {
   totalWorkers: number;
   criticalAlerts: number;
   totalCotisations: number;
+  activeMembers: number;
 }
 
 export const usePDGSyndicatData = () => {
@@ -68,6 +80,7 @@ export const usePDGSyndicatData = () => {
   const [workers, setWorkers] = useState<SyndicateWorker[]>([]);
   const [alerts, setAlerts] = useState<SyndicateAlert[]>([]);
   const [features, setFeatures] = useState<BureauFeature[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<SyndicatStats>({
     totalBureaus: 0,
@@ -77,6 +90,7 @@ export const usePDGSyndicatData = () => {
     totalWorkers: 0,
     criticalAlerts: 0,
     totalCotisations: 0,
+    activeMembers: 0,
   });
 
   // Charger toutes les données
@@ -84,31 +98,36 @@ export const usePDGSyndicatData = () => {
     try {
       setLoading(true);
       
-      const [bureausRes, workersRes, alertsRes, featuresRes] = await Promise.all([
+      const [bureausRes, workersRes, alertsRes, featuresRes, membersRes] = await Promise.all([
         supabase.from('bureaus').select('*').order('created_at', { ascending: false }),
         supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }),
         supabase.from('syndicate_alerts').select('*').eq('is_critical', true).order('created_at', { ascending: false }).limit(10),
-        supabase.from('bureau_features').select('*').eq('is_active', true)
+        supabase.from('bureau_features').select('*').eq('is_active', true),
+        supabase.from('members').select('*').order('created_at', { ascending: false })
       ]);
 
       if (bureausRes.error) throw bureausRes.error;
       if (workersRes.error) throw workersRes.error;
       if (alertsRes.error) throw alertsRes.error;
       if (featuresRes.error) throw featuresRes.error;
+      if (membersRes.error) throw membersRes.error;
 
       const bureausData = bureausRes.data || [];
       const workersData = workersRes.data || [];
       const alertsData = alertsRes.data || [];
       const featuresData = featuresRes.data || [];
+      const membersData = membersRes.data || [];
 
       setBureaus(bureausData);
       setWorkers(workersData as any);
       setAlerts(alertsData as any);
       setFeatures(featuresData as any);
+      setMembers(membersData as any);
 
       // Calculer les statistiques
       const activeBureaus = bureausData.filter(b => b.status === 'active').length;
-      const totalMembers = bureausData.reduce((sum, b) => sum + (b.total_members || 0), 0);
+      const totalMembers = membersData.length;
+      const activeMembers = membersData.filter((m: any) => m.status === 'active').length;
       const totalVehicles = bureausData.reduce((sum, b) => sum + (b.total_vehicles || 0), 0);
       const totalCotisations = bureausData.reduce((sum, b) => sum + (b.total_cotisations || 0), 0);
       const criticalAlerts = alertsData.filter((a: any) => a.is_critical).length;
@@ -121,6 +140,7 @@ export const usePDGSyndicatData = () => {
         totalWorkers: workersData.length,
         criticalAlerts,
         totalCotisations,
+        activeMembers,
       });
     } catch (error) {
       console.error('Erreur chargement données:', error);
@@ -380,6 +400,46 @@ export const usePDGSyndicatData = () => {
     }
   }, [loadAllData]);
 
+  // Mettre à jour un membre
+  const updateMember = useCallback(async (memberId: string, updates: Partial<Member>) => {
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update(updates)
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast.success('Membre mis à jour avec succès');
+      await loadAllData();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur mise à jour membre:', error);
+      toast.error(error.message || 'Erreur lors de la mise à jour du membre');
+      return false;
+    }
+  }, [loadAllData]);
+
+  // Supprimer un membre
+  const deleteMember = useCallback(async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast.success('Membre supprimé avec succès');
+      await loadAllData();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur suppression membre:', error);
+      toast.error(error.message || 'Erreur lors de la suppression du membre');
+      return false;
+    }
+  }, [loadAllData]);
+
   // Charger les données au montage
   useEffect(() => {
     loadAllData();
@@ -390,6 +450,7 @@ export const usePDGSyndicatData = () => {
     workers,
     alerts,
     features,
+    members,
     loading,
     stats,
     validateBureau,
@@ -400,6 +461,8 @@ export const usePDGSyndicatData = () => {
     resendBureauLink,
     updateWorker,
     deleteWorker,
+    updateMember,
+    deleteMember,
     refetch: loadAllData,
   };
 };

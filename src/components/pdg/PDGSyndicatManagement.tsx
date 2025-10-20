@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2 } from 'lucide-react';
+import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2, UserCircle } from 'lucide-react';
 import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
 
 export default function PDGSyndicatManagement() {
@@ -15,6 +15,7 @@ export default function PDGSyndicatManagement() {
     workers,
     alerts,
     features,
+    members,
     loading,
     stats,
     validateBureau,
@@ -25,6 +26,8 @@ export default function PDGSyndicatManagement() {
     resendBureauLink,
     updateWorker,
     deleteWorker,
+    updateMember,
+    deleteMember,
   } = usePDGSyndicatData();
 
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
@@ -35,6 +38,8 @@ export default function PDGSyndicatManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<any>(null);
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<any>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     bureau_code: '',
     prefecture: '',
@@ -133,6 +138,32 @@ export default function PDGSyndicatManagement() {
   const handleDeleteWorker = async (workerId: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce travailleur ?")) return;
     await deleteWorker(workerId);
+  };
+
+  const handleEditMember = (member: any) => {
+    setEditingMember(member);
+    setIsMemberDialogOpen(true);
+  };
+
+  const handleSaveMember = async () => {
+    if (!editingMember) return;
+
+    const success = await updateMember(editingMember.id, {
+      full_name: editingMember.full_name,
+      email: editingMember.email,
+      phone: editingMember.phone,
+      status: editingMember.status
+    });
+
+    if (success) {
+      setIsMemberDialogOpen(false);
+      setEditingMember(null);
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    await deleteMember(memberId);
   };
 
   const filteredBureaus = bureaus.filter(bureau =>
@@ -323,7 +354,7 @@ export default function PDGSyndicatManagement() {
 
       {/* Tabs pour les différentes sections */}
       <Tabs defaultValue="bureaus" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="bureaus">
             <Building2 className="w-4 h-4 mr-2" />
             Bureaux ({stats.totalBureaus})
@@ -331,6 +362,10 @@ export default function PDGSyndicatManagement() {
           <TabsTrigger value="workers">
             <Users className="w-4 h-4 mr-2" />
             Travailleurs ({stats.totalWorkers})
+          </TabsTrigger>
+          <TabsTrigger value="members">
+            <UserCircle className="w-4 h-4 mr-2" />
+            Membres ({stats.totalMembers})
           </TabsTrigger>
           <TabsTrigger value="alerts">
             <AlertCircle className="w-4 h-4 mr-2" />
@@ -590,6 +625,119 @@ export default function PDGSyndicatManagement() {
                     Annuler
                   </Button>
                   <Button onClick={handleSaveWorker}>
+                    Sauvegarder
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <TabsContent value="members" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des Membres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {members.map((member) => {
+                  const bureau = bureaus.find(b => b.id === member.bureau_id);
+                  return (
+                    <div key={member.id} className="flex items-center justify-between p-4 rounded-lg border">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{member.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {member.email || 'Pas d\'email'} • Bureau: {bureau?.bureau_code || 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Code: {member.member_code} • Tél: {member.phone || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {member.status === 'active' ? (
+                          <Badge className="bg-green-500">Actif</Badge>
+                        ) : (
+                          <Badge className="bg-gray-500">Inactif</Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMember(member)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteMember(member.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {members.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucun membre trouvé
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Dialog pour modifier un membre */}
+        <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier le membre</DialogTitle>
+            </DialogHeader>
+            {editingMember && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="member_name">Nom complet</Label>
+                  <Input
+                    id="member_name"
+                    value={editingMember.full_name}
+                    onChange={(e) => setEditingMember({ ...editingMember, full_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="member_email">Email</Label>
+                  <Input
+                    id="member_email"
+                    type="email"
+                    value={editingMember.email || ''}
+                    onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="member_phone">Téléphone</Label>
+                  <Input
+                    id="member_phone"
+                    value={editingMember.phone || ''}
+                    onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="member_status">Statut</Label>
+                  <select
+                    id="member_status"
+                    value={editingMember.status}
+                    onChange={(e) => setEditingMember({ ...editingMember, status: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="active">Actif</option>
+                    <option value="inactive">Inactif</option>
+                    <option value="suspended">Suspendu</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsMemberDialogOpen(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={handleSaveMember}>
                     Sauvegarder
                   </Button>
                 </div>
