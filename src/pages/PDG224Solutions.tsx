@@ -20,7 +20,6 @@ const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMainte
 const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
 const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalytics'));
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
-const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 
 export default function PDG224Solutions() {
@@ -257,14 +256,6 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Agents</span>
               </TabsTrigger>
               <TabsTrigger
-                value="syndicat"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Bureaux Syndicaux"
-              >
-                <Building2 className="w-4 h-4" />
-                <span className="font-medium">Bureaux Syndicaux</span>
-              </TabsTrigger>
-              <TabsTrigger
                 value="reports"
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Rapports"
@@ -338,12 +329,6 @@ export default function PDG224Solutions() {
               <TabsContent value="agents" className="animate-fade-in transition-all duration-300">
                 <ErrorBoundary>
                   <PDGAgentsManagement />
-                </ErrorBoundary>
-              </TabsContent>
-
-              <TabsContent value="syndicat" className="animate-fade-in transition-all duration-300">
-                <ErrorBoundary>
-                  <PDGSyndicatManagement />
                 </ErrorBoundary>
               </TabsContent>
 
