@@ -14,7 +14,7 @@ import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 // ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
 const PDGUsers = lazy(() => import('@/components/pdg/PDGUsers'));
-const PDGSecurity = lazy(() => import('@/components/pdg/PDGSecurity'));
+const SecurityOpsPanel = lazy(() => import('@/components/pdg/SecurityOpsPanel'));
 const PDGConfig = lazy(() => import('@/components/pdg/PDGConfig'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
 const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMaintenance'));
@@ -333,7 +333,7 @@ export default function PDG224Solutions() {
 
               <TabsContent value="security" className="animate-fade-in transition-all duration-300">
                 <ErrorBoundary>
-                  <PDGSecurity />
+                  <SecurityOpsPanel />
                 </ErrorBoundary>
               </TabsContent>
 
