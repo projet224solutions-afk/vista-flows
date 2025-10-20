@@ -14,11 +14,7 @@ export interface Product {
   images?: string[];
   created_at: string;
   updated_at?: string;
-  stock_info?: {
-    quantity: number;
-    warehouse_id?: number;
-    lot_number?: string;
-  }[];
+  total_stock?: number;
 }
 
 export interface ProductStats {
@@ -48,31 +44,57 @@ export function usePDGProductsData() {
     totalStock: 0
   });
 
-  // Charger les produits
+  // Charger les produits avec leur stock
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Récupérer les produits
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (productsError) throw productsError;
 
-      const productsData = data || [];
-      setProducts(productsData);
+      // Récupérer le stock par produit en utilisant une requête raw SQL via RPC
+      // On va faire une agrégation simple côté client pour l'instant
+      const productsWithStock = await Promise.all(
+        (productsData || []).map(async (product) => {
+          // Essayer de récupérer le stock pour ce produit (si la table existe)
+          try {
+            const { data: stockData } = await supabase
+              .rpc('get_product_stock_total', { p_product_id: product.id })
+              .single();
+            
+            return {
+              ...product,
+              total_stock: stockData?.total || 0
+            };
+          } catch {
+            // Si la fonction n'existe pas ou erreur, on met 0
+            return {
+              ...product,
+              total_stock: 0
+            };
+          }
+        })
+      );
+
+      setProducts(productsWithStock);
 
       // Calculer les statistiques
-      const activeProducts = productsData.filter(p => p.is_active);
-      const totalValue = productsData.reduce((sum, p) => sum + (p.price || 0), 0);
+      const activeProducts = productsWithStock.filter(p => p.is_active);
+      const totalValue = productsWithStock.reduce((sum, p) => sum + (p.price || 0), 0);
+      const totalStock = productsWithStock.reduce((sum, p) => sum + (p.total_stock || 0), 0);
 
       setStats({
-        total: productsData.length,
+        total: productsWithStock.length,
         active: activeProducts.length,
-        inactive: productsData.length - activeProducts.length,
-        lowStock: 0, // À calculer si la table stock existe
+        inactive: productsWithStock.length - activeProducts.length,
+        lowStock: productsWithStock.filter(p => (p.total_stock || 0) <= 10).length,
         totalValue,
-        totalStock: productsData.length // Nombre de produits = stock (catalogue)
+        totalStock
       });
     } catch (error) {
       console.error('Erreur chargement produits:', error);

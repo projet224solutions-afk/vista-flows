@@ -188,9 +188,17 @@ export default function PDGProductsManagement() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                      <span>Prix: {product.price.toLocaleString()} GNF</span>
-                      <span className="text-xs">Vendeur: {getVendorInfo(product.vendor_id)}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">Prix: {product.price.toLocaleString()} GNF</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Box className="w-3 h-3" />
+                          Stock: <span className="font-medium text-foreground">{product.total_stock || 0}</span> unités
+                        </span>
+                        <span className="text-xs">Vendeur: {getVendorInfo(product.vendor_id)}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
