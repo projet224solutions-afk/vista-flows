@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail } from 'lucide-react';
+import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,6 +18,7 @@ interface Bureau {
   president_name?: string;
   president_email?: string;
   president_phone?: string;
+  full_location?: string;
   total_members: number;
   total_vehicles: number;
   total_cotisations: number;
@@ -69,6 +70,8 @@ export default function PDGSyndicatManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
+  const [editingBureau, setEditingBureau] = useState<Bureau | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     bureau_code: '',
     prefecture: '',
@@ -188,6 +191,87 @@ export default function PDGSyndicatManagement() {
     } catch (error) {
       console.error('Erreur création bureau:', error);
       toast.error('Erreur lors de la création du bureau');
+    }
+  };
+
+  const handleCopyBureau = async (bureau: Bureau) => {
+    try {
+      const { data, error } = await supabase
+        .from('bureaus')
+        .insert({
+          bureau_code: `${bureau.bureau_code}_COPIE`,
+          commune: bureau.commune,
+          prefecture: bureau.prefecture,
+          president_name: bureau.president_name,
+          president_email: bureau.president_email,
+          president_phone: bureau.president_phone,
+          full_location: bureau.full_location,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Le bureau a été copié avec succès");
+      
+      await loadAllData();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la copie du bureau");
+    }
+  };
+
+  const handleEditBureau = (bureau: Bureau) => {
+    setEditingBureau(bureau);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingBureau) return;
+
+    try {
+      const { error } = await supabase
+        .from('bureaus')
+        .update({
+          bureau_code: editingBureau.bureau_code,
+          commune: editingBureau.commune,
+          prefecture: editingBureau.prefecture,
+          president_name: editingBureau.president_name,
+          president_email: editingBureau.president_email,
+          president_phone: editingBureau.president_phone,
+          full_location: editingBureau.full_location,
+          status: editingBureau.status
+        })
+        .eq('id', editingBureau.id);
+
+      if (error) throw error;
+
+      toast.success("Le bureau a été modifié avec succès");
+      
+      setIsEditDialogOpen(false);
+      setEditingBureau(null);
+      await loadAllData();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la modification du bureau");
+    }
+  };
+
+  const handleDeleteBureau = async (bureauId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('bureaus')
+        .delete()
+        .eq('id', bureauId);
+
+      if (error) throw error;
+
+      toast.success("Le bureau a été supprimé avec succès");
+      
+      await loadAllData();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la suppression du bureau");
     }
   };
 
@@ -476,6 +560,15 @@ export default function PDGSyndicatManagement() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleCopyBureau(bureau)}>
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditBureau(bureau)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteBureau(bureau.id)}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSelectedBureau(bureau)}>
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -610,6 +703,86 @@ export default function PDGSyndicatManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog d'édition */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier le bureau</DialogTitle>
+          </DialogHeader>
+          {editingBureau && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Code Bureau</Label>
+                  <Input
+                    value={editingBureau.bureau_code}
+                    onChange={(e) => setEditingBureau({...editingBureau, bureau_code: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Commune</Label>
+                  <Input
+                    value={editingBureau.commune}
+                    onChange={(e) => setEditingBureau({...editingBureau, commune: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Préfecture</Label>
+                  <Input
+                    value={editingBureau.prefecture}
+                    onChange={(e) => setEditingBureau({...editingBureau, prefecture: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nom du Président</Label>
+                  <Input
+                    value={editingBureau.president_name || ''}
+                    onChange={(e) => setEditingBureau({...editingBureau, president_name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email du Président</Label>
+                  <Input
+                    type="email"
+                    value={editingBureau.president_email || ''}
+                    onChange={(e) => setEditingBureau({...editingBureau, president_email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Téléphone du Président</Label>
+                  <Input
+                    value={editingBureau.president_phone || ''}
+                    onChange={(e) => setEditingBureau({...editingBureau, president_phone: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Localisation complète</Label>
+                  <Input
+                    value={editingBureau.full_location || ''}
+                    onChange={(e) => setEditingBureau({...editingBureau, full_location: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Statut</Label>
+                  <Input
+                    value={editingBureau.status}
+                    onChange={(e) => setEditingBureau({...editingBureau, status: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveEdit}>
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
