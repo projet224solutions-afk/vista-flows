@@ -3663,9 +3663,11 @@ export type Database = {
           card_number: string
           created_at: string
           cvv: string
+          daily_limit: number | null
           expiry_date: string
           holder_name: string | null
           id: string
+          monthly_limit: number | null
           status: string
           user_id: string
         }
@@ -3673,9 +3675,11 @@ export type Database = {
           card_number: string
           created_at?: string
           cvv: string
+          daily_limit?: number | null
           expiry_date: string
           holder_name?: string | null
           id?: string
+          monthly_limit?: number | null
           status?: string
           user_id: string
         }
@@ -3683,9 +3687,11 @@ export type Database = {
           card_number?: string
           created_at?: string
           cvv?: string
+          daily_limit?: number | null
           expiry_date?: string
           holder_name?: string | null
           id?: string
+          monthly_limit?: number | null
           status?: string
           user_id?: string
         }
