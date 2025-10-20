@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Zap, TrendingUp, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Brain, Zap, TrendingUp, AlertTriangle, CheckCircle, RefreshCw, Send, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 
@@ -11,13 +12,33 @@ interface PDGAIAssistantProps {
 }
 
 export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
-  const { aiActive, insights, loading, refreshInsights, toggleAI } = usePDGAIAssistant();
+  const { 
+    aiActive, 
+    insights, 
+    loading, 
+    messages, 
+    isStreaming, 
+    refreshInsights, 
+    toggleAI, 
+    sendMessage,
+    clearMessages 
+  } = usePDGAIAssistant();
+  
   const [analyzing, setAnalyzing] = useState(false);
+  const [inputMessage, setInputMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
       await refreshInsights();
       toast.success('Analyse IA terminée');
     } catch (error) {
@@ -25,6 +46,14 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
     } finally {
       setAnalyzing(false);
     }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || isStreaming) return;
+    
+    await sendMessage(inputMessage);
+    setInputMessage('');
   };
 
   const getInsightIcon = (type: string) => {
@@ -148,6 +177,84 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Chat avec l'Assistant IA */}
+      {aiActive && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Discussion avec l'Assistant IA
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={clearMessages}>
+                Effacer
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Zone de messages */}
+              <div className="h-[400px] overflow-y-auto border rounded-lg p-4 space-y-4 bg-muted/20">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                    <Brain className="w-12 h-12 mb-4 opacity-50" />
+                    <p className="font-medium">Démarrez une conversation</p>
+                    <p className="text-sm mt-2">
+                      Posez des questions sur la plateforme, demandez des analyses ou des recommandations
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-lg p-3 ${
+                            msg.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-card border'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {isStreaming && (
+                      <div className="flex justify-start">
+                        <div className="bg-card border rounded-lg p-3">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+                            <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-100" />
+                            <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-200" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
+              </div>
+
+              {/* Input de message */}
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Posez une question à l'assistant IA..."
+                  disabled={isStreaming}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isStreaming || !inputMessage.trim()}>
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            </div>
           </CardContent>
         </Card>
       )}
