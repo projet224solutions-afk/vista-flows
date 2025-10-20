@@ -4600,12 +4600,19 @@ export type Database = {
         Returns: boolean
       }
       acquire_taxi_lock: {
-        Args: {
-          p_locked_by: string
-          p_resource_id: string
-          p_resource_type: string
-          p_ttl_seconds?: number
-        }
+        Args:
+          | {
+              p_locked_by: string
+              p_resource_id: string
+              p_resource_type: string
+              p_timeout_seconds?: number
+            }
+          | {
+              p_locked_by: string
+              p_resource_id: string
+              p_resource_type: string
+              p_ttl_seconds?: number
+            }
         Returns: boolean
       }
       addauth: {
@@ -4693,6 +4700,10 @@ export type Database = {
           p_service_name: string
           p_transaction_type: string
         }
+        Returns: number
+      }
+      calculate_distance_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
       calculate_expense_stats: {
@@ -4792,11 +4803,10 @@ export type Database = {
         Returns: {
           distance_km: number
           driver_id: string
-          is_online: boolean
-          last_lat: number
-          last_lng: number
-          status: string
+          rating: number
           user_id: string
+          vehicle_plate: string
+          vehicle_type: string
         }[]
       }
       generate_card_number: {
@@ -5098,7 +5108,7 @@ export type Database = {
           p_actor_id: string
           p_actor_type: string
           p_details?: Json
-          p_resource_id: string
+          p_resource_id?: string
           p_resource_type: string
         }
         Returns: string
@@ -5312,11 +5322,17 @@ export type Database = {
         Returns: string
       }
       release_taxi_lock: {
-        Args: {
-          p_locked_by: string
-          p_resource_id: string
-          p_resource_type: string
-        }
+        Args:
+          | {
+              p_locked_by: string
+              p_resource_id: string
+              p_resource_type: string
+            }
+          | {
+              p_locked_by: string
+              p_resource_id: string
+              p_resource_type: string
+            }
         Returns: boolean
       }
       spheroid_in: {
