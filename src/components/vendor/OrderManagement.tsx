@@ -180,9 +180,32 @@ export default function OrderManagement() {
   });
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
-    console.log('Updating order status:', { orderId, newStatus });
+    console.log('🔄 Updating order status:', { orderId, newStatus });
+    
+    // Optimistic update
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { ...order, status: newStatus as string, updated_at: new Date().toISOString() }
+        : order
+    ));
     
     try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get vendor ID first
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!vendor) {
+        throw new Error('Vendor not found');
+      }
+
+      // Update order status with vendor verification
       const { data, error } = await supabase
         .from('orders')
         .update({ 
@@ -190,32 +213,34 @@ export default function OrderManagement() {
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId)
+        .eq('vendor_id', vendor.id) // Security: only update own orders
         .select();
 
       if (error) {
-        console.error('Error updating order status:', error);
+        console.error('❌ Error updating order status:', error);
+        // Rollback optimistic update
+        await fetchOrders();
         throw error;
       }
 
-      console.log('Order status updated successfully:', data);
-
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
-          ? { ...order, status: newStatus as string, updated_at: new Date().toISOString() }
-          : order
-      ));
+      console.log('✅ Order status updated successfully:', data);
 
       toast({
-        title: "Statut mis à jour",
-        description: `La commande a été marquée comme ${statusLabels[newStatus as keyof typeof statusLabels]}.`
+        title: "✅ Statut mis à jour",
+        description: `La commande a été marquée comme ${statusLabels[newStatus]}.`
       });
+
+      // Refresh to ensure sync
+      await fetchOrders();
     } catch (error) {
-      console.error('Failed to update order status:', error);
+      console.error('❌ Failed to update order status:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut de la commande.",
+        title: "❌ Erreur",
+        description: error instanceof Error ? error.message : "Impossible de mettre à jour le statut de la commande.",
         variant: "destructive"
       });
+      // Rollback optimistic update
+      await fetchOrders();
     }
   };
 
@@ -227,8 +252,10 @@ export default function OrderManagement() {
         <Button 
           key="confirm" 
           size="sm"
-          onClick={() => {
-            console.log('Confirming order:', order.id);
+          className="bg-green-600 hover:bg-green-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('✅ Confirming order:', order.id);
             updateOrderStatus(order.id, 'confirmed');
           }}
         >
@@ -243,9 +270,10 @@ export default function OrderManagement() {
         <Button 
           key="process" 
           size="sm" 
-          variant="default"
-          onClick={() => {
-            console.log('Preparing order:', order.id);
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('📦 Preparing order:', order.id);
             updateOrderStatus(order.id, 'preparing');
           }}
         >
@@ -260,8 +288,10 @@ export default function OrderManagement() {
         <Button 
           key="ship" 
           size="sm"
-          onClick={() => {
-            console.log('Shipping order:', order.id);
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('🚚 Shipping order:', order.id);
             updateOrderStatus(order.id, 'in_transit');
           }}
         >
@@ -276,13 +306,15 @@ export default function OrderManagement() {
         <Button 
           key="deliver" 
           size="sm"
-          onClick={() => {
-            console.log('Delivering order:', order.id);
+          className="bg-green-600 hover:bg-green-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('✅ Delivering order:', order.id);
             updateOrderStatus(order.id, 'delivered');
           }}
         >
           <CheckCircle className="w-4 h-4 mr-1" />
-          Livrer
+          Marquer livré
         </Button>
       );
     }
@@ -293,9 +325,12 @@ export default function OrderManagement() {
           key="cancel" 
           size="sm" 
           variant="destructive"
-          onClick={() => {
-            console.log('Cancelling order:', order.id);
-            updateOrderStatus(order.id, 'cancelled');
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('❌ Cancelling order:', order.id);
+            if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+              updateOrderStatus(order.id, 'cancelled');
+            }
           }}
         >
           <XCircle className="w-4 h-4 mr-1" />
