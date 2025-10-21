@@ -157,10 +157,10 @@ export default function IndexAlibaba() {
   useRoleRedirect(); // Active la redirection automatique vers l'interface de rôle
   const { profile } = useAuth();
 
-  // Redirection automatique vers l'interface PDG
-  useEffect(() => {
-    navigate('/pdg');
-  }, [navigate]);
+  // Redirection automatique désactivée pour éviter les problèmes d'affichage
+  // useEffect(() => {
+  //   navigate('/pdg');
+  // }, [navigate]);
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
     if (service.id === 'vendeur') {
