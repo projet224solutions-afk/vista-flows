@@ -240,49 +240,82 @@ export default function BureauDashboard() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Membres du Bureau</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              Membres du Bureau
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{workers.length}</div>
+            <div className="text-3xl font-bold">{workers.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Membres actifs</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Membres</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              Adhérents
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{members.length}</div>
+            <div className="text-3xl font-bold">{members.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Total membres</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Véhicules</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bike className="w-4 h-4 text-muted-foreground" />
+              Véhicules
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{motos.length}</div>
+            <div className="text-3xl font-bold text-primary">{motos.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Enregistrés</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Alertes</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+              Alertes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{alerts.filter(a => !a.is_read).length}</div>
+            <div className="text-3xl font-bold text-destructive">{alerts.filter(a => !a.is_read).length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Non lues</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
-          <TabsTrigger value="motos">Véhicules</TabsTrigger>
-          <TabsTrigger value="sync">Synchronisation</TabsTrigger>
-          <TabsTrigger value="alerts">Alertes</TabsTrigger>
-          <TabsTrigger value="communication">Communication</TabsTrigger>
+      <Tabs defaultValue="motos" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 h-auto">
+          <TabsTrigger value="motos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Bike className="w-4 h-4 mr-2" />
+            Véhicules
+          </TabsTrigger>
+          <TabsTrigger value="workers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            Bureau
+          </TabsTrigger>
+          <TabsTrigger value="sync" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Sync
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Alertes {alerts.filter(a => !a.is_read).length > 0 && (
+              <Badge variant="destructive" className="ml-2">{alerts.filter(a => !a.is_read).length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="communication" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Communication
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="workers" className="space-y-4">
@@ -470,24 +503,61 @@ export default function BureauDashboard() {
 
         <TabsContent value="motos" className="space-y-6">
           {bureau && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
-                <MotoManagementDashboard 
-                  bureauId={bureau.id} 
-                  bureauName={`${bureau.prefecture || ''} - ${bureau.commune || ''}`}
-                />
+            <>
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                <Card className="xl:col-span-3">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bike className="w-5 h-5" />
+                      Enregistrement de Véhicule
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
+                  </CardContent>
+                </Card>
+                <div className="space-y-4">
+                  <MotoSecurityNotifications bureauId={bureau.id} />
+                </div>
               </div>
-              <div className="space-y-6">
-                <MotoSecurityNotifications bureauId={bureau.id} />
-                <MotoSecurityAlerts bureauId={bureau.id} />
+              
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                <Card className="xl:col-span-3">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bike className="w-5 h-5" />
+                      Gestion des Véhicules
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MotoManagementDashboard 
+                      bureauId={bureau.id} 
+                      bureauName={`${bureau.prefecture || ''} - ${bureau.commune || ''}`}
+                    />
+                  </CardContent>
+                </Card>
+                <div className="space-y-4">
+                  <MotoSecurityAlerts bureauId={bureau.id} />
+                </div>
               </div>
-            </div>
+            </>
           )}
         </TabsContent>
 
         <TabsContent value="sync" className="space-y-6">
-          {bureau && <BureauOfflineSyncPanel bureauId={bureau.id} />}
+          {bureau && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" />
+                  Synchronisation Hors-ligne
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BureauOfflineSyncPanel bureauId={bureau.id} />
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
@@ -532,7 +602,17 @@ export default function BureauDashboard() {
         </TabsContent>
 
         <TabsContent value="communication" className="space-y-4">
-          <UniversalCommunicationHub />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Hub de Communication
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UniversalCommunicationHub />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
