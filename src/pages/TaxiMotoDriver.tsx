@@ -815,13 +815,6 @@ export default function TaxiMotoDriver() {
                                 </div>
                             )}
                             <Button
-                                onClick={toggleOnlineStatus}
-                                variant={isOnline ? "destructive" : "default"}
-                                size="sm"
-                            >
-                                {isOnline ? 'Se déconnecter' : 'Se connecter'}
-                            </Button>
-                            <Button
                                 onClick={handleSignOut}
                                 variant="outline"
                                 size="sm"
