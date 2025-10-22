@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
-import { RidesService, type RideDetails } from "@/services/taxi/ridesService";
+import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
@@ -91,6 +91,7 @@ export default function TaxiMotoDriver() {
         onlineTime: '0h 0m'
     });
     const [driverId, setDriverId] = useState<string | null>(null);
+    const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
 
     // États de navigation
     const [navigationActive, setNavigationActive] = useState(false);
@@ -101,59 +102,134 @@ export default function TaxiMotoDriver() {
 
     useEffect(() => {
         loadDriverProfile();
-        loadDriverStats();
-        
-        // Recharger les stats toutes les 30 secondes
-        const statsInterval = setInterval(() => {
-            if (driverId) {
+    }, []);
+
+    useEffect(() => {
+        if (driverId) {
+            loadDriverStats();
+            
+            // Recharger les stats toutes les 30 secondes
+            const statsInterval = setInterval(() => {
                 loadDriverStats();
-            }
-        }, 30000);
-        
+            }, 30000);
+            
+            return () => clearInterval(statsInterval);
+        }
+    }, [driverId]);
+
+    // Gérer le statut en ligne et le tracking
+    useEffect(() => {
         if (isOnline && driverId) {
             startLocationTracking();
-            subscribeToRideRequests();
+        } else if (locationWatchId !== null) {
+            stopWatching(locationWatchId);
+            setLocationWatchId(null);
         }
-        
-        return () => clearInterval(statsInterval);
     }, [isOnline, driverId]);
 
-    // Écouter les notifications pour les nouvelles courses
+    // S'abonner aux demandes de courses temps réel
     useEffect(() => {
-        const newRideNotifications = notifications.filter(
-            n => n.type === 'new_ride_request' && !n.is_read
-        );
-        
-        if (newRideNotifications.length > 0 && !activeRide) {
-            // Charger les détails de la course
-            newRideNotifications.forEach(async (notif) => {
-                if (notif.data?.rideId) {
-                    try {
-                        const ride = await RidesService.getRideDetails(notif.data.rideId);
-                        addRideRequest(ride);
-                    } catch (error) {
-                        console.error('Error loading ride:', error);
+        if (!driverId || !isOnline) return;
+
+        const channel = supabase
+            .channel('driver-ride-requests')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'taxi_trips',
+                    filter: `status=eq.requested`
+                },
+                async (payload) => {
+                    console.log('📲 Nouvelle course disponible:', payload);
+                    const ride = payload.new as any;
+                    
+                    // Vérifier si le chauffeur est à proximité
+                    if (location) {
+                        const distance = calculateDistance(
+                            location.latitude,
+                            location.longitude,
+                            ride.pickup_lat,
+                            ride.pickup_lng
+                        );
+                        
+                        // Si à moins de 5km, afficher la demande
+                        if (distance <= 5) {
+                            await addRideRequestFromDB(ride);
+                            toast.success('🚗 Nouvelle course disponible!');
+                            // Audio notification
+                            try {
+                                const audio = new Audio('/notification.mp3');
+                                audio.play().catch(() => {});
+                            } catch (e) {}
+                        }
                     }
                 }
-            });
-        }
-    }, [notifications, activeRide]);
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [driverId, isOnline, location]);
+
+    // S'abonner aux mises à jour de la course active
+    useEffect(() => {
+        if (!activeRide) return;
+
+        const unsubscribe = TaxiMotoService.subscribeToRide(activeRide.id, (updatedRide) => {
+            console.log('📍 Mise à jour course:', updatedRide);
+            
+            // Mettre à jour la course active
+            if (updatedRide.status === 'cancelled' || updatedRide.status === 'completed') {
+                setActiveRide(null);
+                setNavigationActive(false);
+                if (updatedRide.status === 'cancelled') {
+                    toast.error('❌ La course a été annulée');
+                }
+            }
+        });
+
+        return unsubscribe;
+    }, [activeRide]);
+
 
     /**
-     * Démarre le suivi de position
+     * Démarre le suivi de position en temps réel
      */
     const startLocationTracking = () => {
-        const watchId = watchLocation();
-        // En production: envoyer la position au serveur en temps réel
-        console.log('📍 Suivi de position activé', watchId);
-    };
+        const watchId = watchLocation((position) => {
+            // Mettre à jour la position dans la DB en temps réel
+            if (driverId) {
+                supabase
+                    .from('taxi_drivers')
+                    .update({
+                        current_lat: position.coords.latitude,
+                        current_lng: position.coords.longitude,
+                        last_location_update: new Date().toISOString()
+                    })
+                    .eq('id', driverId)
+                    .then(({ error }) => {
+                        if (error) console.error('Error updating driver location:', error);
+                    });
 
-    /**
-     * Arrête le suivi de position
-     */
-    const stopLocationTracking = (watchId: number) => {
-        stopWatching(watchId);
-        console.log('📍 Suivi de position désactivé');
+                // Si une course est active, tracker la position
+                if (activeRide && (activeRide.status === 'picked_up' || activeRide.status === 'in_progress')) {
+                    TaxiMotoService.trackPosition(
+                        activeRide.id,
+                        driverId,
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        position.coords.speed || undefined,
+                        position.coords.heading || undefined,
+                        position.coords.accuracy || undefined
+                    ).catch(err => console.error('Error tracking position:', err));
+                }
+            }
+        });
+        setLocationWatchId(watchId);
+        console.log('📍 Suivi de position GPS activé');
     };
 
     /**
@@ -167,19 +243,19 @@ export default function TaxiMotoDriver() {
             return;
         }
 
-        try {
-            const { error } = await supabase
-                .from('taxi_drivers')
-                .update({
-                    is_online: next,
-                    status: next ? 'available' : 'offline',
-                    last_location_lat: location?.latitude,
-                    last_location_lng: location?.longitude,
-                    last_seen: new Date().toISOString()
-                })
-                .eq('id', driverId);
+        if (!location && next) {
+            toast.error('Impossible d\'obtenir votre position GPS');
+            return;
+        }
 
-            if (error) throw error;
+        try {
+            await TaxiMotoService.updateDriverStatus(
+                driverId,
+                next,
+                next,
+                location?.latitude,
+                location?.longitude
+            );
 
             setIsOnline(next);
             
@@ -225,30 +301,40 @@ export default function TaxiMotoDriver() {
             // Charger le profil conducteur complet
             const { data: driverData } = await supabase
                 .from('taxi_drivers')
-                .select('rating, total_rides, total_earnings, is_online, last_seen, created_at')
+                .select('rating, total_trips, total_earnings, is_online, last_seen, created_at')
                 .eq('id', driverId)
                 .single();
 
             // Charger toutes les courses du conducteur
-            const rides = await RidesService.getDriverRides(driverId, 100);
+            const rides = await TaxiMotoService.getDriverRides(driverId, 100);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
             const todayRides = rides.filter(r => {
-                const rideDate = new Date(r.requested_at || r.accepted_at);
+                const rideDate = new Date(r.requested_at || r.created_at);
                 return rideDate >= today && r.status === 'completed';
             });
             
-            const todayEarnings = todayRides.reduce((sum, r) => sum + (r.driver_share || r.price_total * 0.85 || 0), 0);
+            // Calculer les gains réels depuis taxi_transactions
+            let todayEarnings = 0;
+            try {
+                const { data: transactions } = await supabase
+                    .from('taxi_transactions')
+                    .select('driver_earnings')
+                    .eq('driver_id', driverId)
+                    .eq('status', 'completed')
+                    .gte('created_at', today.toISOString());
+                
+                if (transactions) {
+                    todayEarnings = transactions.reduce((sum, t) => sum + (t.driver_earnings || 0), 0);
+                }
+            } catch (e) {
+                console.error('Error loading transactions:', e);
+            }
             
             // Calculer le temps en ligne aujourd'hui
-            const todayOnlineRides = rides.filter(r => {
-                const rideDate = new Date(r.requested_at || r.accepted_at);
-                return rideDate >= today;
-            });
-            
             let onlineMinutes = 0;
-            todayOnlineRides.forEach(ride => {
+            todayRides.forEach(ride => {
                 if (ride.completed_at && ride.accepted_at) {
                     const start = new Date(ride.accepted_at);
                     const end = new Date(ride.completed_at);
@@ -263,7 +349,7 @@ export default function TaxiMotoDriver() {
                 todayEarnings: Math.round(todayEarnings),
                 todayRides: todayRides.length,
                 rating: Number(driverData?.rating) || 5.0,
-                totalRides: driverData?.total_rides || 0,
+                totalRides: driverData?.total_trips || 0,
                 onlineTime: `${hours}h ${mins}m`
             });
         } catch (error) {
@@ -272,20 +358,11 @@ export default function TaxiMotoDriver() {
         }
     };
 
-    /**
-     * S'abonne aux demandes de course temps réel
-     */
-    const subscribeToRideRequests = () => {
-        if (!user) return;
-
-        console.log('Subscribing to ride requests...');
-        // Les notifications arrivent déjà via useTaxiNotifications
-    };
 
     /**
-     * Ajoute une demande de course à la liste avec données réelles
+     * Ajoute une demande de course depuis la DB
      */
-    const addRideRequest = async (ride: RideDetails) => {
+    const addRideRequestFromDB = async (ride: any) => {
         // Charger les données du client
         let customerName = 'Client';
         let customerRating = 4.5;
@@ -298,7 +375,17 @@ export default function TaxiMotoDriver() {
                 .single();
 
             if (customerProfile) {
-                customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim();
+                customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Client';
+            }
+
+            // Charger la note du client depuis taxi_ratings
+            const { data: ratings } = await supabase
+                .from('taxi_ratings')
+                .select('rating')
+                .eq('customer_id', ride.customer_id);
+            
+            if (ratings && ratings.length > 0) {
+                customerRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
             }
         } catch (error) {
             console.error('Error loading customer:', error);
@@ -308,19 +395,19 @@ export default function TaxiMotoDriver() {
             id: ride.id,
             customerId: ride.customer_id,
             customerName,
-            customerRating,
+            customerRating: Math.round(customerRating * 10) / 10,
             pickupAddress: ride.pickup_address,
             destinationAddress: ride.dropoff_address,
-            distance: (ride as any).distance_km || 0,
-            estimatedEarnings: ride.price_total,
-            estimatedDuration: (ride as any).duration_min || 0,
+            distance: ride.distance_km || 0,
+            estimatedEarnings: ride.estimated_price || 0,
+            estimatedDuration: ride.duration_min || 0,
             pickupCoords: { 
-                latitude: (ride as any).pickup_lat || 0, 
-                longitude: (ride as any).pickup_lng || 0 
+                latitude: ride.pickup_lat || 0, 
+                longitude: ride.pickup_lng || 0 
             },
             destinationCoords: { 
-                latitude: (ride as any).dropoff_lat || 0, 
-                longitude: (ride as any).dropoff_lng || 0 
+                latitude: ride.dropoff_lat || 0, 
+                longitude: ride.dropoff_lng || 0 
             },
             requestTime: ride.created_at
         };
@@ -342,8 +429,8 @@ export default function TaxiMotoDriver() {
         }
 
         try {
-            // Appeler le service d'acceptation
-            await RidesService.acceptRide(request.id, driverId);
+            // Appeler le service d'acceptation via TaxiMotoService
+            await TaxiMotoService.acceptRide(request.id, driverId);
 
             // Charger le téléphone réel du client
             let customerPhone = '+224 600 00 00 00';
@@ -407,7 +494,7 @@ export default function TaxiMotoDriver() {
         if (!driverId) return;
 
         try {
-            await RidesService.refuseRide(requestId, driverId);
+            await TaxiMotoService.refuseRide(requestId, driverId);
             setRideRequests(prev => prev.filter(req => req.id !== requestId));
             
             // Marquer les notifications comme lues
@@ -460,11 +547,11 @@ export default function TaxiMotoDriver() {
         if (!activeRide) return;
 
         try {
-            let dbStatus = newStatus;
-            if (newStatus === 'arriving') dbStatus = 'accepted';
-            if (newStatus === 'in_progress') dbStatus = 'completed';
+            let dbStatus = newStatus === 'arriving' ? 'accepted' : 
+                          newStatus === 'picked_up' ? 'started' : 
+                          newStatus === 'in_progress' ? 'completed' : newStatus;
 
-            await RidesService.updateRideStatus(activeRide.id, dbStatus);
+            await TaxiMotoService.updateRideStatus(activeRide.id, dbStatus);
             setActiveRide(prev => prev ? { ...prev, status: newStatus } : null);
 
             switch (newStatus) {
@@ -475,15 +562,6 @@ export default function TaxiMotoDriver() {
                     toast.success('🚗 Client à bord, navigation vers la destination...');
                     if (activeRide && driverId) {
                         startNavigation(activeRide.destination.coords);
-                        // Tracker la position en temps réel
-                        if (location) {
-                            RidesService.trackPosition(
-                                activeRide.id,
-                                driverId,
-                                location.latitude,
-                                location.longitude
-                            );
-                        }
                     }
                     break;
                 case 'in_progress':
@@ -505,12 +583,12 @@ export default function TaxiMotoDriver() {
 
         try {
             // Marquer la course comme complétée
-            await RidesService.updateRideStatus(activeRide.id, 'completed');
+            await TaxiMotoService.updateRideStatus(activeRide.id, 'completed');
             
             // Mettre à jour les statistiques du conducteur dans la DB
             const { data: currentDriver } = await supabase
                 .from('taxi_drivers')
-                .select('total_rides, total_earnings')
+                .select('total_trips, total_earnings')
                 .eq('id', driverId)
                 .single();
             
@@ -518,9 +596,10 @@ export default function TaxiMotoDriver() {
                 await supabase
                     .from('taxi_drivers')
                     .update({
-                        total_rides: (currentDriver.total_rides || 0) + 1,
+                        total_trips: (currentDriver.total_trips || 0) + 1,
                         total_earnings: (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings,
-                        status: 'available'
+                        status: 'available',
+                        is_available: true
                     })
                     .eq('id', driverId);
             }
