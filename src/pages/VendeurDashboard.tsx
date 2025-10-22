@@ -43,6 +43,7 @@ import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 import GeminiAITest from "@/components/vendor/GeminiAITest";
+import GoogleCloudVerification from "@/components/vendor/GoogleCloudVerification";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -406,6 +407,7 @@ export default function VendeurDashboard() {
               <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
               <Route path="test-ai" element={<GeminiAITest />} />
+              <Route path="test-google-cloud" element={<GoogleCloudVerification />} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </main>
