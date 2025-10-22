@@ -4,6 +4,8 @@ import { Users, TrendingUp, ShoppingCart, Package, Star, Activity } from "lucide
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 
 export default function AdminDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -60,16 +62,19 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Dashboard Administrateur</h1>
               <p className="text-muted-foreground">
                 Vue d'ensemble de la plateforme - {profile?.first_name || user?.email}
               </p>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
-              Se déconnecter
-            </Button>
+            <div className="flex items-center gap-3">
+              <WalletBalanceWidget className="min-w-[280px]" />
+              <Button variant="outline" onClick={handleSignOut}>
+                Se déconnecter
+              </Button>
+            </div>
           </div>
         </div>
       </header>

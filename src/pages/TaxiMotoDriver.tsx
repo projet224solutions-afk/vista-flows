@@ -34,6 +34,8 @@ import { toast } from "sonner";
 import { RidesService, type RideDetails } from "@/services/taxi/ridesService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -586,6 +588,10 @@ export default function TaxiMotoDriver() {
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <div className="hidden lg:block">
+                                <WalletBalanceWidget className="max-w-[260px]" showTransferButton={false} />
+                            </div>
+                            <QuickTransferButton variant="ghost" size="icon" showText={false} />
                             {unreadCount > 0 && (
                                 <div className="relative">
                                     <Bell className="w-5 h-5 text-gray-600" />

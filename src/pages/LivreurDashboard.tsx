@@ -17,6 +17,8 @@ import {
   MessageSquare
 } from "lucide-react";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 
 export default function LivreurDashboard() {
   const { profile, signOut } = useAuth();
@@ -83,16 +85,22 @@ export default function LivreurDashboard() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="bg-livreur-gradient p-8 text-white">
-        <div className="container mx-auto flex justify-between items-center">
-          <div>
+        <div className="container mx-auto flex justify-between items-center gap-4">
+          <div className="flex-1">
             <h1 className="text-4xl font-bold mb-2">Dashboard Livreur</h1>
             <p className="text-white/80 text-lg">
               Bienvenue {profile?.first_name || 'Livreur'} - Optimisez vos tournées et maximisez vos gains
             </p>
           </div>
-          <Button variant="outline" onClick={signOut} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-            Déconnexion
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:block">
+              <WalletBalanceWidget className="min-w-[260px] bg-white/10 border-white/20" />
+            </div>
+            <QuickTransferButton variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
+            <Button variant="outline" onClick={signOut} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              Déconnexion
+            </Button>
+          </div>
         </div>
       </div>
 

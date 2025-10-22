@@ -44,6 +44,8 @@ import SupplierManagement from "@/components/vendor/SupplierManagement";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 import GeminiAITest from "@/components/vendor/GeminiAITest";
 import GoogleCloudVerification from "@/components/vendor/GoogleCloudVerification";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -367,6 +369,10 @@ export default function VendeurDashboard() {
               </div>
 
               <div className="flex items-center gap-2">
+                <div className="hidden lg:block">
+                  <WalletBalanceWidget className="max-w-[280px]" />
+                </div>
+                <QuickTransferButton variant="ghost" size="icon" showText={false} />
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
                 </Button>

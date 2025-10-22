@@ -18,6 +18,8 @@ import UserProfileCard from "@/components/UserProfileCard";
 import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -88,6 +90,10 @@ export default function ClientDashboard() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden md:block">
+              <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
+            </div>
+            <QuickTransferButton variant="ghost" size="icon" showText={false} />
             <Button
               variant="ghost"
               size="icon"
