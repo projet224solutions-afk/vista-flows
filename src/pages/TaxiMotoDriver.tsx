@@ -301,14 +301,21 @@ export default function TaxiMotoDriver() {
         if (!driverId) return;
 
         try {
-            const { data: ride, error } = await supabase
+            const { data: rides, error } = await supabase
                 .from('taxi_trips')
                 .select('*')
                 .eq('driver_id', driverId)
                 .in('status', ['accepted', 'started', 'driver_arriving'])
-                .single();
+                .limit(1);
 
-            if (error || !ride) return;
+            if (error) {
+                console.error('Error loading active ride:', error);
+                return;
+            }
+
+            if (!rides || rides.length === 0) return;
+            
+            const ride = rides[0];
 
             // Charger les infos du client
             let customerName = 'Client';
@@ -420,7 +427,7 @@ export default function TaxiMotoDriver() {
             // Charger le profil conducteur complet
             const { data: driverData } = await supabase
                 .from('taxi_drivers')
-                .select('rating, total_trips, total_earnings, is_online, last_seen, created_at')
+                .select('rating, total_rides, total_earnings, is_online, last_seen, created_at')
                 .eq('id', driverId)
                 .single();
 
@@ -434,22 +441,11 @@ export default function TaxiMotoDriver() {
                 return rideDate >= today && r.status === 'completed';
             });
             
-            // Calculer les gains réels depuis taxi_transactions
-            let todayEarnings = 0;
-            try {
-                const { data: transactions } = await supabase
-                    .from('taxi_transactions')
-                    .select('driver_earnings')
-                    .eq('driver_id', driverId)
-                    .eq('status', 'completed')
-                    .gte('created_at', today.toISOString());
-                
-                if (transactions) {
-                    todayEarnings = transactions.reduce((sum, t) => sum + (t.driver_earnings || 0), 0);
-                }
-            } catch (e) {
-                console.error('Error loading transactions:', e);
-            }
+            // Calculer les gains du jour depuis les courses complétées
+            const todayEarnings = todayRides.reduce((sum, r) => {
+                // 85% du prix total va au chauffeur
+                return sum + ((r.estimated_price || r.price_total || 0) * 0.85);
+            }, 0);
             
             // Calculer le temps en ligne aujourd'hui
             let onlineMinutes = 0;
@@ -468,7 +464,7 @@ export default function TaxiMotoDriver() {
                 todayEarnings: Math.round(todayEarnings),
                 todayRides: todayRides.length,
                 rating: Number(driverData?.rating) || 5.0,
-                totalRides: driverData?.total_trips || 0,
+                totalRides: driverData?.total_rides || 0,
                 onlineTime: `${hours}h ${mins}m`
             });
         } catch (error) {
@@ -715,7 +711,7 @@ export default function TaxiMotoDriver() {
                 await supabase
                     .from('taxi_drivers')
                     .update({
-                        total_trips: (currentDriver.total_trips || 0) + 1,
+                        total_rides: (currentDriver.total_rides || 0) + 1,
                         total_earnings: (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings,
                         status: 'available',
                         is_available: true
