@@ -41,6 +41,7 @@ import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
 import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
+import { SimpleMapView } from "@/components/taxi-moto/SimpleMapView";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
