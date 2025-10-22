@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RidesService } from "@/services/taxi/ridesService";
+import RidePaymentFlow from "./RidePaymentFlow";
 
 interface LocationCoordinates {
     latitude: number;
@@ -74,6 +75,8 @@ export default function TaxiMotoTracking({
     const [estimatedArrival, setEstimatedArrival] = useState<string>('');
     const [rideProgress, setRideProgress] = useState(0);
     const [rideDetails, setRideDetails] = useState<any>(null);
+    const [driverInfo, setDriverInfo] = useState<any>(null);
+    const [showPayment, setShowPayment] = useState(false);
 
     // Charger les détails de la course
     useEffect(() => {
@@ -149,17 +152,27 @@ export default function TaxiMotoTracking({
 
     const loadDriverInfo = async (driverId: string) => {
         try {
-            const { data: driverData } = await supabase
+            const { data: driverData, error } = await supabase
                 .from('taxi_drivers')
                 .select('*, profiles!taxi_drivers_user_id_fkey(first_name, last_name, phone)')
                 .eq('id', driverId)
                 .single();
 
+            if (error) throw error;
+
             if (driverData) {
                 const profile = (driverData as any).profiles;
-                // Mettre à jour currentRide avec les infos du conducteur
-                // Note: Cette partie devrait être gérée par le parent
-                console.log('Driver info loaded:', driverData);
+                const formattedDriver = {
+                    id: driverData.id,
+                    name: profile ? `${profile.first_name} ${profile.last_name}` : 'Conducteur',
+                    rating: driverData.rating || 4.5,
+                    phone: profile?.phone || '',
+                    vehicleType: driverData.vehicle_type || 'moto_rapide',
+                    vehicleNumber: driverData.vehicle_plate || 'N/A',
+                    photo: null
+                };
+                setDriverInfo(formattedDriver);
+                console.log('Driver info loaded:', formattedDriver);
             }
         } catch (error) {
             console.error('Error loading driver info:', error);
@@ -177,6 +190,11 @@ export default function TaxiMotoTracking({
             'cancelled': 0
         };
         setRideProgress(statusProgress[ride.status as keyof typeof statusProgress] || 0);
+        
+        // Afficher le paiement si la course est terminée
+        if (ride.status === 'completed' && !ride.payment_status) {
+            setShowPayment(true);
+        }
     };
 
     /**
@@ -305,6 +323,23 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
         );
     }
 
+    // Afficher le flow de paiement si la course est terminée
+    if (showPayment && currentRide.status === 'completed') {
+        return (
+            <RidePaymentFlow
+                rideId={currentRide.id}
+                amount={currentRide.estimatedPrice}
+                onPaymentSuccess={() => {
+                    setShowPayment(false);
+                    toast.success('Merci ! À bientôt sur 224Solutions');
+                }}
+                onCancel={() => {
+                    setShowPayment(false);
+                }}
+            />
+        );
+    }
+
     const statusInfo = getStatusInfo(currentRide.status);
     const StatusIcon = statusInfo.icon;
 
@@ -341,38 +376,47 @@ Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
             </Card>
 
             {/* Informations du conducteur */}
-            {currentRide.driver && (
+            {(currentRide.driver || driverInfo) && (
                 <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-lg">Votre conducteur</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                                {currentRide.driver.photo ? (
-                                    <img
-                                        src={currentRide.driver.photo}
-                                        alt={currentRide.driver.name}
-                                        className="w-16 h-16 rounded-full object-cover"
-                                    />
-                                ) : (
-                                    <User className="w-8 h-8 text-primary" />
-                                )}
-                            </div>
+                        {(() => {
+                            const driver = currentRide.driver || driverInfo;
+                            if (!driver) return null;
+                            
+                            return (
+                                <>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                                            {driver.photo ? (
+                                                <img
+                                                    src={driver.photo}
+                                                    alt={driver.name}
+                                                    className="w-16 h-16 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <User className="w-8 h-8 text-primary" />
+                                            )}
+                                        </div>
 
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-lg">{currentRide.driver.name}</h3>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span>{currentRide.driver.rating}</span>
-                                    <span>•</span>
-                                    <span>{currentRide.driver.vehicleType}</span>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    Plaque: {currentRide.driver.vehicleNumber}
-                                </p>
-                            </div>
-                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-lg">{driver.name}</h3>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                                <span>{driver.rating?.toFixed(1)}</span>
+                                                <span>•</span>
+                                                <span>{driver.vehicleType}</span>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">
+                                                Plaque: {driver.vehicleNumber}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
 
                         <div className="flex gap-2">
                             <Button

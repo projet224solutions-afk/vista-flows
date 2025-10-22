@@ -25,6 +25,7 @@ import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRideNotifications } from "@/hooks/useRideNotifications";
 
 interface Driver {
   id: string;
@@ -63,6 +64,19 @@ export default function TaxiMotoClient() {
   const [activeTab, setActiveTab] = useState('booking');
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
+
+  // Hook de notifications temps réel
+  useRideNotifications(user?.id, (notification) => {
+    console.log('[TaxiMotoClient] Notification received:', notification);
+    
+    // Mettre à jour currentRide si nécessaire
+    if (notification.type === 'ride_completed' || notification.type === 'ride_cancelled') {
+      setCurrentRide(null);
+      if (notification.type === 'ride_completed') {
+        setActiveTab('history');
+      }
+    }
+  });
 
   useEffect(() => {
     getCurrentLocation();
