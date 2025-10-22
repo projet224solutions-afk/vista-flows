@@ -107,6 +107,7 @@ export default function TaxiMotoDriver() {
     useEffect(() => {
         if (driverId) {
             loadDriverStats();
+            loadActiveRide(); // Charger la course active
             
             // Recharger les stats toutes les 30 secondes
             const statsInterval = setInterval(() => {
@@ -121,6 +122,7 @@ export default function TaxiMotoDriver() {
     useEffect(() => {
         if (isOnline && driverId) {
             startLocationTracking();
+            loadPendingRides(); // Charger les courses en attente
         } else if (locationWatchId !== null) {
             stopWatching(locationWatchId);
             setLocationWatchId(null);
@@ -285,9 +287,126 @@ export default function TaxiMotoDriver() {
 
             if (data) {
                 setDriverId(data.id);
+                setIsOnline(data.is_online || false);
             }
         } catch (error) {
             console.error('Error loading driver profile:', error);
+        }
+    };
+
+    /**
+     * Charge la course active depuis la DB
+     */
+    const loadActiveRide = async () => {
+        if (!driverId) return;
+
+        try {
+            const { data: ride, error } = await supabase
+                .from('taxi_trips')
+                .select('*')
+                .eq('driver_id', driverId)
+                .in('status', ['accepted', 'started', 'driver_arriving'])
+                .single();
+
+            if (error || !ride) return;
+
+            // Charger les infos du client
+            let customerName = 'Client';
+            let customerPhone = '+224 600 00 00 00';
+            let customerRating = 4.5;
+
+            try {
+                const { data: customerProfile } = await supabase
+                    .from('profiles')
+                    .select('first_name, last_name, phone')
+                    .eq('id', ride.customer_id)
+                    .single();
+
+                if (customerProfile) {
+                    customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Client';
+                    customerPhone = customerProfile.phone || customerPhone;
+                }
+
+                const { data: ratings } = await supabase
+                    .from('taxi_ratings')
+                    .select('rating')
+                    .eq('customer_id', ride.customer_id);
+                
+                if (ratings && ratings.length > 0) {
+                    customerRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+                }
+            } catch (e) {
+                console.error('Error loading customer info:', e);
+            }
+
+            const activeRideData: ActiveRide = {
+                id: ride.id,
+                customer: {
+                    name: customerName,
+                    phone: customerPhone,
+                    rating: Math.round(customerRating * 10) / 10
+                },
+                pickup: {
+                    address: ride.pickup_address,
+                    coords: { latitude: ride.pickup_lat || 0, longitude: ride.pickup_lng || 0 }
+                },
+                destination: {
+                    address: ride.dropoff_address,
+                    coords: { latitude: ride.dropoff_lat || 0, longitude: ride.dropoff_lng || 0 }
+                },
+                status: ride.status === 'started' ? 'picked_up' : 'accepted',
+                startTime: ride.accepted_at || ride.created_at,
+                estimatedEarnings: ride.estimated_price || 0
+            };
+
+            setActiveRide(activeRideData);
+            setNavigationActive(true);
+            
+            console.log('✅ Course active chargée:', activeRideData);
+        } catch (error) {
+            console.error('Error loading active ride:', error);
+        }
+    };
+
+    /**
+     * Charge les courses en attente depuis la DB
+     */
+    const loadPendingRides = async () => {
+        if (!driverId || !location) return;
+
+        try {
+            // Charger toutes les courses "requested" à proximité (5km)
+            const { data: rides, error } = await supabase
+                .from('taxi_trips')
+                .select('*')
+                .eq('status', 'requested')
+                .is('driver_id', null);
+
+            if (error) throw error;
+            if (!rides || rides.length === 0) return;
+
+            // Filtrer par distance et ajouter à la liste
+            const nearbyRides = rides.filter(ride => {
+                if (!ride.pickup_lat || !ride.pickup_lng) return false;
+                const distance = calculateDistance(
+                    location.latitude,
+                    location.longitude,
+                    ride.pickup_lat,
+                    ride.pickup_lng
+                );
+                return distance <= 5; // 5km radius
+            });
+
+            // Charger les détails pour chaque course
+            for (const ride of nearbyRides) {
+                await addRideRequestFromDB(ride);
+            }
+
+            if (nearbyRides.length > 0) {
+                toast.success(`${nearbyRides.length} course(s) disponible(s)!`);
+            }
+        } catch (error) {
+            console.error('Error loading pending rides:', error);
         }
     };
 
@@ -700,59 +819,76 @@ export default function TaxiMotoDriver() {
 
             {/* Demandes de course en attente */}
             {rideRequests.length > 0 && (
-                <div className="fixed top-20 left-4 right-4 z-50">
+                <div className="fixed top-20 left-4 right-4 z-50 max-h-[60vh] overflow-y-auto">
                     {rideRequests.map((request) => (
-                        <Card key={request.id} className="bg-yellow-50 border-yellow-200 mb-2">
+                        <Card key={request.id} className="bg-yellow-50 border-yellow-200 mb-2 animate-in slide-in-from-top">
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
-                                        <h3 className="font-semibold">Nouvelle course</h3>
+                                        <h3 className="font-semibold">Nouvelle course 🚗</h3>
                                         <p className="text-sm text-gray-600">{request.customerName}</p>
                                     </div>
-                                    <Badge className="bg-green-100 text-green-800">
-                                        +{request.estimatedEarnings.toLocaleString()} FCFA
+                                    <Badge className="bg-green-100 text-green-800 text-base font-bold">
+                                        +{request.estimatedEarnings.toLocaleString()} GNF
                                     </Badge>
                                 </div>
 
                                 <div className="space-y-1 mb-3 text-sm">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="font-medium">Départ:</span>
                                         <span>{request.pickupAddress}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        <span className="font-medium">Arrivée:</span>
                                         <span>{request.destinationAddress}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-                                    <span>{request.distance}km • {request.estimatedDuration}min</span>
+                                <div className="flex items-center justify-between text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                    <span className="font-medium">{request.distance.toFixed(1)}km • {request.estimatedDuration}min</span>
                                     <div className="flex items-center gap-1">
                                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                        <span>{request.customerRating}</span>
+                                        <span className="font-medium">{request.customerRating}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 mt-3">
                                     <Button
                                         onClick={() => declineRideRequest(request.id)}
                                         variant="outline"
                                         size="sm"
                                         className="flex-1"
                                     >
-                                        Refuser
+                                        ❌ Refuser
                                     </Button>
                                     <Button
                                         onClick={() => acceptRideRequest(request)}
                                         size="sm"
                                         className="flex-1 bg-green-600 hover:bg-green-700"
                                     >
-                                        Accepter
+                                        ✅ Accepter
                                     </Button>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
+                </div>
+            )}
+
+            {/* Message quand en ligne sans courses */}
+            {isOnline && rideRequests.length === 0 && !activeRide && (
+                <div className="fixed top-20 left-4 right-4 z-40">
+                    <Card className="bg-blue-50 border-blue-200">
+                        <CardContent className="p-4 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                                <Car className="w-8 h-8 text-blue-600 animate-pulse" />
+                                <p className="text-sm font-medium text-blue-900">En attente de courses...</p>
+                                <p className="text-xs text-blue-700">Vous recevrez une notification dès qu'une course est disponible</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             )}
 
