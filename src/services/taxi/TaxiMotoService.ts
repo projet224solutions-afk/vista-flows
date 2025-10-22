@@ -114,6 +114,10 @@ export class TaxiMotoService {
       p_prefix: 'TMR'
     });
 
+    // Calculer driver_share (85%) et platform_fee (15%)
+    const driverShare = Math.round(params.estimatedPrice * 0.85);
+    const platformFee = params.estimatedPrice - driverShare;
+
     const { data, error } = await supabase
       .from('taxi_trips')
       .insert({
@@ -127,7 +131,9 @@ export class TaxiMotoService {
         dropoff_address: params.dropoffAddress,
         distance_km: params.distanceKm as any,
         duration_min: params.durationMin as any,
-        estimated_price: params.estimatedPrice as any,
+        price_total: params.estimatedPrice as any,
+        driver_share: driverShare as any,
+        platform_fee: platformFee as any,
         status: 'requested',
         payment_status: 'pending'
       } as any)
@@ -149,7 +155,7 @@ export class TaxiMotoService {
         p_type: 'ride_request',
         p_title: 'Nouvelle course disponible',
         p_body: `Course de ${params.pickupAddress} à ${params.dropoffAddress} - ${params.estimatedPrice} GNF`,
-        p_data: { distance_km: params.distanceKm, estimated_price: params.estimatedPrice }
+        p_data: { distance_km: params.distanceKm, price_total: params.estimatedPrice, driver_share: driverShare }
       });
     }
 
@@ -364,13 +370,13 @@ export class TaxiMotoService {
   ): Promise<void> {
     const updateData: any = {
       is_online: isOnline,
-      is_available: isAvailable,
-      last_location_update: new Date().toISOString()
+      status: isOnline ? (isAvailable ? 'available' : 'busy') : 'offline',
+      last_seen: new Date().toISOString()
     };
 
     if (currentLat && currentLng) {
-      updateData.current_lat = currentLat;
-      updateData.current_lng = currentLng;
+      updateData.last_lat = currentLat;
+      updateData.last_lng = currentLng;
     }
 
     const { error } = await supabase

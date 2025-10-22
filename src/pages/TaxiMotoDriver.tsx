@@ -36,6 +36,8 @@ import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
+import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -92,6 +94,7 @@ export default function TaxiMotoDriver() {
     });
     const [driverId, setDriverId] = useState<string | null>(null);
     const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
+    const [rideHistory, setRideHistory] = useState<any[]>([]);
 
     // États de navigation
     const [navigationActive, setNavigationActive] = useState(false);
@@ -107,7 +110,8 @@ export default function TaxiMotoDriver() {
     useEffect(() => {
         if (driverId) {
             loadDriverStats();
-            loadActiveRide(); // Charger la course active
+            loadActiveRide();
+            loadRideHistory();
             
             // Recharger les stats toutes les 30 secondes
             const statsInterval = setInterval(() => {
@@ -207,9 +211,9 @@ export default function TaxiMotoDriver() {
                 supabase
                     .from('taxi_drivers')
                     .update({
-                        current_lat: position.coords.latitude,
-                        current_lng: position.coords.longitude,
-                        last_location_update: new Date().toISOString()
+                        last_lat: position.coords.latitude,
+                        last_lng: position.coords.longitude,
+                        last_seen: new Date().toISOString()
                     })
                     .eq('id', driverId)
                     .then(({ error }) => {
@@ -363,7 +367,7 @@ export default function TaxiMotoDriver() {
                 },
                 status: ride.status === 'started' ? 'picked_up' : 'accepted',
                 startTime: ride.accepted_at || ride.created_at,
-                estimatedEarnings: ride.estimated_price || 0
+                estimatedEarnings: ride.driver_share || Math.round((ride.price_total || 0) * 0.85)
             };
 
             setActiveRide(activeRideData);
@@ -372,6 +376,22 @@ export default function TaxiMotoDriver() {
             console.log('✅ Course active chargée:', activeRideData);
         } catch (error) {
             console.error('Error loading active ride:', error);
+        }
+    };
+
+    /**
+     * Charge l'historique des courses
+     */
+    const loadRideHistory = async () => {
+        if (!driverId) return;
+
+        try {
+            const rides = await TaxiMotoService.getDriverRides(driverId, 50);
+            const completedRides = rides.filter(r => r.status === 'completed');
+            setRideHistory(completedRides);
+            console.log(`✅ Historique chargé: ${completedRides.length} courses`);
+        } catch (error) {
+            console.error('Error loading ride history:', error);
         }
     };
 
@@ -441,10 +461,9 @@ export default function TaxiMotoDriver() {
                 return rideDate >= today && r.status === 'completed';
             });
             
-            // Calculer les gains du jour depuis les courses complétées
+            // Calculer les gains du jour depuis driver_share
             const todayEarnings = todayRides.reduce((sum, r) => {
-                // 85% du prix total va au chauffeur
-                return sum + ((r.estimated_price || r.price_total || 0) * 0.85);
+                return sum + (r.driver_share || 0);
             }, 0);
             
             // Calculer le temps en ligne aujourd'hui
@@ -514,7 +533,7 @@ export default function TaxiMotoDriver() {
             pickupAddress: ride.pickup_address,
             destinationAddress: ride.dropoff_address,
             distance: ride.distance_km || 0,
-            estimatedEarnings: ride.estimated_price || 0,
+            estimatedEarnings: ride.driver_share || Math.round((ride.price_total || 0) * 0.85),
             estimatedDuration: ride.duration_min || 0,
             pickupCoords: { 
                 latitude: ride.pickup_lat || 0, 
@@ -733,8 +752,9 @@ export default function TaxiMotoDriver() {
             setNavigationActive(false);
             setActiveTab('dashboard');
             
-            // Recharger les statistiques
+            // Recharger les statistiques et l'historique
             loadDriverStats();
+            loadRideHistory();
         } catch (error) {
             console.error('Error completing ride:', error);
             toast.error('Erreur lors de la finalisation');
@@ -815,60 +835,15 @@ export default function TaxiMotoDriver() {
 
             {/* Demandes de course en attente */}
             {rideRequests.length > 0 && (
-                <div className="fixed top-20 left-4 right-4 z-50 max-h-[60vh] overflow-y-auto">
-                    {rideRequests.map((request) => (
-                        <Card key={request.id} className="bg-yellow-50 border-yellow-200 mb-2 animate-in slide-in-from-top">
-                            <CardContent className="p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <h3 className="font-semibold">Nouvelle course 🚗</h3>
-                                        <p className="text-sm text-gray-600">{request.customerName}</p>
-                                    </div>
-                                    <Badge className="bg-green-100 text-green-800 text-base font-bold">
-                                        +{request.estimatedEarnings.toLocaleString()} GNF
-                                    </Badge>
-                                </div>
-
-                                <div className="space-y-1 mb-3 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                        <span className="font-medium">Départ:</span>
-                                        <span>{request.pickupAddress}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                        <span className="font-medium">Arrivée:</span>
-                                        <span>{request.destinationAddress}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
-                                    <span className="font-medium">{request.distance.toFixed(1)}km • {request.estimatedDuration}min</span>
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                        <span className="font-medium">{request.customerRating}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 mt-3">
-                                    <Button
-                                        onClick={() => declineRideRequest(request.id)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex-1"
-                                    >
-                                        ❌ Refuser
-                                    </Button>
-                                    <Button
-                                        onClick={() => acceptRideRequest(request)}
-                                        size="sm"
-                                        className="flex-1 bg-green-600 hover:bg-green-700"
-                                    >
-                                        ✅ Accepter
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <div className="fixed top-20 left-4 right-4 z-50 max-h-[70vh] overflow-y-auto space-y-2">
+                    {rideRequests.map((request, index) => (
+                        <RideRequestNotification
+                            key={request.id}
+                            request={request}
+                            onAccept={() => acceptRideRequest(request)}
+                            onDecline={() => declineRideRequest(request.id)}
+                            index={index}
+                        />
                     ))}
                 </div>
             )}
@@ -1115,35 +1090,12 @@ export default function TaxiMotoDriver() {
                     </TabsContent>
 
                     {/* Gains */}
-                    <TabsContent value="earnings" className="space-y-4 mt-4">
-                        <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                            <CardHeader>
-                                <CardTitle>Résumé des gains</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="text-center">
-                                    <div className="text-3xl font-bold text-green-600 mb-2">
-                                        {driverStats.todayEarnings.toLocaleString()} FCFA
-                                    </div>
-                                    <p className="text-gray-600">Gains d'aujourd'hui</p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                                    <div className="text-center">
-                                        <div className="text-lg font-bold text-blue-600">
-                                            {driverStats.todayRides}
-                                        </div>
-                                        <div className="text-sm text-gray-600">Courses</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-lg font-bold text-purple-600">
-                                            {driverStats.todayRides > 0 ? Math.round(driverStats.todayEarnings / driverStats.todayRides) : 0}
-                                        </div>
-                                        <div className="text-sm text-gray-600">FCFA/course</div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <TabsContent value="earnings" className="mt-4">
+                        <DriverEarningsHistory 
+                            rides={rideHistory}
+                            todayEarnings={driverStats.todayEarnings}
+                            todayRides={driverStats.todayRides}
+                        />
                     </TabsContent>
                 </Tabs>
             </div>
