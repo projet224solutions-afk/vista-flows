@@ -10,6 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Upload, CheckCircle2, Bike, User, FileText, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useBureauOfflineSync } from '@/hooks/useBureauOfflineSync';
+
+// Import mode offline pour MotoRegistrationForm
+import offlineSyncManager from '@/lib/offlineSyncManager';
 
 interface MotoForm {
   owner_name: string;
@@ -33,6 +37,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [conducteurSearch, setConducteurSearch] = useState('');
   const [customBrand, setCustomBrand] = useState('');
+  const { storeOfflineEvent, isOnline } = useBureauOfflineSync(bureauId);
   const [form, setForm] = useState<MotoForm>({
     owner_name: '',
     owner_phone: '',
@@ -101,20 +106,36 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     try {
       const finalBrand = form.brand === 'Autre' ? customBrand : form.brand;
       
-      const { data, error } = await supabase
-        .from('registered_motos')
-        .insert([{
-          bureau_id: bureauId,
-          ...form,
-          brand: finalBrand,
-          status: 'pending'
-        }])
-        .select()
-        .single();
+      const motoData = {
+        id: crypto.randomUUID(),
+        bureau_id: bureauId,
+        ...form,
+        brand: finalBrand,
+        status: 'pending',
+        registration_date: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      if (isOnline) {
+        // Enregistrement direct si en ligne
+        const { data, error } = await supabase
+          .from('registered_motos')
+          .insert([motoData])
+          .select()
+          .single();
 
-      toast.success('Moto enregistrée avec succès! En attente de validation.');
+        if (error) throw error;
+
+        toast.success('🏍️ Moto enregistrée avec succès!', {
+          description: 'En attente de validation'
+        });
+      } else {
+        // Stockage hors ligne
+        await storeOfflineEvent('moto_registration', motoData);
+        
+        toast.success('📴 Moto enregistrée localement', {
+          description: 'Elle sera synchronisée à la reconnexion'
+        });
+      }
       
       // Reset form
       setForm({

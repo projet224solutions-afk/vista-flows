@@ -9,13 +9,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare } from 'lucide-react';
+import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
 import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
 import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
+import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
+import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator';
+import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration';
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 
 export default function BureauDashboard() {
@@ -209,13 +212,22 @@ export default function BureauDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* PWA Integration */}
+      <SyndicatePWAIntegration
+        bureauId={bureau.id}
+        bureauName={`${bureau.prefecture} - ${bureau.commune}`}
+        presidentName={bureau.president_name || 'Président'}
+        isOnline={navigator.onLine}
+      />
+
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{bureau.bureau_code}</h1>
           <p className="text-muted-foreground">{bureau.prefecture} - {bureau.commune}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <BureauNetworkIndicator bureauId={bureau.id} />
           <Button variant="outline">
             <Phone className="w-4 h-4 mr-2" />
             Support Technique
@@ -265,9 +277,10 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="workers">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="workers">Membres du Bureau</TabsTrigger>
           <TabsTrigger value="motos">Véhicules</TabsTrigger>
+          <TabsTrigger value="sync">Synchronisation</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
           <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
@@ -471,6 +484,10 @@ export default function BureauDashboard() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="sync" className="space-y-6">
+          {bureau && <BureauOfflineSyncPanel bureauId={bureau.id} />}
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">

@@ -46,6 +46,8 @@ import GeminiAITest from "@/components/vendor/GeminiAITest";
 import GoogleCloudVerification from "@/components/vendor/GoogleCloudVerification";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
+import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -369,6 +371,7 @@ export default function VendeurDashboard() {
               </div>
 
               <div className="flex items-center gap-2">
+                <NetworkStatusIndicator />
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
@@ -414,6 +417,7 @@ export default function VendeurDashboard() {
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
               <Route path="test-ai" element={<GeminiAITest />} />
               <Route path="test-google-cloud" element={<GoogleCloudVerification />} />
+              <Route path="offline-sync" element={<OfflineSyncPanel />} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </main>

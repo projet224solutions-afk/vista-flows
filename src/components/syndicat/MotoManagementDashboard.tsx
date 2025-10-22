@@ -9,6 +9,8 @@ import {  AlertCircle, Eye, CheckCircle2, XCircle, AlertTriangle, Download, QrCo
 import BadgeGenerator from './BadgeGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import StolenMotoReportButton from './StolenMotoReportButton';
+import MotoManagementOffline from './MotoManagementOffline';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 

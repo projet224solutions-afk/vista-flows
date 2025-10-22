@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2, UserCircle } from 'lucide-react';
+import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2, UserCircle, Download, RefreshCw } from 'lucide-react';
 import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
+import { supabase } from '@/integrations/supabase/client';
+import GenerateBureauInstallLink from '@/components/admin/GenerateBureauInstallLink';
+import DualSyncDashboard from '@/components/admin/DualSyncDashboard';
 
 export default function PDGSyndicatManagement() {
   const {
@@ -375,6 +378,10 @@ export default function PDGSyndicatManagement() {
             <Settings className="w-4 h-4 mr-2" />
             Fonctionnalités ({features.length})
           </TabsTrigger>
+          <TabsTrigger value="sync">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Synchronisation
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="bureaus" className="space-y-4">
@@ -468,7 +475,11 @@ export default function PDGSyndicatManagement() {
                     )}
                     
                     {/* Actions */}
-                    <div className="flex items-center gap-2 pt-2 border-t">
+                    <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
+                      <GenerateBureauInstallLink 
+                        bureauId={bureau.id}
+                        bureauName={`${bureau.prefecture} - ${bureau.commune}`}
+                      />
                       <Button variant="ghost" size="sm" onClick={() => handleCopyBureau(bureau)}>
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -810,6 +821,10 @@ export default function PDGSyndicatManagement() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="sync" className="space-y-4">
+          <DualSyncDashboard />
         </TabsContent>
       </Tabs>
 
