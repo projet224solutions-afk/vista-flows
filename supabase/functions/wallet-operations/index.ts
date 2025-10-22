@@ -6,6 +6,114 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 🔧 FONCTIONS HELPER
+
+/**
+ * Calculer les frais de transaction
+ */
+async function calculateFee(supabase: any, transactionType: string, amount: number, currency: string = 'GNF'): Promise<number> {
+  try {
+    const { data: feeConfig, error } = await supabase
+      .from('wallet_fees')
+      .select('*')
+      .eq('transaction_type', transactionType)
+      .eq('currency', currency)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !feeConfig) {
+      return 0;
+    }
+
+    let fee = 0;
+    if (feeConfig.fee_type === 'fixed') {
+      fee = feeConfig.fee_value;
+    } else if (feeConfig.fee_type === 'percentage') {
+      fee = (amount * feeConfig.fee_value) / 100;
+    }
+
+    return Math.max(0, fee);
+  } catch (error) {
+    console.error('⚠️ Erreur calculateFee:', error);
+    return 0;
+  }
+}
+
+/**
+ * Logger une opération wallet
+ */
+async function logWalletOperation(supabase: any, logData: any): Promise<void> {
+  try {
+    await supabase.from('wallet_logs').insert([logData]);
+  } catch (error) {
+    console.error('⚠️ Erreur logging:', error);
+  }
+}
+
+/**
+ * Détecter activité suspecte
+ */
+async function detectSuspicious(supabase: any, userId: string, amount: number): Promise<any> {
+  try {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: recentLogs } = await supabase
+      .from('wallet_logs')
+      .select('amount')
+      .eq('user_id', userId)
+      .gte('created_at', yesterday);
+
+    const total24h = recentLogs?.reduce((sum: number, log: any) => sum + (log.amount || 0), 0) || 0;
+    const count24h = recentLogs?.length || 0;
+
+    const flags = [];
+    let severity = 'low';
+
+    if (amount > 2000000) {
+      flags.push('high_amount');
+      severity = 'high';
+    }
+
+    if (count24h > 10) {
+      flags.push('high_frequency');
+      severity = 'medium';
+    }
+
+    if (total24h > 5000000) {
+      flags.push('high_volume');
+      severity = 'critical';
+    }
+
+    if (flags.length > 0) {
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (wallet) {
+        await supabase
+          .from('wallet_suspicious_activities')
+          .insert([{
+            wallet_id: wallet.id,
+            user_id: userId,
+            activity_type: flags.join(', '),
+            severity,
+            description: `Activité détectée: montant ${amount}, total 24h: ${total24h}, nb: ${count24h}`,
+            metadata: { amount, total24h, count24h, flags }
+          }]);
+      }
+
+      return { suspicious: true, severity, flags, should_block: severity === 'critical' };
+    }
+
+    return { suspicious: false };
+  } catch (error) {
+    console.error('⚠️ Erreur detectSuspicious:', error);
+    return { suspicious: false };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -62,11 +170,37 @@ serve(async (req) => {
 
     let result;
 
+    // 🔍 Détecter activités suspectes
+    const suspicious = await detectSuspicious(supabaseClient, user.id, amount);
+    if (suspicious.should_block) {
+      // Bloquer le wallet automatiquement
+      await supabaseClient
+        .from('wallets')
+        .update({ 
+          is_blocked: true, 
+          blocked_reason: `Activité suspecte: ${suspicious.flags.join(', ')}`,
+          blocked_at: new Date().toISOString()
+        })
+        .eq('id', wallet.id);
+
+      throw new Error('Transaction bloquée: activité suspecte détectée');
+    }
+
+    // Vérifier si le wallet est bloqué
+    if (wallet.is_blocked) {
+      throw new Error('Wallet bloqué. Contactez le support.');
+    }
+
     switch (operation) {
       case 'deposit':
         console.log('➕ Processing deposit...');
-        // Dépôt
-        const newBalanceDeposit = wallet.balance + amount;
+        
+        // Calculer frais
+        const depositFee = await calculateFee(supabaseClient, 'deposit', amount, wallet.currency);
+        const netDeposit = amount - depositFee;
+        
+        const balanceBeforeDeposit = wallet.balance;
+        const newBalanceDeposit = balanceBeforeDeposit + netDeposit;
         
         const { error: depositError } = await supabaseClient
           .from('wallets')
