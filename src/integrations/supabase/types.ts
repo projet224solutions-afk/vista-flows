@@ -255,6 +255,13 @@ export type Database = {
             foreignKeyName: "badges_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "badges_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -263,6 +270,60 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bureau_access_logs: {
+        Row: {
+          access_type: string
+          bureau_id: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          success: boolean | null
+          timestamp: string | null
+          token_used: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_type: string
+          bureau_id: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean | null
+          timestamp?: string | null
+          token_used?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_type?: string
+          bureau_id?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          success?: boolean | null
+          timestamp?: string | null
+          token_used?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bureau_access_logs_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_access_logs_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
         ]
@@ -290,6 +351,13 @@ export type Database = {
           id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bureau_feature_assignments_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
           {
             foreignKeyName: "bureau_feature_assignments_bureau_id_fkey"
             columns: ["bureau_id"]
@@ -377,6 +445,13 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bureau_transactions_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
           {
             foreignKeyName: "bureau_transactions_bureau_id_fkey"
             columns: ["bureau_id"]
@@ -1867,6 +1942,13 @@ export type Database = {
             foreignKeyName: "members_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "members_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -2651,6 +2733,105 @@ export type Database = {
           },
         ]
       }
+      pwa_installations: {
+        Row: {
+          bureau_id: string
+          created_at: string | null
+          id: string
+          installed_at: string | null
+          ip_address: string | null
+          is_mobile: boolean | null
+          platform: string | null
+          token: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          bureau_id: string
+          created_at?: string | null
+          id?: string
+          installed_at?: string | null
+          ip_address?: string | null
+          is_mobile?: boolean | null
+          platform?: string | null
+          token?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          bureau_id?: string
+          created_at?: string | null
+          id?: string
+          installed_at?: string | null
+          ip_address?: string | null
+          is_mobile?: boolean | null
+          platform?: string | null
+          token?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pwa_installations_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "pwa_installations_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pwa_tokens: {
+        Row: {
+          bureau_id: string
+          created_at: string | null
+          created_by: string | null
+          expires_at: string
+          id: string
+          token: string
+          used: boolean | null
+          used_at: string | null
+        }
+        Insert: {
+          bureau_id: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          token: string
+          used?: boolean | null
+          used_at?: string | null
+        }
+        Update: {
+          bureau_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pwa_tokens_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "pwa_tokens_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registered_motos: {
         Row: {
           brand: string | null
@@ -2704,6 +2885,13 @@ export type Database = {
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "registered_motos_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
           {
             foreignKeyName: "registered_motos_bureau_id_fkey"
             columns: ["bureau_id"]
@@ -2946,6 +3134,13 @@ export type Database = {
           vehicle_serial?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sos_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
           {
             foreignKeyName: "sos_alerts_bureau_id_fkey"
             columns: ["bureau_id"]
@@ -3259,6 +3454,13 @@ export type Database = {
             foreignKeyName: "syndicate_alerts_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "syndicate_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -3308,6 +3510,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "syndicate_workers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
           {
             foreignKeyName: "syndicate_workers_bureau_id_fkey"
             columns: ["bureau_id"]
@@ -4025,6 +4234,13 @@ export type Database = {
             foreignKeyName: "vehicles_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "vehicles_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -4441,6 +4657,22 @@ export type Database = {
       }
     }
     Views: {
+      bureau_pwa_stats: {
+        Row: {
+          bureau_id: string | null
+          commune: string | null
+          desktop_installations: number | null
+          last_installation: string | null
+          mobile_installations: number | null
+          prefecture: string | null
+          recent_installations: number | null
+          tokens_used: number | null
+          total_access_attempts: number | null
+          total_installations: number | null
+          total_tokens_generated: number | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -4717,6 +4949,10 @@ export type Database = {
           p_surge_multiplier?: number
         }
         Returns: Json
+      }
+      cleanup_expired_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_communication_notification: {
         Args: {
@@ -5090,6 +5326,10 @@ export type Database = {
       gidx_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      has_active_installation: {
+        Args: { bureau_uuid: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
