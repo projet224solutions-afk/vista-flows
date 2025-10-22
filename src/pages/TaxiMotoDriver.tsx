@@ -36,8 +36,9 @@ import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
-import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
-import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
+import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
+import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
+import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -924,18 +925,22 @@ export default function TaxiMotoDriver() {
             {/* Navigation par onglets */}
             <div className="px-4 mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm">
+                    <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
                         <TabsTrigger value="dashboard">
                             <TrendingUp className="w-4 h-4 mr-1" />
-                            Dashboard
+                            <span className="hidden sm:inline">Dashboard</span>
                         </TabsTrigger>
                         <TabsTrigger value="navigation" disabled={!activeRide}>
                             <Navigation className="w-4 h-4 mr-1" />
-                            Navigation
+                            <span className="hidden sm:inline">Course</span>
                         </TabsTrigger>
                         <TabsTrigger value="earnings">
                             <DollarSign className="w-4 h-4 mr-1" />
-                            Gains
+                            <span className="hidden sm:inline">Gains</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="settings">
+                            <Settings className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">Réglages</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -1154,6 +1159,11 @@ export default function TaxiMotoDriver() {
                             todayEarnings={driverStats.todayEarnings}
                             todayRides={driverStats.todayRides}
                         />
+                    </TabsContent>
+
+                    {/* Onglet Paramètres */}
+                    <TabsContent value="settings" className="mt-4">
+                        {driverId && <DriverSettings driverId={driverId} />}
                     </TabsContent>
                 </Tabs>
             </div>
