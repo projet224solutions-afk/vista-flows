@@ -124,22 +124,52 @@ export default function Auth() {
           }
         });
 
-        if (error) throw error;
-        setSuccess("Inscription réussie ! Vérifiez votre email.");
+        if (error) {
+          if (error.message.includes('User already registered')) {
+            throw new Error('❌ Cet email est déjà utilisé. Veuillez vous connecter ou utiliser un autre email.');
+          } else {
+            throw error;
+          }
+        }
+        setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
       } else {
         // Connexion
         const validatedData = loginSchema.parse(formData);
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
 
-        if (error) throw error;
-        setSuccess("Connexion réussie ! Redirection en cours...");
+        if (error) {
+          // Gérer les erreurs d'authentification de manière conviviale
+          if (error.message.includes('Email not confirmed')) {
+            throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
+          } else if (error.message.includes('Invalid login credentials')) {
+            throw new Error('❌ Email ou mot de passe incorrect. Veuillez réessayer.');
+          } else {
+            throw error;
+          }
+        }
+        
+        if (data.user) {
+          setSuccess("✅ Connexion réussie ! Redirection en cours...");
+        }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      let errorMessage = 'Une erreur est survenue';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      // Gestion des erreurs de validation Zod
+      if (err && typeof err === 'object' && 'issues' in err) {
+        const zodError = err as any;
+        errorMessage = zodError.issues[0]?.message || errorMessage;
+      }
+      
       setError(errorMessage);
+      console.error('Erreur authentification:', err);
     } finally {
       setLoading(false);
     }
@@ -248,12 +278,27 @@ export default function Auth() {
       <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
-            {/* Message d'information */}
+            {/* Messages d'information */}
             {!showSignup && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-800 text-sm">
-                  <strong>✨ Connexion intelligente :</strong> Utilisez vos identifiants habituels.
-                  Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
+              <>
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    <strong>✨ Connexion intelligente :</strong> Utilisez vos identifiants habituels.
+                    Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
+                  </p>
+                </div>
+                <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-amber-800 text-xs">
+                    <strong>💡 Note :</strong> Si vous venez de vous inscrire, n'oubliez pas de confirmer votre email avant de vous connecter.
+                  </p>
+                </div>
+              </>
+            )}
+            
+            {showSignup && (
+              <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <p className="text-purple-800 text-sm">
+                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole}` : ''}.
                 </p>
               </div>
             )}
