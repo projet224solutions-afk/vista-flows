@@ -917,8 +917,8 @@ export default function TaxiMotoDriver() {
                                 </div>
                                 <Button
                                     onClick={toggleOnlineStatus}
-                                    size="lg"
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-xl"
+                                    size="default"
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                                 >
                                     🟢 Passer en ligne
                                 </Button>
