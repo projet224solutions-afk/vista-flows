@@ -103,9 +103,15 @@ export default function TaxiMotoDriver() {
     const [distanceToDestination, setDistanceToDestination] = useState(0);
     const [timeToDestination, setTimeToDestination] = useState(0);
 
+    // Initialisation : Charger le profil et demander la position GPS
     useEffect(() => {
         loadDriverProfile();
-    }, []);
+        // Demander la position GPS immédiatement
+        getCurrentLocation().catch(err => {
+            console.error('Erreur GPS:', err);
+            toast.error('⚠️ Veuillez activer votre GPS pour utiliser l\'application');
+        });
+    }, [getCurrentLocation]);
 
     useEffect(() => {
         if (driverId) {
@@ -249,34 +255,53 @@ export default function TaxiMotoDriver() {
             return;
         }
 
-        if (!location && next) {
-            toast.error('Impossible d\'obtenir votre position GPS');
-            return;
-        }
+        // Si on veut passer en ligne, vérifier/obtenir la position GPS
+        if (next) {
+            try {
+                // Demander la position GPS
+                const position = await getCurrentLocation();
+                console.log('📍 Position GPS obtenue:', position);
+                
+                // Mettre le chauffeur en ligne avec la position
+                await TaxiMotoService.updateDriverStatus(
+                    driverId,
+                    true,
+                    true,
+                    position.latitude,
+                    position.longitude
+                );
 
-        try {
-            await TaxiMotoService.updateDriverStatus(
-                driverId,
-                next,
-                next,
-                location?.latitude,
-                location?.longitude
-            );
-
-            setIsOnline(next);
-            
-            if (next) {
+                setIsOnline(true);
                 toast.success('🟢 Vous êtes maintenant en ligne');
+                
                 // Charger les courses en attente
                 loadPendingRides();
-            } else {
+                
+            } catch (error) {
+                console.error('Erreur GPS:', error);
+                toast.error('⚠️ Impossible d\'obtenir votre position GPS. Veuillez activer votre GPS et réessayer.');
+                return;
+            }
+        } else {
+            // Passer hors ligne
+            try {
+                await TaxiMotoService.updateDriverStatus(
+                    driverId,
+                    false,
+                    false,
+                    location?.latitude,
+                    location?.longitude
+                );
+
+                setIsOnline(false);
                 toast.info('🔴 Vous êtes maintenant hors ligne');
+                
                 // Vider les demandes de courses
                 setRideRequests([]);
+            } catch (error) {
+                console.error('Error updating status:', error);
+                toast.error('Erreur lors du changement de statut');
             }
-        } catch (error) {
-            console.error('Error updating status:', error);
-            toast.error('Erreur lors du changement de statut');
         }
     };
 
