@@ -1,5 +1,8 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[functions.generate-unique-id]
+verify_jwt = false
+
 [functions.wallet-operations]
 verify_jwt = true
 

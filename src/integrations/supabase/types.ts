@@ -844,6 +844,7 @@ export type Database = {
           last_message_at: string | null
           last_message_preview: string | null
           name: string | null
+          public_id: string | null
           type: string | null
           unread_count: number | null
           updated_at: string | null
@@ -857,6 +858,7 @@ export type Database = {
           last_message_at?: string | null
           last_message_preview?: string | null
           name?: string | null
+          public_id?: string | null
           type?: string | null
           unread_count?: number | null
           updated_at?: string | null
@@ -870,6 +872,7 @@ export type Database = {
           last_message_at?: string | null
           last_message_preview?: string | null
           name?: string | null
+          public_id?: string | null
           type?: string | null
           unread_count?: number | null
           updated_at?: string | null
@@ -967,6 +970,7 @@ export type Database = {
           id: string
           payment_methods: Json | null
           preferences: Json | null
+          public_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -976,6 +980,7 @@ export type Database = {
           id?: string
           payment_methods?: Json | null
           preferences?: Json | null
+          public_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -985,6 +990,7 @@ export type Database = {
           id?: string
           payment_methods?: Json | null
           preferences?: Json | null
+          public_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1014,6 +1020,7 @@ export type Database = {
           id: string
           order_id: string
           pickup_address: Json
+          public_id: string | null
           status: Database["public"]["Enums"]["delivery_status"] | null
           updated_at: string | null
         }
@@ -1032,6 +1039,7 @@ export type Database = {
           id?: string
           order_id: string
           pickup_address: Json
+          public_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
           updated_at?: string | null
         }
@@ -1050,6 +1058,7 @@ export type Database = {
           id?: string
           order_id?: string
           pickup_address?: Json
+          public_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
           updated_at?: string | null
         }
@@ -1078,6 +1087,7 @@ export type Database = {
           is_online: boolean | null
           is_verified: boolean | null
           license_number: string
+          public_id: string | null
           rating: number | null
           total_deliveries: number | null
           updated_at: string | null
@@ -1092,6 +1102,7 @@ export type Database = {
           is_online?: boolean | null
           is_verified?: boolean | null
           license_number: string
+          public_id?: string | null
           rating?: number | null
           total_deliveries?: number | null
           updated_at?: string | null
@@ -1106,6 +1117,7 @@ export type Database = {
           is_online?: boolean | null
           is_verified?: boolean | null
           license_number?: string
+          public_id?: string | null
           rating?: number | null
           total_deliveries?: number | null
           updated_at?: string | null
@@ -1132,6 +1144,7 @@ export type Database = {
           id: string
           metadata: Json | null
           method: string
+          public_id: string | null
           receiver_id: string
           sender_id: string
           status: string
@@ -1145,6 +1158,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           method?: string
+          public_id?: string | null
           receiver_id: string
           sender_id: string
           status?: string
@@ -1158,6 +1172,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           method?: string
+          public_id?: string | null
           receiver_id?: string
           sender_id?: string
           status?: string
@@ -1479,6 +1494,57 @@ export type Database = {
           risk_score?: number
           transaction_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      id_generation_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          public_id: string
+          scope: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          public_id: string
+          scope: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          public_id?: string
+          scope?: string
+        }
+        Relationships: []
+      }
+      ids_reserved: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          public_id: string
+          scope: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          public_id: string
+          scope: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          public_id?: string
+          scope?: string
         }
         Relationships: []
       }
@@ -1964,6 +2030,7 @@ export type Database = {
           file_url: string | null
           id: string
           metadata: Json | null
+          public_id: string | null
           read_at: string | null
           recipient_id: string
           sender_id: string
@@ -1979,6 +2046,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           metadata?: Json | null
+          public_id?: string | null
           read_at?: string | null
           recipient_id: string
           sender_id: string
@@ -1994,6 +2062,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           metadata?: Json | null
+          public_id?: string | null
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
@@ -2123,6 +2192,7 @@ export type Database = {
           order_number: string
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
+          public_id: string | null
           shipping_address: Json
           shipping_amount: number | null
           status: Database["public"]["Enums"]["order_status"] | null
@@ -2142,6 +2212,7 @@ export type Database = {
           order_number: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          public_id?: string | null
           shipping_address: Json
           shipping_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"] | null
@@ -2161,6 +2232,7 @@ export type Database = {
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          public_id?: string | null
           shipping_address?: Json
           shipping_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"] | null
@@ -2433,6 +2505,7 @@ export type Database = {
           low_stock_threshold: number | null
           name: string
           price: number
+          public_id: string | null
           rating: number | null
           reviews_count: number | null
           seo_description: string | null
@@ -2461,6 +2534,7 @@ export type Database = {
           low_stock_threshold?: number | null
           name: string
           price: number
+          public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
           seo_description?: string | null
@@ -2489,6 +2563,7 @@ export type Database = {
           low_stock_threshold?: number | null
           name?: string
           price?: number
+          public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
           seo_description?: string | null
@@ -2527,6 +2602,7 @@ export type Database = {
           is_active: boolean | null
           last_name: string | null
           phone: string | null
+          public_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           status: string | null
           updated_at: string | null
@@ -2540,6 +2616,7 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string | null
           phone?: string | null
+          public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
           updated_at?: string | null
@@ -2553,6 +2630,7 @@ export type Database = {
           is_active?: boolean | null
           last_name?: string | null
           phone?: string | null
+          public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
           updated_at?: string | null
@@ -4356,6 +4434,7 @@ export type Database = {
           is_verified: boolean | null
           logo_url: string | null
           phone: string | null
+          public_id: string | null
           rating: number | null
           total_reviews: number | null
           updated_at: string | null
@@ -4372,6 +4451,7 @@ export type Database = {
           is_verified?: boolean | null
           logo_url?: string | null
           phone?: string | null
+          public_id?: string | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -4388,6 +4468,7 @@ export type Database = {
           is_verified?: boolean | null
           logo_url?: string | null
           phone?: string | null
+          public_id?: string | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -5057,12 +5138,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_public_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_transaction_custom_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       generate_transaction_id: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_unique_public_id: {
+        Args: { p_scope: string }
         Returns: string
       }
       geography: {
