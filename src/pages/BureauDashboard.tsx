@@ -20,6 +20,7 @@ import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel
 import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator';
 import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration';
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -228,6 +229,12 @@ export default function BureauDashboard() {
         </div>
         <div className="flex gap-2 items-center">
           <BureauNetworkIndicator bureauId={bureau.id} />
+          <PWAInstallButton 
+            appName={`Bureau Syndicat ${bureau.commune}`} 
+            variant="default" 
+            size="default"
+            className="bg-primary hover:bg-primary/90"
+          />
           <Button variant="outline">
             <Phone className="w-4 h-4 mr-2" />
             Support Technique

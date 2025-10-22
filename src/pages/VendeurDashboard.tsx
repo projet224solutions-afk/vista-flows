@@ -48,6 +48,7 @@ import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
 import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
+import PWAInstallButton from "@/components/pwa/PWAInstallButton";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -372,6 +373,7 @@ export default function VendeurDashboard() {
 
               <div className="flex items-center gap-2">
                 <NetworkStatusIndicator />
+                <PWAInstallButton appName="224Solutions Vendeur" variant="outline" size="sm" />
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
