@@ -8,6 +8,7 @@ import localforage from 'localforage';
 import { supabase } from '@/lib/supabaseClient';
 import { encryptData, decryptData } from './encryption';
 import offlineDB from './offlineDB';
+import dualSyncManager from './dualSyncManager';
 
 // Configuration des stores locaux
 const vendorStore = localforage.createInstance({
@@ -85,6 +86,13 @@ async function syncSingleData(
       .upsert(actualData, { onConflict: 'id' });
 
     if (error) throw error;
+
+    // Synchronisation vers Firestore (si configuré)
+    try {
+      await dualSyncManager.syncSupabaseToFirestore(collection, actualData);
+    } catch (firestoreError) {
+      console.warn('Synchronisation Firestore échouée (non bloquant):', firestoreError);
+    }
 
     // Marquer comme synchronisé
     offlineData.sync = true;
