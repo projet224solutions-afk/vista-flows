@@ -49,6 +49,7 @@ import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
 import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
 import PWAInstallButton from "@/components/pwa/PWAInstallButton";
+import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -359,15 +360,13 @@ export default function VendeurDashboard() {
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
                     224SOLUTIONS
                   </h1>
-                  <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    {profile?.first_name || user?.email?.split('@')[0]}
-                    {userInfo && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">
-                        {userInfo.custom_id}
-                      </span>
-                    )}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                      {profile?.first_name || user?.email?.split('@')[0]}
+                    </p>
+                    <VendorIdDisplay showName={false} />
+                  </div>
                 </div>
               </div>
 

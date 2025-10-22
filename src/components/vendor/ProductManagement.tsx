@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePublicId } from "@/hooks/usePublicId";
+import { PublicIdBadge } from "@/components/PublicIdBadge";
 import { 
   Package, Plus, Search, Filter, Edit, Trash2, Star, 
   Eye, ShoppingCart, TrendingUp, Camera, Save, X, Sparkles
@@ -17,6 +19,7 @@ import {
 
 interface Product {
   id: string;
+  public_id?: string;
   name: string;
   description?: string;
   price: number;
@@ -43,6 +46,7 @@ interface Category {
 export default function ProductManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { generatePublicId } = usePublicId();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -257,9 +261,24 @@ export default function ProductManagement() {
           description: "Le produit a été mis à jour avec succès."
         });
       } else {
+        // 🆕 Générer un public_id avant l'insertion
+        console.log('🔄 Génération public_id pour nouveau produit...');
+        const public_id = await generatePublicId('products', false);
+        
+        if (!public_id) {
+          toast({
+            title: "Erreur",
+            description: "Impossible de générer l'ID du produit.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        console.log('✅ Public_id généré:', public_id);
+
         const { data, error } = await supabase
           .from('products')
-          .insert([productData])
+          .insert([{ ...productData, public_id }])
           .select()
           .single();
 
@@ -1052,10 +1071,20 @@ export default function ProductManagement() {
               
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    {product.public_id && (
+                      <PublicIdBadge 
+                        publicId={product.public_id}
+                        variant="secondary"
+                        size="sm"
+                        copyable={true}
+                      />
+                    )}
+                    {product.sku && (
+                      <Badge variant="outline">{product.sku}</Badge>
+                    )}
+                  </div>
                   <h3 className="font-semibold text-lg mb-1 line-clamp-2">{product.name}</h3>
-                  {product.sku && (
-                    <Badge variant="outline" className="mb-2">{product.sku}</Badge>
-                  )}
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => handleEdit(product)}>
