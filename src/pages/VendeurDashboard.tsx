@@ -373,7 +373,9 @@ export default function VendeurDashboard() {
 
               <div className="flex items-center gap-2">
                 <NetworkStatusIndicator />
-                <PWAInstallButton appName="224Solutions Vendeur" variant="outline" size="sm" />
+                <div className="hidden lg:block">
+                  <PWAInstallButton appName="224Solutions Vendeur" variant="outline" size="sm" />
+                </div>
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>

@@ -4,7 +4,7 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { Download, CheckCircle, Smartphone } from 'lucide-react';
+import { Download, CheckCircle } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 
@@ -13,13 +13,15 @@ interface PWAInstallButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
+  showWhenInstalled?: boolean;
 }
 
 export default function PWAInstallButton({
   appName = 'l\'application',
   variant = 'default',
   size = 'default',
-  className = ''
+  className = '',
+  showWhenInstalled = false
 }: PWAInstallButtonProps) {
   const { isInstallable, isInstalled, promptInstall, isMobile } = usePWAInstall();
 
@@ -37,14 +39,19 @@ export default function PWAInstallButton({
     }
   };
 
-  // Si déjà installé
-  if (isInstalled) {
+  // Si déjà installé et on veut l'afficher
+  if (isInstalled && showWhenInstalled) {
     return (
       <Button variant="outline" size={size} className={`${className} border-green-500 text-green-700`} disabled>
         <CheckCircle className="w-4 h-4 mr-2" />
         Installé
       </Button>
     );
+  }
+
+  // Si déjà installé et on ne veut pas l'afficher
+  if (isInstalled && !showWhenInstalled) {
+    return null;
   }
 
   // Si installable
@@ -62,6 +69,6 @@ export default function PWAInstallButton({
     );
   }
 
-  // Si pas installable (déjà en mode PWA ou navigateur non compatible)
+  // Si pas installable, ne rien afficher
   return null;
 }
