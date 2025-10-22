@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
+import { GeolocationService } from "@/services/taxi/GeolocationService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
@@ -106,6 +107,7 @@ export default function TaxiMotoDriver() {
     const [nextInstruction, setNextInstruction] = useState('');
     const [distanceToDestination, setDistanceToDestination] = useState(0);
     const [timeToDestination, setTimeToDestination] = useState(0);
+    const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
     // Initialisation : Charger le profil et demander la position GPS
     useEffect(() => {
@@ -678,21 +680,62 @@ export default function TaxiMotoDriver() {
     /**
      * Démarre la navigation GPS vers une destination
      */
-    const startNavigation = (destination: { latitude: number; longitude: number }) => {
+    const startNavigation = async (destination: { latitude: number; longitude: number }) => {
         setNavigationActive(true);
-        setNextInstruction('Navigation démarrée');
+        setNextInstruction('📍 Calcul de l\'itinéraire...');
         
-        // En production, utiliser une vraie API de navigation (Google Maps, Mapbox, etc.)
-        // Ici on initialise juste l'état de navigation
-        if (location) {
-            const distance = calculateDistance(
+        if (!location) {
+            toast.error('Position GPS non disponible');
+            return;
+        }
+
+        try {
+            // Calculer l'itinéraire avec Google Maps
+            const route = await GeolocationService.calculateRoute(
+                { lat: location.latitude, lng: location.longitude },
+                { lat: destination.latitude, lng: destination.longitude }
+            );
+
+            if (route) {
+                setDistanceToDestination(route.distance);
+                setTimeToDestination(route.duration);
+                setRouteSteps(route.steps);
+                
+                // Afficher la première instruction
+                if (route.steps.length > 0) {
+                    const firstStep = route.steps[0];
+                    setNextInstruction(firstStep.instruction.replace(/<[^>]*>/g, ''));
+                } else {
+                    setNextInstruction(`Direction: ${route.endAddress}`);
+                }
+
+                toast.success(`🗺️ Itinéraire calculé: ${route.distanceText}, ${route.durationText}`);
+            } else {
+                // Fallback: calcul de distance simple
+                const distance = GeolocationService.calculateDistance(
+                    location.latitude,
+                    location.longitude,
+                    destination.latitude,
+                    destination.longitude
+                );
+                setDistanceToDestination(distance * 1000);
+                setTimeToDestination(Math.ceil(distance / 30 * 60));
+                setNextInstruction('Navigation démarrée - Suivez les indications');
+                toast.info('Navigation activée (mode simplifié)');
+            }
+        } catch (error) {
+            console.error('Navigation error:', error);
+            // Fallback en cas d'erreur
+            const distance = GeolocationService.calculateDistance(
                 location.latitude,
                 location.longitude,
                 destination.latitude,
                 destination.longitude
             );
             setDistanceToDestination(distance * 1000);
-            setTimeToDestination(Math.ceil(distance / 30 * 60)); // Estimation à 30km/h
+            setTimeToDestination(Math.ceil(distance / 30 * 60));
+            setNextInstruction('Navigation activée');
+            toast.warning('Navigation en mode simplifié');
         }
     };
 
@@ -1092,29 +1135,99 @@ export default function TaxiMotoDriver() {
                     <TabsContent value="navigation" className="space-y-4 mt-4">
                         {activeRide && navigationActive ? (
                             <>
+                                {/* Carte avec les positions */}
+                                <SimpleMapView
+                                    driverLocation={location ? { latitude: location.latitude, longitude: location.longitude } : undefined}
+                                    pickupLocation={activeRide.status === 'accepted' || activeRide.status === 'arriving' 
+                                        ? activeRide.pickup.coords 
+                                        : undefined}
+                                    destinationLocation={activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
+                                        ? activeRide.destination.coords 
+                                        : undefined}
+                                    height="300px"
+                                />
+
                                 {/* Instruction de navigation */}
                                 <Card className="bg-blue-50 border-blue-200">
-                                    <CardContent className="p-6 text-center">
-                                        <Navigation className="w-12 h-12 mx-auto mb-4 text-blue-600" />
-                                        <h3 className="text-lg font-semibold mb-2">{nextInstruction}</h3>
-                                        <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
-                                            <span>{distanceToDestination}m</span>
-                                            <span>•</span>
-                                            <span>{timeToDestination} min</span>
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start gap-4">
+                                            <Navigation className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-semibold mb-2 text-blue-900">{nextInstruction}</h3>
+                                                <div className="flex items-center gap-4 text-sm text-gray-700">
+                                                    <span className="font-medium">📏 {(distanceToDestination / 1000).toFixed(1)} km</span>
+                                                    <span>•</span>
+                                                    <span className="font-medium">⏱️ {Math.ceil(timeToDestination / 60)} min</span>
+                                                </div>
+                                                
+                                                {/* Bouton pour ouvrir Google Maps */}
+                                                <Button
+                                                    onClick={() => {
+                                                        const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
+                                                            ? activeRide.destination.coords
+                                                            : activeRide.pickup.coords;
+                                                        GeolocationService.openNativeNavigation(
+                                                            { lat: destination.latitude, lng: destination.longitude },
+                                                            location ? { lat: location.latitude, lng: location.longitude } : undefined
+                                                        );
+                                                    }}
+                                                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                                                    size="lg"
+                                                >
+                                                    <Navigation className="w-5 h-5 mr-2" />
+                                                    Ouvrir dans Google Maps
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
 
+                                {/* Instructions détaillées si disponibles */}
+                                {routeSteps.length > 0 && (
+                                    <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                                        <CardHeader>
+                                            <CardTitle className="text-lg">Instructions de navigation</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-3">
+                                            {routeSteps.slice(0, 5).map((step, index) => (
+                                                <div key={index} className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-0">
+                                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                                        {index + 1}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: step.instruction }} />
+                                                        <p className="text-xs text-gray-500 mt-1">{step.distance} • {step.duration}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </CardContent>
+                                    </Card>
+                                )}
+
                                 {/* Actions de course */}
                                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                                     <CardContent className="p-4 space-y-3">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                                            <Phone className="w-4 h-4" />
+                                            <span className="font-medium">{activeRide.customer.name}</span>
+                                            <Button
+                                                onClick={() => contactCustomer(activeRide.customer.phone)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="ml-auto"
+                                            >
+                                                Appeler
+                                            </Button>
+                                        </div>
+
                                         {activeRide.status === 'accepted' && (
                                             <Button
                                                 onClick={() => updateRideStatus('arriving')}
                                                 className="w-full"
+                                                size="lg"
                                             >
                                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                                Je suis arrivé
+                                                Je suis arrivé au point de départ
                                             </Button>
                                         )}
 
@@ -1122,9 +1235,10 @@ export default function TaxiMotoDriver() {
                                             <Button
                                                 onClick={() => updateRideStatus('picked_up')}
                                                 className="w-full"
+                                                size="lg"
                                             >
                                                 <Car className="w-4 h-4 mr-2" />
-                                                Client à bord
+                                                Client à bord - Démarrer la course
                                             </Button>
                                         )}
 
@@ -1132,9 +1246,10 @@ export default function TaxiMotoDriver() {
                                             <Button
                                                 onClick={() => updateRideStatus('in_progress')}
                                                 className="w-full bg-green-600 hover:bg-green-700"
+                                                size="lg"
                                             >
                                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                                Terminer la course
+                                                Arrivé à destination - Terminer la course
                                             </Button>
                                         )}
                                     </CardContent>
