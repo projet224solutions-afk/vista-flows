@@ -912,6 +912,36 @@ export type Database = {
         }
         Relationships: []
       }
+      currencies: {
+        Row: {
+          code: string
+          created_at: string | null
+          decimal_places: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          symbol: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          decimal_places?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          symbol: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          decimal_places?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       customer_credits: {
         Row: {
           created_at: string | null
@@ -1221,6 +1251,57 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "transactions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_rates: {
+        Row: {
+          created_at: string | null
+          from_currency: string
+          id: string
+          is_active: boolean | null
+          rate: number
+          set_by: string | null
+          to_currency: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_currency: string
+          id?: string
+          is_active?: boolean | null
+          rate: number
+          set_by?: string | null
+          to_currency: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_currency?: string
+          id?: string
+          is_active?: boolean | null
+          rate?: number
+          set_by?: string | null
+          to_currency?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rates_from_currency_fkey"
+            columns: ["from_currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "exchange_rates_to_currency_fkey"
+            columns: ["to_currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -4523,6 +4604,204 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_fees: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          fee_type: string
+          fee_value: number
+          id: string
+          is_active: boolean | null
+          max_amount: number | null
+          min_amount: number | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          fee_type: string
+          fee_value: number
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          fee_type?: string
+          fee_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      wallet_logs: {
+        Row: {
+          action: string
+          amount: number | null
+          balance_after: number | null
+          balance_before: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          payment_method: string | null
+          status: string | null
+          transaction_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          wallet_id: string | null
+        }
+        Insert: {
+          action: string
+          amount?: number | null
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          wallet_id?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number | null
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_logs_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_payment_methods: {
+        Row: {
+          account_number: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          metadata: Json | null
+          method_type: string
+          provider: string | null
+          updated_at: string | null
+          wallet_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          method_type: string
+          provider?: string | null
+          updated_at?: string | null
+          wallet_id: string
+        }
+        Update: {
+          account_number?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          method_type?: string
+          provider?: string | null
+          updated_at?: string | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_payment_methods_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_suspicious_activities: {
+        Row: {
+          action_taken: string | null
+          activity_type: string
+          description: string | null
+          detected_at: string | null
+          id: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_id: string | null
+          wallet_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          activity_type: string
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          user_id?: string | null
+          wallet_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          activity_type?: string
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_id?: string | null
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_suspicious_activities_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_transactions: {
         Row: {
           amount: number
@@ -4580,27 +4859,63 @@ export type Database = {
       wallets: {
         Row: {
           balance: number
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
           currency: string
+          daily_limit: number | null
           id: string
+          is_blocked: boolean | null
+          last_transaction_at: string | null
+          monthly_limit: number | null
+          pin_hash: string | null
+          public_id: string | null
+          total_received: number | null
+          total_sent: number | null
+          two_factor_enabled: boolean | null
           updated_at: string
           user_id: string
+          wallet_status: string | null
         }
         Insert: {
           balance?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           currency?: string
+          daily_limit?: number | null
           id?: string
+          is_blocked?: boolean | null
+          last_transaction_at?: string | null
+          monthly_limit?: number | null
+          pin_hash?: string | null
+          public_id?: string | null
+          total_received?: number | null
+          total_sent?: number | null
+          two_factor_enabled?: boolean | null
           updated_at?: string
           user_id: string
+          wallet_status?: string | null
         }
         Update: {
           balance?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           currency?: string
+          daily_limit?: number | null
           id?: string
+          is_blocked?: boolean | null
+          last_transaction_at?: string | null
+          monthly_limit?: number | null
+          pin_hash?: string | null
+          public_id?: string | null
+          total_received?: number | null
+          total_sent?: number | null
+          two_factor_enabled?: boolean | null
           updated_at?: string
           user_id?: string
+          wallet_status?: string | null
         }
         Relationships: []
       }
@@ -4793,6 +5108,20 @@ export type Database = {
           f_table_schema?: unknown | null
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      wallet_admin_stats: {
+        Row: {
+          active_wallets: number | null
+          average_balance: number | null
+          blocked_wallets: number | null
+          total_balance: number | null
+          total_received_all: number | null
+          total_sent_all: number | null
+          total_transactions_today: number | null
+          total_wallets: number | null
+          volume_24h: number | null
         }
         Relationships: []
       }
@@ -5034,6 +5363,14 @@ export type Database = {
       cleanup_expired_tokens: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      convert_currency: {
+        Args: {
+          p_amount: number
+          p_from_currency: string
+          p_to_currency: string
+        }
+        Returns: number
       }
       create_communication_notification: {
         Args: {
