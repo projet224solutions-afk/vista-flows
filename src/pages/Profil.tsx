@@ -89,7 +89,7 @@ export default function Profil() {
               <p className="text-muted-foreground mb-6">
                 Vous devez vous connecter pour accéder à votre profil
               </p>
-              <Button 
+              <Button
                 onClick={() => navigate('/auth')}
                 className="bg-vendeur-primary hover:bg-vendeur-primary/90"
               >
@@ -204,7 +204,7 @@ export default function Profil() {
                   size="sm"
                   onClick={() => navigate('/vendeur')}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
                   Retour
                 </Button>
               )}
@@ -242,11 +242,11 @@ export default function Profil() {
                   </Button>
                 )}
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-xl font-bold">
-                    {profile?.first_name && profile?.last_name 
+                    {profile?.first_name && profile?.last_name
                       ? `${profile.first_name} ${profile.last_name}`
                       : user.email
                     }
@@ -255,13 +255,13 @@ export default function Profil() {
                     {userTypeInfo.label}
                   </Badge>
                 </div>
-                
+
                 <p className="text-muted-foreground mb-2">{user.email}</p>
-                
+
                 {profile?.phone && (
                   <p className="text-sm text-muted-foreground mb-2">{profile.phone}</p>
                 )}
-                
+
                 <p className="text-sm text-muted-foreground">
                   {userTypeInfo.description}
                 </p>

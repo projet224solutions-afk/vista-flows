@@ -94,7 +94,11 @@ export default function TaxiMotoDriver() {
         loadDriverStats();
         if (isOnline) {
             startLocationTracking();
-            simulateRideRequests();
+            loadRideRequests();
+
+            // Polling pour les nouvelles demandes
+            const interval = setInterval(loadRideRequests, 10000); // Toutes les 10 secondes
+            return () => clearInterval(interval);
         }
     }, [isOnline]);
 
@@ -129,7 +133,7 @@ export default function TaxiMotoDriver() {
                 credentials: 'include',
                 body: JSON.stringify({ isOnline: next, ...coords })
             });
-        } catch {}
+        } catch { }
         if (next) {
             toast.success('🟢 Vous êtes maintenant en ligne');
         } else {
@@ -222,7 +226,7 @@ export default function TaxiMotoDriver() {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                 body: JSON.stringify({ tripId: request.id })
             });
-        } catch {}
+        } catch { }
         toast.success('Course acceptée ! Navigation vers le client...');
 
         // Simuler la navigation
@@ -314,7 +318,7 @@ export default function TaxiMotoDriver() {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                 body: JSON.stringify({ tripId: activeRide.id, distanceKm: 3.2, durationMin: 10 })
             });
-        } catch {}
+        } catch { }
         toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} FCFA`);
     };
 
@@ -517,9 +521,9 @@ export default function TaxiMotoDriver() {
                                             </div>
                                         </div>
                                         <Badge className={`${activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
-                                                activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-                                                    activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
-                                                        'bg-purple-100 text-purple-800'
+                                            activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
+                                                activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
+                                                    'bg-purple-100 text-purple-800'
                                             }`}>
                                             {activeRide.status === 'accepted' ? 'Acceptée' :
                                                 activeRide.status === 'arriving' ? 'En route' :

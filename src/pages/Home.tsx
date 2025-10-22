@@ -140,7 +140,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            
+
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full text-xs text-white flex items-center justify-center">
@@ -148,8 +148,8 @@ export default function Home() {
               </span>
             </Button>
           </div>
-          
-          <SearchBar 
+
+          <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
             showFilter

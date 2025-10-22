@@ -185,6 +185,160 @@ router.get('/status', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /stats - obtenir les statistiques détaillées du conducteur
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Statistiques du jour
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayTrips } = await supabase
+      .from('taxi_trips')
+      .select('price_total, driver_share')
+      .eq('driver_id', userId)
+      .gte('completed_at', today);
+
+    const todayEarnings = todayTrips?.reduce((sum, trip) => sum + (trip.driver_share || 0), 0) || 0;
+    const todayRides = todayTrips?.length || 0;
+
+    // Statistiques globales
+    const { data: allTrips } = await supabase
+      .from('taxi_trips')
+      .select('driver_share, rating')
+      .eq('driver_id', userId)
+      .eq('status', 'completed');
+
+    const totalRides = allTrips?.length || 0;
+    const totalEarnings = allTrips?.reduce((sum, trip) => sum + (trip.driver_share || 0), 0) || 0;
+    const averageRating = allTrips?.length > 0
+      ? allTrips.reduce((sum, trip) => sum + (trip.rating || 0), 0) / allTrips.length
+      : 5.0;
+
+    // Temps en ligne aujourd'hui
+    const { data: driver } = await supabase
+      .from('taxi_drivers')
+      .select('last_seen, created_at')
+      .eq('user_id', userId)
+      .single();
+
+    const onlineTime = driver?.last_seen
+      ? Math.floor((new Date() - new Date(driver.last_seen)) / (1000 * 60)) // minutes
+      : 0;
+
+    const stats = {
+      todayEarnings: Math.round(todayEarnings),
+      todayRides,
+      rating: Math.round(averageRating * 10) / 10,
+      totalRides,
+      totalEarnings: Math.round(totalEarnings),
+      onlineTime: `${Math.floor(onlineTime / 60)}h ${onlineTime % 60}m`
+    };
+
+    return res.json({ success: true, stats });
+  } catch (e) {
+    console.error('Error getting driver stats:', e);
+    return res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /nearbyRequests - obtenir les demandes de course à proximité
+router.get('/nearbyRequests', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { lat, lng, radius = 5 } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, message: 'lat et lng requis' });
+    }
+
+    // Obtenir le conducteur
+    const { data: driver } = await supabase
+      .from('taxi_drivers')
+      .select('id, last_lat, last_lng')
+      .eq('user_id', userId)
+      .single();
+
+    if (!driver) {
+      return res.json({ success: true, requests: [] });
+    }
+
+    // Chercher les demandes à proximité
+    const { data: requests } = await supabase
+      .from('taxi_trips')
+      .select(`
+        id,
+        customer_id,
+        pickup_lat,
+        pickup_lng,
+        pickup_address,
+        dropoff_address,
+        price_total,
+        requested_at,
+        profiles:customer_id (
+          full_name,
+          phone
+        )
+      `)
+      .eq('status', 'requested')
+      .is('driver_id', null)
+      .gte('requested_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()); // 30 dernières minutes
+
+    // Filtrer par distance
+    const nearbyRequests = requests?.filter(request => {
+      if (!request.pickup_lat || !request.pickup_lng) return false;
+
+      const distance = calculateDistance(
+        parseFloat(lat), parseFloat(lng),
+        request.pickup_lat, request.pickup_lng
+      );
+
+      return distance <= parseFloat(radius);
+    }).map(request => ({
+      id: request.id,
+      customerId: request.customer_id,
+      customerName: request.profiles?.full_name || 'Client',
+      customerRating: 4.5, // Par défaut
+      pickupAddress: request.pickup_address,
+      destinationAddress: request.dropoff_address,
+      distance: calculateDistance(
+        parseFloat(lat), parseFloat(lng),
+        request.pickup_lat, request.pickup_lng
+      ),
+      estimatedEarnings: Math.round(request.price_total * 0.8), // 80% pour le conducteur
+      estimatedDuration: Math.round(calculateDistance(
+        parseFloat(lat), parseFloat(lng),
+        request.pickup_lat, request.pickup_lng
+      ) * 2), // Estimation basique
+      pickupCoords: {
+        latitude: request.pickup_lat,
+        longitude: request.pickup_lng
+      },
+      destinationCoords: {
+        latitude: request.dropoff_lat,
+        longitude: request.dropoff_lng
+      },
+      requestTime: request.requested_at
+    })) || [];
+
+    return res.json({ success: true, requests: nearbyRequests });
+  } catch (e) {
+    console.error('Error getting nearby requests:', e);
+    return res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Fonction utilitaire pour calculer la distance
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // POST /status - basculer en ligne/hors ligne et MAJ position
 router.post('/status', authMiddleware, async (req, res) => {
   try {
