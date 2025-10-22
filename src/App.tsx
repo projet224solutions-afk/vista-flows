@@ -37,6 +37,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentSystem = lazy(() => import("./pages/AgentSystem"));
+const InstallPWA = lazy(() => import("./pages/InstallPWA"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
+              <Route path="/install" element={<InstallPWA />} />
 
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
