@@ -286,7 +286,14 @@ export default function IndexAlibaba() {
               className="bg-green-400 text-gray-900 hover:bg-green-300 font-bold text-lg px-8 py-4 shadow-lg"
               size="lg"
             >
-              🏍️ Taxi Moto
+              🏍️ Taxi Moto Client
+            </Button>
+            <Button
+              onClick={() => navigate('/taxi-moto/driver')}
+              className="bg-blue-500 text-white hover:bg-blue-600 font-bold text-lg px-8 py-4 shadow-lg"
+              size="lg"
+            >
+              🏍️ Interface Conducteur
             </Button>
           </div>
         </div>
