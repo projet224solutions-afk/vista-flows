@@ -286,9 +286,27 @@ export default function OrderManagement() {
     if (order.status === 'preparing') {
       actions.push(
         <Button 
-          key="ship" 
+          key="ready" 
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('✅ Order ready:', order.id);
+            updateOrderStatus(order.id, 'ready');
+          }}
+        >
+          <CheckCircle className="w-4 h-4 mr-1" />
+          Prêt
+        </Button>
+      );
+    }
+    
+    if (order.status === 'ready') {
+      actions.push(
+        <Button 
+          key="ship" 
+          size="sm"
+          className="bg-orange-600 hover:bg-orange-700 text-white"
           onClick={(e) => {
             e.stopPropagation();
             console.log('🚚 Shipping order:', order.id);
