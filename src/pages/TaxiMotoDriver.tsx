@@ -39,6 +39,8 @@ import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
 import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
+import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
+import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
