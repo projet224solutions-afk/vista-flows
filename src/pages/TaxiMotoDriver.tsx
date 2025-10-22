@@ -267,8 +267,12 @@ export default function TaxiMotoDriver() {
             
             if (next) {
                 toast.success('🟢 Vous êtes maintenant en ligne');
+                // Charger les courses en attente
+                loadPendingRides();
             } else {
                 toast.info('🔴 Vous êtes maintenant hors ligne');
+                // Vider les demandes de courses
+                setRideRequests([]);
             }
         } catch (error) {
             console.error('Error updating status:', error);
@@ -826,6 +830,32 @@ export default function TaxiMotoDriver() {
                 </div>
             </header>
 
+            {/* Bouton de connexion quand hors ligne */}
+            {!isOnline && !activeRide && (
+                <div className="px-4 pt-4">
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-xl">
+                        <CardContent className="p-6">
+                            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                                <div className="p-4 bg-white rounded-full shadow-md">
+                                    <Car className="w-12 h-12 text-green-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-1">Prêt à travailler ?</h3>
+                                    <p className="text-sm text-gray-600">Activez votre statut pour recevoir des demandes de courses</p>
+                                </div>
+                                <Button
+                                    onClick={toggleOnlineStatus}
+                                    size="lg"
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-xl"
+                                >
+                                    🟢 Passer en ligne
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
             {/* Demandes de course en attente */}
             {rideRequests.length > 0 && (
                 <div className="fixed top-20 left-4 right-4 z-50 max-h-[70vh] overflow-y-auto space-y-2">
@@ -844,12 +874,22 @@ export default function TaxiMotoDriver() {
             {/* Message quand en ligne sans courses */}
             {isOnline && rideRequests.length === 0 && !activeRide && (
                 <div className="fixed top-20 left-4 right-4 z-40">
-                    <Card className="bg-blue-50 border-blue-200">
+                    <Card className="bg-blue-50 border-blue-200 shadow-lg">
                         <CardContent className="p-4 text-center">
-                            <div className="flex flex-col items-center gap-2">
+                            <div className="flex flex-col items-center gap-3">
                                 <Car className="w-8 h-8 text-blue-600 animate-pulse" />
-                                <p className="text-sm font-medium text-blue-900">En attente de courses...</p>
-                                <p className="text-xs text-blue-700">Vous recevrez une notification dès qu'une course est disponible</p>
+                                <div>
+                                    <p className="text-sm font-bold text-blue-900">🟢 Vous êtes en ligne</p>
+                                    <p className="text-xs text-blue-700 mt-1">En attente de courses...</p>
+                                </div>
+                                <Button
+                                    onClick={toggleOnlineStatus}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                >
+                                    🔴 Passer hors ligne
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
