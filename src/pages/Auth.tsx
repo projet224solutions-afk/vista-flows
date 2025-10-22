@@ -90,11 +90,12 @@ export default function Auth() {
     try {
       if (showSignup) {
         // Inscription
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error("Les mots de passe ne correspondent pas");
-        }
         if (!selectedRole) {
-          throw new Error("Veuillez sélectionner un type de compte");
+          throw new Error("⚠️ Veuillez d'abord sélectionner un type de compte ci-dessus (Client, Marchand, Livreur, etc.)");
+        }
+        
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("❌ Les mots de passe ne correspondent pas");
         }
 
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
