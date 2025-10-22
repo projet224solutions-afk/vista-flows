@@ -100,6 +100,7 @@ export default function OrderManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -180,7 +181,13 @@ export default function OrderManagement() {
   });
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
+    if (updatingOrderId === orderId) {
+      console.log('⏳ Update already in progress for order:', orderId);
+      return; // Prevent duplicate updates
+    }
+    
     console.log('🔄 Updating order status:', { orderId, newStatus });
+    setUpdatingOrderId(orderId);
     
     // Optimistic update
     setOrders(prev => prev.map(order => 
@@ -241,6 +248,8 @@ export default function OrderManagement() {
       });
       // Rollback optimistic update
       await fetchOrders();
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -252,7 +261,8 @@ export default function OrderManagement() {
         <Button 
           key="confirm" 
           size="sm"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          disabled={updatingOrderId === order.id}
+          className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('✅ Confirming order:', order.id);
@@ -260,7 +270,7 @@ export default function OrderManagement() {
           }}
         >
           <CheckCircle className="w-4 h-4 mr-1" />
-          Confirmer
+          {updatingOrderId === order.id ? 'En cours...' : 'Confirmer'}
         </Button>
       );
     }
@@ -270,7 +280,8 @@ export default function OrderManagement() {
         <Button 
           key="process" 
           size="sm" 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          disabled={updatingOrderId === order.id}
+          className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('📦 Preparing order:', order.id);
@@ -278,7 +289,7 @@ export default function OrderManagement() {
           }}
         >
           <Package className="w-4 h-4 mr-1" />
-          Préparer
+          {updatingOrderId === order.id ? 'En cours...' : 'Préparer'}
         </Button>
       );
     }
