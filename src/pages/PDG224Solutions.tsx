@@ -3,13 +3,13 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap, LogOut, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
+import PDGNavigation from '@/components/pdg/PDGNavigation';
 
 // ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
@@ -205,121 +205,15 @@ export default function PDG224Solutions() {
 
         {/* Main Content */}
         <div className="max-w-[1600px] mx-auto px-6 py-8">
-          <Tabs
-            defaultValue="finance"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-8"
-            aria-label="Navigation PDG 224Solutions"
-          >
-            <TabsList className="inline-flex h-auto p-1.5 bg-muted/50 backdrop-blur-xl border border-border/40 rounded-2xl shadow-lg" role="tablist">
-              <TabsTrigger
-                value="finance"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Finances"
-              >
-                <DollarSign className="w-4 h-4" />
-                <span className="font-medium">Finances</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="users"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Utilisateurs"
-              >
-                <Users className="w-4 h-4" />
-                <span className="font-medium">Utilisateurs</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="security"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Sécurité"
-              >
-                <Shield className="w-4 h-4" />
-                <span className="font-medium">Sécurité</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="config"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Configuration"
-              >
-                <Settings className="w-4 h-4" />
-                <span className="font-medium">Configuration</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="products"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Produits"
-              >
-                <Package className="w-4 h-4" />
-                <span className="font-medium">Produits</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="maintenance"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Maintenance"
-              >
-                <Wrench className="w-4 h-4" />
-                <span className="font-medium">Maintenance</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="agents"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Agents"
-              >
-                <UserCheck className="w-4 h-4" />
-                <span className="font-medium">Agents</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="syndicat"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Bureaux Syndicaux"
-              >
-                <Building2 className="w-4 h-4" />
-                <span className="font-medium">Bureaux Syndicaux</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="reports"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Rapports"
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span className="font-medium">Rapports</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="ai-assistant"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Assistant IA"
-              >
-                <Brain className="w-4 h-4" />
-                <span className="font-medium">Assistant IA</span>
-                {aiActive && <Zap className="w-3 h-3 text-purple-500" />}
-              </TabsTrigger>
-              <TabsTrigger
-                value="copilot"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Copilote IA"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span className="font-medium">Copilote IA</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="communication"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Communication"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span className="font-medium">Communication</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="api"
-                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
-                aria-label="Onglet Supervision API"
-              >
-                <Key className="w-4 h-4" />
-                <span className="font-medium">API</span>
-              </TabsTrigger>
-            </TabsList>
+          {/* Navigation organisée par catégories */}
+          <PDGNavigation 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            aiActive={aiActive}
+          />
 
+          {/* Contenu des onglets */}
+          <div className="mt-8 animate-fade-in">
             <Suspense fallback={
               <div className="flex items-center justify-center py-12">
                 <div className="flex items-center gap-3">
@@ -328,85 +222,85 @@ export default function PDG224Solutions() {
                 </div>
               </div>
             }>
-              <TabsContent value="finance" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'finance' && (
                 <ErrorBoundary>
                   <PDGFinance />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="users" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'users' && (
                 <ErrorBoundary>
                   <PDGUsers />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="security" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'security' && (
                 <ErrorBoundary>
                   <SecurityOpsPanel />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="config" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'config' && (
                 <ErrorBoundary>
                   <PDGConfig />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="products" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'products' && (
                 <ErrorBoundary>
                   <PDGProductsManagement />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="maintenance" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'maintenance' && (
                 <ErrorBoundary>
                   <PDGSystemMaintenance />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="agents" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'agents' && (
                 <ErrorBoundary>
                   <PDGAgentsManagement />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="syndicat" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'syndicat' && (
                 <ErrorBoundary>
                   <PDGSyndicatManagement />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="reports" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'reports' && (
                 <ErrorBoundary>
                   <PDGReportsAnalytics />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="ai-assistant" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'ai-assistant' && (
                 <ErrorBoundary>
                   <PDGAIAssistant mfaVerified={mfaVerified} />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="copilot" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'copilot' && (
                 <ErrorBoundary>
                   <PDGCopilot mfaVerified={mfaVerified} />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="communication" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'communication' && (
                 <ErrorBoundary>
                   <UniversalCommunicationHub />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
 
-              <TabsContent value="api" className="animate-fade-in transition-all duration-300">
+              {activeTab === 'api' && (
                 <ErrorBoundary>
                   <PDGApiSupervision />
                 </ErrorBoundary>
-              </TabsContent>
+              )}
             </Suspense>
-          </Tabs>
+          </div>
         </div>
       </div>
     </div>
