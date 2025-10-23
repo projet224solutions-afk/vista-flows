@@ -1,86 +1,121 @@
 /**
  * 🎨 DASHBOARD PDG - VUE D'ENSEMBLE
- * KPIs et statistiques en temps réel
+ * KPIs et statistiques RÉELLES en temps réel depuis Supabase
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   TrendingUp, TrendingDown, Users, DollarSign, Package, 
-  Activity, AlertCircle, CheckCircle, Clock, Zap
+  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw
 } from 'lucide-react';
-import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { usePDGStats } from '@/hooks/usePDGStats';
 
 export function PDGDashboardHome() {
-  const adminData = useAdminUnifiedData(true);
+  const stats = usePDGStats();
+
+  if (stats.loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="text-muted-foreground">Chargement des statistiques...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (stats.error) {
+    return (
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <div>
+              <p className="font-medium text-destructive">Erreur de chargement</p>
+              <p className="text-sm text-muted-foreground">{stats.error}</p>
+            </div>
+            <Button onClick={stats.refresh} variant="outline" size="sm" className="ml-auto">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Réessayer
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const kpis = [
     {
       title: 'Chiffre d\'Affaires',
-      value: '2.5M GNF',
-      change: '+12.5%',
-      trend: 'up',
+      value: stats.totalRevenue,
+      change: `${stats.revenueGrowth >= 0 ? '+' : ''}${stats.revenueGrowth}%`,
+      trend: stats.revenueGrowth >= 0 ? 'up' : 'down',
       icon: DollarSign,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
       description: 'vs mois dernier'
     },
     {
       title: 'Utilisateurs Actifs',
-      value: String(adminData?.profiles?.data?.length || 0),
-      change: '+8.2%',
-      trend: 'up',
+      value: stats.totalUsers.toLocaleString(),
+      change: `${stats.userGrowth >= 0 ? '+' : ''}${stats.userGrowth}%`,
+      trend: stats.userGrowth >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
-      description: 'vs mois dernier'
+      description: `${stats.newUsersThisMonth} nouveaux ce mois`
     },
     {
       title: 'Commandes',
-      value: '1,284',
-      change: '-3.1%',
-      trend: 'down',
+      value: stats.totalOrders.toLocaleString(),
+      change: `${stats.ordersGrowth >= 0 ? '+' : ''}${stats.ordersGrowth}%`,
+      trend: stats.ordersGrowth >= 0 ? 'up' : 'down',
       icon: Package,
       color: 'text-purple-600 bg-purple-500/10 border-purple-500/20',
-      description: 'vs mois dernier'
+      description: `${stats.ordersThisMonth} ce mois`
     },
     {
       title: 'Taux de Conversion',
-      value: '3.2%',
-      change: '+0.5%',
-      trend: 'up',
+      value: `${stats.conversionRate}%`,
+      change: `${stats.conversionGrowth >= 0 ? '+' : ''}${stats.conversionGrowth}%`,
+      trend: stats.conversionGrowth >= 0 ? 'up' : 'down',
       icon: Activity,
       color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
-      description: 'vs mois dernier'
+      description: 'commandes / utilisateurs'
     },
   ];
 
   const alerts = [
     { 
       type: 'warning', 
-      message: '15 utilisateurs en attente de validation',
+      message: `${stats.pendingValidations} commande(s) en attente de traitement`,
       icon: Clock,
-      color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20'
+      color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
+      show: stats.pendingValidations > 0
+    },
+    { 
+      type: 'error', 
+      message: `${stats.criticalAlerts} alerte(s) API critique(s) nécessitent votre attention`,
+      icon: AlertCircle,
+      color: 'text-red-600 bg-red-500/10 border-red-500/20',
+      show: stats.criticalAlerts > 0
     },
     { 
       type: 'success', 
-      message: 'Toutes les APIs fonctionnent correctement',
+      message: `${stats.activeVendors} vendeurs actifs sur ${stats.totalVendors}`,
       icon: CheckCircle,
-      color: 'text-green-600 bg-green-500/10 border-green-500/20'
+      color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      show: true
     },
     { 
       type: 'info', 
-      message: 'Maintenance système programmée ce week-end',
-      icon: AlertCircle,
-      color: 'text-blue-600 bg-blue-500/10 border-blue-500/20'
+      message: `${stats.onlineDrivers} livreurs en ligne sur ${stats.totalDrivers}`,
+      icon: Activity,
+      color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+      show: true
     },
-  ];
-
-  const activities = [
-    { user: 'Jean Dupont', action: 'a créé un nouveau produit', time: 'Il y a 5 min', type: 'create' },
-    { user: 'Marie Claire', action: 'a modifié les paramètres', time: 'Il y a 12 min', type: 'edit' },
-    { user: 'Ahmed Diallo', action: 'a validé une commande', time: 'Il y a 18 min', type: 'approve' },
-    { user: 'Fatou Sow', action: 'a contacté le support', time: 'Il y a 25 min', type: 'support' },
-  ];
+  ].filter(alert => alert.show);
 
   return (
     <div className="space-y-6">
@@ -158,31 +193,46 @@ export function PDGDashboardHome() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Stats Détaillées */}
         <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              Activité Récente
-            </CardTitle>
-            <CardDescription>Dernières actions dans le système</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  Statistiques Détaillées
+                </CardTitle>
+                <CardDescription>Vue d'ensemble de la plateforme</CardDescription>
+              </div>
+              <Button onClick={stats.refresh} variant="outline" size="sm">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualiser
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {activities.map((activity, index) => (
-              <div key={index} className="flex items-start gap-3 group">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{activity.user}</span>
-                    {' '}
-                    <span className="text-muted-foreground">{activity.action}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{activity.time}</p>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Produits</p>
+                <p className="text-2xl font-bold">{stats.totalProducts}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeProducts} actifs</p>
               </div>
-            ))}
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Vendeurs</p>
+                <p className="text-2xl font-bold">{stats.totalVendors}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeVendors} actifs</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Livreurs</p>
+                <p className="text-2xl font-bold">{stats.totalDrivers}</p>
+                <p className="text-xs text-muted-foreground">{stats.onlineDrivers} en ligne</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Commandes en attente</p>
+                <p className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</p>
+                <p className="text-xs text-muted-foreground">À traiter</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
