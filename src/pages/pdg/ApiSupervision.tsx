@@ -97,10 +97,18 @@ export default function ApiSupervision() {
     active: apis.filter(a => a.status === 'active').length,
     suspended: apis.filter(a => a.status === 'suspended').length,
     expired: apis.filter(a => a.status === 'expired').length,
+    error: apis.filter(a => a.status === 'error').length,
+    working: apis.filter(a => a.metadata?.is_working === true).length,
+    broken: apis.filter(a => a.metadata?.is_working === false).length,
     totalTokensUsed: apis.reduce((sum, a) => sum + a.tokens_used, 0),
     totalTokensLimit: apis.reduce((sum, a) => sum + (a.tokens_limit || 0), 0),
     criticalAlerts: alerts.filter(a => a.severity === 'critical').length
   };
+
+  // Séparer les API fonctionnelles et non-fonctionnelles
+  const workingApis = apis.filter(a => a.metadata?.is_working === true);
+  const brokenApis = apis.filter(a => a.metadata?.is_working === false || a.status === 'error' || a.status === 'expired');
+  const notConfiguredApis = apis.filter(a => a.metadata?.key_configured === false);
 
   // Données pour les graphiques
   const apiTypeData = [
@@ -294,93 +302,176 @@ export default function ApiSupervision() {
           </TabsContent>
 
           {/* Liste des API */}
-          <TabsContent value="apis" className="space-y-4">
-            {apis.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center">
-                    <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Aucune API connectée</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Commencez par ajouter votre première API
-                    </p>
-                    <Button onClick={() => setAddModalOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter une API
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {apis.map((api) => (
-                <Card key={api.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => {
-                  setSelectedApi(api);
-                  setModalOpen(true);
-                }}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{api.api_name}</CardTitle>
-                        <CardDescription>
-                          {api.api_provider}
-                        </CardDescription>
-                      </div>
-                      <Badge className={`${STATUS_COLORS[api.status]} text-white`}>
-                        {STATUS_LABELS[api.status]}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Key className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono">
-                        {maskApiKey(api.api_key_encrypted)}
-                      </span>
-                    </div>
-                    
-                    {api.tokens_limit && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Tokens</span>
-                          <span className="font-medium">
-                            {api.tokens_used.toLocaleString()} / {api.tokens_limit.toLocaleString()}
+          <TabsContent value="apis" className="space-y-6">
+            {/* API Fonctionnelles */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <h3 className="text-lg font-semibold">API Fonctionnelles ({workingApis.length})</h3>
+              </div>
+              
+              {workingApis.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8">
+                    <p className="text-center text-muted-foreground">Aucune API fonctionnelle détectée</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {workingApis.map((api) => (
+                    <Card key={api.id} className="hover:border-green-500 transition-colors cursor-pointer border-green-200" onClick={() => {
+                      setSelectedApi(api);
+                      setModalOpen(true);
+                    }}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg">{api.api_name}</CardTitle>
+                            <CardDescription>
+                              {api.api_provider}
+                            </CardDescription>
+                          </div>
+                          <Badge className="bg-green-500 text-white">
+                            ✓ Actif
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Key className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono">
+                            {maskApiKey(api.api_key_encrypted)}
                           </span>
                         </div>
-                        <Progress 
-                          value={(api.tokens_used / api.tokens_limit) * 100}
-                          className="h-2"
-                        />
-                      </div>
-                    )}
+                        
+                        {api.metadata?.used_in_functions && api.metadata.used_in_functions.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Utilisée dans:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {api.metadata.used_in_functions.slice(0, 3).map((func: string) => (
+                                <Badge key={func} variant="outline" className="text-xs">
+                                  {func}
+                                </Badge>
+                              ))}
+                              {api.metadata.used_in_functions.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{api.metadata.used_in_functions.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-                    {api.last_request_at && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        Dernière requête: {new Date(api.last_request_at).toLocaleString('fr-FR')}
-                      </div>
-                    )}
+                        {api.last_request_at && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            Dernière requête: {new Date(api.last_request_at).toLocaleString('fr-FR')}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedApi(api);
-                          setModalOpen(true);
-                        }}
-                      >
-                        <Activity className="h-3 w-3 mr-1" />
-                        Voir détails
-                      </Button>
+            {/* Séparateur */}
+            <div className="border-t border-border my-8" />
+
+            {/* API Défaillantes / Non configurées */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <XCircle className="h-5 w-5 text-red-600" />
+                <h3 className="text-lg font-semibold">API Défaillantes ou Non Configurées ({brokenApis.length})</h3>
+              </div>
+              
+              {brokenApis.length === 0 ? (
+                <Card className="border-green-200">
+                  <CardContent className="py-8">
+                    <div className="text-center">
+                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                      <p className="text-green-600 font-medium">Toutes les API fonctionnent correctement !</p>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-              </div>
-            )}
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {brokenApis.map((api) => (
+                    <Card key={api.id} className="hover:border-red-500 transition-colors cursor-pointer border-red-200" onClick={() => {
+                      setSelectedApi(api);
+                      setModalOpen(true);
+                    }}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg">{api.api_name}</CardTitle>
+                            <CardDescription>
+                              {api.api_provider}
+                            </CardDescription>
+                          </div>
+                          <Badge className={`${STATUS_COLORS[api.status]} text-white`}>
+                            {STATUS_LABELS[api.status]}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Key className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono">
+                            {maskApiKey(api.api_key_encrypted)}
+                          </span>
+                        </div>
+
+                        {/* Raison de l'erreur */}
+                        <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded text-xs text-red-600">
+                          {api.metadata?.key_configured === false ? (
+                            <span>⚠️ Clé API non configurée dans les variables d'environnement</span>
+                          ) : api.status === 'error' ? (
+                            <span>❌ Clé invalide ou API non accessible</span>
+                          ) : api.status === 'expired' ? (
+                            <span>⏰ API expirée - renouvellement nécessaire</span>
+                          ) : (
+                            <span>⚠️ Statut inconnu</span>
+                          )}
+                        </div>
+                        
+                        {api.metadata?.used_in_functions && api.metadata.used_in_functions.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">Impacte les fonctions:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {api.metadata.used_in_functions.slice(0, 3).map((func: string) => (
+                                <Badge key={func} variant="destructive" className="text-xs">
+                                  {func}
+                                </Badge>
+                              ))}
+                              {api.metadata.used_in_functions.length > 3 && (
+                                <Badge variant="destructive" className="text-xs">
+                                  +{api.metadata.used_in_functions.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedApi(api);
+                            setModalOpen(true);
+                          }}
+                        >
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Diagnostiquer
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* Alertes */}
