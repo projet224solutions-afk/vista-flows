@@ -18,6 +18,7 @@ import { ApiMonitoringService, ApiConnection, ApiAlert } from '@/services/apiMon
 import { maskApiKey } from '@/services/apiEncryption';
 import { toast } from 'sonner';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import ApiDetailsModal from '@/components/pdg/ApiDetailsModal';
 
 const STATUS_COLORS = {
   active: 'bg-green-500',
@@ -40,6 +41,7 @@ export default function ApiSupervision() {
   const [alerts, setAlerts] = useState<ApiAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApi, setSelectedApi] = useState<ApiConnection | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Charger les données
   const loadData = async () => {
@@ -99,26 +101,26 @@ export default function ApiSupervision() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center space-y-4">
-          <RefreshCw className="h-12 w-12 text-blue-500 animate-spin" />
-          <p className="text-white text-lg">Chargement du tableau de bord...</p>
+          <RefreshCw className="h-12 w-12 text-primary animate-spin" />
+          <p className="text-muted-foreground">Chargement du tableau de bord...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Shield className="h-8 w-8 text-blue-500" />
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Shield className="h-8 w-8 text-primary" />
               Supervision des API
             </h1>
-            <p className="text-slate-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               Monitoring intelligent avec 224Guard
             </p>
           </div>
@@ -126,15 +128,15 @@ export default function ApiSupervision() {
             <Button
               onClick={loadData}
               variant="outline"
-              className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+              className="gap-2"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4" />
               Actualiser
             </Button>
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="gap-2"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Ajouter une API
             </Button>
           </div>
@@ -142,29 +144,29 @@ export default function ApiSupervision() {
 
         {/* Statistiques principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Total API</p>
-                  <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+                  <p className="text-muted-foreground text-sm">Total API</p>
+                  <p className="text-3xl font-bold mt-1">{stats.total}</p>
                 </div>
-                <Activity className="h-10 w-10 text-blue-500" />
+                <Activity className="h-10 w-10 text-primary" />
               </div>
               <div className="mt-4 flex gap-2">
-                <span className="text-xs text-green-500">{stats.active} actives</span>
-                <span className="text-xs text-slate-500">•</span>
-                <span className="text-xs text-red-500">{stats.expired} expirées</span>
+                <span className="text-xs text-green-600">{stats.active} actives</span>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-destructive">{stats.expired} expirées</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Tokens utilisés</p>
-                  <p className="text-3xl font-bold text-white mt-1">
+                  <p className="text-muted-foreground text-sm">Tokens utilisés</p>
+                  <p className="text-3xl font-bold mt-1">
                     {stats.totalTokensUsed.toLocaleString()}
                   </p>
                 </div>
@@ -177,31 +179,31 @@ export default function ApiSupervision() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Alertes critiques</p>
-                  <p className="text-3xl font-bold text-white mt-1">{stats.criticalAlerts}</p>
+                  <p className="text-muted-foreground text-sm">Alertes critiques</p>
+                  <p className="text-3xl font-bold mt-1">{stats.criticalAlerts}</p>
                 </div>
-                <AlertTriangle className="h-10 w-10 text-red-500" />
+                <AlertTriangle className="h-10 w-10 text-destructive" />
               </div>
-              <p className="text-xs text-slate-500 mt-4">
+              <p className="text-xs text-muted-foreground mt-4">
                 {alerts.length} alertes au total
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">224Guard</p>
-                  <p className="text-lg font-bold text-green-500 mt-1">Actif</p>
+                  <p className="text-muted-foreground text-sm">224Guard</p>
+                  <p className="text-lg font-bold text-green-600 mt-1">Actif</p>
                 </div>
-                <Shield className="h-10 w-10 text-green-500" />
+                <Shield className="h-10 w-10 text-green-600" />
               </div>
-              <p className="text-xs text-slate-500 mt-4">
+              <p className="text-xs text-muted-foreground mt-4">
                 Surveillance en temps réel
               </p>
             </CardContent>
@@ -209,7 +211,7 @@ export default function ApiSupervision() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="bg-slate-800 border-slate-700">
+          <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="apis">API connectées</TabsTrigger>
             <TabsTrigger value="alerts">Alertes</TabsTrigger>
@@ -220,9 +222,9 @@ export default function ApiSupervision() {
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Répartition par type */}
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Répartition des API par type</CardTitle>
+                  <CardTitle>Répartition des API par type</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -248,20 +250,17 @@ export default function ApiSupervision() {
               </Card>
 
               {/* Consommation de tokens */}
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Consommation de tokens</CardTitle>
+                  <CardTitle>Consommation de tokens</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={tokenUsageData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                      <XAxis dataKey="name" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
-                        labelStyle={{ color: '#fff' }}
-                      />
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
                       <Legend />
                       <Bar dataKey="utilisés" fill="#3B82F6" />
                       <Bar dataKey="restants" fill="#10B981" />
@@ -276,12 +275,15 @@ export default function ApiSupervision() {
           <TabsContent value="apis" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {apis.map((api) => (
-                <Card key={api.id} className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors cursor-pointer">
+                <Card key={api.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => {
+                  setSelectedApi(api);
+                  setModalOpen(true);
+                }}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-white text-lg">{api.api_name}</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardTitle className="text-lg">{api.api_name}</CardTitle>
+                        <CardDescription>
                           {api.api_provider}
                         </CardDescription>
                       </div>
@@ -292,8 +294,8 @@ export default function ApiSupervision() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <Key className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-300 font-mono">
+                      <Key className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-mono">
                         {maskApiKey(api.api_key_encrypted)}
                       </span>
                     </div>
@@ -301,8 +303,8 @@ export default function ApiSupervision() {
                     {api.tokens_limit && (
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-400">Tokens</span>
-                          <span className="text-white">
+                          <span className="text-muted-foreground">Tokens</span>
+                          <span className="font-medium">
                             {api.tokens_used.toLocaleString()} / {api.tokens_limit.toLocaleString()}
                           </span>
                         </div>
@@ -314,20 +316,25 @@ export default function ApiSupervision() {
                     )}
 
                     {api.last_request_at && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         Dernière requête: {new Date(api.last_request_at).toLocaleString('fr-FR')}
                       </div>
                     )}
 
                     <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="outline" className="flex-1 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-                        <Settings className="h-3 w-3 mr-1" />
-                        Config
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1 bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedApi(api);
+                          setModalOpen(true);
+                        }}
+                      >
                         <Activity className="h-3 w-3 mr-1" />
-                        Logs
+                        Voir détails
                       </Button>
                     </div>
                   </CardContent>
@@ -338,9 +345,9 @@ export default function ApiSupervision() {
 
           {/* Alertes */}
           <TabsContent value="alerts" className="space-y-4">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5 text-yellow-500" />
                   Alertes actives ({alerts.length})
                 </CardTitle>
@@ -349,14 +356,14 @@ export default function ApiSupervision() {
                 <div className="space-y-3">
                   {alerts.length === 0 ? (
                     <div className="text-center py-8">
-                      <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                      <p className="text-slate-400">Aucune alerte active</p>
+                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                      <p className="text-muted-foreground">Aucune alerte active</p>
                     </div>
                   ) : (
                     alerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="p-4 bg-slate-700 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors"
+                        className="p-4 bg-muted rounded-lg border hover:border-primary transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -369,17 +376,17 @@ export default function ApiSupervision() {
                               }>
                                 {alert.severity.toUpperCase()}
                               </Badge>
-                              <span className="text-white font-medium">{alert.title}</span>
+                              <span className="font-medium">{alert.title}</span>
                             </div>
-                            <p className="text-slate-300 text-sm">{alert.message}</p>
-                            <p className="text-slate-500 text-xs mt-2">
+                            <p className="text-sm">{alert.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
                               {new Date(alert.created_at).toLocaleString('fr-FR')}
                             </p>
                           </div>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-green-500 hover:text-green-400 hover:bg-slate-600"
+                            className="text-green-600 hover:text-green-500"
                             onClick={() => {
                               // Marquer comme résolue
                               toast.success('Alerte résolue');
@@ -398,15 +405,15 @@ export default function ApiSupervision() {
 
           {/* Analytiques */}
           <TabsContent value="analytics" className="space-y-4">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white">Statistiques détaillées</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle>Statistiques détaillées</CardTitle>
+                <CardDescription>
                   Analyse de performance sur les 30 derniers jours
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-400 text-center py-8">
+                <p className="text-muted-foreground text-center py-8">
                   Graphiques d'analytiques disponibles prochainement
                 </p>
               </CardContent>
@@ -414,6 +421,17 @@ export default function ApiSupervision() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de détails d'API */}
+      <ApiDetailsModal
+        api={selectedApi}
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedApi(null);
+          loadData(); // Recharger les données après fermeture
+        }}
+      />
     </div>
   );
 }

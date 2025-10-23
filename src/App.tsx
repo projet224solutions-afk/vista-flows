@@ -29,6 +29,7 @@ const UserActivationPage = lazy(() => import("./components/agent-system/UserActi
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
+const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
@@ -137,6 +138,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <PDG224Solutions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pdg/api-supervision"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ApiSupervision />
                   </ProtectedRoute>
                 }
               />
