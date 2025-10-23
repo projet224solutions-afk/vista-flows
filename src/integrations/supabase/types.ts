@@ -162,6 +162,169 @@ export type Database = {
           },
         ]
       }
+      api_alerts: {
+        Row: {
+          alert_type: string
+          api_connection_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          is_resolved: boolean | null
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          api_connection_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          api_connection_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_alerts_api_connection_id_fkey"
+            columns: ["api_connection_id"]
+            isOneToOne: false
+            referencedRelation: "api_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_connections: {
+        Row: {
+          api_key_encrypted: string
+          api_name: string
+          api_provider: string
+          api_secret_encrypted: string | null
+          api_type: string
+          base_url: string | null
+          created_at: string | null
+          created_by: string | null
+          encryption_iv: string
+          expires_at: string | null
+          id: string
+          last_request_at: string | null
+          metadata: Json | null
+          status: string
+          tokens_limit: number | null
+          tokens_remaining: number | null
+          tokens_used: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key_encrypted: string
+          api_name: string
+          api_provider: string
+          api_secret_encrypted?: string | null
+          api_type: string
+          base_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          encryption_iv: string
+          expires_at?: string | null
+          id?: string
+          last_request_at?: string | null
+          metadata?: Json | null
+          status?: string
+          tokens_limit?: number | null
+          tokens_remaining?: number | null
+          tokens_used?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string
+          api_name?: string
+          api_provider?: string
+          api_secret_encrypted?: string | null
+          api_type?: string
+          base_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          encryption_iv?: string
+          expires_at?: string | null
+          id?: string
+          last_request_at?: string | null
+          metadata?: Json | null
+          status?: string
+          tokens_limit?: number | null
+          tokens_remaining?: number | null
+          tokens_used?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      api_usage_logs: {
+        Row: {
+          api_connection_id: string | null
+          created_at: string | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          method: string
+          request_metadata: Json | null
+          response_time_ms: number | null
+          status_code: number | null
+          tokens_consumed: number | null
+        }
+        Insert: {
+          api_connection_id?: string | null
+          created_at?: string | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          method: string
+          request_metadata?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          tokens_consumed?: number | null
+        }
+        Update: {
+          api_connection_id?: string | null
+          created_at?: string | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          method?: string
+          request_metadata?: Json | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          tokens_consumed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_api_connection_id_fkey"
+            columns: ["api_connection_id"]
+            isOneToOne: false
+            referencedRelation: "api_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
