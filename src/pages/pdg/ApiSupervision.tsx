@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import ApiDetailsModal from '@/components/pdg/ApiDetailsModal';
 import AddApiModal from '@/components/pdg/AddApiModal';
+import ApiAnalytics from '@/components/pdg/ApiAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_COLORS = {
@@ -50,6 +51,9 @@ export default function ApiSupervision() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Synchroniser les API système en premier
+      await syncSystemApis();
+      
       const [apisData, alertsData] = await Promise.all([
         ApiMonitoringService.getAllApiConnections(),
         ApiMonitoringService.getUnresolvedAlerts()
@@ -62,6 +66,20 @@ export default function ApiSupervision() {
       toast.error(error?.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Synchroniser les API système automatiquement
+  const syncSystemApis = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-system-apis');
+      if (error) throw error;
+      if (data?.synced?.length > 0) {
+        console.log('✅ API système synchronisées:', data.synced);
+      }
+    } catch (error) {
+      console.error('⚠️ Erreur sync API système:', error);
+      // Ne pas bloquer si la synchronisation échoue
     }
   };
 
@@ -435,19 +453,7 @@ export default function ApiSupervision() {
 
           {/* Analytiques */}
           <TabsContent value="analytics" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiques détaillées</CardTitle>
-                <CardDescription>
-                  Analyse de performance sur les 30 derniers jours
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-center py-8">
-                  Graphiques d'analytiques disponibles prochainement
-                </p>
-              </CardContent>
-            </Card>
+            <ApiAnalytics apis={apis} />
           </TabsContent>
         </Tabs>
       </div>
