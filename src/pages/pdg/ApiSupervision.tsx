@@ -19,6 +19,8 @@ import { maskApiKey } from '@/services/apiEncryption';
 import { toast } from 'sonner';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import ApiDetailsModal from '@/components/pdg/ApiDetailsModal';
+import AddApiModal from '@/components/pdg/AddApiModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_COLORS = {
   active: 'bg-green-500',
@@ -42,6 +44,7 @@ export default function ApiSupervision() {
   const [loading, setLoading] = useState(true);
   const [selectedApi, setSelectedApi] = useState<ApiConnection | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
 
   // Charger les données
   const loadData = async () => {
@@ -52,11 +55,11 @@ export default function ApiSupervision() {
         ApiMonitoringService.getUnresolvedAlerts()
       ]);
       
-      setApis(apisData);
-      setAlerts(alertsData);
-    } catch (error) {
+      setApis(apisData || []);
+      setAlerts(alertsData || []);
+    } catch (error: any) {
       console.error('❌ Erreur chargement:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(error?.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -135,6 +138,7 @@ export default function ApiSupervision() {
             </Button>
             <Button
               className="gap-2"
+              onClick={() => setAddModalOpen(true)}
             >
               <Plus className="h-4 w-4" />
               Ajouter une API
@@ -273,8 +277,25 @@ export default function ApiSupervision() {
 
           {/* Liste des API */}
           <TabsContent value="apis" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {apis.map((api) => (
+            {apis.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Aucune API connectée</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Commencez par ajouter votre première API
+                    </p>
+                    <Button onClick={() => setAddModalOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ajouter une API
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {apis.map((api) => (
                 <Card key={api.id} className="hover:border-primary transition-colors cursor-pointer" onClick={() => {
                   setSelectedApi(api);
                   setModalOpen(true);
@@ -340,7 +361,8 @@ export default function ApiSupervision() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Alertes */}
@@ -387,9 +409,17 @@ export default function ApiSupervision() {
                             size="sm"
                             variant="ghost"
                             className="text-green-600 hover:text-green-500"
-                            onClick={() => {
-                              // Marquer comme résolue
-                              toast.success('Alerte résolue');
+                            onClick={async () => {
+                              try {
+                                const { data: { user } } = await supabase.auth.getUser();
+                                if (user) {
+                                  await ApiMonitoringService.resolveAlert(alert.id, user.id);
+                                  await loadData();
+                                }
+                              } catch (error) {
+                                console.error('Erreur résolution alerte:', error);
+                                toast.error('Erreur lors de la résolution');
+                              }
                             }}
                           >
                             <CheckCircle2 className="h-4 w-4" />
@@ -431,6 +461,13 @@ export default function ApiSupervision() {
           setSelectedApi(null);
           loadData(); // Recharger les données après fermeture
         }}
+      />
+
+      {/* Modal d'ajout d'API */}
+      <AddApiModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSuccess={loadData}
       />
     </div>
   );
