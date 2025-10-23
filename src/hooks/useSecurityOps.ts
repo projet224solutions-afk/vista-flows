@@ -47,7 +47,7 @@ export interface SecurityStats {
   keys_need_rotation: number;
 }
 
-export function useSecurityOps() {
+export function useSecurityOps(autoLoad?: boolean) {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
