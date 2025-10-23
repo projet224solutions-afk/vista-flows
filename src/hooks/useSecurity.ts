@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -102,22 +102,8 @@ export function useSecurityIncidents() {
     const [loading, setLoading] = useState(false);
 
     const loadIncidents = useCallback(async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('moto_security_audit')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(100);
-            
-            if (!error && data) {
-                setIncidents(data);
-            }
-        } catch (err) {
-            console.error('Erreur chargement incidents:', err);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(false);
+        // Table non disponible - désactivé temporairement
     }, []);
 
     useEffect(() => {
@@ -125,23 +111,9 @@ export function useSecurityIncidents() {
     }, [loadIncidents]);
 
     const createIncident = useCallback(async (incident: unknown) => {
-        try {
-            const { data, error } = await supabase
-                .from('moto_security_audit')
-                .insert(incident)
-                .select()
-                .single();
-            
-            if (!error && data) {
-                setIncidents(prev => [data, ...prev]);
-                toast.success('Incident créé avec succès');
-                return data;
-            }
-            return null;
-        } catch (err) {
-            console.error('Erreur création incident:', err);
-            return null;
-        }
+        setLoading(false);
+        // Table non disponible - désactivé temporairement
+        return null;
     }, []);
 
     return {
@@ -159,22 +131,8 @@ export function useSecurityEvents() {
     const [loading, setLoading] = useState(false);
 
     const loadEvents = useCallback(async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('moto_security_audit')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(200);
-            
-            if (!error && data) {
-                setEvents(data);
-            }
-        } catch (err) {
-            console.error('Erreur chargement événements:', err);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(false);
+        // Table non disponible - désactivé temporairement
     }, []);
 
     useEffect(() => {

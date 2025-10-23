@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,24 +11,21 @@ import {
   MessageSquare,
   Truck,
   Users,
-  ShoppingBag,
   Store,
-  MapPin,
   Star,
-  TrendingUp,
-  Zap,
-  Crown,
   Shield,
+  Zap,
   Globe,
   Clock,
-  Phone,
-  Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { useHomeStats } from "@/hooks/useHomeStats";
+import { useHomeProducts } from "@/hooks/useHomeProducts";
+import { useHomeCategories } from "@/hooks/useHomeCategories";
 
-// Services principaux comme dans l'image
-const mainServices = [
+// Services principaux avec données dynamiques
+const getMainServices = (stats: any) => [
   {
     id: 'categories',
     title: 'Explorer par catégories',
@@ -36,7 +33,7 @@ const mainServices = [
     icon: Grid3X3,
     color: 'bg-purple-600',
     path: '/marketplace',
-    stats: '2,500+ produits'
+    stats: `${stats.totalProducts}+ produits`
   },
   {
     id: 'devis',
@@ -54,7 +51,7 @@ const mainServices = [
     icon: Truck,
     color: 'bg-purple-600',
     path: '/services-proximite',
-    stats: '500+ services'
+    stats: `${stats.totalServices}+ services`
   },
   {
     id: 'vendeur',
@@ -63,104 +60,65 @@ const mainServices = [
     icon: Users,
     color: 'bg-purple-600',
     path: '/auth',
-    stats: '1,200+ vendeurs'
+    stats: `${stats.totalVendors}+ vendeurs`
   }
 ];
 
-// Catégories populaires
-const popularCategories = [
-  {
-    name: 'Électronique',
-    icon: '📱',
-    count: '850+ produits',
-    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Mode & Beauté',
-    icon: '👗',
-    count: '1,200+ produits',
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Maison & Jardin',
-    icon: '🏠',
-    count: '650+ produits',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Alimentation',
-    icon: '🍎',
-    count: '400+ produits',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Automobile',
-    icon: '🚗',
-    count: '300+ produits',
-    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Services',
-    icon: '🔧',
-    count: '200+ services',
+// Mapping des catégories avec leurs icônes et images (par défaut)
+const getCategoryMapping = (categoryName: string): { icon: string; image: string } => {
+  const mappings: Record<string, { icon: string; image: string }> = {
+    'Électronique': { 
+      icon: '📱', 
+      image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop'
+    },
+    'Mode & Beauté': { 
+      icon: '👗', 
+      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop'
+    },
+    'Maison & Jardin': { 
+      icon: '🏠', 
+      image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop'
+    },
+    'Alimentation': { 
+      icon: '🍎', 
+      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop'
+    },
+    'Automobile': { 
+      icon: '🚗', 
+      image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=300&h=200&fit=crop'
+    },
+    'Services': { 
+      icon: '🔧', 
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop'
+    },
+  };
+  
+  return mappings[categoryName] || { 
+    icon: '📦', 
     image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop'
-  }
-];
+  };
+};
 
-// Produits tendance
-const trendingProducts = [
-  {
-    id: 1,
-    name: 'Smartphone Samsung Galaxy A54',
-    price: '285,000 GNF',
-    originalPrice: '320,000 GNF',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop',
-    rating: 4.5,
-    reviews: 128,
-    badge: 'Bestseller'
-  },
-  {
-    id: 2,
-    name: 'Ordinateur Portable HP',
-    price: '450,000 GNF',
-    originalPrice: '500,000 GNF',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop',
-    rating: 4.8,
-    reviews: 89,
-    badge: 'Promo'
-  },
-  {
-    id: 3,
-    name: 'Robe Africaine Traditionnelle',
-    price: '45,000 GNF',
-    originalPrice: '60,000 GNF',
-    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=300&fit=crop',
-    rating: 4.7,
-    reviews: 156,
-    badge: 'Nouveau'
-  },
-  {
-    id: 4,
-    name: 'Casque Audio Bluetooth',
-    price: '35,000 GNF',
-    originalPrice: '45,000 GNF',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-    rating: 4.6,
-    reviews: 203,
-    badge: 'Top vente'
-  }
-];
+// Helper pour formater le prix
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('fr-GN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+  }).format(price) + ' GNF';
+};
 
 export default function IndexAlibaba() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  useRoleRedirect(); // Active la redirection automatique vers l'interface de rôle
+  useRoleRedirect();
   const { profile } = useAuth();
+  
+  // Chargement des données réelles depuis Supabase
+  const { stats, loading: statsLoading } = useHomeStats();
+  const { products, loading: productsLoading } = useHomeProducts(4);
+  const { categories, loading: categoriesLoading } = useHomeCategories();
 
-  // Redirection automatique désactivée pour éviter les problèmes d'affichage
-  // useEffect(() => {
-  //   navigate('/pdg');
-  // }, [navigate]);
+  const mainServices = getMainServices(stats);
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
     if (service.id === 'vendeur') {
@@ -174,7 +132,7 @@ export default function IndexAlibaba() {
     navigate(`/marketplace?category=${encodeURIComponent(category)}`);
   };
 
-  const handleProductClick = (productId: number) => {
+  const handleProductClick = (productId: string) => {
     navigate(`/marketplace/product/${productId}`);
   };
 
@@ -245,22 +203,30 @@ export default function IndexAlibaba() {
             </div>
           </div>
 
-          {/* Stats rapides */}
+          {/* Stats rapides - Données réelles */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold">2,500+</div>
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalProducts}+`}
+              </div>
               <div className="text-sm opacity-80">Produits</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">1,200+</div>
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalVendors}+`}
+              </div>
               <div className="text-sm opacity-80">Vendeurs</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">500+</div>
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalServices}+`}
+              </div>
               <div className="text-sm opacity-80">Services</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">15,000+</div>
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalClients}+`}
+              </div>
               <div className="text-sm opacity-80">Clients</div>
             </div>
           </div>
@@ -311,7 +277,7 @@ export default function IndexAlibaba() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {mainServices.map((service) => {
+            {getMainServices(stats).map((service) => {
               const Icon = service.icon;
               return (
                 <Card
@@ -355,33 +321,46 @@ export default function IndexAlibaba() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {popularCategories.map((category) => (
-              <Card
-                key={category.name}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-                onClick={() => handleCategoryClick(category.name)}
-              >
-                <div className="relative">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                  <div className="absolute top-2 left-2 text-2xl">
-                    {category.icon}
-                  </div>
-                </div>
-                <CardContent className="p-4 text-center">
-                  <h3 className="font-semibold text-gray-800 mb-1">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {category.count}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {categoriesLoading ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Chargement des catégories...</p>
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Aucune catégorie disponible</p>
+              </div>
+            ) : (
+              categories.map((category) => {
+                const mapping = getCategoryMapping(category.name);
+                return (
+                  <Card
+                    key={category.name}
+                    className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    onClick={() => handleCategoryClick(category.name)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={mapping.image}
+                        alt={category.name}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                      <div className="absolute top-2 left-2 text-2xl">
+                        {mapping.icon}
+                      </div>
+                    </div>
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-semibold text-gray-800 mb-1">
+                        {category.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {category.count}+ produits
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -404,47 +383,52 @@ export default function IndexAlibaba() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trendingProducts.map((product) => (
-              <Card
-                key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-                onClick={() => handleProductClick(product.id)}
-              >
-                <div className="relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <Badge
-                    className="absolute top-2 left-2 bg-red-500 text-white"
-                  >
-                    {product.badge}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600 ml-1">
-                        {product.rating} ({product.reviews})
+            {productsLoading ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Chargement des produits...</p>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Aucun produit disponible</p>
+              </div>
+            ) : (
+              products.map((product) => (
+                <Card
+                  key={product.id}
+                  className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div className="relative">
+                    <img
+                      src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=300&fit=crop'}
+                      alt={product.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+                      Nouveau
+                    </Badge>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm text-gray-600 ml-1">
+                          {product.rating || 4.5} ({product.reviews_count || 0})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-purple-600">
+                        {formatPrice(product.price)}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-purple-600">
-                      {product.price}
-                    </span>
-                    <span className="text-sm text-gray-400 line-through">
-                      {product.originalPrice}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </section>

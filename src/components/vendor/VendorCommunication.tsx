@@ -15,7 +15,7 @@ import {
   Phone, Video, PhoneOff, Mic, MicOff, VideoOff as VideoOffIcon,
   MessageSquare, Users, Search, Signal
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Contact {
