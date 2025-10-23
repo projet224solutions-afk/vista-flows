@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap, LogOut } from 'lucide-react';
+import { Shield, DollarSign, Users, Settings, MessageSquare, Lock, Wrench, Package, BarChart3, UserCheck, Building2, Brain, Zap, LogOut, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -315,7 +315,7 @@ export default function PDG224Solutions() {
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
                 aria-label="Onglet Supervision API"
               >
-                <Key className="w-4 w-4" />
+                <Key className="w-4 h-4" />
                 <span className="font-medium">API</span>
               </TabsTrigger>
             </TabsList>
