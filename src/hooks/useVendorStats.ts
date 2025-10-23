@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface VendorStats {
+  vendorId: string | null;
   revenue: number;
   orders_count: number;
   customers_count: number;
@@ -114,6 +115,7 @@ export function useVendorStats() {
       ).length || 0;
 
       setStats({
+        vendorId: vendor.id,
         revenue,
         orders_count: ordersResult.count || 0,
         customers_count: customersResult.count || 0,

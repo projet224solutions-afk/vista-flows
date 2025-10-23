@@ -413,7 +413,7 @@ export default function VendeurDashboard() {
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
               <Route path="debts" element={<DebtManagement />} />
-              <Route path="affiliate" element={<AffiliateManagement shopId={undefined} />} />
+              <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
               <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<UniversalCommunicationHub />} />
