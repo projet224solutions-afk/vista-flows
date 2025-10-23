@@ -7,8 +7,9 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'VendorOfflineDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'offline_events';
+const FILES_STORE_NAME = 'offline_files';
 
 class OfflineDB {
     constructor() {
@@ -35,6 +36,13 @@ class OfflineDB {
                         store.createIndex('type', 'type', { unique: false });
                         store.createIndex('created_at', 'created_at', { unique: false });
                         store.createIndex('vendor_id', 'vendor_id', { unique: false });
+                    }
+
+                    // Créer le store pour les fichiers hors-ligne
+                    if (!db.objectStoreNames.contains(FILES_STORE_NAME)) {
+                        db.createObjectStore(FILES_STORE_NAME, {
+                            keyPath: 'id'
+                        });
                     }
                 }
             });
@@ -260,14 +268,7 @@ class OfflineDB {
                 created_at: new Date().toISOString()
             };
 
-            // Stocker dans un store séparé pour les fichiers
-            if (!this.db.objectStoreNames.contains('offline_files')) {
-                const store = this.db.createObjectStore('offline_files', {
-                    keyPath: 'id'
-                });
-            }
-
-            await this.db.add('offline_files', fileData);
+            await this.db.add(FILES_STORE_NAME, fileData);
             console.log('✅ Fichier stocké hors-ligne:', file.name);
             return fileData.id;
         } catch (error) {
@@ -297,7 +298,7 @@ class OfflineDB {
         }
 
         try {
-            const fileData = await this.db.get('offline_files', fileId);
+            const fileData = await this.db.get(FILES_STORE_NAME, fileId);
             return fileData;
         } catch (error) {
             console.error('❌ Erreur récupération fichier:', error);
@@ -314,7 +315,7 @@ class OfflineDB {
         }
 
         try {
-            await this.db.delete('offline_files', fileId);
+            await this.db.delete(FILES_STORE_NAME, fileId);
             console.log('🗑️ Fichier supprimé:', fileId);
         } catch (error) {
             console.error('❌ Erreur suppression fichier:', error);
