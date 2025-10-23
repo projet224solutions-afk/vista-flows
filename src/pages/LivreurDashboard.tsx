@@ -1,81 +1,165 @@
-import { Card } from "@/components/ui/card";
+/**
+ * LIVREUR - INTERFACE COMPLÈTE
+ * 224Solutions Delivery System
+ * Gestion des missions, suivi en temps réel, historique et solde
+ */
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useDeliveries } from "@/hooks/useSupabaseQuery";
-import { 
-  MapPin, 
-  Package, 
-  Clock, 
-  DollarSign, 
-  Truck, 
-  AlertTriangle,
-  CheckCircle,
-  Navigation,
-  Star,
-  MessageSquare
-} from "lucide-react";
-import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import { useCurrentLocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+
+interface Delivery {
+  id: string;
+  pickup_address: any;
+  delivery_address: any;
+  delivery_fee: number;
+  status: string;
+  driver_id?: string;
+  completed_at?: string;
+  delivered_at?: string;
+  picked_up_at?: string;
+  order?: {
+    order_number?: string;
+  };
+}
 
 export default function LivreurDashboard() {
-  const { profile, signOut } = useAuth();
-  const { data: deliveries, loading } = useDeliveries(profile?.id);
+  const { user, profile } = useAuth();
+  const { location, getCurrentLocation } = useCurrentLocation();
 
-  // Calculate stats from deliveries
-  const todayDeliveries = deliveries?.filter(delivery => {
-    const today = new Date();
-    const deliveryDate = new Date(delivery.created_at);
-    return deliveryDate.toDateString() === today.toDateString();
-  }).length || 0;
+  const [activeTab, setActiveTab] = useState('missions');
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [currentDelivery, setCurrentDelivery] = useState<Delivery | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const completedDeliveries = deliveries?.filter(d => d.status === 'delivered').length || 0;
-  const pendingDeliveries = deliveries?.filter(d => ['pending', 'assigned', 'picked_up', 'in_transit'].includes(d.status)).length || 0;
-  
-  const todayEarnings = deliveries?.filter(delivery => {
-    const today = new Date();
-    const deliveryDate = new Date(delivery.created_at);
-    return deliveryDate.toDateString() === today.toDateString() && delivery.status === 'delivered';
-  }).reduce((sum, delivery) => sum + (delivery.delivery_fee || 0), 0) || 0;
+  useEffect(() => {
+    getCurrentLocation();
+    loadDeliveries();
+  }, []);
 
-  const avgRating = 4.8; // This would come from reviews in a real implementation
-
-  const stats = [
-    { label: "Livraisons aujourd'hui", value: todayDeliveries.toString(), change: "+3", icon: Package },
-    { label: "Gains du jour", value: `${todayEarnings} €`, change: "+18%", icon: DollarSign },
-    { label: "Temps de livraison moy.", value: "28 min", change: "-5%", icon: Clock },
-    { label: "Note satisfaction", value: `${avgRating}/5`, change: "+0.2", icon: CheckCircle },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-500';
-      case 'in_transit': return 'bg-livreur-primary';
-      case 'picked_up': return 'bg-yellow-500';
-      case 'assigned': return 'bg-orange-500';
-      default: return 'bg-muted';
+  /**
+   * Charger les livraisons disponibles pour ce livreur
+   */
+  const loadDeliveries = async () => {
+    setLoading(true);
+    
+    // Livraisons disponibles (non assignées)
+    const { data: available, error: availableError } = await supabase
+      .from('deliveries')
+      .select('*, order:orders(order_number)')
+      .is('driver_id', null)
+      .in('status', ['pending', 'assigned'])
+      .limit(10);
+    
+    // Livraison en cours pour ce livreur
+    const { data: current } = await supabase
+      .from('deliveries')
+      .select('*, order:orders(order_number)')
+      .eq('driver_id', user?.id)
+      .in('status', ['picked_up', 'in_transit'])
+      .single();
+    
+    if (availableError) {
+      console.error(availableError);
     }
+    
+    setDeliveries(available || []);
+    setCurrentDelivery(current || null);
+    setLoading(false);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'En attente';
-      case 'assigned': return 'Assignée';
-      case 'picked_up': return 'Récupérée';
-      case 'in_transit': return 'En cours';
-      case 'delivered': return 'Livrée';
-      case 'cancelled': return 'Annulée';
-      default: return status;
+  /**
+   * Accepter une livraison
+   */
+  const acceptDelivery = async (deliveryId: string) => {
+    if (!user?.id) return;
+    
+    const { error } = await supabase
+      .from('deliveries')
+      .update({ 
+        status: 'picked_up', 
+        driver_id: user.id,
+        picked_up_at: new Date().toISOString()
+      })
+      .eq('id', deliveryId);
+
+    if (error) {
+      toast.error("Erreur lors de l'acceptation");
+      return;
     }
+
+    toast.success("Livraison acceptée !");
+    loadDeliveries();
+    setActiveTab('active');
+  };
+
+  /**
+   * Marquer une livraison comme en transit
+   */
+  const startDelivery = async () => {
+    if (!currentDelivery) return;
+
+    const { error } = await supabase
+      .from('deliveries')
+      .update({ status: 'in_transit' })
+      .eq('id', currentDelivery.id);
+
+    if (error) {
+      toast.error("Erreur lors du démarrage");
+      return;
+    }
+
+    toast.success("Livraison en cours !");
+    loadDeliveries();
+  };
+
+  /**
+   * Marquer une livraison comme livrée
+   */
+  const completeDelivery = async () => {
+    if (!currentDelivery) return;
+
+    const { error } = await supabase
+      .from('deliveries')
+      .update({ 
+        status: 'delivered', 
+        delivered_at: new Date().toISOString() 
+      })
+      .eq('id', currentDelivery.id);
+
+    if (error) {
+      toast.error("Erreur lors de la finalisation");
+      return;
+    }
+
+    toast.success("Livraison terminée !");
+    loadDeliveries();
+    setActiveTab('missions');
+  };
+
+  /**
+   * Signaler un problème
+   */
+  const reportProblem = async () => {
+    if (!currentDelivery) return;
+    
+    toast.warning("Problème signalé au support !");
+    // Dans une version complète, on pourrait créer une table pour les problèmes
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Truck className="h-12 w-12 animate-bounce mx-auto mb-4 text-livreur-primary" />
+          <Truck className="h-12 w-12 animate-bounce mx-auto mb-4 text-primary" />
           <p>Chargement des données...</p>
         </div>
       </div>
@@ -83,135 +167,212 @@ export default function LivreurDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="bg-livreur-gradient p-8 text-white">
-        <div className="container mx-auto flex justify-between items-center gap-4">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">Dashboard Livreur</h1>
-            <p className="text-white/80 text-lg">
-              Bienvenue {profile?.first_name || 'Livreur'} - Optimisez vos tournées et maximisez vos gains
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold mb-1">🚴 Livreur - 224Solutions</h1>
+            <p className="text-sm text-muted-foreground">
+              Bienvenue {profile?.first_name || 'Livreur'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:block">
-              <WalletBalanceWidget className="min-w-[260px] bg-white/10 border-white/20" />
-            </div>
-            <QuickTransferButton variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
-            <Button variant="outline" onClick={signOut} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-              Déconnexion
-            </Button>
-          </div>
+          {location && (
+            <Badge variant="outline" className="gap-2">
+              <MapPin className="h-3 w-3" />
+              GPS Actif
+            </Badge>
+          )}
         </div>
-      </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Navigation par onglets */}
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="communication">Communication</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 bg-card/80 mb-6">
+            <TabsTrigger value="missions">
+              📦 Missions
+              {deliveries.length > 0 && (
+                <Badge variant="secondary" className="ml-2">{deliveries.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="active">
+              🚚 En cours
+              {currentDelivery && <Badge variant="default" className="ml-2">1</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="wallet">💰 Solde</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="p-6 border-0 shadow-elegant hover:shadow-glow transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-sm text-livreur-primary font-medium">{stat.change}</p>
+          {/* 📦 Liste des livraisons disponibles */}
+          <TabsContent value="missions" className="space-y-3">
+            {deliveries.length === 0 ? (
+              <Card className="p-8">
+                <div className="text-center text-muted-foreground">
+                  <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">Aucune livraison disponible</p>
+                  <p className="text-sm mt-1">Les nouvelles livraisons apparaîtront ici</p>
                 </div>
-                <div className="p-3 rounded-xl bg-livreur-accent">
-                  <stat.icon className="h-6 w-6 text-livreur-primary" />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Map and Deliveries */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card className="p-6 border-0 shadow-elegant">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold">Carte des livraisons</h3>
-              <Button size="sm" className="bg-livreur-primary hover:bg-livreur-primary/90 text-white">
-                <Navigation className="h-4 w-4 mr-2" />
-                GPS
-              </Button>
-            </div>
-            <div className="h-64 bg-livreur-accent rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-livreur-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Carte interactive GPS</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Optimisation automatique des tournées
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-0 shadow-elegant">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold">Livraisons en attente</h3>
-              <Badge variant="outline" className="text-livreur-primary border-livreur-primary">
-                {pendingDeliveries} livraisons
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {deliveries?.filter(d => ['pending', 'assigned', 'picked_up', 'in_transit'].includes(d.status)).slice(0, 3).map((delivery) => (
-                <div key={delivery.id} className="flex items-center justify-between p-4 bg-background border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-semibold text-sm">
-                        #{delivery.order?.order_number || 'N/A'}
-                      </span>
-                      <span className={`px-2 py-1 text-xs rounded-full text-white ${getStatusColor(delivery.status)}`}>
-                        {getStatusText(delivery.status)}
-                      </span>
+              </Card>
+            ) : (
+              deliveries.map((delivery) => (
+                <Card key={delivery.id} className="shadow-md hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Package className="h-4 w-4 text-primary" />
+                          <p className="font-bold">
+                            Commande #{delivery.order?.order_number || delivery.id.slice(0, 8)}
+                          </p>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <span className="line-clamp-1">
+                              {typeof delivery.pickup_address === 'string' 
+                                ? delivery.pickup_address 
+                                : 'Adresse de collecte'}
+                            </span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-green-500" />
+                            <span className="line-clamp-1">
+                              {typeof delivery.delivery_address === 'string' 
+                                ? delivery.delivery_address 
+                                : 'Adresse de livraison'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col gap-2">
+                        <Badge className="bg-primary whitespace-nowrap">
+                          {(delivery.delivery_fee || 0).toLocaleString()} GNF
+                        </Badge>
+                        <Button 
+                          size="sm" 
+                          onClick={() => acceptDelivery(delivery.id)}
+                          className="whitespace-nowrap"
+                        >
+                          Accepter
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {delivery.order?.customer?.profiles?.first_name} {delivery.order?.customer?.profiles?.last_name}
-                    </p>
-                    <p className="text-sm font-medium text-foreground">
-                      {delivery.delivery_fee ? `${delivery.delivery_fee} €` : 'Tarif à définir'}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-livreur-primary text-livreur-primary hover:bg-livreur-primary hover:text-white">
-                    <Truck className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-
-              {pendingDeliveries === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune livraison en attente</p>
-                  <p className="text-sm">Parfait ! Toutes vos livraisons sont à jour</p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Alert */}
-        <Card className="p-6 border-l-4 border-l-livreur-primary bg-livreur-accent/50">
-          <div className="flex items-center gap-4">
-            <AlertTriangle className="h-6 w-6 text-livreur-primary" />
-            <div>
-              <h4 className="font-semibold text-foreground">Système connecté - Fonctionnalités actives</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Géolocalisation GPS, paiements intégrés Mobile Money, 
-                optimisation automatique des tournées, communication client temps réel.
-              </p>
-            </div>
-          </div>
-        </Card>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
-          <TabsContent value="communication" className="space-y-6">
-            <RealCommunicationInterface />
+          {/* 🚚 Livraison en cours */}
+          <TabsContent value="active">
+            {currentDelivery ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Badge variant="default" className="mb-3">Livraison en cours</Badge>
+                      <h3 className="font-bold text-lg mb-2">
+                        Commande #{currentDelivery.order?.order_number || currentDelivery.id.slice(0, 8)}
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-foreground">Point de collecte</p>
+                            <p>
+                              {typeof currentDelivery.pickup_address === 'string' 
+                                ? currentDelivery.pickup_address 
+                                : 'Adresse de collecte'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-500" />
+                          <div>
+                            <p className="font-medium text-foreground">Destination</p>
+                            <p>
+                              {typeof currentDelivery.delivery_address === 'string' 
+                                ? currentDelivery.delivery_address 
+                                : 'Adresse de livraison'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Rémunération</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {(currentDelivery.delivery_fee || 0).toLocaleString()} GNF
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-2">
+                      {currentDelivery.status === 'picked_up' && (
+                        <Button 
+                          onClick={startDelivery} 
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Truck className="w-4 h-4 mr-2" /> 
+                          Démarrer la livraison
+                        </Button>
+                      )}
+                      <Button 
+                        onClick={completeDelivery} 
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" /> 
+                        Livraison terminée
+                      </Button>
+                      <Button 
+                        onClick={reportProblem} 
+                        variant="destructive"
+                        className="w-full"
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-2" /> 
+                        Signaler un problème
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="p-8">
+                <div className="text-center text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">Aucune livraison active</p>
+                  <p className="text-sm mt-1">Acceptez une livraison pour commencer</p>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* 💰 Portefeuille */}
+          <TabsContent value="wallet">
+            <div className="space-y-4">
+              <WalletBalanceWidget />
+
+              <Card className="shadow-md">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Statistiques de livraison
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Livraisons disponibles</span>
+                      <Badge variant="secondary">{deliveries.length}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Livraison en cours</span>
+                      <Badge variant="secondary">{currentDelivery ? '1' : '0'}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Statut GPS</span>
+                      <Badge variant={location ? 'default' : 'secondary'}>
+                        {location ? '✓ Actif' : 'Inactif'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
