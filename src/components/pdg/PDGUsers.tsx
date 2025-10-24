@@ -104,36 +104,33 @@ export default function PDGUsers() {
 
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
-      // Obtenir le token d'authentification
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast.error('Session expirée, veuillez vous reconnecter');
-        return;
-      }
+      // Note: La suppression complète nécessite des permissions admin service_role
+      // Pour l'instant, on désactive seulement l'utilisateur
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
 
-      // Appeler l'edge function pour supprimer l'utilisateur
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+      if (error) throw error;
+
+      // Log action
+      const { data: currentUser } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        actor_id: currentUser.user?.id,
+        action: 'USER_DEACTIVATED',
+        target_type: 'user',
+        target_id: userId,
+        data_json: { email: userEmail, reason: 'Désactivation par PDG' }
       });
 
-      if (error) {
-        console.error('Erreur suppression:', error);
-        throw error;
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Échec de la suppression');
-      }
-
-      toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
+      toast.success(`Utilisateur ${userEmail} désactivé avec succès`);
       loadUsers();
     } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error);
-      toast.error(error.message || 'Erreur lors de la suppression de l\'utilisateur');
+      console.error('Erreur désactivation utilisateur:', error);
+      toast.error(error.message || 'Erreur lors de la désactivation de l\'utilisateur');
     }
   };
 
@@ -305,15 +302,16 @@ export default function PDGUsers() {
                         className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
+                        Désactiver
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                        <AlertDialogTitle>Confirmer la désactivation</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
-                          Cette action est irréversible et supprimera toutes les données associées.
+                          Êtes-vous sûr de vouloir désactiver l'utilisateur <strong>{user.email}</strong> ?
+                          L'utilisateur ne pourra plus se connecter mais ses données seront conservées.
+                          Vous pourrez le réactiver plus tard si nécessaire.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -322,7 +320,7 @@ export default function PDGUsers() {
                           onClick={() => deleteUser(user.id, user.email)}
                           className="bg-red-500 hover:bg-red-600"
                         >
-                          Supprimer définitivement
+                          Désactiver l'utilisateur
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
