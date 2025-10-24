@@ -42,7 +42,7 @@ import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
 import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
-import { SimpleMapView } from "@/components/taxi-moto/SimpleMapView";
+import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -121,6 +121,7 @@ export default function TaxiMotoDriver() {
 
     useEffect(() => {
         if (driverId) {
+            // Chargement initial
             loadDriverStats();
             loadActiveRide();
             loadRideHistory();
@@ -129,8 +130,30 @@ export default function TaxiMotoDriver() {
             const statsInterval = setInterval(() => {
                 loadDriverStats();
             }, 30000);
+
+            // S'abonner aux changements de courses pour rafraîchir immédiatement
+            const channel = supabase
+                .channel('driver-stats-updates')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'taxi_trips',
+                        filter: `driver_id=eq.${driverId}`
+                    },
+                    () => {
+                        console.log('📊 Course updated, refreshing stats...');
+                        loadDriverStats();
+                        loadRideHistory();
+                    }
+                )
+                .subscribe();
             
-            return () => clearInterval(statsInterval);
+            return () => {
+                clearInterval(statsInterval);
+                supabase.removeChannel(channel);
+            };
         }
     }, [driverId]);
 
@@ -1032,145 +1055,16 @@ export default function TaxiMotoDriver() {
                         </TabsTrigger>
                     </TabsList>
 
-                    {/* Dashboard */}
-                    <TabsContent value="dashboard" className="space-y-4 mt-4">
-                        {/* Statistiques du jour */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-600">
-                                        {driverStats.todayEarnings.toLocaleString()}
-                                    </div>
-                                    <div className="text-sm text-gray-600">FCFA aujourd'hui</div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-blue-600">
-                                        {driverStats.todayRides}
-                                    </div>
-                                    <div className="text-sm text-gray-600">Courses</div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-yellow-600 flex items-center justify-center gap-1">
-                                        {driverStats.rating}
-                                        <Star className="w-5 h-5 fill-current" />
-                                    </div>
-                                    <div className="text-sm text-gray-600">Note moyenne</div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-purple-600">
-                                        {driverStats.onlineTime}
-                                    </div>
-                                    <div className="text-sm text-gray-600">En ligne</div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Course active */}
-                        {activeRide && (
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Car className="w-5 h-5 text-blue-600" />
-                                        Course en cours
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="font-semibold">{activeRide.customer.name}</h3>
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                <span>{activeRide.customer.rating}</span>
-                                            </div>
-                                        </div>
-                                        <Badge className={`${activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
-                                                activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-                                                    activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
-                                                        'bg-purple-100 text-purple-800'
-                                            }`}>
-                                            {activeRide.status === 'accepted' ? 'Acceptée' :
-                                                activeRide.status === 'arriving' ? 'En route' :
-                                                    activeRide.status === 'picked_up' ? 'Client à bord' :
-                                                        'En cours'}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span>{activeRide.pickup.address}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                            <span>{activeRide.destination.address}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <Button
-                                            onClick={() => contactCustomer(activeRide.customer.phone)}
-                                            variant="outline"
-                                            size="sm"
-                                            className="flex-1"
-                                        >
-                                            <Phone className="w-4 h-4 mr-1" />
-                                            Appeler
-                                        </Button>
-                                        <Button
-                                            onClick={() => setActiveTab('navigation')}
-                                            size="sm"
-                                            className="flex-1"
-                                        >
-                                            <Navigation className="w-4 h-4 mr-1" />
-                                            Navigation
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* État du système */}
-                        <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="text-lg">État du système</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-green-600" />
-                                        <span className="text-sm">GPS</span>
-                                    </div>
-                                    <Badge className="bg-green-100 text-green-800">Actif</Badge>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Wifi className="w-4 h-4 text-green-600" />
-                                        <span className="text-sm">Connexion</span>
-                                    </div>
-                                    <Badge className="bg-green-100 text-green-800">Excellente</Badge>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Battery className="w-4 h-4 text-yellow-600" />
-                                        <span className="text-sm">Batterie</span>
-                                    </div>
-                                    <Badge className="bg-yellow-100 text-yellow-800">75%</Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
+                    {/* Dashboard - Composant dédié avec connexion temps réel */}
+                    <TabsContent value="dashboard" className="mt-0">
+                        <DriverDashboard
+                            driverId={driverId || ''}
+                            isOnline={isOnline}
+                            location={location}
+                            activeRide={activeRide}
+                            onNavigate={setActiveTab}
+                            onContactCustomer={contactCustomer}
+                        />
                     </TabsContent>
 
                     {/* Navigation */}
