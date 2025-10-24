@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Lock, Unlock, Shield } from 'lucide-react';
+import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -14,6 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function PDGUsers() {
   const [users, setUsers] = useState<unknown[]>([]);
@@ -88,6 +99,34 @@ export default function PDGUsers() {
       loadUsers();
     } catch (error) {
       toast.error('Erreur lors de la modification du statut');
+    }
+  };
+
+  const deleteUser = async (userId: string, userEmail: string) => {
+    try {
+      // Supprimer le profil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Log action
+      const { data: currentUser } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        actor_id: currentUser.user?.id,
+        action: 'USER_DELETED',
+        target_type: 'user',
+        target_id: userId,
+        data_json: { email: userEmail }
+      });
+
+      toast.success('Utilisateur supprimé avec succès');
+      loadUsers();
+    } catch (error) {
+      console.error('Erreur suppression utilisateur:', error);
+      toast.error('Erreur lors de la suppression de l\'utilisateur');
     }
   };
 
@@ -250,6 +289,37 @@ export default function PDGUsers() {
                       </>
                     )}
                   </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Supprimer
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
+                          Cette action est irréversible et supprimera toutes les données associées.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteUser(user.id, user.email)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Supprimer définitivement
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
