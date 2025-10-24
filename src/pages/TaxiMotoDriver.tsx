@@ -43,6 +43,7 @@ import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
 import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
 import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
+import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -1067,143 +1068,13 @@ export default function TaxiMotoDriver() {
                         />
                     </TabsContent>
 
-                    {/* Navigation */}
-                    <TabsContent value="navigation" className="space-y-4 mt-4">
-                        {activeRide && navigationActive ? (
-                            <>
-                                {/* Carte avec les positions */}
-                                <SimpleMapView
-                                    driverLocation={location ? { latitude: location.latitude, longitude: location.longitude } : undefined}
-                                    pickupLocation={activeRide.status === 'accepted' || activeRide.status === 'arriving' 
-                                        ? activeRide.pickup.coords 
-                                        : undefined}
-                                    destinationLocation={activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
-                                        ? activeRide.destination.coords 
-                                        : undefined}
-                                    height="300px"
-                                />
-
-                                {/* Instruction de navigation */}
-                                <Card className="bg-blue-50 border-blue-200">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-start gap-4">
-                                            <Navigation className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
-                                            <div className="flex-1">
-                                                <h3 className="text-lg font-semibold mb-2 text-blue-900">{nextInstruction}</h3>
-                                                <div className="flex items-center gap-4 text-sm text-gray-700">
-                                                    <span className="font-medium">📏 {(distanceToDestination / 1000).toFixed(1)} km</span>
-                                                    <span>•</span>
-                                                    <span className="font-medium">⏱️ {Math.ceil(timeToDestination / 60)} min</span>
-                                                </div>
-                                                
-                                                {/* Bouton pour ouvrir Google Maps */}
-                                                <Button
-                                                    onClick={() => {
-                                                        const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
-                                                            ? activeRide.destination.coords
-                                                            : activeRide.pickup.coords;
-                                                        GeolocationService.openNativeNavigation(
-                                                            { lat: destination.latitude, lng: destination.longitude },
-                                                            location ? { lat: location.latitude, lng: location.longitude } : undefined
-                                                        );
-                                                    }}
-                                                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-                                                    size="lg"
-                                                >
-                                                    <Navigation className="w-5 h-5 mr-2" />
-                                                    Ouvrir dans Google Maps
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Instructions détaillées si disponibles */}
-                                {routeSteps.length > 0 && (
-                                    <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                        <CardHeader>
-                                            <CardTitle className="text-lg">Instructions de navigation</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-3">
-                                            {routeSteps.slice(0, 5).map((step, index) => (
-                                                <div key={index} className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-0">
-                                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                                        {index + 1}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: step.instruction }} />
-                                                        <p className="text-xs text-gray-500 mt-1">{step.distance} • {step.duration}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {/* Actions de course */}
-                                <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                    <CardContent className="p-4 space-y-3">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                                            <Phone className="w-4 h-4" />
-                                            <span className="font-medium">{activeRide.customer.name}</span>
-                                            <Button
-                                                onClick={() => contactCustomer(activeRide.customer.phone)}
-                                                variant="outline"
-                                                size="sm"
-                                                className="ml-auto"
-                                            >
-                                                Appeler
-                                            </Button>
-                                        </div>
-
-                                        {activeRide.status === 'accepted' && (
-                                            <Button
-                                                onClick={() => updateRideStatus('arriving')}
-                                                className="w-full"
-                                                size="lg"
-                                            >
-                                                <CheckCircle className="w-4 h-4 mr-2" />
-                                                Je suis arrivé au point de départ
-                                            </Button>
-                                        )}
-
-                                        {activeRide.status === 'arriving' && (
-                                            <Button
-                                                onClick={() => updateRideStatus('picked_up')}
-                                                className="w-full"
-                                                size="lg"
-                                            >
-                                                <Car className="w-4 h-4 mr-2" />
-                                                Client à bord - Démarrer la course
-                                            </Button>
-                                        )}
-
-                                        {activeRide.status === 'picked_up' && (
-                                            <Button
-                                                onClick={() => updateRideStatus('in_progress')}
-                                                className="w-full bg-green-600 hover:bg-green-700"
-                                                size="lg"
-                                            >
-                                                <CheckCircle className="w-4 h-4 mr-2" />
-                                                Arrivé à destination - Terminer la course
-                                            </Button>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </>
-                        ) : (
-                            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-                                <CardContent className="p-8 text-center">
-                                    <Navigation className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                                        Aucune navigation active
-                                    </h3>
-                                    <p className="text-gray-600">
-                                        Acceptez une course pour commencer la navigation
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
+                    {/* Navigation - Composant dédié avec connexion temps réel */}
+                    <TabsContent value="navigation" className="mt-0">
+                        <DriverNavigation
+                            driverId={driverId || ''}
+                            location={location}
+                            onContactCustomer={contactCustomer}
+                        />
                     </TabsContent>
 
                     {/* Gains */}
