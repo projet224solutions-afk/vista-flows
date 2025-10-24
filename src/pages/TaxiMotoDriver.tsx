@@ -1013,20 +1013,22 @@ export default function TaxiMotoDriver() {
             {isOnline && rideRequests.length === 0 && !activeRide && (
                 <div className="fixed top-20 left-4 right-4 z-40">
                     <Card className="bg-blue-50 border-blue-200 shadow-lg">
-                        <CardContent className="p-4 text-center">
-                            <div className="flex flex-col items-center gap-3">
-                                <Car className="w-8 h-8 text-blue-600 animate-pulse" />
-                                <div>
-                                    <p className="text-sm font-bold text-blue-900">🟢 Vous êtes en ligne</p>
-                                    <p className="text-xs text-blue-700 mt-1">En attente de courses...</p>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <Car className="w-6 h-6 text-blue-600 animate-pulse" />
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900">🟢 Vous êtes en ligne</p>
+                                        <p className="text-xs text-blue-700">En attente de courses...</p>
+                                    </div>
                                 </div>
                                 <Button
                                     onClick={toggleOnlineStatus}
                                     variant="outline"
                                     size="sm"
-                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                    className="border-red-300 text-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto"
                                 >
-                                    🔴 Passer hors ligne
+                                    🔴 Hors ligne
                                 </Button>
                             </div>
                         </CardContent>
