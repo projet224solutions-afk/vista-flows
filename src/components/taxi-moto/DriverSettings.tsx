@@ -33,6 +33,8 @@ interface DriverProfile {
   avatar_url: string | null;
   vehicle_type: string;
   vehicle_plate: string | null;
+  gilet_number: string | null;
+  moto_serial_number: string | null;
   rating: number;
   total_rides: number;
   kyc_verified: boolean;
@@ -79,6 +81,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
       if (profileError) throw profileError;
 
+      // Extraire gilet_number et moto_serial_number du champ vehicle JSON
+      const vehicleData = driverData.vehicle ? 
+        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle) 
+        : {};
+
       setProfile({
         id: driverId,
         user_id: driverData.user_id,
@@ -89,6 +96,8 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         avatar_url: profileData.avatar_url,
         vehicle_type: driverData.vehicle_type || 'moto',
         vehicle_plate: driverData.vehicle_plate,
+        gilet_number: vehicleData.gilet_number || '',
+        moto_serial_number: vehicleData.moto_serial_number || '',
         rating: driverData.rating || 5,
         total_rides: driverData.total_rides || 0,
         kyc_verified: driverData.kyc_verified || false,
@@ -126,10 +135,28 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
         if (profileError) throw profileError;
 
+        // Mettre à jour les infos du véhicule dans le champ JSON
+        const { data: currentDriver } = await supabase
+          .from('taxi_drivers')
+          .select('vehicle')
+          .eq('id', driverId)
+          .single();
+
+        const currentVehicle = currentDriver?.vehicle ? 
+          (typeof currentDriver.vehicle === 'string' ? JSON.parse(currentDriver.vehicle) : currentDriver.vehicle) 
+          : {};
+
+        const updatedVehicle = {
+          ...currentVehicle,
+          gilet_number: profile.gilet_number,
+          moto_serial_number: profile.moto_serial_number,
+        };
+
         const { error: driverError } = await supabase
           .from('taxi_drivers')
           .update({
             vehicle_plate: profile.vehicle_plate,
+            vehicle: updatedVehicle,
           })
           .eq('id', driverId);
 
@@ -309,6 +336,28 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                 value={profile.vehicle_plate || ''}
                 onChange={(e) => setProfile({ ...profile, vehicle_plate: e.target.value })}
                 placeholder="Ex: GN-1234-ABC"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="moto_serial_number" className="text-sm">Numéro de série de la moto</Label>
+              <Input
+                id="moto_serial_number"
+                value={profile.moto_serial_number || ''}
+                onChange={(e) => setProfile({ ...profile, moto_serial_number: e.target.value })}
+                placeholder="Ex: MT-2024-12345678"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="gilet_number" className="text-sm">Numéro de gilet</Label>
+              <Input
+                id="gilet_number"
+                value={profile.gilet_number || ''}
+                onChange={(e) => setProfile({ ...profile, gilet_number: e.target.value })}
+                placeholder="Ex: G-001"
                 className="mt-1"
               />
             </div>

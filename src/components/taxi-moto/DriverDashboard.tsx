@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Wifi, Battery, Phone, Navigation, Car } from "lucide-react";
+import { Star, MapPin, Wifi, Battery, Phone, Navigation, Car, CreditCard, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
@@ -18,6 +18,9 @@ interface DriverStats {
   rating: number;
   totalRides: number;
   onlineTime: string;
+  vehiclePlate?: string;
+  giletNumber?: string;
+  serialNumber?: string;
 }
 
 interface ActiveRide {
@@ -64,7 +67,10 @@ export function DriverDashboard({
     todayRides: 0,
     rating: 5.0,
     totalRides: 0,
-    onlineTime: '0h 0m'
+    onlineTime: '0h 0m',
+    vehiclePlate: '',
+    giletNumber: '',
+    serialNumber: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -76,11 +82,16 @@ export function DriverDashboard({
       // Charger le profil conducteur
       const { data: driverData, error: driverError } = await supabase
         .from('taxi_drivers')
-        .select('rating, total_rides, total_earnings, is_online, last_seen, created_at')
+        .select('rating, total_rides, total_earnings, is_online, last_seen, created_at, vehicle_plate, vehicle')
         .eq('id', driverId)
         .single();
 
       if (driverError) throw driverError;
+
+      // Extraire les infos du véhicule
+      const vehicleData = driverData?.vehicle ? 
+        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle) 
+        : {};
 
       // Charger toutes les courses du conducteur
       const rides = await TaxiMotoService.getDriverRides(driverId, 100);
@@ -115,7 +126,10 @@ export function DriverDashboard({
         todayRides: todayRides.length,
         rating: Number(driverData?.rating) || 5.0,
         totalRides: driverData?.total_rides || 0,
-        onlineTime: `${hours}h ${mins}m`
+        onlineTime: `${hours}h ${mins}m`,
+        vehiclePlate: driverData?.vehicle_plate || '',
+        giletNumber: vehicleData?.gilet_number || '',
+        serialNumber: vehicleData?.moto_serial_number || ''
       });
 
       console.log('✅ Stats loaded:', {
@@ -301,6 +315,47 @@ export function DriverDashboard({
           </CardContent>
         </Card>
       )}
+
+      {/* État du système - Connexion temps réel */}
+      <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Car className="w-5 h-5 text-blue-600" />
+            Informations du véhicule
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium">Plaque</span>
+            </div>
+            <Badge variant="outline" className="font-mono">
+              {stats.vehiclePlate || 'Non renseignée'}
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium">N° Série</span>
+            </div>
+            <Badge variant="outline" className="font-mono text-xs">
+              {stats.serialNumber || 'Non renseigné'}
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium">N° Gilet</span>
+            </div>
+            <Badge variant="outline" className="font-mono">
+              {stats.giletNumber || 'Non renseigné'}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* État du système - Connexion temps réel */}
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
