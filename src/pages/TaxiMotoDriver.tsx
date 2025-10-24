@@ -1065,6 +1065,7 @@ export default function TaxiMotoDriver() {
                             activeRide={activeRide}
                             onNavigate={setActiveTab}
                             onContactCustomer={contactCustomer}
+                            onToggleOnline={toggleOnlineStatus}
                         />
                     </TabsContent>
 

@@ -47,6 +47,7 @@ interface DriverDashboardProps {
   activeRide: ActiveRide | null;
   onNavigate: (tab: string) => void;
   onContactCustomer: (phone: string) => void;
+  onToggleOnline: () => void;
 }
 
 export function DriverDashboard({
@@ -55,7 +56,8 @@ export function DriverDashboard({
   location,
   activeRide,
   onNavigate,
-  onContactCustomer
+  onContactCustomer,
+  onToggleOnline
 }: DriverDashboardProps) {
   const [stats, setStats] = useState<DriverStats>({
     todayEarnings: 0,
@@ -162,9 +164,39 @@ export function DriverDashboard({
 
   return (
     <div className="space-y-4 mt-4">
+      {/* Bouton de statut en ligne/hors ligne */}
+      <Card className={`shadow-lg ${isOnline ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-4 h-4 rounded-full ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-300'}`} />
+              <div>
+                <h3 className="text-white font-bold text-lg">
+                  {isOnline ? '🟢 En ligne' : '🔴 Hors ligne'}
+                </h3>
+                <p className="text-white/90 text-xs">
+                  {isOnline ? 'Vous recevez les demandes de courses' : 'Cliquez pour passer en ligne'}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={onToggleOnline}
+              size="lg"
+              className={`font-bold ${
+                isOnline 
+                  ? 'bg-white text-green-600 hover:bg-gray-100' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {isOnline ? 'Passer hors ligne' : 'Passer en ligne'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* En-tête avec bouton de rafraîchissement */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-gray-800">Tableau de bord</h2>
+        <h2 className="text-lg font-bold text-gray-800">Statistiques du jour</h2>
         <Button
           onClick={() => {
             loadStats();

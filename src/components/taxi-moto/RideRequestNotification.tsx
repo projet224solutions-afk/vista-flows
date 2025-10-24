@@ -118,14 +118,14 @@ export function RideRequestNotification({
             onClick={onDecline}
             variant="outline"
             size="lg"
-            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 font-bold text-base"
+            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95"
           >
             <span className="text-xl mr-1">❌</span> Refuser
           </Button>
           <Button
             onClick={onAccept}
             size="lg"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg font-bold text-base animate-pulse"
+            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95"
           >
             <span className="text-xl mr-1">✅</span> Accepter
           </Button>
