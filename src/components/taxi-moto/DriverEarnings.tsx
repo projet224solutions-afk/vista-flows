@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, DollarSign, TrendingUp, Calendar, Clock, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, DollarSign, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, Send, History } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
+import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
+import { QuickTransferButton } from '@/components/wallet/QuickTransferButton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -27,21 +31,36 @@ interface EarningsStats {
   todayEarnings: number;
   weekEarnings: number;
   monthEarnings: number;
+  yearEarnings: number;
   todayRides: number;
   weekRides: number;
   monthRides: number;
+  yearRides: number;
+}
+
+interface WalletTransaction {
+  id: string;
+  transaction_type: string;
+  amount: number;
+  description: string;
+  status: string;
+  created_at: string;
 }
 
 export function DriverEarnings({ driverId }: DriverEarningsProps) {
   const [rides, setRides] = useState<Ride[]>([]);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [stats, setStats] = useState<EarningsStats>({
     todayEarnings: 0,
     weekEarnings: 0,
     monthEarnings: 0,
+    yearEarnings: 0,
     todayRides: 0,
     weekRides: 0,
     monthRides: 0,
+    yearRides: 0,
   });
+  const [showTransactions, setShowTransactions] = useState(false);
   const [loading, setLoading] = useState(true);
   const { balance, currency } = useWalletBalance(driverId);
 
@@ -93,6 +112,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const yearStart = new Date(now.getFullYear(), 0, 1);
 
       const todayRides = formattedRides.filter(
         (r) => new Date(r.completed_at || r.requested_at) >= today
@@ -103,15 +123,38 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       const monthRides = formattedRides.filter(
         (r) => new Date(r.completed_at || r.requested_at) >= monthAgo
       );
+      const yearRides = formattedRides.filter(
+        (r) => new Date(r.completed_at || r.requested_at) >= yearStart
+      );
 
       setStats({
         todayEarnings: todayRides.reduce((sum, r) => sum + (r.fare || 0), 0),
         weekEarnings: weekRides.reduce((sum, r) => sum + (r.fare || 0), 0),
         monthEarnings: monthRides.reduce((sum, r) => sum + (r.fare || 0), 0),
+        yearEarnings: yearRides.reduce((sum, r) => sum + (r.fare || 0), 0),
         todayRides: todayRides.length,
         weekRides: weekRides.length,
         monthRides: monthRides.length,
+        yearRides: yearRides.length,
       });
+
+      // Charger les transactions du wallet
+      const { data: walletData } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', driverId)
+        .single();
+
+      if (walletData) {
+        const { data: transactionsData } = await supabase
+          .from('wallet_transactions')
+          .select('*')
+          .or(`from_wallet_id.eq.${walletData.id},to_wallet_id.eq.${walletData.id}`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        setTransactions(transactionsData || []);
+      }
     } catch (error) {
       console.error('Error loading earnings:', error);
     } finally {
@@ -157,23 +200,99 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
   return (
     <div className="space-y-4 pb-20">
-      {/* Solde du wallet */}
-      <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
+      {/* Wallet 224Solutions */}
+      <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="w-5 h-5" />
+            Wallet 224Solutions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
             <div>
               <p className="text-sm opacity-90">Solde disponible</p>
-              <p className="text-3xl font-bold mt-1">
+              <p className="text-4xl font-bold mt-1">
                 {balance.toLocaleString()} {currency}
               </p>
             </div>
-            <DollarSign className="w-12 h-12 opacity-75" />
+            
+            {/* Actions rapides du wallet */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant="secondary" 
+                className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
+                onClick={() => window.location.href = '/wallet'}
+              >
+                <ArrowUpCircle className="w-4 h-4 mr-2" />
+                Recharger
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
+                onClick={() => setShowTransactions(!showTransactions)}
+              >
+                <History className="w-4 h-4 mr-2" />
+                Historique
+              </Button>
+            </div>
+
+            {/* Transfert rapide */}
+            <div className="pt-2 border-t border-white/20">
+              <QuickTransferButton 
+                variant="ghost" 
+                className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20"
+                showText={true}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Historique des transactions wallet */}
+      {showTransactions && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Transactions récentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {transactions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">Aucune transaction</p>
+              ) : (
+                transactions.map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {tx.transaction_type === 'credit' ? (
+                        <ArrowDownCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <ArrowUpCircle className="w-5 h-5 text-orange-500" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{tx.description || tx.transaction_type}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(tx.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold ${tx.transaction_type === 'credit' ? 'text-green-600' : 'text-orange-600'}`}>
+                        {tx.transaction_type === 'credit' ? '+' : '-'}{tx.amount.toLocaleString()} {currency}
+                      </p>
+                      <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                        {tx.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistiques de gains */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
@@ -203,6 +322,17 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <p className="text-xs text-muted-foreground">30 jours</p>
               <p className="text-lg font-bold">{stats.monthEarnings.toLocaleString()} {currency}</p>
               <p className="text-xs text-muted-foreground">{stats.monthRides} courses</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4">
+            <div className="text-center">
+              <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
+              <p className="text-xs text-muted-foreground">Année {new Date().getFullYear()}</p>
+              <p className="text-lg font-bold">{stats.yearEarnings.toLocaleString()} {currency}</p>
+              <p className="text-xs text-muted-foreground">{stats.yearRides} courses</p>
             </div>
           </CardContent>
         </Card>
