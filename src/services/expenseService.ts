@@ -4,7 +4,7 @@
  * Service opérationnel pour gestion des dépenses avec Supabase
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ExpenseCategory {
   id: string;
