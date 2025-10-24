@@ -3848,6 +3848,33 @@ export type Database = {
           },
         ]
       }
+      taxi_api_usage: {
+        Row: {
+          created_at: string | null
+          date: string
+          estimated_cost: number | null
+          id: string
+          request_count: number | null
+          service_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          estimated_cost?: number | null
+          id?: string
+          request_count?: number | null
+          service_type: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          estimated_cost?: number | null
+          id?: string
+          request_count?: number | null
+          service_type?: string
+        }
+        Relationships: []
+      }
       taxi_audit_logs: {
         Row: {
           action_type: string
@@ -3881,6 +3908,53 @@ export type Database = {
         }
         Relationships: []
       }
+      taxi_driver_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          document_url: string
+          driver_id: string
+          id: string
+          rejection_reason: string | null
+          status: string | null
+          uploaded_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          driver_id: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string | null
+          uploaded_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          driver_id?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string | null
+          uploaded_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_driver_documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "taxi_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       taxi_driver_locations: {
         Row: {
           driver_id: string
@@ -3912,12 +3986,16 @@ export type Database = {
       }
       taxi_drivers: {
         Row: {
+          can_work: boolean | null
           created_at: string | null
           id: string
           is_online: boolean | null
+          kyc_verified: boolean | null
+          last_heading: number | null
           last_lat: number | null
           last_lng: number | null
           last_seen: string | null
+          last_speed: number | null
           rating: number | null
           status: string | null
           total_earnings: number | null
@@ -3929,12 +4007,16 @@ export type Database = {
           vehicle_type: string | null
         }
         Insert: {
+          can_work?: boolean | null
           created_at?: string | null
           id?: string
           is_online?: boolean | null
+          kyc_verified?: boolean | null
+          last_heading?: number | null
           last_lat?: number | null
           last_lng?: number | null
           last_seen?: string | null
+          last_speed?: number | null
           rating?: number | null
           status?: string | null
           total_earnings?: number | null
@@ -3946,12 +4028,16 @@ export type Database = {
           vehicle_type?: string | null
         }
         Update: {
+          can_work?: boolean | null
           created_at?: string | null
           id?: string
           is_online?: boolean | null
+          kyc_verified?: boolean | null
+          last_heading?: number | null
           last_lat?: number | null
           last_lng?: number | null
           last_seen?: string | null
+          last_speed?: number | null
           rating?: number | null
           status?: string | null
           total_earnings?: number | null
@@ -4063,6 +4149,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      taxi_pricing_config: {
+        Row: {
+          base_fare: number | null
+          currency: string | null
+          driver_commission: number | null
+          id: string
+          minimum_fare: number | null
+          per_km_rate: number | null
+          per_minute_rate: number | null
+          platform_commission: number | null
+          surge_multiplier: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          base_fare?: number | null
+          currency?: string | null
+          driver_commission?: number | null
+          id?: string
+          minimum_fare?: number | null
+          per_km_rate?: number | null
+          per_minute_rate?: number | null
+          platform_commission?: number | null
+          surge_multiplier?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          base_fare?: number | null
+          currency?: string | null
+          driver_commission?: number | null
+          id?: string
+          minimum_fare?: number | null
+          per_km_rate?: number | null
+          per_minute_rate?: number | null
+          platform_commission?: number | null
+          surge_multiplier?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      taxi_pricing_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          config_snapshot: Json
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          config_snapshot: Json
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          config_snapshot?: Json
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
       }
       taxi_ratings: {
         Row: {
@@ -5691,6 +5843,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_driver_earnings: {
+        Args: { p_amount: number; p_driver_id: string }
+        Returns: undefined
+      }
+      log_api_usage: {
+        Args: { p_cost?: number; p_service_type: string }
+        Returns: undefined
       }
       log_taxi_action: {
         Args: {
