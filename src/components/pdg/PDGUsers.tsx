@@ -104,29 +104,36 @@ export default function PDGUsers() {
 
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
-      // Supprimer le profil
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      // Obtenir le token d'authentification
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Session expirée, veuillez vous reconnecter');
+        return;
+      }
 
-      if (profileError) throw profileError;
-
-      // Log action
-      const { data: currentUser } = await supabase.auth.getUser();
-      await supabase.from('audit_logs').insert({
-        actor_id: currentUser.user?.id,
-        action: 'USER_DELETED',
-        target_type: 'user',
-        target_id: userId,
-        data_json: { email: userEmail }
+      // Appeler l'edge function pour supprimer l'utilisateur
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
-      toast.success('Utilisateur supprimé avec succès');
+      if (error) {
+        console.error('Erreur suppression:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Échec de la suppression');
+      }
+
+      toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur suppression utilisateur:', error);
-      toast.error('Erreur lors de la suppression de l\'utilisateur');
+      toast.error(error.message || 'Erreur lors de la suppression de l\'utilisateur');
     }
   };
 
