@@ -1052,8 +1052,46 @@ export default function TaxiMotoDriver() {
 
                     {/* Dashboard */}
                     <TabsContent value="dashboard" className="space-y-4 mt-4">
-                        {/* Statistiques du jour */}
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* Écran hors ligne - "Prêt à travailler ?" */}
+                        {!isOnline ? (
+                            <div className="flex items-center justify-center min-h-[60vh]">
+                                <Card className="w-full max-w-2xl bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-xl">
+                                    <CardContent className="p-12 text-center">
+                                        <div className="flex flex-col items-center gap-6">
+                                            {/* Icône de moto */}
+                                            <div className="bg-white rounded-full p-8 shadow-lg">
+                                                <Car className="w-20 h-20 text-green-600" />
+                                            </div>
+
+                                            {/* Message principal */}
+                                            <div className="space-y-2">
+                                                <h2 className="text-3xl font-bold text-gray-900">
+                                                    Prêt à travailler ?
+                                                </h2>
+                                                <p className="text-gray-600">
+                                                    Activez votre statut pour recevoir des demandes de courses
+                                                </p>
+                                            </div>
+
+                                            {/* Bouton passer en ligne */}
+                                            <Button
+                                                onClick={toggleOnlineStatus}
+                                                size="lg"
+                                                className="w-full max-w-md h-14 text-lg bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                                                    Passer en ligne
+                                                </div>
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Statistiques du jour */}
+                                <div className="grid grid-cols-2 gap-4">
                             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                                 <CardContent className="p-4 text-center">
                                     <div className="text-2xl font-bold text-green-600">
@@ -1189,6 +1227,8 @@ export default function TaxiMotoDriver() {
                                 </div>
                             </CardContent>
                         </Card>
+                        </>
+                        )}
                     </TabsContent>
 
                     {/* Navigation */}
@@ -1344,6 +1384,50 @@ export default function TaxiMotoDriver() {
                         {driverId && <DriverSettings driverId={driverId} />}
                     </TabsContent>
                 </Tabs>
+            </div>
+
+            {/* Barre de navigation inférieure */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+                <div className="grid grid-cols-4 h-16">
+                    <button
+                        onClick={() => setActiveTab('dashboard')}
+                        className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-500'
+                            }`}
+                    >
+                        <TrendingUp className="w-5 h-5" />
+                        <span className="text-xs font-medium">Accueil</span>
+                    </button>
+
+                    <button
+                        onClick={() => window.location.href = '/marketplace'}
+                        className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        <span className="text-xs font-medium">Marketplace</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('navigation')}
+                        className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === 'navigation' ? 'text-blue-600' : 'text-gray-500'
+                            }`}
+                    >
+                        <MapPin className="w-5 h-5" />
+                        <span className="text-xs font-medium">Tracking</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-500'
+                            }`}
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-xs font-medium">Profil</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
