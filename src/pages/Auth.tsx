@@ -20,7 +20,8 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
-  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin'])
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin']),
+  city: z.string().min(1, "La ville est requise")
 });
 
 type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin';
@@ -43,8 +44,27 @@ export default function Auth() {
     firstName: '',
     lastName: '',
     phone: '',
-    country: ''
+    country: '',
+    city: ''
   });
+  
+  const [bureaus, setBureaus] = useState<Array<{ id: string; commune: string; prefecture: string }>>([]);
+
+  // Charger les bureaux syndicaux disponibles
+  useEffect(() => {
+    const loadBureaus = async () => {
+      const { data, error } = await supabase
+        .from('bureaus')
+        .select('id, commune, prefecture')
+        .eq('status', 'active')
+        .order('prefecture', { ascending: true });
+      
+      if (!error && data) {
+        setBureaus(data);
+      }
+    };
+    loadBureaus();
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -67,6 +87,8 @@ export default function Auth() {
               navigate('/pdg');
             } else if (profile.role === 'client') {
               navigate('/client');
+            } else if (profile.role === 'taxi') {
+              navigate('/taxi-moto-driver');
             } else {
               navigate(`/${profile.role}`);
             }
@@ -109,7 +131,7 @@ export default function Auth() {
           userCustomId += Math.floor(Math.random() * 10).toString();
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
           options: {
@@ -119,11 +141,43 @@ export default function Auth() {
               role: validatedData.role,
               phone: formData.phone,
               country: formData.country,
-              custom_id: userCustomId // Ajouter l'ID personnalisé
+              city: validatedData.city,
+              custom_id: userCustomId
             },
             emailRedirectTo: `${window.location.origin}/`
           }
         });
+        
+        // Si c'est un taxi-motard, créer son profil conducteur et le lier à son bureau
+        if (!error && authData.user && validatedData.role === 'taxi') {
+          try {
+            // Trouver le bureau de la ville sélectionnée
+            const bureau = bureaus.find(b => b.commune === validatedData.city);
+            
+            // Créer l'entrée taxi_drivers avec les infos du bureau pour la synchronisation
+            const { error: driverError } = await supabase
+              .from('taxi_drivers')
+              .insert({
+                user_id: authData.user.id,
+                is_online: false,
+                status: 'pending_verification',
+                vehicle: {
+                  commune: validatedData.city,
+                  bureau_id: bureau?.id || null,
+                  prefecture: bureau?.prefecture || null,
+                  registration_date: new Date().toISOString()
+                }
+              });
+            
+            if (driverError) {
+              console.error('❌ Erreur création profil conducteur:', driverError);
+            } else {
+              console.log('✅ Profil taxi-motard créé et synchronisé avec le bureau de', validatedData.city);
+            }
+          } catch (syncError) {
+            console.error('❌ Erreur synchronisation:', syncError);
+          }
+        }
 
         if (error) {
           if (error.message.includes('User already registered')) {
@@ -355,10 +409,33 @@ export default function Auth() {
                       type="text"
                       value={formData.country}
                       onChange={(e) => handleInputChange('country', e.target.value)}
-                      placeholder="Votre pays"
+                      placeholder="Votre pays (ex: Guinée)"
                       required
                       className="mt-1"
                     />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="city">Ville / Commune</Label>
+                    <select
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      required
+                      className="mt-1 w-full px-3 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Sélectionnez votre ville</option>
+                      {bureaus.map((bureau) => (
+                        <option key={bureau.id} value={bureau.commune}>
+                          {bureau.commune} - {bureau.prefecture}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedRole === 'taxi' && formData.city && (
+                      <p className="text-xs text-green-600 mt-1">
+                        ✅ Vous serez automatiquement synchronisé avec le bureau syndical de {formData.city}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -396,7 +473,7 @@ export default function Auth() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Votre mot de passe"
+                  placeholder="Minimum 6 caractères"
                   required
                   className="mt-1"
                 />
@@ -404,7 +481,7 @@ export default function Auth() {
 
               {showSignup && (
                 <div>
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                  <Label htmlFor="confirmPassword">Retaper le mot de passe</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -414,6 +491,18 @@ export default function Auth() {
                     required
                     className="mt-1"
                   />
+                </div>
+              )}
+              
+              {!showSignup && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => {/* TODO: Implémenter récupération mot de passe */}}
+                    className="text-sm text-purple-600 hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
                 </div>
               )}
 
