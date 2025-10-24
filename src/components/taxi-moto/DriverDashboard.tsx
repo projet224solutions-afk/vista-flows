@@ -164,51 +164,35 @@ export function DriverDashboard({
 
   return (
     <div className="space-y-4 mt-4">
-      {/* Bouton de statut en ligne/hors ligne */}
-      <Card className={`shadow-lg ${isOnline ? 'bg-gradient-to-br from-green-500 to-green-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-300'}`} />
-              <div>
-                <h3 className="text-white font-bold text-lg">
-                  {isOnline ? '🟢 En ligne' : '🔴 Hors ligne'}
-                </h3>
-                <p className="text-white/90 text-xs">
-                  {isOnline ? 'Vous recevez les demandes de courses' : 'Cliquez pour passer en ligne'}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={onToggleOnline}
-              size="lg"
-              className={`font-bold ${
-                isOnline 
-                  ? 'bg-white text-green-600 hover:bg-gray-100' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {isOnline ? 'Passer hors ligne' : 'Passer en ligne'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* En-tête avec bouton de rafraîchissement */}
+      {/* En-tête avec statistiques et bouton en ligne */}
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-bold text-gray-800">Statistiques du jour</h2>
-        <Button
-          onClick={() => {
-            loadStats();
-            toast.success('✓ Données actualisées');
-          }}
-          variant="outline"
-          size="sm"
-          className="gap-1"
-          disabled={loading}
-        >
-          {loading ? '⏳' : '🔄'} Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={onToggleOnline}
+            size="sm"
+            className={`font-bold text-xs ${
+              isOnline 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-gray-400 hover:bg-gray-500 text-white'
+            }`}
+          >
+            <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
+            {isOnline ? 'En ligne' : 'Hors ligne'}
+          </Button>
+          <Button
+            onClick={() => {
+              loadStats();
+              toast.success('✓ Données actualisées');
+            }}
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            disabled={loading}
+          >
+            {loading ? '⏳' : '🔄'}
+          </Button>
+        </div>
       </div>
 
       {/* Statistiques du jour */}
