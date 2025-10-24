@@ -1027,35 +1027,8 @@ export default function TaxiMotoDriver() {
 
                     {/* Dashboard */}
                     <TabsContent value="dashboard" className="space-y-4 mt-4">
-                        {/* Écran hors ligne - "Prêt à travailler ?" */}
-                        {!isOnline ? (
-                            <div className="flex items-center justify-center min-h-[60vh]">
-                                <Card className="w-full max-w-2xl bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-xl">
-                                    <CardContent className="p-12 text-center">
-                                        <div className="flex flex-col items-center gap-6">
-                                            {/* Icône de moto */}
-                                            <div className="bg-white rounded-full p-8 shadow-lg">
-                                                <Car className="w-20 h-20 text-green-600" />
-                                            </div>
-
-                                            {/* Message principal */}
-                                            <div className="space-y-2">
-                                                <h2 className="text-3xl font-bold text-gray-900">
-                                                    Prêt à travailler ?
-                                                </h2>
-                                                <p className="text-gray-600">
-                                                    Activez votre statut pour recevoir des demandes de courses
-                                                </p>
-                                            </div>
-
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Statistiques du jour */}
-                                <div className="grid grid-cols-2 gap-4">
+                        {/* Statistiques du jour */}
+                        <div className="grid grid-cols-2 gap-4">
                             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                                 <CardContent className="p-4 text-center">
                                     <div className="text-2xl font-bold text-green-600">
@@ -1191,8 +1164,6 @@ export default function TaxiMotoDriver() {
                                 </div>
                             </CardContent>
                         </Card>
-                        </>
-                        )}
                     </TabsContent>
 
                     {/* Navigation */}
