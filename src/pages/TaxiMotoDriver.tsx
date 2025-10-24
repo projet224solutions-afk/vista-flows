@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
+import { GPSNavigation } from "@/components/taxi-moto/GPSNavigation";
 import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
@@ -1099,106 +1100,13 @@ export default function TaxiMotoDriver() {
                         />
                     </TabsContent>
 
-                    {/* Navigation GPS avec Mapbox */}
+                    {/* Navigation GPS */}
                     <TabsContent value="gps-navigation" className="mt-0">
-                        <Card className="bg-white/95 backdrop-blur-sm shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-blue-600" />
-                                    Navigation GPS en temps réel
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {/* Informations sur la configuration Mapbox */}
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <h3 className="font-semibold text-blue-900 mb-2">🗺️ Configuration Mapbox requise</h3>
-                                        <p className="text-sm text-blue-800 mb-3">
-                                            Pour activer la navigation GPS avec Mapbox, vous devez :
-                                        </p>
-                                        <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
-                                            <li>Créer un compte sur <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a></li>
-                                            <li>Obtenir votre clé API publique (Public Token)</li>
-                                            <li>Ajouter la clé dans les secrets Supabase sous le nom <code className="bg-blue-100 px-1 rounded">MAPBOX_PUBLIC_TOKEN</code></li>
-                                        </ol>
-                                    </div>
-
-                                    {/* Zone de carte - Placeholder */}
-                                    <div className="relative w-full h-96 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                                        <div className="text-center p-6">
-                                            <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                                            <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                                                Navigation GPS Mapbox
-                                            </h3>
-                                            <p className="text-sm text-gray-600 mb-4">
-                                                Configurez votre clé API Mapbox pour activer la carte interactive
-                                            </p>
-                                            {location && (
-                                                <div className="bg-white rounded-lg p-3 inline-block">
-                                                    <p className="text-xs text-gray-500">Position actuelle :</p>
-                                                    <p className="text-sm font-mono text-green-600">
-                                                        📍 {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Instructions de navigation */}
-                                    {activeRide && (
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                                    <Navigation className="w-6 h-6 text-white" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-semibold text-gray-900">Navigation active</h3>
-                                                    <p className="text-sm text-gray-600">Vers {activeRide.destination.address}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-white rounded-lg p-3 text-center">
-                                                    <p className="text-xs text-gray-500 mb-1">Distance estimée</p>
-                                                    <p className="text-lg font-bold text-blue-600">
-                                                        {distanceToDestination > 0 ? `${(distanceToDestination / 1000).toFixed(1)} km` : 'Calcul...'}
-                                                    </p>
-                                                </div>
-                                                <div className="bg-white rounded-lg p-3 text-center">
-                                                    <p className="text-xs text-gray-500 mb-1">Temps estimé</p>
-                                                    <p className="text-lg font-bold text-green-600">
-                                                        {timeToDestination > 0 ? `${Math.round(timeToDestination / 60)} min` : 'Calcul...'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Intégration Google Maps alternative */}
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                        <h3 className="font-semibold text-amber-900 mb-2">🗺️ Option alternative : Google Maps</h3>
-                                        <p className="text-sm text-amber-800 mb-3">
-                                            Vous pouvez également utiliser Google Maps API pour la navigation.
-                                        </p>
-                                        <Button 
-                                            variant="outline" 
-                                            className="w-full"
-                                            onClick={() => {
-                                                if (activeRide) {
-                                                    const destination = `${activeRide.destination.coords.latitude},${activeRide.destination.coords.longitude}`;
-                                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`, '_blank');
-                                                } else {
-                                                    toast.error('Aucune course active');
-                                                }
-                                            }}
-                                        >
-                                            <MapPin className="w-4 h-4 mr-2" />
-                                            Ouvrir dans Google Maps
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <GPSNavigation
+                            activeRide={activeRide}
+                            currentLocation={location}
+                            onContactCustomer={contactCustomer}
+                        />
                     </TabsContent>
 
                     {/* Gains - Composant dédié avec connexion temps réel */}
