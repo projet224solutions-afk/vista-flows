@@ -3,9 +3,11 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, LogOut, Lock, Brain, Bell } from 'lucide-react';
+import { Shield, LogOut, Lock, Brain, Bell, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
@@ -36,6 +38,9 @@ export default function PDG224Solutions() {
   const [verifyingMfa, setVerifyingMfa] = useState(false);
   const [isEnsured, setIsEnsured] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [updatingEmail, setUpdatingEmail] = useState(false);
   const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
 
   // Hook IA Assistant
@@ -119,6 +124,29 @@ export default function PDG224Solutions() {
     }
   }, [user]);
 
+  const handleUpdateEmail = useCallback(async () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast.error('Veuillez entrer une adresse email valide');
+      return;
+    }
+
+    setUpdatingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      
+      if (error) throw error;
+
+      toast.success('Email mis à jour avec succès. Vérifiez votre nouvelle adresse pour confirmer.');
+      setShowEmailDialog(false);
+      setNewEmail('');
+    } catch (error: any) {
+      console.error('Erreur mise à jour email:', error);
+      toast.error(error.message || 'Échec de la mise à jour de l\'email');
+    } finally {
+      setUpdatingEmail(false);
+    }
+  }, [newEmail]);
+
   if (loading || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
@@ -181,6 +209,15 @@ export default function PDG224Solutions() {
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-4 h-4" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEmailDialog(true)}
+                  className="gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  Modifier Email
                 </Button>
                 <Button
                   variant="outline"
@@ -314,6 +351,59 @@ export default function PDG224Solutions() {
           </div>
         </div>
       </div>
+
+      {/* Dialog Modification Email */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Modifier l'adresse email
+            </DialogTitle>
+            <DialogDescription>
+              Entrez votre nouvelle adresse email. Un email de confirmation sera envoyé.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email actuel</label>
+              <Input 
+                value={user?.email || ''} 
+                disabled 
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nouvel email</label>
+              <Input
+                type="email"
+                placeholder="nouveau@email.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                disabled={updatingEmail}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEmailDialog(false);
+                setNewEmail('');
+              }}
+              disabled={updatingEmail}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleUpdateEmail}
+              disabled={updatingEmail || !newEmail}
+            >
+              {updatingEmail ? 'Mise à jour...' : 'Mettre à jour'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
