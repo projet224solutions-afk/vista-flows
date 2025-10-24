@@ -975,13 +975,6 @@ export default function TaxiMotoDriver() {
                                     <h3 className="text-xl font-bold text-gray-900 mb-1">Prêt à travailler ?</h3>
                                     <p className="text-sm text-gray-600">Activez votre statut pour recevoir des demandes de courses</p>
                                 </div>
-                                <Button
-                                    onClick={toggleOnlineStatus}
-                                    size="default"
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                                >
-                                    🟢 Passer en ligne
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>
