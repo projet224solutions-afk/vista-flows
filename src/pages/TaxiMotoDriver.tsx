@@ -962,24 +962,6 @@ export default function TaxiMotoDriver() {
                 </div>
             </header>
 
-            {/* Bouton de connexion quand hors ligne */}
-            {!isOnline && !activeRide && (
-                <div className="px-4 pt-4">
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-xl">
-                        <CardContent className="p-6">
-                            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                                <div className="p-4 bg-white rounded-full shadow-md">
-                                    <Car className="w-12 h-12 text-green-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-1">Prêt à travailler ?</h3>
-                                    <p className="text-sm text-gray-600">Activez votre statut pour recevoir des demandes de courses</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
 
             {/* Demandes de course en attente */}
             {rideRequests.length > 0 && (
