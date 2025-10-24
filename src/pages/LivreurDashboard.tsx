@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
 
 interface Delivery {
   id: string;
@@ -171,7 +172,10 @@ export default function LivreurDashboard() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1">🚴 Livreur - 224Solutions</h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold">🚴 Livreur - 224Solutions</h1>
+              <UserIdDisplay layout="horizontal" showBadge={true} />
+            </div>
             <p className="text-sm text-muted-foreground">
               Bienvenue {profile?.first_name || 'Livreur'}
             </p>

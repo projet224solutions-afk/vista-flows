@@ -21,6 +21,7 @@ import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator
 import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration';
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 import PWAInstallButton from '@/components/pwa/PWAInstallButton';
+import { UserIdDisplay } from '@/components/UserIdDisplay';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -224,7 +225,10 @@ export default function BureauDashboard() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{bureau.bureau_code}</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-bold">{bureau.bureau_code}</h1>
+            <UserIdDisplay layout="horizontal" showBadge={true} />
+          </div>
           <p className="text-muted-foreground">{bureau.prefecture} - {bureau.commune}</p>
         </div>
         <div className="flex gap-2 items-center">

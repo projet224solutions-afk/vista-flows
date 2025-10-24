@@ -20,6 +20,7 @@ import CopiloteChat from "@/components/copilot/CopiloteChat";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -70,7 +71,10 @@ export default function ClientDashboard() {
                 <ShoppingBag className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">224SOLUTIONS</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-foreground">224SOLUTIONS</h1>
+                  <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                </div>
                 <p className="text-xs text-muted-foreground">Marketplace</p>
               </div>
             </div>

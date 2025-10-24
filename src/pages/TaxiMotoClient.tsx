@@ -26,6 +26,7 @@ import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRideNotifications } from "@/hooks/useRideNotifications";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
 
 interface Driver {
   id: string;
@@ -181,10 +182,13 @@ export default function TaxiMotoClient() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Taxi-Moto 224Solutions
-              </h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-xl font-bold text-foreground">
+                  Taxi-Moto 224Solutions
+                </h1>
+                <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
+              </div>
+              <div className="flex items-center gap-2">
                 <User className="w-3 h-3 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
                   {profile?.first_name || 'Client'}

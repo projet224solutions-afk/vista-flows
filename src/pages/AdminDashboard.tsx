@@ -6,6 +6,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
 
 export default function AdminDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -64,7 +65,10 @@ export default function AdminDashboard() {
         <div className="px-4 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Dashboard Administrateur</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold text-foreground">Dashboard Administrateur</h1>
+                <UserIdDisplay layout="horizontal" showBadge={true} />
+              </div>
               <p className="text-muted-foreground">
                 Vue d'ensemble de la plateforme - {profile?.first_name || user?.email}
               </p>

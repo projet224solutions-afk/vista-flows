@@ -45,6 +45,7 @@ import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
 import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
 import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -955,9 +956,12 @@ export default function TaxiMotoDriver() {
                 <div className="px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">
-                                Conducteur {profile?.first_name || 'Taxi-Moto'}
-                            </h1>
+                            <div className="flex items-center gap-3 mb-1">
+                                <h1 className="text-xl font-bold text-gray-900">
+                                    Conducteur {profile?.first_name || 'Taxi-Moto'}
+                                </h1>
+                                <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
+                            </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                 <span className="text-sm text-gray-600">

@@ -14,6 +14,7 @@ import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 import PDGNavigation from '@/components/pdg/PDGNavigation';
 import { PDGDashboardHome } from '@/components/pdg/PDGDashboardHome';
+import { UserIdDisplay } from '@/components/UserIdDisplay';
 
 // ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
@@ -175,9 +176,12 @@ export default function PDG224Solutions() {
                   </div>
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Interface PDG 224SOLUTIONS
-                  </h1>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      Interface PDG 224SOLUTIONS
+                    </h1>
+                    <UserIdDisplay layout="horizontal" showBadge={true} />
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                     <Lock className="w-3 h-3 text-green-500" />
                     Contrôle total et sécurisé de la plateforme

@@ -6,6 +6,7 @@ import { Users, TrendingUp, DollarSign, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { UserIdDisplay } from '@/components/UserIdDisplay';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -76,7 +77,10 @@ export default function AgentDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Dashboard Agent</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold">Dashboard Agent</h1>
+                <UserIdDisplay layout="horizontal" showBadge={true} />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Bienvenue, {agent.name}
               </p>
