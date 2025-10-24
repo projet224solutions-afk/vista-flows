@@ -1011,7 +1011,7 @@ export default function TaxiMotoDriver() {
                             <TrendingUp className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
                         </TabsTrigger>
-                        <TabsTrigger value="navigation" disabled={!activeRide}>
+                        <TabsTrigger value="navigation">
                             <Navigation className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Course</span>
                         </TabsTrigger>
