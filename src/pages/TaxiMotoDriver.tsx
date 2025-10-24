@@ -40,7 +40,7 @@ import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
 import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
-import { DriverEarningsHistory } from "@/components/taxi-moto/DriverEarningsHistory";
+import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
 import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
 import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
@@ -1077,13 +1077,9 @@ export default function TaxiMotoDriver() {
                         />
                     </TabsContent>
 
-                    {/* Gains */}
-                    <TabsContent value="earnings" className="mt-4">
-                        <DriverEarningsHistory 
-                            rides={rideHistory}
-                            todayEarnings={driverStats.todayEarnings}
-                            todayRides={driverStats.todayRides}
-                        />
+                    {/* Gains - Composant dédié avec connexion temps réel */}
+                    <TabsContent value="earnings" className="mt-0">
+                        <DriverEarnings driverId={driverId || ''} />
                     </TabsContent>
 
                     {/* Onglet Paramètres */}
