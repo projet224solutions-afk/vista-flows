@@ -43,9 +43,30 @@ export class TaxiMotoPricingService {
    * Récupérer la configuration de tarification depuis la DB
    */
   static async getPricingConfig(): Promise<PricingConfig> {
-    // Pour l'instant, utiliser la configuration par défaut
-    // TODO: Créer une table taxi_pricing_config via migration
-    return this.defaultConfig;
+    try {
+      const { data, error } = await supabase
+        .from('taxi_pricing_config')
+        .select('*')
+        .single();
+
+      if (error || !data) {
+        console.log('[Pricing] Using default config');
+        return this.defaultConfig;
+      }
+
+      return {
+        base_fare: Number(data.base_fare) || this.defaultConfig.base_fare,
+        per_km_rate: Number(data.per_km_rate) || this.defaultConfig.per_km_rate,
+        per_minute_rate: Number(data.per_minute_rate) || this.defaultConfig.per_minute_rate,
+        minimum_fare: Number(data.minimum_fare) || this.defaultConfig.minimum_fare,
+        driver_commission: Number(data.driver_commission) || this.defaultConfig.driver_commission,
+        platform_commission: Number(data.platform_commission) || this.defaultConfig.platform_commission,
+        surge_multiplier: Number(data.surge_multiplier) || this.defaultConfig.surge_multiplier
+      };
+    } catch (err) {
+      console.error('[Pricing] Error loading config:', err);
+      return this.defaultConfig;
+    }
   }
 
   /**
@@ -139,8 +160,19 @@ export class TaxiMotoPricingService {
    * Mettre à jour la configuration de tarification (admin seulement)
    */
   static async updatePricingConfig(config: Partial<PricingConfig>): Promise<void> {
-    // TODO: Implémenter la mise à jour de la config via migration
-    console.log('[Pricing] Configuration update requested:', config);
+    try {
+      const { error } = await supabase
+        .from('taxi_pricing_config')
+        .update(config as any)
+        .eq('id', (await supabase.from('taxi_pricing_config').select('id').single()).data?.id);
+
+      if (error) throw error;
+
+      console.log('[Pricing] Configuration mise à jour');
+    } catch (err) {
+      console.error('[Pricing] Error updating config:', err);
+      throw err;
+    }
   }
 
   /**
