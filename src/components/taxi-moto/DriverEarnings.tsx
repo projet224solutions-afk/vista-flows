@@ -3,12 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, DollarSign, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, Send, History } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
 import { QuickTransferButton } from '@/components/wallet/QuickTransferButton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface DriverEarningsProps {
   driverId: string;
@@ -62,29 +66,33 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
   });
   const [showTransactions, setShowTransactions] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { balance, currency } = useWalletBalance(driverId);
+  const [userId, setUserId] = useState<string>('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const { balance, currency, reload } = useWalletBalance(userId);
 
   const loadEarningsData = async () => {
     try {
       setLoading(true);
 
+      // Récupérer le user_id du driver
+      const { data: driverData } = await supabase
+        .from('taxi_drivers')
+        .select('user_id')
+        .eq('id', driverId)
+        .single();
+
+      if (driverData) {
+        setUserId(driverData.user_id);
+      }
+
       // Charger les courses terminées du chauffeur
       const { data: ridesData, error: ridesError } = await supabase
         .from('taxi_trips')
-        .select(`
-          id,
-          pickup_address,
-          dropoff_address,
-          distance_km,
-          duration_minutes,
-          fare,
-          status,
-          requested_at,
-          completed_at,
-          customers:customer_id (
-            full_name
-          )
-        `)
+        .select('*')
         .eq('driver_id', driverId)
         .in('status', ['completed', 'paid'])
         .order('completed_at', { ascending: false })
@@ -102,7 +110,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         status: ride.status,
         requested_at: ride.requested_at,
         completed_at: ride.completed_at,
-        customer_name: ride.customers?.full_name || 'Client',
+        customer_name: 'Client',
       }));
 
       setRides(formattedRides);
@@ -139,21 +147,23 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       });
 
       // Charger les transactions du wallet
-      const { data: walletData } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('user_id', driverId)
-        .single();
+      if (driverData) {
+        const { data: walletData } = await supabase
+          .from('wallets')
+          .select('id')
+          .eq('user_id', driverData.user_id)
+          .single();
 
-      if (walletData) {
-        const { data: transactionsData } = await supabase
-          .from('wallet_transactions')
-          .select('*')
-          .or(`from_wallet_id.eq.${walletData.id},to_wallet_id.eq.${walletData.id}`)
-          .order('created_at', { ascending: false })
-          .limit(20);
+        if (walletData) {
+          const { data: transactionsData } = await supabase
+            .from('wallet_transactions')
+            .select('*')
+            .or(`from_wallet_id.eq.${walletData.id},to_wallet_id.eq.${walletData.id}`)
+            .order('created_at', { ascending: false })
+            .limit(20);
 
-        setTransactions(transactionsData || []);
+          setTransactions(transactionsData || []);
+        }
       }
     } catch (error) {
       console.error('Error loading earnings:', error);
@@ -190,6 +200,73 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
     }
   }, [driverId]);
 
+  const handleDeposit = async () => {
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      toast.error('Veuillez entrer un montant valide');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'deposit',
+          amount: parseFloat(depositAmount),
+          method: 'cash',
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Dépôt effectué avec succès');
+      setDepositAmount('');
+      setDepositOpen(false);
+      reload();
+      loadEarningsData();
+    } catch (error: any) {
+      console.error('Erreur dépôt:', error);
+      toast.error(error.message || 'Erreur lors du dépôt');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      toast.error('Veuillez entrer un montant valide');
+      return;
+    }
+
+    if (parseFloat(withdrawAmount) > balance) {
+      toast.error('Solde insuffisant');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'withdraw',
+          amount: parseFloat(withdrawAmount),
+          method: 'cash',
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Retrait effectué avec succès');
+      setWithdrawAmount('');
+      setWithdrawOpen(false);
+      reload();
+      loadEarningsData();
+    } catch (error: any) {
+      console.error('Erreur retrait:', error);
+      toast.error(error.message || 'Erreur lors du retrait');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -219,23 +296,111 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             
             {/* Actions rapides du wallet */}
             <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant="secondary" 
-                className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
-                onClick={() => window.location.href = '/wallet'}
-              >
-                <ArrowUpCircle className="w-4 h-4 mr-2" />
-                Recharger
-              </Button>
-              <Button 
-                variant="secondary" 
-                className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
-                onClick={() => setShowTransactions(!showTransactions)}
-              >
-                <History className="w-4 h-4 mr-2" />
-                Historique
-              </Button>
+              <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
+                  >
+                    <ArrowDownCircle className="w-4 h-4 mr-2" />
+                    Dépôt
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Effectuer un dépôt</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="deposit-amount">Montant ({currency})</Label>
+                      <Input
+                        id="deposit-amount"
+                        type="number"
+                        placeholder="Entrez le montant"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleDeposit} 
+                      disabled={processing}
+                      className="w-full"
+                    >
+                      {processing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Traitement...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowDownCircle className="w-4 h-4 mr-2" />
+                          Confirmer le dépôt
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
+                  >
+                    <ArrowUpCircle className="w-4 h-4 mr-2" />
+                    Retrait
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Effectuer un retrait</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-amount">Montant ({currency})</Label>
+                      <Input
+                        id="withdraw-amount"
+                        type="number"
+                        placeholder="Entrez le montant"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Solde disponible: {balance.toLocaleString()} {currency}
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={handleWithdraw} 
+                      disabled={processing}
+                      className="w-full"
+                    >
+                      {processing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Traitement...
+                        </>
+                      ) : (
+                        <>
+                          <ArrowUpCircle className="w-4 h-4 mr-2" />
+                          Confirmer le retrait
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
+            
+            {/* Bouton Historique */}
+            <Button 
+              variant="secondary" 
+              className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
+              onClick={() => setShowTransactions(!showTransactions)}
+            >
+              <History className="w-4 h-4 mr-2" />
+              {showTransactions ? 'Masquer' : 'Voir'} l'historique
+            </Button>
 
             {/* Transfert rapide */}
             <div className="pt-2 border-t border-white/20">
