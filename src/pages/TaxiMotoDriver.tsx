@@ -963,18 +963,25 @@ export default function TaxiMotoDriver() {
             </header>
 
 
-            {/* Demandes de course en attente */}
+            {/* Demandes de course en attente - AFFICHAGE PRIORITAIRE */}
             {rideRequests.length > 0 && (
-                <div className="fixed top-20 left-4 right-4 z-50 max-h-[70vh] overflow-y-auto space-y-2">
-                    {rideRequests.map((request, index) => (
-                        <RideRequestNotification
-                            key={request.id}
-                            request={request}
-                            onAccept={() => acceptRideRequest(request)}
-                            onDecline={() => declineRideRequest(request.id)}
-                            index={index}
-                        />
-                    ))}
+                <div className="fixed top-16 left-0 right-0 z-[100] bg-black/20 backdrop-blur-sm">
+                    <div className="max-w-2xl mx-auto p-4 space-y-3 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                        {/* Indicateur de nombre de courses */}
+                        <div className="bg-yellow-500 text-black font-bold text-center py-2 px-4 rounded-lg shadow-xl animate-bounce">
+                          🚨 {rideRequests.length} course(s) disponible(s) ! 🚨
+                        </div>
+                        
+                        {rideRequests.map((request, index) => (
+                            <RideRequestNotification
+                                key={request.id}
+                                request={request}
+                                onAccept={() => acceptRideRequest(request)}
+                                onDecline={() => declineRideRequest(request.id)}
+                                index={index}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
 

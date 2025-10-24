@@ -113,21 +113,21 @@ export function RideRequestNotification({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             onClick={onDecline}
             variant="outline"
-            size="sm"
-            className="flex-1 border-red-300 hover:bg-red-50"
+            size="lg"
+            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 font-bold text-base"
           >
-            ❌ Refuser
+            <span className="text-xl mr-1">❌</span> Refuser
           </Button>
           <Button
             onClick={onAccept}
-            size="sm"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+            size="lg"
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg font-bold text-base animate-pulse"
           >
-            ✅ Accepter
+            <span className="text-xl mr-1">✅</span> Accepter
           </Button>
         </div>
       </CardContent>
