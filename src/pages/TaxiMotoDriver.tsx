@@ -641,14 +641,21 @@ export default function TaxiMotoDriver() {
      * Accepte une demande de course avec chargement des données client réelles
      */
     const acceptRideRequest = async (request: RideRequest) => {
+        console.log('🎯 Tentative d\'acceptation de course:', request.id);
+        
         if (!driverId) {
+            console.error('❌ Pas de driverId disponible');
             toast.error('Profil conducteur non trouvé');
             return;
         }
 
+        console.log('✅ DriverId trouvé:', driverId);
+
         try {
+            console.log('📞 Appel de TaxiMotoService.acceptRide...');
             // Appeler le service d'acceptation via TaxiMotoService
             await TaxiMotoService.acceptRide(request.id, driverId);
+            console.log('✅ Course acceptée avec succès dans la DB');
 
             // Charger le téléphone réel du client
             let customerPhone = '+224 600 00 00 00';
@@ -661,6 +668,7 @@ export default function TaxiMotoDriver() {
                 
                 if (customerProfile?.phone) {
                     customerPhone = customerProfile.phone;
+                    console.log('📱 Téléphone client chargé:', customerPhone);
                 }
             } catch (error) {
                 console.error('Error loading customer phone:', error);
@@ -686,6 +694,7 @@ export default function TaxiMotoDriver() {
                 estimatedEarnings: request.estimatedEarnings
             };
 
+            console.log('🚗 Définition de la course active:', newActiveRide);
             setActiveRide(newActiveRide);
             setRideRequests([]);
             setNavigationActive(true);
@@ -698,9 +707,10 @@ export default function TaxiMotoDriver() {
             relatedNotifs.forEach(n => markAsRead(n.id));
 
             // Démarrer la navigation
+            console.log('🗺️ Démarrage de la navigation vers:', request.pickupCoords);
             startNavigation(request.pickupCoords);
         } catch (error) {
-            console.error('Error accepting ride:', error);
+            console.error('❌ Erreur lors de l\'acceptation:', error);
             toast.error('Impossible d\'accepter la course. Elle a peut-être déjà été prise.');
         }
     };

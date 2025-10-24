@@ -115,7 +115,10 @@ export function RideRequestNotification({
 
         <div className="flex gap-3">
           <Button
-            onClick={onDecline}
+            onClick={() => {
+              console.log('🚫 Bouton REFUSER cliqué pour la course:', request.id);
+              onDecline();
+            }}
             variant="outline"
             size="lg"
             className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95"
@@ -123,7 +126,10 @@ export function RideRequestNotification({
             <span className="text-xl mr-1">❌</span> Refuser
           </Button>
           <Button
-            onClick={onAccept}
+            onClick={() => {
+              console.log('✅ Bouton ACCEPTER cliqué pour la course:', request.id);
+              onAccept();
+            }}
             size="lg"
             className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95"
           >
