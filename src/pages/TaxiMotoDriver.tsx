@@ -26,7 +26,8 @@ import {
     Wifi,
     Settings,
     LogOut,
-    Bell
+    Bell,
+    History
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
@@ -1049,7 +1050,7 @@ export default function TaxiMotoDriver() {
             {/* Navigation par onglets */}
             <div className="px-4 mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
                         <TabsTrigger value="dashboard">
                             <TrendingUp className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
@@ -1057,6 +1058,10 @@ export default function TaxiMotoDriver() {
                         <TabsTrigger value="navigation">
                             <Navigation className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Course</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="history">
+                            <History className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">Historique</span>
                         </TabsTrigger>
                         <TabsTrigger value="earnings">
                             <DollarSign className="w-4 h-4 mr-1" />
@@ -1088,6 +1093,92 @@ export default function TaxiMotoDriver() {
                             location={location}
                             onContactCustomer={contactCustomer}
                         />
+                    </TabsContent>
+
+                    {/* Historique des courses */}
+                    <TabsContent value="history" className="mt-4">
+                        <Card className="bg-white/95 backdrop-blur-sm shadow-lg">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <History className="w-5 h-5 text-blue-600" />
+                                    Historique des courses
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {rideHistory.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <History className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                        <p>Aucune course dans l'historique</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {rideHistory.map((ride) => (
+                                            <Card key={ride.id} className="border border-gray-200">
+                                                <CardContent className="p-4">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <MapPin className="w-4 h-4 text-green-600" />
+                                                                <span className="text-sm font-medium">
+                                                                    {typeof ride.pickup === 'string' 
+                                                                        ? ride.pickup 
+                                                                        : ride.pickup?.address || 'Départ'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <MapPin className="w-4 h-4 text-red-600" />
+                                                                <span className="text-sm">
+                                                                    {typeof ride.dropoff === 'string' 
+                                                                        ? ride.dropoff 
+                                                                        : ride.dropoff?.address || 'Arrivée'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <Badge 
+                                                            variant={ride.status === 'completed' ? 'default' : 'secondary'}
+                                                            className="ml-2"
+                                                        >
+                                                            {ride.status === 'completed' ? 'Terminée' : ride.status}
+                                                        </Badge>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100">
+                                                        <div className="text-center">
+                                                            <p className="text-xs text-gray-500">Distance</p>
+                                                            <p className="text-sm font-semibold">
+                                                                {ride.distance_km ? `${ride.distance_km.toFixed(1)} km` : 'N/A'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-xs text-gray-500">Durée</p>
+                                                            <p className="text-sm font-semibold">
+                                                                {ride.duration_min ? `${ride.duration_min} min` : 'N/A'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-xs text-gray-500">Gain</p>
+                                                            <p className="text-sm font-bold text-green-600">
+                                                                {ride.price ? `${ride.price} GNF` : 'N/A'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="mt-2 text-xs text-gray-400 text-right">
+                                                        {new Date(ride.created_at).toLocaleDateString('fr-FR', {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     {/* Gains - Composant dédié avec connexion temps réel */}
