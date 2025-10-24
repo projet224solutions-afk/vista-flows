@@ -1011,12 +1011,12 @@ export default function TaxiMotoDriver() {
 
             {/* Message quand en ligne sans courses */}
             {isOnline && rideRequests.length === 0 && !activeRide && (
-                <div className="fixed top-20 left-4 right-4 z-40">
+                <div className="px-4 mt-2">
                     <Card className="bg-blue-50 border-blue-200 shadow-lg">
-                        <CardContent className="p-4">
+                        <CardContent className="p-3">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
-                                    <Car className="w-6 h-6 text-blue-600 animate-pulse" />
+                                    <Car className="w-5 h-5 text-blue-600 animate-pulse" />
                                     <div>
                                         <p className="text-sm font-bold text-blue-900">🟢 Vous êtes en ligne</p>
                                         <p className="text-xs text-blue-700">En attente de courses...</p>
