@@ -1073,17 +1073,6 @@ export default function TaxiMotoDriver() {
                                                 </p>
                                             </div>
 
-                                            {/* Bouton passer en ligne */}
-                                            <Button
-                                                onClick={toggleOnlineStatus}
-                                                size="lg"
-                                                className="w-full max-w-md h-14 text-lg bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                                                    Passer en ligne
-                                                </div>
-                                            </Button>
                                         </div>
                                     </CardContent>
                                 </Card>
