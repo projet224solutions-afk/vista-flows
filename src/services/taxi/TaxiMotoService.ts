@@ -200,8 +200,15 @@ export class TaxiMotoService {
   ): Promise<void> {
     const updateData: any = { status, ...additionalData };
 
-    if (status === 'started') {
+    // Mettre à jour les timestamps selon le statut
+    if (status === 'accepted') {
+      updateData.accepted_at = new Date().toISOString();
+    } else if (status === 'arriving') {
+      updateData.arriving_at = new Date().toISOString();
+    } else if (status === 'started') {
       updateData.started_at = new Date().toISOString();
+    } else if (status === 'in_progress') {
+      updateData.in_progress_at = new Date().toISOString();
     } else if (status === 'completed') {
       updateData.completed_at = new Date().toISOString();
     } else if (status === 'cancelled') {
@@ -219,14 +226,18 @@ export class TaxiMotoService {
     }
 
     // Logger l'action
-    await supabase.rpc('log_taxi_action' as any, {
-      p_action_type: `ride_status_${status}`,
-      p_actor_id: (await supabase.auth.getUser()).data.user?.id,
-      p_actor_type: 'driver',
-      p_resource_type: 'ride',
-      p_resource_id: rideId,
-      p_details: { status, ...additionalData }
-    });
+    try {
+      await supabase.rpc('log_taxi_action' as any, {
+        p_action_type: `ride_status_${status}`,
+        p_actor_id: (await supabase.auth.getUser()).data.user?.id,
+        p_actor_type: 'driver',
+        p_resource_type: 'ride',
+        p_resource_id: rideId,
+        p_details: { status, ...additionalData }
+      });
+    } catch (err) {
+      console.warn('[TaxiMotoService] Could not log action:', err);
+    }
   }
 
   /**

@@ -344,7 +344,8 @@ export default function TaxiMotoDriver() {
                 .from('taxi_trips')
                 .select('*')
                 .eq('driver_id', driverId)
-                .in('status', ['accepted', 'started', 'driver_arriving'])
+                .in('status', ['accepted', 'started', 'arriving', 'in_progress'])
+                .order('created_at', { ascending: false })
                 .limit(1);
 
             if (error) {
@@ -352,7 +353,11 @@ export default function TaxiMotoDriver() {
                 return;
             }
 
-            if (!rides || rides.length === 0) return;
+            if (!rides || rides.length === 0) {
+                setActiveRide(null);
+                setNavigationActive(false);
+                return;
+            }
             
             const ride = rides[0];
 
@@ -385,6 +390,18 @@ export default function TaxiMotoDriver() {
                 console.error('Error loading customer info:', e);
             }
 
+            // Mapper les statuts DB vers les statuts frontend
+            let frontendStatus: ActiveRide['status'] = 'accepted';
+            if (ride.status === 'arriving') {
+                frontendStatus = 'arriving';
+            } else if (ride.status === 'started') {
+                frontendStatus = 'picked_up';
+            } else if (ride.status === 'in_progress') {
+                frontendStatus = 'in_progress';
+            } else if (ride.status === 'accepted') {
+                frontendStatus = 'accepted';
+            }
+
             const activeRideData: ActiveRide = {
                 id: ride.id,
                 customer: {
@@ -400,13 +417,21 @@ export default function TaxiMotoDriver() {
                     address: ride.dropoff_address,
                     coords: { latitude: ride.dropoff_lat || 0, longitude: ride.dropoff_lng || 0 }
                 },
-                status: ride.status === 'started' ? 'picked_up' : 'accepted',
+                status: frontendStatus,
                 startTime: ride.accepted_at || ride.created_at,
                 estimatedEarnings: ride.driver_share || Math.round((ride.price_total || 0) * 0.85)
             };
 
             setActiveRide(activeRideData);
             setNavigationActive(true);
+            
+            // Si course démarrée, lancer navigation vers destination
+            if (frontendStatus === 'picked_up' || frontendStatus === 'in_progress') {
+                startNavigation(activeRideData.destination.coords);
+            } else {
+                // Sinon navigation vers pickup
+                startNavigation(activeRideData.pickup.coords);
+            }
             
             console.log('✅ Course active chargée:', activeRideData);
         } catch (error) {
@@ -757,11 +782,23 @@ export default function TaxiMotoDriver() {
         if (!activeRide) return;
 
         try {
-            let dbStatus = newStatus === 'arriving' ? 'accepted' : 
-                          newStatus === 'picked_up' ? 'started' : 
-                          newStatus === 'in_progress' ? 'completed' : newStatus;
+            // Mapper les statuts frontend vers les statuts DB
+            let dbStatus: string;
+            
+            if (newStatus === 'arriving') {
+                dbStatus = 'arriving';
+            } else if (newStatus === 'picked_up') {
+                dbStatus = 'started';
+            } else if (newStatus === 'in_progress') {
+                dbStatus = 'in_progress';
+            } else {
+                dbStatus = newStatus;
+            }
 
+            // Mettre à jour le statut dans la DB
             await TaxiMotoService.updateRideStatus(activeRide.id, dbStatus);
+            
+            // Mettre à jour l'état local
             setActiveRide(prev => prev ? { ...prev, status: newStatus } : null);
 
             switch (newStatus) {
@@ -770,13 +807,16 @@ export default function TaxiMotoDriver() {
                     break;
                 case 'picked_up':
                     toast.success('🚗 Client à bord, navigation vers la destination...');
-                    if (activeRide && driverId) {
+                    if (activeRide) {
                         startNavigation(activeRide.destination.coords);
                     }
                     break;
                 case 'in_progress':
-                    toast.success('🏁 Course terminée !');
-                    completeRide();
+                    toast.success('🏁 Arrivé à destination !');
+                    // Ne pas terminer tout de suite, attendre confirmation
+                    setTimeout(() => {
+                        completeRide();
+                    }, 2000);
                     break;
             }
         } catch (error) {
@@ -792,26 +832,41 @@ export default function TaxiMotoDriver() {
         if (!activeRide || !driverId) return;
 
         try {
+            console.log('🏁 Finalisation de la course:', activeRide.id);
+            
             // Marquer la course comme complétée
-            await TaxiMotoService.updateRideStatus(activeRide.id, 'completed');
+            await TaxiMotoService.updateRideStatus(activeRide.id, 'completed', {
+                completed_at: new Date().toISOString()
+            });
             
             // Mettre à jour les statistiques du conducteur dans la DB
-            const { data: currentDriver } = await supabase
+            const { data: currentDriver, error: driverError } = await supabase
                 .from('taxi_drivers')
-                .select('total_trips, total_earnings')
+                .select('total_rides, total_earnings')
                 .eq('id', driverId)
                 .single();
             
+            if (driverError) {
+                console.error('Error loading driver stats:', driverError);
+            }
+            
             if (currentDriver) {
-                await supabase
+                const newTotalRides = (currentDriver.total_rides || 0) + 1;
+                const newTotalEarnings = (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings;
+                
+                const { error: updateError } = await supabase
                     .from('taxi_drivers')
                     .update({
-                        total_rides: (currentDriver.total_rides || 0) + 1,
-                        total_earnings: (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings,
+                        total_rides: newTotalRides,
+                        total_earnings: newTotalEarnings,
                         status: 'available',
                         is_available: true
                     })
                     .eq('id', driverId);
+                
+                if (updateError) {
+                    console.error('Error updating driver stats:', updateError);
+                }
             }
             
             // Mettre à jour les statistiques locales
@@ -824,16 +879,21 @@ export default function TaxiMotoDriver() {
 
             toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} GNF`);
 
+            // Réinitialiser l'état
             setActiveRide(null);
             setNavigationActive(false);
             setActiveTab('dashboard');
             
-            // Recharger les statistiques et l'historique
-            loadDriverStats();
-            loadRideHistory();
+            // Recharger les données
+            setTimeout(() => {
+                loadDriverStats();
+                loadRideHistory();
+            }, 500);
+            
+            console.log('✅ Course finalisée avec succès');
         } catch (error) {
             console.error('Error completing ride:', error);
-            toast.error('Erreur lors de la finalisation');
+            toast.error('Erreur lors de la finalisation de la course');
         }
     };
 
