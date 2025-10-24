@@ -345,7 +345,7 @@ export default function TaxiMotoDriver() {
                 .select('*')
                 .eq('driver_id', driverId)
                 .in('status', ['accepted', 'started', 'arriving', 'in_progress'])
-                .order('created_at', { ascending: false })
+                .order('requested_at', { ascending: false })
                 .limit(1);
 
             if (error) {
