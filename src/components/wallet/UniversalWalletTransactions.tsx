@@ -111,21 +111,69 @@ export const UniversalWalletTransactions = () => {
       return;
     }
 
+    if (amount < 1000) {
+      toast.error('Montant minimum 1000 GNF');
+      return;
+    }
+
     setProcessing(true);
     console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
     
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'deposit',
+      // Créer ou récupérer le wallet de l'utilisateur
+      let { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (walletError && walletError.code === 'PGRST116') {
+        // Wallet n'existe pas, on le crée
+        const { data: newWallet, error: createError } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: user.id,
+            balance: 0,
+            currency: 'GNF'
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        walletData = newWallet;
+      } else if (walletError) {
+        throw walletError;
+      }
+
+      // Créer une transaction de dépôt
+      const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'deposit',
           amount: amount,
-          description: 'Dépôt sur le wallet'
-        }
-      });
+          net_amount: amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Dépôt sur le wallet',
+          receiver_wallet_id: walletData.id
+        });
 
-      console.log('✅ Réponse dépôt:', { data, error });
+      if (transactionError) throw transactionError;
 
-      if (error) throw error;
+      // Mettre à jour le solde du wallet
+      const newBalance = walletData.balance + amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      console.log('✅ Dépôt effectué avec succès');
 
       toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
       setDepositAmount('');
@@ -151,6 +199,11 @@ export const UniversalWalletTransactions = () => {
       return;
     }
 
+    if (amount < 5000) {
+      toast.error('Montant minimum 5000 GNF');
+      return;
+    }
+
     if (amount > (wallet?.balance || 0)) {
       toast.error('Solde insuffisant');
       return;
@@ -160,17 +213,45 @@ export const UniversalWalletTransactions = () => {
     console.log('🔄 Retrait en cours:', { amount, userId: user.id });
     
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'withdraw',
-          amount: amount,
-          description: 'Retrait du wallet'
-        }
-      });
+      // Récupérer le wallet de l'utilisateur
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      console.log('✅ Réponse retrait:', { data, error });
+      if (walletError) throw walletError;
+      if (!walletData) throw new Error('Wallet introuvable');
 
-      if (error) throw error;
+      // Créer une transaction de retrait
+      const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'withdraw',
+          amount: -amount,
+          net_amount: -amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Retrait du wallet',
+          sender_wallet_id: walletData.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Mettre à jour le solde du wallet
+      const newBalance = walletData.balance - amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      console.log('✅ Retrait effectué avec succès');
 
       toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
       setWithdrawAmount('');
