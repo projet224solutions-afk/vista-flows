@@ -24,7 +24,6 @@ const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"));
-const TestTaxiRequests = lazy(() => import("./pages/TestTaxiRequests"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
@@ -38,7 +37,6 @@ const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
-const AgentSystem = lazy(() => import("./pages/AgentSystem"));
 const InstallPWA = lazy(() => import("./pages/InstallPWA"));
 
 // Composant de loading
@@ -75,7 +73,6 @@ const App = () => (
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
-              <Route path="/test-taxi-requests" element={<TestTaxiRequests />} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
 
@@ -156,10 +153,6 @@ const App = () => (
               <Route path="/worker/:token" element={<WorkerDashboard />} />
               <Route path="/agent/activate/:token" element={<AgentActivation />} />
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
-              <Route
-                path="/agent-system"
-                element={<AgentSystem />}
-              />
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"
