@@ -278,9 +278,9 @@ export function DriverDashboard({
           className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.onlineTime !== '0h 0m') {
-              toast.success(`⏱️ Temps en ligne aujourd'hui: ${stats.onlineTime}`);
+              toast.success(`⏱️ En ligne depuis ${stats.onlineTime}`);
             } else {
-              toast.info('Vous n\'avez pas encore travaillé aujourd\'hui. Passez en ligne pour commencer.');
+              toast.info('Passez en ligne pour commencer à travailler');
             }
           }}
         >
@@ -289,7 +289,6 @@ export function DriverDashboard({
               {stats.onlineTime}
             </div>
             <div className="text-xs font-medium text-gray-600">Temps en ligne</div>
-            <div className="text-xs text-purple-600 mt-1">👆 Détails</div>
           </CardContent>
         </Card>
       </div>
