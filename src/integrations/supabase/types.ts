@@ -108,6 +108,7 @@ export type Database = {
       }
       agents_management: {
         Row: {
+          access_token: string | null
           agent_code: string
           commission_rate: number | null
           created_at: string | null
@@ -123,6 +124,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          access_token?: string | null
           agent_code: string
           commission_rate?: number | null
           created_at?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          access_token?: string | null
           agent_code?: string
           commission_rate?: number | null
           created_at?: string | null
@@ -5711,6 +5714,7 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      generate_agent_access_token: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 
@@ -429,27 +429,41 @@ export default function PDGAgentsManagement() {
                 </div>
                 
                 {/* Lien d'accès à l'interface Agent */}
-                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <p className="text-xs font-semibold text-foreground flex items-center gap-2">
-                        <span className="text-blue-600">🔗</span> Lien d'accès à l'interface
-                      </p>
-                      <p className="text-xs font-mono text-muted-foreground truncate bg-background p-1.5 rounded border text-blue-600">
-                        {window.location.origin}/agent
-                      </p>
+                {agent.access_token && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-xs font-semibold text-foreground flex items-center gap-2">
+                          <span className="text-blue-600">🔗</span> Lien d'accès à l'interface
+                        </p>
+                        <p className="text-xs font-mono text-blue-600 bg-white dark:bg-gray-900 p-2 rounded border truncate">
+                          {window.location.origin}/agent/{agent.access_token}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/agent/${agent.access_token}`);
+                            toast.success('Lien copié!');
+                          }}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => window.open(`/agent/${agent.access_token}`, '_blank')}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                          Ouvrir
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => window.open('/agent', '_blank')}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                      Ouvrir
-                    </Button>
                   </div>
-                </div>
+                )}
                 
                 <div className="pt-3 flex gap-2 border-t">
                   <Button

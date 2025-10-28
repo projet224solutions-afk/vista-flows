@@ -14,6 +14,7 @@ export interface Agent {
   permissions: string[];
   commission_rate: number;
   can_create_sub_agent: boolean;
+  access_token?: string;
   created_at: string;
   updated_at?: string;
   total_users_created?: number;
@@ -149,6 +150,7 @@ export const usePDGAgentsData = () => {
           permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
           commission_rate: Number(agent.commission_rate) || 0,
           can_create_sub_agent: false, // Par défaut false si la colonne n'existe pas
+          access_token: agent.access_token,
           created_at: agent.created_at,
           updated_at: agent.updated_at || undefined,
           total_commissions_earned: 0,
