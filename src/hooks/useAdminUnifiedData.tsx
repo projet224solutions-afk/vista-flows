@@ -33,7 +33,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
     activeServices: 15,
   });
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -188,6 +188,8 @@ export function useAdminUnifiedData(enabled: boolean = true) {
   useEffect(() => {
     if (enabled) {
       fetchData();
+    } else {
+      setLoading(false);
     }
   }, [enabled]);
 

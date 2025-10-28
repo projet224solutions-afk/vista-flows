@@ -55,36 +55,36 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const kpis = [
     {
       title: 'Chiffre d\'Affaires',
-      value: stats.totalRevenue,
-      change: `${stats.revenueGrowth >= 0 ? '+' : ''}${stats.revenueGrowth}%`,
-      trend: stats.revenueGrowth >= 0 ? 'up' : 'down',
+      value: stats.totalRevenue || '0 GNF',
+      change: `${(stats.revenueGrowth || 0) >= 0 ? '+' : ''}${stats.revenueGrowth || 0}%`,
+      trend: (stats.revenueGrowth || 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
       description: 'vs mois dernier'
     },
     {
       title: 'Utilisateurs Actifs',
-      value: stats.totalUsers.toLocaleString(),
-      change: `${stats.userGrowth >= 0 ? '+' : ''}${stats.userGrowth}%`,
-      trend: stats.userGrowth >= 0 ? 'up' : 'down',
+      value: (stats.totalUsers || 0).toLocaleString(),
+      change: `${(stats.userGrowth || 0) >= 0 ? '+' : ''}${stats.userGrowth || 0}%`,
+      trend: (stats.userGrowth || 0) >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
-      description: `${stats.newUsersThisMonth} nouveaux ce mois`
+      description: `${stats.newUsersThisMonth || 0} nouveaux ce mois`
     },
     {
       title: 'Commandes',
-      value: stats.totalOrders.toLocaleString(),
-      change: `${stats.ordersGrowth >= 0 ? '+' : ''}${stats.ordersGrowth}%`,
-      trend: stats.ordersGrowth >= 0 ? 'up' : 'down',
+      value: (stats.totalOrders || 0).toLocaleString(),
+      change: `${(stats.ordersGrowth || 0) >= 0 ? '+' : ''}${stats.ordersGrowth || 0}%`,
+      trend: (stats.ordersGrowth || 0) >= 0 ? 'up' : 'down',
       icon: Package,
       color: 'text-purple-600 bg-purple-500/10 border-purple-500/20',
-      description: `${stats.ordersThisMonth} ce mois`
+      description: `${stats.ordersThisMonth || 0} ce mois`
     },
     {
       title: 'Taux de Conversion',
-      value: `${stats.conversionRate}%`,
-      change: `${stats.conversionGrowth >= 0 ? '+' : ''}${stats.conversionGrowth}%`,
-      trend: stats.conversionGrowth >= 0 ? 'up' : 'down',
+      value: `${stats.conversionRate || 0}%`,
+      change: `${(stats.conversionGrowth || 0) >= 0 ? '+' : ''}${stats.conversionGrowth || 0}%`,
+      trend: (stats.conversionGrowth || 0) >= 0 ? 'up' : 'down',
       icon: Activity,
       color: 'text-orange-600 bg-orange-500/10 border-orange-500/20',
       description: 'commandes / utilisateurs'
@@ -94,28 +94,28 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const alerts = [
     { 
       type: 'warning', 
-      message: `${stats.pendingValidations} commande(s) en attente de traitement`,
+      message: `${stats.pendingValidations || 0} commande(s) en attente de traitement`,
       icon: Clock,
       color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
-      show: stats.pendingValidations > 0
+      show: (stats.pendingValidations || 0) > 0
     },
     { 
       type: 'error', 
-      message: `${stats.criticalAlerts} alerte(s) API critique(s) nécessitent votre attention`,
+      message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nécessitent votre attention`,
       icon: AlertCircle,
       color: 'text-red-600 bg-red-500/10 border-red-500/20',
-      show: stats.criticalAlerts > 0
+      show: (stats.criticalAlerts || 0) > 0
     },
     { 
       type: 'success', 
-      message: `${stats.activeVendors} vendeurs actifs sur ${stats.totalVendors}`,
+      message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
       show: true
     },
     { 
       type: 'info', 
-      message: `${stats.onlineDrivers} livreurs en ligne sur ${stats.totalDrivers}`,
+      message: `${stats.onlineDrivers || 0} livreurs en ligne sur ${stats.totalDrivers || 0}`,
       icon: Activity,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
       show: true
@@ -219,23 +219,23 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Produits</p>
-                <p className="text-2xl font-bold">{stats.totalProducts}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeProducts} actifs</p>
+                <p className="text-2xl font-bold">{stats.totalProducts || 0}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeProducts || 0} actifs</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Vendeurs</p>
-                <p className="text-2xl font-bold">{stats.totalVendors}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeVendors} actifs</p>
+                <p className="text-2xl font-bold">{stats.totalVendors || 0}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeVendors || 0} actifs</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Services Pro</p>
-                <p className="text-2xl font-bold text-primary">{stats.totalServices}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeServices} disponibles</p>
+                <p className="text-2xl font-bold text-primary">{stats.totalServices || 0}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeServices || 0} disponibles</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Livreurs</p>
-                <p className="text-2xl font-bold">{stats.totalDrivers}</p>
-                <p className="text-xs text-muted-foreground">{stats.onlineDrivers} en ligne</p>
+                <p className="text-2xl font-bold">{stats.totalDrivers || 0}</p>
+                <p className="text-xs text-muted-foreground">{stats.onlineDrivers || 0} en ligne</p>
               </div>
             </div>
           </CardContent>
@@ -256,28 +256,28 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 icon: Users, 
                 color: 'from-blue-500 to-blue-600',
                 action: 'users',
-                count: stats.totalUsers
+                count: stats.totalUsers || 0
               },
               { 
                 label: 'Gérer Finances', 
                 icon: DollarSign, 
                 color: 'from-green-500 to-green-600',
                 action: 'finance',
-                count: stats.totalRevenue
+                count: stats.totalRevenue || '0 GNF'
               },
               { 
                 label: 'Vérifier Sécurité', 
                 icon: AlertCircle, 
                 color: 'from-red-500 to-red-600',
                 action: 'security',
-                count: stats.criticalAlerts
+                count: stats.criticalAlerts || 0
               },
               { 
                 label: 'Voir Rapports', 
                 icon: Activity, 
                 color: 'from-purple-500 to-purple-600',
                 action: 'reports',
-                count: stats.totalOrders
+                count: stats.totalOrders || 0
               },
             ].map((action) => {
               const ActionIcon = action.icon;
