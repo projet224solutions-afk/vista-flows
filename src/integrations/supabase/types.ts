@@ -1784,6 +1784,60 @@ export type Database = {
           },
         ]
       }
+      financial_transactions: {
+        Row: {
+          amount: number
+          api_response: Json | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          destination_reference: string | null
+          error_message: string | null
+          fees: number | null
+          id: string
+          metadata: Json | null
+          source_reference: string | null
+          status: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          api_response?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          destination_reference?: string | null
+          error_message?: string | null
+          fees?: number | null
+          id?: string
+          metadata?: Json | null
+          source_reference?: string | null
+          status?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          api_response?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          destination_reference?: string | null
+          error_message?: string | null
+          fees?: number | null
+          id?: string
+          metadata?: Json | null
+          source_reference?: string | null
+          status?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       forensic_reports: {
         Row: {
           created_at: string | null
@@ -6228,6 +6282,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_transaction_fees: {
+        Args: { p_amount: number; p_transaction_type: string }
+        Returns: number
+      }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       convert_currency: {
         Args: {
@@ -6529,6 +6587,23 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      process_card_to_om: {
+        Args: {
+          p_amount: number
+          p_card_id: string
+          p_phone_number: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      process_card_to_wallet: {
+        Args: { p_amount: number; p_card_id: string; p_user_id: string }
+        Returns: string
+      }
+      process_wallet_to_card: {
+        Args: { p_amount: number; p_card_id: string; p_user_id: string }
+        Returns: string
+      }
       process_wallet_transaction: {
         Args: {
           p_amount: number
