@@ -253,22 +253,43 @@ export function DriverDashboard({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-shadow">
+        <Card 
+          className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          onClick={() => {
+            if (stats.totalRides > 0) {
+              onNavigate('history');
+              toast.success(`⭐ Note moyenne: ${stats.rating.toFixed(1)}/5 sur ${stats.totalRides} courses`);
+            } else {
+              toast.info('Aucune évaluation pour le moment. Effectuez des courses pour recevoir des notes.');
+            }
+          }}
+        >
           <CardContent className="p-4 text-center">
             <div className="text-3xl font-bold text-yellow-700 flex items-center justify-center gap-1 mb-1">
               {stats.rating.toFixed(1)}
               <Star className="w-6 h-6 fill-yellow-500 text-yellow-500" />
             </div>
             <div className="text-xs font-medium text-gray-600">Note moyenne</div>
+            <div className="text-xs text-yellow-600 mt-1">👆 Voir évaluations</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-shadow">
+        <Card 
+          className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          onClick={() => {
+            if (stats.onlineTime !== '0h 0m') {
+              toast.success(`⏱️ Temps en ligne aujourd'hui: ${stats.onlineTime}`);
+            } else {
+              toast.info('Vous n\'avez pas encore travaillé aujourd\'hui. Passez en ligne pour commencer.');
+            }
+          }}
+        >
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-purple-700 mb-1">
               {stats.onlineTime}
             </div>
             <div className="text-xs font-medium text-gray-600">Temps en ligne</div>
+            <div className="text-xs text-purple-600 mt-1">👆 Détails</div>
           </CardContent>
         </Card>
       </div>
