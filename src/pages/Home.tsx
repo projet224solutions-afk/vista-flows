@@ -211,27 +211,68 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Section Créer un Service Professionnel */}
-      <section className="px-4 py-4">
-        <Card className="overflow-hidden border-primary/50 bg-gradient-to-br from-primary/5 to-secondary/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Store className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-bold">Créez votre Service Professionnel</h3>
+      {/* Section Créer un Service Professionnel - Hero */}
+      <section className="px-4 py-6">
+        <Card className="overflow-hidden border-2 border-primary shadow-xl bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 animate-fade-in">
+          <CardContent className="p-8">
+            <div className="text-center space-y-6">
+              <div className="flex justify-center">
+                <div className="p-4 bg-primary/20 rounded-full">
+                  <Store className="w-12 h-12 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Restaurant, Boutique, Transport, Beauté... Choisissez parmi 15 catégories avec des outils professionnels complets
+              </div>
+              
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  Créez votre Service Professionnel
+                </h2>
+                <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+                  Restaurant, Boutique, Livraison, Transport, Beauté, Santé, Éducation... 
+                  <br />
+                  <span className="font-semibold text-foreground">15 catégories professionnelles</span> avec des outils complets inspirés des meilleurs standards internationaux
                 </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                 <Button
                   onClick={() => navigate('/services')}
-                  className="gap-2"
-                  size="sm"
+                  size="lg"
+                  className="gap-2 text-lg px-8 shadow-lg hover:scale-105 transition-transform"
                 >
-                  <Store className="w-4 h-4" />
+                  <Store className="w-5 h-5" />
                   Commencer maintenant
                 </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => navigate('/services')}
+                  className="gap-2"
+                >
+                  Découvrir les 15 services
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 text-xs text-muted-foreground">
+                <div className="flex items-center justify-center gap-1">
+                  <Utensils className="w-4 h-4 text-primary" />
+                  <span>Restaurant</span>
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <Store className="w-4 h-4 text-primary" />
+                  <span>Boutique</span>
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <Truck className="w-4 h-4 text-primary" />
+                  <span>Livraison</span>
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <Car className="w-4 h-4 text-primary" />
+                  <span>Transport</span>
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <Plane className="w-4 h-4 text-primary" />
+                  <span>+11 autres</span>
+                </div>
               </div>
             </div>
           </CardContent>
