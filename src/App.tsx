@@ -136,14 +136,6 @@ const App = () => (
                 }
               />
               <Route
-                path="/pdg"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <PDG224Solutions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/pdg/api-supervision"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
