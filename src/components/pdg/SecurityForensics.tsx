@@ -252,7 +252,11 @@ const SecurityForensics: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-muted-foreground">Score d'Anomalie</p>
-                      <p className="text-2xl font-bold">{behaviorAnalysis.anomalyScore.toFixed(1)}</p>
+                      <p className="text-2xl font-bold">
+                        {behaviorAnalysis.anomalyScore !== null && behaviorAnalysis.anomalyScore !== undefined 
+                          ? behaviorAnalysis.anomalyScore.toFixed(1) 
+                          : '0.0'}
+                      </p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-muted-foreground">Niveau de Risque</p>
