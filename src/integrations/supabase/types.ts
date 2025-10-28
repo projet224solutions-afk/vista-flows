@@ -110,6 +110,7 @@ export type Database = {
         Row: {
           access_token: string | null
           agent_code: string
+          can_create_sub_agent: boolean
           commission_rate: number | null
           created_at: string | null
           email: string
@@ -126,6 +127,7 @@ export type Database = {
         Insert: {
           access_token?: string | null
           agent_code: string
+          can_create_sub_agent?: boolean
           commission_rate?: number | null
           created_at?: string | null
           email: string
@@ -142,6 +144,7 @@ export type Database = {
         Update: {
           access_token?: string | null
           agent_code?: string
+          can_create_sub_agent?: boolean
           commission_rate?: number | null
           created_at?: string | null
           email?: string
