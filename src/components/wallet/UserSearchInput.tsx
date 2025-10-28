@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, Check } from 'lucide-react';
+import { Search, User, Check, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface UserSearchResult {
   custom_id: string;
@@ -33,6 +34,31 @@ export const UserSearchInput = ({
   const [searching, setSearching] = useState(false);
   const [userInfo, setUserInfo] = useState<UserSearchResult | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [availableUsers, setAvailableUsers] = useState<UserSearchResult[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Charger tous les utilisateurs disponibles au montage
+  useEffect(() => {
+    const loadAvailableUsers = async () => {
+      try {
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (!currentUser.user) return;
+
+        const { data, error } = await supabase
+          .from('user_search_view')
+          .select('*')
+          .neq('user_id', currentUser.user.id); // Exclure l'utilisateur actuel
+
+        if (!error && data) {
+          setAvailableUsers(data);
+        }
+      } catch (error) {
+        console.error('❌ Erreur chargement utilisateurs:', error);
+      }
+    };
+
+    loadAvailableUsers();
+  }, []);
 
   const searchUser = async (customId: string) => {
     if (!customId || customId.length < 3) {
@@ -98,6 +124,23 @@ export const UserSearchInput = ({
     return user.email || user.phone || 'Utilisateur';
   };
 
+  const filteredUsers = availableUsers.filter(user =>
+    user.custom_id.toLowerCase().includes(value.toLowerCase()) ||
+    user.first_name?.toLowerCase().includes(value.toLowerCase()) ||
+    user.last_name?.toLowerCase().includes(value.toLowerCase()) ||
+    user.email?.toLowerCase().includes(value.toLowerCase())
+  );
+
+  const selectUser = (user: UserSearchResult) => {
+    onChange(user.custom_id);
+    setUserInfo(user);
+    setSearchError(null);
+    setShowSuggestions(false);
+    if (onUserSelect && user.user_id) {
+      onUserSelect(user.user_id);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor="user-search">{label}</Label>
@@ -108,6 +151,8 @@ export const UserSearchInput = ({
           placeholder={placeholder}
           value={value}
           onChange={(e) => handleInputChange(e.target.value.toUpperCase())}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           className="pl-10"
         />
         {searching && (
@@ -116,6 +161,33 @@ export const UserSearchInput = ({
           </div>
         )}
       </div>
+
+      {/* Suggestions d'utilisateurs pendant la saisie */}
+      {showSuggestions && value && filteredUsers.length > 0 && (
+        <ScrollArea className="h-[200px] border rounded-lg bg-background">
+          <div className="p-2 space-y-1">
+            {filteredUsers.map((user) => (
+              <button
+                key={user.user_id}
+                onClick={() => selectUser(user)}
+                className="w-full p-2 hover:bg-muted rounded-lg text-left transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {getUserDisplayName(user)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs font-mono ml-2 flex-shrink-0">
+                    {user.custom_id}
+                  </Badge>
+                </div>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
 
       {/* Résultat de la recherche */}
       {userInfo && (
@@ -145,6 +217,41 @@ export const UserSearchInput = ({
           <p className="text-sm text-red-600 dark:text-red-400">
             {searchError}
           </p>
+        </div>
+      )}
+
+      {/* Liste des utilisateurs disponibles si aucune recherche */}
+      {!value && availableUsers.length > 0 && (
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">
+              Utilisateurs disponibles ({availableUsers.length})
+            </p>
+          </div>
+          <ScrollArea className="h-[150px]">
+            <div className="space-y-2">
+              {availableUsers.map((user) => (
+                <button
+                  key={user.user_id}
+                  onClick={() => selectUser(user)}
+                  className="w-full p-2 hover:bg-background rounded text-left transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {getUserDisplayName(user)}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs font-mono ml-2 flex-shrink-0">
+                      {user.custom_id}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       )}
     </div>
