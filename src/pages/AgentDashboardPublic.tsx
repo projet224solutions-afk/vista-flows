@@ -16,7 +16,7 @@ import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
-import { ManageProductsSection } from '@/components/agent/ManageProductsSection';
+import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
 
