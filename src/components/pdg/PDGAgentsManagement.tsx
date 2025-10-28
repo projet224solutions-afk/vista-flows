@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, UserCog } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 
@@ -438,15 +438,15 @@ export default function PDGAgentsManagement() {
                     <Edit className="w-4 h-4 mr-1" />
                     Modifier
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => window.open('/agent', '_blank')}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  <a
+                    href="/agent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
                   >
-                    <UserCog className="w-4 h-4 mr-1" />
+                    <ExternalLink className="w-4 h-4" />
                     Interface Agent
-                  </Button>
+                  </a>
                   {agent.is_active ? (
                     <Button
                       size="sm"
