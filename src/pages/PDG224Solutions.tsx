@@ -29,7 +29,7 @@ const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagem
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const PDGApiSupervision = lazy(() => import('@/pages/pdg/ApiSupervision'));
-const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
+const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
 
 export default function PDG224Solutions() {
   const { user, profile, signOut } = useAuth();
@@ -342,7 +342,7 @@ export default function PDG224Solutions() {
 
               {activeTab === 'communication' && (
                 <ErrorBoundary>
-                  <UniversalCommunicationHub />
+                  <PDGCommunicationTest />
                 </ErrorBoundary>
               )}
 

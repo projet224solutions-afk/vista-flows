@@ -107,8 +107,9 @@ class UniversalCommunicationService {
 
       if (convError) throw convError;
 
-      // Ajouter les participants
-      const participants = participantIds.map(userId => ({
+      // Ajouter les participants (incluant le créateur)
+      const allParticipantIds = Array.from(new Set([creatorId, ...participantIds]));
+      const participants = allParticipantIds.map(userId => ({
         conversation_id: conversation.id,
         user_id: userId
       }));
@@ -192,10 +193,12 @@ class UniversalCommunicationService {
       const { data, error } = await supabase
         .from('messages')
         .insert({
+          conversation_id: conversationId, // 🔧 AJOUT DU conversation_id
           sender_id: senderId,
           recipient_id: recipientId,
           content,
-          type: 'text'
+          type: 'text',
+          status: 'sent'
         } as any)
         .select()
         .single();
@@ -242,10 +245,15 @@ class UniversalCommunicationService {
       const { data, error } = await supabase
         .from('messages')
         .insert({
+          conversation_id: conversationId, // 🔧 AJOUT DU conversation_id
           sender_id: senderId,
           recipient_id: recipientId,
           content: file.name,
-          type
+          type,
+          status: 'sent',
+          file_url: publicUrl,
+          file_name: file.name,
+          file_size: file.size
         } as any)
         .select()
         .single();
