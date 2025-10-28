@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      advanced_carts: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          price_at_add: number
+          product_id: string
+          quantity: number
+          updated_at: string | null
+          user_id: string
+          variant_id: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          price_at_add: number
+          product_id: string
+          quantity: number
+          updated_at?: string | null
+          user_id: string
+          variant_id?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          price_at_add?: number
+          product_id?: string
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+          variant_id?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advanced_carts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advanced_carts_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advanced_carts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_created_users: {
         Row: {
           agent_id: string
@@ -2544,6 +2605,45 @@ export type Database = {
           },
         ]
       }
+      mfa_verifications: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          expires_at: string
+          id: string
+          is_verified: boolean | null
+          transaction_id: string | null
+          user_id: string
+          verification_code: string
+          verification_method: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          is_verified?: boolean | null
+          transaction_id?: string | null
+          user_id: string
+          verification_code: string
+          verification_method: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          is_verified?: boolean | null
+          transaction_id?: string | null
+          user_id?: string
+          verification_code?: string
+          verification_method?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -2896,6 +2996,78 @@ export type Database = {
           vendor_id?: string
         }
         Relationships: []
+      }
+      product_reviews: {
+        Row: {
+          content: string
+          created_at: string | null
+          helpful_count: number | null
+          id: string
+          is_approved: boolean | null
+          not_helpful_count: number | null
+          order_id: string | null
+          photos: Json | null
+          product_id: string
+          rating: number
+          title: string
+          updated_at: string | null
+          user_id: string
+          vendor_response: string | null
+          vendor_response_at: string | null
+          verified_purchase: boolean | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_approved?: boolean | null
+          not_helpful_count?: number | null
+          order_id?: string | null
+          photos?: Json | null
+          product_id: string
+          rating: number
+          title: string
+          updated_at?: string | null
+          user_id: string
+          vendor_response?: string | null
+          vendor_response_at?: string | null
+          verified_purchase?: boolean | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_approved?: boolean | null
+          not_helpful_count?: number | null
+          order_id?: string | null
+          photos?: Json | null
+          product_id?: string
+          rating?: number
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          vendor_response?: string | null
+          vendor_response_at?: string | null
+          verified_purchase?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_variants: {
         Row: {
@@ -3353,6 +3525,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_notifications: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          is_sent: boolean | null
+          priority: string | null
+          read_at: string | null
+          sent_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          is_sent?: boolean | null
+          priority?: string | null
+          read_at?: string | null
+          sent_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          is_sent?: boolean | null
+          priority?: string | null
+          read_at?: string | null
+          sent_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       pwa_installations: {
         Row: {
@@ -5302,6 +5519,45 @@ export type Database = {
           },
         ]
       }
+      user_analytics: {
+        Row: {
+          created_at: string | null
+          device_info: Json | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          location_data: Json | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: Json | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          location_data?: Json | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: Json | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          location_data?: Json | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_contacts: {
         Row: {
           contact_id: string
@@ -5343,6 +5599,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_product_interactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string
+          interaction_weight: number | null
+          metadata: Json | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          interaction_weight?: number | null
+          metadata?: Json | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          interaction_weight?: number | null
+          metadata?: Json | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_product_interactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -6089,6 +6383,44 @@ export type Database = {
           },
         ]
       }
+      wishlists: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          notify_on_sale: boolean | null
+          priority: number | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notify_on_sale?: boolean | null
+          priority?: number | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notify_on_sale?: boolean | null
+          priority?: number | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       bureau_pwa_stats: {
@@ -6331,6 +6663,10 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
         Returns: Json
       }
+      calculate_recommendation_score: {
+        Args: { p_product_id: string; p_user_id: string }
+        Returns: number
+      }
       calculate_taxi_fare: {
         Args: {
           p_distance_km: number
@@ -6560,6 +6896,14 @@ export type Database = {
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       get_finance_stats: { Args: never; Returns: Json }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
+      get_personalized_recommendations: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          product_id: string
+          reason: string
+          score: number
+        }[]
+      }
       get_user_conversations: {
         Args: { p_user_id: string }
         Returns: {
