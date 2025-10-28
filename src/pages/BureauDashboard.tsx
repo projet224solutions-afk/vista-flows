@@ -226,10 +226,11 @@ export default function BureauDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-bold">{bureau.bureau_code}</h1>
+            <h1 className="text-3xl font-bold">Interface Bureau Syndicat</h1>
             <UserIdDisplay layout="horizontal" showBadge={true} />
           </div>
-          <p className="text-muted-foreground">{bureau.prefecture} - {bureau.commune}</p>
+          <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
+          <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
         </div>
         <div className="flex gap-2 items-center">
           <BureauNetworkIndicator bureauId={bureau.id} />
