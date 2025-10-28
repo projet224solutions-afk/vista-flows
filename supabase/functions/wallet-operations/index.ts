@@ -429,7 +429,11 @@ serve(async (req) => {
     console.error('❌ Error in wallet operation:', errorMessage, error);
     
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        success: false,
+        error: errorMessage,
+        message: errorMessage
+      }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

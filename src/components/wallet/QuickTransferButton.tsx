@@ -81,7 +81,14 @@ export function QuickTransferButton({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Erreur lors du transfert');
+      }
+
+      // Vérifier si la réponse contient une erreur
+      if (data && !data.success && data.error) {
+        throw new Error(data.error);
+      }
 
       toast.success(`Transfert de ${transferAmount.toLocaleString()} GNF réussi !`);
       setAmount('');
@@ -93,7 +100,8 @@ export function QuickTransferButton({
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
       console.error('❌ Erreur transfert:', error);
-      toast.error(error.message || 'Erreur lors du transfert');
+      const errorMessage = error.message || error.error || 'Erreur lors du transfert';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

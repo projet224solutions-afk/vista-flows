@@ -302,7 +302,15 @@ export const UniversalWalletTransactions = () => {
 
       console.log('✅ Réponse transfert:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        // Si c'est une FunctionsHttpError, on essaie de récupérer le message d'erreur du body
+        throw new Error(error.message || 'Erreur lors du transfert');
+      }
+
+      // Vérifier si la réponse contient une erreur
+      if (data && !data.success && data.error) {
+        throw new Error(data.error);
+      }
 
       toast.success(`Transfert de ${formatPrice(amount)} effectué avec succès !`);
       setTransferAmount('');
@@ -312,7 +320,9 @@ export const UniversalWalletTransactions = () => {
       await Promise.all([loadWalletData(), loadTransactions()]);
     } catch (error: any) {
       console.error('❌ Erreur transfert:', error);
-      toast.error(error.message || 'Erreur lors du transfert');
+      // Afficher le message d'erreur spécifique
+      const errorMessage = error.message || error.error || 'Erreur lors du transfert';
+      toast.error(errorMessage);
     } finally {
       setProcessing(false);
     }
