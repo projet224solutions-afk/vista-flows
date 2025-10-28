@@ -27,7 +27,6 @@ const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
@@ -125,11 +124,12 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              {/* Rediriger /admin vers /pdg - Interface principale de gestion */}
               <Route
                 path="/admin"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
+                    <PDG224Solutions />
                   </ProtectedRoute>
                 }
               />
