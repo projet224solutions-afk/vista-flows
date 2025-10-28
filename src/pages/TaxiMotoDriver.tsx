@@ -48,6 +48,7 @@ import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
+import { UserTracker } from "@/components/taxi-moto/UserTracker";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -964,6 +965,7 @@ export default function TaxiMotoDriver() {
                                 </h1>
                                 <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
                                 <DriverTutorial />
+                                <UserTracker />
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
