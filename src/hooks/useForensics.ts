@@ -78,7 +78,7 @@ export const useForensics = () => {
         .limit(50);
 
       if (error) throw error;
-      setSnapshots((data || []) as ForensicSnapshot[]);
+      setSnapshots((data as any) || []);
     } catch (error: any) {
       console.error('Error loading snapshots:', error);
     }
