@@ -15,7 +15,8 @@ export interface RouteInfo {
 }
 
 export class TaxiMotoGeolocationService {
-  private static MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNXA5Z3Y4czBkOW8yanM2dHhtZDk5YXgifQ.6_iU6CvxfWWFhJFwNBLy5g';
+  private static SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+  private static SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
 
   /**
    * Calculer la distance entre deux points (formule Haversine)
@@ -46,16 +47,25 @@ export class TaxiMotoGeolocationService {
   }
 
   /**
-   * Obtenir un itinéraire avec Mapbox Directions API
+   * Obtenir un itinéraire via Edge Function proxy
    */
   static async getRoute(
     start: Coordinates,
     end: Coordinates
   ): Promise<RouteInfo> {
     try {
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${this.MAPBOX_TOKEN}`;
-      
-      const response = await fetch(url);
+      const response = await fetch(`${this.SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'route',
+          data: { start, end }
+        })
+      });
+
       const data = await response.json();
 
       if (!data.routes || data.routes.length === 0) {
@@ -92,16 +102,25 @@ export class TaxiMotoGeolocationService {
   }
 
   /**
-   * Géocodage inverse: obtenir l'adresse à partir de coordonnées
+   * Géocodage inverse via Edge Function proxy
    */
   static async reverseGeocode(
     latitude: number,
     longitude: number
   ): Promise<string> {
     try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${this.MAPBOX_TOKEN}&language=fr`;
-      
-      const response = await fetch(url);
+      const response = await fetch(`${this.SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'reverse-geocode',
+          data: { latitude, longitude }
+        })
+      });
+
       const data = await response.json();
 
       if (data.features && data.features.length > 0) {
@@ -116,20 +135,25 @@ export class TaxiMotoGeolocationService {
   }
 
   /**
-   * Recherche d'adresse (autocomplete)
+   * Recherche d'adresse via Edge Function proxy
    */
   static async searchAddress(
     query: string,
     proximity?: Coordinates
   ): Promise<Array<{ id: string; name: string; coordinates: Coordinates }>> {
     try {
-      let url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${this.MAPBOX_TOKEN}&language=fr&country=GN&limit=5`;
-      
-      if (proximity) {
-        url += `&proximity=${proximity.longitude},${proximity.latitude}`;
-      }
+      const response = await fetch(`${this.SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'search-address',
+          data: { query, proximity }
+        })
+      });
 
-      const response = await fetch(url);
       const data = await response.json();
 
       if (data.features) {

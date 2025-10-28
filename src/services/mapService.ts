@@ -62,13 +62,27 @@ class MapService {
     });
   }
 
-  // Calculer un itinéraire avec Mapbox
+  // Calculer un itinéraire via Edge Function proxy
   async calculateRoute(start: Location, end: Location): Promise<Route> {
     try {
-      const MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNXA5Z3Y4czBkOW8yanM2dHhtZDk5YXgifQ.6_iU6CvxfWWFhJFwNBLy5g';
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
       
-      const response = await fetch(url);
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'route',
+          data: { 
+            start: { latitude: start.latitude, longitude: start.longitude },
+            end: { latitude: end.latitude, longitude: end.longitude }
+          }
+        })
+      });
+
       const data = await response.json();
 
       if (!data.routes || data.routes.length === 0) {
@@ -98,13 +112,24 @@ class MapService {
     }
   }
 
-  // Géocode une adresse avec Mapbox
+  // Géocode une adresse via Edge Function proxy
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
     try {
-      const MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNXA5Z3Y4czBkOW8yanM2dHhtZDk5YXgifQ.6_iU6CvxfWWFhJFwNBLy5g';
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&language=fr&country=GN&limit=5`;
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
       
-      const response = await fetch(url);
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/mapbox-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'geocode',
+          data: { address }
+        })
+      });
+
       const data = await response.json();
 
       if (data.features && data.features.length > 0) {
