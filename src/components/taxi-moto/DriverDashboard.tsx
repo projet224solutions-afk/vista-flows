@@ -214,56 +214,40 @@ export function DriverDashboard({
         <Card 
           className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
-            onNavigate('history');
-            toast.success('💰 Détails des gains');
+            if (stats.todayEarnings > 0) {
+              onNavigate('history');
+              toast.success('💰 Détails des gains');
+            } else {
+              toast.info('Aucun gain aujourd\'hui. Commencez une course pour gagner de l\'argent.');
+            }
           }}
         >
           <CardContent className="p-4 text-center">
-            {stats.todayEarnings > 0 ? (
-              <>
-                <div className="text-3xl font-bold text-green-700 mb-1">
-                  {stats.todayEarnings.toLocaleString()}
-                </div>
-                <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
-                <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
-              </>
-            ) : (
-              <>
-                <div className="text-lg font-semibold text-gray-500 mb-1">
-                  Aucun gain
-                </div>
-                <div className="text-xs text-gray-500">aujourd'hui</div>
-                <div className="text-xs text-gray-400 mt-1">Commencez une course</div>
-              </>
-            )}
+            <div className="text-3xl font-bold text-green-700 mb-1">
+              {stats.todayEarnings.toLocaleString()}
+            </div>
+            <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
+            <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
           </CardContent>
         </Card>
 
         <Card 
           className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
-            onNavigate('history');
-            toast.success('🚕 Historique des courses');
+            if (stats.todayRides > 0) {
+              onNavigate('history');
+              toast.success('🚕 Historique des courses');
+            } else {
+              toast.info('Aucune course active aujourd\'hui. Passez en ligne pour recevoir des demandes.');
+            }
           }}
         >
           <CardContent className="p-4 text-center">
-            {stats.todayRides > 0 ? (
-              <>
-                <div className="text-3xl font-bold text-blue-700 mb-1">
-                  {stats.todayRides}
-                </div>
-                <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
-                <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
-              </>
-            ) : (
-              <>
-                <div className="text-lg font-semibold text-gray-500 mb-1">
-                  Aucune course
-                </div>
-                <div className="text-xs text-gray-500">active aujourd'hui</div>
-                <div className="text-xs text-gray-400 mt-1">En attente...</div>
-              </>
-            )}
+            <div className="text-3xl font-bold text-blue-700 mb-1">
+              {stats.todayRides}
+            </div>
+            <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
+            <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
           </CardContent>
         </Card>
       </div>
