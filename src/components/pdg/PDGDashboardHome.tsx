@@ -97,6 +97,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       message: `${stats.pendingValidations || 0} commande(s) en attente de traitement`,
       icon: Clock,
       color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
+      action: 'orders',
       show: (stats.pendingValidations || 0) > 0
     },
     { 
@@ -104,6 +105,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nécessitent votre attention`,
       icon: AlertCircle,
       color: 'text-red-600 bg-red-500/10 border-red-500/20',
+      action: 'security',
       show: (stats.criticalAlerts || 0) > 0
     },
     { 
@@ -111,6 +113,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      action: 'vendors',
       show: true
     },
     { 
@@ -118,6 +121,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       message: `${stats.onlineDrivers || 0} livreurs en ligne sur ${stats.totalDrivers || 0}`,
       icon: Activity,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
+      action: 'drivers',
       show: true
     },
   ].filter(alert => alert.show);
@@ -181,18 +185,19 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             {alerts.map((alert, index) => {
               const AlertIcon = alert.icon;
               return (
-                <div 
+                <button
                   key={index}
+                  onClick={() => onNavigate?.(alert.action)}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 hover:shadow-md",
+                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer hover:scale-[1.02]",
                     alert.color
                   )}
                 >
                   <div className="w-8 h-8 rounded-full bg-background/50 flex items-center justify-center flex-shrink-0">
                     <AlertIcon className="w-4 h-4" />
                   </div>
-                  <p className="text-sm font-medium flex-1">{alert.message}</p>
-                </div>
+                  <p className="text-sm font-medium flex-1 text-left">{alert.message}</p>
+                </button>
               );
             })}
           </CardContent>
