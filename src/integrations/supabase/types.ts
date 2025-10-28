@@ -6586,6 +6586,17 @@ export type Database = {
         }
         Relationships: []
       }
+      user_search_view: {
+        Row: {
+          custom_id: string | null
+          email: string | null
+          first_name: string | null
+          last_name: string | null
+          phone: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       wallet_admin_stats: {
         Row: {
           active_wallets: number | null
@@ -6910,6 +6921,7 @@ export type Database = {
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
+      generate_user_custom_id: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }

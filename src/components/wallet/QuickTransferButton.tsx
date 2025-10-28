@@ -119,14 +119,17 @@ export function QuickTransferButton({
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="recipient">ID du destinataire</Label>
+            <Label htmlFor="recipient">Code du destinataire</Label>
             <Input
               id="recipient"
-              placeholder="UUID de l'utilisateur destinataire"
+              placeholder="Ex: ABC1234"
               value={recipientId}
-              onChange={(e) => setRecipientId(e.target.value)}
+              onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
               disabled={loading}
             />
+            <p className="text-xs text-muted-foreground">
+              Entrez le code d'identification de 7 caractères
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="amount">Montant (GNF)</Label>
