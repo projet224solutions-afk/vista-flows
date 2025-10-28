@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft } from "lucide-react";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 
@@ -36,6 +36,8 @@ export default function Auth() {
   // Form data
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [showSignup, setShowSignup] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [showServiceSelection, setShowServiceSelection] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -231,7 +233,19 @@ export default function Auth() {
   };
 
   const handleRoleClick = (role: UserRole) => {
-    setSelectedRole(role);
+    if (role === 'vendeur') {
+      // Pour les marchands, afficher d'abord la sélection du type de service
+      setShowServiceSelection(true);
+      setSelectedRole(role);
+    } else {
+      setSelectedRole(role);
+      setShowSignup(true);
+    }
+  };
+
+  const handleServiceTypeSelect = (serviceTypeId: string) => {
+    setSelectedServiceType(serviceTypeId);
+    setShowServiceSelection(false);
     setShowSignup(true);
   };
 
@@ -294,12 +308,13 @@ export default function Auth() {
               <span className="font-medium">Client</span>
             </button>
             <button
-              onClick={() => navigate('/services')}
-              className="flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-green-600"
+              onClick={() => handleRoleClick('vendeur')}
+              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
+                }`}
             >
               <Store className="h-6 w-6 text-green-600 mb-2" />
               <span className="font-medium">Marchand</span>
-              <span className="text-xs text-muted-foreground mt-1">Services Pro</span>
+              <span className="text-xs text-muted-foreground">15 services pro</span>
             </button>
             <button
               onClick={() => handleRoleClick('livreur')}
@@ -329,8 +344,72 @@ export default function Auth() {
         </div>
       </div>
 
+      {/* Sélection du type de service professionnel pour les marchands */}
+      {showServiceSelection && (
+        <div className="max-w-6xl mx-auto px-6 mt-8">
+          <Card className="shadow-xl border-2 border-primary">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowServiceSelection(false);
+                    setSelectedRole(null);
+                  }}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Retour
+                </Button>
+              </div>
+              
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold mb-2">
+                  Choisissez votre Type de Service Professionnel
+                </h3>
+                <p className="text-muted-foreground">
+                  Sélectionnez le service que vous souhaitez créer parmi nos 15 catégories professionnelles
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[
+                  { id: '1', name: 'Restaurant', icon: '🍽️', color: 'orange' },
+                  { id: '2', name: 'Boutique E-commerce', icon: '🛍️', color: 'blue' },
+                  { id: '3', name: 'Livraison', icon: '📦', color: 'green' },
+                  { id: '4', name: 'Taxi-Moto', icon: '🏍️', color: 'yellow' },
+                  { id: '5', name: 'Beauté & Bien-être', icon: '💇', color: 'pink' },
+                  { id: '6', name: 'Réparation', icon: '🔧', color: 'gray' },
+                  { id: '7', name: 'Location Immobilière', icon: '🏠', color: 'purple' },
+                  { id: '8', name: 'Éducation', icon: '🎓', color: 'indigo' },
+                  { id: '9', name: 'Santé', icon: '🏥', color: 'red' },
+                  { id: '10', name: 'Voyage', icon: '✈️', color: 'cyan' },
+                  { id: '11', name: 'Freelance', icon: '💼', color: 'teal' },
+                  { id: '12', name: 'Agriculture', icon: '🌾', color: 'lime' },
+                  { id: '13', name: 'Construction', icon: '🏗️', color: 'amber' },
+                  { id: '14', name: 'Média', icon: '📸', color: 'rose' },
+                  { id: '15', name: 'Informatique', icon: '💻', color: 'violet' },
+                ].map((service) => (
+                  <button
+                    key={service.id}
+                    onClick={() => handleServiceTypeSelect(service.id)}
+                    className={`flex flex-col items-center p-4 bg-white rounded-lg border-2 hover:border-primary hover:shadow-lg transition-all ${
+                      selectedServiceType === service.id ? 'border-primary ring-2 ring-primary' : 'border-border'
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">{service.icon}</div>
+                    <span className="text-sm font-medium text-center">{service.name}</span>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Formulaire de connexion/inscription */}
-      <div className="max-w-md mx-auto px-6 mt-8">
+      {!showServiceSelection && (
+        <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
             {/* Messages d'information */}
@@ -353,7 +432,12 @@ export default function Auth() {
             {showSignup && (
               <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="text-purple-800 text-sm">
-                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole}` : ''}.
+                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? 'Marchand Professionnel' : selectedRole}` : ''}.
+                  {selectedServiceType && (
+                    <span className="block mt-1 font-semibold">
+                      Service sélectionné : Type {selectedServiceType}
+                    </span>
+                  )}
                 </p>
               </div>
             )}
@@ -538,6 +622,7 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Footer de navigation */}
       <QuickFooter />
