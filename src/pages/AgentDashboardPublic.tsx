@@ -277,6 +277,8 @@ export default function AgentDashboardPublic() {
                       {permission === 'view_reports' && '📊 Voir les rapports'}
                       {permission === 'manage_commissions' && '💰 Gérer les commissions'}
                       {permission === 'create_sub_agents' && '👥 Créer des sous-agents'}
+                      {permission === 'manage_users' && '👤 Gérer les utilisateurs'}
+                      {permission === 'manage_products' && '📦 Gérer les produits'}
                     </span>
                   </div>
                 ))}

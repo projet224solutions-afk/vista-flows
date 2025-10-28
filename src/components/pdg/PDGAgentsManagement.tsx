@@ -25,7 +25,9 @@ export default function PDGAgentsManagement() {
       create_users: true,
       create_sub_agents: false,
       view_reports: true,
-      manage_commissions: false
+      manage_commissions: false,
+      manage_users: false,
+      manage_products: false
     }
   });
 
@@ -81,7 +83,9 @@ export default function PDGAgentsManagement() {
           create_users: true,
           create_sub_agents: false,
           view_reports: true,
-          manage_commissions: false
+          manage_commissions: false,
+          manage_users: false,
+          manage_products: false
         }
       });
       
@@ -106,7 +110,9 @@ export default function PDGAgentsManagement() {
         create_users: agent.permissions.includes('create_users'),
         create_sub_agents: agent.can_create_sub_agent,
         view_reports: agent.permissions.includes('view_reports'),
-        manage_commissions: agent.permissions.includes('manage_commissions')
+        manage_commissions: agent.permissions.includes('manage_commissions'),
+        manage_users: agent.permissions.includes('manage_users'),
+        manage_products: agent.permissions.includes('manage_products')
       }
     });
     setIsDialogOpen(true);
@@ -169,7 +175,9 @@ export default function PDGAgentsManagement() {
                   create_users: true,
                   create_sub_agents: false,
                   view_reports: true,
-                  manage_commissions: false
+                  manage_commissions: false,
+                  manage_users: false,
+                  manage_products: false
                 }
               });
             }}>
@@ -277,6 +285,28 @@ export default function PDGAgentsManagement() {
                       })}
                     />
                     <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manage_users"
+                      checked={formData.permissions.manage_users}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, manage_users: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manage_products"
+                      checked={formData.permissions.manage_products}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, manage_products: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
                   </div>
                 </div>
               </div>

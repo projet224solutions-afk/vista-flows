@@ -25,6 +25,8 @@ export function CreateSubAgentForm({ parentAgentId, pdgId }: CreateSubAgentFormP
       create_users: true,
       view_reports: false,
       manage_commissions: false,
+      manage_users: false,
+      manage_products: false
     }
   });
 
@@ -74,6 +76,8 @@ export function CreateSubAgentForm({ parentAgentId, pdgId }: CreateSubAgentFormP
           create_users: true,
           view_reports: false,
           manage_commissions: false,
+          manage_users: false,
+          manage_products: false
         }
       });
       setIsOpen(false);
@@ -179,6 +183,28 @@ export function CreateSubAgentForm({ parentAgentId, pdgId }: CreateSubAgentFormP
                   })}
                 />
                 <label htmlFor="manage_commissions_sub" className="text-sm">Gérer les commissions</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="manage_users_sub"
+                  checked={formData.permissions.manage_users}
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    permissions: { ...formData.permissions, manage_users: checked as boolean }
+                  })}
+                />
+                <label htmlFor="manage_users_sub" className="text-sm">Gérer les utilisateurs</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="manage_products_sub"
+                  checked={formData.permissions.manage_products}
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    permissions: { ...formData.permissions, manage_products: checked as boolean }
+                  })}
+                />
+                <label htmlFor="manage_products_sub" className="text-sm">Gérer les produits</label>
               </div>
             </div>
           </div>
