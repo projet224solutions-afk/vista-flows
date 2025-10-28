@@ -286,11 +286,35 @@ serve(async (req) => {
           throw new Error('Solde insuffisant');
         }
 
+        // 🔍 Détecter si c'est un UUID ou un custom_id
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recipient_id);
+        let recipientUserId = recipient_id;
+
+        if (!isUUID) {
+          // C'est un custom_id, chercher l'user_id correspondant
+          console.log('🔍 Recherche par custom_id:', recipient_id);
+          
+          const { data: userIdData, error: userIdError } = await supabaseClient
+            .from('user_ids')
+            .select('user_id')
+            .eq('custom_id', recipient_id.toUpperCase())
+            .single();
+
+          console.log('👤 User ID lookup:', { userIdData, userIdError });
+
+          if (userIdError || !userIdData) {
+            throw new Error(`Utilisateur avec le code ${recipient_id} introuvable`);
+          }
+
+          recipientUserId = userIdData.user_id;
+          console.log('✅ User ID trouvé:', recipientUserId);
+        }
+
         // Vérifier le wallet du destinataire
         const { data: recipientWallet, error: recipientError } = await supabaseClient
           .from('wallets')
           .select('*')
-          .eq('user_id', recipient_id)
+          .eq('user_id', recipientUserId)
           .single();
 
         console.log('👥 Recipient wallet:', { recipientWallet, recipientError });
@@ -316,7 +340,7 @@ serve(async (req) => {
         const { error: recipientUpdateError } = await supabaseClient
           .from('wallets')
           .update({ balance: newBalanceRecipient })
-          .eq('user_id', recipient_id);
+          .eq('user_id', recipientUserId);
 
         if (recipientUpdateError) {
           console.error('❌ Recipient update error:', recipientUpdateError);
@@ -328,7 +352,7 @@ serve(async (req) => {
           .from('enhanced_transactions')
           .insert({
             sender_id: user.id,
-            receiver_id: recipient_id,
+            receiver_id: recipientUserId,
             amount: amount,
             method: 'wallet',
             status: 'completed',
