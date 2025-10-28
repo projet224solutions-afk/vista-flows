@@ -73,26 +73,49 @@ export function DriverDashboard({
     serialNumber: ''
   });
   const [loading, setLoading] = useState(false);
-  const [onlineStartTime, setOnlineStartTime] = useState<Date | null>(null);
   const [currentOnlineTime, setCurrentOnlineTime] = useState('0h 0m 0s');
 
-  // Suivre le temps en ligne en temps réel
+  // Gérer le début/fin de la session en ligne avec localStorage
   useEffect(() => {
-    if (isOnline && !onlineStartTime) {
-      setOnlineStartTime(new Date());
-    } else if (!isOnline) {
-      setOnlineStartTime(null);
+    const storageKey = `driver_online_start_${driverId}`;
+    
+    if (isOnline) {
+      // Si le conducteur passe en ligne et n'a pas d'heure de début enregistrée
+      const existingStartTime = localStorage.getItem(storageKey);
+      if (!existingStartTime) {
+        const startTime = new Date().toISOString();
+        localStorage.setItem(storageKey, startTime);
+        console.log('⏰ Session en ligne démarrée:', startTime);
+      } else {
+        console.log('⏰ Session en ligne existante récupérée:', existingStartTime);
+      }
+    } else {
+      // Si le conducteur passe hors ligne, nettoyer le localStorage
+      localStorage.removeItem(storageKey);
       setCurrentOnlineTime('0h 0m 0s');
+      console.log('⏸️ Session en ligne terminée');
     }
-  }, [isOnline]);
+  }, [isOnline, driverId]);
 
   // Mettre à jour le temps en ligne chaque seconde
   useEffect(() => {
-    if (!isOnline || !onlineStartTime) return;
+    if (!isOnline || !driverId) {
+      setCurrentOnlineTime('0h 0m 0s');
+      return;
+    }
 
-    const interval = setInterval(() => {
+    const storageKey = `driver_online_start_${driverId}`;
+    
+    const updateTime = () => {
+      const startTimeStr = localStorage.getItem(storageKey);
+      if (!startTimeStr) {
+        setCurrentOnlineTime('0h 0m 0s');
+        return;
+      }
+
+      const startTime = new Date(startTimeStr);
       const now = new Date();
-      const diffMs = now.getTime() - onlineStartTime.getTime();
+      const diffMs = now.getTime() - startTime.getTime();
       const totalSeconds = Math.floor(diffMs / 1000);
       
       const hours = Math.floor(totalSeconds / 3600);
@@ -100,10 +123,14 @@ export function DriverDashboard({
       const seconds = totalSeconds % 60;
       
       setCurrentOnlineTime(`${hours}h ${minutes}m ${seconds}s`);
-    }, 1000);
+    };
+
+    // Mise à jour immédiate puis toutes les secondes
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
-  }, [isOnline, onlineStartTime]);
+  }, [isOnline, driverId]);
 
   const loadStats = async () => {
     if (!driverId) return;
