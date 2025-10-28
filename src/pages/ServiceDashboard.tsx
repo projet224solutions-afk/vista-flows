@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
+import { RestaurantMenu } from '@/components/professional-services/modules/RestaurantMenu';
+import { EcommerceProducts } from '@/components/professional-services/modules/EcommerceProducts';
+import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 
 export default function ServiceDashboard() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -189,25 +192,15 @@ export default function ServiceDashboard() {
           </TabsContent>
 
           <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des Produits/Services</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Module de gestion des produits à implémenter...</p>
-              </CardContent>
-            </Card>
+            {service.service_type?.category === 'food' ? (
+              <RestaurantMenu serviceId={service.id} />
+            ) : (
+              <EcommerceProducts serviceId={service.id} />
+            )}
           </TabsContent>
 
           <TabsContent value="bookings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Réservations & Commandes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Module de gestion des réservations à implémenter...</p>
-              </CardContent>
-            </Card>
+            <BookingManagement serviceId={service.id} />
           </TabsContent>
 
           <TabsContent value="reviews">
