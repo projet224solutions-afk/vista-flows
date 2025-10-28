@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -20,8 +21,9 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { useFinanceData } from '@/hooks/useFinanceData';
 
 export default function PDGFinance() {
-  const { stats, transactions, loading, refetch } = useFinanceData(true);
+  const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [showWalletsDialog, setShowWalletsDialog] = useState(false);
 
   const chartConfig = {
     amount: { label: "Montant", color: "hsl(var(--primary))" },
@@ -154,7 +156,10 @@ export default function PDGFinance() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+        <Card 
+          className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
+          onClick={() => setShowWalletsDialog(true)}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -170,7 +175,7 @@ export default function PDGFinance() {
                 {stats.active_wallets}
               </p>
               <p className="text-xs text-muted-foreground">
-                Utilisateurs
+                Cliquez pour voir les détails
               </p>
             </div>
           </CardContent>
@@ -325,6 +330,136 @@ export default function PDGFinance() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal des Wallets */}
+      <Dialog open={showWalletsDialog} onOpenChange={setShowWalletsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Wallet className="w-6 h-6 text-primary" />
+              Détails des Wallets ({wallets.length})
+            </DialogTitle>
+            <DialogDescription>
+              Liste complète de tous les wallets avec leurs informations détaillées
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {wallets.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Aucun wallet trouvé
+              </div>
+            ) : (
+              wallets.map((wallet) => (
+                <Card key={wallet.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Informations utilisateur */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {wallet.profiles?.business_name || 
+                               `${wallet.profiles?.first_name || ''} ${wallet.profiles?.last_name || ''}`.trim() ||
+                               'Utilisateur'}
+                            </h3>
+                            <Badge variant="outline" className="mt-1">
+                              {wallet.profiles?.role || 'N/A'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {wallet.profiles?.email && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Email:</span>
+                              <span className="font-medium">{wallet.profiles.email}</span>
+                            </div>
+                          )}
+                          
+                          {wallet.profiles?.phone && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Téléphone:</span>
+                              <span className="font-medium">{wallet.profiles.phone}</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <CreditCard className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">User ID:</span>
+                            <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                              {wallet.user_id}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informations wallet */}
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20">
+                          <p className="text-sm text-muted-foreground mb-1">Solde</p>
+                          <p className="text-3xl font-bold text-green-600">
+                            {Number(wallet.balance).toLocaleString()} {wallet.currency}
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Wallet className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Wallet ID:</span>
+                            <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                              {wallet.id}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Statut:</span>
+                            <Badge 
+                              variant={wallet.status === 'active' ? 'default' : 'secondary'}
+                              className={wallet.status === 'active' ? 'bg-green-500' : ''}
+                            >
+                              {wallet.status}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Créé le:</span>
+                            <span className="font-medium">
+                              {new Date(wallet.created_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Mis à jour:</span>
+                            <span className="font-medium">
+                              {new Date(wallet.updated_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
