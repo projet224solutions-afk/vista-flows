@@ -72,16 +72,8 @@ export function useFinanceData(enabled: boolean = true) {
 
       // Récupérer les transactions
       const { data: transData, error: transError } = await supabase
-        .from('enhanced_transactions')
-        .select(`
-          *,
-          sender_wallet:wallets!sender_wallet_id(
-            profiles(first_name, last_name)
-          ),
-          receiver_wallet:wallets!receiver_wallet_id(
-            profiles(first_name, last_name)
-          )
-        `)
+        .from('wallet_transactions')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -90,27 +82,32 @@ export function useFinanceData(enabled: boolean = true) {
       // Récupérer les wallets avec les profils utilisateurs
       const { data: walletsData, error: walletsError } = await supabase
         .from('wallets')
-        .select(`
-          *,
-          profiles(
-            id,
-            first_name,
-            last_name,
-            email,
-            phone,
-            role,
-            status
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
+      
+      // Récupérer les profils pour chaque wallet
+      let enrichedWallets: any[] = [];
+      if (walletsData) {
+        const profilePromises = walletsData.map(async (wallet) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, phone, role, status')
+            .eq('id', wallet.user_id)
+            .single();
+          return { ...wallet, profiles: profile };
+        });
+        enrichedWallets = await Promise.all(profilePromises);
+      }
       
       if (walletsError) {
         console.error('Erreur lors de la récupération des wallets:', walletsError);
         throw walletsError;
       }
 
+      console.log('✅ Wallets récupérés:', enrichedWallets);
+
       setTransactions(transData || []);
-      setWallets(walletsData || []);
+      setWallets(enrichedWallets);
 
       // Calculer les statistiques
       const totalRevenue = (transData || [])
@@ -125,8 +122,8 @@ export function useFinanceData(enabled: boolean = true) {
         .filter(t => t.status === 'pending')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
-      const activeWallets = (walletsData || [])
-        .filter(w => w.wallet_status === 'active')
+      const activeWallets = (enrichedWallets || [])
+        .filter((w: any) => w.wallet_status === 'active')
         .length;
 
       setStats({
