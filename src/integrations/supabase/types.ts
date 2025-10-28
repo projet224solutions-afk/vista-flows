@@ -2959,6 +2959,89 @@ export type Database = {
           },
         ]
       }
+      professional_services: {
+        Row: {
+          address: string | null
+          business_documents: Json | null
+          business_name: string
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          metadata: Json | null
+          opening_hours: Json | null
+          phone: string | null
+          rating: number | null
+          service_type_id: string
+          status: string | null
+          total_orders: number | null
+          total_revenue: number | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string
+          verification_status: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_documents?: Json | null
+          business_name: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          metadata?: Json | null
+          opening_hours?: Json | null
+          phone?: string | null
+          rating?: number | null
+          service_type_id: string
+          status?: string | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_documents?: Json | null
+          business_name?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          metadata?: Json | null
+          opening_hours?: Json | null
+          phone?: string | null
+          rating?: number | null
+          service_type_id?: string
+          status?: string | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_services_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3723,6 +3806,214 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_bookings: {
+        Row: {
+          booking_type: string
+          client_id: string
+          commission_amount: number | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          payment_status: string | null
+          professional_service_id: string
+          scheduled_date: string | null
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_type: string
+          client_id: string
+          commission_amount?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          payment_status?: string | null
+          professional_service_id: string
+          scheduled_date?: string | null
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_type?: string
+          client_id?: string
+          commission_amount?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          payment_status?: string | null
+          professional_service_id?: string
+          scheduled_date?: string | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_products: {
+        Row: {
+          category: string | null
+          compare_at_price: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: Json | null
+          is_available: boolean | null
+          metadata: Json | null
+          name: string
+          price: number
+          professional_service_id: string
+          stock_quantity: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          is_available?: boolean | null
+          metadata?: Json | null
+          name: string
+          price: number
+          professional_service_id: string
+          stock_quantity?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          is_available?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          professional_service_id?: string
+          stock_quantity?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_products_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reviews: {
+        Row: {
+          booking_id: string | null
+          client_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          images: Json | null
+          is_verified: boolean | null
+          professional_service_id: string
+          rating: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          client_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          images?: Json | null
+          is_verified?: boolean | null
+          professional_service_id: string
+          rating: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          client_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          images?: Json | null
+          is_verified?: boolean | null
+          professional_service_id?: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "service_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_reviews_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_types: {
+        Row: {
+          category: string | null
+          code: string
+          commission_rate: number | null
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sos_alerts: {
         Row: {

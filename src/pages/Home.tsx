@@ -211,6 +211,33 @@ export default function Home() {
         </Card>
       </section>
 
+      {/* Section Créer un Service Professionnel */}
+      <section className="px-4 py-4">
+        <Card className="overflow-hidden border-primary/50 bg-gradient-to-br from-primary/5 to-secondary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Store className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold">Créez votre Service Professionnel</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Restaurant, Boutique, Transport, Beauté... Choisissez parmi 15 catégories avec des outils professionnels complets
+                </p>
+                <Button
+                  onClick={() => navigate('/services')}
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Store className="w-4 h-4" />
+                  Commencer maintenant
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Services à proximité */}
       <section className="px-4 py-6">
         <h2 className="text-xl font-bold text-foreground mb-4">Services à proximité</h2>

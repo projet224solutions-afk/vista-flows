@@ -38,6 +38,8 @@ const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
 const InstallPWA = lazy(() => import("./pages/InstallPWA"));
+const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
+const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -164,6 +166,24 @@ const App = () => (
               <Route
                 path="/diagnostic-fonctionnalites"
                 element={<DiagnosticFonctionnalites />}
+              />
+
+              {/* Professional Services Routes */}
+              <Route
+                path="/services"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
+                    <ServiceSelection />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/service/:serviceId"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
+                    <ServiceDashboard />
+                  </ProtectedRoute>
+                }
               />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
