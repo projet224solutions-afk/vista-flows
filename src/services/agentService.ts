@@ -19,7 +19,6 @@ export interface AgentManagement extends Omit<AgentRow, 'permissions'> {
   permissions: string[];
   total_users_created?: number;
   total_commissions_earned?: number;
-  can_create_sub_agent?: boolean;
 }
 
 // Types additionnels

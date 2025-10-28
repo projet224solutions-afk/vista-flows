@@ -12,9 +12,12 @@ import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCir
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { CreateUserForm } from '@/components/agent/CreateUserForm';
+import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
 
 interface Agent {
   id: string;
+  pdg_id: string;
   name: string;
   email: string;
   phone?: string;
@@ -229,6 +232,32 @@ export default function AgentDashboardPublic() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Actions Rapides */}
+          <Card className="border-2 border-green-200 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
+              <CardTitle className="text-xl">Actions Rapides</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bouton Créer Utilisateur */}
+                {agent.permissions.includes('create_users') && (
+                  <CreateUserForm 
+                    agentId={agent.id} 
+                    agentCode={agent.agent_code}
+                  />
+                )}
+
+                {/* Bouton Créer Sous-Agent */}
+                {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
+                  <CreateSubAgentForm 
+                    parentAgentId={agent.id}
+                    pdgId={agent.pdg_id}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Permissions */}
           <Card>
