@@ -141,8 +141,50 @@ export function useFinanceData(enabled: boolean = true) {
   };
 
   useEffect(() => {
+    if (!enabled) return;
+
     fetchData();
-  }, []);
+
+    // Subscription temps réel pour les wallets
+    const walletsChannel = supabase
+      .channel('wallets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallets',
+        },
+        (payload) => {
+          console.log('💰 Wallet modifié:', payload);
+          fetchData(); // Recharger toutes les données
+        }
+      )
+      .subscribe();
+
+    // Subscription temps réel pour les transactions
+    const transactionsChannel = supabase
+      .channel('transactions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallet_transactions',
+        },
+        (payload) => {
+          console.log('💸 Transaction modifiée:', payload);
+          fetchData(); // Recharger toutes les données
+        }
+      )
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      walletsChannel.unsubscribe();
+      transactionsChannel.unsubscribe();
+    };
+  }, [enabled]);
 
   return {
     stats,
