@@ -33,18 +33,11 @@ export default function PDGFinance() {
   const exportData = async () => {
     try {
       const csvData = (transactions || []).map(t => {
-        const senderProfile = t.sender_wallet?.profiles;
-        const receiverProfile = t.receiver_wallet?.profiles;
-        
         return {
-          'ID Transaction': t.transaction_id,
+          'ID Transaction': t.id,
           'Type': t.transaction_type || 'N/A',
           'Montant': t.amount,
-          'Frais': t.fee,
-          'Montant Net': t.net_amount,
           'Statut': t.status,
-          'Expéditeur': senderProfile ? `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() || 'Système' : 'Système',
-          'Destinataire': receiverProfile ? `${receiverProfile?.first_name || ''} ${receiverProfile?.last_name || ''}`.trim() || 'Système' : 'Système',
           'Date': new Date(t.created_at).toLocaleDateString('fr-FR'),
           'Description': t.description || 'N/A',
           'Devise': t.currency || 'GNF'
@@ -294,7 +287,7 @@ export default function PDGFinance() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold">
-                        {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{trans.transaction_id}
+                        {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{trans.id.slice(0, 8)}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(trans.created_at).toLocaleDateString('fr-FR', { 
