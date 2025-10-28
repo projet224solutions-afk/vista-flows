@@ -215,23 +215,22 @@ export default function PDG224Solutions() {
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                 </Button>
                 <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate('/agent')}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg"
-                >
-                  <UserCog className="w-4 h-4" />
-                  <span className="hidden sm:inline">Interface Agent</span>
-                  <span className="sm:hidden">Agent</span>
-                </Button>
-                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowEmailDialog(true)}
                   className="gap-2"
                 >
                   <Mail className="w-4 h-4" />
-                  <span className="hidden sm:inline">Modifier Email</span>
+                  Modifier Email
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate('/agent')}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                >
+                  <UserCog className="w-4 h-4" />
+                  Interface Agent
                 </Button>
                 <Button
                   variant="outline"
@@ -240,7 +239,7 @@ export default function PDG224Solutions() {
                   className="gap-2"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Déconnexion</span>
+                  Déconnexion
                 </Button>
               </div>
             </div>
