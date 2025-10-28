@@ -43,6 +43,33 @@ export default function AgentDashboardPublic() {
     }
   }, [token]);
 
+  // Écouter les mises à jour en temps réel
+  useEffect(() => {
+    if (!token) return;
+
+    const channel = supabase
+      .channel('agent-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'agents_management',
+          filter: `access_token=eq.${token}`
+        },
+        (payload) => {
+          console.log('Agent mis à jour:', payload);
+          setAgent(payload.new as Agent);
+          toast.success('Vos informations ont été mises à jour');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [token]);
+
   const loadAgentData = async () => {
     try {
       setLoading(true);

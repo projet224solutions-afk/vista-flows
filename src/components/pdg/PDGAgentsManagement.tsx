@@ -57,7 +57,8 @@ export default function PDGAgentsManagement() {
           phone: formData.phone,
           permissions,
           commission_rate: formData.commission_rate,
-        } as any);
+          can_create_sub_agent: formData.permissions.create_sub_agents,
+        });
       } else {
         // Mode création
         await createAgent({
