@@ -5868,6 +5868,10 @@ export type Database = {
             }
             Returns: string
           }
+      agent_can_create_sub_agents: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       calculate_commission: {
         Args: {
           p_amount: number
@@ -6128,6 +6132,10 @@ export type Database = {
       increment_driver_earnings: {
         Args: { p_amount: number; p_driver_id: string }
         Returns: undefined
+      }
+      is_agent_in_same_pdg: {
+        Args: { _pdg_id: string; _user_id: string }
+        Returns: boolean
       }
       log_api_usage: {
         Args: { p_cost?: number; p_service_type: string }
