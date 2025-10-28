@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SimpleMapView } from "./SimpleMapView";
 import { GeolocationService } from "@/services/taxi/GeolocationService";
+import { TaxiMotoGeolocationService } from "@/services/taxi/TaxiMotoGeolocationService";
 
 interface ActiveRide {
   id: string;
@@ -134,26 +135,37 @@ export function DriverNavigation({
 
       setActiveRide(activeRideData);
 
-      // Calculer la distance et le temps
+      // Calculer la distance et le temps avec Mapbox
       if (location) {
         const destination = frontendStatus === 'picked_up' || frontendStatus === 'in_progress'
           ? activeRideData.destination.coords
           : activeRideData.pickup.coords;
         
-        const distance = calculateDistance(
-          location.latitude,
-          location.longitude,
-          destination.latitude,
-          destination.longitude
-        );
-        
-        setDistanceToDestination(distance * 1000); // en mètres
-        setTimeToDestination(Math.round((distance / 30) * 60)); // Estimation à 30 km/h
-        
-        if (frontendStatus === 'accepted' || frontendStatus === 'arriving') {
-          setNextInstruction(`Direction: ${activeRideData.pickup.address}`);
-        } else {
-          setNextInstruction(`Direction: ${activeRideData.destination.address}`);
+        try {
+          const routeInfo = await TaxiMotoGeolocationService.getRoute(
+            { latitude: location.latitude, longitude: location.longitude },
+            { latitude: destination.latitude, longitude: destination.longitude }
+          );
+          
+          setDistanceToDestination(routeInfo.distance * 1000); // convertir km en mètres
+          setTimeToDestination(routeInfo.duration); // déjà en minutes
+          
+          if (frontendStatus === 'accepted' || frontendStatus === 'arriving') {
+            setNextInstruction(`Direction: ${activeRideData.pickup.address}`);
+          } else {
+            setNextInstruction(`Direction: ${activeRideData.destination.address}`);
+          }
+        } catch (error) {
+          console.error('Erreur calcul route Mapbox:', error);
+          // Fallback calcul simple
+          const distance = TaxiMotoGeolocationService.calculateDistance(
+            location.latitude,
+            location.longitude,
+            destination.latitude,
+            destination.longitude
+          );
+          setDistanceToDestination(distance * 1000);
+          setTimeToDestination(Math.ceil(distance * 3));
         }
       }
 
@@ -166,18 +178,6 @@ export function DriverNavigation({
     }
   };
 
-  // Calculer la distance entre deux points
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Rayon de la terre en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
 
   // Mettre à jour le statut de la course
   const updateRideStatus = async (newStatus: string) => {
@@ -236,22 +236,30 @@ export function DriverNavigation({
     };
   }, [driverId]);
 
-  // Recalculer la distance quand la position change
+  // Recalculer la distance quand la position change avec Mapbox
   useEffect(() => {
     if (activeRide && location) {
       const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
         ? activeRide.destination.coords
         : activeRide.pickup.coords;
       
-      const distance = calculateDistance(
-        location.latitude,
-        location.longitude,
-        destination.latitude,
-        destination.longitude
-      );
-      
-      setDistanceToDestination(distance * 1000);
-      setTimeToDestination(Math.round((distance / 30) * 60));
+      TaxiMotoGeolocationService.getRoute(
+        { latitude: location.latitude, longitude: location.longitude },
+        { latitude: destination.latitude, longitude: destination.longitude }
+      ).then(routeInfo => {
+        setDistanceToDestination(routeInfo.distance * 1000);
+        setTimeToDestination(routeInfo.duration);
+      }).catch(() => {
+        // Fallback
+        const distance = TaxiMotoGeolocationService.calculateDistance(
+          location.latitude,
+          location.longitude,
+          destination.latitude,
+          destination.longitude
+        );
+        setDistanceToDestination(distance * 1000);
+        setTimeToDestination(Math.ceil(distance * 3));
+      });
     }
   }, [location, activeRide]);
 

@@ -1,5 +1,5 @@
 // Service de gestion des cartes (Maps) pour 224Solutions
-// Version simplifiée avec calculs de base
+// Utilise Mapbox pour les calculs de routes réelles
 
 export interface Location {
   latitude: number;
@@ -62,24 +62,69 @@ class MapService {
     });
   }
 
-  // Calculer un itinéraire simple (simulation)
+  // Calculer un itinéraire avec Mapbox
   async calculateRoute(start: Location, end: Location): Promise<Route> {
-    const distance = this.calculateDistance(start, end);
-    const duration = distance * 3; // Estimation: 3 minutes par km
-    
-    return {
-      distance,
-      duration,
-      coordinates: [start, end]
-    };
+    try {
+      const MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNXA5Z3Y4czBkOW8yanM2dHhtZDk5YXgifQ.6_iU6CvxfWWFhJFwNBLy5g';
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!data.routes || data.routes.length === 0) {
+        throw new Error('Aucun itinéraire trouvé');
+      }
+
+      const route = data.routes[0];
+      const coordinates = route.geometry.coordinates.map((coord: [number, number]) => ({
+        latitude: coord[1],
+        longitude: coord[0]
+      }));
+      
+      return {
+        distance: route.distance / 1000, // convertir en km
+        duration: Math.ceil(route.duration / 60), // convertir en minutes
+        coordinates
+      };
+    } catch (error) {
+      console.error('Erreur Mapbox, utilisation du fallback:', error);
+      // Fallback: calcul simple
+      const distance = this.calculateDistance(start, end);
+      return {
+        distance,
+        duration: distance * 3,
+        coordinates: [start, end]
+      };
+    }
   }
 
-  // Géocode une adresse (stub pour compatibilité)
+  // Géocode une adresse avec Mapbox
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
-    return [{
-      address: address,
-      coordinates: { latitude: 0, longitude: 0 }
-    }];
+    try {
+      const MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNXA5Z3Y4czBkOW8yanM2dHhtZDk5YXgifQ.6_iU6CvxfWWFhJFwNBLy5g';
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&language=fr&country=GN&limit=5`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        return data.features.map((feature: any) => ({
+          address: feature.place_name,
+          coordinates: {
+            latitude: feature.center[1],
+            longitude: feature.center[0]
+          }
+        }));
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Erreur géocodage Mapbox:', error);
+      return [{
+        address: address,
+        coordinates: { latitude: 0, longitude: 0 }
+      }];
+    }
   }
 
   // Obtenir un itinéraire (alias de calculateRoute)

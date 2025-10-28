@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation, Phone, ExternalLink, Clock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { TaxiMotoGeolocationService } from "@/services/taxi/TaxiMotoGeolocationService";
 
 interface Coordinates {
   latitude: number;
@@ -38,19 +39,6 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
-  // Calcul de la distance approximative (formule haversine simplifiée)
-  const calculateDistance = (from: Coordinates, to: Coordinates): number => {
-    const R = 6371; // Rayon de la Terre en km
-    const dLat = (to.latitude - from.latitude) * Math.PI / 180;
-    const dLon = (to.longitude - from.longitude) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(from.latitude * Math.PI / 180) * Math.cos(to.latitude * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
   useEffect(() => {
     if (!activeRide || !currentLocation) {
       setDistance(null);
@@ -63,11 +51,24 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
       ? activeRide.pickup.coords
       : activeRide.destination.coords;
 
-    const dist = calculateDistance(currentLocation, target);
-    setDistance(dist);
-    
-    // Estimation du temps (vitesse moyenne de 30 km/h en ville)
-    setDuration(Math.ceil((dist / 30) * 60));
+    // Utiliser Mapbox pour obtenir la route réelle
+    TaxiMotoGeolocationService.getRoute(
+      { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+      { latitude: target.latitude, longitude: target.longitude }
+    ).then(routeInfo => {
+      setDistance(routeInfo.distance);
+      setDuration(routeInfo.duration);
+    }).catch(() => {
+      // Fallback: calcul simple
+      const dist = TaxiMotoGeolocationService.calculateDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        target.latitude,
+        target.longitude
+      );
+      setDistance(dist);
+      setDuration(Math.ceil(dist * 3));
+    });
   }, [activeRide, currentLocation]);
 
   const openGoogleMaps = () => {
