@@ -277,17 +277,21 @@ export default function AgentDashboardPublic() {
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {agent.permissions.includes('create_users') && (
-                      <CreateUserForm 
-                        agentId={agent.id} 
-                        agentCode={agent.agent_code}
-                      />
+                      <div>
+                        <CreateUserForm 
+                          agentId={agent.id} 
+                          agentCode={agent.agent_code}
+                        />
+                      </div>
                     )}
 
                     {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-                      <CreateSubAgentForm 
-                        parentAgentId={agent.id}
-                        pdgId={agent.pdg_id}
-                      />
+                      <div>
+                        <CreateSubAgentForm 
+                          parentAgentId={agent.id}
+                          pdgId={agent.pdg_id}
+                        />
+                      </div>
                     )}
                   </div>
                 </CardContent>
@@ -302,24 +306,46 @@ export default function AgentDashboardPublic() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {agent.permissions.map((permission) => (
-                      <div key={permission} className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                        <span className="text-sm font-medium text-blue-900">
-                          {permission === 'create_users' && '✅ Créer des utilisateurs'}
-                          {permission === 'view_reports' && '📊 Voir les rapports'}
-                          {permission === 'manage_commissions' && '💰 Gérer les commissions'}
-                          {permission === 'create_sub_agents' && '👥 Créer des sous-agents'}
-                          {permission === 'manage_users' && '👤 Gérer les utilisateurs'}
-                          {permission === 'manage_products' && '📦 Gérer les produits'}
-                        </span>
-                      </div>
-                    ))}
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {agent.permissions.map((permission) => {
+                      const permissionConfig: Record<string, { label: string; description: string }> = {
+                        'create_users': { label: '✅ Créer des utilisateurs', description: 'Accès au formulaire de création' },
+                        'view_reports': { label: '📊 Voir les rapports', description: 'Consultez vos statistiques' },
+                        'manage_commissions': { label: '💰 Gérer les commissions', description: 'Gérez vos gains' },
+                        'create_sub_agents': { label: '👥 Créer des sous-agents', description: 'Créer des agents secondaires' },
+                        'manage_users': { label: '👤 Gérer les utilisateurs', description: 'Administrez les utilisateurs' },
+                        'manage_products': { label: '📦 Gérer les produits', description: 'Gérez le catalogue' }
+                      };
+
+                      const config = permissionConfig[permission];
+                      if (!config) return null;
+
+                      return (
+                        <div 
+                          key={permission} 
+                          className="flex flex-col gap-1 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-all shadow-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-semibold text-blue-900">
+                              {config.label}
+                            </span>
+                          </div>
+                          <span className="text-xs text-blue-600 ml-4">
+                            {config.description}
+                          </span>
+                        </div>
+                      );
+                    })}
                     {agent.can_create_sub_agent && (
-                      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                        <span className="text-sm font-medium text-green-900">👥 Peut créer des sous-agents</span>
+                      <div className="flex flex-col gap-1 p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                          <span className="text-sm font-semibold text-green-900">🌟 Peut créer des sous-agents</span>
+                        </div>
+                        <span className="text-xs text-green-600 ml-4">
+                          Créez et gérez votre réseau
+                        </span>
                       </div>
                     )}
                   </div>
