@@ -27,8 +27,6 @@ const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
-const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
-const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
@@ -126,24 +124,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* Rediriger /admin vers /pdg - Interface principale de gestion */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <PDG224Solutions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/pdg/api-supervision"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <ApiSupervision />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route path="/bureau/:token" element={<BureauDashboard />} />
               <Route path="/worker/:token" element={<WorkerDashboard />} />
               <Route path="/agent/activate/:token" element={<AgentActivation />} />
