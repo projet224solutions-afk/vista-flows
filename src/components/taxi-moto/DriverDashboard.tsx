@@ -211,21 +211,35 @@ export function DriverDashboard({
 
       {/* Statistiques du jour */}
       <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-shadow">
+        <Card 
+          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          onClick={() => {
+            onNavigate('history');
+            toast.success('💰 Détails des gains');
+          }}
+        >
           <CardContent className="p-4 text-center">
             <div className="text-3xl font-bold text-green-700 mb-1">
               {stats.todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
+            <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
+        <Card 
+          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          onClick={() => {
+            onNavigate('history');
+            toast.success('🚕 Historique des courses');
+          }}
+        >
           <CardContent className="p-4 text-center">
             <div className="text-3xl font-bold text-blue-700 mb-1">
               {stats.todayRides}
             </div>
             <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
+            <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
           </CardContent>
         </Card>
       </div>
