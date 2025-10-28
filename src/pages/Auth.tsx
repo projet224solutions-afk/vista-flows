@@ -52,6 +52,8 @@ export default function Auth() {
     city: ''
   });
   
+  const [manualCityEntry, setManualCityEntry] = useState(false);
+  
   const [bureaus, setBureaus] = useState<Array<{ id: string; commune: string; prefecture: string }>>([]);
 
   // Charger les bureaux syndicaux disponibles
@@ -502,24 +504,55 @@ export default function Auth() {
                   </div>
 
                   <div>
-                    <Label htmlFor="city">Ville / Commune</Label>
-                    <select
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      required
-                      className="mt-1 w-full px-3 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="">Sélectionnez votre ville</option>
-                      {bureaus.map((bureau) => (
-                        <option key={bureau.id} value={bureau.commune}>
-                          {bureau.commune} - {bureau.prefecture}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedRole === 'taxi' && formData.city && (
+                    <div className="flex items-center justify-between mb-2">
+                      <Label htmlFor="city">Ville / Commune</Label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualCityEntry(!manualCityEntry);
+                          setFormData({ ...formData, city: '' });
+                        }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {manualCityEntry ? '📋 Choisir dans la liste' : '✏️ Saisir manuellement'}
+                      </button>
+                    </div>
+                    
+                    {manualCityEntry ? (
+                      <Input
+                        id="city"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder="Saisissez votre ville"
+                        required
+                        className="mt-1"
+                      />
+                    ) : (
+                      <select
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        required
+                        className="mt-1 w-full px-3 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring z-50"
+                      >
+                        <option value="">Sélectionnez votre ville</option>
+                        {bureaus.map((bureau) => (
+                          <option key={bureau.id} value={bureau.commune}>
+                            {bureau.commune} - {bureau.prefecture}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
+                    {selectedRole === 'taxi' && formData.city && !manualCityEntry && (
                       <p className="text-xs text-green-600 mt-1">
                         ✅ Vous serez automatiquement synchronisé avec le bureau syndical de {formData.city}
+                      </p>
+                    )}
+                    {selectedRole === 'taxi' && formData.city && manualCityEntry && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        ⚠️ Ville saisie manuellement - synchronisation bureau non garantie
                       </p>
                     )}
                   </div>
