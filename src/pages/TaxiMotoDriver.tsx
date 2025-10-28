@@ -48,7 +48,7 @@ import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
-import { UserTracker } from "@/components/taxi-moto/UserTracker";
+import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -965,7 +965,6 @@ export default function TaxiMotoDriver() {
                                 </h1>
                                 <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
                                 <DriverTutorial />
-                                <UserTracker />
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -1062,7 +1061,7 @@ export default function TaxiMotoDriver() {
             {/* Navigation par onglets */}
             <div className="px-4 mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm relative">
                         <TabsTrigger value="dashboard">
                             <TrendingUp className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
@@ -1074,6 +1073,12 @@ export default function TaxiMotoDriver() {
                                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse border-2 border-white"></span>
                             )}
                         </TabsTrigger>
+                        
+                        {/* Bouton de tracking entre Course et Navigation */}
+                        <div className="flex items-center justify-center border-x border-border/50">
+                            <UserTrackerButton />
+                        </div>
+                        
                         <TabsTrigger value="gps-navigation">
                             <MapPin className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Navigation</span>

@@ -193,14 +193,7 @@ export function UserTracker() {
   };
 
   return (
-    <Card className="shadow-lg border-2 border-primary/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MapPin className="w-5 h-5 text-primary" />
-          Tracker un utilisateur
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
         {/* Formulaire de recherche */}
         {!isTracking && (
           <div className="space-y-3">
@@ -327,7 +320,6 @@ export function UserTracker() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
