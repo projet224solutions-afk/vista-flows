@@ -40,6 +40,7 @@ const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
 const InstallPWA = lazy(() => import("./pages/InstallPWA"));
 const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
+const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -117,6 +118,10 @@ const App = () => (
               <Route
                 path="/payment/:paymentId"
                 element={<PaymentPage />}
+              />
+              <Route
+                path="/test-wallet-transfer"
+                element={<TestWalletTransfer />}
               />
               <Route
                 path="/transitaire"
