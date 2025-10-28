@@ -67,7 +67,7 @@ export function useFinanceData(enabled: boolean = true) {
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<WalletDetail[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
 
   const fetchData = async () => {
     if (!enabled) {
@@ -152,6 +152,8 @@ export function useFinanceData(enabled: boolean = true) {
   useEffect(() => {
     if (enabled) {
       fetchData();
+    } else {
+      setLoading(false);
     }
   }, [enabled]);
 

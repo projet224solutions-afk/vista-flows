@@ -32,7 +32,7 @@ export default function PDGFinance() {
 
   const exportData = async () => {
     try {
-      const csvData = transactions.map(t => {
+      const csvData = (transactions || []).map(t => {
         const senderProfile = t.sender_wallet?.profiles;
         const receiverProfile = t.receiver_wallet?.profiles;
         
@@ -79,7 +79,7 @@ export default function PDGFinance() {
     );
   }
 
-  const chartData = transactions.slice(0, 10).reverse().map(t => ({
+  const chartData = (transactions || []).slice(0, 10).reverse().map(t => ({
     date: new Date(t.created_at).toLocaleDateString(),
     amount: Number(t.amount),
     commission: Number(t.fee)
@@ -128,7 +128,7 @@ export default function PDGFinance() {
                 {(stats.total_commission || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
-                Sur {transactions.length} transactions
+                Sur {transactions?.length || 0} transactions
               </p>
             </div>
           </CardContent>
@@ -150,7 +150,7 @@ export default function PDGFinance() {
                 {(stats.pending_payments || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
-                {transactions.filter(t => t.status === 'pending').length} transactions
+                {transactions?.filter(t => t.status === 'pending').length || 0} transactions
               </p>
             </div>
           </CardContent>
@@ -273,7 +273,7 @@ export default function PDGFinance() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {transactions.slice(0, 10).map((trans, index) => (
+            {(transactions || []).slice(0, 10).map((trans, index) => (
               <div
                 key={trans.id}
                 className="group p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 hover:border-border/60 transition-all duration-200 animate-fade-in"
@@ -337,7 +337,7 @@ export default function PDGFinance() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Wallet className="w-6 h-6 text-primary" />
-              Détails des Wallets ({wallets.length})
+              Détails des Wallets ({wallets?.length || 0})
             </DialogTitle>
             <DialogDescription>
               Liste complète de tous les wallets avec leurs informations détaillées
@@ -345,7 +345,7 @@ export default function PDGFinance() {
           </DialogHeader>
           
           <div className="space-y-4 mt-4">
-            {wallets.length === 0 ? (
+            {!wallets || wallets.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Aucun wallet trouvé
               </div>
