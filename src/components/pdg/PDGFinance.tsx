@@ -102,7 +102,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {stats.total_revenue.toLocaleString()} GNF
+                {(stats.total_revenue || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-green-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
@@ -125,7 +125,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {stats.total_commission.toLocaleString()} GNF
+                {(stats.total_commission || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
                 Sur {transactions.length} transactions
@@ -147,7 +147,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {stats.pending_payments.toLocaleString()} GNF
+                {(stats.pending_payments || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
                 {transactions.filter(t => t.status === 'pending').length} transactions
@@ -172,7 +172,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {stats.active_wallets}
+                {stats.active_wallets || 0}
               </p>
               <p className="text-xs text-muted-foreground">
                 Cliquez pour voir les détails
