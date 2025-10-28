@@ -32,6 +32,7 @@ interface Agent {
   permissions: string[];
   total_users_created?: number;
   total_commissions_earned?: number;
+  total_sub_agents?: number;
   can_create_sub_agent?: boolean;
   created_at: string;
 }
@@ -97,8 +98,27 @@ export default function AgentDashboardPublic() {
         return;
       }
 
-      setAgent(agentData as Agent);
-      toast.success(`Bienvenue ${agentData.name}!`);
+      // Compter les vrais utilisateurs dans la plateforme
+      const { count: usersCount, error: usersError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Compter les vrais agents créés par ce PDG
+      const { count: agentsCount, error: agentsError } = await supabase
+        .from('agents_management')
+        .select('*', { count: 'exact', head: true })
+        .eq('pdg_id', agentData.pdg_id)
+        .eq('is_active', true);
+
+      // Créer un nouvel objet agent avec les statistiques
+      const enrichedAgent = {
+        ...agentData,
+        total_users_created: usersCount || 0,
+        total_sub_agents: agentsCount || 0
+      };
+
+      setAgent(enrichedAgent as Agent);
+      toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs dans la plateforme`);
     } catch (error) {
       console.error('Erreur chargement agent:', error);
       toast.error('Erreur lors du chargement des données');
