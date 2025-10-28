@@ -6,14 +6,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   TrendingUp, TrendingDown, Users, DollarSign, Package, 
-  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw
+  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw, UserCheck, Building2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { usePDGStats } from '@/hooks/usePDGStats';
 
-export function PDGDashboardHome() {
+interface PDGDashboardHomeProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const stats = usePDGStats();
 
   if (stats.loading) {
@@ -246,16 +250,41 @@ export function PDGDashboardHome() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Valider Utilisateurs', icon: Users, color: 'from-blue-500 to-blue-600' },
-              { label: 'Gérer Finances', icon: DollarSign, color: 'from-green-500 to-green-600' },
-              { label: 'Vérifier Sécurité', icon: AlertCircle, color: 'from-red-500 to-red-600' },
-              { label: 'Voir Rapports', icon: Activity, color: 'from-purple-500 to-purple-600' },
+              { 
+                label: 'Valider Utilisateurs', 
+                icon: Users, 
+                color: 'from-blue-500 to-blue-600',
+                action: 'users',
+                count: stats.totalUsers
+              },
+              { 
+                label: 'Gérer Finances', 
+                icon: DollarSign, 
+                color: 'from-green-500 to-green-600',
+                action: 'finance',
+                count: stats.totalRevenue
+              },
+              { 
+                label: 'Vérifier Sécurité', 
+                icon: AlertCircle, 
+                color: 'from-red-500 to-red-600',
+                action: 'security',
+                count: stats.criticalAlerts
+              },
+              { 
+                label: 'Voir Rapports', 
+                icon: Activity, 
+                color: 'from-purple-500 to-purple-600',
+                action: 'reports',
+                count: stats.totalOrders
+              },
             ].map((action) => {
               const ActionIcon = action.icon;
               return (
                 <button
                   key={action.label}
-                  className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border/40 hover:border-primary/40 bg-card hover:shadow-lg transition-all duration-200 group"
+                  onClick={() => onNavigate?.(action.action)}
+                  className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border/40 hover:border-primary/40 bg-card hover:shadow-lg transition-all duration-200 group cursor-pointer"
                 >
                   <div className={cn(
                     "w-12 h-12 rounded-xl bg-gradient-to-br shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform",
@@ -263,13 +292,109 @@ export function PDGDashboardHome() {
                   )}>
                     <ActionIcon className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-center">{action.label}</span>
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm font-medium text-center">{action.label}</span>
+                    <Badge variant="secondary" className="mt-1 text-xs">
+                      {typeof action.count === 'number' ? action.count.toLocaleString() : action.count}
+                    </Badge>
+                  </div>
                 </button>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
+      {/* Management Sections - Agents & Syndicats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Gestion des Agents */}
+        <Card 
+          className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          onClick={() => onNavigate?.('agents')}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-green-600 text-white group-hover:scale-110 transition-transform">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                Gestion des Agents
+              </CardTitle>
+              <Badge variant="secondary" className="bg-green-600 text-white">
+                Opérationnel
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Gérez votre réseau d'agents commerciaux avec permissions, commissions et suivi des performances en temps réel
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Total Agents</p>
+                <p className="text-lg font-bold text-green-600">{stats.totalAgents || 0}</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Actifs</p>
+                <p className="text-lg font-bold text-green-600">{stats.activeAgents || 0}</p>
+              </div>
+            </div>
+            <Button 
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.('agents');
+              }}
+            >
+              Accéder à la gestion
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Gestion des Bureaux Syndicats */}
+        <Card 
+          className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          onClick={() => onNavigate?.('syndicat')}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-600 text-white group-hover:scale-110 transition-transform">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                Bureaux Syndicaux
+              </CardTitle>
+              <Badge variant="secondary" className="bg-blue-600 text-white">
+                Opérationnel
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Administrez les bureaux syndicaux de taxi-motos avec accès sécurisé, gestion des membres et cotisations
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Total Bureaux</p>
+                <p className="text-lg font-bold text-blue-600">{stats.totalBureaus || 0}</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Validés</p>
+                <p className="text-lg font-bold text-blue-600">{stats.validatedBureaus || 0}</p>
+              </div>
+            </div>
+            <Button 
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 group-hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.('syndicat');
+              }}
+            >
+              Accéder à la gestion
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

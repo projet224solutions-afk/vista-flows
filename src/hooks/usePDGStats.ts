@@ -39,6 +39,14 @@ export interface PDGStats {
   totalDrivers: number;
   onlineDrivers: number;
 
+  // Agents
+  totalAgents: number;
+  activeAgents: number;
+
+  // Bureaux Syndicats
+  totalBureaus: number;
+  validatedBureaus: number;
+
   // Alertes
   criticalAlerts: number;
   pendingValidations: number;
@@ -68,6 +76,10 @@ export function usePDGStats() {
     activeVendors: 0,
     totalDrivers: 0,
     onlineDrivers: 0,
+    totalAgents: 0,
+    activeAgents: 0,
+    totalBureaus: 0,
+    validatedBureaus: 0,
     criticalAlerts: 0,
     pendingValidations: 0,
     loading: true,
@@ -97,7 +109,9 @@ export function usePDGStats() {
         productsRes,
         vendorsRes,
         driversRes,
-        apiAlertsRes
+        apiAlertsRes,
+        agentsRes,
+        bureausRes
       ] = await Promise.all([
         // Utilisateurs
         supabase.from('profiles').select('id, created_at', { count: 'exact' }),
@@ -132,7 +146,13 @@ export function usePDGStats() {
         supabase.from('api_alerts')
           .select('id', { count: 'exact' })
           .eq('is_resolved', false)
-          .in('severity', ['critical', 'high'])
+          .in('severity', ['critical', 'high']),
+
+        // Agents
+        supabase.from('agents_management').select('id, is_active', { count: 'exact' }),
+
+        // Bureaux Syndicats
+        supabase.from('bureaus').select('id, validated_at', { count: 'exact' })
       ]);
 
       // Calculer les statistiques
@@ -185,6 +205,14 @@ export function usePDGStats() {
       const totalDrivers = driversRes.count || 0;
       const onlineDrivers = driversRes.data?.filter(d => d.is_online).length || 0;
 
+      // Agents
+      const totalAgents = agentsRes.count || 0;
+      const activeAgents = agentsRes.data?.filter(a => a.is_active).length || 0;
+
+      // Bureaux Syndicats
+      const totalBureaus = bureausRes.count || 0;
+      const validatedBureaus = bureausRes.data?.filter(b => b.validated_at !== null).length || 0;
+
       // Taux de conversion (commandes / utilisateurs)
       const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers * 100) : 0;
 
@@ -208,6 +236,10 @@ export function usePDGStats() {
         activeVendors,
         totalDrivers,
         onlineDrivers,
+        totalAgents,
+        activeAgents,
+        totalBureaus,
+        validatedBureaus,
         criticalAlerts: apiAlertsRes.count || 0,
         pendingValidations: pendingOrders,
         loading: false,

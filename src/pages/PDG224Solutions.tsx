@@ -270,7 +270,7 @@ export default function PDG224Solutions() {
                 }>
                   {activeTab === 'dashboard' && (
                     <ErrorBoundary>
-                      <PDGDashboardHome />
+                      <PDGDashboardHome onNavigate={setActiveTab} />
                     </ErrorBoundary>
                   )}
 
