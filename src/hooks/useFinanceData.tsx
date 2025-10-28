@@ -64,14 +64,9 @@ export function useFinanceData(enabled: boolean = true) {
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<WalletDetail[]>([]);
-  const [loading, setLoading] = useState(enabled);
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
 
@@ -108,8 +103,6 @@ export function useFinanceData(enabled: boolean = true) {
           )
         `)
         .order('created_at', { ascending: false });
-
-      console.log('Wallets query result:', { walletsData, walletsError });
       
       if (walletsError) {
         console.error('Erreur lors de la récupération des wallets:', walletsError);
@@ -151,12 +144,8 @@ export function useFinanceData(enabled: boolean = true) {
   };
 
   useEffect(() => {
-    if (enabled) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
-  }, [enabled]);
+    fetchData();
+  }, []);
 
   return {
     stats,
