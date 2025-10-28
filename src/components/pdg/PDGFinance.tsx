@@ -43,8 +43,8 @@ export default function PDGFinance() {
           'Frais': t.fee,
           'Montant Net': t.net_amount,
           'Statut': t.status,
-          'Expéditeur': senderProfile?.business_name || `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() || 'Système',
-          'Destinataire': receiverProfile?.business_name || `${receiverProfile?.first_name || ''} ${receiverProfile?.last_name || ''}`.trim() || 'Système',
+          'Expéditeur': senderProfile ? `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() || 'Système' : 'Système',
+          'Destinataire': receiverProfile ? `${receiverProfile?.first_name || ''} ${receiverProfile?.last_name || ''}`.trim() || 'Système' : 'Système',
           'Date': new Date(t.created_at).toLocaleDateString('fr-FR'),
           'Description': t.description || 'N/A',
           'Devise': t.currency || 'GNF'
@@ -362,8 +362,7 @@ export default function PDGFinance() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg">
-                              {wallet.profiles?.business_name || 
-                               `${wallet.profiles?.first_name || ''} ${wallet.profiles?.last_name || ''}`.trim() ||
+                              {`${wallet.profiles?.first_name || ''} ${wallet.profiles?.last_name || ''}`.trim() ||
                                'Utilisateur'}
                             </h3>
                             <Badge variant="outline" className="mt-1">
@@ -420,10 +419,10 @@ export default function PDGFinance() {
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-muted-foreground">Statut:</span>
                             <Badge 
-                              variant={wallet.status === 'active' ? 'default' : 'secondary'}
-                              className={wallet.status === 'active' ? 'bg-green-500' : ''}
+                              variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
+                              className={wallet.wallet_status === 'active' ? 'bg-green-500' : ''}
                             >
-                              {wallet.status}
+                              {wallet.wallet_status}
                             </Badge>
                           </div>
 

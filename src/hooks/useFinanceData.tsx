@@ -7,14 +7,13 @@ export interface WalletDetail {
   user_id: string;
   balance: number;
   currency: string;
-  status: string;
+  wallet_status: string;
   created_at: string;
   updated_at: string;
   profiles?: {
     id: string;
     first_name: string | null;
     last_name: string | null;
-    business_name: string | null;
     email: string | null;
     phone: string | null;
     role: string;
@@ -39,14 +38,12 @@ export interface Transaction {
     profiles: {
       first_name: string | null;
       last_name: string | null;
-      business_name: string | null;
     };
   };
   receiver_wallet?: {
     profiles: {
       first_name: string | null;
       last_name: string | null;
-      business_name: string | null;
     };
   };
 }
@@ -84,10 +81,10 @@ export function useFinanceData(enabled: boolean = true) {
         .select(`
           *,
           sender_wallet:wallets!sender_wallet_id(
-            profiles(first_name, last_name, business_name)
+            profiles(first_name, last_name)
           ),
           receiver_wallet:wallets!receiver_wallet_id(
-            profiles(first_name, last_name, business_name)
+            profiles(first_name, last_name)
           )
         `)
         .order('created_at', { ascending: false })
@@ -104,7 +101,6 @@ export function useFinanceData(enabled: boolean = true) {
             id,
             first_name,
             last_name,
-            business_name,
             email,
             phone,
             role,
@@ -132,7 +128,7 @@ export function useFinanceData(enabled: boolean = true) {
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
       const activeWallets = (walletsData || [])
-        .filter(w => w.status === 'active')
+        .filter(w => w.wallet_status === 'active')
         .length;
 
       setStats({
