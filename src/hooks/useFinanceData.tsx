@@ -109,7 +109,12 @@ export function useFinanceData(enabled: boolean = true) {
         `)
         .order('created_at', { ascending: false });
 
-      if (walletsError) throw walletsError;
+      console.log('Wallets query result:', { walletsData, walletsError });
+      
+      if (walletsError) {
+        console.error('Erreur lors de la récupération des wallets:', walletsError);
+        throw walletsError;
+      }
 
       setTransactions(transData || []);
       setWallets(walletsData || []);
