@@ -294,12 +294,12 @@ export default function Auth() {
               <span className="font-medium">Client</span>
             </button>
             <button
-              onClick={() => handleRoleClick('vendeur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
-                }`}
+              onClick={() => navigate('/services')}
+              className="flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-green-600"
             >
               <Store className="h-6 w-6 text-green-600 mb-2" />
               <span className="font-medium">Marchand</span>
+              <span className="text-xs text-muted-foreground mt-1">Services Pro</span>
             </button>
             <button
               onClick={() => handleRoleClick('livreur')}
