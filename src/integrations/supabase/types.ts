@@ -443,6 +443,53 @@ export type Database = {
           },
         ]
       }
+      blocked_ips: {
+        Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          expires_at: string | null
+          id: string
+          incident_id: string | null
+          ip_address: unknown
+          is_active: boolean | null
+          reason: string
+          unblocked_at: string | null
+          unblocked_by: string | null
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          incident_id?: string | null
+          ip_address: unknown
+          is_active?: boolean | null
+          reason: string
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          incident_id?: string | null
+          ip_address?: unknown
+          is_active?: boolean | null
+          reason?: string
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_ips_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bureau_access_logs: {
         Row: {
           access_type: string
@@ -1701,6 +1748,44 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forensic_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          file_path: string | null
+          id: string
+          incident_id: string | null
+          report_data: Json
+          report_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          incident_id?: string | null
+          report_data: Json
+          report_type: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          file_path?: string | null
+          id?: string
+          incident_id?: string | null
+          report_data?: Json
+          report_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forensic_reports_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
             referencedColumns: ["id"]
           },
         ]
@@ -3417,6 +3502,195 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      security_alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          auto_actions: Json | null
+          created_at: string | null
+          description: string
+          id: string
+          incident_id: string | null
+          severity: string
+          source: string | null
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          auto_actions?: Json | null
+          created_at?: string | null
+          description: string
+          id?: string
+          incident_id?: string | null
+          severity: string
+          source?: string | null
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          auto_actions?: Json | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          incident_id?: string | null
+          severity?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          incident_id: string | null
+          ip_address: unknown
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          incident_id?: string | null
+          ip_address?: unknown
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          incident_id?: string | null
+          ip_address?: unknown
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_audit_logs_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_incidents: {
+        Row: {
+          affected_users: string[] | null
+          assigned_to: string | null
+          contained_at: string | null
+          created_at: string | null
+          description: string | null
+          detected_at: string | null
+          id: string
+          incident_type: string
+          indicators: Json | null
+          investigated_at: string | null
+          resolved_at: string | null
+          severity: string
+          source_ip: unknown
+          status: string
+          title: string
+        }
+        Insert: {
+          affected_users?: string[] | null
+          assigned_to?: string | null
+          contained_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          incident_type: string
+          indicators?: Json | null
+          investigated_at?: string | null
+          resolved_at?: string | null
+          severity: string
+          source_ip?: unknown
+          status?: string
+          title: string
+        }
+        Update: {
+          affected_users?: string[] | null
+          assigned_to?: string | null
+          contained_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          detected_at?: string | null
+          id?: string
+          incident_type?: string
+          indicators?: Json | null
+          investigated_at?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source_ip?: unknown
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      security_snapshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          incident_id: string | null
+          metadata: Json | null
+          snapshot_hash: string | null
+          snapshot_type: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          incident_id?: string | null
+          metadata?: Json | null
+          snapshot_hash?: string | null
+          snapshot_type: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          incident_id?: string | null
+          metadata?: Json | null
+          snapshot_hash?: string | null
+          snapshot_type?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_snapshots_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sos_alerts: {
         Row: {

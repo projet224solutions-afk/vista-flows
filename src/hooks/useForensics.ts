@@ -71,14 +71,14 @@ export const useForensics = () => {
 
   const loadSnapshots = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('security_snapshots')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setSnapshots(data || []);
+      setSnapshots((data || []) as ForensicSnapshot[]);
     } catch (error: any) {
       console.error('Error loading snapshots:', error);
     }
