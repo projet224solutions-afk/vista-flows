@@ -22,6 +22,8 @@ Deno.serve(async (req) => {
       throw new Error('Missing productId or updates');
     }
 
+    const token = authHeader.replace('Bearer ', '');
+
     // Initialiser le client Supabase avec la clé service
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -34,25 +36,8 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Initialiser le client Supabase avec le token utilisateur
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        },
-        global: {
-          headers: {
-            Authorization: authHeader
-          }
-        }
-      }
-    );
-
-    // Vérifier l'authentification
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Vérifier le token et obtenir l'utilisateur
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Auth error:', userError);
