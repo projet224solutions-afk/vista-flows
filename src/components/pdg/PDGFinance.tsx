@@ -125,7 +125,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {stats.total_commissions.toLocaleString()} GNF
+                {stats.total_commission.toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
                 Sur {transactions.length} transactions
