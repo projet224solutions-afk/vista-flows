@@ -25,9 +25,9 @@ export interface IncidentTimeline {
 
 export interface BehaviorAnalysis {
   user_id: string;
-  anomaly_score: number;
+  anomalyScore: number;
   patterns: string[];
-  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
   recommendations: string[];
 }
 
@@ -78,7 +78,7 @@ export const useForensics = () => {
         .limit(50);
 
       if (error) throw error;
-      setSnapshots((data as any) || []);
+      setSnapshots((data as ForensicSnapshot[]) || []);
     } catch (error: any) {
       console.error('Error loading snapshots:', error);
     }
