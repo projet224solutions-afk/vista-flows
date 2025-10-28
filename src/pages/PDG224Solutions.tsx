@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, LogOut, Lock, Brain, Bell, Mail } from 'lucide-react';
+import { Shield, LogOut, Lock, Brain, Bell, Mail, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -222,6 +222,15 @@ export default function PDG224Solutions() {
                 >
                   <Mail className="w-4 h-4" />
                   Modifier Email
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate('/agent')}
+                  className="gap-2 bg-primary hover:bg-primary/90"
+                >
+                  <UserCog className="w-4 h-4" />
+                  Interface Agent
                 </Button>
                 <Button
                   variant="outline"
