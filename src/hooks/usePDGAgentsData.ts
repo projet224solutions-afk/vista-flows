@@ -149,7 +149,7 @@ export const usePDGAgentsData = () => {
           is_active: agent.is_active,
           permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
           commission_rate: Number(agent.commission_rate) || 0,
-          can_create_sub_agent: false, // Par défaut false si la colonne n'existe pas
+          can_create_sub_agent: false,
           access_token: agent.access_token,
           created_at: agent.created_at,
           updated_at: agent.updated_at || undefined,
