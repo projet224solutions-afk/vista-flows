@@ -41,6 +41,7 @@ export default function AgentDashboardPublic() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (token) {
@@ -239,7 +240,7 @@ export default function AgentDashboardPublic() {
           </div>
 
           {/* Tabs pour les différentes sections */}
-          <Tabs defaultValue="overview" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="overview">Aperçu</TabsTrigger>
               {agent.permissions.includes('manage_users') && (
@@ -311,71 +312,63 @@ export default function AgentDashboardPublic() {
                       const permissionConfig: Record<string, { 
                         label: string; 
                         description: string;
-                        action: () => void;
+                        tabValue: string;
+                        available: boolean;
                       }> = {
                         'create_users': { 
                           label: '✅ Créer des utilisateurs', 
                           description: 'Accès au formulaire de création',
-                          action: () => {
-                            const tab = document.querySelector('[value="overview"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Accédez au formulaire de création d\'utilisateurs dans Actions Rapides');
-                          }
+                          tabValue: 'overview',
+                          available: true
                         },
                         'view_reports': { 
                           label: '📊 Voir les rapports', 
                           description: 'Consultez vos statistiques',
-                          action: () => {
-                            const tab = document.querySelector('[value="reports"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Onglet Rapports ouvert');
-                          }
+                          tabValue: 'reports',
+                          available: agent.permissions.includes('view_reports')
                         },
                         'manage_commissions': { 
                           label: '💰 Gérer les commissions', 
                           description: 'Gérez vos gains',
-                          action: () => {
-                            const tab = document.querySelector('[value="commissions"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Onglet Commissions ouvert');
-                          }
+                          tabValue: 'commissions',
+                          available: agent.permissions.includes('manage_commissions')
                         },
                         'create_sub_agents': { 
                           label: '👥 Créer des sous-agents', 
                           description: 'Créer des agents secondaires',
-                          action: () => {
-                            const tab = document.querySelector('[value="overview"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Accédez au formulaire de création de sous-agents dans Actions Rapides');
-                          }
+                          tabValue: 'overview',
+                          available: true
                         },
                         'manage_users': { 
                           label: '👤 Gérer les utilisateurs', 
                           description: 'Administrez les utilisateurs',
-                          action: () => {
-                            const tab = document.querySelector('[value="users"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Onglet Utilisateurs ouvert');
-                          }
+                          tabValue: 'users',
+                          available: agent.permissions.includes('manage_users')
                         },
                         'manage_products': { 
                           label: '📦 Gérer les produits', 
                           description: 'Gérez le catalogue',
-                          action: () => {
-                            const tab = document.querySelector('[value="products"]') as HTMLElement;
-                            if (tab) tab.click();
-                            toast.success('Onglet Produits ouvert');
-                          }
+                          tabValue: 'products',
+                          available: agent.permissions.includes('manage_products')
                         }
                       };
 
                       const config = permissionConfig[permission];
                       if (!config) return null;
 
+                      const handleClick = () => {
+                        if (!config.available) {
+                          toast.error('Cette fonctionnalité n\'est pas disponible pour vous');
+                          return;
+                        }
+                        setActiveTab(config.tabValue);
+                        toast.success(`Navigation vers ${config.label}`);
+                      };
+
                       return (
                         <button
                           key={permission}
-                          onClick={config.action}
+                          onClick={handleClick}
                           className="flex flex-col gap-1 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all shadow-sm cursor-pointer text-left"
                         >
                           <div className="flex items-center gap-2">
@@ -393,9 +386,8 @@ export default function AgentDashboardPublic() {
                     {agent.can_create_sub_agent && (
                       <button
                         onClick={() => {
-                          const tab = document.querySelector('[value="overview"]') as HTMLElement;
-                          if (tab) tab.click();
-                          toast.success('Accédez au formulaire de création de sous-agents dans Actions Rapides');
+                          setActiveTab('overview');
+                          toast.success('Navigation vers création de sous-agents');
                         }}
                         className="flex flex-col gap-1 p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 hover:border-green-400 hover:shadow-md transition-all shadow-sm cursor-pointer text-left"
                       >
