@@ -428,6 +428,29 @@ export default function PDGAgentsManagement() {
                   <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
                 </div>
                 
+                {/* Lien d'accès à l'interface Agent */}
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-xs font-semibold text-foreground flex items-center gap-2">
+                        <span className="text-blue-600">🔗</span> Lien d'accès à l'interface
+                      </p>
+                      <p className="text-xs font-mono text-muted-foreground truncate bg-background p-1.5 rounded border text-blue-600">
+                        {window.location.origin}/agent
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => window.open('/agent', '_blank')}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      Ouvrir
+                    </Button>
+                  </div>
+                </div>
+                
                 <div className="pt-3 flex gap-2 border-t">
                   <Button
                     size="sm"
@@ -438,15 +461,6 @@ export default function PDGAgentsManagement() {
                     <Edit className="w-4 h-4 mr-1" />
                     Modifier
                   </Button>
-                  <a
-                    href="/agent"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Interface Agent
-                  </a>
                   {agent.is_active ? (
                     <Button
                       size="sm"
