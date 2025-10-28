@@ -308,22 +308,75 @@ export default function AgentDashboardPublic() {
                 <CardContent>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {agent.permissions.map((permission) => {
-                      const permissionConfig: Record<string, { label: string; description: string }> = {
-                        'create_users': { label: '✅ Créer des utilisateurs', description: 'Accès au formulaire de création' },
-                        'view_reports': { label: '📊 Voir les rapports', description: 'Consultez vos statistiques' },
-                        'manage_commissions': { label: '💰 Gérer les commissions', description: 'Gérez vos gains' },
-                        'create_sub_agents': { label: '👥 Créer des sous-agents', description: 'Créer des agents secondaires' },
-                        'manage_users': { label: '👤 Gérer les utilisateurs', description: 'Administrez les utilisateurs' },
-                        'manage_products': { label: '📦 Gérer les produits', description: 'Gérez le catalogue' }
+                      const permissionConfig: Record<string, { 
+                        label: string; 
+                        description: string;
+                        action: () => void;
+                      }> = {
+                        'create_users': { 
+                          label: '✅ Créer des utilisateurs', 
+                          description: 'Accès au formulaire de création',
+                          action: () => {
+                            const tab = document.querySelector('[value="overview"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Accédez au formulaire de création d\'utilisateurs dans Actions Rapides');
+                          }
+                        },
+                        'view_reports': { 
+                          label: '📊 Voir les rapports', 
+                          description: 'Consultez vos statistiques',
+                          action: () => {
+                            const tab = document.querySelector('[value="reports"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Onglet Rapports ouvert');
+                          }
+                        },
+                        'manage_commissions': { 
+                          label: '💰 Gérer les commissions', 
+                          description: 'Gérez vos gains',
+                          action: () => {
+                            const tab = document.querySelector('[value="commissions"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Onglet Commissions ouvert');
+                          }
+                        },
+                        'create_sub_agents': { 
+                          label: '👥 Créer des sous-agents', 
+                          description: 'Créer des agents secondaires',
+                          action: () => {
+                            const tab = document.querySelector('[value="overview"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Accédez au formulaire de création de sous-agents dans Actions Rapides');
+                          }
+                        },
+                        'manage_users': { 
+                          label: '👤 Gérer les utilisateurs', 
+                          description: 'Administrez les utilisateurs',
+                          action: () => {
+                            const tab = document.querySelector('[value="users"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Onglet Utilisateurs ouvert');
+                          }
+                        },
+                        'manage_products': { 
+                          label: '📦 Gérer les produits', 
+                          description: 'Gérez le catalogue',
+                          action: () => {
+                            const tab = document.querySelector('[value="products"]') as HTMLElement;
+                            if (tab) tab.click();
+                            toast.success('Onglet Produits ouvert');
+                          }
+                        }
                       };
 
                       const config = permissionConfig[permission];
                       if (!config) return null;
 
                       return (
-                        <div 
-                          key={permission} 
-                          className="flex flex-col gap-1 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-all shadow-sm"
+                        <button
+                          key={permission}
+                          onClick={config.action}
+                          className="flex flex-col gap-1 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:shadow-md transition-all shadow-sm cursor-pointer text-left"
                         >
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
@@ -334,11 +387,18 @@ export default function AgentDashboardPublic() {
                           <span className="text-xs text-blue-600 ml-4">
                             {config.description}
                           </span>
-                        </div>
+                        </button>
                       );
                     })}
                     {agent.can_create_sub_agent && (
-                      <div className="flex flex-col gap-1 p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 shadow-sm">
+                      <button
+                        onClick={() => {
+                          const tab = document.querySelector('[value="overview"]') as HTMLElement;
+                          if (tab) tab.click();
+                          toast.success('Accédez au formulaire de création de sous-agents dans Actions Rapides');
+                        }}
+                        className="flex flex-col gap-1 p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 hover:border-green-400 hover:shadow-md transition-all shadow-sm cursor-pointer text-left"
+                      >
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
                           <span className="text-sm font-semibold text-green-900">🌟 Peut créer des sous-agents</span>
@@ -346,7 +406,7 @@ export default function AgentDashboardPublic() {
                         <span className="text-xs text-green-600 ml-4">
                           Créez et gérez votre réseau
                         </span>
-                      </div>
+                      </button>
                     )}
                   </div>
                 </CardContent>
