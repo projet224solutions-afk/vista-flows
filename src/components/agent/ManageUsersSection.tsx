@@ -34,16 +34,25 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
     try {
       setLoading(true);
 
-      // Récupérer TOUS les utilisateurs de la plateforme (données réelles)
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Extraire le token de l'URL
+      const currentPath = window.location.pathname;
+      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
+      const agentToken = tokenMatch ? tokenMatch[1] : null;
 
-      if (profilesError) throw profilesError;
+      if (!agentToken) {
+        toast.error('Token agent introuvable');
+        return;
+      }
 
-      setUsers(profiles || []);
-      toast.success(`${profiles?.length || 0} utilisateurs chargés`);
+      // Appeler la Edge Function pour récupérer les utilisateurs
+      const { data, error } = await supabase.functions.invoke('get-agent-users', {
+        body: { agentToken }
+      });
+
+      if (error) throw error;
+
+      setUsers(data.users || []);
+      toast.success(`${data.users?.length || 0} utilisateurs chargés`);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
