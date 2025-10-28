@@ -47,6 +47,7 @@ import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotif
 import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
+import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -957,11 +958,12 @@ export default function TaxiMotoDriver() {
                 <div className="px-4 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="flex items-center gap-3 mb-1">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
                                 <h1 className="text-xl font-bold text-gray-900">
                                     Conducteur {profile?.first_name || 'Taxi-Moto'}
                                 </h1>
                                 <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
+                                <DriverTutorial />
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -1038,14 +1040,17 @@ export default function TaxiMotoDriver() {
                                         <p className="text-xs text-blue-700">En attente de courses...</p>
                                     </div>
                                 </div>
-                                <Button
-                                    onClick={toggleOnlineStatus}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-300 text-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto"
-                                >
-                                    🔴 Hors ligne
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <DriverTutorial />
+                                    <Button
+                                        onClick={toggleOnlineStatus}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-red-300 text-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto"
+                                    >
+                                        🔴 Hors ligne
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
