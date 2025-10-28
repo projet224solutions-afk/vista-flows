@@ -219,11 +219,23 @@ export function DriverDashboard({
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-green-700 mb-1">
-              {stats.todayEarnings.toLocaleString()}
-            </div>
-            <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
-            <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
+            {stats.todayEarnings > 0 ? (
+              <>
+                <div className="text-3xl font-bold text-green-700 mb-1">
+                  {stats.todayEarnings.toLocaleString()}
+                </div>
+                <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
+                <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold text-gray-500 mb-1">
+                  Aucun gain
+                </div>
+                <div className="text-xs text-gray-500">aujourd'hui</div>
+                <div className="text-xs text-gray-400 mt-1">Commencez une course</div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -235,11 +247,23 @@ export function DriverDashboard({
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-blue-700 mb-1">
-              {stats.todayRides}
-            </div>
-            <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
-            <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
+            {stats.todayRides > 0 ? (
+              <>
+                <div className="text-3xl font-bold text-blue-700 mb-1">
+                  {stats.todayRides}
+                </div>
+                <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
+                <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold text-gray-500 mb-1">
+                  Aucune course
+                </div>
+                <div className="text-xs text-gray-500">active aujourd'hui</div>
+                <div className="text-xs text-gray-400 mt-1">En attente...</div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
