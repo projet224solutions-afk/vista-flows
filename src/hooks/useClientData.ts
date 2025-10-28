@@ -72,7 +72,7 @@ export function useClientData() {
           is_featured,
           free_shipping,
           created_at,
-          vendors!inner(business_name, brand)
+          vendors!inner(business_name)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -94,8 +94,8 @@ export function useClientData() {
         category: product.category || 'general',
         discount: product.discount,
         inStock: product.in_stock,
-        seller: (product.vendors as unknown)?.business_name || (product.vendors as unknown)?.brand || 'Vendeur',
-        brand: (product.vendors as unknown)?.brand || (product.vendors as unknown)?.business_name || 'Marque',
+        seller: (product.vendors as unknown)?.business_name || 'Vendeur',
+        brand: (product.vendors as unknown)?.business_name || 'Marque',
         isHot: product.is_hot || false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         isFreeShipping: product.free_shipping || false
