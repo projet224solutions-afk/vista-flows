@@ -34,15 +34,40 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
     try {
       setLoading(true);
 
-      // Récupérer les utilisateurs créés par cet agent
-      const { data, error } = await supabase
+      // Récupérer les utilisateurs créés par cet agent via la table de liaison
+      const { data: agentUsers, error: linkError } = await supabase
+        .from('agent_created_users')
+        .select('user_id, user_role, created_at')
+        .eq('agent_id', agentId);
+
+      if (linkError) throw linkError;
+
+      if (!agentUsers || agentUsers.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      // Récupérer les profils des utilisateurs
+      const userIds = agentUsers.map(u => u.user_id);
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
+        .in('id', userIds)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      setUsers(data || []);
+      // Enrichir avec les informations de création
+      const enrichedUsers = profiles?.map(profile => {
+        const agentUser = agentUsers.find(au => au.user_id === profile.id);
+        return {
+          ...profile,
+          agent_user_role: agentUser?.user_role,
+          agent_created_at: agentUser?.created_at
+        };
+      }) || [];
+
+      setUsers(enrichedUsers);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');

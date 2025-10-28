@@ -175,6 +175,13 @@ serve(async (req) => {
       }
     });
 
+    // Créer la liaison agent-utilisateur
+    await supabaseClient.from('agent_created_users').insert({
+      agent_id: body.agentId,
+      user_id: authUser.user.id,
+      user_role: body.role
+    });
+
     return new Response(
       JSON.stringify({ 
         success: true, 

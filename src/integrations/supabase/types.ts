@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_created_users: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+          user_role: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_created_users_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_invitations: {
         Row: {
           accepted_at: string | null
