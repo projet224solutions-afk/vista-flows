@@ -67,12 +67,43 @@ export function DriverDashboard({
     todayRides: 0,
     rating: 5.0,
     totalRides: 0,
-    onlineTime: '0h 0m',
+    onlineTime: '0h 0m 0s',
     vehiclePlate: '',
     giletNumber: '',
     serialNumber: ''
   });
   const [loading, setLoading] = useState(false);
+  const [onlineStartTime, setOnlineStartTime] = useState<Date | null>(null);
+  const [currentOnlineTime, setCurrentOnlineTime] = useState('0h 0m 0s');
+
+  // Suivre le temps en ligne en temps réel
+  useEffect(() => {
+    if (isOnline && !onlineStartTime) {
+      setOnlineStartTime(new Date());
+    } else if (!isOnline) {
+      setOnlineStartTime(null);
+      setCurrentOnlineTime('0h 0m 0s');
+    }
+  }, [isOnline]);
+
+  // Mettre à jour le temps en ligne chaque seconde
+  useEffect(() => {
+    if (!isOnline || !onlineStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diffMs = now.getTime() - onlineStartTime.getTime();
+      const totalSeconds = Math.floor(diffMs / 1000);
+      
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      
+      setCurrentOnlineTime(`${hours}h ${minutes}m ${seconds}s`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOnline, onlineStartTime]);
 
   const loadStats = async () => {
     if (!driverId) return;
@@ -277,8 +308,8 @@ export function DriverDashboard({
         <Card 
           className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
-            if (stats.onlineTime !== '0h 0m') {
-              toast.success(`⏱️ En ligne depuis ${stats.onlineTime}`);
+            if (isOnline) {
+              toast.success(`⏱️ En ligne depuis ${currentOnlineTime}`);
             } else {
               toast.info('Passez en ligne pour commencer à travailler');
             }
@@ -286,7 +317,7 @@ export function DriverDashboard({
         >
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-purple-700 mb-1">
-              {stats.onlineTime}
+              {isOnline ? currentOnlineTime : '0h 0m 0s'}
             </div>
             <div className="text-xs font-medium text-gray-600">Temps en ligne</div>
           </CardContent>
