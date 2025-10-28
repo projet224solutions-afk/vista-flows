@@ -224,15 +224,6 @@ export default function PDG224Solutions() {
                   Modifier Email
                 </Button>
                 <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate('/agent')}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                >
-                  <UserCog className="w-4 h-4" />
-                  Interface Agent
-                </Button>
-                <Button
                   variant="outline"
                   size="sm"
                   onClick={signOut}
