@@ -233,39 +233,6 @@ export default function IndexAlibaba() {
         </div>
       </section>
 
-      {/* Accès Interfaces Professionnelles */}
-      <section className="py-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🎯 Interfaces Professionnelles</h2>
-          <p className="mb-6">Accédez à vos tableaux de bord de gestion</p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => navigate('/vendeur-open')}
-              className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              <Store className="w-6 h-6 mr-2" />
-              Interface Vendeur
-            </Button>
-            <Button
-              onClick={() => navigate('/taxi-moto')}
-              className="bg-green-400 text-gray-900 hover:bg-green-300 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              🏍️ Taxi Moto Client
-            </Button>
-            <Button
-              onClick={() => navigate('/taxi-moto/driver')}
-              className="bg-blue-500 text-white hover:bg-blue-600 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              🏍️ Interface Conducteur
-            </Button>
-          </div>
-        </div>
-      </section>
-
-
       {/* Nos Services - Section principale comme dans l'image */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
