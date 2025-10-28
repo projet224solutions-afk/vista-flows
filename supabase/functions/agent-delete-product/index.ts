@@ -1,30 +1,26 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
+    const { agentToken, productId } = await req.json();
+
+    if (!agentToken || !productId) {
+      return new Response(
+        JSON.stringify({ error: 'Paramètres requis manquants' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const { productId } = await req.json();
-
-    if (!productId) {
-      throw new Error('Missing productId');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    // Initialiser le client Supabase avec la clé service
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -36,32 +32,26 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Vérifier le token et obtenir l'utilisateur
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (userError || !user) {
-      console.error('Auth error:', userError);
-      throw new Error('Unauthorized');
-    }
-
-    // Vérifier que l'utilisateur est un agent avec les bonnes permissions
+    // Vérifier le token agent
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')
-      .select('id, permissions')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
+      .select('id, pdg_id, is_active, permissions')
+      .eq('access_token', agentToken)
       .single();
 
-    if (agentError || !agent) {
-      console.error('Agent check error:', agentError);
-      throw new Error('Not authorized as agent');
+    if (agentError || !agent || !agent.is_active) {
+      return new Response(
+        JSON.stringify({ error: 'Token agent invalide ou agent inactif' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!agent.permissions?.includes('manage_products')) {
-      throw new Error('Missing manage_products permission');
+    if (!agent.permissions.includes('manage_products')) {
+      return new Response(
+        JSON.stringify({ error: 'Permission refusée' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    console.log('Agent authorized to delete product:', agent.id);
 
     // Supprimer le produit
     const { error: deleteError } = await supabaseAdmin
@@ -69,29 +59,18 @@ Deno.serve(async (req) => {
       .delete()
       .eq('id', productId);
 
-    if (deleteError) {
-      console.error('Delete error:', deleteError);
-      throw deleteError;
-    }
-
-    console.log('Product deleted successfully:', productId);
+    if (deleteError) throw deleteError;
 
     return new Response(
       JSON.stringify({ success: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in agent-delete-product:', error);
+    console.error('Erreur:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

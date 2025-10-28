@@ -93,8 +93,20 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
   const loadProducts = async () => {
     try {
       setLoading(true);
+
+      // Extraire le token de l'URL
+      const currentPath = window.location.pathname;
+      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
+      const agentToken = tokenMatch ? tokenMatch[1] : null;
+
+      if (!agentToken) {
+        toast.error('Token agent introuvable');
+        return;
+      }
       
-      const { data, error } = await supabase.functions.invoke('agent-get-products');
+      const { data, error } = await supabase.functions.invoke('agent-get-products', {
+        body: { agentToken }
+      });
       
       if (error) throw error;
       
@@ -120,8 +132,17 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
+      const currentPath = window.location.pathname;
+      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
+      const agentToken = tokenMatch ? tokenMatch[1] : null;
+
+      if (!agentToken) {
+        toast.error('Token agent introuvable');
+        return;
+      }
+
       const { error } = await supabase.functions.invoke('agent-toggle-product-status', {
-        body: { productId, currentStatus }
+        body: { agentToken, productId, currentStatus }
       });
 
       if (error) throw error;
@@ -136,8 +157,17 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
   const deleteProduct = async (productId: string) => {
     try {
+      const currentPath = window.location.pathname;
+      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
+      const agentToken = tokenMatch ? tokenMatch[1] : null;
+
+      if (!agentToken) {
+        toast.error('Token agent introuvable');
+        return;
+      }
+
       const { error } = await supabase.functions.invoke('agent-delete-product', {
-        body: { productId }
+        body: { agentToken, productId }
       });
 
       if (error) throw error;
@@ -155,8 +185,18 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
     if (!editingProduct) return;
     
     try {
+      const currentPath = window.location.pathname;
+      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
+      const agentToken = tokenMatch ? tokenMatch[1] : null;
+
+      if (!agentToken) {
+        toast.error('Token agent introuvable');
+        return;
+      }
+
       const { error } = await supabase.functions.invoke('agent-update-product', {
         body: {
+          agentToken,
           productId: editingProduct.id,
           updates: {
             name: editingProduct.name,
