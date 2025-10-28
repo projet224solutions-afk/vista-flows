@@ -8,12 +8,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
+import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
+import { ManageProductsSection } from '@/components/agent/ManageProductsSection';
+import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
+import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
 
 interface Agent {
   id: string;
@@ -233,64 +238,130 @@ export default function AgentDashboardPublic() {
             </Card>
           </div>
 
-          {/* Actions Rapides */}
-          <Card className="border-2 border-green-200 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-              <CardTitle className="text-xl">Actions Rapides</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Bouton Créer Utilisateur */}
-                {agent.permissions.includes('create_users') && (
-                  <CreateUserForm 
-                    agentId={agent.id} 
-                    agentCode={agent.agent_code}
-                  />
-                )}
+          {/* Tabs pour les différentes sections */}
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+              <TabsTrigger value="overview">Aperçu</TabsTrigger>
+              {agent.permissions.includes('manage_users') && (
+                <TabsTrigger value="users">
+                  <UserCog className="w-4 h-4 mr-2" />
+                  Utilisateurs
+                </TabsTrigger>
+              )}
+              {agent.permissions.includes('manage_products') && (
+                <TabsTrigger value="products">
+                  <Package className="w-4 h-4 mr-2" />
+                  Produits
+                </TabsTrigger>
+              )}
+              {agent.permissions.includes('view_reports') && (
+                <TabsTrigger value="reports">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Rapports
+                </TabsTrigger>
+              )}
+              {agent.permissions.includes('manage_commissions') && (
+                <TabsTrigger value="commissions">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Commissions
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-                {/* Bouton Créer Sous-Agent */}
-                {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-                  <CreateSubAgentForm 
-                    parentAgentId={agent.id}
-                    pdgId={agent.pdg_id}
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            <TabsContent value="overview" className="space-y-6">
+              {/* Actions Rapides */}
+              <Card className="border-2 border-green-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
+                  <CardTitle className="text-xl">Actions Rapides</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {agent.permissions.includes('create_users') && (
+                      <CreateUserForm 
+                        agentId={agent.id} 
+                        agentCode={agent.agent_code}
+                      />
+                    )}
 
-          {/* Permissions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-blue-600" />
-                Permissions et Accès
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {agent.permissions.map((permission) => (
-                  <div key={permission} className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-900">
-                      {permission === 'create_users' && '✅ Créer des utilisateurs'}
-                      {permission === 'view_reports' && '📊 Voir les rapports'}
-                      {permission === 'manage_commissions' && '💰 Gérer les commissions'}
-                      {permission === 'create_sub_agents' && '👥 Créer des sous-agents'}
-                      {permission === 'manage_users' && '👤 Gérer les utilisateurs'}
-                      {permission === 'manage_products' && '📦 Gérer les produits'}
-                    </span>
+                    {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
+                      <CreateSubAgentForm 
+                        parentAgentId={agent.id}
+                        pdgId={agent.pdg_id}
+                      />
+                    )}
                   </div>
-                ))}
-                {agent.can_create_sub_agent && (
-                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span className="text-sm font-medium text-green-900">👥 Peut créer des sous-agents</span>
+                </CardContent>
+              </Card>
+
+              {/* Permissions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    Permissions et Accès
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {agent.permissions.map((permission) => (
+                      <div key={permission} className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <span className="text-sm font-medium text-blue-900">
+                          {permission === 'create_users' && '✅ Créer des utilisateurs'}
+                          {permission === 'view_reports' && '📊 Voir les rapports'}
+                          {permission === 'manage_commissions' && '💰 Gérer les commissions'}
+                          {permission === 'create_sub_agents' && '👥 Créer des sous-agents'}
+                          {permission === 'manage_users' && '👤 Gérer les utilisateurs'}
+                          {permission === 'manage_products' && '📦 Gérer les produits'}
+                        </span>
+                      </div>
+                    ))}
+                    {agent.can_create_sub_agent && (
+                      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                        <span className="text-sm font-medium text-green-900">👥 Peut créer des sous-agents</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {agent.permissions.includes('manage_users') && (
+              <TabsContent value="users">
+                <ManageUsersSection agentId={agent.id} />
+              </TabsContent>
+            )}
+
+            {agent.permissions.includes('manage_products') && (
+              <TabsContent value="products">
+                <ManageProductsSection agentId={agent.id} />
+              </TabsContent>
+            )}
+
+            {agent.permissions.includes('view_reports') && (
+              <TabsContent value="reports">
+                <ViewReportsSection 
+                  agentId={agent.id}
+                  agentData={{
+                    total_users_created: agent.total_users_created,
+                    total_commissions_earned: agent.total_commissions_earned,
+                    commission_rate: agent.commission_rate
+                  }}
+                />
+              </TabsContent>
+            )}
+
+            {agent.permissions.includes('manage_commissions') && (
+              <TabsContent value="commissions">
+                <ManageCommissionsSection 
+                  agentId={agent.id}
+                  totalCommissions={agent.total_commissions_earned || 0}
+                  commissionRate={agent.commission_rate}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
 
           {/* Informations système */}
           <Card className="bg-gray-50 border-gray-200">
