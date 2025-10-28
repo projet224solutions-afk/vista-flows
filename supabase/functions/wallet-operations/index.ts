@@ -310,6 +310,41 @@ serve(async (req) => {
           console.log('✅ User ID trouvé:', recipientUserId);
         }
 
+        // 🛡️ DÉTECTION DE FRAUDE (NOUVEAU - comme Amazon)
+        console.log('🛡️ Running fraud detection...');
+        try {
+          const fraudCheckResult = await supabaseClient.functions.invoke('fraud-detection', {
+            body: {
+              userId: user.id,
+              amount,
+              recipientId: recipientUserId,
+              method: 'wallet',
+              metadata: { description, currency: wallet.currency }
+            }
+          });
+
+          console.log('🔍 Fraud check result:', fraudCheckResult.data);
+
+          if (fraudCheckResult.data) {
+            const { riskLevel, requiresMFA, flags } = fraudCheckResult.data;
+
+            // Bloquer si risque critique
+            if (riskLevel === 'critical') {
+              console.error('❌ TRANSACTION BLOCKED - Critical risk detected');
+              throw new Error(`Transaction bloquée pour raison de sécurité: ${flags.join(', ')}`);
+            }
+
+            // Avertir si risque élevé (mais autoriser)
+            if (riskLevel === 'high') {
+              console.warn('⚠️ HIGH RISK TRANSACTION - Proceeding with caution');
+              // TODO: Demander MFA si requiresMFA = true
+            }
+          }
+        } catch (fraudError: any) {
+          // Si le service de fraud detection échoue, on continue mais on log
+          console.warn('⚠️ Fraud detection failed, proceeding anyway:', fraudError);
+        }
+
         // Vérifier le wallet du destinataire
         const { data: recipientWallet, error: recipientError } = await supabaseClient
           .from('wallets')

@@ -2997,6 +2997,39 @@ export type Database = {
         }
         Relationships: []
       }
+      product_recommendations: {
+        Row: {
+          based_on_product_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          reason: string | null
+          recommended_product_id: string
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          based_on_product_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          recommended_product_id: string
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          based_on_product_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          recommended_product_id?: string
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           content: string
@@ -3109,6 +3142,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_views: {
+        Row: {
+          id: string
+          metadata: Json | null
+          product_id: string
+          session_id: string | null
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          product_id: string
+          session_id?: string | null
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          product_id?: string
+          session_id?: string | null
+          user_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -5519,6 +5579,51 @@ export type Database = {
           },
         ]
       }
+      user_addresses: {
+        Row: {
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string
+          phone: string
+          postal_code: string | null
+          recipient_name: string
+          street: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+          phone: string
+          postal_code?: string | null
+          recipient_name: string
+          street: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          phone?: string
+          postal_code?: string | null
+          recipient_name?: string
+          street?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_analytics: {
         Row: {
           created_at: string | null
@@ -6689,6 +6794,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
+      cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       convert_currency: {
         Args: {
@@ -6793,6 +6899,14 @@ export type Database = {
       generate_custom_id: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
       generate_public_id: { Args: never; Returns: string }
+      generate_recommendations_for_user: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          product_id: string
+          reason: string
+          score: number
+        }[]
+      }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
@@ -6902,6 +7016,24 @@ export type Database = {
           product_id: string
           reason: string
           score: number
+        }[]
+      }
+      get_product_rating: {
+        Args: { p_product_id: string }
+        Returns: {
+          average_rating: number
+          total_reviews: number
+        }[]
+      }
+      get_trending_products: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          avg_rating: number
+          product_id: string
+          review_count: number
+          trend_score: number
+          view_count: number
+          wishlist_count: number
         }[]
       }
       get_user_conversations: {
