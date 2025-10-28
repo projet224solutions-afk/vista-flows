@@ -37,6 +37,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
+const BureauSyndicatDashboard = lazy(() => import("./pages/BureauSyndicatDashboard"));
 const InstallPWA = lazy(() => import("./pages/InstallPWA"));
 
 // Composant de loading
@@ -151,6 +152,7 @@ const App = () => (
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
               <Route path="/bureau/:token" element={<BureauDashboard />} />
+              <Route path="/bureau-syndicat/:token" element={<BureauSyndicatDashboard />} />
               <Route path="/worker/:token" element={<WorkerDashboard />} />
               <Route path="/agent/activate/:token" element={<AgentActivation />} />
               <Route path="/agent/:token" element={<AgentDashboardPublic />} />
