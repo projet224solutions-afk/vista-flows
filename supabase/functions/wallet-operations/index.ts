@@ -291,22 +291,22 @@ serve(async (req) => {
         let recipientUserId = recipient_id;
 
         if (!isUUID) {
-          // C'est un custom_id, chercher l'user_id correspondant
-          console.log('🔍 Recherche par custom_id:', recipient_id);
+          // C'est un public_id standardisé, chercher l'user_id correspondant
+          console.log('🔍 Recherche par public_id:', recipient_id);
           
-          const { data: userIdData, error: userIdError } = await supabaseClient
-            .from('user_ids')
-            .select('user_id')
-            .eq('custom_id', recipient_id.toUpperCase())
+          const { data: profileData, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('id')
+            .eq('public_id', recipient_id.toUpperCase())
             .single();
 
-          console.log('👤 User ID lookup:', { userIdData, userIdError });
+          console.log('👤 User profile lookup:', { profileData, profileError });
 
-          if (userIdError || !userIdData) {
-            throw new Error(`Utilisateur avec le code ${recipient_id} introuvable`);
+          if (profileError || !profileData) {
+            throw new Error(`Utilisateur avec l'ID ${recipient_id} introuvable`);
           }
 
-          recipientUserId = userIdData.user_id;
+          recipientUserId = profileData.id;
           console.log('✅ User ID trouvé:', recipientUserId);
         }
 
