@@ -98,7 +98,18 @@ serve(async (req) => {
       throw new Error('Erreur lors de la création de l\'utilisateur');
     }
 
-    // Créer le profil utilisateur
+    // Créer le custom_id et public_id
+    const customIdPrefix = body.role === 'vendeur' ? 'VND' : 
+                          body.role === 'livreur' ? 'DRV' :
+                          body.role === 'taxi' ? 'DRV' :
+                          body.role === 'admin' ? 'PDG' :
+                          body.role === 'syndicat' ? 'SYD' :
+                          body.role === 'transitaire' ? 'AGT' :
+                          'USR';
+    const customId = `${customIdPrefix}${Math.floor(1000 + Math.random() * 9000)}`;
+    const publicId = customId; // Utiliser le même ID pour simplifier
+
+    // Créer le profil utilisateur avec custom_id et public_id
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .insert({
@@ -108,32 +119,26 @@ serve(async (req) => {
         last_name: body.lastName || '',
         phone: body.phone,
         role: body.role,
+        custom_id: customId,
+        public_id: publicId,
         is_active: true
       });
 
     if (profileError) {
       console.error('Profile error:', profileError);
-      // Ne pas échouer si le profil existe déjà
-      if (!profileError.message.includes('duplicate')) {
-        throw new Error(profileError.message);
+      // Si le profil existe déjà, ne pas échouer
+      if (!profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Erreur lors de la création du profil: ' + profileError.message,
+            code: 'PROFILE_ERROR'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
       }
     }
 
-    // Créer le custom_id
-    const customIdPrefix = body.role === 'vendeur' ? 'VEN' : 
-                          body.role === 'livreur' ? 'LIV' : 'QQC';
-    const customId = `${customIdPrefix}${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const { error: userIdError } = await supabaseClient
-      .from('user_ids')
-      .insert({
-        user_id: authUser.user.id,
-        custom_id: customId
-      });
-
-    if (userIdError) {
-      console.error('User ID error:', userIdError);
-    }
+    // Supprimer la création dans user_ids car on utilise custom_id directement dans profiles
 
     // Créer le wallet si c'est un client
     if (body.role === 'client') {
