@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -657,24 +658,40 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
               <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm opacity-90">224SOLUTIONS</span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-white hover:bg-white/20 p-1"
-                      onClick={() => setShowCardNumber(!showCardNumber)}
-                    >
-                      {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-white hover:bg-white/20 p-1"
-                      onClick={copyCardNumber}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <TooltipProvider>
+                    <div className="flex gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 p-2 h-8 w-8"
+                            onClick={() => setShowCardNumber(!showCardNumber)}
+                          >
+                            {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{showCardNumber ? 'Masquer' : 'Afficher'} le numéro</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 p-2 h-8 w-8"
+                            onClick={copyCardNumber}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copier le numéro</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
                 </div>
                 <p className="text-lg font-mono tracking-wider">
                   {showCardNumber 
