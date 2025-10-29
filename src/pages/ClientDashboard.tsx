@@ -284,10 +284,42 @@ export default function ClientDashboard() {
                               <Badge variant="secondary" className="text-xs">En stock</Badge>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-lg font-bold text-client-primary">{formatPrice(product.price)}</p>
-                            <Button size="sm" onClick={() => addToCart(product)} className="bg-client-primary hover:bg-client-primary/90">
-                              <Plus className="w-4 h-4" />
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-lg font-bold text-client-primary">{formatPrice(product.price)}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => addToCart(product)} 
+                                className="flex-1 border-client-primary text-client-primary hover:bg-client-primary hover:text-white"
+                              >
+                                <ShoppingCart className="w-4 h-4 mr-1" />
+                                Panier
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                onClick={() => {
+                                  addToCart(product);
+                                  handleCheckout();
+                                }}
+                                className="flex-1 bg-client-primary hover:bg-client-primary/90"
+                              >
+                                <CreditCard className="w-4 h-4 mr-1" />
+                                Acheter
+                              </Button>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-full"
+                              onClick={() => {
+                                toast.info('Fonctionnalité de contact en cours de développement');
+                              }}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Contacter
                             </Button>
                           </div>
                         </CardContent>
@@ -351,16 +383,42 @@ export default function ClientDashboard() {
                           </div>
                           <div className="flex items-center justify-between pt-2">
                             <p className="text-xl font-bold text-client-primary">{formatPrice(product.price)}</p>
-                            <Button
-                              size="sm"
-                              onClick={() => addToCart(product)}
-                              disabled={!product.inStock}
-                              className="bg-client-primary hover:bg-client-primary/90"
-                            >
-                              <ShoppingCart className="w-4 h-4 mr-1" />
-                              Ajouter
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => addToCart(product)}
+                                disabled={!product.inStock}
+                                className="border-client-primary text-client-primary hover:bg-client-primary hover:text-white"
+                              >
+                                <ShoppingCart className="w-4 h-4 mr-1" />
+                                Panier
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  addToCart(product);
+                                  handleCheckout();
+                                }}
+                                disabled={!product.inStock}
+                                className="bg-client-primary hover:bg-client-primary/90"
+                              >
+                                <CreditCard className="w-4 h-4 mr-1" />
+                                Acheter
+                              </Button>
+                            </div>
                           </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="w-full mt-2"
+                            onClick={() => {
+                              toast.info('Fonctionnalité de contact en cours de développement');
+                            }}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Contacter le vendeur
+                          </Button>
                         </CardContent>
                       </Card>
                     ))}

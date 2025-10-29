@@ -22,6 +22,8 @@ interface Product {
   inStock: boolean;
   seller: string;
   brand: string;
+  vendorId?: string;
+  vendorUserId?: string;
   isHot?: boolean;
   isNew?: boolean;
   isFreeShipping?: boolean;
@@ -65,6 +67,7 @@ export function useClientData() {
           price,
           images,
           category_id,
+          vendor_id,
           stock_quantity,
           created_at,
           is_active,
@@ -72,7 +75,7 @@ export function useClientData() {
           free_shipping,
           rating,
           reviews_count,
-          vendors!inner(business_name)
+          vendors!inner(business_name, user_id)
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
@@ -92,8 +95,10 @@ export function useClientData() {
         reviews: product.reviews_count || 0,
         category: product.category_id || 'general',
         inStock: (product.stock_quantity || 0) > 0,
-        seller: (product.vendors as unknown)?.business_name || 'Vendeur',
-        brand: (product.vendors as unknown)?.business_name || 'Marque',
+        seller: (product.vendors as any)?.business_name || 'Vendeur',
+        brand: (product.vendors as any)?.business_name || 'Marque',
+        vendorId: product.vendor_id,
+        vendorUserId: (product.vendors as any)?.user_id,
         isHot: product.is_hot || false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         isFreeShipping: product.free_shipping || false
@@ -268,27 +273,22 @@ export function useClientData() {
     }
 
     try {
-      const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
-      
       // Grouper les articles par vendeur
       const itemsByVendor = cartItems.reduce((acc, item) => {
-        if (!acc[item.seller]) {
-          acc[item.seller] = [];
+        const vendorKey = item.vendorUserId || 'unknown';
+        if (!acc[vendorKey]) {
+          acc[vendorKey] = [];
         }
-        acc[item.seller].push(item);
+        acc[vendorKey].push(item);
         return acc;
       }, {} as Record<string, Product[]>);
 
       // Créer une commande pour chaque vendeur
-      for (const [vendorName, items] of Object.entries(itemsByVendor)) {
-        // Récupérer le vendor_id
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id, user_id')
-          .eq('business_name', vendorName)
-          .single();
-
-        if (!vendor) continue;
+      for (const [vendorUserId, items] of Object.entries(itemsByVendor)) {
+        if (vendorUserId === 'unknown') {
+          console.error('❌ Produit sans vendeur:', items);
+          continue;
+        }
 
         const vendorTotal = items.reduce((sum, item) => sum + item.price, 0);
 
@@ -297,17 +297,23 @@ export function useClientData() {
           .from('orders')
           .insert({
             customer_id: userId,
-            vendor_id: vendor.user_id,
+            vendor_id: vendorUserId,
             total_amount: vendorTotal,
+            subtotal: vendorTotal,
+            tax_amount: 0,
+            shipping_amount: 0,
+            discount_amount: 0,
             status: 'pending',
             payment_status: 'pending',
-            delivery_address: 'Adresse par défaut' // À remplacer par une vraie adresse
+            payment_method: 'cash',
+            shipping_address: { address: 'Adresse par défaut', city: 'Conakry', country: 'Guinée' }
           })
           .select()
-          .single();
+          .maybeSingle();
 
-        if (orderError) {
+        if (orderError || !orderData) {
           console.error('❌ Erreur création commande:', orderError);
+          toast.error('Erreur lors de la création de la commande');
           continue;
         }
 
