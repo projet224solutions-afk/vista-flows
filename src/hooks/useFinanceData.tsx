@@ -24,29 +24,20 @@ export interface WalletDetail {
 
 export interface Transaction {
   id: string;
-  transaction_id: string;
-  sender_wallet_id: string;
-  receiver_wallet_id: string;
+  sender_id: string | null;
+  receiver_id: string | null;
   amount: number;
-  fee: number;
-  net_amount: number;
   currency: string;
   status: string;
-  transaction_type: string | null;
-  description: string | null;
+  method: string | null;
+  transaction_type?: string | null;
+  fee?: number;
+  description?: string | null;
   created_at: string;
-  sender_wallet?: {
-    profiles: {
-      first_name: string | null;
-      last_name: string | null;
-    };
-  };
-  receiver_wallet?: {
-    profiles: {
-      first_name: string | null;
-      last_name: string | null;
-    };
-  };
+  updated_at: string;
+  metadata?: any;
+  custom_id?: string;
+  public_id?: string;
 }
 
 export interface FinanceStats {
@@ -71,14 +62,27 @@ export function useFinanceData(enabled: boolean = true) {
     try {
       setLoading(true);
 
-      // Récupérer les transactions
+      // Récupérer les transactions depuis enhanced_transactions
       const { data: transData, error: transError } = await supabase
-        .from('wallet_transactions')
+        .from('enhanced_transactions')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (transError) throw transError;
+      if (transError) {
+        console.error('❌ Erreur récupération transactions:', transError);
+        throw transError;
+      }
+
+      console.log('✅ Transactions récupérées:', transData?.length);
+
+      // Mapper les transactions pour ajouter transaction_type depuis method
+      const mappedTransactions = (transData || []).map((t: any) => ({
+        ...t,
+        transaction_type: t.method,
+        fee: t.fee || t.metadata?.fee || 0,
+        description: t.description || t.metadata?.description || null
+      }));
 
       // Récupérer les wallets avec les profils utilisateurs
       const { data: walletsData, error: walletsError } = await supabase
@@ -115,19 +119,19 @@ export function useFinanceData(enabled: boolean = true) {
 
       console.log('✅ Wallets récupérés:', enrichedWallets);
 
-      setTransactions(transData || []);
+      setTransactions(mappedTransactions);
       setWallets(enrichedWallets);
 
       // Calculer les statistiques
-      const totalRevenue = (transData || [])
+      const totalRevenue = mappedTransactions
         .filter(t => t.status === 'completed')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
-      const totalCommission = (transData || [])
+      const totalCommission = mappedTransactions
         .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + Number(t.fee), 0);
+        .reduce((sum, t) => sum + Number(t.fee || 0), 0);
 
-      const pendingPayments = (transData || [])
+      const pendingPayments = mappedTransactions
         .filter(t => t.status === 'pending')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -171,15 +175,15 @@ export function useFinanceData(enabled: boolean = true) {
       )
       .subscribe();
 
-    // Subscription temps réel pour les transactions
+    // Subscription temps réel pour les transactions (enhanced_transactions)
     const transactionsChannel = supabase
-      .channel('transactions-changes')
+      .channel('enhanced-transactions-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'wallet_transactions',
+          table: 'enhanced_transactions',
         },
         (payload) => {
           console.log('💸 Transaction modifiée:', payload);
