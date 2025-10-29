@@ -62,19 +62,15 @@ export function useClientData() {
           id,
           name,
           price,
-          image_url,
-          rating,
-          reviews_count,
-          category,
+          images,
+          category_id,
           discount,
-          in_stock,
-          is_hot,
-          is_featured,
-          free_shipping,
+          stock,
           created_at,
+          is_active,
           vendors!inner(business_name)
         `)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -88,17 +84,17 @@ export function useClientData() {
         name: product.name,
         price: product.price,
         originalPrice: product.discount ? product.price / (1 - product.discount / 100) : undefined,
-        image: product.image_url || '/placeholder.svg',
-        rating: product.rating || 0,
-        reviews: product.reviews_count || 0,
-        category: product.category || 'general',
-        discount: product.discount,
-        inStock: product.in_stock,
+        image: (Array.isArray(product.images) && product.images.length > 0) ? product.images[0] : '/placeholder.svg',
+        rating: 0,
+        reviews: 0,
+        category: product.category_id || 'general',
+        discount: product.discount || 0,
+        inStock: (product.stock || 0) > 0,
         seller: (product.vendors as unknown)?.business_name || 'Vendeur',
         brand: (product.vendors as unknown)?.business_name || 'Marque',
-        isHot: product.is_hot || false,
+        isHot: false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        isFreeShipping: product.free_shipping || false
+        isFreeShipping: false
       })) || [];
 
       setProducts(formattedProducts);
@@ -128,11 +124,11 @@ export function useClientData() {
       // Compter les produits par catégorie
       const categoriesWithCount = await Promise.all(
         (categoriesData || []).map(async (category) => {
-          const { count } = await supabase
+           const { count } = await supabase
             .from('products')
             .select('id', { count: 'exact', head: true })
-            .eq('category', category.name)
-            .eq('status', 'active');
+            .eq('category_id', category.id)
+            .eq('is_active', true);
 
           return {
             id: category.id,
