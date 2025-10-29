@@ -5016,6 +5016,33 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       taxi_api_usage: {
         Row: {
           created_at: string | null
@@ -7217,6 +7244,7 @@ export type Database = {
         }[]
       }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
+      get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {
@@ -7340,6 +7368,15 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       preview_next_id: { Args: { p_prefix: string }; Returns: string }
+      preview_wallet_transfer: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: Json
+      }
       process_card_to_om: {
         Args: {
           p_amount: number

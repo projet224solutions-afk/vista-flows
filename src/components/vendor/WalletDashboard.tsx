@@ -6,12 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function WalletDashboard() {
   const { user } = useAuth();
@@ -24,6 +34,8 @@ export default function WalletDashboard() {
   const [receiverId, setReceiverId] = useState("");
   const [transferReason, setTransferReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showTransferPreview, setShowTransferPreview] = useState(false);
+  const [transferPreview, setTransferPreview] = useState<any>(null);
 
   const walletId = useMemo(() => wallet?.id, [wallet]);
   const balanceDisplay = useMemo(() => {
@@ -141,7 +153,7 @@ export default function WalletDashboard() {
     }
   }, [withdrawAmount, userId, wallet, refetch]);
 
-  const handleTransfer = useCallback(async () => {
+  const handlePreviewTransfer = useCallback(async () => {
     if (!userId || !wallet) return;
     const amount = parseFloat(transferAmount);
     if (!amount || amount <= 0) {
@@ -152,20 +164,49 @@ export default function WalletDashboard() {
       toast.error('Destinataire requis (ID utilisateur)');
       return;
     }
-    if (amount > wallet.balance) {
-      toast.error('Solde insuffisant');
-      return;
-    }
+    
     try {
       setBusy(true);
 
-      // Utiliser la fonction RPC atomique pour le transfert
-      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+      // Appeler la fonction de prévisualisation
+      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: userId,
         p_receiver_id: receiverId,
         p_amount: amount,
+        p_currency: 'GNF'
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        toast.error(data.error);
+        return;
+      }
+
+      setTransferPreview(data);
+      setShowTransferPreview(true);
+    } catch (e: any) {
+      console.error('Erreur prévisualisation:', e);
+      toast.error(e?.message || 'Erreur lors de la prévisualisation');
+    } finally {
+      setBusy(false);
+    }
+  }, [transferAmount, receiverId, userId, wallet]);
+
+  const handleConfirmTransfer = useCallback(async () => {
+    if (!userId || !transferPreview) return;
+    
+    try {
+      setBusy(true);
+      setShowTransferPreview(false);
+
+      // Exécuter le transfert
+      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+        p_sender_id: userId,
+        p_receiver_id: receiverId,
+        p_amount: transferPreview.amount,
         p_currency: 'GNF',
-        p_description: transferReason || `Transfert de ${amount.toLocaleString()} GNF`
+        p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} GNF`
       });
 
       if (error) throw error;
@@ -173,7 +214,13 @@ export default function WalletDashboard() {
       setTransferAmount("");
       setReceiverId("");
       setTransferReason("");
-      toast.success(`Transfert de ${amount.toLocaleString()} GNF effectué avec succès`);
+      setTransferPreview(null);
+      
+      toast.success(
+        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
+        { duration: 5000 }
+      );
+      
       await refetch(userId);
     } catch (e: any) {
       console.error('Erreur transfert:', e);
@@ -181,7 +228,7 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, transferReason, userId, wallet, refetch]);
+  }, [transferPreview, receiverId, transferReason, userId, refetch]);
 
   return (
     <Card className="h-full">
@@ -256,7 +303,7 @@ export default function WalletDashboard() {
                   <Label>Montant à transférer</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <Input type="number" placeholder="0" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
-                    <Button onClick={handleTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
+                    <Button onClick={handlePreviewTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
                       Transférer
                     </Button>
                   </div>
@@ -269,6 +316,58 @@ export default function WalletDashboard() {
             <WalletTransactionHistory />
           </TabsContent>
         </Tabs>
+
+        {/* Dialog de confirmation avec prévisualisation */}
+        <AlertDialog open={showTransferPreview} onOpenChange={setShowTransferPreview}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-primary" />
+                Confirmer le transfert
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4 mt-4">
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-orange-600">
+                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between items-center">
+                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                      <br />
+                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Souhaitez-vous confirmer ce transfert ?
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Non, annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmTransfer} disabled={busy}>
+                Oui, confirmer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
