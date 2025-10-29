@@ -159,61 +159,16 @@ export default function WalletDashboard() {
     try {
       setBusy(true);
 
-      // Vérifier que le destinataire existe et récupérer son wallet
-      const { data: receiverWallet, error: receiverError } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('user_id', receiverId)
-        .single();
+      // Utiliser la fonction RPC atomique pour le transfert
+      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+        p_sender_id: userId,
+        p_receiver_id: receiverId,
+        p_amount: amount,
+        p_currency: 'GNF',
+        p_description: transferReason || `Transfert de ${amount.toLocaleString()} GNF`
+      });
 
-      if (receiverError || !receiverWallet) {
-        toast.error('Destinataire introuvable');
-        return;
-      }
-
-      // Créer une transaction de transfert
-      const referenceNumber = `TRF${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      
-      const { error: transactionError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: referenceNumber,
-          transaction_type: 'transfer',
-          amount: amount,
-          net_amount: amount,
-          fee: 0,
-          currency: 'GNF',
-          status: 'completed',
-          description: transferReason || `Transfert vers ${receiverId.substring(0, 8)}...`,
-          sender_wallet_id: wallet.id,
-          receiver_wallet_id: receiverWallet.id
-        });
-
-      if (transactionError) throw transactionError;
-
-      // Débiter l'expéditeur
-      const newSenderBalance = wallet.balance - amount;
-      const { error: senderUpdateError } = await supabase
-        .from('wallets')
-        .update({ balance: newSenderBalance })
-        .eq('user_id', userId);
-
-      if (senderUpdateError) throw senderUpdateError;
-
-      // Créditer le destinataire
-      const { data: currentReceiverWallet } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', receiverId)
-        .single();
-
-      const newReceiverBalance = (currentReceiverWallet?.balance || 0) + amount;
-      const { error: receiverUpdateError } = await supabase
-        .from('wallets')
-        .update({ balance: newReceiverBalance })
-        .eq('user_id', receiverId);
-
-      if (receiverUpdateError) throw receiverUpdateError;
+      if (error) throw error;
 
       setTransferAmount("");
       setReceiverId("");
@@ -226,7 +181,7 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, userId, wallet, refetch]);
+  }, [transferAmount, receiverId, transferReason, userId, wallet, refetch]);
 
   return (
     <Card className="h-full">
