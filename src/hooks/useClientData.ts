@@ -374,7 +374,7 @@ export function useClientData() {
     loadAllData();
   }, [loadAllData]);
 
-  // Contacter un vendeur
+  // Contacter un vendeur via API backend
   const contactVendor = useCallback(async (vendorUserId: string, vendorName: string) => {
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -383,52 +383,27 @@ export function useClientData() {
         return null;
       }
 
-      // Vérifier si une conversation existe déjà
-      const { data: existingConversations } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          conversation_participants!inner(user_id)
-        `)
-        .eq('type', 'private')
-        .or(`creator_id.eq.${userId},creator_id.eq.${vendorUserId}`);
-
-      // Filtrer pour trouver une conversation entre ces deux utilisateurs
-      const existingConv = existingConversations?.find(conv => {
-        const participants = conv.conversation_participants as any[];
-        return participants.some(p => p.user_id === userId) && 
-               participants.some(p => p.user_id === vendorUserId);
-      });
-
-      if (existingConv) {
-        return existingConv.id;
-      }
-
-      // Créer une nouvelle conversation
-      const { data: newConv, error: convError } = await supabase
-        .from('conversations')
-        .insert({
-          creator_id: userId,
+      // Utiliser l'API backend pour éviter les problèmes de RLS
+      const response = await fetch('/api/communication/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participants: [userId, vendorUserId],
           type: 'private',
           name: `Discussion avec ${vendorName}`
         })
-        .select()
-        .single();
+      });
 
-      if (convError) throw convError;
+      const result = await response.json();
 
-      // Ajouter les participants
-      const { error: participantsError } = await supabase
-        .from('conversation_participants')
-        .insert([
-          { conversation_id: newConv.id, user_id: userId, role: 'member' },
-          { conversation_id: newConv.id, user_id: vendorUserId, role: 'member' }
-        ]);
-
-      if (participantsError) throw participantsError;
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors de la création de la conversation');
+      }
 
       toast.success('Conversation créée avec succès');
-      return newConv.id;
+      return result.conversation.id;
     } catch (error) {
       console.error('❌ Erreur création conversation:', error);
       toast.error('Erreur lors de la création de la conversation');
