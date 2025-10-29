@@ -9,21 +9,10 @@ import ServiceCard from "@/components/ServiceCard";
 import QuickFooter from "@/components/QuickFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 
 // Types pour les données réelles
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-  images?: string[] | null;
-  vendor_id: string;
-  vendors?: {
-    business_name?: string;
-  };
-}
-
 interface ServiceStats {
   id: string;
   title: string;
@@ -35,19 +24,19 @@ export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [serviceStats, setServiceStats] = useState<ServiceStats[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+
+  // Utiliser le hook universel pour les produits
+  const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
+    limit: 6,
+    sortBy: 'newest',
+    autoLoad: true
+  });
 
   // Charger les statistiques des services à proximité
   useEffect(() => {
     loadServiceStats();
-  }, []);
-
-  // Charger les produits récents
-  useEffect(() => {
-    loadRecentProducts();
   }, []);
 
   // Charger les notifications
@@ -98,36 +87,6 @@ export default function Home() {
       ]);
     } catch (error) {
       console.error('Erreur chargement statistiques:', error);
-    }
-  };
-
-  const loadRecentProducts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          id,
-          name,
-          price,
-          description,
-          images,
-          vendor_id,
-          vendors (
-            business_name
-          )
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (error) throw error;
-      setRecentProducts(data || []);
-    } catch (error) {
-      console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -311,9 +270,9 @@ export default function Home() {
             Voir tout
           </Button>
         </div>
-        {loading ? (
+        {productsLoading ? (
           <div className="text-center py-8 text-muted-foreground">Chargement...</div>
-        ) : recentProducts.length === 0 ? (
+        ) : universalProducts.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Aucun produit disponible</p>
             <Button 
@@ -326,18 +285,19 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentProducts.map((product) => (
+            {universalProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
                 image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                 title={product.name}
                 price={product.price}
-                vendor={product.vendors?.business_name || 'Vendeur'}
-                rating={0}
-                reviewCount={0}
+                vendor={product.vendor_name}
+                rating={product.rating}
+                reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
                 onContact={() => navigate(`/marketplace?product=${product.id}`)}
+                isPremium={product.is_hot}
               />
             ))}
           </div>

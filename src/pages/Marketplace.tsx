@@ -10,6 +10,7 @@ import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
+import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 
 const PAGE_LIMIT = 12;
@@ -36,30 +37,38 @@ interface Product {
 export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
+
+  // Utiliser le hook universel pour les produits
+  const { 
+    products, 
+    loading, 
+    total, 
+    hasMore, 
+    loadMore 
+  } = useUniversalProducts({
+    limit: 12,
+    category: selectedCategory,
+    searchQuery,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: filters.minRating,
+    sortBy,
+    autoLoad: true
+  });
 
   // Charger les catégories
   useEffect(() => {
     loadCategories();
   }, []);
-
-  // Charger les produits quand les filtres changent
-  useEffect(() => {
-    fetchProducts(true);
-  }, [searchQuery, selectedCategory, filters, sortBy]);
 
   const loadCategories = async () => {
     try {
@@ -76,91 +85,6 @@ export default function Marketplace() {
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
       setCategories([{ id: 'all', name: 'Toutes', is_active: true }]);
-    }
-  };
-
-  const fetchProducts = async (reset = false) => {
-    if (reset) {
-      setPage(1);
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    const currentPage = reset ? 1 : page;
-
-    try {
-      let query = supabase
-        .from('products')
-        .select(`
-          id,
-          name,
-          price,
-          description,
-          images,
-          vendor_id,
-          vendors (
-            business_name
-          )
-        `, { count: 'exact' })
-        .eq('is_active', true);
-
-      // Filtres de recherche
-      if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
-      }
-
-      // Filtre par catégorie
-      if (selectedCategory && selectedCategory !== 'all') {
-        query = query.eq('category_id', selectedCategory);
-      }
-
-      // Filtres de prix
-      if (filters.minPrice > 0) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters.maxPrice > 0) {
-        query = query.lte('price', filters.maxPrice);
-      }
-
-      // Tri
-      switch (sortBy) {
-        case 'price-low':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'price-high':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'newest':
-          query = query.order('created_at', { ascending: false });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
-      }
-
-      // Pagination
-      const start = (currentPage - 1) * PAGE_LIMIT;
-      const end = start + PAGE_LIMIT - 1;
-      query = query.range(start, end);
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      if (reset) {
-        setProducts(data || []);
-      } else {
-        setProducts(prev => [...prev, ...(data || [])]);
-      }
-      
-      setTotal(count || 0);
-    } catch (error) {
-      console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
-      if (reset) setProducts([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
     }
   };
 
@@ -220,11 +144,11 @@ export default function Marketplace() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="popular">Popularité</SelectItem>
-                <SelectItem value="price-low">Prix croissant</SelectItem>
-                <SelectItem value="price-high">Prix décroissant</SelectItem>
-                <SelectItem value="rating">Mieux notés</SelectItem>
                 <SelectItem value="newest">Plus récents</SelectItem>
+                <SelectItem value="popular">Popularité</SelectItem>
+                <SelectItem value="price_asc">Prix croissant</SelectItem>
+                <SelectItem value="price_desc">Prix décroissant</SelectItem>
+                <SelectItem value="rating">Mieux notés</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -308,26 +232,24 @@ export default function Marketplace() {
                 image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                 title={product.name}
                 price={product.price}
-                vendor={product.vendors?.business_name || 'Vendeur'}
-                rating={0}
-                reviewCount={0}
+                vendor={product.vendor_name}
+                rating={product.rating}
+                reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
                 onContact={() => handleProductContact(product.id)}
+                isPremium={product.is_hot}
               />
             ))}
           </div>
         )}
 
-        {products.length < total && !loading && (
+        {hasMore && !loading && (
           <div className="text-center mt-4">
             <Button 
-              onClick={() => { 
-                setPage(prev => prev + 1); 
-                fetchProducts(); 
-              }} 
-              disabled={loadingMore}
+              onClick={loadMore} 
+              disabled={loading}
             >
-              {loadingMore ? 'Chargement...' : 'Voir plus'}
+              {loading ? 'Chargement...' : 'Voir plus'}
             </Button>
           </div>
         )}

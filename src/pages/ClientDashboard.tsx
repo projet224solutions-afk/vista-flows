@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useClientData } from "@/hooks/useClientData";
+import { useUniversalProducts } from "@/hooks/useUniversalProducts";
+import ProductCard from "@/components/ProductCard";
 import UserProfileCard from "@/components/UserProfileCard";
 import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
@@ -29,22 +31,26 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Utiliser le hook universel pour les produits
+  const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
+    limit: 50,
+    sortBy: 'newest',
+    autoLoad: true,
+    searchQuery
+  });
+
   const {
-    products,
     orders,
     cartItems,
     favorites,
-    loading,
     addToCart,
     removeFromCart,
     clearCart,
     createOrder,
     toggleFavorite,
-    searchProducts,
     contactVendor,
   } = useClientData();
 
-  const [filteredProducts, setFilteredProducts] = useState(products);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [communicationRefresh, setCommunicationRefresh] = useState(0);
 
@@ -62,17 +68,6 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setFilteredProducts(products);
-      return;
-    }
-    const results = await searchProducts(searchQuery);
-    setFilteredProducts(results);
-    toast.success(`${results.length} produit(s) trouvé(s)`);
-    setActiveTab('products');
-  };
-
   const handleCheckout = async () => {
     if (!user?.id) {
       toast.error('Veuillez vous connecter');
@@ -82,19 +77,14 @@ export default function ClientDashboard() {
     setActiveTab('orders');
   };
 
-  // Mettre à jour les produits filtrés quand les produits changent
-  useEffect(() => {
-    setFilteredProducts(products);
-  }, [products]);
-
   // Contacter le vendeur
   const handleContactVendor = async (product: any) => {
-    if (!product.vendorUserId) {
+    if (!product.vendor_user_id) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
 
-    const conversationId = await contactVendor(product.vendorUserId, product.seller);
+    const conversationId = await contactVendor(product.vendor_user_id, product.vendor_name);
     if (conversationId) {
       setSelectedConversationId(conversationId);
       setCommunicationRefresh(prev => prev + 1);
@@ -131,7 +121,6 @@ export default function ClientDashboard() {
                 placeholder="Rechercher des produits..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-9 border-border focus-visible:ring-client-primary"
               />
             </div>
@@ -286,60 +275,23 @@ export default function ClientDashboard() {
               <CardContent>
                 <ScrollArea className="w-full">
                   <div className="flex gap-4 pb-4">
-                    {products.slice(0, 6).map((product) => (
-                      <Card key={product.id} className="min-w-[250px] hover:shadow-glow transition-all">
-                        <CardContent className="p-4 space-y-3">
-                          <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                            <ShoppingBag className="w-12 h-12 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-sm line-clamp-2">{product.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="flex items-center">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs ml-1">4.5</span>
-                              </div>
-                              <Badge variant="secondary" className="text-xs">En stock</Badge>
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
-                              <p className="text-lg font-bold text-client-primary">{formatPrice(product.price)}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => addToCart(product)} 
-                                className="flex-1 border-client-primary text-client-primary hover:bg-client-primary hover:text-white"
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-1" />
-                                Panier
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                onClick={() => {
-                                  addToCart(product);
-                                  handleCheckout();
-                                }}
-                                className="flex-1 bg-client-primary hover:bg-client-primary/90"
-                              >
-                                <CreditCard className="w-4 h-4 mr-1" />
-                                Acheter
-                              </Button>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="w-full"
-                              onClick={() => handleContactVendor(product)}
-                            >
-                              <MessageSquare className="w-4 h-4 mr-2" />
-                              Contacter
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                    {universalProducts.slice(0, 6).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                        title={product.name}
+                        price={product.price}
+                        vendor={product.vendor_name}
+                        rating={product.rating}
+                        reviewCount={product.reviews_count}
+                        onBuy={() => {
+                          addToCart(product as any);
+                          handleCheckout();
+                        }}
+                        onContact={() => handleContactVendor(product)}
+                        isPremium={product.is_hot}
+                      />
                     ))}
                   </div>
                 </ScrollArea>
@@ -355,7 +307,7 @@ export default function ClientDashboard() {
                 <CardDescription>Parcourez notre sélection complète</CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
+                {productsLoading ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {[...Array(8)].map((_, i) => (
                       <Card key={i} className="animate-pulse">
@@ -369,72 +321,23 @@ export default function ClientDashboard() {
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredProducts.map((product) => (
-                      <Card key={product.id} className="hover:shadow-glow transition-all group">
-                        <CardContent className="p-4 space-y-3">
-                          <div className="aspect-square bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
-                            <ShoppingBag className="w-16 h-16 text-muted-foreground" />
-                            <Button
-                              size="icon"
-                              variant="secondary"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => toggleFavorite(product.id)}
-                            >
-                              <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                            </Button>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold line-clamp-2 group-hover:text-client-primary transition-colors">
-                              {product.name}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-2">
-                              <div className="flex items-center">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs ml-1">4.5</span>
-                              </div>
-                              <Badge variant="secondary" className="text-xs">
-                                {product.inStock ? 'En stock' : 'Rupture'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between pt-2">
-                            <p className="text-xl font-bold text-client-primary">{formatPrice(product.price)}</p>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => addToCart(product)}
-                                disabled={!product.inStock}
-                                className="border-client-primary text-client-primary hover:bg-client-primary hover:text-white"
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-1" />
-                                Panier
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  addToCart(product);
-                                  handleCheckout();
-                                }}
-                                disabled={!product.inStock}
-                                className="bg-client-primary hover:bg-client-primary/90"
-                              >
-                                <CreditCard className="w-4 h-4 mr-1" />
-                                Acheter
-                              </Button>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="w-full mt-2"
-                            onClick={() => handleContactVendor(product)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Contacter le vendeur
-                          </Button>
-                        </CardContent>
-                      </Card>
+                    {universalProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                        title={product.name}
+                        price={product.price}
+                        vendor={product.vendor_name}
+                        rating={product.rating}
+                        reviewCount={product.reviews_count}
+                        onBuy={() => {
+                          addToCart(product as any);
+                          handleCheckout();
+                        }}
+                        onContact={() => handleContactVendor(product)}
+                        isPremium={product.is_hot}
+                      />
                     ))}
                   </div>
                 )}
