@@ -75,20 +75,34 @@ export function QuickTransferButton({
         return;
       }
 
-      // Convertir le custom_id en UUID réel
-      const { data: recipientData, error: recipientError } = await supabase
+      // Convertir le custom_id en UUID réel (format: AAA0001)
+      let recipientData = await supabase
         .from('user_ids')
         .select('user_id')
-        .eq('custom_id', recipientId)
-        .single();
+        .eq('custom_id', recipientId.toUpperCase())
+        .maybeSingle();
 
-      if (recipientError || !recipientData) {
+      // Si pas trouvé, chercher dans profiles en fallback
+      let recipientUuid = null;
+      if (!recipientData.data) {
+        const profileData = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('custom_id', recipientId.toUpperCase())
+          .maybeSingle();
+        
+        if (profileData.data) {
+          recipientUuid = profileData.data.id;
+        }
+      } else {
+        recipientUuid = recipientData.data.user_id;
+      }
+
+      if (!recipientUuid) {
         toast.error('Destinataire introuvable. Vérifiez le code.');
         setLoading(false);
         return;
       }
-
-      const recipientUuid = recipientData.user_id;
 
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {

@@ -171,22 +171,36 @@ export default function WalletDashboard() {
       // Convertir le custom_id en UUID si nécessaire
       let recipientUuid = receiverId;
       
-      // Vérifier si c'est un custom_id (format: 0002ABC) ou un UUID
+      // Vérifier si c'est un custom_id (format: AAA0001 ex: USR0001, VND0001) ou un UUID
       if (!receiverId.includes('-')) {
         // C'est probablement un custom_id, on le convertit en UUID
-        const { data: recipientData, error: recipientError } = await supabase
+        // Chercher d'abord dans user_ids
+        let recipientData = await supabase
           .from('user_ids')
           .select('user_id')
           .eq('custom_id', receiverId.toUpperCase())
-          .single();
+          .maybeSingle();
 
-        if (recipientError || !recipientData) {
+        // Si pas trouvé, chercher dans profiles en fallback
+        if (!recipientData.data) {
+          recipientData = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('custom_id', receiverId.toUpperCase())
+            .maybeSingle();
+          
+          if (recipientData.data) {
+            recipientUuid = recipientData.data.id;
+          }
+        } else {
+          recipientUuid = recipientData.data.user_id;
+        }
+
+        if (!recipientUuid || recipientUuid === receiverId) {
           toast.error('Destinataire introuvable. Vérifiez le code.');
           setBusy(false);
           return;
         }
-
-        recipientUuid = recipientData.user_id;
       }
 
       // Vérifier qu'on ne transfère pas à soi-même

@@ -328,19 +328,33 @@ export const UniversalWalletTransactions = () => {
     setProcessing(true);
     
     try {
-      // Récupérer l'UUID du destinataire depuis son custom_id
-      const { data: recipientData, error: recipientError } = await supabase
+      // Récupérer l'UUID du destinataire depuis son custom_id (format: AAA0001)
+      let recipientData = await supabase
         .from('user_ids')
         .select('user_id')
-        .eq('custom_id', recipientId)
-        .single();
+        .eq('custom_id', recipientId.toUpperCase())
+        .maybeSingle();
 
-      if (recipientError || !recipientData) {
+      // Si pas trouvé, chercher dans profiles en fallback
+      let recipientUuid = null;
+      if (!recipientData.data) {
+        const profileData = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('custom_id', recipientId.toUpperCase())
+          .maybeSingle();
+        
+        if (profileData.data) {
+          recipientUuid = profileData.data.id;
+        }
+      } else {
+        recipientUuid = recipientData.data.user_id;
+      }
+
+      if (!recipientUuid) {
         toast.error('Destinataire introuvable');
         return;
       }
-
-      const recipientUuid = recipientData.user_id;
 
       if (recipientUuid === user.id) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
