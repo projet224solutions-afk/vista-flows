@@ -47,8 +47,36 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
+  // Écouter les changements dans agent_created_users pour recharger en temps réel
   useEffect(() => {
+    if (!agentId) return;
+
+    // Charger les utilisateurs au montage
     loadUsers();
+
+    const channel = supabase
+      .channel('agent-users-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agent_created_users',
+          filter: `agent_id=eq.${agentId}`
+        },
+        (payload) => {
+          console.log('Changement détecté dans agent_created_users:', payload);
+          // Recharger les utilisateurs après un court délai pour laisser le profil se créer
+          setTimeout(() => {
+            loadUsers();
+          }, 500);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [agentId]);
 
   useEffect(() => {

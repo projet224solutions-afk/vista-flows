@@ -235,25 +235,41 @@ export default function AgentDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <CreateUserForm 
-            agentId={agent.id} 
-            agentCode={agent.agent_code}
-            onUserCreated={() => {
-              // Recharger les données après la création d'un utilisateur
-              loadAgentData();
-            }}
-          />
-          {agent.permissions?.includes('create_sub_agents') && (
-            <Button className="h-20" variant="outline">
-              <Users className="w-6 h-6 mr-2" />
-              Créer un Sous-Agent
-            </Button>
+        <div className="mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CreateUserForm 
+              agentId={agent.id} 
+              agentCode={agent.agent_code}
+              onUserCreated={() => {
+                // Recharger les données après la création d'un utilisateur
+                loadAgentData();
+              }}
+            />
+            {agent.permissions?.includes('create_sub_agents') && (
+              <Button className="h-20" variant="outline">
+                <Users className="w-6 h-6 mr-2" />
+                Créer un Sous-Agent
+              </Button>
+            )}
+            {agent.permissions?.includes('manage_users') && (
+              <Button 
+                className="h-20" 
+                variant="outline"
+                onClick={() => {
+                  // Simuler la navigation vers l'onglet utilisateurs en ouvrant AgentDashboardPublic
+                  toast.info('Utilisez l\'interface publique de l\'agent pour voir la liste complète des utilisateurs');
+                }}
+              >
+                <Users className="w-6 h-6 mr-2" />
+                Voir les Utilisateurs
+              </Button>
+            )}
+          </div>
+          {agent.permissions?.includes('manage_users') && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              💡 Astuce: Cliquez sur la carte "Utilisateurs Créés" pour voir la liste détaillée
+            </p>
           )}
-          <Button className="h-20" variant="outline">
-            <TrendingUp className="w-6 h-6 mr-2" />
-            Voir les Rapports
-          </Button>
         </div>
       </div>
     </div>

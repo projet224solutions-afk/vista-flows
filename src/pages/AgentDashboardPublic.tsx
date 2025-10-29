@@ -235,14 +235,26 @@ export default function AgentDashboardPublic() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card 
+              className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-green-500/50"
+              onClick={() => {
+                if (agent.permissions.includes('manage_users')) {
+                  setActiveTab('users');
+                  toast.success('Navigation vers la liste des utilisateurs');
+                } else {
+                  toast.error('Vous n\'avez pas accès à cette fonctionnalité');
+                }
+              }}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Utilisateurs Créés</CardTitle>
                 <Users className="w-4 h-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600">{agent.total_users_created || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Total créés</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cliquez pour voir la liste
+                </p>
               </CardContent>
             </Card>
 
@@ -432,7 +444,7 @@ export default function AgentDashboardPublic() {
 
             {agent.permissions.includes('manage_users') && (
               <TabsContent value="users">
-                <ManageUsersSection agentId={agent.id} />
+                <ManageUsersSection key={activeTab} agentId={agent.id} />
               </TabsContent>
             )}
 
