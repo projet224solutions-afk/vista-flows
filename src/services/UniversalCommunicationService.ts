@@ -228,14 +228,14 @@ class UniversalCommunicationService {
       const filePath = `communication/${conversationId}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('product-images') // Utiliser un bucket existant
+        .from('communication-files')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Obtenir l'URL publique
       const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
+        .from('communication-files')
         .getPublicUrl(filePath);
 
       // Obtenir le destinataire
@@ -245,7 +245,7 @@ class UniversalCommunicationService {
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId, // 🔧 AJOUT DU conversation_id
+          conversation_id: conversationId,
           sender_id: senderId,
           recipient_id: recipientId,
           content: file.name,
