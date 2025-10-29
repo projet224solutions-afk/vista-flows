@@ -63,7 +63,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     virtualCard: null
   });
   const [loading, setLoading] = useState(true);
-  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(true);
   const [creatingCard, setCreatingCard] = useState(false);
   
   // États pour les opérations wallet
