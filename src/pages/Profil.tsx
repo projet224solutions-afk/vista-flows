@@ -96,9 +96,9 @@ export default function Profil() {
           vendor_id,
           total_amount,
           status,
-          created_at,
-          delivery_address,
-          delivery_city
+          payment_status,
+          shipping_address,
+          created_at
         `)
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
