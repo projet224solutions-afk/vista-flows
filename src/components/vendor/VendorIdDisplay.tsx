@@ -1,12 +1,11 @@
 /**
- * 🔧 COMPOSANT: AFFICHAGE ID VENDEUR
- * Affiche l'ID public du vendeur avec son nom
+ * 🔧 COMPOSANT: AFFICHAGE ID VENDEUR (NOUVEAU SYSTÈME)
+ * Affiche le custom_id du vendeur (VEN0001) avec son nom
  */
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useStandardId } from '@/hooks/useStandardId';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Loader2 } from 'lucide-react';
 
@@ -20,9 +19,8 @@ export function VendorIdDisplay({
   showName = true 
 }: VendorIdDisplayProps) {
   const { user } = useAuth();
-  const { generateStandardId } = useStandardId();
   const [vendorData, setVendorData] = useState<{
-    public_id: string | null;
+    custom_id: string | null;
     business_name: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,48 +36,38 @@ export function VendorIdDisplay({
     }
 
     try {
-      // Récupérer les données du vendeur
-      const { data: vendor, error } = await supabase
-        .from('vendors')
-        .select('id, public_id, business_name')
+      console.log('🔍 Récupération custom_id vendeur pour user:', user.id);
+
+      // ÉTAPE 1: Récupérer le custom_id depuis user_ids
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('user_ids')
+        .select('custom_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-      if (!vendor) {
-        setLoading(false);
-        return;
-      }
+      if (userIdError) throw userIdError;
 
-      // Si pas de public_id, en générer un
-      if (!vendor.public_id) {
-        console.log('🔄 Génération standard_id vendeur...');
-        const newPublicId = await generateStandardId('vendors', false);
-        
-        if (newPublicId) {
-          // Mettre à jour le vendeur
-          const { error: updateError } = await supabase
-            .from('vendors')
-            .update({ public_id: newPublicId })
-            .eq('id', vendor.id);
+      // ÉTAPE 2: Récupérer les infos du vendeur
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('business_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-          if (!updateError) {
-            setVendorData({
-              public_id: newPublicId,
-              business_name: vendor.business_name
-            });
-            console.log('✅ Public_id vendeur créé:', newPublicId);
-          }
-        }
-      } else {
+      if (vendorError) throw vendorError;
+
+      if (userIdData?.custom_id) {
         setVendorData({
-          public_id: vendor.public_id,
-          business_name: vendor.business_name
+          custom_id: userIdData.custom_id,
+          business_name: vendor?.business_name || null
         });
+        console.log('✅ Custom ID vendeur:', userIdData.custom_id);
+      } else {
+        console.log('⚠️ Aucun custom_id trouvé pour ce vendeur');
       }
 
     } catch (error) {
-      console.error('Erreur récupération données vendeur:', error);
+      console.error('❌ Erreur récupération données vendeur:', error);
     } finally {
       setLoading(false);
     }
@@ -94,14 +82,14 @@ export function VendorIdDisplay({
     );
   }
 
-  if (!vendorData?.public_id) {
+  if (!vendorData?.custom_id) {
     return null;
   }
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <StandardIdBadge 
-        standardId={vendorData.public_id}
+        standardId={vendorData.custom_id}
         variant="secondary"
         size="md"
         copyable={true}
