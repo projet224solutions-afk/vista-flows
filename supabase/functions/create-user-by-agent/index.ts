@@ -112,7 +112,7 @@ serve(async (req) => {
       throw new Error('Erreur lors de la création de l\'utilisateur');
     }
 
-    // Créer le custom_id et public_id
+    // Générer les IDs en utilisant la fonction de la base de données
     const customIdPrefix = body.role === 'vendeur' ? 'VND' : 
                           body.role === 'livreur' ? 'DRV' :
                           body.role === 'taxi' ? 'DRV' :
@@ -120,10 +120,25 @@ serve(async (req) => {
                           body.role === 'syndicat' ? 'SYD' :
                           body.role === 'transitaire' ? 'AGT' :
                           'USR';
-    const customId = `${customIdPrefix}${Math.floor(1000 + Math.random() * 9000)}`;
-    const publicId = customId; // Utiliser le même ID pour simplifier
+    
+    // Appeler la fonction generate_sequential_id pour obtenir un ID unique
+    const { data: idData, error: idError } = await supabaseClient
+      .rpc('generate_sequential_id', { p_prefix: customIdPrefix });
+    
+    if (idError) {
+      console.error('ID generation error:', idError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Erreur lors de la génération de l\'ID',
+          code: 'ID_GENERATION_ERROR'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
 
-    // Créer le profil utilisateur avec custom_id et public_id
+    const publicId = idData as string;
+
+    // Créer le profil utilisateur avec les IDs générés
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .insert({
@@ -133,7 +148,6 @@ serve(async (req) => {
         last_name: body.lastName || '',
         phone: body.phone,
         role: body.role,
-        custom_id: customId,
         public_id: publicId,
         is_active: true
       });
@@ -226,7 +240,7 @@ serve(async (req) => {
         user: {
           id: authUser.user.id,
           email: body.email,
-          custom_id: customId
+          public_id: publicId
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
