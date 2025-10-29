@@ -41,6 +41,7 @@ export default function ClientDashboard() {
     createOrder,
     toggleFavorite,
     searchProducts,
+    contactVendor,
   } = useClientData();
 
   const [filteredProducts, setFilteredProducts] = useState(products);
@@ -83,6 +84,20 @@ export default function ClientDashboard() {
   useEffect(() => {
     setFilteredProducts(products);
   }, [products]);
+
+  // Contacter le vendeur
+  const handleContactVendor = async (product: any) => {
+    if (!product.vendorUserId) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
+
+    const conversationId = await contactVendor(product.vendorUserId, product.seller);
+    if (conversationId) {
+      setActiveTab('communication');
+      // L'onglet communication gérera l'affichage de la conversation
+    }
+  };
 
   const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
 
@@ -314,9 +329,7 @@ export default function ClientDashboard() {
                               size="sm"
                               variant="ghost"
                               className="w-full"
-                              onClick={() => {
-                                toast.info('Fonctionnalité de contact en cours de développement');
-                              }}
+                              onClick={() => handleContactVendor(product)}
                             >
                               <MessageSquare className="w-4 h-4 mr-2" />
                               Contacter
@@ -412,9 +425,7 @@ export default function ClientDashboard() {
                             size="sm"
                             variant="ghost"
                             className="w-full mt-2"
-                            onClick={() => {
-                              toast.info('Fonctionnalité de contact en cours de développement');
-                            }}
+                            onClick={() => handleContactVendor(product)}
                           >
                             <MessageSquare className="w-4 h-4 mr-2" />
                             Contacter le vendeur
