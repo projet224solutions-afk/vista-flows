@@ -7134,6 +7134,7 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      find_user_by_code: { Args: { p_code: string }; Returns: string }
       generate_agent_access_token: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
@@ -7419,6 +7420,15 @@ export type Database = {
         }
         Returns: Json
       }
+      preview_wallet_transfer_by_code: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_receiver_code: string
+          p_sender_code: string
+        }
+        Returns: Json
+      }
       process_card_to_om: {
         Args: {
           p_amount: number
@@ -7445,6 +7455,16 @@ export type Database = {
           p_sender_id: string
         }
         Returns: string
+      }
+      process_wallet_transfer_with_fees: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_receiver_code: string
+          p_sender_code: string
+        }
+        Returns: Json
       }
       release_taxi_lock:
         | {
