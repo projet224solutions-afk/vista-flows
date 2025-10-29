@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import QuickFooter from "@/components/QuickFooter";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 // Lazy loading des pages pour optimiser le bundle
 const Index = lazy(() => import("./pages/Index"));
@@ -203,6 +204,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <CommunicationWidget position="bottom-right" showNotifications={true} />
             <QuickFooter />
           </Suspense>
         </TooltipProvider>
