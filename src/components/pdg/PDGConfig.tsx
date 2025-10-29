@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import TransferFeeSettings from '@/components/admin/TransferFeeSettings';
 
 export default function PDGConfig() {
   const { configs, stats, loading, refetch, createConfig, updateConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
@@ -196,6 +197,9 @@ export default function PDGConfig() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Transfer Fee Settings */}
+      <TransferFeeSettings />
 
       {/* New Config Form */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
