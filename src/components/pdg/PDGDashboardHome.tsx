@@ -63,13 +63,22 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       description: 'vs mois dernier'
     },
     {
-      title: 'Utilisateurs Actifs',
+      title: 'Utilisateurs Plateforme',
       value: (stats.totalUsers || 0).toLocaleString(),
       change: `${(stats.userGrowth || 0) >= 0 ? '+' : ''}${stats.userGrowth || 0}%`,
       trend: (stats.userGrowth || 0) >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
       description: `${stats.newUsersThisMonth || 0} nouveaux ce mois`
+    },
+    {
+      title: 'Utilisateurs Créés (Agents)',
+      value: (stats.totalUsersCreatedByAgents || 0).toLocaleString(),
+      change: `${(stats.agentCreatedUsersGrowth || 0) >= 0 ? '+' : ''}${stats.agentCreatedUsersGrowth || 0}%`,
+      trend: (stats.agentCreatedUsersGrowth || 0) >= 0 ? 'up' : 'down',
+      icon: UserCheck,
+      color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      description: `${stats.agentCreatedUsersThisMonth || 0} ce mois par agents`
     },
     {
       title: 'Commandes',
@@ -129,7 +138,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   return (
     <div className="space-y-6">
       {/* KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           const TrendIcon = kpi.trend === 'up' ? TrendingUp : TrendingDown;

@@ -8,6 +8,9 @@ export function useAdminUnifiedData(enabled: boolean = true) {
     activeUsers: 0,
     newUsersThisMonth: 0,
     userGrowth: 0,
+    totalUsersCreatedByAgents: 0,
+    agentCreatedUsersThisMonth: 0,
+    agentCreatedUsersGrowth: 0,
     totalRevenue: '0 GNF',
     revenueThisMonth: 0,
     revenueGrowth: 0,
@@ -57,6 +60,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
         agentsResult,
         bureausResult,
         walletsResult,
+        agentCreatedUsersResult,
       ] = await Promise.all([
         supabase.from('profiles').select('id, created_at, status', { count: 'exact' }),
         supabase.from('orders').select('id, total_amount, status, created_at', { count: 'exact' }),
@@ -67,6 +71,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
         supabase.from('agents_management').select('id, is_active', { count: 'exact' }),
         supabase.from('bureaus').select('id, validated_at', { count: 'exact' }),
         supabase.from('wallets').select('balance'),
+        supabase.from('agent_created_users').select('id, created_at', { count: 'exact' }),
       ]);
 
       const now = new Date();
@@ -144,6 +149,19 @@ export function useAdminUnifiedData(enabled: boolean = true) {
       const totalServices = 15;
       const activeServices = 15;
 
+      // Utilisateurs créés par les agents
+      const totalUsersCreatedByAgents = agentCreatedUsersResult.count || 0;
+      const agentCreatedUsersThisMonth = agentCreatedUsersResult.data?.filter(u => 
+        new Date(u.created_at) >= firstDayOfMonth
+      ).length || 0;
+      const agentCreatedUsersLastMonth = agentCreatedUsersResult.data?.filter(u => {
+        const createdAt = new Date(u.created_at);
+        return createdAt >= firstDayOfLastMonth && createdAt < firstDayOfMonth;
+      }).length || 0;
+      const agentCreatedUsersGrowth = agentCreatedUsersLastMonth > 0 
+        ? Math.round(((agentCreatedUsersThisMonth - agentCreatedUsersLastMonth) / agentCreatedUsersLastMonth) * 100)
+        : 0;
+
       // Taux de conversion
       const conversionRate = totalUsers > 0 ? Number(((totalOrders / totalUsers) * 100).toFixed(1)) : 0;
       
@@ -152,6 +170,9 @@ export function useAdminUnifiedData(enabled: boolean = true) {
         activeUsers,
         newUsersThisMonth,
         userGrowth,
+        totalUsersCreatedByAgents,
+        agentCreatedUsersThisMonth,
+        agentCreatedUsersGrowth,
         totalRevenue: `${totalRevenue.toLocaleString('fr-GN')} GNF`,
         revenueThisMonth,
         revenueGrowth,
