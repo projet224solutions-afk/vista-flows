@@ -127,24 +127,13 @@ export const useWallet = (userId?: string) => {
     }
   }, []);
 
-  // Charger les transactions
+  // Charger les transactions depuis enhanced_transactions
   const loadTransactions = useCallback(async (userId: string) => {
     try {
-      // Récupérer l'id du wallet de l'utilisateur
-      const { data: walletRow, error: walletErr } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
-      if (walletErr || !walletRow?.id) {
-        throw walletErr || new Error('Wallet introuvable');
-      }
-
       const { data: transactionsData, error: transactionsError } = await supabase
-        .from('wallet_transactions')
+        .from('enhanced_transactions')
         .select('*')
-        .or(`sender_wallet_id.eq.${walletRow.id},receiver_wallet_id.eq.${walletRow.id}`)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -153,7 +142,7 @@ export const useWallet = (userId?: string) => {
         throw transactionsError;
       }
 
-      // Le schéma wallet_transactions diffère de l'interface locale; on caste pour affichage
+      console.log('✅ Transactions chargées:', transactionsData);
       setTransactions((transactionsData as unknown) as Transaction[]);
     } catch (error) {
       console.error('❌ Erreur chargement transactions:', error);
@@ -168,22 +157,13 @@ export const useWallet = (userId?: string) => {
 
     const setupRealtime = async () => {
       try {
-        // Récupérer l'id de wallet pour filtrer les événements
-        const { data: walletRow } = await supabase
-          .from('wallets')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
-
-        const walletId = walletRow?.id;
-
         channel = supabase
           .channel(`wallet_${userId}`)
           .on('postgres_changes', {
             event: '*',
             schema: 'public',
-            table: 'wallet_transactions',
-            filter: walletId ? `or(sender_wallet_id.eq.${walletId},receiver_wallet_id.eq.${walletId})` : undefined
+            table: 'enhanced_transactions',
+            filter: `or(sender_id.eq.${userId},receiver_id.eq.${userId})`
           }, () => {
             // Recharger les transactions
             loadTransactions(userId);
