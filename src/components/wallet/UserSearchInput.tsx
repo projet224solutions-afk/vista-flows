@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface UserSearchResult {
-  custom_id: string;
+  public_id: string;
   user_id: string;
   email: string | null;
   first_name: string | null;
@@ -28,8 +28,8 @@ export const UserSearchInput = ({
   value,
   onChange,
   onUserSelect,
-  label = "Code du destinataire",
-  placeholder = "Ex: ABC1234"
+  label = "ID du destinataire",
+  placeholder = "Ex: USR0001"
 }: UserSearchInputProps) => {
   const [searching, setSearching] = useState(false);
   const [userInfo, setUserInfo] = useState<UserSearchResult | null>(null);
@@ -45,12 +45,22 @@ export const UserSearchInput = ({
         if (!currentUser.user) return;
 
         const { data, error } = await supabase
-          .from('user_search_view')
-          .select('*')
-          .neq('user_id', currentUser.user.id); // Exclure l'utilisateur actuel
+          .from('profiles')
+          .select('id, public_id, email, first_name, last_name, phone')
+          .neq('id', currentUser.user.id) // Exclure l'utilisateur actuel
+          .not('public_id', 'is', null); // Uniquement les utilisateurs avec public_id
 
         if (!error && data) {
-          setAvailableUsers(data);
+          // Formater les données pour correspondre à UserSearchResult
+          const formattedUsers = data.map(profile => ({
+            public_id: profile.public_id || '',
+            user_id: profile.id,
+            email: profile.email,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            phone: profile.phone
+          }));
+          setAvailableUsers(formattedUsers);
         }
       } catch (error) {
         console.error('❌ Erreur chargement utilisateurs:', error);
@@ -60,8 +70,8 @@ export const UserSearchInput = ({
     loadAvailableUsers();
   }, []);
 
-  const searchUser = async (customId: string) => {
-    if (!customId || customId.length < 3) {
+  const searchUser = async (publicId: string) => {
+    if (!publicId || publicId.length < 3) {
       setUserInfo(null);
       setSearchError(null);
       return;
@@ -72,24 +82,33 @@ export const UserSearchInput = ({
 
     try {
       const { data, error } = await supabase
-        .from('user_search_view')
-        .select('*')
-        .ilike('custom_id', `%${customId.toUpperCase()}%`)
+        .from('profiles')
+        .select('id, public_id, email, first_name, last_name, phone')
+        .ilike('public_id', `%${publicId.toUpperCase()}%`)
         .limit(1)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          setSearchError('Aucun utilisateur trouvé avec ce code');
+          setSearchError('Aucun utilisateur trouvé avec cet ID');
         } else {
           throw error;
         }
         setUserInfo(null);
       } else {
-        setUserInfo(data);
+        // Formater les données pour correspondre à UserSearchResult
+        const formattedUser = {
+          public_id: data.public_id || '',
+          user_id: data.id,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone
+        };
+        setUserInfo(formattedUser);
         setSearchError(null);
-        if (onUserSelect && data.user_id) {
-          onUserSelect(data.user_id);
+        if (onUserSelect && data.id) {
+          onUserSelect(data.id);
         }
       }
     } catch (error) {
@@ -125,14 +144,14 @@ export const UserSearchInput = ({
   };
 
   const filteredUsers = availableUsers.filter(user =>
-    user.custom_id.toLowerCase().includes(value.toLowerCase()) ||
+    user.public_id?.toLowerCase().includes(value.toLowerCase()) ||
     user.first_name?.toLowerCase().includes(value.toLowerCase()) ||
     user.last_name?.toLowerCase().includes(value.toLowerCase()) ||
     user.email?.toLowerCase().includes(value.toLowerCase())
   );
 
   const selectUser = (user: UserSearchResult) => {
-    onChange(user.custom_id);
+    onChange(user.public_id);
     setUserInfo(user);
     setSearchError(null);
     setShowSuggestions(false);
@@ -180,7 +199,7 @@ export const UserSearchInput = ({
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <Badge variant="outline" className="text-xs font-mono ml-2 flex-shrink-0">
-                    {user.custom_id}
+                    {user.public_id}
                   </Badge>
                 </div>
               </button>
@@ -201,7 +220,7 @@ export const UserSearchInput = ({
             </p>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="outline" className="text-xs font-mono">
-                {userInfo.custom_id}
+                {userInfo.public_id}
               </Badge>
               {userInfo.phone && (
                 <span className="text-xs text-muted-foreground">{userInfo.phone}</span>
@@ -245,7 +264,7 @@ export const UserSearchInput = ({
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                     <Badge variant="outline" className="text-xs font-mono ml-2 flex-shrink-0">
-                      {user.custom_id}
+                      {user.public_id}
                     </Badge>
                   </div>
                 </button>

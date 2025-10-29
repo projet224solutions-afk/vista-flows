@@ -333,7 +333,7 @@ export default function VendeurDashboard() {
             <p className="text-sm text-muted-foreground">Email: {user?.email}</p>
             <p className="text-sm text-muted-foreground">Nom: {profile?.first_name} {profile?.last_name}</p>
             {userInfo && (
-              <p className="text-sm text-muted-foreground">ID: {userInfo.custom_id}</p>
+              <p className="text-sm text-muted-foreground">ID: {userInfo.public_id}</p>
             )}
           </div>
         </div>

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 interface UserInfo {
-  custom_id: string;
+  public_id: string;
   user_id: string;
   created_at: string;
 }
@@ -20,13 +20,21 @@ export const useUserInfo = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('user_ids')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .from('profiles')
+        .select('id, public_id, created_at')
+        .eq('id', user.id)
+        .single();
 
       if (error) throw error;
-      setUserInfo(data);
+      
+      // Formater les données pour correspondre à l'interface UserInfo
+      if (data) {
+        setUserInfo({
+          public_id: data.public_id || '',
+          user_id: data.id,
+          created_at: data.created_at || new Date().toISOString()
+        });
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
       setError(errorMessage);

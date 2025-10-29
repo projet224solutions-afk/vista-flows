@@ -486,15 +486,15 @@ export const UniversalWalletTransactions = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="recipient-id">Code du destinataire</Label>
+                  <Label htmlFor="recipient-id">ID du destinataire</Label>
                   <Input
                     id="recipient-id"
-                    placeholder="Ex: ABC1234"
+                    placeholder="Ex: USR0001"
                     value={recipientId}
                     onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Entrez le code d'identification de 7 caractères du destinataire
+                    Entrez l'ID standardisé du destinataire (format: AAA0000)
                   </p>
                 </div>
                 <div>
