@@ -161,17 +161,45 @@ export default function WalletDashboard() {
       return;
     }
     if (!receiverId) {
-      toast.error('Destinataire requis (ID utilisateur)');
+      toast.error('Destinataire requis (Code utilisateur)');
       return;
     }
     
     try {
       setBusy(true);
 
+      // Convertir le custom_id en UUID si nécessaire
+      let recipientUuid = receiverId;
+      
+      // Vérifier si c'est un custom_id (format: 0002ABC) ou un UUID
+      if (!receiverId.includes('-')) {
+        // C'est probablement un custom_id, on le convertit en UUID
+        const { data: recipientData, error: recipientError } = await supabase
+          .from('user_ids')
+          .select('user_id')
+          .eq('custom_id', receiverId.toUpperCase())
+          .single();
+
+        if (recipientError || !recipientData) {
+          toast.error('Destinataire introuvable. Vérifiez le code.');
+          setBusy(false);
+          return;
+        }
+
+        recipientUuid = recipientData.user_id;
+      }
+
+      // Vérifier qu'on ne transfère pas à soi-même
+      if (recipientUuid === userId) {
+        toast.error('Vous ne pouvez pas transférer à vous-même');
+        setBusy(false);
+        return;
+      }
+
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: userId,
-        p_receiver_id: receiverId,
+        p_receiver_id: recipientUuid,
         p_amount: amount,
         p_currency: 'GNF'
       });
@@ -183,7 +211,7 @@ export default function WalletDashboard() {
         return;
       }
 
-      setTransferPreview(data);
+      setTransferPreview({ ...data, recipient_uuid: recipientUuid });
       setShowTransferPreview(true);
     } catch (e: any) {
       console.error('Erreur prévisualisation:', e);
@@ -200,10 +228,10 @@ export default function WalletDashboard() {
       setBusy(true);
       setShowTransferPreview(false);
 
-      // Exécuter le transfert
+      // Exécuter le transfert avec l'UUID du destinataire
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
         p_sender_id: userId,
-        p_receiver_id: receiverId,
+        p_receiver_id: transferPreview.recipient_uuid, // Utiliser l'UUID converti
         p_amount: transferPreview.amount,
         p_currency: 'GNF',
         p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} GNF`
@@ -292,8 +320,15 @@ export default function WalletDashboard() {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-3">
                 <div>
-                  <Label>ID Destinataire</Label>
-                  <Input placeholder="UUID du destinataire" value={receiverId} onChange={(e) => setReceiverId(e.target.value)} />
+                  <Label>Code Destinataire</Label>
+                  <Input 
+                    placeholder="Ex: 0002ABC" 
+                    value={receiverId} 
+                    onChange={(e) => setReceiverId(e.target.value.toUpperCase())} 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Entrez le code d'identification (format: 0002ABC)
+                  </p>
                 </div>
                 <div>
                   <Label>Motif du transfert</Label>
