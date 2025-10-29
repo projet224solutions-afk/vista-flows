@@ -391,12 +391,6 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
           </Avatar>
           <div className="flex-1">
             <CardTitle className="text-xl text-gray-800">{displayName}</CardTitle>
-            <div className="flex items-center gap-2 mt-1">
-              <IdCard className="w-4 h-4 text-blue-600" />
-              <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                ID: {userInfo.customId || 'En cours...'}
-              </Badge>
-            </div>
             <p className="text-sm text-gray-600 mt-1">{profile?.role || 'client'}</p>
           </div>
         </div>
