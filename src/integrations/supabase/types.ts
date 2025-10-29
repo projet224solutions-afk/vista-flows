@@ -7092,6 +7092,10 @@ export type Database = {
           score: number
         }[]
       }
+      generate_role_based_custom_id: {
+        Args: { user_id_param: string }
+        Returns: string
+      }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
@@ -7212,6 +7216,7 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      get_role_prefix: { Args: { user_role: string }; Returns: string }
       get_trending_products: {
         Args: { p_days?: number; p_limit?: number }
         Returns: {
