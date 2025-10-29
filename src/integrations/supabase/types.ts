@@ -4008,11 +4008,13 @@ export type Database = {
           brand: string | null
           bureau_id: string | null
           color: string | null
+          documents: Json | null
           id: string
           metadata: Json | null
           model: string | null
           owner_name: string | null
           owner_phone: string | null
+          photos: Json | null
           plate_number: string | null
           registration_date: string | null
           serial_number: string
@@ -4025,11 +4027,13 @@ export type Database = {
           brand?: string | null
           bureau_id?: string | null
           color?: string | null
+          documents?: Json | null
           id?: string
           metadata?: Json | null
           model?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          photos?: Json | null
           plate_number?: string | null
           registration_date?: string | null
           serial_number: string
@@ -4042,11 +4046,13 @@ export type Database = {
           brand?: string | null
           bureau_id?: string | null
           color?: string | null
+          documents?: Json | null
           id?: string
           metadata?: Json | null
           model?: string | null
           owner_name?: string | null
           owner_phone?: string | null
+          photos?: Json | null
           plate_number?: string | null
           registration_date?: string | null
           serial_number?: string

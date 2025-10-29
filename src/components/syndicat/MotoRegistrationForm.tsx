@@ -11,6 +11,7 @@ import { AlertCircle, Upload, CheckCircle2, Bike, User, FileText, Camera } from 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useBureauOfflineSync } from '@/hooks/useBureauOfflineSync';
+import { useAuth } from '@/hooks/useAuth';
 
 // Import mode offline pour MotoRegistrationForm
 import offlineSyncManager from '@/lib/offlineSyncManager';
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('moto');
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -227,12 +229,20 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       const finalBrand = form.brand === 'Autre' ? customBrand : form.brand;
       
       const motoData = {
-        id: crypto.randomUUID(),
         bureau_id: bureauId,
-        ...form,
+        worker_id: user?.id, // ID de l'utilisateur qui enregistre
+        serial_number: form.serial_number,
+        plate_number: form.plate_number,
+        vest_number: form.vest_number || null,
         brand: finalBrand,
-        status: 'pending',
-        registration_date: new Date().toISOString()
+        model: form.model,
+        year: form.year,
+        color: form.color || null,
+        owner_name: form.owner_name,
+        owner_phone: form.owner_phone,
+        documents: form.documents || [], // Array JSONB
+        photos: form.photos || [], // Array JSONB
+        status: 'pending'
       };
 
       if (isOnline) {
