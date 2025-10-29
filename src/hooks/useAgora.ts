@@ -47,6 +47,45 @@ export function useAgora() {
 
   const configRef = useRef<AgoraConfig | null>(null);
 
+  // Fonction pour récupérer les credentials Agora
+  const fetchAgoraCredentials = useCallback(async (channel: string, uid: string) => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data, error } = await supabase.functions.invoke('agora-token', {
+      body: { channel, uid, role: 'publisher' }
+    });
+
+    if (error) throw error;
+    return data;
+  }, []);
+
+  // Auto-initialiser Agora au montage
+  useEffect(() => {
+    const initAgora = async () => {
+      if (isInitialized || !user?.id) return;
+
+      try {
+        // Récupérer un token temporaire pour initialiser
+        const credentials = await fetchAgoraCredentials('init', user.id);
+        
+        const config: AgoraConfig = {
+          appId: credentials.appId,
+          appCertificate: '',
+          tempToken: credentials.token
+        };
+
+        await agoraService.initialize(config);
+        configRef.current = config;
+        setIsInitialized(true);
+        
+        console.log('✅ Agora initialisé automatiquement');
+      } catch (err) {
+        console.error('❌ Erreur initialisation auto Agora:', err);
+      }
+    };
+
+    initAgora();
+  }, [user?.id, isInitialized, fetchAgoraCredentials]);
+
   /**
    * Initialiser Agora avec les clés
    */
@@ -81,10 +120,10 @@ export function useAgora() {
    * Rejoindre un appel
    */
   const joinCall = useCallback(async (channel: string, isVideo: boolean = true) => {
-    if (!isInitialized || !user?.id) {
+    if (!user?.id) {
       toast({
         title: "❌ Erreur",
-        description: "Agora non initialisé ou utilisateur non connecté",
+        description: "Utilisateur non connecté",
         variant: "destructive"
       });
       return;
@@ -94,9 +133,13 @@ export function useAgora() {
       setIsLoading(true);
       setError(null);
 
+      // Récupérer le token pour ce canal
+      const credentials = await fetchAgoraCredentials(channel, user.id);
+
       const callConfig: CallConfig = {
         channel,
         uid: user.id,
+        token: credentials.token,
         role: 'publisher'
       };
 
@@ -126,7 +169,7 @@ export function useAgora() {
     } finally {
       setIsLoading(false);
     }
-  }, [isInitialized, user?.id, toast]);
+  }, [user?.id, toast, fetchAgoraCredentials]);
 
   /**
    * Quitter un appel
