@@ -61,7 +61,7 @@ export class DeliveryService {
         return distance <= radiusKm;
       });
 
-      return nearby as NearbyDelivery[];
+      return nearby as unknown as NearbyDelivery[];
     } catch (error) {
       console.error('[DeliveryService] Error finding nearby deliveries:', error);
       throw error;
