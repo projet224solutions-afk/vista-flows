@@ -49,6 +49,7 @@ export function useClientData() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,10 +65,13 @@ export function useClientData() {
           price,
           images,
           category_id,
-          discount,
-          stock,
+          stock_quantity,
           created_at,
           is_active,
+          is_hot,
+          free_shipping,
+          rating,
+          reviews_count,
           vendors!inner(business_name)
         `)
         .eq('is_active', true)
@@ -83,18 +87,16 @@ export function useClientData() {
         id: product.id,
         name: product.name,
         price: product.price,
-        originalPrice: product.discount ? product.price / (1 - product.discount / 100) : undefined,
         image: (Array.isArray(product.images) && product.images.length > 0) ? product.images[0] : '/placeholder.svg',
-        rating: 0,
-        reviews: 0,
+        rating: product.rating || 0,
+        reviews: product.reviews_count || 0,
         category: product.category_id || 'general',
-        discount: product.discount || 0,
-        inStock: (product.stock || 0) > 0,
+        inStock: (product.stock_quantity || 0) > 0,
         seller: (product.vendors as unknown)?.business_name || 'Vendeur',
         brand: (product.vendors as unknown)?.business_name || 'Marque',
-        isHot: false,
+        isHot: product.is_hot || false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        isFreeShipping: false
+        isFreeShipping: product.free_shipping || false
       })) || [];
 
       setProducts(formattedProducts);
@@ -232,6 +234,32 @@ export function useClientData() {
     toast.success('Panier vidé');
   }, []);
 
+  // Gérer les favoris
+  const toggleFavorite = useCallback((productId: string) => {
+    setFavorites(prev => {
+      const isFavorite = prev.includes(productId);
+      if (isFavorite) {
+        toast.success('Retiré des favoris');
+        return prev.filter(id => id !== productId);
+      } else {
+        toast.success('Ajouté aux favoris');
+        return [...prev, productId];
+      }
+    });
+  }, []);
+
+  // Rechercher des produits
+  const searchProducts = useCallback(async (query: string) => {
+    if (!query.trim()) return products;
+    
+    const lowerQuery = query.toLowerCase();
+    return products.filter(product => 
+      product.name.toLowerCase().includes(lowerQuery) ||
+      product.brand.toLowerCase().includes(lowerQuery) ||
+      product.category.toLowerCase().includes(lowerQuery)
+    );
+  }, [products]);
+
   // Créer une commande
   const createOrder = useCallback(async (userId: string) => {
     if (cartItems.length === 0) {
@@ -242,49 +270,63 @@ export function useClientData() {
     try {
       const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
       
-      // Récupérer le customer_id à partir de l'user_id
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
+      // Grouper les articles par vendeur
+      const itemsByVendor = cartItems.reduce((acc, item) => {
+        if (!acc[item.seller]) {
+          acc[item.seller] = [];
+        }
+        acc[item.seller].push(item);
+        return acc;
+      }, {} as Record<string, Product[]>);
 
-      if (!customer) {
-        throw new Error('Client introuvable');
-      }
+      // Créer une commande pour chaque vendeur
+      for (const [vendorName, items] of Object.entries(itemsByVendor)) {
+        // Récupérer le vendor_id
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id, user_id')
+          .eq('business_name', vendorName)
+          .single();
 
-      // Créer la commande
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: customer.id,
-          vendor_id: cartItems[0]?.seller, // Utiliser le vendeur du premier item
-          total_amount: totalAmount,
-          status: 'pending',
-          payment_status: 'pending'
-        })
-        .select()
-        .single();
+        if (!vendor) continue;
 
-      if (orderError) {
-        throw orderError;
-      }
+        const vendorTotal = items.reduce((sum, item) => sum + item.price, 0);
 
-      // Créer les items de commande
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(
-          cartItems.map(item => ({
-            order_id: orderData.id,
-            product_id: item.id,
-            quantity: 1,
-            unit_price: item.price,
-            total_price: item.price
-          }))
-        );
+        // Créer la commande
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            customer_id: userId,
+            vendor_id: vendor.user_id,
+            total_amount: vendorTotal,
+            status: 'pending',
+            payment_status: 'pending',
+            delivery_address: 'Adresse par défaut' // À remplacer par une vraie adresse
+          })
+          .select()
+          .single();
 
-      if (itemsError) {
-        throw itemsError;
+        if (orderError) {
+          console.error('❌ Erreur création commande:', orderError);
+          continue;
+        }
+
+        // Créer les items de commande
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(
+            items.map(item => ({
+              order_id: orderData.id,
+              product_id: item.id,
+              quantity: 1,
+              unit_price: item.price,
+              total_price: item.price
+            }))
+          );
+
+        if (itemsError) {
+          console.error('❌ Erreur création items:', itemsError);
+        }
       }
 
       // Vider le panier après commande
@@ -294,7 +336,6 @@ export function useClientData() {
       await loadOrders(userId);
       
       toast.success('Commande créée avec succès');
-      return orderData;
     } catch (error) {
       console.error('❌ Erreur création commande:', error);
       toast.error('Erreur lors de la création de la commande');
@@ -332,12 +373,15 @@ export function useClientData() {
     categories,
     orders,
     cartItems,
+    favorites,
     loading,
     error,
     addToCart,
     removeFromCart,
     clearCart,
     createOrder,
+    toggleFavorite,
+    searchProducts,
     loadAllData,
     refetch: loadAllData
   };

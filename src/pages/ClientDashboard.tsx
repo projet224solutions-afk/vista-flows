@@ -33,9 +33,17 @@ export default function ClientDashboard() {
     products,
     orders,
     cartItems,
+    favorites,
     loading,
     addToCart,
+    removeFromCart,
+    clearCart,
+    createOrder,
+    toggleFavorite,
+    searchProducts,
   } = useClientData();
+
+  const [filteredProducts, setFilteredProducts] = useState(products);
 
   const handleSignOut = async () => {
     try {
@@ -51,13 +59,30 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      toast.info('Entrez un terme de recherche');
+      setFilteredProducts(products);
       return;
     }
-    toast.info(`Recherche: ${searchQuery}`);
+    const results = await searchProducts(searchQuery);
+    setFilteredProducts(results);
+    toast.success(`${results.length} produit(s) trouvé(s)`);
+    setActiveTab('products');
   };
+
+  const handleCheckout = async () => {
+    if (!user?.id) {
+      toast.error('Veuillez vous connecter');
+      return;
+    }
+    await createOrder(user.id);
+    setActiveTab('orders');
+  };
+
+  // Mettre à jour les produits filtrés quand les produits changent
+  useEffect(() => {
+    setFilteredProducts(products);
+  }, [products]);
 
   const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
 
@@ -217,9 +242,9 @@ export default function ClientDashboard() {
                       <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
                         <Heart className="w-5 h-5 text-purple-600" />
                       </div>
-                      <div>
+                       <div>
                         <p className="text-sm text-muted-foreground">Favoris</p>
-                        <p className="text-2xl font-bold text-foreground">0</p>
+                        <p className="text-2xl font-bold text-foreground">{favorites.length}</p>
                       </div>
                     </div>
                   </div>
@@ -296,7 +321,7 @@ export default function ClientDashboard() {
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <Card key={product.id} className="hover:shadow-glow transition-all group">
                         <CardContent className="p-4 space-y-3">
                           <div className="aspect-square bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
@@ -305,8 +330,9 @@ export default function ClientDashboard() {
                               size="icon"
                               variant="secondary"
                               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => toggleFavorite(product.id)}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
                             </Button>
                           </div>
                           <div>
@@ -378,7 +404,12 @@ export default function ClientDashboard() {
                               {formatPrice(item.price)}
                             </p>
                           </div>
-                          <Button variant="ghost" size="icon" className="text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive"
+                            onClick={() => removeFromCart(item.id)}
+                          >
                             <LogOut className="w-4 h-4" />
                           </Button>
                         </CardContent>
@@ -392,7 +423,11 @@ export default function ClientDashboard() {
                             {formatPrice(cartItems.reduce((sum, item) => sum + item.price, 0))}
                           </span>
                         </div>
-                        <Button className="w-full bg-client-primary hover:bg-client-primary/90" size="lg">
+                        <Button 
+                          className="w-full bg-client-primary hover:bg-client-primary/90" 
+                          size="lg"
+                          onClick={handleCheckout}
+                        >
                           <CreditCard className="w-5 h-5 mr-2" />
                           Procéder au paiement
                         </Button>
