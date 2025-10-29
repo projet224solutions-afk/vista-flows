@@ -21,6 +21,7 @@ import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTran
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
+import { IdSystemIndicator } from "@/components/IdSystemIndicator";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -169,13 +170,17 @@ export default function ClientDashboard() {
                 <UserProfileCard showWalletDetails={false} />
               </div>
 
-              {/* Wallet et transactions */}
+              {/* Système d'ID */}
               <div>
-                <UniversalWalletTransactions />
+                <IdSystemIndicator />
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Wallet et transactions */}
+              <div className="lg:col-span-2">
+                <UniversalWalletTransactions />
+              </div>
               {/* Statistiques rapides */}
               <Card className="shadow-elegant">
                 <CardHeader>
