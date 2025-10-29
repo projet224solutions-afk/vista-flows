@@ -24,14 +24,28 @@ serve(async (req) => {
   }
 
   try {
+    // Client service_role pour les opérations admin
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
+    // Vérifier l'authentification de la requête
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Unauthorized');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Non autorisé - token manquant',
+          code: 'UNAUTHORIZED'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
     const body: CreateUserRequest = await req.json();
