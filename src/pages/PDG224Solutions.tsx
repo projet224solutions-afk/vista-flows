@@ -61,14 +61,19 @@ export default function PDG224Solutions() {
 
     // Log de l'accès PDG une fois le profil chargé
     if (profile && profile.role === 'admin') {
-      supabase.from('audit_logs').insert({
-        actor_id: user!.id,
-        action: 'PDG_ACCESS',
-        target_type: 'dashboard',
-        data_json: { timestamp: new Date().toISOString() }
-      }).catch(error => {
-        console.warn('Audit log indisponible:', error);
-      });
+      const logAccess = async () => {
+        try {
+          await supabase.from('audit_logs').insert({
+            actor_id: user!.id,
+            action: 'PDG_ACCESS',
+            target_type: 'dashboard',
+            data_json: { timestamp: new Date().toISOString() }
+          });
+        } catch (error) {
+          console.warn('Audit log indisponible:', error);
+        }
+      };
+      logAccess();
     }
   }, [user, profile, profileLoading, navigate]);
 
