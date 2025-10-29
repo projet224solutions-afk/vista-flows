@@ -12,17 +12,17 @@ export interface NearbyDelivery {
   id: string;
   pickup_address: string;
   delivery_address: string;
-  pickup_lat: number;
-  pickup_lng: number;
-  delivery_lat: number;
-  delivery_lng: number;
-  distance_km: number;
+  pickup_lat?: number;
+  pickup_lng?: number;
+  delivery_lat?: number;
+  delivery_lng?: number;
+  distance_km?: number;
   delivery_fee: number;
   status: string;
   customer_name?: string;
   customer_phone?: string;
   notes?: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface TrackingPoint {
@@ -54,14 +54,44 @@ export class DeliveryService {
 
       if (error) throw error;
 
-      // Filtrer par distance (approximation simple)
-      const nearby = (data || []).filter((delivery: any) => {
-        if (!delivery.pickup_lat || !delivery.pickup_lng) return false;
-        const distance = this.calculateDistance(lat, lng, delivery.pickup_lat, delivery.pickup_lng);
-        return distance <= radiusKm;
+      // Transformer les données pour extraire les adresses
+      const deliveries = (data || []).map((delivery: any) => {
+        const pickupAddr = typeof delivery.pickup_address === 'string' 
+          ? delivery.pickup_address 
+          : delivery.pickup_address?.address || JSON.stringify(delivery.pickup_address);
+        
+        const deliveryAddr = typeof delivery.delivery_address === 'string'
+          ? delivery.delivery_address
+          : delivery.delivery_address?.address || JSON.stringify(delivery.delivery_address);
+
+        return {
+          id: delivery.id,
+          pickup_address: pickupAddr,
+          delivery_address: deliveryAddr,
+          pickup_lat: delivery.pickup_address?.lat,
+          pickup_lng: delivery.pickup_address?.lng,
+          delivery_lat: delivery.delivery_address?.lat,
+          delivery_lng: delivery.delivery_address?.lng,
+          distance_km: delivery.distance_km,
+          delivery_fee: delivery.delivery_fee,
+          status: delivery.status,
+          customer_name: delivery.customer_name,
+          customer_phone: delivery.customer_phone,
+          notes: delivery.driver_notes,
+          created_at: delivery.created_at
+        } as NearbyDelivery;
       });
 
-      return nearby as unknown as NearbyDelivery[];
+      // Filtrer par distance si des coordonnées sont disponibles
+      if (lat && lng) {
+        return deliveries.filter((delivery: NearbyDelivery) => {
+          if (!delivery.pickup_lat || !delivery.pickup_lng) return true; // Garder ceux sans coordonnées
+          const distance = this.calculateDistance(lat, lng, delivery.pickup_lat, delivery.pickup_lng);
+          return distance <= radiusKm;
+        });
+      }
+
+      return deliveries;
     } catch (error) {
       console.error('[DeliveryService] Error finding nearby deliveries:', error);
       throw error;
