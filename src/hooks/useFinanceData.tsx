@@ -74,15 +74,20 @@ export function useFinanceData(enabled: boolean = true) {
         throw transError;
       }
 
-      console.log('✅ Transactions récupérées:', transData?.length);
+      console.log('✅ Transactions récupérées depuis enhanced_transactions:', transData?.length, transData);
 
-      // Mapper les transactions pour ajouter transaction_type depuis method
-      const mappedTransactions = (transData || []).map((t: any) => ({
-        ...t,
-        transaction_type: t.method,
-        fee: t.fee || t.metadata?.fee || 0,
-        description: t.description || t.metadata?.description || null
-      }));
+      // Mapper les transactions et calculer les frais (1.5% du montant)
+      const mappedTransactions = (transData || []).map((t: any) => {
+        const calculatedFee = Math.round(Number(t.amount) * 0.015); // 1.5% de frais
+        return {
+          ...t,
+          transaction_type: t.method || 'transfer',
+          fee: t.metadata?.fee || calculatedFee,
+          description: t.metadata?.description || t.description || null
+        };
+      });
+
+      console.log('📊 Transactions mappées avec frais:', mappedTransactions.length);
 
       // Récupérer les wallets avec les profils utilisateurs
       const { data: walletsData, error: walletsError } = await supabase

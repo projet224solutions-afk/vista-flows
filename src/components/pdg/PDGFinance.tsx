@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,25 @@ export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [showWalletsDialog, setShowWalletsDialog] = useState(false);
+
+  // Auto-rafraîchir les données au montage du composant
+  useEffect(() => {
+    console.log('🔄 PDGFinance monté - rafraîchissement des données');
+    refetch();
+  }, []);
+
+  // Log des stats pour debug
+  useEffect(() => {
+    if (!loading) {
+      console.log('📊 Stats Finance PDG:', {
+        total_revenue: stats.total_revenue,
+        total_commission: stats.total_commission,
+        pending_payments: stats.pending_payments,
+        active_wallets: stats.active_wallets,
+        transactions_count: transactions?.length || 0
+      });
+    }
+  }, [loading, stats, transactions]);
 
   const chartConfig = {
     amount: { label: "Montant", color: "hsl(var(--primary))" },
@@ -121,7 +140,7 @@ export default function PDGFinance() {
                 {(stats.total_commission || 0).toLocaleString()} GNF
               </p>
               <p className="text-xs text-muted-foreground">
-                Sur {transactions?.length || 0} transactions
+                  Sur {transactions?.length || 0} transactions
               </p>
             </div>
           </CardContent>
