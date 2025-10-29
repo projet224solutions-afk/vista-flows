@@ -112,61 +112,31 @@ serve(async (req) => {
       throw new Error('Erreur lors de la création de l\'utilisateur');
     }
 
-    // Générer les IDs en utilisant la fonction de la base de données
-    const customIdPrefix = body.role === 'vendeur' ? 'VND' : 
-                          body.role === 'livreur' ? 'DRV' :
-                          body.role === 'taxi' ? 'DRV' :
-                          body.role === 'admin' ? 'PDG' :
-                          body.role === 'syndicat' ? 'SYD' :
-                          body.role === 'transitaire' ? 'AGT' :
-                          'USR';
-    
-    // Appeler la fonction generate_sequential_id pour obtenir un ID unique
-    const { data: idData, error: idError } = await supabaseClient
-      .rpc('generate_sequential_id', { p_prefix: customIdPrefix });
-    
-    if (idError) {
-      console.error('ID generation error:', idError);
+    console.log('✅ Utilisateur créé dans auth.users, ID:', authUser.user.id);
+    console.log('📝 Le profil sera créé automatiquement par le trigger');
+
+    // Attendre un peu pour que le trigger s'exécute
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Récupérer le profil créé par le trigger
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('public_id')
+      .eq('id', authUser.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('❌ Erreur récupération profil:', profileError);
       return new Response(
         JSON.stringify({ 
-          error: 'Erreur lors de la génération de l\'ID',
-          code: 'ID_GENERATION_ERROR'
+          error: 'Profil non créé par le trigger: ' + profileError.message,
+          code: 'PROFILE_ERROR'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    const publicId = idData as string;
-
-    // Créer le profil utilisateur avec les IDs générés
-    const { error: profileError } = await supabaseClient
-      .from('profiles')
-      .insert({
-        id: authUser.user.id,
-        email: body.email,
-        first_name: body.firstName,
-        last_name: body.lastName || '',
-        phone: body.phone,
-        role: body.role,
-        public_id: publicId,
-        is_active: true
-      });
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      // Si le profil existe déjà, ne pas échouer
-      if (!profileError.message.includes('duplicate') && !profileError.message.includes('already exists')) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Erreur lors de la création du profil: ' + profileError.message,
-            code: 'PROFILE_ERROR'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
-      }
-    }
-
-    // Supprimer la création dans user_ids car on utilise custom_id directement dans profiles
+    const publicId = profile.public_id;
 
     // Créer le wallet si c'est un client
     if (body.role === 'client') {
