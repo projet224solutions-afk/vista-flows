@@ -28,9 +28,12 @@ const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalyt
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
-const PDGApiSupervision = lazy(() => import('@/pages/pdg/ApiSupervision'));
 const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
+const PDGApiSupervision = lazy(() => import('@/components/pdg/PDGApiSupervision'));
 const TransferFeeSettings = lazy(() => import('@/components/pdg/TransferFeeSettings'));
+const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
+const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
+const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -356,6 +359,24 @@ export default function PDG224Solutions() {
               {activeTab === 'transfer-fees' && (
                 <ErrorBoundary>
                   <TransferFeeSettings />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'orders' && (
+                <ErrorBoundary>
+                  <PDGOrders />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'vendors' && (
+                <ErrorBoundary>
+                  <PDGVendors />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'drivers' && (
+                <ErrorBoundary>
+                  <PDGDrivers />
                 </ErrorBoundary>
               )}
             </Suspense>

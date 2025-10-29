@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
-  ChevronDown, ChevronUp, Sparkles, Percent
+  ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +43,9 @@ const categories: NavCategory[] = [
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
+      { value: 'orders', label: 'Commandes', icon: Package },
+      { value: 'vendors', label: 'Vendeurs', icon: Store },
+      { value: 'drivers', label: 'Livreurs', icon: Bike },
       { value: 'communication', label: 'Communication', icon: MessageSquare },
     ]
   },
