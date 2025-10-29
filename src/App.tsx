@@ -56,15 +56,16 @@ const PageLoader = () => (
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
@@ -215,6 +216,7 @@ const App = () => (
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>
-);
+  );
+}
 
 export default App;
