@@ -160,7 +160,7 @@ export function ActiveRideCard({
             <span className="text-sm text-gray-600">Gain estimé</span>
           </div>
           <span className="text-2xl font-bold text-green-600">
-            {ride.estimatedEarnings.toLocaleString()} GNF
+            {(ride?.estimatedEarnings || 0).toLocaleString()} GNF
           </span>
         </div>
 

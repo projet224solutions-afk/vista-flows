@@ -151,7 +151,15 @@ export default function TaxiMotoBooking({
 
             // Calculer le prix pour le type sélectionné
             const price = pricingService.calculatePrice(route.distance, route.duration);
-            setPriceEstimate(price);
+            
+            // Valider que l'objet prix a toutes les propriétés nécessaires
+            if (price && typeof price.totalPrice === 'number') {
+                setPriceEstimate(price);
+            } else {
+                console.error('Prix invalide retourné:', price);
+                setPriceEstimate(null);
+                toast.error('Erreur lors du calcul du prix');
+            }
 
             // Réinitialiser la comparaison
             setPriceComparison([]);
@@ -159,6 +167,7 @@ export default function TaxiMotoBooking({
         } catch (error) {
             console.error('Erreur calcul itinéraire/prix:', error);
             toast.error('Impossible de calculer l\'itinéraire');
+            setPriceEstimate(null);
         } finally {
             setLoadingRoute(false);
             setLoadingPrice(false);
@@ -398,11 +407,11 @@ export default function TaxiMotoBooking({
 
                                         <div className="text-right">
                                             <div className="text-lg font-bold text-green-600">
-                                                {option.price.totalPrice.toLocaleString()} GNF
+                                                {(option.price?.totalPrice || 0).toLocaleString()} GNF
                                             </div>
-                                            {option.price.appliedMultipliers.length > 0 && (
+                                            {option.price?.appliedMultipliers?.length > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    +{Math.round((option.price.surgeMultiplier - 1) * 100)}%
+                                                    +{Math.round(((option.price?.surgeMultiplier || 1) - 1) * 100)}%
                                                 </Badge>
                                             )}
                                         </div>
@@ -426,45 +435,45 @@ export default function TaxiMotoBooking({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
                             <span>Prix de base</span>
-                            <span>{priceEstimate.basePrice.toLocaleString()} GNF</span>
+                            <span>{(priceEstimate?.basePrice || 0).toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Distance ({routeInfo?.distance}km)</span>
-                            <span>{priceEstimate.distancePrice.toLocaleString()} GNF</span>
+                            <span>{(priceEstimate?.distancePrice || 0).toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Temps ({routeInfo?.duration}min)</span>
-                            <span>{priceEstimate.timePrice.toLocaleString()} GNF</span>
+                            <span>{(priceEstimate?.timePrice || 0).toLocaleString()} GNF</span>
                         </div>
 
-                        {priceEstimate.appliedMultipliers.length > 0 && (
+                        {priceEstimate?.appliedMultipliers?.length > 0 && (
                             <>
                                 <Separator />
                                 {priceEstimate.appliedMultipliers.map((multiplier, index) => (
                                     <div key={index} className="flex justify-between text-sm">
-                                        <span className="text-orange-600">{multiplier.reason}</span>
+                                        <span className="text-orange-600">{multiplier?.reason || 'Majoration'}</span>
                                         <span className="text-orange-600">
-                                            +{Math.round((multiplier.multiplier - 1) * 100)}%
+                                            +{Math.round(((multiplier?.multiplier || 1) - 1) * 100)}%
                                         </span>
                                     </div>
                                 ))}
                                 <div className="flex justify-between text-sm">
                                     <span>Majoration</span>
-                                    <span>+{priceEstimate.surgeAmount.toLocaleString()} GNF</span>
+                                    <span>+{(priceEstimate?.surgeAmount || 0).toLocaleString()} GNF</span>
                                 </div>
                             </>
                         )}
 
                         <div className="flex justify-between text-sm">
                             <span>TVA (18%)</span>
-                            <span>{priceEstimate.taxes.toLocaleString()} GNF</span>
+                            <span>{(priceEstimate?.taxes || 0).toLocaleString()} GNF</span>
                         </div>
 
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span className="text-green-600">
-                                {priceEstimate.totalPrice.toLocaleString()} GNF
+                                {(priceEstimate?.totalPrice || 0).toLocaleString()} GNF
                             </span>
                         </div>
                     </CardContent>
