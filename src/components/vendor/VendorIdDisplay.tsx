@@ -6,8 +6,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePublicId } from '@/hooks/usePublicId';
-import { PublicIdBadge } from '@/components/PublicIdBadge';
+import { useStandardId } from '@/hooks/useStandardId';
+import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Loader2 } from 'lucide-react';
 
 interface VendorIdDisplayProps {
@@ -20,7 +20,7 @@ export function VendorIdDisplay({
   showName = true 
 }: VendorIdDisplayProps) {
   const { user } = useAuth();
-  const { generatePublicId } = usePublicId();
+  const { generateStandardId } = useStandardId();
   const [vendorData, setVendorData] = useState<{
     public_id: string | null;
     business_name: string | null;
@@ -53,8 +53,8 @@ export function VendorIdDisplay({
 
       // Si pas de public_id, en générer un
       if (!vendor.public_id) {
-        console.log('🔄 Génération public_id vendeur...');
-        const newPublicId = await generatePublicId('vendors', false);
+        console.log('🔄 Génération standard_id vendeur...');
+        const newPublicId = await generateStandardId('vendors', false);
         
         if (newPublicId) {
           // Mettre à jour le vendeur
@@ -100,8 +100,8 @@ export function VendorIdDisplay({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <PublicIdBadge 
-        publicId={vendorData.public_id}
+      <StandardIdBadge 
+        standardId={vendorData.public_id}
         variant="secondary"
         size="md"
         copyable={true}

@@ -2,48 +2,37 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Copy, Check, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { StandardIdBadge } from '@/components/StandardIdBadge';
+import { User } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const UserCustomIdDisplay = () => {
   const { user } = useAuth();
-  const [customId, setCustomId] = useState<string | null>(null);
+  const [standardId, setStandardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
-      loadCustomId();
+      loadStandardId();
     }
   }, [user?.id]);
 
-  const loadCustomId = async () => {
+  const loadStandardId = async () => {
     if (!user?.id) return;
 
     try {
       const { data, error } = await supabase
-        .from('user_ids')
-        .select('custom_id')
-        .eq('user_id', user.id)
+        .from('profiles')
+        .select('public_id')
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
-      setCustomId(data?.custom_id || null);
+      setStandardId(data?.public_id || null);
     } catch (error) {
-      console.error('❌ Erreur chargement custom_id:', error);
+      console.error('❌ Erreur chargement standard_id:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCopy = () => {
-    if (customId) {
-      navigator.clipboard.writeText(customId);
-      setCopied(true);
-      toast.success('Code copié dans le presse-papier !');
-      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -59,7 +48,7 @@ export const UserCustomIdDisplay = () => {
     );
   }
 
-  if (!customId) {
+  if (!standardId) {
     return null;
   }
 
@@ -71,33 +60,23 @@ export const UserCustomIdDisplay = () => {
             <User className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">Votre Code d'Identification</CardTitle>
-            <CardDescription>Partagez ce code pour recevoir des paiements</CardDescription>
+            <CardTitle className="text-lg">Votre ID Standardisé</CardTitle>
+            <CardDescription>Identifiant unique 224SOLUTIONS</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between bg-background rounded-lg p-4 border-2 border-primary/20">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-xl font-mono px-4 py-2">
-              {customId}
-            </Badge>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="hover:bg-primary/10"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-green-600" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </Button>
+        <div className="flex items-center justify-center">
+          <StandardIdBadge 
+            standardId={standardId}
+            variant="default"
+            size="lg"
+            copyable={true}
+            showIcon={true}
+          />
         </div>
         <p className="text-xs text-muted-foreground text-center">
-          💡 Les autres utilisateurs peuvent vous envoyer de l'argent avec ce code
+          💡 Partagez cet ID pour recevoir des paiements ou être identifié
         </p>
       </CardContent>
     </Card>
