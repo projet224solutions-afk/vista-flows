@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { agoraService, AgoraConfig, CallConfig } from '@/services/agoraService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AgoraCallState {
   isConnected: boolean;
@@ -49,7 +50,6 @@ export function useAgora() {
 
   // Fonction pour récupérer les credentials Agora
   const fetchAgoraCredentials = useCallback(async (channel: string, uid: string) => {
-    const { supabase } = await import('@/integrations/supabase/client');
     const { data, error } = await supabase.functions.invoke('agora-token', {
       body: { channel, uid, role: 'publisher' }
     });
