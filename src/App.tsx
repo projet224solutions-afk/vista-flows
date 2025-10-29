@@ -32,7 +32,7 @@ const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
-const PaymentPage = lazy(() => import("./pages/PaymentPage"));
+const Payment = lazy(() => import("./pages/Payment"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
@@ -119,7 +119,11 @@ const App = () => (
               />
               <Route
                 path="/payment/:paymentId"
-                element={<PaymentPage />}
+                element={<Payment />}
+              />
+              <Route
+                path="/payment"
+                element={<Payment />}
               />
               <Route
                 path="/test-wallet-transfer"
