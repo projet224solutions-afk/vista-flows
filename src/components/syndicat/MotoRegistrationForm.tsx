@@ -25,6 +25,7 @@ interface MotoForm {
   model: string;
   year: number;
   color: string;
+  documents?: string[];
 }
 
 interface Props {
@@ -35,6 +36,7 @@ interface Props {
 export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [activeTab, setActiveTab] = useState('moto');
   const [loading, setLoading] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [conducteurSearch, setConducteurSearch] = useState('');
   const [customBrand, setCustomBrand] = useState('');
   const { storeOfflineEvent, isOnline } = useBureauOfflineSync(bureauId);
@@ -48,6 +50,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     model: '',
     year: new Date().getFullYear(),
     color: '',
+    documents: [],
   });
 
   const updateForm = (field: keyof MotoForm, value: any) => {
@@ -76,6 +79,55 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       console.error('Erreur upload:', error);
       toast.error('Erreur lors du téléchargement');
     }
+  };
+
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingDoc(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `moto-documents/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      setForm(prev => ({
+        ...prev,
+        documents: [...(prev.documents || []), ...uploadedUrls]
+      }));
+
+      toast.success(`${uploadedUrls.length} document(s) téléchargé(s) avec succès`);
+    } catch (error) {
+      console.error('Erreur upload documents:', error);
+      toast.error('Erreur lors du téléchargement des documents');
+    } finally {
+      setUploadingDoc(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeDocument = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      documents: prev.documents?.filter((_, i) => i !== index) || []
+    }));
+    toast.success('Document retiré');
   };
 
   const searchConducteur = async () => {
@@ -148,6 +200,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         model: '',
         year: new Date().getFullYear(),
         color: '',
+        documents: [],
       });
       setCustomBrand('');
       
@@ -323,7 +376,74 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
             </TabsContent>
 
             <TabsContent value="documents" className="space-y-4">
-              <p className="text-sm text-muted-foreground">Fonctionnalité de téléchargement de documents à venir</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Documents officiels (Carte grise, Assurance, etc.)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingDoc}
+                    onClick={() => document.getElementById('doc-upload')?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploadingDoc ? 'Téléchargement...' : 'Ajouter des documents'}
+                  </Button>
+                  <input
+                    id="doc-upload"
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    className="hidden"
+                    onChange={handleDocumentUpload}
+                  />
+                </div>
+
+                {form.documents && form.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {form.documents.map((docUrl, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <span className="text-sm">Document {index + 1}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Téléchargé
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(docUrl, '_blank')}
+                          >
+                            Voir
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeDocument(index)}
+                          >
+                            Retirer
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Aucun document téléchargé
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PDF, Images, Word acceptés
+                    </p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="photos" className="space-y-4">
