@@ -8,9 +8,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send, Loader2, Wallet } from "lucide-react";
+import { Send, Loader2, Wallet, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,8 +44,10 @@ export function QuickTransferButton({
   const [amount, setAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
   const [description, setDescription] = useState('');
+  const [showTransferPreview, setShowTransferPreview] = useState(false);
+  const [transferPreview, setTransferPreview] = useState<any>(null);
 
-  const handleTransfer = async () => {
+  const handlePreviewTransfer = async () => {
     if (!user?.id || !amount || !recipientId || !description) {
       toast.error('Veuillez remplir tous les champs');
       return;
@@ -48,7 +60,6 @@ export function QuickTransferButton({
     }
 
     setLoading(true);
-    console.log('💸 Transfert rapide:', { amount: transferAmount, recipientId });
 
     try {
       // Récupérer notre propre custom_id pour la vérification
@@ -79,45 +90,61 @@ export function QuickTransferButton({
 
       const recipientUuid = recipientData.user_id;
 
-      // Vérifier le solde
-      const { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single();
+      // Appeler la fonction de prévisualisation
+      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
+        p_sender_id: user.id,
+        p_receiver_id: recipientUuid,
+        p_amount: transferAmount,
+        p_currency: 'GNF'
+      });
 
-      if (walletError) throw walletError;
+      if (error) throw error;
 
-      if (!walletData || walletData.balance < transferAmount) {
-        toast.error('Solde insuffisant');
-        setLoading(false);
+      const previewData = data as any;
+
+      if (!previewData.success) {
+        toast.error(previewData.error);
         return;
       }
 
-      // Effectuer le transfert via edge function avec l'UUID réel
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'transfer',
-          amount: transferAmount,
-          recipient_id: recipientUuid,
-          description: description
-        }
+      setTransferPreview({ ...previewData, recipient_uuid: recipientUuid, recipient_code: recipientId });
+      setShowTransferPreview(true);
+      setOpen(false);
+    } catch (error: any) {
+      console.error('❌ Erreur prévisualisation:', error);
+      toast.error(error.message || 'Erreur lors de la prévisualisation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmTransfer = async () => {
+    if (!user?.id || !transferPreview) return;
+    
+    setLoading(true);
+    setShowTransferPreview(false);
+    
+    try {
+      // Exécuter le transfert avec la fonction RPC
+      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+        p_sender_id: user.id,
+        p_receiver_id: transferPreview.recipient_uuid,
+        p_amount: transferPreview.amount,
+        p_currency: 'GNF',
+        p_description: description
       });
 
-      if (error) {
-        throw new Error(error.message || 'Erreur lors du transfert');
-      }
+      if (error) throw error;
 
-      // Vérifier si la réponse contient une erreur
-      if (data && !data.success && data.error) {
-        throw new Error(data.error);
-      }
-
-      toast.success(`Transfert de ${transferAmount.toLocaleString()} GNF réussi vers ${recipientId} !`);
+      toast.success(
+        `✅ Transfert réussi vers ${transferPreview.recipient_code}\n💸 Frais : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant : ${transferPreview.amount.toLocaleString()} GNF`,
+        { duration: 5000 }
+      );
+      
       setAmount('');
       setRecipientId('');
       setDescription('');
-      setOpen(false);
+      setTransferPreview(null);
 
       // Recharger la page pour mettre à jour le solde
       window.dispatchEvent(new CustomEvent('wallet-updated'));
@@ -184,15 +211,67 @@ export function QuickTransferButton({
             />
           </div>
           <Button
-            onClick={handleTransfer}
+            onClick={handlePreviewTransfer}
             disabled={loading || !amount || !recipientId || !description}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {loading ? 'Transfert en cours...' : 'Confirmer le transfert'}
+            {loading ? 'Chargement...' : 'Voir les frais et confirmer'}
           </Button>
         </div>
       </DialogContent>
+
+      {/* Dialog de confirmation avec prévisualisation des frais */}
+      <AlertDialog open={showTransferPreview} onOpenChange={setShowTransferPreview}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-primary" />
+              Confirmer le transfert
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 mt-4">
+                <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">💰 Montant à transférer</span>
+                    <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                  </div>
+                  <div className="flex justify-between items-center text-orange-600">
+                    <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                    <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                  </div>
+                  <div className="border-t pt-3 flex justify-between items-center">
+                    <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                    <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                  </div>
+                  <div className="flex justify-between items-center text-green-600">
+                    <span className="text-sm font-medium">📈 Montant net reçu par {transferPreview?.recipient_code}</span>
+                    <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                    <br />
+                    <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                  </p>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Souhaitez-vous confirmer ce transfert ?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Non, annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmTransfer} disabled={loading}>
+              Oui, confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
