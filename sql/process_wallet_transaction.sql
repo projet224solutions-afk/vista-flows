@@ -14,7 +14,7 @@ BEGIN
     -- Vérifier le solde de l'expéditeur
     SELECT balance INTO sender_wallet_balance 
     FROM wallets 
-    WHERE user_id = p_sender_id AND currency = p_currency AND status = 'active';
+    WHERE user_id = p_sender_id AND currency = p_currency;
     
     IF sender_wallet_balance IS NULL THEN
         RAISE EXCEPTION 'Wallet non trouvé pour l''expéditeur';
@@ -36,8 +36,8 @@ BEGIN
     WHERE user_id = p_sender_id AND currency = p_currency;
     
     -- Créditer le destinataire (créer wallet si n'existe pas)
-    INSERT INTO wallets (user_id, balance, currency, status)
-    VALUES (p_receiver_id, p_amount, p_currency, 'active')
+    INSERT INTO wallets (user_id, balance, currency)
+    VALUES (p_receiver_id, p_amount, p_currency)
     ON CONFLICT (user_id, currency) 
     DO UPDATE SET balance = wallets.balance + p_amount, updated_at = now();
     
