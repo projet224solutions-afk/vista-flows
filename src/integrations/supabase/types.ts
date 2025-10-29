@@ -7042,6 +7042,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_user_complete: {
+        Args: { p_role?: string; p_user_id: string }
+        Returns: Json
+      }
       credit_wallet: {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
@@ -7109,6 +7113,10 @@ export type Database = {
       generate_agent_access_token: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
+      generate_custom_id_with_role: {
+        Args: { p_role?: string }
+        Returns: string
+      }
       generate_invitation_token: { Args: never; Returns: string }
       generate_public_id: { Args: never; Returns: string }
       generate_recommendations_for_user: {
