@@ -17,6 +17,7 @@ import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
+import { NearbyDeliveriesListener } from "@/components/delivery/NearbyDeliveriesListener";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -60,17 +61,24 @@ export default function LivreurDashboard() {
   const loading = deliveryLoading || rideLoading;
   const error = deliveryError;
 
-  // Charger la position au montage
+  // Charger la position GPS au montage
   useEffect(() => {
     getCurrentLocation();
-  }, []);
+  }, [getCurrentLocation]);
+
+  // Recharger les livraisons quand on bascule sur l'onglet missions
+  useEffect(() => {
+    if (activeTab === 'missions' && location && !currentDelivery && !currentRide) {
+      findNearbyDeliveries(location.latitude, location.longitude, 10);
+    }
+  }, [activeTab, location, currentDelivery, currentRide, findNearbyDeliveries]);
 
   // Charger les livraisons à proximité quand la position change
   useEffect(() => {
-    if (location && !currentDelivery) {
+    if (location && !currentDelivery && !currentRide) {
       findNearbyDeliveries(location.latitude, location.longitude, 10);
     }
-  }, [location, currentDelivery]);
+  }, [location, currentDelivery, currentRide, findNearbyDeliveries]);
 
   // S'abonner au tracking en temps réel pour livraison ou course
   useEffect(() => {
@@ -118,12 +126,15 @@ export default function LivreurDashboard() {
   const handleAcceptDelivery = async (deliveryId: string) => {
     try {
       await acceptDeliveryFn(deliveryId);
+      toast.success('Livraison acceptée! Direction le point de collecte.');
       setActiveTab('active');
+      // Recharger les livraisons disponibles
       if (location) {
         await findNearbyDeliveries(location.latitude, location.longitude, 10);
       }
     } catch (error) {
       console.error('Error accepting delivery:', error);
+      toast.error('Impossible d\'accepter cette livraison');
     }
   };
 
@@ -206,6 +217,16 @@ export default function LivreurDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-4">
+      {/* Listener temps réel pour nouvelles livraisons */}
+      <NearbyDeliveriesListener 
+        enabled={!currentDelivery && !currentRide}
+        onNewDelivery={() => {
+          if (location) {
+            findNearbyDeliveries(location.latitude, location.longitude, 10);
+          }
+        }}
+      />
+
       <div className="max-w-4xl mx-auto">
         {/* En-tête avec informations utilisateur */}
         <div className="flex items-center justify-between mb-6">
@@ -313,9 +334,19 @@ export default function LivreurDashboard() {
                           size="sm" 
                           onClick={() => handleAcceptDelivery(delivery.id)}
                           disabled={loading}
-                          className="whitespace-nowrap"
+                          className="whitespace-nowrap gap-2"
                         >
-                          Accepter
+                          {loading ? (
+                            <>
+                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                              Acceptation...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-3 w-3" />
+                              Accepter
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>

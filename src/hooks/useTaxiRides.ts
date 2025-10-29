@@ -32,7 +32,7 @@ export function useTaxiRides() {
         .select('*')
         .eq('driver_id', user.user.id)
         .in('status', ['accepted', 'picked_up', 'in_transit'])
-        .order('created_at', { ascending: false })
+        .order('requested_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
