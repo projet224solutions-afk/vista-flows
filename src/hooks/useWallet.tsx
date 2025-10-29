@@ -50,39 +50,57 @@ export const useWallet = (userId?: string) => {
 
   // Charger le wallet de l'utilisateur
   const loadWallet = useCallback(async (userId: string) => {
+    if (!userId) {
+      console.log('⚠️ Pas de userId fourni');
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
+      
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (walletError) {
-        if (walletError.code === 'PGRST116') {
-          // Créer un wallet s'il n'existe pas
-          const { data: newWallet, error: createError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: userId,
-              balance: 0,
-              currency: 'GNF'
-            })
-            .select()
-            .single();
+        console.error('❌ Erreur requête wallet:', walletError);
+        throw walletError;
+      }
 
-          if (createError) throw createError;
-          setWallet(newWallet);
-        } else {
-          throw walletError;
+      if (!walletData) {
+        // Créer un wallet s'il n'existe pas
+        console.log('📝 Création d\'un nouveau wallet pour:', userId);
+        const { data: newWallet, error: createError } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: userId,
+            balance: 0,
+            currency: 'GNF'
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('❌ Erreur création wallet:', createError);
+          throw createError;
         }
+        
+        console.log('✅ Wallet créé:', newWallet);
+        setWallet(newWallet);
       } else {
+        console.log('✅ Wallet chargé:', walletData);
         setWallet(walletData);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur chargement wallet:', error);
-      setError('Erreur lors du chargement du portefeuille');
-      toast.error('Erreur lors du chargement du portefeuille');
+      // Ne pas afficher de toast si c'est juste qu'il n'y a pas de userId
+      if (userId) {
+        setError('Erreur lors du chargement du portefeuille');
+        toast.error('Erreur lors du chargement du portefeuille');
+      }
     } finally {
       setLoading(false);
     }
