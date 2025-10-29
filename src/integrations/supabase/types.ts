@@ -2129,6 +2129,30 @@ export type Database = {
         }
         Relationships: []
       }
+      global_ids: {
+        Row: {
+          created_at: string | null
+          id: number
+          last_number: number | null
+          prefix: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          last_number?: number | null
+          prefix: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          last_number?: number | null
+          prefix?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       id_counters: {
         Row: {
           created_at: string
@@ -7139,6 +7163,7 @@ export type Database = {
         Returns: string
       }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
+      generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
@@ -7251,6 +7276,7 @@ export type Database = {
           score: number
         }[]
       }
+      get_prefix_for_role: { Args: { p_role: string }; Returns: string }
       get_product_rating: {
         Args: { p_product_id: string }
         Returns: {
@@ -7285,6 +7311,7 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_user_custom_id: { Args: { p_user_id: string }; Returns: string }
       gettransactionid: { Args: never; Returns: unknown }
       has_active_installation: {
         Args: { bureau_uuid: string }
