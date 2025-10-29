@@ -104,6 +104,21 @@ export function QuickTransferButton({
         return;
       }
 
+      // Récupérer les informations du destinataire
+      const { data: recipientProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, phone')
+        .eq('id', recipientUuid)
+        .single();
+
+      if (profileError) {
+        console.error('Erreur profil destinataire:', profileError);
+      }
+
+      const recipientFullName = recipientProfile 
+        ? `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim() || 'Non renseigné'
+        : 'Non renseigné';
+
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
@@ -121,7 +136,14 @@ export function QuickTransferButton({
         return;
       }
 
-      setTransferPreview({ ...previewData, recipient_uuid: recipientUuid, recipient_code: recipientId });
+      setTransferPreview({ 
+        ...previewData, 
+        recipient_uuid: recipientUuid, 
+        recipient_code: recipientId,
+        recipient_name: recipientFullName,
+        recipient_email: recipientProfile?.email || 'Non renseigné',
+        recipient_phone: recipientProfile?.phone || 'Non renseigné'
+      });
       setShowTransferPreview(true);
       setOpen(false);
     } catch (error: any) {
@@ -245,6 +267,18 @@ export function QuickTransferButton({
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 mt-4">
+                {/* Informations du destinataire */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                  <h4 className="font-semibold text-blue-900 mb-2">👤 Informations du destinataire</h4>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Nom:</strong> {transferPreview?.recipient_name}</p>
+                    <p><strong>Email:</strong> {transferPreview?.recipient_email}</p>
+                    <p><strong>Téléphone:</strong> {transferPreview?.recipient_phone}</p>
+                    <p><strong>ID:</strong> {transferPreview?.recipient_code}</p>
+                  </div>
+                </div>
+
+                {/* Détails du transfert */}
                 <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">💰 Montant à transférer</span>
@@ -259,7 +293,7 @@ export function QuickTransferButton({
                     <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
                   </div>
                   <div className="flex justify-between items-center text-green-600">
-                    <span className="text-sm font-medium">📈 Montant net reçu par {transferPreview?.recipient_code}</span>
+                    <span className="text-sm font-medium">📈 Montant net reçu</span>
                     <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
                   </div>
                 </div>
