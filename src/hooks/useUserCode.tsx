@@ -31,10 +31,13 @@ export function useUserCode() {
           .maybeSingle();
 
         if (userIdData?.custom_id) {
+          console.log('✅ Code trouvé dans user_ids:', userIdData.custom_id);
           setUserCode(userIdData.custom_id);
           setLoading(false);
           return;
         }
+        
+        console.log('⚠️ Pas de code dans user_ids, cherche dans profiles...');
 
         // Sinon chercher dans profiles
         const { data: profileData } = await supabase
@@ -45,7 +48,11 @@ export function useUserCode() {
 
         if (profileData) {
           // Priorité à custom_id, sinon public_id
-          setUserCode(profileData.custom_id || profileData.public_id);
+          const code = profileData.custom_id || profileData.public_id;
+          console.log('✅ Code trouvé dans profiles:', code);
+          setUserCode(code);
+        } else {
+          console.log('❌ Aucun code trouvé pour user_id:', user.id);
         }
       } catch (error) {
         console.error('Erreur récupération code utilisateur:', error);

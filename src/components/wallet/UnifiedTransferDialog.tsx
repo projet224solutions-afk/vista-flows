@@ -101,6 +101,8 @@ export function UnifiedTransferDialog({
         recipient: recipientCode,
         amount: transferAmount
       });
+      
+      console.log('📞 Appel RPC preview_wallet_transfer_by_code...');
 
       const { data, error } = await supabase.rpc('preview_wallet_transfer_by_code', {
         p_sender_code: senderCode.toUpperCase(),

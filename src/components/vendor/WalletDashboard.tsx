@@ -167,100 +167,68 @@ export default function WalletDashboard() {
     
     try {
       setBusy(true);
-
-      // Convertir le custom_id en UUID si nécessaire
-      let recipientUuid = null;
       
-      // Vérifier si c'est un custom_id (format: AAA0001 ex: USR0001, VND0001) ou un UUID
-      if (!receiverId.includes('-')) {
-        const recipientIdUpper = receiverId.toUpperCase();
-        console.log('🔍 [Vendeur] Recherche destinataire:', recipientIdUpper);
-        
-        // Chercher d'abord dans user_ids
-        const { data: userIdData, error: userIdError } = await supabase
-          .from('user_ids')
-          .select('user_id')
-          .eq('custom_id', recipientIdUpper)
-          .maybeSingle();
-
-        console.log('📋 [Vendeur] Résultat user_ids:', userIdData, userIdError);
-
-        if (userIdData?.user_id) {
-          recipientUuid = userIdData.user_id;
-          console.log('✅ [Vendeur] Trouvé dans user_ids:', recipientUuid);
-        } else {
-          // Si pas trouvé, chercher dans profiles en fallback
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('custom_id', recipientIdUpper)
-            .maybeSingle();
-          
-          console.log('📋 [Vendeur] Résultat profiles:', profileData, profileError);
-          
-          if (profileData?.id) {
-            recipientUuid = profileData.id;
-            console.log('✅ [Vendeur] Trouvé dans profiles:', recipientUuid);
-          }
-        }
-
-        if (!recipientUuid) {
-          console.error('❌ [Vendeur] Destinataire introuvable pour:', recipientIdUpper);
-          toast.error(`Destinataire introuvable. Vérifiez le code: ${recipientIdUpper}`);
-          setBusy(false);
-          return;
-        }
+      const recipientCodeUpper = receiverId.toUpperCase();
+      
+      console.log('🔍 [Vendeur] Début prévisualisation transfert:', {
+        recipient: recipientCodeUpper,
+        amount
+      });
+      
+      // Récupérer notre propre code pour l'API
+      let senderCode = null;
+      
+      // Chercher dans user_ids d'abord
+      const { data: senderIdData } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (senderIdData?.custom_id) {
+        senderCode = senderIdData.custom_id;
       } else {
-        // C'est déjà un UUID
-        recipientUuid = receiverId;
-        console.log('📌 [Vendeur] UUID direct fourni:', recipientUuid);
+        // Sinon chercher dans profiles
+        const { data: senderProfileData } = await supabase
+          .from('profiles')
+          .select('custom_id, public_id')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
       }
-
-      // Vérifier qu'on ne transfère pas à soi-même
-      if (recipientUuid === userId) {
-        toast.error('Vous ne pouvez pas transférer à vous-même');
+      
+      if (!senderCode) {
+        toast.error('Votre code utilisateur est introuvable');
         setBusy(false);
         return;
       }
-
-      // Récupérer les informations du destinataire
-      const { data: recipientProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, email, phone, custom_id')
-        .eq('id', recipientUuid)
-        .single();
-
-      if (profileError) {
-        console.error('Erreur profil destinataire:', profileError);
-      }
-
-      const recipientFullName = recipientProfile 
-        ? `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim() || 'Non renseigné'
-        : 'Non renseigné';
-
-      // Appeler la fonction de prévisualisation
-      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-        p_sender_id: userId,
-        p_receiver_id: recipientUuid,
+      
+      console.log('📋 [Vendeur] Code expéditeur:', senderCode);
+      console.log('📞 [Vendeur] Appel preview_wallet_transfer_by_code...');
+      
+      // Appeler la nouvelle fonction de prévisualisation par code
+      const { data, error } = await supabase.rpc('preview_wallet_transfer_by_code', {
+        p_sender_code: senderCode,
+        p_receiver_code: recipientCodeUpper,
         p_amount: amount,
         p_currency: 'GNF'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [Vendeur] Erreur RPC:', error);
+        throw error;
+      }
+      
+      console.log('📋 [Vendeur] Résultat prévisualisation:', data);
 
       if (!data.success) {
-        toast.error(data.error);
+        toast.error(data.error || 'Erreur lors de la prévisualisation');
+        setBusy(false);
         return;
       }
 
-      setTransferPreview({ 
-        ...data, 
-        recipient_uuid: recipientUuid,
-        recipient_code: recipientProfile?.custom_id || receiverId,
-        recipient_name: recipientFullName,
-        recipient_email: recipientProfile?.email || 'Non renseigné',
-        recipient_phone: recipientProfile?.phone || 'Non renseigné'
-      });
+      setTransferPreview(data);
       setShowTransferPreview(true);
     } catch (e: any) {
       console.error('Erreur prévisualisation:', e);
@@ -276,11 +244,33 @@ export default function WalletDashboard() {
     try {
       setBusy(true);
       setShowTransferPreview(false);
+      
+      console.log('💸 [Vendeur] Exécution du transfert...');
 
-      // Exécuter le transfert avec l'UUID du destinataire
-      const { data, error } = await supabase.rpc('process_wallet_transaction', {
-        p_sender_id: userId,
-        p_receiver_id: transferPreview.recipient_uuid, // Utiliser l'UUID converti
+      // Récupérer notre code pour l'API
+      let senderCode = null;
+      const { data: senderIdData } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (senderIdData?.custom_id) {
+        senderCode = senderIdData.custom_id;
+      } else {
+        const { data: senderProfileData } = await supabase
+          .from('profiles')
+          .select('custom_id, public_id')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
+      }
+
+      // Exécuter le transfert avec la nouvelle fonction
+      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
+        p_sender_code: senderCode,
+        p_receiver_code: transferPreview.receiver.custom_id,
         p_amount: transferPreview.amount,
         p_currency: 'GNF',
         p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} GNF`
