@@ -40,9 +40,15 @@ import AgoraAudioCall from './AgoraAudioCall';
 
 interface UniversalCommunicationHubProps {
   className?: string;
+  selectedConversationId?: string | null;
+  refreshTrigger?: number;
 }
 
-export default function UniversalCommunicationHub({ className }: UniversalCommunicationHubProps) {
+export default function UniversalCommunicationHub({ 
+  className,
+  selectedConversationId,
+  refreshTrigger 
+}: UniversalCommunicationHubProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -68,7 +74,17 @@ export default function UniversalCommunicationHub({ className }: UniversalCommun
       loadConversations();
       loadNotifications();
     }
-  }, [user]);
+  }, [user, refreshTrigger]);
+
+  // Sélectionner automatiquement une conversation
+  useEffect(() => {
+    if (selectedConversationId && conversations.length > 0) {
+      const conv = conversations.find(c => c.id === selectedConversationId);
+      if (conv) {
+        handleSelectConversation(conv);
+      }
+    }
+  }, [selectedConversationId, conversations]);
 
   // S'abonner aux notifications
   useEffect(() => {
@@ -161,6 +177,16 @@ export default function UniversalCommunicationHub({ className }: UniversalCommun
     setSelectedConversation(conversation);
     loadMessages(conversation.id);
   };
+
+  // Sélectionner automatiquement une conversation
+  useEffect(() => {
+    if (selectedConversationId && conversations.length > 0) {
+      const conv = conversations.find(c => c.id === selectedConversationId);
+      if (conv) {
+        handleSelectConversation(conv);
+      }
+    }
+  }, [selectedConversationId, conversations]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !user?.id) return;

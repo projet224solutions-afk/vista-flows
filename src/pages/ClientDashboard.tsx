@@ -45,6 +45,8 @@ export default function ClientDashboard() {
   } = useClientData();
 
   const [filteredProducts, setFilteredProducts] = useState(products);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [communicationRefresh, setCommunicationRefresh] = useState(0);
 
   const handleSignOut = async () => {
     try {
@@ -94,8 +96,9 @@ export default function ClientDashboard() {
 
     const conversationId = await contactVendor(product.vendorUserId, product.seller);
     if (conversationId) {
+      setSelectedConversationId(conversationId);
+      setCommunicationRefresh(prev => prev + 1);
       setActiveTab('communication');
-      // L'onglet communication gérera l'affichage de la conversation
     }
   };
 
@@ -562,7 +565,10 @@ export default function ClientDashboard() {
 
           {/* Communication */}
           <TabsContent value="communication" className="animate-fade-in">
-            <UniversalCommunicationHub />
+            <UniversalCommunicationHub 
+              selectedConversationId={selectedConversationId}
+              refreshTrigger={communicationRefresh}
+            />
           </TabsContent>
 
           {/* Copilote */}
