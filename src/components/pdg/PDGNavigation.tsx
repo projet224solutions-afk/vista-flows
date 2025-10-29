@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
-  ChevronDown, ChevronUp, Sparkles
+  ChevronDown, ChevronUp, Sparkles, Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,7 @@ const categories: NavCategory[] = [
       { value: 'finance', label: 'Finances', icon: DollarSign },
       { value: 'users', label: 'Utilisateurs', icon: Users },
       { value: 'products', label: 'Produits', icon: Package },
+      { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },
     ]
   },
   {

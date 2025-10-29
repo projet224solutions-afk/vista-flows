@@ -30,6 +30,7 @@ const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatMan
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const PDGApiSupervision = lazy(() => import('@/pages/pdg/ApiSupervision'));
 const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
+const TransferFeeSettings = lazy(() => import('@/components/pdg/TransferFeeSettings'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -349,6 +350,12 @@ export default function PDG224Solutions() {
               {activeTab === 'api' && (
                 <ErrorBoundary>
                   <PDGApiSupervision />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'transfer-fees' && (
+                <ErrorBoundary>
+                  <TransferFeeSettings />
                 </ErrorBoundary>
               )}
             </Suspense>
