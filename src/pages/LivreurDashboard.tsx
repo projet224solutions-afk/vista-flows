@@ -10,10 +10,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp } from "lucide-react";
+import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { useDelivery } from "@/hooks/useDelivery";
+import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 
@@ -22,13 +23,14 @@ export default function LivreurDashboard() {
   const { location, getCurrentLocation } = useCurrentLocation();
   const [activeTab, setActiveTab] = useState('missions');
 
+  // Hook pour les livraisons
   const {
     currentDelivery,
     deliveryHistory,
     nearbyDeliveries,
     trackingPoints,
-    loading,
-    error,
+    loading: deliveryLoading,
+    error: deliveryError,
     findNearbyDeliveries,
     acceptDelivery: acceptDeliveryFn,
     startDelivery: startDeliveryFn,
@@ -36,11 +38,27 @@ export default function LivreurDashboard() {
     cancelDelivery,
     loadTracking,
     subscribeToTracking,
-    trackPosition,
-    processPayment,
+    trackPosition: trackDeliveryPosition,
+    processPayment: processDeliveryPayment,
     loadDeliveryHistory,
     loadCurrentDelivery
   } = useDelivery();
+
+  // Hook pour les courses taxi-moto
+  const {
+    currentRide,
+    rideHistory,
+    loading: rideLoading,
+    acceptRide: acceptRideFn,
+    startRide: startRideFn,
+    completeRide: completeRideFn,
+    cancelRide,
+    trackPosition: trackRidePosition,
+    processPayment: processRidePayment
+  } = useTaxiRides();
+
+  const loading = deliveryLoading || rideLoading;
+  const error = deliveryError;
 
   // Charger la position au montage
   useEffect(() => {
@@ -54,7 +72,7 @@ export default function LivreurDashboard() {
     }
   }, [location, currentDelivery]);
 
-  // S'abonner au tracking en temps réel si livraison en cours
+  // S'abonner au tracking en temps réel pour livraison ou course
   useEffect(() => {
     if (currentDelivery) {
       const unsubscribe = subscribeToTracking(currentDelivery.id);
@@ -62,12 +80,12 @@ export default function LivreurDashboard() {
       // Envoyer la position toutes les 10 secondes
       const intervalId = setInterval(() => {
         if (location) {
-          trackPosition(
+          trackDeliveryPosition(
             currentDelivery.id,
             location.latitude,
             location.longitude,
-            undefined, // speed
-            undefined, // heading  
+            undefined,
+            undefined,
             location.accuracy
           );
         }
@@ -78,7 +96,21 @@ export default function LivreurDashboard() {
         clearInterval(intervalId);
       };
     }
-  }, [currentDelivery, location]);
+
+    if (currentRide && location) {
+      const intervalId = setInterval(() => {
+        trackRidePosition(
+          currentRide.id,
+          location.latitude,
+          location.longitude,
+          undefined,
+          undefined
+        );
+      }, 10000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [currentDelivery, currentRide, location, trackDeliveryPosition, trackRidePosition, subscribeToTracking]);
 
   /**
    * Accepter une livraison
@@ -138,18 +170,23 @@ export default function LivreurDashboard() {
    */
   const reportProblem = () => {
     toast.warning("Problème signalé au support !");
-    // Appeler handleCancelDelivery avec une raison si nécessaire
   };
 
   /**
-   * Traiter le paiement
+   * Traiter le paiement (livraison ou course)
    */
   const handleProcessPayment = async (paymentMethod: string) => {
-    if (!currentDelivery) return;
     try {
-      const result = await processPayment(currentDelivery.id, paymentMethod);
-      if (result.success) {
-        setActiveTab('history');
+      if (currentDelivery) {
+        const result = await processDeliveryPayment(currentDelivery.id, paymentMethod);
+        if (result.success) {
+          setActiveTab('history');
+        }
+      } else if (currentRide) {
+        const result = await processRidePayment(currentRide.id, paymentMethod);
+        if (result.success) {
+          setActiveTab('history');
+        }
       }
     } catch (error) {
       console.error('Error processing payment:', error);
@@ -180,9 +217,9 @@ export default function LivreurDashboard() {
             <p className="text-sm text-muted-foreground">
               Bienvenue {profile?.first_name || 'Livreur'}
             </p>
-            {currentDelivery && (
+            {(currentDelivery || currentRide) && (
               <Badge variant="default" className="mt-1">
-                Livraison en cours
+                {currentDelivery ? 'Livraison en cours' : 'Course en cours'}
               </Badge>
             )}
           </div>
@@ -209,14 +246,14 @@ export default function LivreurDashboard() {
                 <Badge variant="secondary" className="ml-2">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active" disabled={!currentDelivery}>
+            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide}>
               🚚 En cours
-              {currentDelivery && <Badge variant="default" className="ml-2">1</Badge>}
+              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-2">1</Badge>}
             </TabsTrigger>
             <TabsTrigger value="history">
               📋 Historique
-              {deliveryHistory.length > 0 && (
-                <Badge variant="outline" className="ml-2">{deliveryHistory.length}</Badge>
+              {(deliveryHistory.length + rideHistory.length) > 0 && (
+                <Badge variant="outline" className="ml-2">{deliveryHistory.length + rideHistory.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="wallet">💰 Solde</TabsTrigger>
@@ -379,29 +416,111 @@ export default function LivreurDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            ) : currentRide ? (
+              <Card className="shadow-lg border-yellow-500/30">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge className="bg-yellow-500">Course Taxi</Badge>
+                        <Badge variant="outline">{currentRide.status}</Badge>
+                      </div>
+                      <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                        <Car className="h-5 w-5" />
+                        Course #{currentRide.id.slice(0, 8)}
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+                          <div className="flex-1">
+                            <p className="font-medium">Point de départ</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {typeof currentRide.pickup_address === 'string' 
+                                ? currentRide.pickup_address 
+                                : 'Adresse non disponible'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <MapPin className="h-5 w-5 flex-shrink-0 text-green-500 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="font-medium">Destination</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {typeof currentRide.dropoff_address === 'string' 
+                                ? currentRide.dropoff_address 
+                                : 'Adresse non disponible'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-yellow-500/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">Prix de la course</p>
+                      <p className="text-3xl font-bold text-yellow-600">
+                        {(currentRide.price_total || 0).toLocaleString()} GNF
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-2">
+                      {currentRide.status === 'accepted' && (
+                        <Button 
+                          onClick={() => startRideFn(currentRide.id)} 
+                          disabled={loading}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" /> 
+                          Client récupéré
+                        </Button>
+                      )}
+                      {(currentRide.status === 'picked_up' || currentRide.status === 'in_transit') && (
+                        <Button 
+                          onClick={() => completeRideFn(currentRide.id)} 
+                          disabled={loading}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" /> 
+                          Terminer la course
+                        </Button>
+                      )}
+                      <Button 
+                        onClick={reportProblem} 
+                        variant="destructive"
+                        disabled={loading}
+                        className="w-full"
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-2" /> 
+                        Signaler un problème
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Aucune livraison active</p>
-                  <p className="text-sm mt-1">Acceptez une livraison pour commencer</p>
+                  <p className="font-medium">Aucune mission active</p>
+                  <p className="text-sm mt-1">Acceptez une livraison ou une course pour commencer</p>
                 </div>
               </Card>
             )}
           </TabsContent>
 
-          {/* 📋 Historique */}
+          {/* 📋 Historique unifié */}
           <TabsContent value="history" className="space-y-3">
-            {deliveryHistory.length === 0 ? (
+            {deliveryHistory.length === 0 && rideHistory.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="font-medium">Aucun historique</p>
-                  <p className="text-sm mt-1">Vos livraisons terminées apparaîtront ici</p>
+                  <p className="text-sm mt-1">Vos livraisons et courses terminées apparaîtront ici</p>
                 </div>
               </Card>
             ) : (
-              deliveryHistory.map((delivery) => (
+              <>
+                {/* Livraisons terminées */}
+                {deliveryHistory.map((delivery) => (
                 <Card key={delivery.id} className="shadow-sm">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
@@ -434,8 +553,46 @@ export default function LivreurDashboard() {
                       </div>
                     </div>
                   </CardContent>
+                  </Card>
+                ))}
+                
+                {/* Courses taxi terminées */}
+                {rideHistory.map((ride) => (
+                <Card key={ride.id} className="shadow-sm border-yellow-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Car className="h-4 w-4 text-yellow-500" />
+                          <p className="font-medium">#{ride.id.slice(0, 8)}</p>
+                          <Badge variant={
+                            ride.status === 'completed' ? 'default' : 
+                            ride.status === 'cancelled' ? 'destructive' : 
+                            'secondary'
+                          }>
+                            {ride.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(ride.requested_at || '').toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-yellow-600">
+                          {(ride.price_total || 0).toLocaleString()} GNF
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
                 </Card>
-              ))
+              ))}
+            </>
             )}
           </TabsContent>
 
