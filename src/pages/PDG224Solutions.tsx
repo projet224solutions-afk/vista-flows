@@ -32,12 +32,10 @@ const PDGApiSupervision = lazy(() => import('@/pages/pdg/ApiSupervision'));
 const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
 
 export default function PDG224Solutions() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [mfaVerified, setMfaVerified] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [verifyingMfa, setVerifyingMfa] = useState(false);
-  const [isEnsured, setIsEnsured] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -48,48 +46,31 @@ export default function PDG224Solutions() {
   const { aiActive, insights } = usePDGAIAssistant();
 
   useEffect(() => {
-    if (isEnsured) return;
-    const checkPDGAccess = async () => {
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
+    // Si pas d'utilisateur, rediriger vers auth
+    if (!user && !profileLoading) {
+      navigate('/auth');
+      return;
+    }
 
-      // Attendre le chargement du profil
-      if (!profile) {
-        setLoading(true);
-        return;
-      }
+    // Si le profil est chargé et que le rôle n'est pas admin
+    if (profile && profile.role !== 'admin') {
+      toast.error('Accès refusé - Réservé au PDG');
+      navigate('/');
+      return;
+    }
 
-      // Vérifier le rôle admin
-      if (profile.role !== 'admin') {
-        toast.error('Accès refusé - Réservé au PDG');
-        navigate('/');
-        return;
-      }
-
-      // ✅ Log de l'accès PDG avec timeout/fallback
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      try {
-        await supabase.from('audit_logs').insert({
-          actor_id: user.id,
-          action: 'PDG_ACCESS',
-          target_type: 'dashboard',
-          data_json: { timestamp: new Date().toISOString() }
-        });
-      } catch (error) {
-        console.warn('Audit log indisponible (fallback):', error);
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      setLoading(false);
-      setIsEnsured(true);
-    };
-
-    checkPDGAccess();
-  }, [user, profile, navigate, isEnsured]);
+    // Log de l'accès PDG une fois le profil chargé
+    if (profile && profile.role === 'admin') {
+      supabase.from('audit_logs').insert({
+        actor_id: user!.id,
+        action: 'PDG_ACCESS',
+        target_type: 'dashboard',
+        data_json: { timestamp: new Date().toISOString() }
+      }).catch(error => {
+        console.warn('Audit log indisponible:', error);
+      });
+    }
+  }, [user, profile, profileLoading, navigate]);
 
   const handleVerifyMfa = useCallback(async () => {
     if (!user) return;
@@ -148,10 +129,24 @@ export default function PDG224Solutions() {
     }
   }, [newEmail]);
 
-  if (loading || !profile) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-destructive">Impossible de charger le profil</p>
+          <Button onClick={() => navigate('/auth')}>Retour à la connexion</Button>
+        </div>
       </div>
     );
   }

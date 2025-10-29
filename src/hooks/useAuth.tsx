@@ -19,6 +19,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  profileLoading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   ensureUserSetup: () => Promise<void>;
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Fonction pour s'assurer que l'utilisateur a son setup complet
   const ensureUserSetup = useCallback(async () => {
@@ -163,9 +165,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
+      setProfileLoading(false);
       return;
     }
 
+    setProfileLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -175,12 +179,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setProfileLoading(false);
         return;
       }
 
       setProfile(data);
     } catch (error) {
       console.error('Error in refreshProfile:', error);
+    } finally {
+      setProfileLoading(false);
     }
   }, [user]);
 
@@ -227,6 +234,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     profile,
     loading,
+    profileLoading,
     signOut,
     refreshProfile,
     ensureUserSetup
