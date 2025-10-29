@@ -7113,13 +7113,19 @@ export type Database = {
       generate_agent_access_token: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
+      generate_custom_id_original: { Args: never; Returns: string }
       generate_custom_id_with_role: {
         Args: { p_role?: string }
         Returns: string
       }
       generate_invitation_token: { Args: never; Returns: string }
       generate_public_id: { Args: never; Returns: string }
+      generate_random_digits: { Args: { length: number }; Returns: string }
       generate_random_letters: { Args: { length: number }; Returns: string }
+      generate_random_letters_original: {
+        Args: { length: number }
+        Returns: string
+      }
       generate_recommendations_for_user: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
