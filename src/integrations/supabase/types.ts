@@ -2836,6 +2836,60 @@ export type Database = {
         }
         Relationships: []
       }
+      moto_security_alerts: {
+        Row: {
+          brand: string
+          created_at: string | null
+          description: string | null
+          detected_bureau_id: string
+          id: string
+          model: string
+          owner_name: string
+          owner_phone: string
+          plate_number: string
+          reported_bureau_id: string
+          reported_bureau_name: string
+          reported_location: string
+          serial_number: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand: string
+          created_at?: string | null
+          description?: string | null
+          detected_bureau_id: string
+          id?: string
+          model: string
+          owner_name: string
+          owner_phone: string
+          plate_number: string
+          reported_bureau_id: string
+          reported_bureau_name: string
+          reported_location: string
+          serial_number: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string | null
+          description?: string | null
+          detected_bureau_id?: string
+          id?: string
+          model?: string
+          owner_name?: string
+          owner_phone?: string
+          plate_number?: string
+          reported_bureau_id?: string
+          reported_bureau_name?: string
+          reported_location?: string
+          serial_number?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
