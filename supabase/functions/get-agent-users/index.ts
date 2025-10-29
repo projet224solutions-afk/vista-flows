@@ -54,33 +54,10 @@ serve(async (req) => {
       );
     }
 
-    // Vérifier que l'agent a la permission de gérer les utilisateurs
-    if (!agent.permissions.includes('manage_users')) {
-      return new Response(
-        JSON.stringify({ error: 'Permission refusée' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Récupérer les utilisateurs créés par cet agent
+    // Récupérer les IDs des utilisateurs créés par cet agent
     const { data: agentUsers, error: agentUsersError } = await supabaseAdmin
       .from('agent_created_users')
-      .select(`
-        user_id,
-        user_role,
-        created_at,
-        profiles:user_id (
-          id,
-          email,
-          first_name,
-          last_name,
-          phone,
-          role,
-          is_active,
-          public_id,
-          created_at
-        )
-      `)
+      .select('user_id, user_role, created_at')
       .eq('agent_id', agent.id)
       .order('created_at', { ascending: false });
 
@@ -88,12 +65,34 @@ serve(async (req) => {
       throw agentUsersError;
     }
 
-    // Formater les données pour le frontend
-    const users = (agentUsers || []).map((item: any) => ({
-      ...item.profiles,
-      created_by_agent: true,
-      user_role: item.user_role
-    }));
+    if (!agentUsers || agentUsers.length === 0) {
+      return new Response(
+        JSON.stringify({ users: [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Récupérer les détails des profils utilisateurs
+    const userIds = agentUsers.map(u => u.user_id);
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, first_name, last_name, phone, role, is_active, public_id, created_at, country, city')
+      .in('id', userIds);
+
+    if (profilesError) {
+      throw profilesError;
+    }
+
+    // Fusionner les données
+    const users = agentUsers.map((agentUser: any) => {
+      const profile = profiles?.find(p => p.id === agentUser.user_id);
+      return {
+        ...profile,
+        created_by_agent: true,
+        user_role: agentUser.user_role,
+        agent_created_at: agentUser.created_at
+      };
+    }).filter(user => user.id); // Filtrer les utilisateurs sans profil
 
     return new Response(
       JSON.stringify({ users }),
