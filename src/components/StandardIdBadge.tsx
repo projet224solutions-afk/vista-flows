@@ -64,9 +64,9 @@ export function StandardIdBadge({
     lg: 'text-base px-3 py-1.5'
   };
 
-  // Extraire préfixe et numéro pour styling
-  const prefix = formattedId.substring(0, 3);
-  const number = formattedId.substring(3);
+  // Extraire préfixe (4 chiffres) et lettres (3 lettres) pour styling
+  const prefix = formattedId.substring(0, 4); // 0002
+  const letters = formattedId.substring(4);     // ABC
 
   return (
     <Badge
@@ -81,7 +81,7 @@ export function StandardIdBadge({
     >
       {showIcon && <Hash className="w-3 h-3 mr-1" />}
       <span className="text-primary font-bold">{prefix}</span>
-      <span className="text-muted-foreground">{number}</span>
+      <span className="text-muted-foreground">{letters}</span>
       {copyable && (
         copied ? (
           <Check className="w-3 h-3 ml-1 text-green-500" />

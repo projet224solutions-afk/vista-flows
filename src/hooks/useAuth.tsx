@@ -64,21 +64,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         let customId = '';
 
-        // Créer ID utilisateur si manquant (3 lettres + 4 chiffres)
+        // Créer ID utilisateur si manquant avec le format basé sur le rôle
         if (needsUserId) {
-          // Générer 3 lettres aléatoires (A-Z)
-          let letters = '';
-          for (let i = 0; i < 3; i++) {
-            letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-          }
+          // Utiliser la fonction RPC pour générer un ID avec le bon préfixe
+          const userRole = profile?.role || 'client';
+          
+          const { data: generatedId, error: generateError } = await supabase
+            .rpc('generate_custom_id_with_role', { p_role: userRole });
 
-          // Générer 4 chiffres aléatoires (0-9)
-          let numbers = '';
-          for (let i = 0; i < 4; i++) {
-            numbers += Math.floor(Math.random() * 10).toString();
+          if (generateError) {
+            console.error('❌ Erreur génération ID:', generateError);
+            // Fallback sur ancien système
+            customId = 'TMP' + Math.random().toString(36).substring(2, 6).toUpperCase();
+          } else {
+            customId = generatedId;
           }
-
-          customId = letters + numbers;
 
           const { error: idError } = await supabase
             .from('user_ids')

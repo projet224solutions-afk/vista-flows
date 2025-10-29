@@ -21,16 +21,17 @@ export const UserCustomIdDisplay = () => {
     if (!user?.id) return;
 
     try {
+      // Récupérer le custom_id depuis la table user_ids (nouveau format avec préfixe)
       const { data, error } = await supabase
-        .from('profiles')
-        .select('public_id')
-        .eq('id', user.id)
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
-      setStandardId(data?.public_id || null);
+      setStandardId(data?.custom_id || null);
     } catch (error) {
-      console.error('❌ Erreur chargement standard_id:', error);
+      console.error('❌ Erreur chargement custom_id:', error);
     } finally {
       setLoading(false);
     }
@@ -60,8 +61,8 @@ export const UserCustomIdDisplay = () => {
             <User className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">Votre ID Standardisé</CardTitle>
-            <CardDescription>Identifiant unique 224SOLUTIONS</CardDescription>
+            <CardTitle className="text-lg">Votre ID Client</CardTitle>
+            <CardDescription>Identifiant unique de compte</CardDescription>
           </div>
         </div>
       </CardHeader>

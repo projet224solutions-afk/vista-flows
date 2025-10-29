@@ -128,13 +128,13 @@ export default function Auth() {
 
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
 
-        // Générer un ID utilisateur unique (3 lettres + 4 chiffres)
-        let userCustomId = '';
-        for (let i = 0; i < 3; i++) {
-          userCustomId += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-        }
-        for (let i = 0; i < 4; i++) {
-          userCustomId += Math.floor(Math.random() * 10).toString();
+        // Générer un ID utilisateur avec le bon préfixe selon le rôle
+        const { data: userCustomId, error: generateError } = await supabase
+          .rpc('generate_custom_id_with_role', { p_role: selectedRole });
+
+        if (generateError) {
+          console.error('❌ Erreur génération ID:', generateError);
+          throw new Error('Erreur lors de la génération de votre identifiant');
         }
 
         const { data: authData, error } = await supabase.auth.signUp({
