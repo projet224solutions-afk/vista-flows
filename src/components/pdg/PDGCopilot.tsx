@@ -3,112 +3,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Send, Shield, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
+import { MessageSquare, Send, Shield, AlertTriangle, Search } from 'lucide-react';
+import { useCopilote } from '@/hooks/useCopilote';
 
 interface PDGCopilotProps {
   mfaVerified: boolean;
 }
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Bonjour ! Je suis votre copilote IA PDG. Je peux vous aider à gérer votre plateforme. Posez-moi une question !'
-    }
-  ]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { 
+    messages, 
+    isLoading, 
+    sendMessage: sendCopilotMessage,
+    analyzeSystem 
+  } = useCopilote();
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: 'user' as const, content: input };
-    setMessages([...messages, userMessage]);
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+    
+    await sendCopilotMessage(input);
     setInput('');
-    setLoading(true);
-
-    try {
-      // Simuler une réponse IA (à remplacer par l'appel à Lovable AI)
-      const response = await generateAIResponse(input);
-      
-      // Log conversation
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('copilot_conversations').insert({
-        pdg_user_id: user?.id,
-        message_in: input,
-        message_out: response,
-        mfa_verified: mfaVerified
-      });
-
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    } catch (error) {
-      console.error('Erreur copilote:', error);
-      toast.error('Erreur lors de la communication avec le copilote');
-    } finally {
-      setLoading(false);
-    }
   };
 
-  const generateAIResponse = async (query: string): Promise<string> => {
-    try {
-      const lowerQuery = query.toLowerCase();
-      
-      if (lowerQuery.includes('utilisateur') || lowerQuery.includes('user')) {
-        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-        return `Il y a actuellement ${count || 0} utilisateurs enregistrés sur la plateforme.`;
-      }
-      
-      if (lowerQuery.includes('transaction') || lowerQuery.includes('paiement')) {
-        const { data: trans } = await supabase
-          .from('wallet_transactions')
-          .select('amount, status')
-          .eq('status', 'completed');
-        const total = trans?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
-        return `Le montant total des transactions complétées est de ${total.toLocaleString()} GNF.`;
-      }
-      
-      if (lowerQuery.includes('vendeur') || lowerQuery.includes('vendor')) {
-        const { data: vendors } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'vendeur');
-        return `Il y a ${vendors?.length || 0} vendeurs actifs sur la plateforme.`;
-      }
-      
-      if (lowerQuery.includes('produit') || lowerQuery.includes('product')) {
-        const { count } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true });
-        return `Il y a ${count || 0} produits dans le catalogue.`;
-      }
-      
-      if (lowerQuery.includes('commande') || lowerQuery.includes('order')) {
-        const { count } = await supabase
-          .from('orders')
-          .select('*', { count: 'exact', head: true });
-        return `Il y a ${count || 0} commandes au total.`;
-      }
-      
-      if (lowerQuery.includes('fraude') || lowerQuery.includes('sécurité')) {
-        const { data: fraud } = await supabase
-          .from('fraud_detection_logs')
-          .select('*')
-          .eq('reviewed', false);
-        return `Il y a ${fraud?.length || 0} alertes de fraude non traitées. ${fraud?.filter(f => f.risk_level === 'critical').length || 0} sont critiques.`;
-      }
-
-      return 'Je peux vous aider avec les statistiques, la gestion des utilisateurs, les transactions, les produits, les commandes et la sécurité. Posez-moi une question spécifique !';
-    } catch (error) {
-      console.error('Erreur génération réponse IA:', error);
-      return 'Désolé, je rencontre une erreur technique. Veuillez réessayer.';
-    }
+  const handleAnalyzeSystem = async () => {
+    if (isLoading) return;
+    await analyzeSystem();
   };
 
   return (
@@ -140,9 +60,18 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
         <CardContent className="space-y-4">
           {/* Messages */}
           <div className="h-96 overflow-y-auto space-y-4 p-4 bg-slate-900/50 rounded-lg">
+            {messages.length === 0 && (
+              <div className="flex justify-start">
+                <div className="bg-slate-700 text-slate-100 p-3 rounded-lg max-w-[80%]">
+                  <p className="text-sm">
+                    Bonjour ! Je suis votre copilote IA PDG. Je peux analyser automatiquement votre système ou répondre à vos questions. Comment puis-je vous aider ?
+                  </p>
+                </div>
+              </div>
+            )}
             {messages.map((msg, idx) => (
               <div
-                key={idx}
+                key={msg.id || idx}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
@@ -152,11 +81,14 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
                       : 'bg-slate-700 text-slate-100'
                   }`}
                 >
-                  <p className="text-sm">{msg.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-xs opacity-50 mt-1">
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
             ))}
-            {loading && (
+            {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-slate-700 text-slate-100 p-3 rounded-lg">
                   <div className="flex gap-2">
@@ -175,11 +107,11 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
               placeholder="Posez votre question..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               className="bg-slate-700 border-slate-600 text-white"
-              disabled={loading}
+              disabled={isLoading}
             />
-            <Button onClick={sendMessage} disabled={loading} className="gap-2">
+            <Button onClick={handleSendMessage} disabled={isLoading} className="gap-2">
               <Send className="w-4 h-4" />
               Envoyer
             </Button>
@@ -193,23 +125,38 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
           <CardTitle className="text-white text-sm">Actions Rapides</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {[
-              'Statistiques utilisateurs',
-              'Transactions du jour',
-              'Alertes fraude',
-              'Commissions actives'
-            ].map((action) => (
-              <Button
-                key={action}
-                variant="outline"
-                size="sm"
-                onClick={() => setInput(action)}
-                className="text-xs"
-              >
-                {action}
-              </Button>
-            ))}
+          <div className="space-y-3">
+            {/* Analyse automatique */}
+            <Button
+              onClick={handleAnalyzeSystem}
+              disabled={isLoading}
+              className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              size="lg"
+            >
+              <Search className="w-4 h-4" />
+              🔍 Analyser automatiquement le système
+            </Button>
+            
+            {/* Questions rapides */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                'Statistiques utilisateurs',
+                'Transactions du jour',
+                'Alertes fraude',
+                'Commissions actives'
+              ].map((action) => (
+                <Button
+                  key={action}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInput(action)}
+                  className="text-xs"
+                  disabled={isLoading}
+                >
+                  {action}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

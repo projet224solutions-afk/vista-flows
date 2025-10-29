@@ -335,6 +335,150 @@ class CopiloteService {
       throw error;
     }
   }
+
+  /**
+   * Analyser automatiquement l'ensemble du système 224Solutions
+   * Collecte et analyse les données pour identifier les problèmes
+   */
+  async analyzeSystem(): Promise<CopiloteResponse> {
+    try {
+      console.log('🔍 Début de l\'analyse système...');
+
+      // 1. Récupérer les données système
+      const [
+        transactionsData,
+        profilesData,
+        ordersData,
+        productsData,
+        auditLogsData,
+        walletsData
+      ] = await Promise.all([
+        supabase.from('enhanced_transactions').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('profiles').select('*').limit(100),
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('products').select('*').limit(50),
+        supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(100),
+        supabase.from('wallets').select('*').limit(50)
+      ]);
+
+      // 2. Calculer les statistiques
+      const transactions = transactionsData.data || [];
+      const profiles = profilesData.data || [];
+      const orders = ordersData.data || [];
+      const products = productsData.data || [];
+      const auditLogs = auditLogsData.data || [];
+      const wallets = walletsData.data || [];
+
+      // Statistiques transactions
+      const completedTransactions = transactions.filter(t => t.status === 'completed');
+      const failedTransactions = transactions.filter(t => t.status === 'failed');
+      const pendingTransactions = transactions.filter(t => t.status === 'pending');
+      const totalRevenue = completedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      // Statistiques utilisateurs
+      const activeUsers = profiles.filter(p => p.is_active);
+      const inactiveUsers = profiles.filter(p => !p.is_active);
+      const usersByRole = profiles.reduce((acc, p) => {
+        acc[p.role] = (acc[p.role] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Statistiques commandes
+      const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'completed');
+      const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
+      const cancelledOrders = orders.filter(o => o.status === 'cancelled');
+
+      // Statistiques produits
+      const activeProducts = products.filter(p => p.is_active);
+      const outOfStockProducts = products.filter(p => (p.stock || 0) === 0);
+
+      // Statistiques wallets
+      const totalWalletBalance = wallets.reduce((sum, w) => sum + (w.balance || 0), 0);
+
+      // 3. Détecter les problèmes potentiels
+      const issues = [];
+      if (failedTransactions.length > completedTransactions.length * 0.1) {
+        issues.push(`⚠️ Taux d'échec des transactions élevé: ${failedTransactions.length}/${transactions.length}`);
+      }
+      if (pendingTransactions.length > 10) {
+        issues.push(`⏳ ${pendingTransactions.length} transactions en attente`);
+      }
+      if (inactiveUsers.length > activeUsers.length * 0.3) {
+        issues.push(`👥 ${inactiveUsers.length} utilisateurs inactifs (${Math.round(inactiveUsers.length/profiles.length*100)}%)`);
+      }
+      if (outOfStockProducts.length > 5) {
+        issues.push(`📦 ${outOfStockProducts.length} produits en rupture de stock`);
+      }
+      if (cancelledOrders.length > completedOrders.length * 0.2) {
+        issues.push(`🛑 Taux d'annulation élevé: ${cancelledOrders.length}/${orders.length} commandes`);
+      }
+
+      // 4. Formatter le message d'analyse
+      const analysisMessage = `
+🔍 ANALYSE AUTOMATIQUE DU SYSTÈME 224SOLUTIONS
+
+📊 STATISTIQUES GLOBALES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 TRANSACTIONS:
+- Total: ${transactions.length} transactions
+- Complétées: ${completedTransactions.length} (${Math.round(completedTransactions.length/transactions.length*100)}%)
+- Échouées: ${failedTransactions.length} (${Math.round(failedTransactions.length/transactions.length*100)}%)
+- En attente: ${pendingTransactions.length}
+- Revenu total: ${totalRevenue.toLocaleString()} GNF
+
+👥 UTILISATEURS:
+- Total: ${profiles.length} utilisateurs
+- Actifs: ${activeUsers.length}
+- Inactifs: ${inactiveUsers.length}
+- Par rôle: ${Object.entries(usersByRole).map(([role, count]) => `${role}: ${count}`).join(', ')}
+
+📦 COMMANDES:
+- Total: ${orders.length} commandes
+- Livrées: ${completedOrders.length}
+- En cours: ${pendingOrders.length}
+- Annulées: ${cancelledOrders.length}
+
+🛍️ PRODUITS:
+- Total: ${products.length} produits
+- Actifs: ${activeProducts.length}
+- Rupture de stock: ${outOfStockProducts.length}
+
+💳 PORTEFEUILLES:
+- Total: ${wallets.length} wallets
+- Solde cumulé: ${totalWalletBalance.toLocaleString()} GNF
+
+${issues.length > 0 ? `
+⚠️ PROBLÈMES DÉTECTÉS:
+${issues.map(issue => `- ${issue}`).join('\n')}
+` : '✅ Aucun problème critique détecté'}
+
+📋 ACTIVITÉ RÉCENTE:
+- ${auditLogs.length} actions enregistrées
+- Dernière action: ${auditLogs[0]?.action || 'N/A'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Merci d'analyser ces données et de:
+1. Identifier les problèmes critiques
+2. Proposer des solutions concrètes
+3. Recommander des optimisations
+4. Alerter sur les risques potentiels
+`;
+
+      console.log('📤 Envoi de l\'analyse au copilote...');
+
+      // 5. Envoyer l'analyse au copilote
+      const response = await this.sendMessage(analysisMessage);
+
+      console.log('✅ Analyse système terminée');
+      return response;
+
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'analyse système:', error);
+      throw error;
+    }
+  }
 }
 
 export const copiloteService = new CopiloteService();
