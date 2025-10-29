@@ -10,6 +10,7 @@ export interface WalletDetail {
   wallet_status: string;
   created_at: string;
   updated_at: string;
+  custom_id?: string;
   profiles?: {
     id: string;
     first_name: string | null;
@@ -85,7 +86,7 @@ export function useFinanceData(enabled: boolean = true) {
         .select('*')
         .order('created_at', { ascending: false });
       
-      // Récupérer les profils pour chaque wallet
+      // Récupérer les profils et custom_id pour chaque wallet
       let enrichedWallets: any[] = [];
       if (walletsData) {
         const profilePromises = walletsData.map(async (wallet) => {
@@ -94,7 +95,15 @@ export function useFinanceData(enabled: boolean = true) {
             .select('id, first_name, last_name, email, phone, role, status')
             .eq('id', wallet.user_id)
             .single();
-          return { ...wallet, profiles: profile };
+          
+          // Récupérer le custom_id
+          const { data: userIdData } = await supabase
+            .from('user_ids')
+            .select('custom_id')
+            .eq('user_id', wallet.user_id)
+            .single();
+          
+          return { ...wallet, profiles: profile, custom_id: userIdData?.custom_id };
         });
         enrichedWallets = await Promise.all(profilePromises);
       }

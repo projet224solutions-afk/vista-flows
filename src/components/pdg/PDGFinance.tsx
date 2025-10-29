@@ -383,9 +383,9 @@ export default function PDGFinance() {
 
                           <div className="flex items-center gap-2 text-sm">
                             <CreditCard className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">User ID:</span>
-                            <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                              {wallet.user_id}
+                            <span className="text-muted-foreground">Code ID:</span>
+                            <span className="font-mono text-sm bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold">
+                              {wallet.custom_id || 'N/A'}
                             </span>
                           </div>
                         </div>
