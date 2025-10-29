@@ -49,7 +49,21 @@ export function CreateUserForm({ agentId, agentCode }: CreateUserFormProps) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
+        return;
+      }
+
+      // Vérifier si la réponse contient une erreur
+      if (data?.error) {
+        if (data.code === 'EMAIL_EXISTS') {
+          toast.error('Cet email est déjà utilisé par un autre utilisateur');
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
 
       toast.success('Utilisateur créé avec succès!');
       setFormData({

@@ -72,7 +72,26 @@ serve(async (req) => {
 
     if (authError) {
       console.error('Auth error:', authError);
-      throw new Error(authError.message);
+      
+      // Gérer les erreurs spécifiques
+      if (authError.message.includes('already been registered') || 
+          authError.message.includes('email_exists')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Un utilisateur avec cet email existe déjà',
+            code: 'EMAIL_EXISTS'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: authError.message || 'Erreur lors de la création de l\'utilisateur',
+          code: 'AUTH_ERROR'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     if (!authUser.user) {
@@ -196,10 +215,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Create user by agent error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ 
+        error: errorMessage,
+        code: 'GENERAL_ERROR'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
