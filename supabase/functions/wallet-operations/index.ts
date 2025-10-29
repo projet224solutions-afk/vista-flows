@@ -291,39 +291,56 @@ serve(async (req) => {
         let recipientUserId = recipient_id;
 
         if (!isUUID) {
-          // C'est un public_id standardisé, chercher l'user_id correspondant
-          console.log('🔍 Recherche par public_id:', recipient_id);
+          // C'est un custom_id ou public_id, chercher l'user_id correspondant
+          console.log('🔍 Recherche utilisateur par ID:', recipient_id);
           
-          // Recherche dans profiles avec public_id
-          const { data: profileData, error: profileError } = await supabaseClient
-            .from('profiles')
-            .select('id, public_id, email, first_name, last_name')
-            .eq('public_id', recipient_id.toUpperCase())
+          // PRIORITÉ 1: Chercher dans user_ids.custom_id (nouveau système: VEN0001, CLI0001, etc.)
+          const { data: userIdData, error: userIdError } = await supabaseClient
+            .from('user_ids')
+            .select('user_id, custom_id')
+            .eq('custom_id', recipient_id.toUpperCase())
             .maybeSingle();
 
-          console.log('👤 User profile lookup:', { profileData, profileError });
-
-          if (profileError) {
-            console.error('❌ Erreur recherche profil:', profileError);
-            throw new Error(`Erreur lors de la recherche de l'utilisateur: ${profileError.message}`);
-          }
-
-          if (!profileData) {
-            // Essayer une recherche plus large pour donner un meilleur message d'erreur
-            const { data: allProfiles, error: allError } = await supabaseClient
+          if (userIdData) {
+            recipientUserId = userIdData.user_id;
+            console.log('✅ Custom ID trouvé:', userIdData.custom_id, '-> user_id:', recipientUserId);
+          } else {
+            // PRIORITÉ 2: Chercher dans profiles.public_id (système profiles)
+            const { data: profileData, error: profileError } = await supabaseClient
               .from('profiles')
-              .select('public_id, email, first_name, last_name')
-              .not('public_id', 'is', null)
-              .limit(5);
-            
-            const availableIds = allProfiles?.map(p => p.public_id).join(', ') || 'aucun';
-            console.log('📋 IDs disponibles (échantillon):', availableIds);
-            
-            throw new Error(`Utilisateur avec l'ID ${recipient_id} introuvable. Vérifiez l'ID et réessayez.`);
-          }
+              .select('id, public_id, email, first_name, last_name')
+              .eq('public_id', recipient_id.toUpperCase())
+              .maybeSingle();
 
-          recipientUserId = profileData.id;
-          console.log('✅ User ID trouvé:', recipientUserId, 'pour', profileData.email || profileData.first_name);
+            if (profileData) {
+              recipientUserId = profileData.id;
+              console.log('✅ Profile public_id trouvé:', profileData.public_id, '-> user_id:', recipientUserId);
+            } else {
+              // PRIORITÉ 3: Chercher dans vendors.public_id (ancien système vendors)
+              const { data: vendorData, error: vendorError } = await supabaseClient
+                .from('vendors')
+                .select('user_id, public_id, business_name')
+                .eq('public_id', recipient_id.toUpperCase())
+                .maybeSingle();
+
+              if (vendorData) {
+                recipientUserId = vendorData.user_id;
+                console.log('✅ Vendor public_id trouvé:', vendorData.public_id, '-> user_id:', recipientUserId);
+              } else {
+                // Aucun ID trouvé - afficher des exemples
+                const { data: sampleIds } = await supabaseClient
+                  .from('user_ids')
+                  .select('custom_id')
+                  .not('custom_id', 'is', null)
+                  .limit(5);
+                
+                const availableIds = sampleIds?.map(u => u.custom_id).join(', ') || 'aucun';
+                console.log('📋 Custom IDs disponibles (échantillon):', availableIds);
+                
+                throw new Error(`Utilisateur avec l'ID ${recipient_id} introuvable. Exemples d'IDs valides: ${availableIds}`);
+              }
+            }
+          }
         }
 
         // 🛡️ DÉTECTION DE FRAUDE (NOUVEAU - comme Amazon)
