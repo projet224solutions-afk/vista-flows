@@ -41,6 +41,7 @@ const InstallPWA = lazy(() => import("./pages/InstallPWA"));
 const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
 const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
+const MigrateIds = lazy(() => import("./pages/Admin/MigrateIds"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -122,6 +123,14 @@ const App = () => (
               <Route
                 path="/test-wallet-transfer"
                 element={<TestWalletTransfer />}
+              />
+              <Route
+                path="/admin/migrate-ids"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <MigrateIds />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/transitaire"

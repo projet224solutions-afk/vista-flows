@@ -2009,6 +2009,30 @@ export type Database = {
         }
         Relationships: []
       }
+      id_counters: {
+        Row: {
+          created_at: string
+          current_value: number
+          description: string | null
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          prefix: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       id_generation_logs: {
         Row: {
           action: string
@@ -2036,6 +2060,30 @@ export type Database = {
           metadata?: Json | null
           public_id?: string
           scope?: string
+        }
+        Relationships: []
+      }
+      id_migration_map: {
+        Row: {
+          migrated_at: string
+          new_id: string
+          old_id: string
+          prefix: string
+          table_name: string
+        }
+        Insert: {
+          migrated_at?: string
+          new_id: string
+          old_id: string
+          prefix: string
+          table_name: string
+        }
+        Update: {
+          migrated_at?: string
+          new_id?: string
+          old_id?: string
+          prefix?: string
+          table_name?: string
         }
         Relationships: []
       }
@@ -6889,6 +6937,8 @@ export type Database = {
           }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      extract_number: { Args: { p_id: string }; Returns: number }
+      extract_prefix: { Args: { p_id: string }; Returns: string }
       find_nearby_taxi_drivers: {
         Args: {
           p_lat: number
@@ -6918,6 +6968,7 @@ export type Database = {
           score: number
         }[]
       }
+      generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
@@ -7102,6 +7153,15 @@ export type Database = {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: undefined
       }
+      migrate_existing_ids: {
+        Args: never
+        Returns: {
+          new_id: string
+          old_id: string
+          status: string
+          table_name: string
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { use_typmod?: boolean }; Returns: string }
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -7142,6 +7202,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      preview_next_id: { Args: { p_prefix: string }; Returns: string }
       process_card_to_om: {
         Args: {
           p_amount: number
@@ -7778,6 +7839,7 @@ export type Database = {
         }
         Returns: string
       }
+      validate_standard_id: { Args: { p_id: string }; Returns: boolean }
     }
     Enums: {
       call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"

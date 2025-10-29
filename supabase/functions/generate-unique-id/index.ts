@@ -1,7 +1,7 @@
 /**
- * 🔧 EDGE FUNCTION: GÉNÉRATION D'ID UNIQUE
- * Génère des IDs uniques au format LLLDDDD (3 lettres + 4 chiffres)
- * Compatible avec tout le système 224SOLUTIONS
+ * 🔧 EDGE FUNCTION: GÉNÉRATION D'ID SÉQUENTIEL STANDARDISÉ
+ * Format universel: AAA0001 (3 lettres préfixe + 4+ chiffres)
+ * Système 224SOLUTIONS - IDs séquentiels par type
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -13,87 +13,71 @@ const corsHeaders = {
 };
 
 /**
- * Génère un ID aléatoire au format LLLDDDD
+ * Mapping des scopes vers les préfixes
  */
-function generateId(): string {
-  const letters = "ABCDEFGHJKMNPQRSTUVWXYZ"; // Sans I, L, O
-  const digits = "0123456789";
-  
-  const randomLetter = () => letters[Math.floor(Math.random() * letters.length)];
-  const randomDigit = () => digits[Math.floor(Math.random() * digits.length)];
-  
-  return (
-    randomLetter() + randomLetter() + randomLetter() +
-    randomDigit() + randomDigit() + randomDigit() + randomDigit()
-  );
-}
+const SCOPE_PREFIX_MAP: Record<string, string> = {
+  'users': 'USR',
+  'user': 'USR',
+  'vendors': 'VND',
+  'vendor': 'VND',
+  'pdg': 'PDG',
+  'agents': 'AGT',
+  'agent': 'AGT',
+  'sub_agents': 'SAG',
+  'sub_agent': 'SAG',
+  'syndicats': 'SYD',
+  'syndicat': 'SYD',
+  'drivers': 'DRV',
+  'driver': 'DRV',
+  'clients': 'CLI',
+  'client': 'CLI',
+  'customers': 'CLI',
+  'customer': 'CLI',
+  'products': 'PRD',
+  'product': 'PRD',
+  'orders': 'ORD',
+  'order': 'ORD',
+  'transactions': 'TXN',
+  'transaction': 'TXN',
+  'wallets': 'WLT',
+  'wallet': 'WLT',
+  'messages': 'MSG',
+  'message': 'MSG',
+  'conversations': 'CNV',
+  'conversation': 'CNV',
+  'deliveries': 'DLV',
+  'delivery': 'DLV',
+  'general': 'GEN',
+};
 
 /**
- * Génère un ID unique avec vérification et réservation
+ * Génère un ID séquentiel standardisé via la fonction SQL
  */
-async function generateUniqueId(
+async function generateStandardId(
   supabase: any,
-  scope: string,
-  userId: string | null
+  prefix: string
 ): Promise<string> {
-  const maxAttempts = 10;
-  let attempt = 0;
+  console.log(`🔄 Génération ID standardisé avec préfixe: ${prefix}`);
 
-  console.log(`🔄 Génération ID pour scope: ${scope}, user: ${userId}`);
+  try {
+    const { data, error } = await supabase
+      .rpc('generate_sequential_id', { p_prefix: prefix });
 
-  while (attempt < maxAttempts) {
-    const newId = generateId();
-    attempt++;
-
-    try {
-      // Vérifier si l'ID existe déjà
-      const { data: existing, error: checkError } = await supabase
-        .from('ids_reserved')
-        .select('public_id')
-        .eq('public_id', newId)
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('❌ Erreur vérification:', checkError);
-        continue;
-      }
-
-      if (existing) {
-        console.log(`⚠️  ID ${newId} existe déjà, tentative ${attempt}/${maxAttempts}`);
-        continue;
-      }
-
-      // Réserver l'ID
-      const { data, error } = await supabase
-        .from('ids_reserved')
-        .insert([{
-          public_id: newId,
-          scope: scope,
-          created_by: userId
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === '23505') { // Violation unicité
-          console.log(`⚠️  Collision ${newId}, tentative ${attempt}/${maxAttempts}`);
-          continue;
-        }
-        throw error;
-      }
-
-      console.log(`✅ ID généré: ${newId} (${scope})`);
-      return newId;
-
-    } catch (error: any) {
-      console.error(`❌ Erreur tentative ${attempt}:`, error?.message || error);
-      if (attempt >= maxAttempts) {
-        throw new Error(`Échec génération après ${maxAttempts} tentatives`);
-      }
+    if (error) {
+      console.error('❌ Erreur génération ID:', error);
+      throw new Error(`Erreur génération ID: ${error.message}`);
     }
-  }
 
-  throw new Error(`Impossible de générer un ID unique après ${maxAttempts} tentatives`);
+    if (!data) {
+      throw new Error('Aucun ID généré');
+    }
+
+    console.log(`✅ ID généré: ${data}`);
+    return data;
+  } catch (error: any) {
+    console.error(`❌ Exception génération ID:`, error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
@@ -127,12 +111,21 @@ serve(async (req) => {
       }
     }
 
-    const { scope = 'general', batch = 1 } = await req.json();
+    const { scope = 'general', batch = 1, prefix = null } = await req.json();
 
-    // Validation
-    if (!scope || typeof scope !== 'string') {
+    // Déterminer le préfixe
+    let finalPrefix = prefix;
+    if (!finalPrefix) {
+      finalPrefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'GEN';
+    }
+
+    // Validation du préfixe
+    if (!/^[A-Z]{3}$/.test(finalPrefix)) {
       return new Response(
-        JSON.stringify({ error: 'Le paramètre "scope" est requis' }),
+        JSON.stringify({ 
+          error: 'Préfixe invalide: doit être 3 lettres majuscules',
+          received: finalPrefix
+        }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -150,21 +143,24 @@ serve(async (req) => {
       );
     }
 
-    // Générer les IDs
+    // Générer les IDs séquentiels
     const ids: string[] = [];
     for (let i = 0; i < batch; i++) {
-      const id = await generateUniqueId(supabaseClient, scope, userId);
+      const id = await generateStandardId(supabaseClient, finalPrefix);
       ids.push(id);
     }
 
-    console.log(`✅ ${ids.length} ID(s) généré(s) pour ${scope}`);
+    console.log(`✅ ${ids.length} ID(s) standardisé(s) généré(s) avec préfixe ${finalPrefix}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         ids: ids,
+        prefix: finalPrefix,
         scope: scope,
-        count: ids.length
+        count: ids.length,
+        format: 'AAA####',
+        system: '224SOLUTIONS'
       }),
       { 
         status: 200,
