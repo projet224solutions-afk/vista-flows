@@ -294,20 +294,36 @@ serve(async (req) => {
           // C'est un public_id standardisé, chercher l'user_id correspondant
           console.log('🔍 Recherche par public_id:', recipient_id);
           
+          // Recherche dans profiles avec public_id
           const { data: profileData, error: profileError } = await supabaseClient
             .from('profiles')
-            .select('id')
+            .select('id, public_id, email, first_name, last_name')
             .eq('public_id', recipient_id.toUpperCase())
-            .single();
+            .maybeSingle();
 
           console.log('👤 User profile lookup:', { profileData, profileError });
 
-          if (profileError || !profileData) {
-            throw new Error(`Utilisateur avec l'ID ${recipient_id} introuvable`);
+          if (profileError) {
+            console.error('❌ Erreur recherche profil:', profileError);
+            throw new Error(`Erreur lors de la recherche de l'utilisateur: ${profileError.message}`);
+          }
+
+          if (!profileData) {
+            // Essayer une recherche plus large pour donner un meilleur message d'erreur
+            const { data: allProfiles, error: allError } = await supabaseClient
+              .from('profiles')
+              .select('public_id, email, first_name, last_name')
+              .not('public_id', 'is', null)
+              .limit(5);
+            
+            const availableIds = allProfiles?.map(p => p.public_id).join(', ') || 'aucun';
+            console.log('📋 IDs disponibles (échantillon):', availableIds);
+            
+            throw new Error(`Utilisateur avec l'ID ${recipient_id} introuvable. Vérifiez l'ID et réessayez.`);
           }
 
           recipientUserId = profileData.id;
-          console.log('✅ User ID trouvé:', recipientUserId);
+          console.log('✅ User ID trouvé:', recipientUserId, 'pour', profileData.email || profileData.first_name);
         }
 
         // 🛡️ DÉTECTION DE FRAUDE (NOUVEAU - comme Amazon)
