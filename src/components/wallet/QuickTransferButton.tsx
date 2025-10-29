@@ -62,44 +62,55 @@ export function QuickTransferButton({
     setLoading(true);
 
     try {
+      const recipientIdUpper = recipientId.toUpperCase();
+      console.log('🔍 Recherche destinataire:', recipientIdUpper);
+
       // Récupérer notre propre custom_id pour la vérification
       const { data: senderIdData } = await supabase
         .from('user_ids')
         .select('custom_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (senderIdData && recipientId === senderIdData.custom_id) {
+      if (senderIdData && recipientIdUpper === senderIdData.custom_id) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
         setLoading(false);
         return;
       }
 
-      // Convertir le custom_id en UUID réel (format: AAA0001)
-      let recipientData = await supabase
+      // Chercher le destinataire dans user_ids d'abord
+      const { data: recipientData, error: userIdError } = await supabase
         .from('user_ids')
         .select('user_id')
-        .eq('custom_id', recipientId.toUpperCase())
+        .eq('custom_id', recipientIdUpper)
         .maybeSingle();
 
-      // Si pas trouvé, chercher dans profiles en fallback
+      console.log('📋 Résultat user_ids:', recipientData, userIdError);
+
       let recipientUuid = null;
-      if (!recipientData.data) {
-        const profileData = await supabase
+      
+      if (recipientData?.user_id) {
+        recipientUuid = recipientData.user_id;
+        console.log('✅ Trouvé dans user_ids:', recipientUuid);
+      } else {
+        // Chercher dans profiles en fallback
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('custom_id', recipientId.toUpperCase())
+          .eq('custom_id', recipientIdUpper)
           .maybeSingle();
         
-        if (profileData.data) {
-          recipientUuid = profileData.data.id;
+        console.log('📋 Résultat profiles:', profileData, profileError);
+        
+        if (profileData?.id) {
+          recipientUuid = profileData.id;
+          console.log('✅ Trouvé dans profiles:', recipientUuid);
         }
-      } else {
-        recipientUuid = recipientData.data.user_id;
       }
 
       if (!recipientUuid) {
-        toast.error('Destinataire introuvable. Vérifiez le code.');
+        console.error('❌ Destinataire introuvable pour:', recipientIdUpper);
+        toast.error(`Destinataire introuvable. Vérifiez le code: ${recipientIdUpper}`);
         setLoading(false);
         return;
       }
