@@ -34,6 +34,9 @@ interface User {
   role: string;
   created_at: string;
   is_active?: boolean;
+  country?: string;
+  city?: string;
+  public_id?: string;
 }
 
 interface ManageUsersSectionProps {
@@ -302,83 +305,143 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
             style={{ animationDelay: `${index * 30}ms` }}
           >
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
-                      <Shield className="w-7 h-7 text-primary-foreground" />
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+                        <Shield className="w-8 h-8 text-primary-foreground" />
+                      </div>
+                      {user.is_active !== false && (
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-card" />
+                      )}
                     </div>
-                    {user.is_active !== false && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card" />
-                    )}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold">
+                        {user.first_name || user.last_name 
+                          ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                          : 'Sans nom'}
+                      </h3>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant="outline" className={getRoleBadge(user.role)}>
+                          {user.role || 'client'}
+                        </Badge>
+                        <Badge variant="outline" className={user.is_active !== false ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                          {user.is_active !== false ? 'Actif' : 'Suspendu'}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {user.first_name || user.last_name 
-                        ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
-                        : 'Sans nom'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <div className="flex gap-2 mt-2">
-                      <Badge variant="outline" className={getRoleBadge(user.role)}>
-                        {user.role || 'client'}
-                      </Badge>
-                      <Badge variant="outline" className={user.is_active !== false ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
-                        {user.is_active !== false ? 'Actif' : 'Suspendu'}
-                      </Badge>
-                    </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleUserStatus(user.id, user.is_active !== false)}
+                      className={user.is_active !== false ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
+                    >
+                      {user.is_active !== false ? (
+                        <>
+                          <Lock className="w-4 h-4 mr-2" />
+                          Suspendre
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-4 h-4 mr-2" />
+                          Activer
+                        </>
+                      )}
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Supprimer
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
+                            Cette action est irréversible et supprimera toutes les données associées.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteUser(user.id, user.email)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Supprimer définitivement
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleUserStatus(user.id, user.is_active !== false)}
-                    className={user.is_active !== false ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
-                  >
-                    {user.is_active !== false ? (
-                      <>
-                        <Lock className="w-4 h-4 mr-2" />
-                        Suspendre
-                      </>
-                    ) : (
-                      <>
-                        <Unlock className="w-4 h-4 mr-2" />
-                        Activer
-                      </>
+
+                {/* Informations détaillées */}
+                <div className="border-t pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="font-medium">{user.email}</p>
+                      </div>
+                    </div>
+                    
+                    {user.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Téléphone</p>
+                          <p className="font-medium">{user.phone}</p>
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
-                          Cette action est irréversible et supprimera toutes les données associées.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteUser(user.id, user.email)}
-                          className="bg-red-500 hover:bg-red-600"
-                        >
-                          Supprimer définitivement
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Créé le</p>
+                        <p className="font-medium">
+                          {new Date(user.created_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {user.country && (
+                    <div className="mt-3 flex items-center gap-2 text-sm">
+                      <div className="w-4 h-4 text-muted-foreground">🌍</div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Localisation</p>
+                        <p className="font-medium">
+                          {user.city ? `${user.city}, ${user.country}` : user.country}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {user.public_id && (
+                    <div className="mt-3 flex items-center gap-2 text-sm">
+                      <Shield className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">ID Public</p>
+                        <p className="font-medium font-mono">{user.public_id}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
