@@ -94,11 +94,18 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `moto-documents/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        console.log('📄 Téléchargement du fichier:', file.name, 'vers', filePath);
+
+        const { data, error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('❌ Erreur upload:', uploadError);
+          throw uploadError;
+        }
+
+        console.log('✅ Fichier téléchargé:', data);
 
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
@@ -113,9 +120,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       }));
 
       toast.success(`${uploadedUrls.length} document(s) téléchargé(s) avec succès`);
-    } catch (error) {
-      console.error('Erreur upload documents:', error);
-      toast.error('Erreur lors du téléchargement des documents');
+    } catch (error: any) {
+      console.error('❌ Erreur complète upload documents:', error);
+      const errorMessage = error?.message || 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`);
     } finally {
       setUploadingDoc(false);
       e.target.value = '';
