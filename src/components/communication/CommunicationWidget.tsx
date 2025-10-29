@@ -29,11 +29,6 @@ export default function CommunicationWidget({
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
-  if (!user) {
-    return null;
-  }
-
   const positionClasses = {
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4',
@@ -53,6 +48,11 @@ export default function CommunicationWidget({
       return () => clearTimeout(timer);
     }
   }, [stats.notificationCount, isOpen]);
+
+  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
+  if (!user) {
+    return null;
+  }
 
   return (
     <>
