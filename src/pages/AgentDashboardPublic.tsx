@@ -238,12 +238,8 @@ export default function AgentDashboardPublic() {
             <Card 
               className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-green-500/50"
               onClick={() => {
-                if (agent.permissions.includes('manage_users')) {
-                  setActiveTab('users');
-                  toast.success('Navigation vers la liste des utilisateurs');
-                } else {
-                  toast.error('Vous n\'avez pas accès à cette fonctionnalité');
-                }
+                setActiveTab('users');
+                toast.success('Navigation vers la liste des utilisateurs créés');
               }}
             >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -276,12 +272,10 @@ export default function AgentDashboardPublic() {
           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="overview">Aperçu</TabsTrigger>
-              {agent.permissions.includes('manage_users') && (
-                <TabsTrigger value="users">
-                  <UserCog className="w-4 h-4 mr-2" />
-                  Utilisateurs
-                </TabsTrigger>
-              )}
+              <TabsTrigger value="users">
+                <Users className="w-4 h-4 mr-2" />
+                Utilisateurs Créés
+              </TabsTrigger>
               {agent.permissions.includes('manage_products') && (
                 <TabsTrigger value="products">
                   <Package className="w-4 h-4 mr-2" />
@@ -442,11 +436,10 @@ export default function AgentDashboardPublic() {
               </Card>
             </TabsContent>
 
-            {agent.permissions.includes('manage_users') && (
-              <TabsContent value="users">
-                <ManageUsersSection key={activeTab} agentId={agent.id} />
-              </TabsContent>
-            )}
+            {/* Onglet Utilisateurs Créés - Accessible à tous les agents */}
+            <TabsContent value="users">
+              <ManageUsersSection key={activeTab} agentId={agent.id} />
+            </TabsContent>
 
             {agent.permissions.includes('manage_products') && (
               <TabsContent value="products">
