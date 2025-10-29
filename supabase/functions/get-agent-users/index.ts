@@ -62,18 +62,41 @@ serve(async (req) => {
       );
     }
 
-    // Récupérer tous les utilisateurs (avec service_role)
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
+    // Récupérer les utilisateurs créés par cet agent
+    const { data: agentUsers, error: agentUsersError } = await supabaseAdmin
+      .from('agent_created_users')
+      .select(`
+        user_id,
+        user_role,
+        created_at,
+        profiles:user_id (
+          id,
+          email,
+          first_name,
+          last_name,
+          phone,
+          role,
+          is_active,
+          public_id,
+          created_at
+        )
+      `)
+      .eq('agent_id', agent.id)
       .order('created_at', { ascending: false });
 
-    if (profilesError) {
-      throw profilesError;
+    if (agentUsersError) {
+      throw agentUsersError;
     }
 
+    // Formater les données pour le frontend
+    const users = (agentUsers || []).map((item: any) => ({
+      ...item.profiles,
+      created_by_agent: true,
+      user_role: item.user_role
+    }));
+
     return new Response(
-      JSON.stringify({ users: profiles || [] }),
+      JSON.stringify({ users }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
