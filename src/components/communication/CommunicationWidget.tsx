@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MessageSquare, Bell, X, Minimize2, Maximize2 } from 'lucide-react';
 import { useUniversalCommunication } from '@/hooks/useUniversalCommunication';
+import { useAuth } from '@/hooks/useAuth';
 import UniversalCommunicationHub from './UniversalCommunicationHub';
 import CommunicationNotificationCenter from './CommunicationNotificationCenter';
 
@@ -22,10 +23,16 @@ export default function CommunicationWidget({
   position = 'bottom-right',
   showNotifications = true 
 }: CommunicationWidgetProps) {
+  const { user } = useAuth();
   const { stats } = useUniversalCommunication();
   const [isOpen, setIsOpen] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
+  if (!user) {
+    return null;
+  }
 
   const positionClasses = {
     'bottom-right': 'bottom-4 right-4',
