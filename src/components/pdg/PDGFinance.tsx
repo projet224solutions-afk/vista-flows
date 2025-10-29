@@ -402,14 +402,6 @@ export default function PDGFinance() {
 
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm">
-                            <Wallet className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Wallet ID:</span>
-                            <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                              {wallet.id}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2 text-sm">
                             <span className="text-muted-foreground">Statut:</span>
                             <Badge 
                               variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
