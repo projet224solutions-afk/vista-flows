@@ -266,6 +266,7 @@ export function useClientData() {
   }, [products]);
 
   // Créer une commande
+  // Créer une commande
   const createOrder = useCallback(async (userId: string) => {
     if (cartItems.length === 0) {
       toast.error('Panier vide');
@@ -273,9 +274,21 @@ export function useClientData() {
     }
 
     try {
-      // Grouper les articles par vendeur
+      // Récupérer le customer_id à partir du user_id
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!customerData) {
+        toast.error('Profil client non trouvé');
+        return;
+      }
+
+      // Grouper les articles par vendeur (vendor_id, pas user_id)
       const itemsByVendor = cartItems.reduce((acc, item) => {
-        const vendorKey = item.vendorUserId || 'unknown';
+        const vendorKey = item.vendorId || 'unknown';
         if (!acc[vendorKey]) {
           acc[vendorKey] = [];
         }
@@ -284,8 +297,8 @@ export function useClientData() {
       }, {} as Record<string, Product[]>);
 
       // Créer une commande pour chaque vendeur
-      for (const [vendorUserId, items] of Object.entries(itemsByVendor)) {
-        if (vendorUserId === 'unknown') {
+      for (const [vendorId, items] of Object.entries(itemsByVendor)) {
+        if (vendorId === 'unknown') {
           console.error('❌ Produit sans vendeur:', items);
           continue;
         }
@@ -296,8 +309,8 @@ export function useClientData() {
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .insert({
-            customer_id: userId,
-            vendor_id: vendorUserId,
+            customer_id: customerData.id,
+            vendor_id: vendorId,
             total_amount: vendorTotal,
             subtotal: vendorTotal,
             tax_amount: 0,
@@ -374,36 +387,40 @@ export function useClientData() {
     loadAllData();
   }, [loadAllData]);
 
-  // Contacter un vendeur via API backend
+  // Contacter un vendeur via edge function
   const contactVendor = useCallback(async (vendorUserId: string, vendorName: string) => {
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         toast.error('Veuillez vous connecter pour contacter le vendeur');
         return null;
       }
 
-      // Utiliser l'API backend pour éviter les problèmes de RLS
-      const response = await fetch('/api/communication/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participants: [userId, vendorUserId],
+      // Utiliser l'edge function Supabase
+      const { data, error } = await supabase.functions.invoke('create-conversation', {
+        body: {
+          participants: [session.user.id, vendorUserId],
           type: 'private',
           name: `Discussion avec ${vendorName}`
-        })
+        }
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Erreur lors de la création de la conversation');
+      if (error) {
+        console.error('❌ Erreur création conversation:', error);
+        throw error;
       }
 
-      toast.success('Conversation créée avec succès');
-      return result.conversation.id;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de la création de la conversation');
+      }
+
+      if (data.existing) {
+        toast.success('Conversation trouvée');
+      } else {
+        toast.success('Conversation créée avec succès');
+      }
+      
+      return data.conversation.id;
     } catch (error) {
       console.error('❌ Erreur création conversation:', error);
       toast.error('Erreur lors de la création de la conversation');
