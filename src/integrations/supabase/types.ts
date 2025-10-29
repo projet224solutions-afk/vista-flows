@@ -7119,6 +7119,7 @@ export type Database = {
       }
       generate_invitation_token: { Args: never; Returns: string }
       generate_public_id: { Args: never; Returns: string }
+      generate_random_letters: { Args: { length: number }; Returns: string }
       generate_recommendations_for_user: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
