@@ -138,25 +138,33 @@ export const usePDGAgentsData = () => {
       if (agentsError) throw agentsError;
 
       // Récupérer les statistiques pour chaque agent
-      const agentsWithStats: Agent[] = (agentsData || []).map((agent) => {
-        return {
-          id: agent.id,
-          pdg_id: agent.pdg_id,
-          agent_code: agent.agent_code,
-          name: agent.name,
-          email: agent.email,
-          phone: agent.phone,
-          is_active: agent.is_active,
-          permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
-          commission_rate: Number(agent.commission_rate) || 0,
-          can_create_sub_agent: false,
-          access_token: agent.access_token,
-          created_at: agent.created_at,
-          updated_at: agent.updated_at || undefined,
-          total_commissions_earned: 0,
-          total_users_created: 0,
-        };
-      });
+      const agentsWithStats: Agent[] = await Promise.all(
+        (agentsData || []).map(async (agent) => {
+          // Compter les utilisateurs créés par cet agent
+          const { count: usersCount } = await supabase
+            .from('agent_created_users')
+            .select('*', { count: 'exact', head: true })
+            .eq('agent_id', agent.id);
+
+          return {
+            id: agent.id,
+            pdg_id: agent.pdg_id,
+            agent_code: agent.agent_code,
+            name: agent.name,
+            email: agent.email,
+            phone: agent.phone,
+            is_active: agent.is_active,
+            permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
+            commission_rate: Number(agent.commission_rate) || 0,
+            can_create_sub_agent: false,
+            access_token: agent.access_token,
+            created_at: agent.created_at,
+            updated_at: agent.updated_at || undefined,
+            total_commissions_earned: 0,
+            total_users_created: usersCount || 0,
+          };
+        })
+      );
 
       setAgents(agentsWithStats);
 

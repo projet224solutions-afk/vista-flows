@@ -98,12 +98,13 @@ export default function AgentDashboardPublic() {
         return;
       }
 
-      // Compter les vrais utilisateurs dans la plateforme
+      // Compter les utilisateurs créés par cet agent
       const { count: usersCount, error: usersError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+        .from('agent_created_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', agentData.id);
 
-      // Compter les vrais agents créés par ce PDG
+      // Compter les sous-agents créés par ce PDG (uniquement pour info)
       const { count: agentsCount, error: agentsError } = await supabase
         .from('agents_management')
         .select('*', { count: 'exact', head: true })
@@ -118,7 +119,7 @@ export default function AgentDashboardPublic() {
       };
 
       setAgent(enrichedAgent as Agent);
-      toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs dans la plateforme`);
+      toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs créés`);
     } catch (error) {
       console.error('Erreur chargement agent:', error);
       toast.error('Erreur lors du chargement des données');
@@ -302,6 +303,10 @@ export default function AgentDashboardPublic() {
                         <CreateUserForm 
                           agentId={agent.id} 
                           agentCode={agent.agent_code}
+                          onUserCreated={() => {
+                            // Recharger les données de l'agent après création
+                            loadAgentData();
+                          }}
                         />
                       </div>
                     )}

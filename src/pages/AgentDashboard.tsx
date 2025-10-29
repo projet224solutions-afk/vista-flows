@@ -14,6 +14,10 @@ export default function AgentDashboard() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsersCreated: 0,
+    usersThisMonth: 0,
+  });
 
   useEffect(() => {
     if (!user) {
@@ -33,11 +37,46 @@ export default function AgentDashboard() {
 
       if (error) throw error;
       setAgent(data);
+
+      // Charger les statistiques des utilisateurs créés
+      await loadUserStats(data.id);
     } catch (error) {
       console.error('Erreur chargement agent:', error);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserStats = async (agentId: string) => {
+    try {
+      // Compter le total d'utilisateurs créés
+      const { count: totalCount, error: totalError } = await supabase
+        .from('agent_created_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', agentId);
+
+      if (totalError) throw totalError;
+
+      // Compter les utilisateurs créés ce mois
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count: monthCount, error: monthError } = await supabase
+        .from('agent_created_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', agentId)
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (monthError) throw monthError;
+
+      setStats({
+        totalUsersCreated: totalCount || 0,
+        usersThisMonth: monthCount || 0,
+      });
+    } catch (error) {
+      console.error('Erreur chargement stats:', error);
     }
   };
 
@@ -106,9 +145,9 @@ export default function AgentDashboard() {
               <Users className="w-4 h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{stats.totalUsersCreated}</div>
               <p className="text-xs text-muted-foreground">
-                +0 ce mois-ci
+                +{stats.usersThisMonth} ce mois-ci
               </p>
             </CardContent>
           </Card>
@@ -200,6 +239,10 @@ export default function AgentDashboard() {
           <CreateUserForm 
             agentId={agent.id} 
             agentCode={agent.agent_code}
+            onUserCreated={() => {
+              // Recharger les données après la création d'un utilisateur
+              loadAgentData();
+            }}
           />
           {agent.permissions?.includes('create_sub_agents') && (
             <Button className="h-20" variant="outline">

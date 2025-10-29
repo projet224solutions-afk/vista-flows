@@ -11,9 +11,10 @@ import { toast } from 'sonner';
 interface CreateUserFormProps {
   agentId: string;
   agentCode: string;
+  onUserCreated?: () => void; // Callback après création réussie
 }
 
-export function CreateUserForm({ agentId, agentCode }: CreateUserFormProps) {
+export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUserFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -74,6 +75,11 @@ export function CreateUserForm({ agentId, agentCode }: CreateUserFormProps) {
         role: 'client',
       });
       setIsOpen(false);
+      
+      // Déclencher le callback pour recharger les données
+      if (onUserCreated) {
+        onUserCreated();
+      }
     } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
       toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
