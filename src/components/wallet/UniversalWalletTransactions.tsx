@@ -28,6 +28,8 @@ interface Transaction {
   id: string;
   sender_id: string;
   receiver_id: string;
+  sender_custom_id?: string;
+  receiver_custom_id?: string;
   amount: number;
   method: string;
   status: string;
@@ -93,7 +95,35 @@ export const UniversalWalletTransactions = () => {
         .limit(10);
 
       if (error) throw error;
-      setTransactions(data || []);
+      
+      // Enrichir les transactions avec les custom_id
+      if (data) {
+        const enrichedTransactions = await Promise.all(
+          data.map(async (tx) => {
+            // Récupérer le custom_id de l'expéditeur
+            const { data: senderData } = await supabase
+              .from('user_ids')
+              .select('custom_id')
+              .eq('user_id', tx.sender_id)
+              .maybeSingle();
+
+            // Récupérer le custom_id du destinataire
+            const { data: receiverData } = await supabase
+              .from('user_ids')
+              .select('custom_id')
+              .eq('user_id', tx.receiver_id)
+              .maybeSingle();
+
+            return {
+              ...tx,
+              sender_custom_id: senderData?.custom_id || tx.sender_id,
+              receiver_custom_id: receiverData?.custom_id || tx.receiver_id
+            };
+          })
+        );
+        
+        setTransactions(enrichedTransactions);
+      }
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
     }
@@ -551,7 +581,14 @@ export const UniversalWalletTransactions = () => {
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{getTransactionType(tx)}</p>
+                    <p className="font-medium text-sm">
+                      {getTransactionType(tx)}{' '}
+                      {(tx.sender_id !== user?.id || tx.receiver_id !== user?.id) && (
+                        <span className="font-mono text-primary text-xs">
+                          ({tx.sender_id === user?.id ? tx.receiver_custom_id : tx.sender_custom_id})
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(tx.created_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',
