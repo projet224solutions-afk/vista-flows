@@ -169,38 +169,51 @@ export default function WalletDashboard() {
       setBusy(true);
 
       // Convertir le custom_id en UUID si nécessaire
-      let recipientUuid = receiverId;
+      let recipientUuid = null;
       
       // Vérifier si c'est un custom_id (format: AAA0001 ex: USR0001, VND0001) ou un UUID
       if (!receiverId.includes('-')) {
-        // C'est probablement un custom_id, on le convertit en UUID
+        const recipientIdUpper = receiverId.toUpperCase();
+        console.log('🔍 [Vendeur] Recherche destinataire:', recipientIdUpper);
+        
         // Chercher d'abord dans user_ids
-        let recipientData = await supabase
+        const { data: userIdData, error: userIdError } = await supabase
           .from('user_ids')
           .select('user_id')
-          .eq('custom_id', receiverId.toUpperCase())
+          .eq('custom_id', recipientIdUpper)
           .maybeSingle();
 
-        // Si pas trouvé, chercher dans profiles en fallback
-        if (!recipientData.data) {
-          recipientData = await supabase
+        console.log('📋 [Vendeur] Résultat user_ids:', userIdData, userIdError);
+
+        if (userIdData?.user_id) {
+          recipientUuid = userIdData.user_id;
+          console.log('✅ [Vendeur] Trouvé dans user_ids:', recipientUuid);
+        } else {
+          // Si pas trouvé, chercher dans profiles en fallback
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('custom_id', receiverId.toUpperCase())
+            .eq('custom_id', recipientIdUpper)
             .maybeSingle();
           
-          if (recipientData.data) {
-            recipientUuid = recipientData.data.id;
+          console.log('📋 [Vendeur] Résultat profiles:', profileData, profileError);
+          
+          if (profileData?.id) {
+            recipientUuid = profileData.id;
+            console.log('✅ [Vendeur] Trouvé dans profiles:', recipientUuid);
           }
-        } else {
-          recipientUuid = recipientData.data.user_id;
         }
 
-        if (!recipientUuid || recipientUuid === receiverId) {
-          toast.error('Destinataire introuvable. Vérifiez le code.');
+        if (!recipientUuid) {
+          console.error('❌ [Vendeur] Destinataire introuvable pour:', recipientIdUpper);
+          toast.error(`Destinataire introuvable. Vérifiez le code: ${recipientIdUpper}`);
           setBusy(false);
           return;
         }
+      } else {
+        // C'est déjà un UUID
+        recipientUuid = receiverId;
+        console.log('📌 [Vendeur] UUID direct fourni:', recipientUuid);
       }
 
       // Vérifier qu'on ne transfère pas à soi-même
@@ -209,6 +222,21 @@ export default function WalletDashboard() {
         setBusy(false);
         return;
       }
+
+      // Récupérer les informations du destinataire
+      const { data: recipientProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, phone, custom_id')
+        .eq('id', recipientUuid)
+        .single();
+
+      if (profileError) {
+        console.error('Erreur profil destinataire:', profileError);
+      }
+
+      const recipientFullName = recipientProfile 
+        ? `${recipientProfile.first_name || ''} ${recipientProfile.last_name || ''}`.trim() || 'Non renseigné'
+        : 'Non renseigné';
 
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
@@ -225,7 +253,14 @@ export default function WalletDashboard() {
         return;
       }
 
-      setTransferPreview({ ...data, recipient_uuid: recipientUuid });
+      setTransferPreview({ 
+        ...data, 
+        recipient_uuid: recipientUuid,
+        recipient_code: recipientProfile?.custom_id || receiverId,
+        recipient_name: recipientFullName,
+        recipient_email: recipientProfile?.email || 'Non renseigné',
+        recipient_phone: recipientProfile?.phone || 'Non renseigné'
+      });
       setShowTransferPreview(true);
     } catch (e: any) {
       console.error('Erreur prévisualisation:', e);
@@ -376,6 +411,18 @@ export default function WalletDashboard() {
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-4 mt-4">
+                  {/* Informations du destinataire */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <h4 className="font-semibold text-blue-900 mb-2">👤 Informations du destinataire</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Nom:</strong> {transferPreview?.recipient_name}</p>
+                      <p><strong>Email:</strong> {transferPreview?.recipient_email}</p>
+                      <p><strong>Téléphone:</strong> {transferPreview?.recipient_phone}</p>
+                      <p><strong>ID:</strong> {transferPreview?.recipient_code}</p>
+                    </div>
+                  </div>
+
+                  {/* Détails du transfert */}
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
@@ -390,7 +437,7 @@ export default function WalletDashboard() {
                       <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
-                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                      <span className="text-sm font-medium">📈 Montant net reçu</span>
                       <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
                     </div>
                   </div>
