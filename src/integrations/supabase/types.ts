@@ -6963,6 +6963,10 @@ export type Database = {
         Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
+      can_view_message: {
+        Args: { _message_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_action: string
@@ -7251,6 +7255,14 @@ export type Database = {
       }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_conversation_creator: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_conversation_participant: {
+        Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
       log_api_usage: {
