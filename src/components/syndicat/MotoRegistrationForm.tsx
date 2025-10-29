@@ -26,6 +26,7 @@ interface MotoForm {
   year: number;
   color: string;
   documents?: string[];
+  photos?: string[];
 }
 
 interface Props {
@@ -37,6 +38,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [activeTab, setActiveTab] = useState('moto');
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [conducteurSearch, setConducteurSearch] = useState('');
   const [customBrand, setCustomBrand] = useState('');
   const { storeOfflineEvent, isOnline } = useBureauOfflineSync(bureauId);
@@ -51,6 +53,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     year: new Date().getFullYear(),
     color: '',
     documents: [],
+    photos: [],
   });
 
   const updateForm = (field: keyof MotoForm, value: any) => {
@@ -138,6 +141,63 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     toast.success('Document retiré');
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingPhoto(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `motos/${fileName}`;
+
+        console.log('📸 Téléchargement photo:', file.name, 'vers', filePath);
+
+        const { data, error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('❌ Erreur upload photo:', uploadError);
+          throw uploadError;
+        }
+
+        console.log('✅ Photo téléchargée:', data);
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      setForm(prev => ({
+        ...prev,
+        photos: [...(prev.photos || []), ...uploadedUrls]
+      }));
+
+      toast.success(`${uploadedUrls.length} photo(s) téléchargée(s) avec succès`);
+    } catch (error: any) {
+      console.error('❌ Erreur complète upload photos:', error);
+      const errorMessage = error?.message || 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`);
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      photos: prev.photos?.filter((_, i) => i !== index) || []
+    }));
+    toast.success('Photo retirée');
+  };
+
   const searchConducteur = async () => {
     if (!conducteurSearch) return;
     toast.info('Recherche de conducteur - fonctionnalité à venir');
@@ -209,6 +269,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         year: new Date().getFullYear(),
         color: '',
         documents: [],
+        photos: [],
       });
       setCustomBrand('');
       
@@ -455,7 +516,92 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
             </TabsContent>
 
             <TabsContent value="photos" className="space-y-4">
-              <p className="text-sm text-muted-foreground">Fonctionnalité de téléchargement de photos à venir</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Photos de la moto</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingPhoto}
+                      onClick={() => document.getElementById('camera-upload')?.click()}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      {uploadingPhoto ? 'Téléchargement...' : 'Prendre une photo'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingPhoto}
+                      onClick={() => document.getElementById('photo-upload')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploadingPhoto ? 'Téléchargement...' : 'Galerie'}
+                    </Button>
+                  </div>
+                  <input
+                    id="camera-upload"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                  <input
+                    id="photo-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </div>
+
+                {form.photos && form.photos.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {form.photos.map((photoUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={photoUrl} 
+                          alt={`Moto ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-lg border"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => window.open(photoUrl, '_blank')}
+                          >
+                            Voir
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removePhoto(index)}
+                          >
+                            Supprimer
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                    <Camera className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Aucune photo téléchargée
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Prenez des photos ou sélectionnez depuis la galerie
+                    </p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
 
