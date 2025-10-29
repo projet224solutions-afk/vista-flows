@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function PDGApiSupervision() {
   return (
