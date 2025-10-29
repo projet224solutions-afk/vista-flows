@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { CreateUserForm } from '@/components/agent/CreateUserForm';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -196,10 +197,10 @@ export default function AgentDashboard() {
 
         {/* Quick Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button className="h-20" variant="outline">
-            <UserPlus className="w-6 h-6 mr-2" />
-            Créer un Utilisateur
-          </Button>
+          <CreateUserForm 
+            agentId={agent.id} 
+            agentCode={agent.agent_code}
+          />
           {agent.permissions?.includes('create_sub_agents') && (
             <Button className="h-20" variant="outline">
               <Users className="w-6 h-6 mr-2" />
