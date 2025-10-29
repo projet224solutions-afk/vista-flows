@@ -47,15 +47,38 @@ export function QuickTransferButton({
       return;
     }
 
-    if (recipientId === user.id) {
-      toast.error('Vous ne pouvez pas transférer à vous-même');
-      return;
-    }
-
     setLoading(true);
     console.log('💸 Transfert rapide:', { amount: transferAmount, recipientId });
 
     try {
+      // Récupérer notre propre custom_id pour la vérification
+      const { data: senderIdData } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (senderIdData && recipientId === senderIdData.custom_id) {
+        toast.error('Vous ne pouvez pas transférer à vous-même');
+        setLoading(false);
+        return;
+      }
+
+      // Convertir le custom_id en UUID réel
+      const { data: recipientData, error: recipientError } = await supabase
+        .from('user_ids')
+        .select('user_id')
+        .eq('custom_id', recipientId)
+        .single();
+
+      if (recipientError || !recipientData) {
+        toast.error('Destinataire introuvable. Vérifiez le code.');
+        setLoading(false);
+        return;
+      }
+
+      const recipientUuid = recipientData.user_id;
+
       // Vérifier le solde
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
@@ -71,12 +94,12 @@ export function QuickTransferButton({
         return;
       }
 
-      // Effectuer le transfert via edge function
+      // Effectuer le transfert via edge function avec l'UUID réel
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
           operation: 'transfer',
           amount: transferAmount,
-          recipient_id: recipientId,
+          recipient_id: recipientUuid,
           description: description
         }
       });
@@ -90,7 +113,7 @@ export function QuickTransferButton({
         throw new Error(data.error);
       }
 
-      toast.success(`Transfert de ${transferAmount.toLocaleString()} GNF réussi !`);
+      toast.success(`Transfert de ${transferAmount.toLocaleString()} GNF réussi vers ${recipientId} !`);
       setAmount('');
       setRecipientId('');
       setDescription('');
