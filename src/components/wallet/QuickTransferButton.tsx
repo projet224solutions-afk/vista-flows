@@ -78,14 +78,14 @@ export function QuickTransferButton({
         return;
       }
 
-      // Chercher le destinataire dans user_ids d'abord
+      // Chercher le destinataire dans user_ids d'abord (custom_id)
       const { data: recipientData, error: userIdError } = await supabase
         .from('user_ids')
         .select('user_id')
         .eq('custom_id', recipientIdUpper)
         .maybeSingle();
 
-      console.log('📋 Résultat user_ids:', recipientData, userIdError);
+      console.log('📋 Résultat user_ids (custom_id):', recipientData, userIdError);
 
       let recipientUuid = null;
       
@@ -93,18 +93,32 @@ export function QuickTransferButton({
         recipientUuid = recipientData.user_id;
         console.log('✅ Trouvé dans user_ids:', recipientUuid);
       } else {
-        // Chercher dans profiles en fallback
-        const { data: profileData, error: profileError } = await supabase
+        // Chercher dans profiles par custom_id
+        const { data: profileByCustomId, error: customIdError } = await supabase
           .from('profiles')
           .select('id')
           .eq('custom_id', recipientIdUpper)
           .maybeSingle();
         
-        console.log('📋 Résultat profiles:', profileData, profileError);
+        console.log('📋 Résultat profiles (custom_id):', profileByCustomId, customIdError);
         
-        if (profileData?.id) {
-          recipientUuid = profileData.id;
-          console.log('✅ Trouvé dans profiles:', recipientUuid);
+        if (profileByCustomId?.id) {
+          recipientUuid = profileByCustomId.id;
+          console.log('✅ Trouvé dans profiles (custom_id):', recipientUuid);
+        } else {
+          // Chercher dans profiles par public_id en dernier recours
+          const { data: profileByPublicId, error: publicIdError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('public_id', recipientIdUpper)
+            .maybeSingle();
+          
+          console.log('📋 Résultat profiles (public_id):', profileByPublicId, publicIdError);
+          
+          if (profileByPublicId?.id) {
+            recipientUuid = profileByPublicId.id;
+            console.log('✅ Trouvé dans profiles (public_id):', recipientUuid);
+          }
         }
       }
 
