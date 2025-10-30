@@ -308,13 +308,21 @@ class UniversalCommunicationService {
         .getPublicUrl(filePath);
 
       // Obtenir le destinataire
-      const conversation = await this.getConversationById(conversationId);
-      const recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
+      let recipientId: string;
+      
+      if (conversationId.startsWith('direct_')) {
+        // Conversation directe
+        recipientId = conversationId.replace('direct_', '');
+      } else {
+        // Conversation normale
+        const conversation = await this.getConversationById(conversationId);
+        recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
+      }
 
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
+          conversation_id: conversationId.startsWith('direct_') ? null : conversationId,
           sender_id: senderId,
           recipient_id: recipientId,
           content: file.name,

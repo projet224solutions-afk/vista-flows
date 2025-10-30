@@ -36,6 +36,8 @@ const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
+const ContactUserById = lazy(() => import("./components/communication/ContactUserById"));
+const DirectConversation = lazy(() => import("./pages/DirectConversation"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
@@ -80,6 +82,8 @@ function App() {
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/contact-user" element={<ContactUserById />} />
+              <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
