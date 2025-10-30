@@ -124,7 +124,18 @@ export default function AgentDashboardPublic() {
   const handleCreateSubAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!agent) return;
+    if (!agent) {
+      toast.error('Agent non trouvé');
+      console.error('Agent manquant:', agent);
+      return;
+    }
+
+    console.log('🔍 Données agent:', {
+      id: agent.id,
+      pdg_id: agent.pdg_id,
+      agent_code: agent.agent_code,
+      token: token
+    });
 
     const validationResult = subAgentSchema.safeParse({
       name: subAgentFormData.name,
@@ -147,22 +158,34 @@ export default function AgentDashboardPublic() {
 
       const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}`;
 
+      const requestBody = {
+        pdg_id: agent.pdg_id,
+        parent_agent_id: agent.id,
+        agent_code: agentCode,
+        name: subAgentFormData.name.trim(),
+        email: subAgentFormData.email.trim().toLowerCase(),
+        phone: subAgentFormData.phone.trim(),
+        permissions,
+        commission_rate: subAgentFormData.commission_rate,
+        access_token: token, // Envoyer le token pour l'authentification
+      };
+
+      console.log('📤 Envoi requête création sous-agent:', requestBody);
+
       const { data, error } = await supabase.functions.invoke('create-sub-agent', {
-        body: {
-          pdg_id: agent.pdg_id,
-          parent_agent_id: agent.id,
-          agent_code: agentCode,
-          name: subAgentFormData.name.trim(),
-          email: subAgentFormData.email.trim().toLowerCase(),
-          phone: subAgentFormData.phone.trim(),
-          permissions,
-          commission_rate: subAgentFormData.commission_rate,
-          access_token: token, // Envoyer le token pour l'authentification
-        }
+        body: requestBody
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      console.log('📥 Réponse fonction edge:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur edge function:', error);
+        throw error;
+      }
+      if (data?.error) {
+        console.error('❌ Erreur dans data:', data.error);
+        throw new Error(data.error);
+      }
 
       toast.success('Sous-agent créé avec succès');
       setIsSubAgentDialogOpen(false);
@@ -182,7 +205,7 @@ export default function AgentDashboardPublic() {
       });
       loadAgentData();
     } catch (error: any) {
-      console.error('Erreur création sous-agent:', error);
+      console.error('❌ Erreur création sous-agent:', error);
       toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setIsSubmitting(false);
