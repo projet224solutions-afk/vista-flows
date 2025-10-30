@@ -54,9 +54,38 @@ export function AgentWalletDisplay({
             .eq('user_id', pdgData.user_id)
             .single();
 
-          if (walletError) throw walletError;
+          if (walletError) {
+            // Si le wallet n'existe pas, le créer
+            if (walletError.code === 'PGRST116') {
+              const { data: newWallet, error: createError } = await supabase
+                .from('wallets')
+                .insert({
+                  user_id: pdgData.user_id,
+                  balance: 10000,
+                  currency: 'GNF'
+                })
+                .select('id, balance, currency')
+                .single();
 
-          if (userWallet) {
+              if (!createError && newWallet) {
+                // Créer une transaction de crédit initial
+                await supabase.from('wallet_transactions').insert({
+                  transaction_id: `INIT-${pdgData.user_id.slice(0, 8)}`,
+                  transaction_type: 'credit',
+                  amount: 10000,
+                  net_amount: 10000,
+                  receiver_wallet_id: newWallet.id,
+                  description: 'Crédit de bienvenue PDG',
+                  status: 'completed',
+                  currency: 'GNF'
+                });
+
+                setWalletId(newWallet.id);
+                setBalance(newWallet.balance || 0);
+                setCurrency(newWallet.currency || 'GNF');
+              }
+            }
+          } else if (userWallet) {
             setWalletId(userWallet.id);
             setBalance(userWallet.balance || 0);
             setCurrency(userWallet.currency || 'GNF');

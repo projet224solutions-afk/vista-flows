@@ -827,9 +827,9 @@ export default function AgentDashboardPublic() {
                 <Card>
                   <CardContent className="p-12 text-center">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-500" />
-                    <h3 className="text-lg font-semibold mb-2">Wallet non disponible</h3>
+                    <h3 className="text-lg font-semibold mb-2">Configuration en cours</h3>
                     <p className="text-muted-foreground">
-                      Le wallet est lié au compte PDG. Veuillez contacter l'administrateur.
+                      Le compte PDG n'a pas de user_id configuré. Contactez l'administrateur pour configurer le système.
                     </p>
                   </CardContent>
                 </Card>
