@@ -514,7 +514,7 @@ export default function PDGAgentsManagement() {
                     onClick={() => handleToggleAgentUsers(agent)}
                     className="w-full justify-between"
                   >
-                    <span className="text-sm font-medium">Utilisateurs créés: {agent.total_users_created || 0}</span>
+                    <span className="text-sm font-medium">Utilisateurs créés: {agentUsersMap[agent.id]?.length ?? agent.total_users_created ?? 0}</span>
                     <Eye className={`w-4 h-4 transition-transform ${expandedAgents.has(agent.id) ? 'rotate-180' : ''}`} />
                   </Button>
 
