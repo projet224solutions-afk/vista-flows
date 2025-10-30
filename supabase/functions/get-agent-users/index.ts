@@ -55,11 +55,24 @@ serve(async (req) => {
       );
     }
 
-    // Récupérer les IDs des utilisateurs créés par cet agent
+    // Récupérer les sous-agents de cet agent
+    const { data: subAgents } = await supabaseAdmin
+      .from('agents_management')
+      .select('id')
+      .eq('parent_agent_id', agent.id)
+      .eq('is_active', true);
+
+    // Créer une liste des IDs d'agents (agent + sous-agents)
+    const agentIds = [agent.id];
+    if (subAgents && subAgents.length > 0) {
+      agentIds.push(...subAgents.map(sa => sa.id));
+    }
+
+    // Récupérer les utilisateurs créés par cet agent et ses sous-agents
     const { data: agentUsers, error: agentUsersError } = await supabaseAdmin
       .from('agent_created_users')
-      .select('user_id, user_role, created_at')
-      .eq('agent_id', agent.id)
+      .select('user_id, user_role, created_at, agent_id')
+      .in('agent_id', agentIds)
       .order('created_at', { ascending: false });
 
     if (agentUsersError) {
