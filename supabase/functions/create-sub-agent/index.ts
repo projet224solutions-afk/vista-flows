@@ -54,18 +54,38 @@ serve(async (req) => {
       );
     }
 
-    // Vérifier que l'utilisateur connecté est bien l'agent parent
+    // Vérifier que l'agent parent existe
     const { data: parentAgent, error: parentError } = await supabaseClient
       .from("agents_management")
       .select("*")
       .eq("id", parent_agent_id)
-      .eq("user_id", user.id)
       .single();
 
     if (parentError || !parentAgent) {
       console.error("Agent parent non trouvé:", parentError);
       return new Response(
-        JSON.stringify({ error: "Vous n'êtes pas autorisé à créer des sous-agents" }),
+        JSON.stringify({ error: "Agent parent non trouvé" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Vérifier que l'utilisateur connecté est autorisé (soit l'agent lui-même, soit le PDG)
+    const isAgentOwner = parentAgent.user_id && parentAgent.user_id === user.id;
+    
+    // Vérifier si l'utilisateur est le PDG de cet agent
+    const { data: pdgProfile, error: pdgError } = await supabaseClient
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .eq("role", "admin")
+      .single();
+    
+    const isPdgOwner = pdgProfile && parentAgent.pdg_id === user.id;
+
+    if (!isAgentOwner && !isPdgOwner) {
+      console.error("Utilisateur non autorisé - user.id:", user.id, "agent.user_id:", parentAgent.user_id, "agent.pdg_id:", parentAgent.pdg_id);
+      return new Response(
+        JSON.stringify({ error: "Vous n'êtes pas autorisé à créer des sous-agents pour cet agent" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
