@@ -54,7 +54,47 @@ export default function UniversalWalletDashboard({
         .eq('user_id', userId)
         .single();
 
-      if (walletError) throw walletError;
+      if (walletError) {
+        // Si le wallet n'existe pas, le créer automatiquement
+        if (walletError.code === 'PGRST116') {
+          console.log('Création automatique du wallet pour:', userId);
+          
+          const { data: newWallet, error: createError } = await supabase
+            .from('wallets')
+            .insert({
+              user_id: userId,
+              balance: 10000,
+              currency: 'GNF'
+            })
+            .select('*')
+            .single();
+
+          if (createError) {
+            console.error('Erreur création wallet:', createError);
+            throw createError;
+          }
+
+          // Créer une transaction de crédit initial
+          if (newWallet) {
+            await supabase.from('wallet_transactions').insert({
+              transaction_id: `INIT-${userId.slice(0, 8)}`,
+              transaction_type: 'credit',
+              amount: 10000,
+              net_amount: 10000,
+              receiver_wallet_id: newWallet.id,
+              description: 'Crédit de bienvenue',
+              status: 'completed',
+              currency: 'GNF'
+            });
+            
+            setWallet(newWallet);
+            toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
+            return;
+          }
+        } else {
+          throw walletError;
+        }
+      }
       
       setWallet(walletData);
 
