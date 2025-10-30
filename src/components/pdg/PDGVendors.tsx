@@ -15,6 +15,7 @@ interface Vendor {
   id: string;
   business_name: string;
   user_id: string;
+  vendor_code: string;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
@@ -23,7 +24,7 @@ interface Vendor {
     first_name: string;
     last_name: string;
     phone: string;
-    public_id: string;
+    custom_id: string;
   };
   agent_info?: string; // Nom de l'agent créateur
 }
@@ -44,7 +45,7 @@ export default function PDGVendors() {
         .from('vendors')
         .select(`
           *,
-          profiles!inner(email, first_name, last_name, phone, public_id)
+          profiles!inner(email, first_name, last_name, phone, custom_id)
         `)
         .order('created_at', { ascending: false });
 
@@ -198,7 +199,7 @@ export default function PDGVendors() {
                           <p>📧 {vendor.profiles?.email || 'Email non disponible'}</p>
                           <p>👤 {vendor.profiles?.first_name} {vendor.profiles?.last_name}</p>
                           {vendor.profiles?.phone && <p>📱 {vendor.profiles.phone}</p>}
-                          <p>🆔 ID Public: <span className="font-mono font-semibold">{vendor.profiles?.public_id}</span></p>
+                          <p>🆔 Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
                           {vendor.agent_info && (
                             <p>👥 Créé par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
                           )}
