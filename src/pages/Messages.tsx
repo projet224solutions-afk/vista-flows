@@ -58,7 +58,7 @@ export default function Messages() {
   }, [selectedConversation, currentUser]);
 
   useEffect(() => {
-    if (recipientIdParam && !selectedConversation) {
+    if (recipientIdParam) {
       setSelectedConversation(recipientIdParam);
     }
   }, [recipientIdParam]);
@@ -114,7 +114,7 @@ export default function Messages() {
             .from('profiles')
             .select('first_name, last_name, email')
             .eq('id', otherUserId)
-            .single();
+            .maybeSingle();
 
           const userName = profile?.first_name && profile?.last_name
             ? `${profile.first_name} ${profile.last_name}`
@@ -126,9 +126,31 @@ export default function Messages() {
             other_user_name: userName,
             last_message: message.content,
             last_message_time: message.created_at,
-            unread_count: 0 // TODO: calculer les non lus
+            unread_count: 0
           });
         }
+      }
+
+      // Si recipientId est fourni et qu'il n'existe pas encore de conversation, la créer
+      if (recipientIdParam && !conversationsMap.has(recipientIdParam)) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', recipientIdParam)
+          .maybeSingle();
+
+        const userName = profile?.first_name && profile?.last_name
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile?.email || 'Utilisateur';
+
+        conversationsMap.set(recipientIdParam, {
+          id: recipientIdParam,
+          other_user_id: recipientIdParam,
+          other_user_name: userName,
+          last_message: 'Nouvelle conversation',
+          last_message_time: new Date().toISOString(),
+          unread_count: 0
+        });
       }
 
       setConversations(Array.from(conversationsMap.values()));
