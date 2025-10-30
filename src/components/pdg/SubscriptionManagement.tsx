@@ -29,7 +29,7 @@ import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw } from 'lucide-
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-export function SubscriptionManagement() {
+export default function SubscriptionManagement() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
   const [stats, setStats] = useState<any>(null);
