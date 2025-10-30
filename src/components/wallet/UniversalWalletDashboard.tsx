@@ -52,17 +52,7 @@ export default function UniversalWalletDashboard({
     try {
       setLoading(true);
       
-      // Vérifier l'authentification
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        console.error('Erreur authentification:', authError);
-        toast.error('Vous devez être connecté pour accéder au wallet');
-        setWallet(null);
-        setLoading(false);
-        return;
-      }
-
-      console.log('🔍 Chargement wallet pour userId:', userId, 'auth user:', user.id);
+      console.log('🔍 Chargement wallet pour userId:', userId);
 
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
