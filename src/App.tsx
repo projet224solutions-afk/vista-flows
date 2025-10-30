@@ -14,6 +14,7 @@ const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const Profil = lazy(() => import("./pages/Profil"));
 const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
@@ -75,6 +76,7 @@ function App() {
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
