@@ -110,7 +110,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   };
 
   const handleContact = async () => {
-    if (!product?.vendors?.user_id) return;
+    if (!product?.vendors?.user_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -121,37 +124,60 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         return;
       }
 
-      // Créer un message initial dans la base de données
+      // Vérifier que l'utilisateur a un profil
+      const { data: senderProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError || !senderProfile) {
+        console.error('Profil sender non trouvé:', profileError);
+        toast.error('Votre profil n\'est pas configuré. Veuillez compléter votre inscription.');
+        return;
+      }
+
+      // Vérifier que le vendeur a un profil
+      const { data: recipientProfile, error: recipientError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', product.vendors.user_id)
+        .maybeSingle();
+
+      if (recipientError || !recipientProfile) {
+        console.error('Profil vendeur non trouvé:', recipientError);
+        toast.error('Le profil du vendeur est introuvable');
+        return;
+      }
+
+      // Créer un message initial
       const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
       
-      const { data: messageData, error: messageError } = await supabase
+      const { error: messageError } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
           recipient_id: product.vendors.user_id,
           content: initialMessage,
           type: 'text'
-        })
-        .select()
-        .single();
+        });
 
       if (messageError) {
         console.error('Erreur création message:', messageError);
         throw messageError;
       }
 
-      console.log('Message créé avec succès:', messageData);
-
-      toast.success('Message envoyé au vendeur avec succès!');
+      toast.success('Message envoyé au vendeur!');
       
-      // Fermer le modal après l'envoi
+      // Rediriger vers la page de messagerie
       setTimeout(() => {
         onClose();
-      }, 1500);
+        navigate(`/messages?recipientId=${product.vendors.user_id}`);
+      }, 1000);
       
     } catch (error) {
       console.error('Erreur lors du contact:', error);
-      toast.error('Impossible de contacter le vendeur');
+      toast.error('Impossible de contacter le vendeur. Veuillez réessayer.');
     }
   };
 

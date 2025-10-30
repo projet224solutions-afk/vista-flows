@@ -80,7 +80,10 @@ export default function ProductDetail() {
   };
 
   const handleContact = async () => {
-    if (!product?.vendors) return;
+    if (!product?.vendor_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -101,7 +104,7 @@ export default function ProductDetail() {
 
       if (error) throw error;
       toast.success('Message envoyé au vendeur');
-      navigate('/profil?tab=messages');
+      navigate(`/messages?recipientId=${product.vendor_id}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error('Erreur lors de l\'envoi du message');
