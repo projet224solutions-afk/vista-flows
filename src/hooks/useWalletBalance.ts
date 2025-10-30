@@ -16,9 +16,44 @@ export function useWalletBalance(userId: string | undefined) {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Si le wallet n'existe pas, le créer
+        if (error.code === 'PGRST116') {
+          console.log('Creating wallet for user:', userId);
+          const { data: newWallet, error: createError } = await supabase
+            .from('wallets')
+            .insert({
+              user_id: userId,
+              balance: 10000, // Solde initial de bienvenue
+              currency: 'GNF'
+            })
+            .select('balance, currency')
+            .single();
 
-      if (data) {
+          if (createError) {
+            console.error('Error creating wallet:', createError);
+            throw createError;
+          }
+
+          if (newWallet) {
+            setBalance(newWallet.balance || 0);
+            setCurrency(newWallet.currency || 'GNF');
+            
+            // Créer une transaction de crédit initial
+            await supabase.from('wallet_transactions').insert({
+              transaction_id: `INIT-${userId.slice(0, 8)}`,
+              transaction_type: 'credit',
+              amount: 10000,
+              net_amount: 10000,
+              receiver_wallet_id: userId,
+              description: 'Crédit de bienvenue',
+              status: 'completed'
+            });
+          }
+        } else {
+          throw error;
+        }
+      } else if (data) {
         setBalance(data.balance || 0);
         setCurrency(data.currency || 'GNF');
       }
