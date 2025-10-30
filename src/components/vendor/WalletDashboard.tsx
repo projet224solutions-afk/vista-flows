@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -23,10 +22,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface WalletInfo {
+  id: string;
+  balance: number;
+  currency: string;
+}
+
 export default function WalletDashboard() {
   const { user } = useAuth();
-  const userId = user?.id;
-  const { wallet, transactions, loading, refetch, createTransaction } = useWallet(userId);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -36,6 +41,31 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadWalletData();
+    }
+  }, [user?.id]);
+
+  const loadWalletData = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setWallet(data);
+    } catch (error) {
+      console.error('Erreur chargement wallet:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const walletId = useMemo(() => wallet?.id, [wallet]);
   const balanceDisplay = useMemo(() => {
@@ -87,17 +117,17 @@ export default function WalletDashboard() {
 
       setDepositAmount("");
       toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
-      await refetch(userId);
+      await loadWalletData();
     } catch (e: any) {
       console.error('Erreur dépôt:', e);
       toast.error(e?.message || 'Erreur lors du dépôt');
     } finally {
       setBusy(false);
     }
-  }, [depositAmount, userId, wallet, refetch]);
+  }, [depositAmount, user?.id, wallet]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!userId || !wallet) return;
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -138,23 +168,23 @@ export default function WalletDashboard() {
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
       setWithdrawAmount("");
       toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
-      await refetch(userId);
+      await loadWalletData();
     } catch (e: any) {
       console.error('Erreur retrait:', e);
       toast.error(e?.message || 'Erreur lors du retrait');
     } finally {
       setBusy(false);
     }
-  }, [withdrawAmount, userId, wallet, refetch]);
+  }, [withdrawAmount, user?.id, wallet]);
 
   const handlePreviewTransfer = useCallback(async () => {
-    if (!userId || !wallet) return;
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(transferAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -182,7 +212,7 @@ export default function WalletDashboard() {
       const { data: senderIdData } = await supabase
         .from('user_ids')
         .select('custom_id')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (senderIdData?.custom_id) {
@@ -192,7 +222,7 @@ export default function WalletDashboard() {
         const { data: senderProfileData } = await supabase
           .from('profiles')
           .select('custom_id, public_id')
-          .eq('id', userId)
+          .eq('id', user.id)
           .maybeSingle();
         
         senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
@@ -236,10 +266,10 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, userId, wallet]);
+  }, [transferAmount, receiverId, user?.id, wallet]);
 
   const handleConfirmTransfer = useCallback(async () => {
-    if (!userId || !transferPreview) return;
+    if (!user?.id || !transferPreview) return;
     
     try {
       setBusy(true);
@@ -252,7 +282,7 @@ export default function WalletDashboard() {
       const { data: senderIdData } = await supabase
         .from('user_ids')
         .select('custom_id')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (senderIdData?.custom_id) {
@@ -261,7 +291,7 @@ export default function WalletDashboard() {
         const { data: senderProfileData } = await supabase
           .from('profiles')
           .select('custom_id, public_id')
-          .eq('id', userId)
+          .eq('id', user.id)
           .maybeSingle();
         
         senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
@@ -288,14 +318,14 @@ export default function WalletDashboard() {
         { duration: 5000 }
       );
       
-      await refetch(userId);
+      await loadWalletData();
     } catch (e: any) {
       console.error('Erreur transfert:', e);
       toast.error(e?.message || 'Erreur lors du transfert');
     } finally {
       setBusy(false);
     }
-  }, [transferPreview, receiverId, transferReason, userId, refetch]);
+  }, [transferPreview, receiverId, transferReason, user?.id]);
 
   return (
     <Card className="h-full">
@@ -312,7 +342,7 @@ export default function WalletDashboard() {
             <p className="text-sm text-muted-foreground">Solde actuel</p>
             <p className="text-2xl font-bold">{balanceDisplay}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => userId && refetch(userId)} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={loadWalletData} disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
