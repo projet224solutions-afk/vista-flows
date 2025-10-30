@@ -38,6 +38,7 @@ const subAgentSchema = z.object({
     .max(100, { message: "Le taux de commission ne peut pas dépasser 100%" })
 });
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
@@ -357,9 +358,9 @@ export default function AgentDashboardPublic() {
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-blue-600 rounded-lg">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
@@ -368,12 +369,15 @@ export default function AgentDashboardPublic() {
                   <p className="text-sm text-gray-600">224Solutions - Dashboard Agent</p>
                 </div>
               </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <UserIdDisplay layout="horizontal" showBadge={true} />
+                <WalletBalanceDisplay userId={agent.pdg_id} compact={true} className="max-w-xs" />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant={agent.is_active ? "default" : "secondary"} className="text-sm">
                 {agent.is_active ? '✅ Actif' : '⏸️ Inactif'}
               </Badge>
-              <UserIdDisplay layout="horizontal" showBadge={true} />
             </div>
           </div>
         </div>

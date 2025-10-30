@@ -53,6 +53,7 @@ import AddTaxiMotardForm from '@/components/syndicate/AddTaxiMotardForm';
 import SyndicateWalletDashboard from '@/components/syndicate/SyndicateWalletDashboard';
 import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 
 interface SyndicateMember {
     id: string;
@@ -159,13 +160,16 @@ export default function SyndicatDashboardUltraPro() {
                                 <Building2 className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <div className="flex items-center gap-3 mb-1">
+                                <div className="flex items-center gap-3 mb-2">
                                     <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                         Bureau Syndicat 224Solutions
                                     </h1>
                                     <UserIdDisplay layout="horizontal" showBadge={true} />
                                 </div>
-                                <p className="text-gray-600 text-sm">Interface Ultra-Professionnelle</p>
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <p className="text-gray-600 text-sm">Interface Ultra-Professionnelle</p>
+                                    <WalletBalanceDisplay userId={user?.id} compact={true} className="max-w-xs" />
+                                </div>
                             </div>
                         </div>
 

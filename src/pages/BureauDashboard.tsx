@@ -233,6 +233,7 @@ export default function BureauDashboard() {
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
+              <UserIdDisplay layout="horizontal" showBadge={true} />
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
                 <span className="text-xs font-medium text-primary">ID Bureau:</span>
                 <span className="text-xs font-mono font-bold text-primary">{bureau.bureau_code}</span>
@@ -244,6 +245,7 @@ export default function BureauDashboard() {
                 </div>
               )}
             </div>
+            <BureauWalletDisplay bureauId={bureau.id} compact={true} className="max-w-md" />
           </div>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
