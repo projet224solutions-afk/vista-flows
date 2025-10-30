@@ -11,7 +11,26 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, type = "chat" } = await req.json();
+    const body = await req.json();
+    const { action, message, messages, type = "chat" } = body;
+    
+    // Handle different request formats
+    let conversationMessages = [];
+    if (action === "chat" && message) {
+      // Single message format from CopiloteService
+      conversationMessages = [{ role: "user", content: message }];
+    } else if (messages && Array.isArray(messages)) {
+      // Array format for advanced usage
+      conversationMessages = messages;
+    } else if (action === "status") {
+      // Status check
+      return new Response(
+        JSON.stringify({ status: "online", version: "2.0" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      throw new Error("Invalid request format. Expected 'message' or 'messages' array.");
+    }
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -72,7 +91,7 @@ Tu es là pour aider le PDG à prendre de meilleures décisions stratégiques. S
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
-        ...messages,
+        ...conversationMessages,
       ],
     };
 
