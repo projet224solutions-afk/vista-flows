@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
-import StatsSection from "@/components/StatsSection";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
@@ -105,12 +104,6 @@ export default function Marketplace() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-foreground mb-4">Marketplace</h1>
-          
-          {/* Stats Section */}
-          <div className="mb-4 py-4">
-            <StatsSection />
-          </div>
-          
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}

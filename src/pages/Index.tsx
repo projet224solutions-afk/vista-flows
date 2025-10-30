@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
-import StatsSection from "@/components/StatsSection";
 import {
   Search,
   Grid3X3,
@@ -205,7 +204,32 @@ export default function IndexAlibaba() {
           </div>
 
           {/* Stats rapides - Données réelles */}
-          <StatsSection />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalProducts}+`}
+              </div>
+              <div className="text-sm opacity-80">Produits</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalVendors}+`}
+              </div>
+              <div className="text-sm opacity-80">Vendeurs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalServices}+`}
+              </div>
+              <div className="text-sm opacity-80">Services</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">
+                {statsLoading ? '...' : `${stats.totalClients}+`}
+              </div>
+              <div className="text-sm opacity-80">Clients</div>
+            </div>
+          </div>
         </div>
       </section>
 
