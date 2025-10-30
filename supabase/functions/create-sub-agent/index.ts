@@ -154,6 +154,9 @@ serve(async (req) => {
       );
     }
 
+    // Générer un access token unique pour le sous-agent
+    const subAgentAccessToken = crypto.randomUUID();
+
     // Créer le sous-agent avec le service role client
     const { data: newAgent, error: insertError } = await supabaseServiceClient
       .from("agents_management")
@@ -168,6 +171,7 @@ serve(async (req) => {
         commission_rate: commission_rate || 5,
         can_create_sub_agent: false, // Les sous-agents ne peuvent pas créer d'autres sous-agents
         is_active: true,
+        access_token: subAgentAccessToken, // Token d'accès unique
       })
       .select()
       .single();
