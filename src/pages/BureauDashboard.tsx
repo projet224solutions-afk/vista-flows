@@ -231,8 +231,17 @@ export default function BureauDashboard() {
           <div className="flex items-center gap-3 mt-2">
             <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
           </div>
-          <div className="mt-3">
-            <p className="text-xs text-muted-foreground mb-1">ID Bureau: {bureau.id}</p>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+              <span className="text-xs font-medium text-primary">ID Bureau:</span>
+              <span className="text-xs font-mono font-bold text-primary">{bureau.bureau_code}</span>
+            </div>
+            {bureau.president_email && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                <span className="text-xs text-muted-foreground">Contact:</span>
+                <span className="text-xs font-medium">{bureau.president_email}</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
