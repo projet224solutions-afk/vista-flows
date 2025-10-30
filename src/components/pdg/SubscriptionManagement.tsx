@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubscriptionService, Plan, PriceHistory } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
-import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw } from 'lucide-react';
+import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -40,7 +40,13 @@ export default function SubscriptionManagement() {
   const [reason, setReason] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProductLimitDialogOpen, setIsProductLimitDialogOpen] = useState(false);
+  const [isFreeSubscriptionDialogOpen, setIsFreeSubscriptionDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [freeSubscriptionData, setFreeSubscriptionData] = useState({
+    userId: '',
+    planId: '',
+    days: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -173,6 +179,74 @@ export default function SubscriptionManagement() {
     }
   };
 
+  const handleOpenFreeSubscriptionDialog = () => {
+    setFreeSubscriptionData({ userId: '', planId: '', days: '' });
+    setIsFreeSubscriptionDialogOpen(true);
+  };
+
+  const handleOfferFreeSubscription = async () => {
+    if (!freeSubscriptionData.userId || !freeSubscriptionData.planId || !freeSubscriptionData.days) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const days = parseInt(freeSubscriptionData.days);
+    if (isNaN(days) || days <= 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Le nombre de jours doit être un nombre positif',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
+
+      // Calculer la date de fin
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + days);
+
+      // Créer l'abonnement gratuit
+      const { error } = await supabase.from('subscriptions').insert({
+        user_id: freeSubscriptionData.userId,
+        plan_id: freeSubscriptionData.planId,
+        price_paid_gnf: 0,
+        billing_cycle: 'custom',
+        status: 'active',
+        started_at: new Date().toISOString(),
+        current_period_end: endDate.toISOString(),
+        auto_renew: false,
+        payment_method: 'free_gift',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Abonnement gratuit de ${days} jours offert avec succès`,
+      });
+
+      setIsFreeSubscriptionDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error offering free subscription:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Erreur lors de l\'attribution de l\'abonnement',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleChangeProductLimit = async () => {
     if (!selectedPlan) return;
 
@@ -245,10 +319,16 @@ export default function SubscriptionManagement() {
             Gérez les plans, prix et suivez les statistiques d'abonnement
           </p>
         </div>
-        <Button onClick={fetchData} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleOpenFreeSubscriptionDialog} variant="default" size="sm">
+            <Gift className="w-4 h-4 mr-2" />
+            Offrir Abonnement
+          </Button>
+          <Button onClick={fetchData} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -518,6 +598,75 @@ export default function SubscriptionManagement() {
             </Button>
             <Button onClick={handleChangeProductLimit} disabled={submitting}>
               {submitting ? 'Modification...' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pour offrir un abonnement gratuit */}
+      <Dialog open={isFreeSubscriptionDialogOpen} onOpenChange={setIsFreeSubscriptionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Offrir un Abonnement Gratuit</DialogTitle>
+            <DialogDescription>
+              Attribuez un abonnement gratuit à un utilisateur pour une durée déterminée
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="userId">ID Utilisateur</Label>
+              <Input
+                id="userId"
+                type="text"
+                value={freeSubscriptionData.userId}
+                onChange={(e) => setFreeSubscriptionData({ ...freeSubscriptionData, userId: e.target.value })}
+                placeholder="UUID de l'utilisateur"
+              />
+              <p className="text-xs text-muted-foreground">
+                L'identifiant unique de l'utilisateur (UUID)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="planSelect">Plan d'Abonnement</Label>
+              <select
+                id="planSelect"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                value={freeSubscriptionData.planId}
+                onChange={(e) => setFreeSubscriptionData({ ...freeSubscriptionData, planId: e.target.value })}
+              >
+                <option value="">Sélectionnez un plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.display_name} - {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="days">Nombre de Jours</Label>
+              <Input
+                id="days"
+                type="number"
+                value={freeSubscriptionData.days}
+                onChange={(e) => setFreeSubscriptionData({ ...freeSubscriptionData, days: e.target.value })}
+                placeholder="Ex: 30, 60, 90"
+                min="1"
+              />
+              <p className="text-xs text-muted-foreground">
+                Durée de l'abonnement gratuit en jours
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsFreeSubscriptionDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleOfferFreeSubscription} disabled={submitting}>
+              {submitting ? 'Attribution...' : 'Offrir l\'Abonnement'}
             </Button>
           </DialogFooter>
         </DialogContent>
