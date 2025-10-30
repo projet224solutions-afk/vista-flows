@@ -3337,6 +3337,101 @@ export type Database = {
           },
         ]
       }
+      plan_price_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string
+          id: string
+          new_price: number
+          old_price: number
+          plan_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by: string
+          id?: string
+          new_price: number
+          old_price: number
+          plan_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string
+          id?: string
+          new_price?: number
+          old_price?: number
+          plan_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_price_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          analytics_access: boolean | null
+          api_access: boolean | null
+          created_at: string | null
+          custom_branding: boolean | null
+          display_name: string
+          display_order: number | null
+          featured_products: boolean | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_images_per_product: number | null
+          max_products: number | null
+          monthly_price_gnf: number
+          name: string
+          priority_support: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          analytics_access?: boolean | null
+          api_access?: boolean | null
+          created_at?: string | null
+          custom_branding?: boolean | null
+          display_name: string
+          display_order?: number | null
+          featured_products?: boolean | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_images_per_product?: number | null
+          max_products?: number | null
+          monthly_price_gnf: number
+          name: string
+          priority_support?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          analytics_access?: boolean | null
+          api_access?: boolean | null
+          created_at?: string | null
+          custom_branding?: boolean | null
+          display_name?: string
+          display_order?: number | null
+          featured_products?: boolean | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_images_per_product?: number | null
+          max_products?: number | null
+          monthly_price_gnf?: number
+          name?: string
+          priority_support?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       platform_revenue: {
         Row: {
           amount: number
@@ -4991,6 +5086,65 @@ export type Database = {
             columns: ["to_warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          billing_cycle: string | null
+          created_at: string | null
+          current_period_end: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          payment_transaction_id: string | null
+          plan_id: string
+          price_paid_gnf: number
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          current_period_end: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_transaction_id?: string | null
+          plan_id: string
+          price_paid_gnf: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          current_period_end?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_transaction_id?: string | null
+          plan_id?: string
+          price_paid_gnf?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]
@@ -7290,6 +7444,16 @@ export type Database = {
         Args: { _message_id: string; _user_id: string }
         Returns: boolean
       }
+      change_plan_price: {
+        Args: {
+          p_admin_user_id: string
+          p_new_price: number
+          p_plan_id: string
+          p_reason?: string
+        }
+        Returns: boolean
+      }
+      check_product_limit: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
         Args: {
           p_action: string
@@ -7572,6 +7736,7 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
       get_finance_stats: { Args: never; Returns: Json }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
       get_or_create_wallet: {
@@ -7855,6 +8020,17 @@ export type Database = {
           p_service_name: string
           p_to_user_id?: string
           p_transaction_type: string
+        }
+        Returns: string
+      }
+      record_subscription_payment: {
+        Args: {
+          p_billing_cycle?: string
+          p_payment_method?: string
+          p_payment_transaction_id?: string
+          p_plan_id: string
+          p_price_paid: number
+          p_user_id: string
         }
         Returns: string
       }

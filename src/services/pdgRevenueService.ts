@@ -11,7 +11,7 @@ export interface RevenueStats {
 
 export interface PdgRevenue {
   id: string;
-  source_type: 'frais_transaction_wallet' | 'frais_achat_commande';
+  source_type: 'frais_transaction_wallet' | 'frais_achat_commande' | 'frais_abonnement';
   transaction_id: string | null;
   user_id: string | null;
   service_id: string | null;
@@ -36,7 +36,7 @@ export class PdgRevenueService {
    * Enregistrer un revenu PDG
    */
   static async recordRevenue(params: {
-    sourceType: 'frais_transaction_wallet' | 'frais_achat_commande';
+    sourceType: 'frais_transaction_wallet' | 'frais_achat_commande' | 'frais_abonnement';
     amount: number;
     percentage: number;
     transactionId?: string;

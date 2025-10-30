@@ -33,6 +33,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'finance', label: 'Finances', icon: DollarSign },
       { value: 'revenue-analytics', label: '💼 Revenus PDG', icon: BarChart3 },
+      { value: 'subscriptions', label: '🎯 Abonnements', icon: Sparkles },
       { value: 'users', label: 'Utilisateurs', icon: Users },
       { value: 'products', label: 'Produits', icon: Package },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },
