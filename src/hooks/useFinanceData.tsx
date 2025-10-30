@@ -62,9 +62,9 @@ export function useFinanceData(enabled: boolean = true) {
     try {
       setLoading(true);
 
-      // Récupérer les transactions depuis enhanced_transactions
+      // Récupérer les transactions depuis wallet_transactions
       const { data: transData, error: transError } = await supabase
-        .from('enhanced_transactions')
+        .from('wallet_transactions')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
@@ -74,20 +74,28 @@ export function useFinanceData(enabled: boolean = true) {
         throw transError;
       }
 
-      console.log('✅ Transactions récupérées depuis enhanced_transactions:', transData?.length, transData);
+      console.log('✅ Transactions récupérées depuis wallet_transactions:', transData?.length);
 
-      // Mapper les transactions et calculer les frais (1.5% du montant)
-      const mappedTransactions = (transData || []).map((t: any) => {
-        const calculatedFee = Math.round(Number(t.amount) * 0.015); // 1.5% de frais
-        return {
-          ...t,
-          transaction_type: t.method || 'transfer',
-          fee: t.metadata?.fee || calculatedFee,
-          description: t.metadata?.description || t.description || null
-        };
-      });
+      // Mapper les transactions
+      const mappedTransactions = (transData || []).map((t: any) => ({
+        id: t.id,
+        sender_id: t.from_wallet_id,
+        receiver_id: t.to_wallet_id,
+        amount: Number(t.amount),
+        currency: t.currency || 'GNF',
+        status: t.status,
+        method: t.transaction_type,
+        transaction_type: t.transaction_type,
+        fee: Number(t.fee || 0),
+        description: t.description,
+        created_at: t.created_at,
+        updated_at: t.updated_at || t.created_at,
+        metadata: t.metadata,
+        custom_id: t.id,
+        public_id: t.id
+      }));
 
-      console.log('📊 Transactions mappées avec frais:', mappedTransactions.length);
+      console.log('📊 Transactions mappées:', mappedTransactions.length);
 
       // Récupérer les wallets avec les profils utilisateurs
       const { data: walletsData, error: walletsError } = await supabase
@@ -180,15 +188,15 @@ export function useFinanceData(enabled: boolean = true) {
       )
       .subscribe();
 
-    // Subscription temps réel pour les transactions (enhanced_transactions)
+    // Subscription temps réel pour les transactions (wallet_transactions)
     const transactionsChannel = supabase
-      .channel('enhanced-transactions-changes')
+      .channel('wallet-transactions-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'enhanced_transactions',
+          table: 'wallet_transactions',
         },
         (payload) => {
           console.log('💸 Transaction modifiée:', payload);

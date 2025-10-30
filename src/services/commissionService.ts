@@ -116,9 +116,17 @@ export class CommissionService {
     try {
       let query = supabase
         .from('wallet_transactions')
-        .select('amount, fee, created_at, metadata')
-        .eq('status', 'completed')
-        .like('transaction_type', `${serviceName}_%`);
+        .select('amount, fee, created_at, metadata, transaction_type')
+        .eq('status', 'completed');
+
+      // Filtrer selon le type de service
+      if (serviceName === 'wallet_transfer') {
+        query = query.eq('transaction_type', 'transfer');
+      } else if (serviceName === 'subscription') {
+        query = query.eq('transaction_type', 'subscription');
+      } else {
+        query = query.like('transaction_type', `${serviceName}_%`);
+      }
 
       if (startDate) {
         query = query.gte('created_at', startDate.toISOString());
@@ -159,7 +167,14 @@ export class CommissionService {
    * Obtient tous les revenus par service pour le tableau de bord PDG
    */
   static async getAllServicesRevenue(startDate?: Date, endDate?: Date) {
-    const services = ['marketplace', 'taxi', 'delivery', 'livreur'];
+    const services = [
+      'wallet_transfer',    // Transferts entre wallets
+      'subscription',       // Abonnements vendeurs/livreurs
+      'marketplace',        // E-commerce
+      'taxi',              // Taxi-moto
+      'delivery',          // Livraison
+      'livreur'            // Livreur
+    ];
     
     const revenuePromises = services.map(service => 
       this.getServiceRevenue(service, startDate, endDate)

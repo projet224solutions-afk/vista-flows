@@ -59,6 +59,10 @@ export default function PlatformRevenueOverview() {
 
   const getServiceIcon = (serviceName: string) => {
     switch (serviceName) {
+      case 'wallet_transfer':
+        return <Wallet className="w-5 h-5" />;
+      case 'subscription':
+        return <Users className="w-5 h-5" />;
       case 'marketplace':
         return <Package className="w-5 h-5" />;
       case 'taxi':
@@ -73,6 +77,10 @@ export default function PlatformRevenueOverview() {
 
   const getServiceLabel = (serviceName: string) => {
     switch (serviceName) {
+      case 'wallet_transfer':
+        return 'Transferts Wallet';
+      case 'subscription':
+        return 'Abonnements';
       case 'marketplace':
         return 'E-Commerce';
       case 'taxi':
@@ -88,6 +96,10 @@ export default function PlatformRevenueOverview() {
 
   const getServiceColor = (serviceName: string) => {
     switch (serviceName) {
+      case 'wallet_transfer':
+        return 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30';
+      case 'subscription':
+        return 'from-pink-500/20 to-pink-600/20 border-pink-500/30';
       case 'marketplace':
         return 'from-green-500/20 to-green-600/20 border-green-500/30';
       case 'taxi':
@@ -219,7 +231,9 @@ export default function PlatformRevenueOverview() {
                 Aucune transaction enregistrée pour le moment
               </div>
             ) : (
-              revenues.services.map((service, index) => (
+              revenues.services
+                .filter(service => service.transaction_count > 0) // Afficher seulement les services avec transactions
+                .map((service, index) => (
                 <div
                   key={service.service_name}
                   className={`p-6 rounded-xl bg-gradient-to-br border transition-all duration-300 hover:shadow-lg animate-fade-in ${getServiceColor(service.service_name)}`}
@@ -241,9 +255,11 @@ export default function PlatformRevenueOverview() {
                       <p className="text-2xl font-bold">
                         {formatAmount(service.total_revenue)}
                       </p>
-                      <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                        +{formatAmount(service.total_commission)} commission
-                      </Badge>
+                      {service.total_commission > 0 && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          +{formatAmount(service.total_commission)} commission
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
