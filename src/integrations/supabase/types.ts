@@ -1593,6 +1593,54 @@ export type Database = {
           },
         ]
       }
+      devis_requests: {
+        Row: {
+          budget: number | null
+          created_at: string | null
+          description: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          responded_at: string | null
+          response: string | null
+          service_type: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string | null
+          description: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          responded_at?: string | null
+          response?: string | null
+          service_type: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string | null
+          description?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          responded_at?: string | null
+          response?: string | null
+          service_type?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           created_at: string | null
