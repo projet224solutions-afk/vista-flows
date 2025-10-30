@@ -175,9 +175,8 @@ serve(async (req) => {
         .from('vendors')
         .insert({
           user_id: authUser.user.id,
-          shop_name: `${body.firstName} ${body.lastName || ''}`.trim(),
-          is_verified: false,
-          is_active: true
+          business_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          is_verified: false
         });
 
       if (vendorError) {
