@@ -1,4 +1,4 @@
--- Fonction pour traiter les transactions entre wallets avec frais
+-- Corriger la fonction process_wallet_transaction pour inclure les frais de transfert
 CREATE OR REPLACE FUNCTION process_wallet_transaction(
     p_sender_id UUID,
     p_receiver_id UUID,

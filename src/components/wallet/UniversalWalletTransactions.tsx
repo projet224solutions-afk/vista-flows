@@ -439,8 +439,8 @@ export const UniversalWalletTransactions = () => {
       console.log('✅ Transfert réussi:', data);
 
       toast.success(
-        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
-        { duration: 5000 }
+        `✅ Transfert réussi vers ${transferPreview.recipient_name || 'le destinataire'}\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n📤 Total débité : ${transferPreview.total_debit.toLocaleString()} GNF\n📥 Montant reçu : ${transferPreview.amount.toLocaleString()} GNF`,
+        { duration: 6000 }
       );
       
       setTransferAmount('');
@@ -755,6 +755,11 @@ export const UniversalWalletTransactions = () => {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
+                      {tx.metadata?.description && (
+                        <span className="block mt-1 italic">
+                          {tx.metadata.description}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="text-right">
@@ -762,6 +767,11 @@ export const UniversalWalletTransactions = () => {
                       {tx.sender_id === user?.id && tx.receiver_id !== user?.id ? '-' : '+'}
                       {formatPrice(tx.amount)}
                     </p>
+                    {tx.sender_id === user?.id && tx.metadata?.fee_amount && (
+                      <p className="text-xs text-orange-600">
+                        +{formatPrice(tx.metadata.fee_amount)} frais
+                      </p>
+                    )}
                     <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
                       {tx.status}
                     </Badge>
