@@ -38,6 +38,7 @@ const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
 const ContactUserById = lazy(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazy(() => import("./pages/DirectConversation"));
+const Devis = lazy(() => import("./pages/Devis"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
@@ -85,6 +86,7 @@ function App() {
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
+              <Route path="/devis" element={<Devis />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
