@@ -9,9 +9,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+// Schéma de validation pour le sous-agent
+const subAgentSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
+    .max(100, { message: "Le nom ne peut pas dépasser 100 caractères" }),
+  email: z.string()
+    .trim()
+    .email({ message: "Email invalide" })
+    .max(255, { message: "L'email ne peut pas dépasser 255 caractères" }),
+  phone: z.string()
+    .trim()
+    .min(8, { message: "Le téléphone doit contenir au moins 8 chiffres" })
+    .max(15, { message: "Le téléphone ne peut pas dépasser 15 chiffres" })
+    .regex(/^[0-9]+$/, { message: "Le téléphone ne doit contenir que des chiffres" }),
+  commission_rate: z.number()
+    .min(0, { message: "Le taux de commission doit être positif" })
+    .max(100, { message: "Le taux de commission ne peut pas dépasser 100%" })
+});
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
@@ -43,6 +68,21 @@ export default function AgentDashboardPublic() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSubAgentDialogOpen, setIsSubAgentDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subAgentFormData, setSubAgentFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    commission_rate: 5,
+    permissions: {
+      create_users: true,
+      view_reports: false,
+      manage_commissions: false,
+      manage_users: false,
+      manage_products: false
+    }
+  });
 
   useEffect(() => {
     if (token) {
@@ -79,6 +119,71 @@ export default function AgentDashboardPublic() {
       supabase.removeChannel(channel);
     };
   }, [token]);
+
+  const handleCreateSubAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!agent) return;
+
+    const validationResult = subAgentSchema.safeParse({
+      name: subAgentFormData.name,
+      email: subAgentFormData.email,
+      phone: subAgentFormData.phone,
+      commission_rate: subAgentFormData.commission_rate
+    });
+
+    if (!validationResult.success) {
+      toast.error(validationResult.error.issues[0].message);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const permissions = Object.entries(subAgentFormData.permissions)
+        .filter(([_, value]) => value)
+        .map(([key]) => key);
+
+      const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}`;
+
+      const { data, error } = await supabase.functions.invoke('create-sub-agent', {
+        body: {
+          pdg_id: agent.pdg_id,
+          parent_agent_id: agent.id,
+          agent_code: agentCode,
+          name: subAgentFormData.name.trim(),
+          email: subAgentFormData.email.trim().toLowerCase(),
+          phone: subAgentFormData.phone.trim(),
+          permissions,
+          commission_rate: subAgentFormData.commission_rate,
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Sous-agent créé avec succès');
+      setIsSubAgentDialogOpen(false);
+      setSubAgentFormData({
+        name: '',
+        email: '',
+        phone: '',
+        commission_rate: 5,
+        permissions: {
+          create_users: true,
+          view_reports: false,
+          manage_commissions: false,
+          manage_users: false,
+          manage_products: false
+        }
+      });
+      loadAgentData();
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors de la création');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const loadAgentData = async () => {
     try {
@@ -317,12 +422,103 @@ export default function AgentDashboardPublic() {
                     )}
 
                     {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-                      <div>
-                        <Button className="w-full h-20" variant="outline">
-                          <Users className="w-6 h-6 mr-2" />
-                          Gérer les Sous-Agents
-                        </Button>
-                      </div>
+                      <Dialog open={isSubAgentDialogOpen} onOpenChange={setIsSubAgentDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="w-full h-20" variant="outline">
+                            <Plus className="w-6 h-6 mr-2" />
+                            Créer un Sous-Agent
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Créer un Sous-Agent</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleCreateSubAgent} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Nom Complet *</Label>
+                              <Input
+                                id="name"
+                                required
+                                value={subAgentFormData.name}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, name: e.target.value })}
+                                placeholder="Ex: Jean Dupont"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email *</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                required
+                                value={subAgentFormData.email}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, email: e.target.value })}
+                                placeholder="agent@exemple.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="phone">Téléphone *</Label>
+                              <Input
+                                id="phone"
+                                required
+                                value={subAgentFormData.phone}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, phone: e.target.value })}
+                                placeholder="622123456"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="commission">Taux Commission (%)</Label>
+                              <Input
+                                id="commission"
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={subAgentFormData.commission_rate}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, commission_rate: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div className="space-y-3 border-t pt-4">
+                              <Label>Permissions</Label>
+                              <div className="space-y-2">
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id="create_users"
+                                    checked={subAgentFormData.permissions.create_users}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, create_users: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id="view_reports"
+                                    checked={subAgentFormData.permissions.view_reports}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, view_reports: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-4">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setIsSubAgentDialogOpen(false)}
+                                disabled={isSubmitting}
+                              >
+                                Annuler
+                              </Button>
+                              <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? 'Création...' : 'Créer'}
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
                 </CardContent>
