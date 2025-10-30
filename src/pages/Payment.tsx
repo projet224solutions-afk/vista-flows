@@ -187,11 +187,25 @@ export default function Payment() {
       setPaymentOpen(false);
     } catch (error: any) {
       console.error('Erreur prévisualisation:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || 'Impossible de prévisualiser le paiement',
-        variant: "destructive"
-      });
+      
+      // Détecter si c'est une erreur de solde insuffisant
+      const errorMessage = error.message || '';
+      const isInsufficientBalance = errorMessage.toLowerCase().includes('insuffisant') || 
+                                   errorMessage.toLowerCase().includes('insufficient');
+      
+      if (isInsufficientBalance) {
+        toast({
+          title: "💳 Solde insuffisant",
+          description: "Votre solde est insuffisant pour effectuer cette transaction. Veuillez recharger votre wallet.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: errorMessage || 'Impossible de prévisualiser le paiement',
+          variant: "destructive"
+        });
+      }
     } finally {
       setProcessing(false);
     }
@@ -228,11 +242,25 @@ export default function Payment() {
       loadRecentTransactions();
     } catch (error: any) {
       console.error('❌ Erreur paiement:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || 'Erreur lors du paiement',
-        variant: "destructive"
-      });
+      
+      // Détecter si c'est une erreur de solde insuffisant
+      const errorMessage = error.message || '';
+      const isInsufficientBalance = errorMessage.toLowerCase().includes('insuffisant') || 
+                                   errorMessage.toLowerCase().includes('insufficient');
+      
+      if (isInsufficientBalance) {
+        toast({
+          title: "💳 Solde insuffisant",
+          description: "Votre solde est insuffisant pour effectuer cette transaction. Veuillez recharger votre wallet.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: errorMessage || 'Erreur lors du paiement',
+          variant: "destructive"
+        });
+      }
     } finally {
       setProcessing(false);
     }

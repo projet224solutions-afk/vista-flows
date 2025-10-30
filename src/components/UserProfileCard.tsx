@@ -328,8 +328,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
         p_receiver_id: recipientId,
-        p_amount: amount,
-        p_currency: 'GNF'
+        p_amount: amount
       });
 
       if (error) throw error;
