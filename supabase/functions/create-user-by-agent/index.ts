@@ -14,6 +14,8 @@ interface CreateUserRequest {
   lastName?: string;
   phone: string;
   role: string;
+  country?: string;
+  city?: string;
   agentId: string;
   agentCode: string;
 }
@@ -78,7 +80,8 @@ serve(async (req) => {
         last_name: body.lastName || '',
         phone: body.phone,
         role: body.role,
-        country: 'Guinée',
+        country: body.country || 'Guinée',
+        city: body.city || '',
         created_by_agent: body.agentCode,
         agent_id: body.agentId
       }
@@ -150,6 +153,20 @@ serve(async (req) => {
       if (walletError) {
         console.error('Wallet error:', walletError);
       }
+
+      // Créer aussi le profil customer
+      const { error: customerError } = await supabaseClient
+        .from('customers')
+        .insert({
+          user_id: authUser.user.id,
+          addresses: [],
+          payment_methods: [],
+          preferences: {}
+        });
+
+      if (customerError) {
+        console.error('Customer error:', customerError);
+      }
     }
 
     // Créer un profil vendeur si nécessaire
@@ -158,8 +175,9 @@ serve(async (req) => {
         .from('vendors')
         .insert({
           user_id: authUser.user.id,
-          business_name: `Business ${body.firstName}`,
-          is_verified: false
+          shop_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          is_verified: false,
+          is_active: true
         });
 
       if (vendorError) {
@@ -173,15 +191,20 @@ serve(async (req) => {
         .from('drivers')
         .insert({
           user_id: authUser.user.id,
-          license_number: 'TEMP-' + Date.now(),
+          license_number: `LIC-${Date.now()}`,
           vehicle_type: 'motorcycle',
-          is_verified: false
+          is_verified: false,
+          is_online: false,
+          vehicle_info: {}
         });
 
       if (driverError) {
         console.error('Driver error:', driverError);
       }
     }
+
+    // Les rôles taxi, transitaire, et syndicat utilisent uniquement le profil de base
+    // Pas besoin de tables supplémentaires pour l'instant
 
     // Log de l'action
     await supabaseClient.from('audit_logs').insert({

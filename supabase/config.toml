@@ -47,3 +47,19 @@ verify_jwt = false
 
 [functions.mapbox-proxy]
 verify_jwt = false
+
+[functions.get-agent-users]
+verify_jwt = false
+
+[functions.create-user-by-agent]
+verify_jwt = false
+
+[functions.create-sub-agent]
+verify_jwt = false
+
+[functions.agent-toggle-user-status]
+verify_jwt = false
+
+[functions.agent-delete-user]
+verify_jwt = false
+

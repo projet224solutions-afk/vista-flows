@@ -13,8 +13,7 @@ import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCir
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
-import { CreateUserForm } from '@/components/agent/CreateUserForm';
-import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
+import { CreateUsersHub } from '@/components/agent/CreateUsersHub';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
 import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
@@ -297,37 +296,18 @@ export default function AgentDashboardPublic() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              {/* Actions Rapides */}
-              <Card className="border-2 border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-                  <CardTitle className="text-xl">Actions Rapides</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {agent.permissions.includes('create_users') && (
-                      <div>
-                        <CreateUserForm 
-                          agentId={agent.id} 
-                          agentCode={agent.agent_code}
-                          onUserCreated={() => {
-                            // Recharger les données de l'agent après création
-                            loadAgentData();
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-                      <div>
-                        <CreateSubAgentForm 
-                          parentAgentId={agent.id}
-                          pdgId={agent.pdg_id}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Centre de Création */}
+              {(agent.permissions.includes('create_users') || agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
+                <CreateUsersHub 
+                  agentId={agent.id} 
+                  agentCode={agent.agent_code}
+                  pdgId={agent.pdg_id}
+                  canCreateSubAgent={agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')}
+                  onUserCreated={() => {
+                    loadAgentData();
+                  }}
+                />
+              )}
 
               {/* Permissions */}
               <Card>
