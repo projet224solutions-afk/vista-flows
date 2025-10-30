@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -116,14 +117,15 @@ export default function AgentDashboard() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold">Dashboard Agent</h1>
                 <UserIdDisplay layout="horizontal" showBadge={true} />
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
               </p>
+              <WalletBalanceDisplay userId={user?.id} compact={true} className="max-w-xs" />
             </div>
             <Button onClick={handleSignOut} variant="outline">
               <LogOut className="w-4 h-4 mr-2" />

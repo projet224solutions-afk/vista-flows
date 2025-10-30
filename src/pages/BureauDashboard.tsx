@@ -22,6 +22,7 @@ import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegrat
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -223,13 +224,18 @@ export default function BureauDashboard() {
       />
 
       {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex-1 min-w-[300px]">
           <h1 className="text-3xl font-bold">Interface Bureau Syndicat</h1>
           <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
-          <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
+          </div>
+          <div className="mt-3">
+            <p className="text-xs text-muted-foreground mb-1">ID Bureau: {bureau.id}</p>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <BureauNetworkIndicator bureauId={bureau.id} />
           <PWAInstallButton 
             appName={`Bureau Syndicat ${bureau.commune}`} 
