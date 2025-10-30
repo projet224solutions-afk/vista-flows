@@ -31,7 +31,16 @@ export default function Payment() {
   const [paymentDescription, setPaymentDescription] = useState('');
   const [processing, setProcessing] = useState(false);
   const [showPaymentPreview, setShowPaymentPreview] = useState(false);
-  const [paymentPreview, setPaymentPreview] = useState<any>(null);
+  const [paymentPreview, setPaymentPreview] = useState<{
+    amount: number;
+    fee_percent: number;
+    fee_amount: number;
+    total_debit: number;
+    amount_received: number;
+    current_balance: number;
+    balance_after: number;
+    receiver_id?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -190,7 +199,7 @@ export default function Payment() {
 
   // Fonction pour confirmer et effectuer un paiement
   const handleConfirmPayment = async () => {
-    if (!user?.id || !paymentPreview || !(paymentPreview as any).receiver_id) return;
+    if (!user?.id || !paymentPreview || !paymentPreview.receiver_id) return;
 
     setProcessing(true);
     setShowPaymentPreview(false);
@@ -198,7 +207,7 @@ export default function Payment() {
     try {
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
         p_sender_id: user.id,
-        p_receiver_id: (paymentPreview as any).receiver_id,
+        p_receiver_id: paymentPreview.receiver_id,
         p_amount: paymentPreview.amount,
         p_description: paymentDescription || 'Paiement via wallet'
       });
