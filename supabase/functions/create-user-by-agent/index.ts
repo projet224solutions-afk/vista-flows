@@ -218,7 +218,7 @@ serve(async (req) => {
           user_id: authUser.user.id,
           business_name: vendorData.business_name || `${body.firstName} ${body.lastName || ''}`.trim(),
           description: vendorData.business_description,
-          business_address: vendorData.business_address,
+          address: vendorData.business_address, // Correction: 'address' au lieu de 'business_address'
           is_verified: false
         });
 
