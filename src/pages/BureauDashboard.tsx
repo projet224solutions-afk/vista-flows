@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download } from 'lucide-react';
+import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
@@ -24,6 +24,7 @@ import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
+import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -318,10 +319,14 @@ export default function BureauDashboard() {
 
       {/* Tabs */}
       <Tabs defaultValue="motos" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-6 h-auto">
           <TabsTrigger value="motos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Bike className="w-4 h-4 mr-2" />
             Véhicules
+          </TabsTrigger>
+          <TabsTrigger value="wallet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Wallet className="w-4 h-4 mr-2" />
+            Wallet
           </TabsTrigger>
           <TabsTrigger value="workers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Users className="w-4 h-4 mr-2" />
@@ -566,6 +571,16 @@ export default function BureauDashboard() {
                 </div>
               </div>
             </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="wallet" className="space-y-4">
+          {bureau && (
+            <UniversalWalletDashboard 
+              userId={bureau.id}
+              userCode={bureau.bureau_code}
+              showTransactions={true}
+            />
           )}
         </TabsContent>
 

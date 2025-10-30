@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, TrendingUp, DollarSign, UserPlus, LogOut } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, UserPlus, LogOut, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
+import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -155,6 +156,10 @@ export default function AgentDashboard() {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="wallet">
+              <Wallet className="w-4 h-4 mr-2" />
+              Wallet
+            </TabsTrigger>
             <TabsTrigger value="sub-agents">Sous-Agents</TabsTrigger>
           </TabsList>
 
@@ -280,6 +285,14 @@ export default function AgentDashboard() {
                 </Button>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="wallet">
+            <UniversalWalletDashboard 
+              userId={user?.id || ''} 
+              userCode={agent.agent_code}
+              showTransactions={true}
+            />
           </TabsContent>
 
           <TabsContent value="sub-agents">
