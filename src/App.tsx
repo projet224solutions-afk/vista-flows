@@ -49,6 +49,7 @@ const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
 const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
 const MigrateIds = lazy(() => import("./pages/Admin/MigrateIds"));
+const Wallet = lazy(() => import("./pages/Wallet"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -141,6 +142,14 @@ function App() {
               <Route
                 path="/test-wallet-transfer"
                 element={<TestWalletTransfer />}
+              />
+              <Route
+                path="/wallet"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}>
+                    <Wallet />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/admin/migrate-ids"
