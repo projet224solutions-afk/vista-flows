@@ -44,6 +44,22 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
     role: 'client',
     country: 'Guinée',
     city: '',
+    // Données syndicat
+    bureau_code: '',
+    prefecture: '',
+    commune: '',
+    full_location: '',
+    // Données vendeur
+    business_name: '',
+    business_description: '',
+    business_address: '',
+    // Données taxi/livreur
+    license_number: '',
+    vehicle_type: 'moto',
+    vehicle_brand: '',
+    vehicle_model: '',
+    vehicle_year: '',
+    vehicle_plate: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,20 +73,60 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
     try {
       setIsSubmitting(true);
 
+      // Préparer les données spécifiques au rôle
+      const requestBody: any = {
+        email: formData.email,
+        password: Math.random().toString(36).slice(-8) + 'Aa1!',
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        role: formData.role,
+        country: formData.country,
+        city: formData.city,
+        agentId: agentId,
+        agentCode: agentCode,
+      };
+
+      // Ajouter les données spécifiques selon le rôle
+      if (formData.role === 'syndicat') {
+        if (!formData.bureau_code || !formData.prefecture || !formData.commune) {
+          toast.error('Veuillez remplir tous les champs du bureau syndical');
+          return;
+        }
+        requestBody.syndicatData = {
+          bureau_code: formData.bureau_code,
+          prefecture: formData.prefecture,
+          commune: formData.commune,
+          full_location: formData.full_location,
+        };
+      } else if (formData.role === 'vendeur') {
+        if (!formData.business_name) {
+          toast.error('Veuillez remplir le nom de l\'entreprise');
+          return;
+        }
+        requestBody.vendeurData = {
+          business_name: formData.business_name,
+          business_description: formData.business_description,
+          business_address: formData.business_address,
+        };
+      } else if (formData.role === 'taxi' || formData.role === 'livreur') {
+        if (!formData.license_number) {
+          toast.error('Veuillez remplir le numéro de permis');
+          return;
+        }
+        requestBody.driverData = {
+          license_number: formData.license_number,
+          vehicle_type: formData.vehicle_type,
+          vehicle_brand: formData.vehicle_brand,
+          vehicle_model: formData.vehicle_model,
+          vehicle_year: formData.vehicle_year,
+          vehicle_plate: formData.vehicle_plate,
+        };
+      }
+
       // Créer l'utilisateur dans auth.users via la fonction edge
       const { data, error } = await supabase.functions.invoke('create-user-by-agent', {
-        body: {
-          email: formData.email,
-          password: Math.random().toString(36).slice(-8) + 'Aa1!',
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          role: formData.role,
-          country: formData.country,
-          city: formData.city,
-          agentId: agentId,
-          agentCode: agentCode,
-        },
+        body: requestBody,
       });
 
       if (error) {
@@ -98,6 +154,19 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
         role: 'client',
         country: 'Guinée',
         city: '',
+        bureau_code: '',
+        prefecture: '',
+        commune: '',
+        full_location: '',
+        business_name: '',
+        business_description: '',
+        business_address: '',
+        license_number: '',
+        vehicle_type: 'moto',
+        vehicle_brand: '',
+        vehicle_model: '',
+        vehicle_year: '',
+        vehicle_plate: '',
       });
       setIsOpen(false);
       
@@ -260,6 +329,187 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
               </div>
             </div>
           </div>
+
+          {/* Champs spécifiques au rôle Syndicat */}
+          {formData.role === 'syndicat' && (
+            <div className="space-y-4 p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 className="w-5 h-5 text-pink-600" />
+                <h3 className="font-semibold text-pink-900 dark:text-pink-100">Informations du Bureau Syndical</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bureau_code">Code Bureau *</Label>
+                  <Input
+                    id="bureau_code"
+                    required
+                    value={formData.bureau_code}
+                    onChange={(e) => setFormData({ ...formData, bureau_code: e.target.value })}
+                    placeholder="Ex: BUR-CON-001"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="prefecture">Préfecture *</Label>
+                  <Input
+                    id="prefecture"
+                    required
+                    value={formData.prefecture}
+                    onChange={(e) => setFormData({ ...formData, prefecture: e.target.value })}
+                    placeholder="Ex: Conakry"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="commune">Commune *</Label>
+                  <Input
+                    id="commune"
+                    required
+                    value={formData.commune}
+                    onChange={(e) => setFormData({ ...formData, commune: e.target.value })}
+                    placeholder="Ex: Matam"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full_location">Localisation complète</Label>
+                  <Input
+                    id="full_location"
+                    value={formData.full_location}
+                    onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
+                    placeholder="Ex: Près du marché"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Champs spécifiques au rôle Vendeur */}
+          {formData.role === 'vendeur' && (
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingBag className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Informations de l'Entreprise</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="business_name">Nom de l'entreprise *</Label>
+                <Input
+                  id="business_name"
+                  required
+                  value={formData.business_name}
+                  onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                  placeholder="Ex: Boutique centrale"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_description">Description de l'activité</Label>
+                <Input
+                  id="business_description"
+                  value={formData.business_description}
+                  onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
+                  placeholder="Ex: Vente de produits alimentaires"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_address">Adresse de l'entreprise</Label>
+                <Input
+                  id="business_address"
+                  value={formData.business_address}
+                  onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
+                  placeholder="Ex: Marché Madina, Conakry"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Champs spécifiques aux rôles Taxi et Livreur */}
+          {(formData.role === 'taxi' || formData.role === 'livreur') && (
+            <div className="space-y-4 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-2 mb-2">
+                {formData.role === 'taxi' ? (
+                  <Car className="w-5 h-5 text-yellow-600" />
+                ) : (
+                  <Truck className="w-5 h-5 text-yellow-600" />
+                )}
+                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                  Informations du Véhicule
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="license_number">Numéro de permis *</Label>
+                  <Input
+                    id="license_number"
+                    required
+                    value={formData.license_number}
+                    onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
+                    placeholder="Ex: GN123456"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_type">Type de véhicule *</Label>
+                  <select
+                    id="vehicle_type"
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    value={formData.vehicle_type}
+                    onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                  >
+                    <option value="moto">Moto</option>
+                    <option value="car">Voiture</option>
+                    <option value="van">Camionnette</option>
+                    <option value="truck">Camion</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_brand">Marque</Label>
+                  <Input
+                    id="vehicle_brand"
+                    value={formData.vehicle_brand}
+                    onChange={(e) => setFormData({ ...formData, vehicle_brand: e.target.value })}
+                    placeholder="Ex: Toyota"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_model">Modèle</Label>
+                  <Input
+                    id="vehicle_model"
+                    value={formData.vehicle_model}
+                    onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })}
+                    placeholder="Ex: Corolla"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_year">Année</Label>
+                  <Input
+                    id="vehicle_year"
+                    value={formData.vehicle_year}
+                    onChange={(e) => setFormData({ ...formData, vehicle_year: e.target.value })}
+                    placeholder="Ex: 2020"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_plate">Plaque d'immatriculation</Label>
+                  <Input
+                    id="vehicle_plate"
+                    value={formData.vehicle_plate}
+                    onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
+                    placeholder="Ex: AB-1234-CD"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button 

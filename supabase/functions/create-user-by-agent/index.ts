@@ -18,6 +18,28 @@ interface CreateUserRequest {
   city?: string;
   agentId: string;
   agentCode: string;
+  // Données spécifiques syndicat
+  syndicatData?: {
+    bureau_code: string;
+    prefecture: string;
+    commune: string;
+    full_location?: string;
+  };
+  // Données spécifiques vendeur
+  vendeurData?: {
+    business_name: string;
+    business_description?: string;
+    business_address?: string;
+  };
+  // Données spécifiques taxi/livreur
+  driverData?: {
+    license_number: string;
+    vehicle_type: string;
+    vehicle_brand?: string;
+    vehicle_model?: string;
+    vehicle_year?: string;
+    vehicle_plate?: string;
+  };
 }
 
 serve(async (req) => {
@@ -177,34 +199,58 @@ serve(async (req) => {
 
     // Créer un profil vendeur si nécessaire
     if (body.role === 'vendeur') {
+      const vendorData = (body.vendeurData || {}) as {
+        business_name?: string;
+        business_description?: string;
+        business_address?: string;
+      };
       const { error: vendorError } = await supabaseClient
         .from('vendors')
         .insert({
           user_id: authUser.user.id,
-          business_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          business_name: vendorData.business_name || `${body.firstName} ${body.lastName || ''}`.trim(),
+          description: vendorData.business_description,
+          business_address: vendorData.business_address,
           is_verified: false
         });
 
       if (vendorError) {
         console.error('Vendor error:', vendorError);
+        throw new Error('Erreur lors de la création du profil vendeur: ' + vendorError.message);
       }
     }
 
-    // Créer un profil livreur si nécessaire
-    if (body.role === 'livreur') {
+    // Créer un profil livreur ou taxi si nécessaire
+    if (body.role === 'livreur' || body.role === 'taxi') {
+      const driverData = (body.driverData || {}) as {
+        license_number?: string;
+        vehicle_type?: string;
+        vehicle_brand?: string;
+        vehicle_model?: string;
+        vehicle_year?: string;
+        vehicle_plate?: string;
+      };
+      const vehicleInfo: any = {};
+      
+      if (driverData.vehicle_brand) vehicleInfo.brand = driverData.vehicle_brand;
+      if (driverData.vehicle_model) vehicleInfo.model = driverData.vehicle_model;
+      if (driverData.vehicle_year) vehicleInfo.year = driverData.vehicle_year;
+      if (driverData.vehicle_plate) vehicleInfo.plate = driverData.vehicle_plate;
+
       const { error: driverError } = await supabaseClient
         .from('drivers')
         .insert({
           user_id: authUser.user.id,
-          license_number: `LIC-${Date.now()}`,
-          vehicle_type: 'moto',
+          license_number: driverData.license_number || `LIC-${Date.now()}`,
+          vehicle_type: driverData.vehicle_type || 'moto',
           is_verified: false,
           is_online: false,
-          vehicle_info: {}
+          vehicle_info: vehicleInfo
         });
 
       if (driverError) {
         console.error('Driver error:', driverError);
+        throw new Error('Erreur lors de la création du profil chauffeur: ' + driverError.message);
       }
     }
 
@@ -234,8 +280,44 @@ serve(async (req) => {
       }
     }
 
-    // Les rôles taxi, transitaire, et syndicat utilisent uniquement le profil de base
-    // Pas besoin de tables supplémentaires pour l'instant
+    // Créer un bureau syndicat si nécessaire
+    if (body.role === 'syndicat') {
+      const syndicatData = body.syndicatData;
+      
+      if (!syndicatData || !syndicatData.bureau_code || !syndicatData.prefecture || !syndicatData.commune) {
+        throw new Error('Données du bureau syndical manquantes (code, préfecture, commune requis)');
+      }
+
+      // Générer un access token unique pour le bureau
+      const accessToken = crypto.randomUUID();
+
+      const { error: bureauError } = await supabaseClient
+        .from('bureaus')
+        .insert({
+          bureau_code: syndicatData.bureau_code,
+          prefecture: syndicatData.prefecture,
+          commune: syndicatData.commune,
+          full_location: syndicatData.full_location || `${syndicatData.prefecture} - ${syndicatData.commune}`,
+          president_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          president_email: body.email,
+          president_phone: body.phone,
+          status: 'active',
+          access_token: accessToken,
+          interface_url: `${Deno.env.get('APP_URL') || 'https://app.224solutions.com'}/bureau/${accessToken}`,
+          total_members: 0,
+          total_vehicles: 0,
+          total_cotisations: 0
+        });
+
+      if (bureauError) {
+        console.error('Bureau error:', bureauError);
+        throw new Error('Erreur lors de la création du bureau syndical: ' + bureauError.message);
+      }
+
+      console.log('✅ Bureau syndical créé avec succès');
+    }
+
+    // Le rôle transitaire utilise uniquement le profil de base
 
     // Log de l'action
     await supabaseClient.from('audit_logs').insert({
