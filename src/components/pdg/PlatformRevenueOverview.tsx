@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { CommissionService } from '@/services/commissionService';
+import DetailedTransactionsList from './DetailedTransactionsList';
 import { 
   Wallet, 
   TrendingUp, 
@@ -14,7 +16,8 @@ import {
   Package,
   RefreshCw,
   DollarSign,
-  Car
+  Car,
+  List
 } from "lucide-react";
 
 interface ServiceRevenue {
@@ -157,9 +160,21 @@ export default function PlatformRevenueOverview() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Résumé Global */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <Tabs defaultValue="summary" className="space-y-6">
+      <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsTrigger value="summary" className="gap-2">
+          <TrendingUp className="w-4 h-4" />
+          Résumé
+        </TabsTrigger>
+        <TabsTrigger value="details" className="gap-2">
+          <List className="w-4 h-4" />
+          Transactions Détaillées
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="summary" className="space-y-6">
+        {/* Résumé Global */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
@@ -320,6 +335,11 @@ export default function PlatformRevenueOverview() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="details">
+        <DetailedTransactionsList />
+      </TabsContent>
+    </Tabs>
   );
 }
