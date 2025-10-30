@@ -7308,6 +7308,7 @@ export type Database = {
             Returns: string
           }
       enablelongtransactions: { Args: never; Returns: string }
+      ensure_pdg_wallet: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       extract_number: { Args: { p_id: string }; Returns: number }
       extract_prefix: { Args: { p_id: string }; Returns: string }
