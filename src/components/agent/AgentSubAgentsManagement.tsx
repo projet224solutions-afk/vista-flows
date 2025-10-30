@@ -9,9 +9,46 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAgentSubAgentsData, type SubAgent, type AgentProfile, type SubAgentStats } from '@/hooks/useAgentSubAgentsData';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+
+// Types
+export interface SubAgent {
+  id: string;
+  pdg_id: string;
+  parent_agent_id: string;
+  agent_code: string;
+  name: string;
+  email: string;
+  phone?: string;
+  is_active: boolean;
+  permissions: string[];
+  commission_rate: number;
+  created_at: string;
+  updated_at?: string;
+  total_users_created: number;
+}
+
+export interface AgentProfile {
+  id: string;
+  pdg_id: string;
+  user_id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  agent_code: string;
+  permissions: string[];
+  is_active: boolean;
+  can_create_sub_agent: boolean;
+  commission_rate: number;
+}
+
+export interface SubAgentStats {
+  totalSubAgents: number;
+  activeSubAgents: number;
+  inactiveSubAgents: number;
+  averageCommission: number;
+}
 
 // Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
