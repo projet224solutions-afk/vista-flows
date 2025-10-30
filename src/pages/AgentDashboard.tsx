@@ -53,11 +53,24 @@ export default function AgentDashboard() {
 
   const loadUserStats = async (agentId: string) => {
     try {
-      // Compter le total d'utilisateurs créés
+      // Récupérer les sous-agents de cet agent
+      const { data: subAgents } = await supabase
+        .from('agents_management')
+        .select('id')
+        .eq('parent_agent_id', agentId)
+        .eq('is_active', true);
+
+      // Créer une liste des IDs d'agents (agent + sous-agents)
+      const agentIds = [agentId];
+      if (subAgents && subAgents.length > 0) {
+        agentIds.push(...subAgents.map(sa => sa.id));
+      }
+
+      // Compter le total d'utilisateurs créés par l'agent et ses sous-agents
       const { count: totalCount, error: totalError } = await supabase
         .from('agent_created_users')
         .select('*', { count: 'exact', head: true })
-        .eq('agent_id', agentId);
+        .in('agent_id', agentIds);
 
       if (totalError) throw totalError;
 
@@ -69,7 +82,7 @@ export default function AgentDashboard() {
       const { count: monthCount, error: monthError } = await supabase
         .from('agent_created_users')
         .select('*', { count: 'exact', head: true })
-        .eq('agent_id', agentId)
+        .in('agent_id', agentIds)
         .gte('created_at', startOfMonth.toISOString());
 
       if (monthError) throw monthError;
