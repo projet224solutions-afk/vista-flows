@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -704,6 +704,9 @@ export default function UniversalCommunicationHub({
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Nouvelle conversation</DialogTitle>
+              <DialogDescription>
+                Recherchez un utilisateur par nom ou ID pour démarrer une conversation
+              </DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="search" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
@@ -800,7 +803,10 @@ export default function UniversalCommunicationHub({
         {/* Dialog appel */}
         {activeCall && (
           <Dialog open={!!activeCall} onOpenChange={() => handleEndCall()}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="max-w-4xl" aria-describedby="call-dialog-description">
+              <span id="call-dialog-description" className="sr-only">
+                {callType === 'video' ? 'Appel vidéo en cours' : 'Appel audio en cours'}
+              </span>
               {callType === 'video' ? (
                 <AgoraVideoCall
                   channel={activeCall.id}
