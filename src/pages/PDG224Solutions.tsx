@@ -30,7 +30,7 @@ const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatMan
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
 const PDGApiSupervision = lazy(() => import('@/components/pdg/PDGApiSupervision'));
-const TransferFeeSettings = lazy(() => import('@/components/pdg/TransferFeeSettings'));
+const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSettings'));
 const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
