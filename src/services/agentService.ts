@@ -152,7 +152,39 @@ export class AgentService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as AgentManagement[];
+      
+      // Récupérer tous les agents (y compris les sous-agents)
+      const allAgents = (data || []) as AgentManagement[];
+      
+      // Pour chaque agent, compter les utilisateurs créés (incluant ceux des sous-agents)
+      const agentsWithStats = await Promise.all(
+        allAgents.map(async (agent) => {
+          // Récupérer les IDs de l'agent et de ses sous-agents
+          const subAgentIds = allAgents
+            .filter(a => a.parent_agent_id === agent.id)
+            .map(a => a.id);
+          
+          const agentIds = [agent.id, ...subAgentIds];
+          
+          // Compter les utilisateurs créés par l'agent et ses sous-agents
+          const { count, error: countError } = await supabase
+            .from('agent_created_users')
+            .select('*', { count: 'exact', head: true })
+            .in('agent_id', agentIds);
+          
+          if (countError) {
+            console.error(`Erreur comptage utilisateurs pour agent ${agent.id}:`, countError);
+          }
+          
+          return {
+            ...agent,
+            total_users_created: count || 0,
+            total_commissions_earned: 0 // À calculer plus tard si nécessaire
+          };
+        })
+      );
+      
+      return agentsWithStats;
     } catch (error) {
       console.error('❌ Erreur récupération agents:', error);
       return [];
