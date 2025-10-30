@@ -80,7 +80,8 @@ export default function AgentDashboardPublic() {
       view_reports: false,
       manage_commissions: false,
       manage_users: false,
-      manage_products: false
+      manage_products: false,
+      create_sub_agents: false
     }
   });
 
@@ -174,7 +175,8 @@ export default function AgentDashboardPublic() {
           view_reports: false,
           manage_commissions: false,
           manage_users: false,
-          manage_products: false
+          manage_products: false,
+          create_sub_agents: false
         }
       });
       loadAgentData();
@@ -477,9 +479,9 @@ export default function AgentDashboardPublic() {
                               />
                             </div>
                             <div className="space-y-3 border-t pt-4">
-                              <Label>Permissions</Label>
-                              <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
+                              <Label className="text-base font-semibold">Permissions</Label>
+                              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
                                   <Checkbox 
                                     id="create_users"
                                     checked={subAgentFormData.permissions.create_users}
@@ -488,9 +490,12 @@ export default function AgentDashboardPublic() {
                                       permissions: { ...subAgentFormData.permissions, create_users: checked as boolean }
                                     })}
                                   />
-                                  <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                                  <label htmlFor="create_users" className="text-sm font-medium cursor-pointer flex-1">
+                                    ✅ Créer des utilisateurs
+                                  </label>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
                                   <Checkbox 
                                     id="view_reports"
                                     checked={subAgentFormData.permissions.view_reports}
@@ -499,9 +504,70 @@ export default function AgentDashboardPublic() {
                                       permissions: { ...subAgentFormData.permissions, view_reports: checked as boolean }
                                     })}
                                   />
-                                  <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                                  <label htmlFor="view_reports" className="text-sm font-medium cursor-pointer flex-1">
+                                    📊 Voir les rapports
+                                  </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
+                                  <Checkbox 
+                                    id="manage_commissions"
+                                    checked={subAgentFormData.permissions.manage_commissions}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, manage_commissions: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="manage_commissions" className="text-sm font-medium cursor-pointer flex-1">
+                                    💰 Gérer les commissions
+                                  </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
+                                  <Checkbox 
+                                    id="manage_users"
+                                    checked={subAgentFormData.permissions.manage_users}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, manage_users: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="manage_users" className="text-sm font-medium cursor-pointer flex-1">
+                                    👤 Gérer les utilisateurs
+                                  </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
+                                  <Checkbox 
+                                    id="manage_products"
+                                    checked={subAgentFormData.permissions.manage_products}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, manage_products: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="manage_products" className="text-sm font-medium cursor-pointer flex-1">
+                                    📦 Gérer les produits
+                                  </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2 p-2 hover:bg-accent rounded">
+                                  <Checkbox 
+                                    id="create_sub_agents"
+                                    checked={subAgentFormData.permissions.create_sub_agents}
+                                    onCheckedChange={(checked) => setSubAgentFormData({
+                                      ...subAgentFormData,
+                                      permissions: { ...subAgentFormData.permissions, create_sub_agents: checked as boolean }
+                                    })}
+                                  />
+                                  <label htmlFor="create_sub_agents" className="text-sm font-medium cursor-pointer flex-1">
+                                    👥 Créer des sous-agents
+                                  </label>
                                 </div>
                               </div>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Sélectionnez les permissions que vous souhaitez accorder au sous-agent
+                              </p>
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
                               <Button 
