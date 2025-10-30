@@ -38,16 +38,17 @@ export const useHomeStats = () => {
           .from('taxi_rides')
           .select('*', { count: 'exact', head: true });
 
-        // Compter les utilisateurs
-        const { count: usersCount } = await supabase
+        // Compter uniquement les clients (utilisateurs avec le rôle 'client')
+        const { count: clientsCount } = await supabase
           .from('profiles')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'client');
 
         setStats({
           totalProducts: productsCount || 0,
           totalVendors: vendorsCount || 0,
           totalServices: ridesCount || 0,
-          totalClients: usersCount || 0,
+          totalClients: clientsCount || 0,
         });
       } catch (error) {
         console.error('Erreur lors du chargement des statistiques:', error);
