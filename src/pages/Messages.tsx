@@ -58,6 +58,12 @@ export default function Messages() {
   }, [selectedConversation, currentUser]);
 
   useEffect(() => {
+    if (recipientIdParam && !selectedConversation) {
+      setSelectedConversation(recipientIdParam);
+    }
+  }, [recipientIdParam]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -260,7 +266,7 @@ export default function Messages() {
         </div>
 
         {/* Zone de messages */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col bg-background">
           {selectedConversation ? (
             <>
               {/* Header conversation */}
