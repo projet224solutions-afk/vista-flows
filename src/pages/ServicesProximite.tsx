@@ -97,8 +97,9 @@ export default function ServicesProximite() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4">
           <div className="flex items-center gap-4 mb-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="outline" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
+              <span className="ml-2">Retour</span>
             </Button>
             <h1 className="text-2xl font-bold text-foreground">Services de Proximité</h1>
           </div>
