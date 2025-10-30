@@ -358,14 +358,10 @@ export const UniversalWalletTransactions = () => {
         return;
       }
 
-      if (recipientUuid === user.id) {
-        toast.error('Vous ne pouvez pas transférer à vous-même');
-        return;
-      }
-
       console.log('🔍 Prévisualisation pour:', { 
         sender: user.id, 
-        receiver: recipientUuid, 
+        receiver: recipientUuid,
+        recipient_name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
         amount 
       });
 
@@ -387,11 +383,21 @@ export const UniversalWalletTransactions = () => {
       const previewData = data as any;
 
       if (!previewData.success) {
+        console.error('❌ Preview échouée:', previewData.error);
         toast.error(previewData.error || 'Erreur inconnue');
         return;
       }
 
-      setTransferPreview({ ...previewData, recipient_uuid: recipientUuid });
+      const recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 
+                           profileData.custom_id || 
+                           profileData.public_id || 
+                           'Utilisateur inconnu';
+
+      setTransferPreview({ 
+        ...previewData, 
+        recipient_uuid: recipientUuid,
+        recipient_name: recipientName
+      });
       setShowTransferPreview(true);
       setTransferOpen(false);
     } catch (error: any) {
@@ -666,6 +672,12 @@ export const UniversalWalletTransactions = () => {
               <AlertDialogDescription asChild>
                 <div className="space-y-4 mt-4">
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                    {transferPreview?.recipient_name && (
+                      <div className="flex justify-between items-center pb-3 border-b">
+                        <span className="text-sm font-medium">👤 Destinataire</span>
+                        <span className="text-lg font-semibold text-primary">{transferPreview.recipient_name}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
                       <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
