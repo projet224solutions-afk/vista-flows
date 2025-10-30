@@ -3307,6 +3307,33 @@ export type Database = {
           },
         ]
       }
+      platform_revenue: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          revenue_type: string
+          source_transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          revenue_type: string
+          source_transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          revenue_type?: string
+          source_transaction_id?: string | null
+        }
+        Relationships: []
+      }
       pos_settings: {
         Row: {
           auto_print_receipt: boolean | null
@@ -7450,6 +7477,14 @@ export type Database = {
           score: number
         }[]
       }
+      get_platform_revenue_stats: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          revenue_type: string
+          total_amount: number
+          transaction_count: number
+        }[]
+      }
       get_prefix_for_role: { Args: { p_role: string }; Returns: string }
       get_product_rating: {
         Args: { p_product_id: string }
@@ -7648,6 +7683,15 @@ export type Database = {
           p_sender_code: string
         }
         Returns: Json
+      }
+      record_platform_revenue: {
+        Args: {
+          p_amount: number
+          p_metadata?: Json
+          p_revenue_type: string
+          p_source_transaction_id?: string
+        }
+        Returns: string
       }
       release_taxi_lock:
         | {

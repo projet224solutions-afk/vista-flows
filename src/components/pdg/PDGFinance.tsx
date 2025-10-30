@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -19,6 +20,7 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useFinanceData } from '@/hooks/useFinanceData';
+import PlatformRevenueOverview from './PlatformRevenueOverview';
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
@@ -98,7 +100,17 @@ export default function PDGFinance() {
   }));
 
   return (
-    <div className="space-y-8">
+    <Tabs defaultValue="overview" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+        <TabsTrigger value="overview">Revenus Plateforme</TabsTrigger>
+        <TabsTrigger value="transactions">Transactions</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview" className="space-y-6">
+        <PlatformRevenueOverview />
+      </TabsContent>
+
+      <TabsContent value="transactions" className="space-y-8">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
@@ -463,6 +475,7 @@ export default function PDGFinance() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }
