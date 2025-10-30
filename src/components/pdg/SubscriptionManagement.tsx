@@ -36,8 +36,10 @@ export default function SubscriptionManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [newPrice, setNewPrice] = useState('');
+  const [newMaxProducts, setNewMaxProducts] = useState('');
   const [reason, setReason] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isProductLimitDialogOpen, setIsProductLimitDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -108,6 +110,13 @@ export default function SubscriptionManagement() {
     setIsDialogOpen(true);
   };
 
+  const handleOpenProductLimitDialog = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setNewMaxProducts(plan.max_products?.toString() || '');
+    setReason('');
+    setIsProductLimitDialogOpen(true);
+  };
+
   const handleChangePlanPrice = async () => {
     if (!selectedPlan) return;
 
@@ -157,6 +166,61 @@ export default function SubscriptionManagement() {
       toast({
         title: 'Erreur',
         description: error.message || 'Impossible de modifier le prix',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleChangeProductLimit = async () => {
+    if (!selectedPlan) return;
+
+    const productLimit = newMaxProducts === '' ? null : parseInt(newMaxProducts);
+    if (productLimit !== null && (isNaN(productLimit) || productLimit < 0)) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez entrer un nombre valide (ou vide pour illimité)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (productLimit === selectedPlan.max_products) {
+      toast({
+        title: 'Attention',
+        description: 'La nouvelle limite doit être différente de l\'ancienne',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('plans')
+        .update({ 
+          max_products: productLimit,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', selectedPlan.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Limite de produits du plan ${selectedPlan.display_name} modifiée avec succès`,
+      });
+      setIsProductLimitDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error changing product limit:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de modifier la limite',
         variant: 'destructive',
       });
     } finally {
@@ -267,11 +331,20 @@ export default function SubscriptionManagement() {
                         {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
                       </TableCell>
                       <TableCell>
-                        {plan.max_products === null ? (
-                          <Badge variant="secondary">Illimité</Badge>
-                        ) : (
-                          plan.max_products
-                        )}
+                        <div className="flex items-center gap-2">
+                          {plan.max_products === null ? (
+                            <Badge variant="secondary">Illimité</Badge>
+                          ) : (
+                            <span className="font-medium">{plan.max_products}</span>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleOpenProductLimitDialog(plan)}
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
@@ -396,6 +469,54 @@ export default function SubscriptionManagement() {
               Annuler
             </Button>
             <Button onClick={handleChangePlanPrice} disabled={submitting}>
+              {submitting ? 'Modification...' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pour modifier la limite de produits */}
+      <Dialog open={isProductLimitDialogOpen} onOpenChange={setIsProductLimitDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier la Limite de Produits</DialogTitle>
+            <DialogDescription>
+              {selectedPlan && `Plan: ${selectedPlan.display_name}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="maxProducts">Nombre Maximum de Produits</Label>
+              <Input
+                id="maxProducts"
+                type="number"
+                value={newMaxProducts}
+                onChange={(e) => setNewMaxProducts(e.target.value)}
+                placeholder="Laissez vide pour illimité"
+              />
+              <p className="text-xs text-muted-foreground">
+                Laissez le champ vide pour autoriser un nombre illimité de produits
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reasonProducts">Raison du changement (optionnel)</Label>
+              <Textarea
+                id="reasonProducts"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Expliquez la raison de ce changement..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProductLimitDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleChangeProductLimit} disabled={submitting}>
               {submitting ? 'Modification...' : 'Confirmer'}
             </Button>
           </DialogFooter>
