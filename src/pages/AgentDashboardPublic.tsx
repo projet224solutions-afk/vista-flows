@@ -39,6 +39,8 @@ const subAgentSchema = z.object({
 });
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
+import { AgentWalletDisplay } from '@/components/agent/AgentWalletDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
@@ -370,8 +372,8 @@ export default function AgentDashboardPublic() {
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
-                <UserIdDisplay layout="horizontal" showBadge={true} />
-                <WalletBalanceDisplay userId={agent.pdg_id} compact={true} className="max-w-xs" />
+                <AgentIdDisplay agentCode={agent.agent_code} agentName={agent.name} />
+                <AgentWalletDisplay agentId={agent.id} agentCode={agent.agent_code} compact={true} className="max-w-xs" />
               </div>
             </div>
             <div className="flex items-center gap-3">
