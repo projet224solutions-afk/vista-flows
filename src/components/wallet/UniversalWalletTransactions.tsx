@@ -328,31 +328,28 @@ export const UniversalWalletTransactions = () => {
     setProcessing(true);
     
     try {
-      // Récupérer l'UUID du destinataire depuis son custom_id (format: AAA0001)
-      let recipientData = await supabase
-        .from('user_ids')
-        .select('user_id')
-        .eq('custom_id', recipientId.toUpperCase())
+      // Récupérer l'UUID du destinataire depuis son custom_id ou public_id
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .or(`custom_id.eq.${recipientId.toUpperCase()},public_id.eq.${recipientId.toUpperCase()}`)
         .maybeSingle();
 
-      // Si pas trouvé, chercher dans profiles en fallback
-      let recipientUuid = null;
-      if (!recipientData.data) {
-        const profileData = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('custom_id', recipientId.toUpperCase())
-          .maybeSingle();
-        
-        if (profileData.data) {
-          recipientUuid = profileData.data.id;
-        }
-      } else {
-        recipientUuid = recipientData.data.user_id;
+      if (profileError) {
+        console.error('Erreur recherche profil:', profileError);
+        toast.error('Erreur lors de la recherche du destinataire');
+        return;
       }
 
-      if (!recipientUuid) {
-        toast.error('Destinataire introuvable');
+      if (!profileData) {
+        toast.error(`Destinataire introuvable avec l'ID: ${recipientId}`);
+        return;
+      }
+
+      const recipientUuid = profileData.id;
+
+      if (recipientUuid === user.id) {
+        toast.error('Vous ne pouvez pas transférer à vous-même');
         return;
       }
 
