@@ -24,6 +24,8 @@ import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { IdSystemIndicator } from "@/components/IdSystemIndicator";
+import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -49,10 +51,13 @@ export default function ClientDashboard() {
     createOrder,
     toggleFavorite,
     contactVendor,
+    loadAllData
   } = useClientData();
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [communicationRefresh, setCommunicationRefresh] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     try {
@@ -68,13 +73,44 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
+  // Charger le customer_id
+  useEffect(() => {
+    const loadCustomerId = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) {
+        setCustomerId(data.id);
+      }
+    };
+    
+    loadCustomerId();
+  }, [user?.id]);
+
   const handleCheckout = async () => {
     if (!user?.id) {
       toast.error('Veuillez vous connecter');
       return;
     }
-    await createOrder(user.id);
+    
+    if (cartItems.length === 0) {
+      toast.error('Votre panier est vide');
+      return;
+    }
+    
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    clearCart();
+    loadAllData(user?.id);
     setActiveTab('orders');
+    toast.success('Commande créée avec succès');
   };
 
   // Contacter le vendeur
@@ -488,6 +524,19 @@ export default function ClientDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modal de paiement */}
+      {user?.id && customerId && (
+        <ProductPaymentModal
+          open={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          cartItems={cartItems}
+          totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
+          onPaymentSuccess={handlePaymentSuccess}
+          userId={user.id}
+          customerId={customerId}
+        />
+      )}
     </div>
   );
 }
