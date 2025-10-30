@@ -264,18 +264,8 @@ export default function AgentDashboardPublic() {
 
       setAgent(enrichedAgent as Agent);
       
-      // Récupérer le user_id du PDG pour le wallet
-      if (agentData.pdg_id) {
-        const { data: pdgData } = await supabase
-          .from('pdg_management')
-          .select('user_id')
-          .eq('id', agentData.pdg_id)
-          .single();
-        
-        if (pdgData?.user_id) {
-          setPdgUserId(pdgData.user_id);
-        }
-      }
+      // Utiliser l'ID de l'agent pour le wallet (chaque agent a son propre wallet)
+      setPdgUserId(agentData.id);
       
       toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs créés`);
     } catch (error) {
@@ -817,23 +807,11 @@ export default function AgentDashboardPublic() {
 
             {/* Onglet Wallet */}
             <TabsContent value="wallet">
-              {pdgUserId ? (
-                <UniversalWalletDashboard 
-                  userId={pdgUserId} 
-                  userCode={agent.agent_code}
-                  showTransactions={true}
-                />
-              ) : (
-                <Card>
-                  <CardContent className="p-12 text-center">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-500" />
-                    <h3 className="text-lg font-semibold mb-2">Configuration en cours</h3>
-                    <p className="text-muted-foreground">
-                      Le compte PDG n'a pas de user_id configuré. Contactez l'administrateur pour configurer le système.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <UniversalWalletDashboard 
+                userId={pdgUserId || agent.id} 
+                userCode={agent.agent_code}
+                showTransactions={true}
+              />
             </TabsContent>
 
             {/* Onglet Utilisateurs Créés - Accessible à tous les agents */}
