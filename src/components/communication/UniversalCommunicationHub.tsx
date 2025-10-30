@@ -291,6 +291,50 @@ export default function UniversalCommunicationHub({
     }
   };
 
+  const handleSearchById = async () => {
+    const userId = searchQuery.trim();
+    
+    if (!userId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer un ID utilisateur",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Vérifier que l'utilisateur existe
+      const profile = await universalCommunicationService.getUserById(userId);
+      
+      if (!profile) {
+        toast({
+          title: "Erreur",
+          description: "Utilisateur introuvable",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Créer une conversation directe
+      await handleCreateConversation(userId);
+      setShowNewConversation(false);
+      setSearchQuery('');
+      
+      toast({
+        title: "Succès",
+        description: `Conversation avec ${profile.first_name} ${profile.last_name}`,
+      });
+    } catch (error) {
+      console.error('Erreur recherche par ID:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de contacter cet utilisateur",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleCreateConversation = async (participantId: string) => {
     if (!user?.id) return;
 
@@ -692,58 +736,37 @@ export default function UniversalCommunicationHub({
               <TabsContent value="id" className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">ID Utilisateur</label>
-                  <Input
-                    placeholder="Entrez l'ID utilisateur (UUID)"
-                    className="font-mono text-sm"
-                    onKeyPress={async (e) => {
-                      if (e.key === 'Enter') {
-                        const userId = e.currentTarget.value.trim();
-                        if (!userId) {
-                          toast({
-                            title: "Erreur",
-                            description: "Veuillez entrer un ID utilisateur",
-                            variant: "destructive"
-                          });
-                          return;
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Entrez l'ID utilisateur"
+                      className="font-mono text-sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearchById();
                         }
-                        
-                        try {
-                          // Vérifier que l'utilisateur existe
-                          const profile = await universalCommunicationService.getUserById(userId);
-                          
-                          if (!profile) {
-                            toast({
-                              title: "Erreur",
-                              description: "Utilisateur introuvable",
-                              variant: "destructive"
-                            });
-                            return;
-                          }
-                          
-                          // Créer une conversation directe
-                          await handleCreateConversation(userId);
-                          setShowNewConversation(false);
-                        } catch (error) {
-                          toast({
-                            title: "Erreur",
-                            description: "Impossible de contacter cet utilisateur",
-                            variant: "destructive"
-                          });
-                        }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                    <Button 
+                      onClick={handleSearchById}
+                      disabled={!searchQuery.trim()}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    💡 Appuyez sur Entrée pour rechercher
+                    💡 Entrez l'ID et cliquez sur rechercher ou appuyez sur Entrée
                   </p>
                 </div>
                 
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm font-medium mb-2">Comment trouver un ID utilisateur ?</p>
                   <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• L'ID est fourni par l'utilisateur que vous souhaitez contacter</li>
-                    <li>• C'est un identifiant unique au format UUID (36 caractères)</li>
-                    <li>• Exemple: 123e4567-e89b-12d3-a456-426614174000</li>
+                    <li>• L'ID est visible dans le profil de chaque utilisateur</li>
+                    <li>• C'est un identifiant unique (UUID ou format personnalisé)</li>
+                    <li>• Demandez à l'utilisateur de vous partager son ID</li>
                   </ul>
                 </div>
               </TabsContent>
