@@ -7195,6 +7195,15 @@ export type Database = {
         }[]
       }
       find_user_by_code: { Args: { p_code: string }; Returns: string }
+      fix_missing_user_data: {
+        Args: never
+        Returns: {
+          action: string
+          custom_id: string
+          user_id: string
+          wallet_id: string
+        }[]
+      }
       generate_agent_access_token: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
@@ -7223,6 +7232,7 @@ export type Database = {
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
+      generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
