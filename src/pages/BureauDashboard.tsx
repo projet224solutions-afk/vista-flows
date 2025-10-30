@@ -24,7 +24,7 @@ import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
-import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
+import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -576,9 +576,9 @@ export default function BureauDashboard() {
 
         <TabsContent value="wallet" className="space-y-4">
           {bureau && (
-            <UniversalWalletDashboard 
-              userId={bureau.id}
-              userCode={bureau.bureau_code}
+            <BureauWalletManagement 
+              bureauId={bureau.id}
+              bureauCode={bureau.bureau_code}
               showTransactions={true}
             />
           )}

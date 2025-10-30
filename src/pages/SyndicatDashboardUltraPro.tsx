@@ -50,7 +50,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddTaxiMotardForm from '@/components/syndicate/AddTaxiMotardForm';
-import SyndicateWalletDashboard from '@/components/syndicate/SyndicateWalletDashboard';
+import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
@@ -556,12 +556,14 @@ export default function SyndicatDashboardUltraPro() {
                         </Card>
                     </TabsContent>
 
-                    {/* Onglet Wallet/Trésorerie */}
                     <TabsContent value="wallet" className="space-y-6">
-                        <SyndicateWalletDashboard
-                            syndicateId="syndicate-demo-1"
-                            bureauName="Bureau Syndicat 224Solutions"
-                        />
+                        {user?.id && (
+                            <UniversalWalletDashboard
+                                userId={user.id}
+                                userCode={profile?.email || ''}
+                                showTransactions={true}
+                            />
+                        )}
                     </TabsContent>
 
                     {/* Onglet Gestion - MAINTENANT OPÉRATIONNEL */}
