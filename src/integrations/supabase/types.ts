@@ -7664,16 +7664,27 @@ export type Database = {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
       }
-      process_wallet_transaction: {
-        Args: {
-          p_amount: number
-          p_currency?: string
-          p_description?: string
-          p_receiver_id: string
-          p_sender_id: string
-        }
-        Returns: string
-      }
+      process_wallet_transaction:
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_description?: string
+              p_receiver_email: string
+              p_sender_email: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_description?: string
+              p_receiver_id: string
+              p_sender_id: string
+            }
+            Returns: string
+          }
       process_wallet_transfer_with_fees: {
         Args: {
           p_amount: number
