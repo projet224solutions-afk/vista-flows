@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit, Copy, Check, ExternalLink } from 'lucide-react';
+import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit, Copy, Check, ExternalLink, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -47,6 +47,7 @@ import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
 import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
+import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 
 interface Agent {
   id: string;
@@ -81,6 +82,7 @@ export default function AgentDashboardPublic() {
   const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
   const [loadingSubAgents, setLoadingSubAgents] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pdgUserId, setPdgUserId] = useState<string | null>(null);
   const [subAgentFormData, setSubAgentFormData] = useState({
     name: '',
     email: '',
@@ -261,6 +263,20 @@ export default function AgentDashboardPublic() {
       };
 
       setAgent(enrichedAgent as Agent);
+      
+      // Récupérer le user_id du PDG pour le wallet
+      if (agentData.pdg_id) {
+        const { data: pdgData } = await supabase
+          .from('pdg_management')
+          .select('user_id')
+          .eq('id', agentData.pdg_id)
+          .single();
+        
+        if (pdgData?.user_id) {
+          setPdgUserId(pdgData.user_id);
+        }
+      }
+      
       toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs créés`);
     } catch (error) {
       console.error('Erreur chargement agent:', error);
@@ -474,8 +490,12 @@ export default function AgentDashboardPublic() {
 
           {/* Tabs pour les différentes sections */}
           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
               <TabsTrigger value="overview">Aperçu</TabsTrigger>
+               <TabsTrigger value="wallet">
+                <Wallet className="w-4 h-4 mr-2" />
+                Wallet
+              </TabsTrigger>
               <TabsTrigger value="users">
                 <Users className="w-4 h-4 mr-2" />
                 Utilisateurs
@@ -793,6 +813,27 @@ export default function AgentDashboardPublic() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Onglet Wallet */}
+            <TabsContent value="wallet">
+              {pdgUserId ? (
+                <UniversalWalletDashboard 
+                  userId={pdgUserId} 
+                  userCode={agent.agent_code}
+                  showTransactions={true}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-orange-500" />
+                    <h3 className="text-lg font-semibold mb-2">Wallet non disponible</h3>
+                    <p className="text-muted-foreground">
+                      Le wallet est lié au compte PDG. Veuillez contacter l'administrateur.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Onglet Utilisateurs Créés - Accessible à tous les agents */}
