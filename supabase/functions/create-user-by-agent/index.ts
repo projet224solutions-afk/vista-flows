@@ -57,7 +57,7 @@ serve(async (req) => {
     // Vérifier que l'agent existe et a la permission
     const { data: agent, error: agentError } = await supabaseClient
       .from('agents_management')
-      .select('id, permissions, pdg_id')
+      .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
       .eq('id', body.agentId)
       .eq('is_active', true)
       .single();
@@ -69,6 +69,11 @@ serve(async (req) => {
     // Vérifier que l'agent a la permission de créer des utilisateurs
     if (!agent.permissions || !agent.permissions.includes('create_users')) {
       throw new Error('Agent non autorisé à créer des utilisateurs');
+    }
+
+    // Si on crée un agent/sous-agent, vérifier la permission spécifique
+    if ((body.role === 'agent' || body.role === 'sub_agent') && !agent.can_create_sub_agent) {
+      throw new Error('Agent non autorisé à créer des sous-agents');
     }
 
     // Créer l'utilisateur dans auth.users
@@ -200,6 +205,32 @@ serve(async (req) => {
 
       if (driverError) {
         console.error('Driver error:', driverError);
+      }
+    }
+
+    // Créer un profil agent/sous-agent si nécessaire
+    if (body.role === 'agent' || body.role === 'sub_agent') {
+      // Générer un code agent unique
+      const agentCode = `AG-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
+      const { error: agentManagementError } = await supabaseClient
+        .from('agents_management')
+        .insert({
+          pdg_id: agent.pdg_id,
+          user_id: authUser.user.id,
+          agent_code: agentCode,
+          name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          email: body.email,
+          phone: body.phone,
+          is_active: true,
+          can_create_sub_agent: false, // Par défaut, les sous-agents ne peuvent pas créer d'autres sous-agents
+          permissions: ['create_users'], // Permission de base
+          commission_rate: 0
+        });
+
+      if (agentManagementError) {
+        console.error('Agent management error:', agentManagementError);
+        throw new Error('Erreur lors de la création du profil agent: ' + agentManagementError.message);
       }
     }
 
