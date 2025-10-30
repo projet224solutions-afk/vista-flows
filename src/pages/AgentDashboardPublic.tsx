@@ -372,7 +372,7 @@ export default function AgentDashboardPublic() {
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
-                <AgentIdDisplay agentCode={agent.agent_code} agentName={agent.name} />
+                <AgentIdDisplay agentCode={agent.agent_code} />
                 <AgentWalletDisplay agentId={agent.id} agentCode={agent.agent_code} compact={true} className="max-w-xs" />
               </div>
             </div>

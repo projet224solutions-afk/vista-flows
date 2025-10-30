@@ -234,7 +234,7 @@ export default function BureauDashboard() {
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <BureauIdDisplay bureauCode={bureau.bureau_code} bureauName={`${bureau.prefecture} - ${bureau.commune}`} />
+              <BureauIdDisplay bureauCode={bureau.bureau_code} />
               {bureau.president_email && (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
                   <span className="text-xs text-muted-foreground">Contact:</span>
