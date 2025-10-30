@@ -38,17 +38,18 @@ serve(async (req) => {
       }
     );
 
-    // Vérifier l'authentification de la requête
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Non autorisé - token manquant',
-          code: 'UNAUTHORIZED'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
+    // Vérifier l'authentification de la requête - DÉSACTIVÉ pour les agents
+    // Les agents utilisent leur token d'accès dans le corps de la requête
+    // const authHeader = req.headers.get('Authorization');
+    // if (!authHeader) {
+    //   return new Response(
+    //     JSON.stringify({ 
+    //       error: 'Non autorisé - token manquant',
+    //       code: 'UNAUTHORIZED'
+    //     }),
+    //     { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+    //   );
+    // }
 
     const body: CreateUserRequest = await req.json();
     console.log('Creating user by agent:', body.agentCode);
@@ -191,7 +192,7 @@ serve(async (req) => {
         .insert({
           user_id: authUser.user.id,
           license_number: `LIC-${Date.now()}`,
-          vehicle_type: 'motorcycle',
+          vehicle_type: 'moto',
           is_verified: false,
           is_online: false,
           vehicle_info: {}
