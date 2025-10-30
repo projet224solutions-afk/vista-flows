@@ -44,10 +44,26 @@ export default function UniversalWalletDashboard({
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
   const loadWallet = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.warn('loadWallet: userId manquant');
+      return;
+    }
     
     try {
       setLoading(true);
+      
+      // Vérifier l'authentification
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Erreur authentification:', authError);
+        toast.error('Vous devez être connecté pour accéder au wallet');
+        setWallet(null);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔍 Chargement wallet pour userId:', userId, 'auth user:', user.id);
+
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
@@ -55,9 +71,11 @@ export default function UniversalWalletDashboard({
         .single();
 
       if (walletError) {
+        console.error('❌ Erreur chargement wallet:', walletError);
+        
         // Si le wallet n'existe pas, le créer automatiquement
         if (walletError.code === 'PGRST116') {
-          console.log('Création automatique du wallet pour:', userId);
+          console.log('💡 Création automatique du wallet pour:', userId);
           
           const { data: newWallet, error: createError } = await supabase
             .from('wallets')
@@ -70,7 +88,8 @@ export default function UniversalWalletDashboard({
             .single();
 
           if (createError) {
-            console.error('Erreur création wallet:', createError);
+            console.error('❌ Erreur création wallet:', createError);
+            toast.error(`Impossible de créer le wallet: ${createError.message}`);
             throw createError;
           }
 
@@ -87,15 +106,20 @@ export default function UniversalWalletDashboard({
               currency: 'GNF'
             });
             
+            console.log('✅ Wallet créé avec succès:', newWallet);
             setWallet(newWallet);
             toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
+            setLoading(false);
             return;
           }
         } else {
+          // Autre erreur (permissions, etc.)
+          toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
           throw walletError;
         }
       }
       
+      console.log('✅ Wallet chargé:', walletData);
       setWallet(walletData);
 
       // Charger les transactions
@@ -109,9 +133,10 @@ export default function UniversalWalletDashboard({
         
         setTransactions(transData || []);
       }
-    } catch (error) {
-      console.error('Erreur chargement wallet:', error);
-      toast.error('Erreur lors du chargement du wallet');
+    } catch (error: any) {
+      console.error('❌ Erreur critique chargement wallet:', error);
+      toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
+      setWallet(null);
     } finally {
       setLoading(false);
     }
@@ -274,11 +299,21 @@ export default function UniversalWalletDashboard({
     return (
       <Card className="border-orange-200 bg-orange-50">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-6 h-6 text-orange-600" />
-            <div>
-              <h3 className="font-semibold text-orange-800">Wallet non disponible</h3>
-              <p className="text-sm text-orange-600">Contactez le support pour activer votre wallet</p>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <AlertCircle className="w-12 h-12 text-orange-600" />
+            <div className="text-center">
+              <h3 className="font-semibold text-orange-800 mb-2">Wallet non disponible</h3>
+              <p className="text-sm text-orange-600 mb-4">
+                Impossible de charger ou créer votre wallet. Vérifiez votre connexion.
+              </p>
+              <Button 
+                onClick={loadWallet}
+                variant="outline"
+                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Réessayer
+              </Button>
             </div>
           </div>
         </CardContent>

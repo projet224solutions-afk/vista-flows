@@ -42,10 +42,15 @@ export default function BureauWalletManagement({
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
 
   const loadWallet = useCallback(async () => {
-    if (!bureauId) return;
+    if (!bureauId) {
+      console.warn('loadWallet: bureauId manquant');
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('🔍 Chargement wallet bureau pour bureauId:', bureauId);
+
       const { data: walletData, error: walletError } = await supabase
         .from('bureau_wallets')
         .select('*')
@@ -53,9 +58,11 @@ export default function BureauWalletManagement({
         .single();
 
       if (walletError) {
+        console.error('❌ Erreur chargement wallet bureau:', walletError);
+        
         // Si le wallet n'existe pas, le créer automatiquement
         if (walletError.code === 'PGRST116') {
-          console.log('Création automatique du wallet bureau pour:', bureauId);
+          console.log('💡 Création automatique du wallet bureau pour:', bureauId);
           
           const { data: newWallet, error: createError } = await supabase
             .from('bureau_wallets')
@@ -69,8 +76,8 @@ export default function BureauWalletManagement({
             .single();
 
           if (createError) {
-            console.error('Erreur création wallet bureau:', createError);
-            toast.error('Erreur lors de la création du wallet');
+            console.error('❌ Erreur création wallet bureau:', createError);
+            toast.error(`Impossible de créer le wallet: ${createError.message}`);
             throw createError;
           }
 
@@ -85,15 +92,20 @@ export default function BureauWalletManagement({
               date: new Date().toISOString().split('T')[0]
             });
             
+            console.log('✅ Wallet bureau créé avec succès:', newWallet);
             setWallet(newWallet);
             toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
+            setLoading(false);
             return;
           }
         } else {
+          // Autre erreur (permissions, etc.)
+          toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
           throw walletError;
         }
       }
       
+      console.log('✅ Wallet bureau chargé:', walletData);
       setWallet(walletData);
 
       // Charger les transactions
@@ -107,9 +119,10 @@ export default function BureauWalletManagement({
 
         setTransactions(txData || []);
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement du wallet:', error);
-      toast.error('Erreur lors du chargement du wallet');
+    } catch (error: any) {
+      console.error('❌ Erreur critique chargement wallet bureau:', error);
+      toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
+      setWallet(null);
     } finally {
       setLoading(false);
     }
@@ -275,11 +288,16 @@ export default function BureauWalletManagement({
         <CardContent className="p-12">
           <div className="flex flex-col items-center justify-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive" />
-            <p className="text-lg font-semibold">Erreur de chargement du wallet</p>
-            <Button onClick={loadWallet} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
-            </Button>
+            <div className="text-center">
+              <p className="text-lg font-semibold mb-2">Erreur de chargement du wallet</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Impossible de charger ou créer le wallet du bureau
+              </p>
+              <Button onClick={loadWallet} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Réessayer
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
