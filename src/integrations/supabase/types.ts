@@ -6291,6 +6291,7 @@ export type Database = {
           total_reviews: number | null
           updated_at: string | null
           user_id: string
+          vendor_code: string | null
         }
         Insert: {
           address?: string | null
@@ -6308,6 +6309,7 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
+          vendor_code?: string | null
         }
         Update: {
           address?: string | null
@@ -6325,6 +6327,7 @@ export type Database = {
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
+          vendor_code?: string | null
         }
         Relationships: [
           {
@@ -7290,6 +7293,7 @@ export type Database = {
       generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
+      generate_vendor_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }
