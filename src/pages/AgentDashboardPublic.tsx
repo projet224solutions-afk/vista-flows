@@ -157,6 +157,7 @@ export default function AgentDashboardPublic() {
           phone: subAgentFormData.phone.trim(),
           permissions,
           commission_rate: subAgentFormData.commission_rate,
+          access_token: token, // Envoyer le token pour l'authentification
         }
       });
 
@@ -181,6 +182,7 @@ export default function AgentDashboardPublic() {
       });
       loadAgentData();
     } catch (error: any) {
+      console.error('Erreur création sous-agent:', error);
       toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setIsSubmitting(false);

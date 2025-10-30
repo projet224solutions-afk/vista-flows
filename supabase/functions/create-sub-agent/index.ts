@@ -22,19 +22,6 @@ serve(async (req) => {
       }
     );
 
-    // Vérifier l'authentification
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Non authentifié" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { 
       pdg_id,
       parent_agent_id, 
@@ -43,8 +30,43 @@ serve(async (req) => {
       email, 
       phone, 
       permissions, 
-      commission_rate 
+      commission_rate,
+      access_token // Token d'accès pour l'interface publique
     } = await req.json();
+
+    // Vérifier l'authentification (soit via auth, soit via access_token)
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
+
+    let authenticatedUserId: string | null = null;
+
+    if (user) {
+      authenticatedUserId = user.id;
+    } else if (access_token) {
+      // Vérifier le token d'accès de l'agent
+      const { data: tokenAgent, error: tokenError } = await supabaseClient
+        .from("agents_management")
+        .select("id, user_id, pdg_id")
+        .eq("access_token", access_token)
+        .eq("id", parent_agent_id)
+        .single();
+
+      if (tokenError || !tokenAgent) {
+        console.error("Token d'accès invalide:", tokenError);
+        return new Response(
+          JSON.stringify({ error: "Token d'accès invalide" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      authenticatedUserId = tokenAgent.user_id;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "Non authentifié" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Validation des données
     if (!pdg_id || !parent_agent_id || !name || !email || !phone) {
@@ -70,20 +92,26 @@ serve(async (req) => {
     }
 
     // Vérifier que l'utilisateur connecté est autorisé (soit l'agent lui-même, soit le PDG)
-    const isAgentOwner = parentAgent.user_id && parentAgent.user_id === user.id;
+    const isAgentOwner = parentAgent.user_id && parentAgent.user_id === authenticatedUserId;
     
-    // Vérifier si l'utilisateur est le PDG de cet agent
-    const { data: pdgProfile, error: pdgError } = await supabaseClient
-      .from("profiles")
-      .select("id, role")
-      .eq("id", user.id)
-      .eq("role", "admin")
-      .single();
-    
-    const isPdgOwner = pdgProfile && parentAgent.pdg_id === user.id;
+    // Vérifier si l'utilisateur est le PDG de cet agent (seulement si authenticatedUserId existe)
+    let isPdgOwner = false;
+    if (authenticatedUserId) {
+      const { data: pdgProfile } = await supabaseClient
+        .from("profiles")
+        .select("id, role")
+        .eq("id", authenticatedUserId)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      isPdgOwner = pdgProfile && parentAgent.pdg_id === authenticatedUserId;
+    }
 
-    if (!isAgentOwner && !isPdgOwner) {
-      console.error("Utilisateur non autorisé - user.id:", user.id, "agent.user_id:", parentAgent.user_id, "agent.pdg_id:", parentAgent.pdg_id);
+    // Pour l'interface publique avec access_token, on autorise si l'agent correspond
+    const isValidAccessToken = access_token && parentAgent.id === parent_agent_id;
+
+    if (!isAgentOwner && !isPdgOwner && !isValidAccessToken) {
+      console.error("Utilisateur non autorisé - authenticatedUserId:", authenticatedUserId, "agent.user_id:", parentAgent.user_id, "agent.pdg_id:", parentAgent.pdg_id);
       return new Response(
         JSON.stringify({ error: "Vous n'êtes pas autorisé à créer des sous-agents pour cet agent" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -146,21 +174,23 @@ serve(async (req) => {
       );
     }
 
-    // Log de l'action dans audit_logs
-    await supabaseClient
-      .from("audit_logs")
-      .insert({
-        actor_id: user.id,
-        action: "SUB_AGENT_CREATED",
-        target_type: "agent",
-        target_id: newAgent.id,
-        data_json: {
-          agent_code: agent_code,
-          name: name,
-          email: email,
-          parent_agent_id: parent_agent_id,
-        },
-      });
+    // Log de l'action dans audit_logs (seulement si un user_id est disponible)
+    if (authenticatedUserId) {
+      await supabaseClient
+        .from("audit_logs")
+        .insert({
+          actor_id: authenticatedUserId,
+          action: "SUB_AGENT_CREATED",
+          target_type: "agent",
+          target_id: newAgent.id,
+          data_json: {
+            agent_code: agent_code,
+            name: name,
+            email: email,
+            parent_agent_id: parent_agent_id,
+          },
+        });
+    }
 
     console.log("Sous-agent créé avec succès:", newAgent.agent_code);
 
