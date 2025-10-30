@@ -635,47 +635,119 @@ export default function UniversalCommunicationHub({
 
         {/* Dialog nouvelle conversation */}
         <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Nouvelle conversation</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Search className="h-5 w-5 mt-2" />
-                <Input
-                  placeholder="Rechercher un utilisateur..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    handleSearchUsers(e.target.value);
-                  }}
-                />
-              </div>
-              <ScrollArea className="h-[300px]">
-                {searchResults.map((user) => (
-                  <div
-                    key={user.id}
-                    className="p-3 mb-2 border rounded-lg cursor-pointer hover:bg-muted"
-                    onClick={() => handleCreateConversation(user.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={user.avatar_url} />
-                        <AvatarFallback>
-                          {user.first_name?.[0]}{user.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">
-                          {user.first_name} {user.last_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+            <Tabs defaultValue="search" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="search">Rechercher par nom</TabsTrigger>
+                <TabsTrigger value="id">Rechercher par ID</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="search" className="space-y-4 mt-4">
+                <div className="flex gap-2">
+                  <Search className="h-5 w-5 mt-2" />
+                  <Input
+                    placeholder="Rechercher un utilisateur..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      handleSearchUsers(e.target.value);
+                    }}
+                  />
+                </div>
+                <ScrollArea className="h-[300px]">
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id}
+                      className="p-3 mb-2 border rounded-lg cursor-pointer hover:bg-muted"
+                      onClick={() => handleCreateConversation(user.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar_url} />
+                          <AvatarFallback>
+                            {user.first_name?.[0]}{user.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {user.first_name} {user.last_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </ScrollArea>
-            </div>
+                  ))}
+                  {searchResults.length === 0 && searchQuery && (
+                    <div className="text-center text-muted-foreground p-8">
+                      <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Aucun utilisateur trouvé</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="id" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">ID Utilisateur</label>
+                  <Input
+                    placeholder="Entrez l'ID utilisateur (UUID)"
+                    className="font-mono text-sm"
+                    onKeyPress={async (e) => {
+                      if (e.key === 'Enter') {
+                        const userId = e.currentTarget.value.trim();
+                        if (!userId) {
+                          toast({
+                            title: "Erreur",
+                            description: "Veuillez entrer un ID utilisateur",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+                        
+                        try {
+                          // Vérifier que l'utilisateur existe
+                          const profile = await universalCommunicationService.getUserById(userId);
+                          
+                          if (!profile) {
+                            toast({
+                              title: "Erreur",
+                              description: "Utilisateur introuvable",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          
+                          // Créer une conversation directe
+                          await handleCreateConversation(userId);
+                          setShowNewConversation(false);
+                        } catch (error) {
+                          toast({
+                            title: "Erreur",
+                            description: "Impossible de contacter cet utilisateur",
+                            variant: "destructive"
+                          });
+                        }
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    💡 Appuyez sur Entrée pour rechercher
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm font-medium mb-2">Comment trouver un ID utilisateur ?</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• L'ID est fourni par l'utilisateur que vous souhaitez contacter</li>
+                    <li>• C'est un identifiant unique au format UUID (36 caractères)</li>
+                    <li>• Exemple: 123e4567-e89b-12d3-a456-426614174000</li>
+                  </ul>
+                </div>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
 

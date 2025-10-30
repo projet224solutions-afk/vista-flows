@@ -392,6 +392,33 @@ export default function Profil() {
             </div>
           </CardContent>
         </Card>
+        
+        {/* User ID Card */}
+        <Card className="mt-4">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-muted-foreground">Votre ID utilisateur</label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.id);
+                    toast.success("ID copié dans le presse-papiers");
+                  }}
+                >
+                  Copier
+                </Button>
+              </div>
+              <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
+                {user.id}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 Partagez cet ID pour permettre à d'autres utilisateurs de vous contacter directement
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Menu Items */}

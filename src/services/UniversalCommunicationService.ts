@@ -503,6 +503,37 @@ class UniversalCommunicationService {
   }
 
   /**
+   * Récupérer un utilisateur par ID
+   */
+  async getUserById(userId: string): Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    avatar_url?: string;
+  } | null> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, avatar_url')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Not found
+          return null;
+        }
+        throw error;
+      }
+      return data as any;
+    } catch (error) {
+      console.error('Erreur récupération utilisateur:', error);
+      return null;
+    }
+  }
+
+  /**
    * S'abonner aux nouveaux messages d'une conversation
    */
   subscribeToMessages(
