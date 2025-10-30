@@ -7599,15 +7599,25 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       preview_next_id: { Args: { p_prefix: string }; Returns: string }
-      preview_wallet_transfer: {
-        Args: {
-          p_amount: number
-          p_currency?: string
-          p_receiver_id: string
-          p_sender_id: string
-        }
-        Returns: Json
-      }
+      preview_wallet_transfer:
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_receiver_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_receiver_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
       preview_wallet_transfer_by_code: {
         Args: {
           p_amount: number
