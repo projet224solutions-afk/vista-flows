@@ -2,7 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -19,6 +23,15 @@ export default function Payment() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  
+  // États pour le paiement
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [recipientId, setRecipientId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [showPaymentPreview, setShowPaymentPreview] = useState(false);
+  const [paymentPreview, setPaymentPreview] = useState<any>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -82,6 +95,122 @@ export default function Payment() {
     return 'text-success';
   };
 
+  // Fonction pour rechercher un utilisateur
+  const searchRecipient = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 3) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_ids')
+        .select('user_id, custom_id, profiles(full_name, phone)')
+        .ilike('custom_id', `%${searchTerm}%`)
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Erreur recherche utilisateur:', error);
+      return null;
+    }
+  };
+
+  // Fonction pour prévisualiser un paiement
+  const handlePreviewPayment = async () => {
+    if (!user?.id || !paymentAmount || !recipientId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Erreur",
+        description: "Montant invalide",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
+        p_sender_id: user.id,
+        p_receiver_id: recipientId,
+        p_amount: amount
+      });
+
+      if (error) throw error;
+
+      const previewData = {
+        amount: (data as any)?.amount || 0,
+        fee_percent: (data as any)?.fee_percent || 0,
+        fee_amount: (data as any)?.fee_amount || 0,
+        total_debit: (data as any)?.total_debit || 0,
+        amount_received: (data as any)?.amount_received || 0,
+        current_balance: (data as any)?.current_balance || 0,
+        balance_after: (data as any)?.balance_after || 0
+      };
+
+      setPaymentPreview(previewData);
+      setShowPaymentPreview(true);
+      setPaymentOpen(false);
+    } catch (error: any) {
+      console.error('Erreur prévisualisation:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || 'Impossible de prévisualiser le paiement',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour confirmer et effectuer un paiement
+  const handleConfirmPayment = async () => {
+    if (!user?.id || !paymentPreview) return;
+
+    setProcessing(true);
+    setShowPaymentPreview(false);
+
+    try {
+      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+        p_sender_id: user.id,
+        p_receiver_id: recipientId,
+        p_amount: paymentPreview.amount,
+        p_description: paymentDescription || 'Paiement via wallet'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Paiement effectué",
+        description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
+      });
+
+      setPaymentAmount('');
+      setRecipientId('');
+      setPaymentDescription('');
+      setPaymentPreview(null);
+      
+      loadWalletData();
+      loadRecentTransactions();
+    } catch (error: any) {
+      console.error('❌ Erreur paiement:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || 'Erreur lors du paiement',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-4">
       <div className="container max-w-6xl mx-auto py-8">
@@ -111,9 +240,64 @@ export default function Payment() {
               </div>
               <div className="flex gap-2">
                 <VirtualCardButton />
-                <Button onClick={() => navigate('/wallet/transfer')}>
-                  Transférer
-                </Button>
+                <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <Send className="h-4 w-4" />
+                      Payer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un paiement</DialogTitle>
+                      <DialogDescription>
+                        Payez facilement avec votre wallet 224SOLUTIONS
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="recipient-id">ID du destinataire *</Label>
+                        <Input
+                          id="recipient-id"
+                          placeholder="USR0001, VEN0001..."
+                          value={recipientId}
+                          onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
+                          maxLength={7}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Format: 3 lettres + 4 chiffres (ex: USR0001)
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="payment-amount">Montant (GNF) *</Label>
+                        <Input
+                          id="payment-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="payment-description">Description (optionnel)</Label>
+                        <Input
+                          id="payment-description"
+                          placeholder="Achat de produits..."
+                          value={paymentDescription}
+                          onChange={(e) => setPaymentDescription(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button 
+                        onClick={handlePreviewPayment} 
+                        disabled={processing || !paymentAmount || !recipientId}
+                      >
+                        {processing ? 'Vérification...' : 'Prévisualiser'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </CardContent>
@@ -218,6 +402,59 @@ export default function Payment() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Dialog de confirmation du paiement */}
+        <AlertDialog open={showPaymentPreview} onOpenChange={setShowPaymentPreview}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Confirmer le paiement
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4 pt-4">
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">💰 Montant</span>
+                      <span className="text-lg font-bold">{paymentPreview?.amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2">
+                      <span className="text-sm font-medium">💸 Frais de paiement ({paymentPreview?.fee_percent}%)</span>
+                      <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2 bg-red-50 dark:bg-red-950 -mx-4 px-4 py-2 rounded">
+                      <span className="text-sm font-bold">💳 Total à débiter</span>
+                      <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2 bg-green-50 dark:bg-green-950 -mx-4 px-4 py-2 rounded">
+                      <span className="text-sm font-medium">✅ Le destinataire recevra</span>
+                      <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} GNF</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm space-y-1 text-muted-foreground">
+                    <p>
+                      <strong>Solde actuel:</strong> {paymentPreview?.current_balance?.toLocaleString()} GNF
+                    </p>
+                    <p>
+                      <strong>Solde après paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} GNF
+                    </p>
+                  </div>
+                  
+                  <p className="text-sm">
+                    Souhaitez-vous confirmer ce paiement ?
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={processing}>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmPayment} disabled={processing}>
+                {processing ? 'Traitement...' : 'Confirmer le paiement'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
