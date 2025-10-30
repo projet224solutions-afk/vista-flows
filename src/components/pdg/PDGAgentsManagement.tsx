@@ -33,9 +33,9 @@ export default function PDGAgentsManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
-  const [viewingAgentUsers, setViewingAgentUsers] = useState<Agent | null>(null);
-  const [agentUsers, setAgentUsers] = useState<AgentUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set());
+  const [agentUsersMap, setAgentUsersMap] = useState<Record<string, AgentUser[]>>({});
+  const [loadingUsersMap, setLoadingUsersMap] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -156,26 +156,40 @@ export default function PDGAgentsManagement() {
     }
   };
 
-  const handleViewAgentUsers = async (agent: Agent) => {
-    setViewingAgentUsers(agent);
-    setLoadingUsers(true);
-    setAgentUsers([]);
+  const handleToggleAgentUsers = async (agent: Agent) => {
+    const isExpanded = expandedAgents.has(agent.id);
+    
+    if (isExpanded) {
+      // Réduire
+      const newExpanded = new Set(expandedAgents);
+      newExpanded.delete(agent.id);
+      setExpandedAgents(newExpanded);
+    } else {
+      // Étendre et charger les utilisateurs si pas déjà chargés
+      const newExpanded = new Set(expandedAgents);
+      newExpanded.add(agent.id);
+      setExpandedAgents(newExpanded);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('get-agent-users', {
-        body: { agent_access_token: agent.access_token }
-      });
+      if (!agentUsersMap[agent.id]) {
+        setLoadingUsersMap({ ...loadingUsersMap, [agent.id]: true });
 
-      if (error) throw error;
+        try {
+          const { data, error } = await supabase.functions.invoke('get-agent-users', {
+            body: { agent_access_token: agent.access_token }
+          });
 
-      if (data?.users) {
-        setAgentUsers(data.users);
+          if (error) throw error;
+
+          if (data?.users) {
+            setAgentUsersMap({ ...agentUsersMap, [agent.id]: data.users });
+          }
+        } catch (error: any) {
+          console.error('Erreur chargement utilisateurs:', error);
+          toast.error('Erreur lors du chargement des utilisateurs');
+        } finally {
+          setLoadingUsersMap({ ...loadingUsersMap, [agent.id]: false });
+        }
       }
-    } catch (error: any) {
-      console.error('Erreur chargement utilisateurs:', error);
-      toast.error('Erreur lors du chargement des utilisateurs');
-    } finally {
-      setLoadingUsers(false);
     }
   };
 
@@ -493,23 +507,63 @@ export default function PDGAgentsManagement() {
                   <span className="text-muted-foreground">Commission:</span>
                   <span className="font-medium">{agent.commission_rate}%</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Utilisateurs créés:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{agent.total_users_created || 0}</span>
-                    {agent.total_users_created > 0 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleViewAgentUsers(agent)}
-                        className="h-6 px-2"
-                      >
-                        <Eye className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
+                <div className="border-t pt-3 mt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleAgentUsers(agent)}
+                    className="w-full justify-between"
+                  >
+                    <span className="text-sm font-medium">Utilisateurs créés: {agent.total_users_created || 0}</span>
+                    <Eye className={`w-4 h-4 transition-transform ${expandedAgents.has(agent.id) ? 'rotate-180' : ''}`} />
+                  </Button>
+
+                  {expandedAgents.has(agent.id) && (
+                    <div className="mt-3 space-y-2">
+                      {loadingUsersMap[agent.id] ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                        </div>
+                      ) : agentUsersMap[agent.id]?.length > 0 ? (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {agentUsersMap[agent.id].map((user) => (
+                            <div 
+                              key={user.id} 
+                              className="p-3 bg-muted/50 rounded-lg border text-xs space-y-1"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">
+                                  {user.first_name && user.last_name 
+                                    ? `${user.first_name} ${user.last_name}`
+                                    : user.email}
+                                </span>
+                                <Badge variant={user.is_active !== false ? 'default' : 'secondary'} className="text-xs">
+                                  {user.is_active !== false ? 'Actif' : 'Inactif'}
+                                </Badge>
+                              </div>
+                              <div className="text-muted-foreground">
+                                <div>📧 {user.email}</div>
+                                {user.phone && <div>📱 {user.phone}</div>}
+                                {(user.city || user.country) && (
+                                  <div>📍 {[user.city, user.country].filter(Boolean).join(', ')}</div>
+                                )}
+                                <div className="flex items-center justify-between mt-1">
+                                  <span>Rôle: {user.user_role || user.role}</span>
+                                  <span>{new Date(user.created_at).toLocaleDateString('fr-FR')}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-sm text-muted-foreground">
+                          Aucun utilisateur créé
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-sm pb-3">
                   <span className="text-muted-foreground">Commissions gagnées:</span>
                   <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
                 </div>
@@ -606,79 +660,6 @@ export default function PDGAgentsManagement() {
           </CardContent>
         </Card>
       )}
-
-      {/* Dialogue pour voir les utilisateurs de l'agent */}
-      <Dialog open={!!viewingAgentUsers} onOpenChange={(open) => !open && setViewingAgentUsers(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              Utilisateurs créés par {viewingAgentUsers?.name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {loadingUsers ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Chargement des utilisateurs...</p>
-              </div>
-            </div>
-          ) : agentUsers.length === 0 ? (
-            <div className="py-12 text-center">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucun utilisateur créé</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                Total: {agentUsers.length} utilisateur(s)
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Téléphone</TableHead>
-                    <TableHead>Rôle</TableHead>
-                    <TableHead>Localisation</TableHead>
-                    <TableHead>Date création</TableHead>
-                    <TableHead>Statut</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {agentUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.first_name && user.last_name 
-                          ? `${user.first_name} ${user.last_name}`
-                          : user.email}
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.phone || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{user.user_role || user.role}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.city && user.country 
-                          ? `${user.city}, ${user.country}`
-                          : user.country || user.city || '-'}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString('fr-FR')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.is_active !== false ? 'default' : 'secondary'}>
-                          {user.is_active !== false ? 'Actif' : 'Inactif'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
