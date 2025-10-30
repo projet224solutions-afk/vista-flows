@@ -7699,6 +7699,16 @@ export type Database = {
             }
             Returns: string
           }
+      process_wallet_transfer: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: Json
+      }
       process_wallet_transfer_with_fees: {
         Args: {
           p_amount: number
