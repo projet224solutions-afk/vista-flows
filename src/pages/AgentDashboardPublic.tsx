@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit, Copy, Check, ExternalLink } from 'lucide-react';
+import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -60,11 +60,6 @@ interface Agent {
   total_sub_agents?: number;
   can_create_sub_agent?: boolean;
   created_at: string;
-  access_token?: string;
-}
-
-interface SubAgent extends Agent {
-  parent_agent_id: string;
 }
 
 export default function AgentDashboardPublic() {
@@ -75,8 +70,6 @@ export default function AgentDashboardPublic() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSubAgentDialogOpen, setIsSubAgentDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [subAgentFormData, setSubAgentFormData] = useState({
     name: '',
     email: '',
@@ -100,12 +93,6 @@ export default function AgentDashboardPublic() {
       navigate('/');
     }
   }, [token]);
-
-  useEffect(() => {
-    if (agent) {
-      loadSubAgents();
-    }
-  }, [agent?.id]);
 
   // Écouter les mises à jour en temps réel
   useEffect(() => {
@@ -217,7 +204,6 @@ export default function AgentDashboardPublic() {
         }
       });
       await loadAgentData();
-      await loadSubAgents();
     } catch (error: any) {
       console.error('❌ Erreur création sous-agent:', error);
       toast.error(error.message || 'Erreur lors de la création');
@@ -250,18 +236,10 @@ export default function AgentDashboardPublic() {
         .select('*', { count: 'exact', head: true })
         .eq('agent_id', agentData.id);
 
-      // Compter les sous-agents créés par cet agent
-      const { count: subAgentsCount, error: subAgentsError } = await supabase
-        .from('agents_management')
-        .select('*', { count: 'exact', head: true })
-        .eq('parent_agent_id', agentData.id)
-        .eq('is_active', true);
-
       // Créer un nouvel objet agent avec les statistiques
       const enrichedAgent = {
         ...agentData,
-        total_users_created: usersCount || 0,
-        total_sub_agents: subAgentsCount || 0
+        total_users_created: usersCount || 0
       };
 
       setAgent(enrichedAgent as Agent);
@@ -272,46 +250,6 @@ export default function AgentDashboardPublic() {
       navigate('/');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadSubAgents = async () => {
-    if (!agent) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('agents_management')
-        .select('*')
-        .eq('parent_agent_id', agent.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setSubAgents(data as SubAgent[] || []);
-    } catch (error) {
-      console.error('Erreur chargement sous-agents:', error);
-      toast.error('Erreur lors du chargement des sous-agents');
-    }
-  };
-
-  const copySubAgentLink = async (subAgent: SubAgent) => {
-    if (!subAgent.access_token) {
-      toast.error('Token d\'accès non disponible');
-      return;
-    }
-
-    const link = `${window.location.origin}/agent/${subAgent.access_token}`;
-    
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopiedId(subAgent.id);
-      toast.success('Lien copié! Envoyez-le au sous-agent');
-      
-      setTimeout(() => {
-        setCopiedId(null);
-      }, 3000);
-    } catch (error) {
-      console.error('Erreur copie:', error);
-      toast.error('Erreur lors de la copie du lien');
     }
   };
 
@@ -462,12 +400,6 @@ export default function AgentDashboardPublic() {
                 <Users className="w-4 h-4 mr-2" />
                 Utilisateurs
               </TabsTrigger>
-              {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-                <TabsTrigger value="sub-agents">
-                  <UserCog className="w-4 h-4 mr-2" />
-                  Sous-Agents ({subAgents.length})
-                </TabsTrigger>
-              )}
               {agent.permissions.includes('manage_products') && (
                 <TabsTrigger value="products">
                   <Package className="w-4 h-4 mr-2" />
@@ -786,126 +718,6 @@ export default function AgentDashboardPublic() {
             <TabsContent value="users">
               <ManageUsersSection key={activeTab} agentId={agent.id} />
             </TabsContent>
-
-            {/* Onglet Sous-Agents */}
-            {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
-              <TabsContent value="sub-agents">
-                <Card>
-                  <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                    <CardTitle className="flex items-center gap-2">
-                      <UserCog className="w-6 h-6" />
-                      Mes Sous-Agents ({subAgents.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    {subAgents.length === 0 ? (
-                      <div className="text-center py-12">
-                        <UserCog className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-muted-foreground mb-4">Aucun sous-agent créé</p>
-                        <Button onClick={() => {
-                          setActiveTab('overview');
-                          setIsSubAgentDialogOpen(true);
-                        }}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Créer votre premier sous-agent
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {subAgents.map((subAgent) => (
-                          <Card key={subAgent.id} className="border-2 hover:border-purple-300 transition-all">
-                            <CardContent className="pt-6">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-purple-100 rounded-lg">
-                                      <UserCog className="w-5 h-5 text-purple-600" />
-                                    </div>
-                                    <div>
-                                      <h3 className="font-semibold text-lg">{subAgent.name}</h3>
-                                      <p className="text-sm text-muted-foreground">{subAgent.agent_code}</p>
-                                    </div>
-                                    <Badge variant={subAgent.is_active ? "default" : "secondary"}>
-                                      {subAgent.is_active ? 'Actif' : 'Inactif'}
-                                    </Badge>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <Mail className="w-4 h-4 text-gray-400" />
-                                      <span>{subAgent.email}</span>
-                                    </div>
-                                    {subAgent.phone && (
-                                      <div className="flex items-center gap-2">
-                                        <Phone className="w-4 h-4 text-gray-400" />
-                                        <span>{subAgent.phone}</span>
-                                      </div>
-                                    )}
-                                    <div className="flex items-center gap-2">
-                                      <TrendingUp className="w-4 h-4 text-gray-400" />
-                                      <span>Commission: {subAgent.commission_rate}%</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Users className="w-4 h-4 text-gray-400" />
-                                      <span>{subAgent.total_users_created || 0} utilisateurs</span>
-                                    </div>
-                                  </div>
-
-                                  {subAgent.permissions && subAgent.permissions.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {subAgent.permissions.map((perm) => (
-                                        <Badge key={perm} variant="outline" className="text-xs">
-                                          {perm.replace(/_/g, ' ')}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {/* Lien d'accès copiable */}
-                                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border-2 border-blue-200">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-semibold text-blue-900 mb-1">
-                                          🔗 Lien d'accès pour le sous-agent
-                                        </p>
-                                        <p className="text-xs text-blue-600 truncate font-mono">
-                                          {window.location.origin}/agent/{subAgent.access_token || '...'}
-                                        </p>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        onClick={() => copySubAgentLink(subAgent)}
-                                        className="flex-shrink-0"
-                                        variant={copiedId === subAgent.id ? "default" : "outline"}
-                                      >
-                                        {copiedId === subAgent.id ? (
-                                          <>
-                                            <Check className="w-4 h-4 mr-1" />
-                                            Copié!
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Copy className="w-4 h-4 mr-1" />
-                                            Copier
-                                          </>
-                                        )}
-                                      </Button>
-                                    </div>
-                                    <p className="text-xs text-blue-500 mt-2">
-                                      💡 Copiez et envoyez ce lien au sous-agent pour qu'il accède à son interface
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
 
             {agent.permissions.includes('manage_products') && (
               <TabsContent value="products">
