@@ -7183,6 +7183,19 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_commission_from_config: {
+        Args: {
+          p_amount: number
+          p_service_name: string
+          p_transaction_type: string
+        }
+        Returns: {
+          commission_amount: number
+          commission_rate: number
+          config_id: string
+          total_amount: number
+        }[]
+      }
       calculate_distance_km: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
@@ -7477,6 +7490,22 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_active_commission_config: {
+        Args: {
+          p_amount?: number
+          p_service_name: string
+          p_transaction_type: string
+        }
+        Returns: {
+          commission_type: string
+          commission_value: number
+          id: string
+          max_amount: number
+          min_amount: number
+          service_name: string
+          transaction_type: string
+        }[]
+      }
       get_finance_stats: { Args: never; Returns: Json }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
       get_or_create_wallet: {
@@ -7725,6 +7754,18 @@ export type Database = {
           p_metadata?: Json
           p_revenue_type: string
           p_source_transaction_id?: string
+        }
+        Returns: string
+      }
+      record_service_transaction: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_from_user_id: string
+          p_metadata?: Json
+          p_service_name: string
+          p_to_user_id?: string
+          p_transaction_type: string
         }
         Returns: string
       }
