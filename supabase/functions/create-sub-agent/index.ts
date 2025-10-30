@@ -22,6 +22,12 @@ serve(async (req) => {
       }
     );
 
+    // Client service role pour bypasser les RLS lors de l'insertion
+    const supabaseServiceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const { 
       pdg_id,
       parent_agent_id, 
@@ -148,8 +154,8 @@ serve(async (req) => {
       );
     }
 
-    // Créer le sous-agent
-    const { data: newAgent, error: insertError } = await supabaseClient
+    // Créer le sous-agent avec le service role client
+    const { data: newAgent, error: insertError } = await supabaseServiceClient
       .from("agents_management")
       .insert({
         pdg_id: pdg_id,
@@ -176,7 +182,7 @@ serve(async (req) => {
 
     // Log de l'action dans audit_logs (seulement si un user_id est disponible)
     if (authenticatedUserId) {
-      await supabaseClient
+      await supabaseServiceClient
         .from("audit_logs")
         .insert({
           actor_id: authenticatedUserId,
