@@ -166,30 +166,41 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           throw subAgentsError;
         }
 
-        const subAgentsWithStats: SubAgent[] = [];
+        // Récupérer les statistiques de tous les sous-agents en une seule requête
+        const subAgentIds = (subAgentsData || []).map(sa => sa.id);
         
-        for (const subAgent of (subAgentsData || [])) {
-          const { count: usersCount } = await supabase
+        let usersCountMap: Record<string, number> = {};
+        
+        if (subAgentIds.length > 0) {
+          const { data: usersCounts, error: countsError } = await supabase
             .from('agent_created_users')
-            .select('*', { count: 'exact', head: true })
-            .eq('agent_id', subAgent.id);
+            .select('agent_id')
+            .in('agent_id', subAgentIds);
 
-          subAgentsWithStats.push({
-            id: subAgent.id,
-            pdg_id: subAgent.pdg_id,
-            parent_agent_id: subAgent.parent_agent_id || agentProfile.id,
-            agent_code: subAgent.agent_code,
-            name: subAgent.name,
-            email: subAgent.email,
-            phone: subAgent.phone || '',
-            is_active: subAgent.is_active,
-            permissions: Array.isArray(subAgent.permissions) ? (subAgent.permissions as string[]) : [],
-            commission_rate: Number(subAgent.commission_rate) || 0,
-            created_at: subAgent.created_at,
-            updated_at: subAgent.updated_at || undefined,
-            total_users_created: usersCount || 0,
-          });
+          if (!countsError && usersCounts) {
+            // Compter les utilisateurs par agent_id
+            usersCountMap = usersCounts.reduce((acc: Record<string, number>, record) => {
+              acc[record.agent_id] = (acc[record.agent_id] || 0) + 1;
+              return acc;
+            }, {});
+          }
         }
+
+        const subAgentsWithStats: SubAgent[] = (subAgentsData || []).map(subAgent => ({
+          id: subAgent.id,
+          pdg_id: subAgent.pdg_id,
+          parent_agent_id: subAgent.parent_agent_id || agentProfile.id,
+          agent_code: subAgent.agent_code,
+          name: subAgent.name,
+          email: subAgent.email,
+          phone: subAgent.phone || '',
+          is_active: subAgent.is_active,
+          permissions: Array.isArray(subAgent.permissions) ? (subAgent.permissions as string[]) : [],
+          commission_rate: Number(subAgent.commission_rate) || 0,
+          created_at: subAgent.created_at,
+          updated_at: subAgent.updated_at || undefined,
+          total_users_created: usersCountMap[subAgent.id] || 0,
+        }));
 
         setSubAgents(subAgentsWithStats);
 
