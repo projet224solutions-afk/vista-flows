@@ -328,20 +328,25 @@ export const UniversalWalletTransactions = () => {
     setProcessing(true);
     
     try {
+      console.log('🔍 Recherche du destinataire:', recipientId);
+      
       // Récupérer l'UUID du destinataire depuis son custom_id ou public_id
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, email, first_name, last_name, custom_id, public_id')
         .or(`custom_id.eq.${recipientId.toUpperCase()},public_id.eq.${recipientId.toUpperCase()}`)
         .maybeSingle();
 
       if (profileError) {
-        console.error('Erreur recherche profil:', profileError);
+        console.error('❌ Erreur recherche profil:', profileError);
         toast.error('Erreur lors de la recherche du destinataire');
         return;
       }
 
+      console.log('📋 Profil trouvé:', profileData);
+
       if (!profileData) {
+        console.error('❌ Aucun profil trouvé avec ID:', recipientId);
         toast.error(`Destinataire introuvable avec l'ID: ${recipientId}`);
         return;
       }
@@ -358,6 +363,12 @@ export const UniversalWalletTransactions = () => {
         return;
       }
 
+      console.log('🔍 Prévisualisation pour:', { 
+        sender: user.id, 
+        receiver: recipientUuid, 
+        amount 
+      });
+
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
@@ -365,12 +376,18 @@ export const UniversalWalletTransactions = () => {
         p_amount: amount
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur RPC:', error);
+        toast.error(error.message || 'Erreur lors de la prévisualisation');
+        return;
+      }
+
+      console.log('✅ Réponse prévisualisation:', data);
 
       const previewData = data as any;
 
       if (!previewData.success) {
-        toast.error(previewData.error);
+        toast.error(previewData.error || 'Erreur inconnue');
         return;
       }
 
@@ -392,6 +409,13 @@ export const UniversalWalletTransactions = () => {
     setShowTransferPreview(false);
     
     try {
+      console.log('🔄 Exécution du transfert:', {
+        sender: user.id,
+        receiver: transferPreview.recipient_uuid,
+        amount: transferPreview.amount,
+        description: transferDescription
+      });
+
       // Exécuter le transfert avec la fonction RPC
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
         p_sender_id: user.id,
@@ -401,7 +425,12 @@ export const UniversalWalletTransactions = () => {
         p_description: transferDescription
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur transfert:', error);
+        throw error;
+      }
+
+      console.log('✅ Transfert réussi:', data);
 
       toast.success(
         `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
