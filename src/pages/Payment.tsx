@@ -60,7 +60,7 @@ export default function Payment() {
   const loadRecentTransactions = async () => {
     try {
       const { data, error } = await supabase
-        .from('transactions')
+        .from('enhanced_transactions')
         .select('*')
         .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
         .order('created_at', { ascending: false })
