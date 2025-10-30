@@ -137,9 +137,26 @@ export default function Payment() {
 
     setProcessing(true);
     try {
+      // Convertir le custom_id en user_id
+      const { data: userData, error: userError } = await supabase
+        .from('user_ids')
+        .select('user_id')
+        .eq('custom_id', recipientId.toUpperCase())
+        .single();
+
+      if (userError || !userData) {
+        toast({
+          title: "Erreur",
+          description: "Utilisateur introuvable avec cet ID",
+          variant: "destructive"
+        });
+        setProcessing(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
-        p_receiver_id: recipientId,
+        p_receiver_id: userData.user_id,
         p_amount: amount
       });
 
@@ -152,7 +169,8 @@ export default function Payment() {
         total_debit: (data as any)?.total_debit || 0,
         amount_received: (data as any)?.amount_received || 0,
         current_balance: (data as any)?.current_balance || 0,
-        balance_after: (data as any)?.balance_after || 0
+        balance_after: (data as any)?.balance_after || 0,
+        receiver_id: userData.user_id // Stocker le user_id pour la confirmation
       };
 
       setPaymentPreview(previewData);
@@ -172,7 +190,7 @@ export default function Payment() {
 
   // Fonction pour confirmer et effectuer un paiement
   const handleConfirmPayment = async () => {
-    if (!user?.id || !paymentPreview) return;
+    if (!user?.id || !paymentPreview || !(paymentPreview as any).receiver_id) return;
 
     setProcessing(true);
     setShowPaymentPreview(false);
@@ -180,7 +198,7 @@ export default function Payment() {
     try {
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
         p_sender_id: user.id,
-        p_receiver_id: recipientId,
+        p_receiver_id: (paymentPreview as any).receiver_id,
         p_amount: paymentPreview.amount,
         p_description: paymentDescription || 'Paiement via wallet'
       });
