@@ -210,6 +210,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          parent_agent_id: string | null
           pdg_id: string
           permissions: Json | null
           phone: string | null
@@ -227,6 +228,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          parent_agent_id?: string | null
           pdg_id: string
           permissions?: Json | null
           phone?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          parent_agent_id?: string | null
           pdg_id?: string
           permissions?: Json | null
           phone?: string | null
@@ -252,6 +255,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agents_management_parent_agent_id_fkey"
+            columns: ["parent_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agents_management_pdg_id_fkey"
             columns: ["pdg_id"]

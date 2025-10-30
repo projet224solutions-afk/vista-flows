@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
-import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
+import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
 import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
@@ -318,10 +318,10 @@ export default function AgentDashboardPublic() {
 
                     {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
                       <div>
-                        <CreateSubAgentForm 
-                          parentAgentId={agent.id}
-                          pdgId={agent.pdg_id}
-                        />
+                        <Button className="w-full h-20" variant="outline">
+                          <Users className="w-6 h-6 mr-2" />
+                          Gérer les Sous-Agents
+                        </Button>
                       </div>
                     )}
                   </div>

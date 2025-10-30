@@ -96,14 +96,17 @@ export const useAgentSubAgentsData = () => {
     try {
       setLoading(true);
 
-      // Récupérer les sous-agents - récupérer plus de champs pour éviter les erreurs de typage
+      // Récupérer les sous-agents - typage simplifié
       const { data: subAgentsData, error: subAgentsError } = await supabase
         .from('agents_management')
-        .select('id, pdg_id, parent_agent_id, agent_code, name, email, phone, is_active, permissions, commission_rate, created_at, updated_at')
+        .select('*')
         .eq('parent_agent_id', agentProfile.id)
         .order('created_at', { ascending: false });
 
-      if (subAgentsError) throw subAgentsError;
+      if (subAgentsError) {
+        console.error('Erreur récupération sous-agents:', subAgentsError);
+        throw subAgentsError;
+      }
 
       // Récupérer les statistiques pour chaque sous-agent
       const subAgentsWithStats: SubAgent[] = [];
