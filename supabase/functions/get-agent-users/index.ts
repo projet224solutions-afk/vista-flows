@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { agentToken } = await req.json();
+    const body = await req.json();
+    const agentToken = body.agentToken || body.agent_access_token;
 
     if (!agentToken) {
       return new Response(
