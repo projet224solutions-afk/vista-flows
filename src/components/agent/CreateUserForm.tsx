@@ -132,16 +132,19 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
       if (error) {
         console.error('Edge function error:', error);
         toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
+        setIsSubmitting(false);
         return;
       }
 
       // Vérifier si la réponse contient une erreur
-      if (data?.error) {
+      if (data?.error || data?.code === 'EMAIL_EXISTS') {
+        console.error('Erreur retournée:', data);
         if (data.code === 'EMAIL_EXISTS') {
-          toast.error('Cet email est déjà utilisé par un autre utilisateur');
+          toast.error('⚠️ Cet email est déjà utilisé par un autre utilisateur');
         } else {
-          toast.error(data.error);
+          toast.error(data.error || 'Erreur lors de la création de l\'utilisateur');
         }
+        setIsSubmitting(false);
         return;
       }
 

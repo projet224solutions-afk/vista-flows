@@ -119,8 +119,12 @@ serve(async (req) => {
       console.error('Auth error:', authError);
       
       // Gérer les erreurs spécifiques
-      if (authError.message.includes('already been registered') || 
-          authError.message.includes('email_exists')) {
+      // Vérifier le code d'erreur directement (plus fiable)
+      if (authError.code === 'email_exists' || 
+          authError.code === 'user_already_exists' ||
+          authError.message?.includes('already been registered') || 
+          authError.message?.includes('email_exists')) {
+        console.log('⚠️ Email déjà utilisé:', body.email);
         return new Response(
           JSON.stringify({ 
             error: 'Un utilisateur avec cet email existe déjà',
@@ -130,10 +134,12 @@ serve(async (req) => {
         );
       }
       
+      console.error('❌ Erreur auth non gérée:', authError.code, authError.message);
       return new Response(
         JSON.stringify({ 
           error: authError.message || 'Erreur lors de la création de l\'utilisateur',
-          code: 'AUTH_ERROR'
+          code: authError.code || 'AUTH_ERROR',
+          details: authError
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
