@@ -99,6 +99,7 @@ serve(async (req) => {
     }
 
     // Créer l'utilisateur dans auth.users
+    console.log('🔄 Tentative de création utilisateur:', body.email, 'rôle:', body.role);
     const { data: authUser, error: authError } = await supabaseClient.auth.admin.createUser({
       email: body.email,
       password: body.password,
@@ -205,6 +206,7 @@ serve(async (req) => {
 
     // Créer un profil vendeur si nécessaire
     if (body.role === 'vendeur') {
+      console.log('📦 Création profil vendeur pour:', authUser.user.id);
       const vendorData = (body.vendeurData || {}) as {
         business_name?: string;
         business_description?: string;
@@ -221,9 +223,10 @@ serve(async (req) => {
         });
 
       if (vendorError) {
-        console.error('Vendor error:', vendorError);
+        console.error('❌ Vendor error:', vendorError);
         throw new Error('Erreur lors de la création du profil vendeur: ' + vendorError.message);
       }
+      console.log('✅ Profil vendeur créé avec succès');
     }
 
     // Créer un profil livreur ou taxi si nécessaire
@@ -288,39 +291,50 @@ serve(async (req) => {
 
     // Créer un bureau syndicat si nécessaire
     if (body.role === 'syndicat') {
+      console.log('🏢 Création bureau syndicat pour:', authUser.user.id);
       const syndicatData = body.syndicatData;
       
       if (!syndicatData || !syndicatData.bureau_code || !syndicatData.prefecture || !syndicatData.commune) {
-        throw new Error('Données du bureau syndical manquantes (code, préfecture, commune requis)');
+        const errorMsg = 'Données du bureau syndical manquantes (code, préfecture, commune requis)';
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
       }
+
+      console.log('📋 Données bureau:', syndicatData);
 
       // Générer un access token unique pour le bureau
       const accessToken = crypto.randomUUID();
+      console.log('🔑 Access token généré:', accessToken);
 
-      const { error: bureauError } = await supabaseClient
+      const bureauData = {
+        bureau_code: syndicatData.bureau_code,
+        prefecture: syndicatData.prefecture,
+        commune: syndicatData.commune,
+        full_location: syndicatData.full_location || `${syndicatData.prefecture} - ${syndicatData.commune}`,
+        president_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+        president_email: body.email,
+        president_phone: body.phone,
+        status: 'active',
+        access_token: accessToken,
+        interface_url: `${Deno.env.get('APP_URL') || 'https://a00e0cf7-bf68-445f-848b-f2c774cf80ce.lovableproject.com'}/bureau/${accessToken}`,
+        total_members: 0,
+        total_vehicles: 0,
+        total_cotisations: 0
+      };
+
+      console.log('💾 Insertion bureau dans la base de données...');
+      const { error: bureauError, data: bureauResult } = await supabaseClient
         .from('bureaus')
-        .insert({
-          bureau_code: syndicatData.bureau_code,
-          prefecture: syndicatData.prefecture,
-          commune: syndicatData.commune,
-          full_location: syndicatData.full_location || `${syndicatData.prefecture} - ${syndicatData.commune}`,
-          president_name: `${body.firstName} ${body.lastName || ''}`.trim(),
-          president_email: body.email,
-          president_phone: body.phone,
-          status: 'active',
-          access_token: accessToken,
-          interface_url: `${Deno.env.get('APP_URL') || 'https://app.224solutions.com'}/bureau/${accessToken}`,
-          total_members: 0,
-          total_vehicles: 0,
-          total_cotisations: 0
-        });
+        .insert(bureauData)
+        .select();
 
       if (bureauError) {
-        console.error('Bureau error:', bureauError);
+        console.error('❌ Bureau error:', bureauError);
+        console.error('❌ Bureau error details:', JSON.stringify(bureauError));
         throw new Error('Erreur lors de la création du bureau syndical: ' + bureauError.message);
       }
 
-      console.log('✅ Bureau syndical créé avec succès');
+      console.log('✅ Bureau syndical créé avec succès:', bureauResult);
     }
 
     // Le rôle transitaire utilise uniquement le profil de base
@@ -346,14 +360,23 @@ serve(async (req) => {
       user_role: body.role
     });
 
+    console.log('✅ Utilisateur créé avec succès:', {
+      id: authUser.user.id,
+      email: body.email,
+      role: body.role,
+      public_id: publicId
+    });
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: {
           id: authUser.user.id,
           email: body.email,
-          public_id: publicId
-        }
+          public_id: publicId,
+          role: body.role
+        },
+        message: `Utilisateur ${body.role} créé avec succès`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
