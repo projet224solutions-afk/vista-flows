@@ -220,7 +220,7 @@ export default function ProductPaymentModal({
           }
 
           // Effectuer le transfert wallet
-          const { error: transferError } = await supabase.rpc('process_wallet_transaction', {
+          const { data: transferData, error: transferError } = await supabase.rpc('process_wallet_transaction', {
             p_sender_id: userId,
             p_receiver_id: vendorData.user_id,
             p_amount: vendorTotal,
@@ -233,6 +233,30 @@ export default function ProductPaymentModal({
               description: transferError.message || 'Le transfert a échoué'
             });
             continue;
+          }
+
+          // Enregistrer la commission de la plateforme (2.5%)
+          const commissionRate = 2.5;
+          const commissionAmount = (vendorTotal * commissionRate) / 100;
+
+          const { error: revenueError } = await supabase
+            .from('platform_revenue')
+            .insert({
+              amount: commissionAmount,
+              revenue_type: 'product_commission',
+              source_transaction_id: typeof transferData === 'string' ? transferData : null,
+              metadata: {
+                commission_rate: commissionRate,
+                order_total: vendorTotal,
+                buyer_id: userId,
+                vendor_id: vendorData.user_id,
+                items_count: items.length
+              }
+            });
+
+          if (revenueError) {
+            console.error('[ProductPayment] Revenue tracking error:', revenueError);
+            // Ne pas bloquer la commande si l'enregistrement du revenu échoue
           }
         }
 
