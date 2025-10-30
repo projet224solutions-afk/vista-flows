@@ -293,9 +293,9 @@ export default function UniversalCommunicationHub({
   };
 
   const handleSearchById = async () => {
-    const userId = userIdSearch.trim();
+    const customId = userIdSearch.trim().toUpperCase();
     
-    if (!userId) {
+    if (!customId) {
       toast({
         title: "Erreur",
         description: "Veuillez entrer un ID utilisateur",
@@ -304,42 +304,42 @@ export default function UniversalCommunicationHub({
       return;
     }
 
-    // Validation du format UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
+    // Validation du format: 3 lettres + 4 chiffres (ex: USR0001, VEN0001, PDG0001)
+    const customIdRegex = /^[A-Z]{3}\d{4}$/;
+    if (!customIdRegex.test(customId)) {
       toast({
         title: "Format invalide",
-        description: "L'ID doit être un UUID valide (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Vérifier qu'on ne s'ajoute pas soi-même
-    if (userId === user?.id) {
-      toast({
-        title: "Erreur",
-        description: "Vous ne pouvez pas créer une conversation avec vous-même",
+        description: "L'ID doit être au format 3 lettres + 4 chiffres (ex: USR0001, VEN0001)",
         variant: "destructive"
       });
       return;
     }
     
     try {
-      // Vérifier que l'utilisateur existe
-      const profile = await universalCommunicationService.getUserById(userId);
+      // Rechercher l'utilisateur par custom_id
+      const profile = await universalCommunicationService.getUserByCustomId(customId);
       
       if (!profile) {
         toast({
           title: "Utilisateur introuvable",
-          description: "Aucun utilisateur ne correspond à cet ID",
+          description: `Aucun utilisateur ne correspond à l'ID ${customId}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Vérifier qu'on ne s'ajoute pas soi-même
+      if (profile.id === user?.id) {
+        toast({
+          title: "Erreur",
+          description: "Vous ne pouvez pas créer une conversation avec vous-même",
           variant: "destructive"
         });
         return;
       }
       
-      // Créer une conversation directe
-      await handleCreateConversation(userId);
+      // Créer une conversation directe avec le user_id (UUID) récupéré
+      await handleCreateConversation(profile.id);
       setShowNewConversation(false);
       setUserIdSearch('');
       
@@ -760,19 +760,20 @@ export default function UniversalCommunicationHub({
               
               <TabsContent value="id" className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">ID Utilisateur (UUID)</label>
+                  <label className="text-sm font-medium">ID Utilisateur (Custom ID)</label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                      className="font-mono text-sm"
+                      placeholder="USR0001"
+                      className="font-mono text-sm uppercase"
                       value={userIdSearch}
-                      onChange={(e) => setUserIdSearch(e.target.value)}
+                      onChange={(e) => setUserIdSearch(e.target.value.toUpperCase())}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           handleSearchById();
                         }
                       }}
+                      maxLength={7}
                     />
                     <Button 
                       onClick={handleSearchById}
@@ -782,17 +783,18 @@ export default function UniversalCommunicationHub({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    💡 Format UUID requis. Appuyez sur Entrée ou cliquez sur le bouton de recherche
+                    💡 Format: 3 lettres + 4 chiffres. Appuyez sur Entrée ou cliquez sur rechercher
                   </p>
                 </div>
                 
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">Comment trouver un ID utilisateur ?</p>
+                  <p className="text-sm font-medium mb-2">📋 Exemples de format d'ID</p>
                   <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• L'ID est un UUID unique visible dans le profil utilisateur</li>
-                    <li>• Format: 8-4-4-4-12 caractères hexadécimaux séparés par des tirets</li>
-                    <li>• Demandez à l'utilisateur de vous partager son ID complet</li>
-                    <li>• Exemple: a1b2c3d4-e5f6-7890-abcd-ef1234567890</li>
+                    <li>• <span className="font-mono font-semibold">USR0001</span> - ID Client</li>
+                    <li>• <span className="font-mono font-semibold">VEN0001</span> - ID Vendeur</li>
+                    <li>• <span className="font-mono font-semibold">PDG0001</span> - ID PDG</li>
+                    <li>• <span className="font-mono font-semibold">DRV0001</span> - ID Chauffeur</li>
+                    <li className="mt-2 pt-2 border-t">💡 Demandez à l'utilisateur de partager son ID personnalisé visible dans son profil</li>
                   </ul>
                 </div>
               </TabsContent>

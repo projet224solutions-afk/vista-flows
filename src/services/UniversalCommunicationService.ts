@@ -503,7 +503,7 @@ class UniversalCommunicationService {
   }
 
   /**
-   * Récupérer un utilisateur par ID
+   * Récupérer un utilisateur par ID (UUID)
    */
   async getUserById(userId: string): Promise<{
     id: string;
@@ -529,6 +529,55 @@ class UniversalCommunicationService {
       return data as any;
     } catch (error) {
       console.error('Erreur récupération utilisateur:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Récupérer un utilisateur par custom_id (format: 3 lettres + 4 chiffres)
+   * Exemples: USR0001, VEN0001, PDG0001, DRV0001
+   */
+  async getUserByCustomId(customId: string): Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    avatar_url?: string;
+  } | null> {
+    try {
+      // Rechercher dans user_ids pour trouver le user_id correspondant au custom_id
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('user_ids')
+        .select('user_id')
+        .eq('custom_id', customId.toUpperCase())
+        .single();
+
+      if (userIdError) {
+        if (userIdError.code === 'PGRST116') {
+          return null;
+        }
+        throw userIdError;
+      }
+
+      if (!userIdData) return null;
+
+      // Récupérer le profil complet de l'utilisateur
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, avatar_url')
+        .eq('id', userIdData.user_id)
+        .single();
+
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          return null;
+        }
+        throw profileError;
+      }
+
+      return profileData as any;
+    } catch (error) {
+      console.error('Erreur récupération utilisateur par custom_id:', error);
       return null;
     }
   }
