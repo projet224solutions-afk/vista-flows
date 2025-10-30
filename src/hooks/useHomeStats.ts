@@ -33,10 +33,11 @@ export const useHomeStats = () => {
           .from('vendors')
           .select('*', { count: 'exact', head: true });
 
-        // Compter les services (taxi_rides uniquement)
-        const { count: ridesCount } = await supabase
-          .from('taxi_rides')
-          .select('*', { count: 'exact', head: true });
+        // Compter les types de services actifs disponibles
+        const { count: servicesCount } = await supabase
+          .from('service_types')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
 
         // Compter uniquement les clients (utilisateurs avec le rôle 'client')
         const { count: clientsCount } = await supabase
@@ -47,7 +48,7 @@ export const useHomeStats = () => {
         setStats({
           totalProducts: productsCount || 0,
           totalVendors: vendorsCount || 0,
-          totalServices: ridesCount || 0,
+          totalServices: servicesCount || 0,
           totalClients: clientsCount || 0,
         });
       } catch (error) {
