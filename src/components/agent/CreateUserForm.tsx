@@ -30,10 +30,11 @@ const USER_ROLES = [
 interface CreateUserFormProps {
   agentId: string;
   agentCode: string;
+  accessToken?: string; // Token d'accès pour les agents/sous-agents publics
   onUserCreated?: () => void; // Callback après création réussie
 }
 
-export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUserFormProps) {
+export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated }: CreateUserFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -85,6 +86,7 @@ export function CreateUserForm({ agentId, agentCode, onUserCreated }: CreateUser
         city: formData.city,
         agentId: agentId,
         agentCode: agentCode,
+        access_token: accessToken, // Ajouter le token d'accès si disponible
       };
 
       // Ajouter les données spécifiques selon le rôle

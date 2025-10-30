@@ -18,6 +18,7 @@ interface CreateUserRequest {
   city?: string;
   agentId: string;
   agentCode: string;
+  access_token?: string; // Token d'accès pour les agents/sous-agents
   // Données spécifiques syndicat
   syndicatData?: {
     bureau_code: string;
@@ -77,15 +78,28 @@ serve(async (req) => {
     console.log('Creating user by agent:', body.agentCode);
 
     // Vérifier que l'agent existe et a la permission
-    const { data: agent, error: agentError } = await supabaseClient
+    let agentQuery = supabaseClient
       .from('agents_management')
-      .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+      .select('id, permissions, pdg_id, can_create_sub_agent, agent_code, access_token')
       .eq('id', body.agentId)
-      .eq('is_active', true)
-      .single();
+      .eq('is_active', true);
+
+    // Si un access_token est fourni, vérifier qu'il correspond à l'agent
+    if (body.access_token) {
+      agentQuery = agentQuery.eq('access_token', body.access_token);
+    }
+
+    const { data: agent, error: agentError } = await agentQuery.single();
 
     if (agentError || !agent) {
-      throw new Error('Agent non trouvé ou inactif');
+      console.error('Agent non trouvé:', agentError);
+      throw new Error('Agent non trouvé ou inactif, ou token invalide');
+    }
+
+    // Si un access_token était fourni, vérifier qu'il correspond bien
+    if (body.access_token && agent.access_token !== body.access_token) {
+      console.error('Token invalide pour cet agent');
+      throw new Error('Token d\'accès invalide pour cet agent');
     }
 
     // Vérifier que l'agent a la permission de créer des utilisateurs

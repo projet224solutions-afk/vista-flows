@@ -503,10 +503,11 @@ export default function AgentDashboardPublic() {
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {agent.permissions.includes('create_users') && (
-                      <div>
+                       <div>
                         <CreateUserForm 
                           agentId={agent.id} 
                           agentCode={agent.agent_code}
+                          accessToken={token}
                           onUserCreated={() => {
                             loadAgentData();
                           }}
