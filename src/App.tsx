@@ -16,6 +16,7 @@ const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Messages = lazy(() => import("./pages/Messages"));
+const ServicesProximite = lazy(() => import("./pages/ServicesProximite"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const Profil = lazy(() => import("./pages/Profil"));
 const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
@@ -79,6 +80,7 @@ function App() {
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
