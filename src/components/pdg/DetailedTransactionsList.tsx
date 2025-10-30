@@ -57,14 +57,10 @@ export default function DetailedTransactionsList() {
       setLoading(true);
       console.log('🔄 [DetailedTransactions] Chargement des transactions détaillées...');
       
-      // Récupérer toutes les transactions avec les informations des wallets
+      // Récupérer toutes les transactions
       const { data: transactionsData, error } = await supabase
         .from('wallet_transactions')
-        .select(`
-          *,
-          sender_wallet:sender_wallet_id(user_id),
-          receiver_wallet:receiver_wallet_id(user_id)
-        `)
+        .select('*')
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(100);
@@ -73,13 +69,35 @@ export default function DetailedTransactionsList() {
 
       console.log('📦 [DetailedTransactions] Transactions brutes:', transactionsData);
 
-      // Récupérer les informations des utilisateurs
-      const userIds = new Set<string>();
+      // Récupérer les wallet IDs uniques
+      const walletIds = new Set<string>();
       transactionsData?.forEach((t: any) => {
-        if (t.sender_wallet?.user_id) userIds.add(t.sender_wallet.user_id);
-        if (t.receiver_wallet?.user_id) userIds.add(t.receiver_wallet.user_id);
+        if (t.sender_wallet_id) walletIds.add(t.sender_wallet_id);
+        if (t.receiver_wallet_id) walletIds.add(t.receiver_wallet_id);
       });
 
+      // Récupérer les wallets avec leurs user_ids
+      const { data: walletsData, error: walletsError } = await supabase
+        .from('wallets')
+        .select('id, user_id')
+        .in('id', Array.from(walletIds));
+
+      if (walletsError) {
+        console.error('⚠️ Erreur chargement wallets:', walletsError);
+      }
+
+      console.log('💼 [DetailedTransactions] Wallets:', walletsData);
+
+      // Créer une map des wallets
+      const walletsMap = new Map(walletsData?.map(w => [w.id, w.user_id]) || []);
+
+      // Récupérer les user IDs uniques
+      const userIds = new Set<string>();
+      walletsData?.forEach((w: any) => {
+        if (w.user_id) userIds.add(w.user_id);
+      });
+
+      // Récupérer les informations des utilisateurs
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email')
@@ -95,27 +113,27 @@ export default function DetailedTransactionsList() {
       const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
       
       const enrichedTransactions: DetailedTransaction[] = (transactionsData || []).map((t: any) => {
-        const senderUserId = t.sender_wallet?.user_id;
-        const receiverUserId = t.receiver_wallet?.user_id;
+        const senderUserId = t.sender_wallet_id ? walletsMap.get(t.sender_wallet_id) : null;
+        const receiverUserId = t.receiver_wallet_id ? walletsMap.get(t.receiver_wallet_id) : null;
         
-        const getSenderUser = usersMap.get(senderUserId);
-        const getReceiverUser = usersMap.get(receiverUserId);
+        const senderUser = senderUserId ? usersMap.get(senderUserId) : null;
+        const receiverUser = receiverUserId ? usersMap.get(receiverUserId) : null;
         
         return {
           ...t,
           sender_info: senderUserId ? {
             user_id: senderUserId,
-            name: getSenderUser 
-              ? `${getSenderUser.first_name || ''} ${getSenderUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
+            name: senderUser 
+              ? `${senderUser.first_name || ''} ${senderUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
               : 'Utilisateur inconnu',
-            email: getSenderUser?.email || 'N/A'
+            email: senderUser?.email || 'N/A'
           } : null,
           receiver_info: receiverUserId ? {
             user_id: receiverUserId,
-            name: getReceiverUser 
-              ? `${getReceiverUser.first_name || ''} ${getReceiverUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
+            name: receiverUser 
+              ? `${receiverUser.first_name || ''} ${receiverUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
               : 'Utilisateur inconnu',
-            email: getReceiverUser?.email || 'N/A'
+            email: receiverUser?.email || 'N/A'
           } : null
         };
       });
