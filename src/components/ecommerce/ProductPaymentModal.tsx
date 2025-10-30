@@ -52,6 +52,8 @@ export default function ProductPaymentModal({
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingBalance, setLoadingBalance] = useState(false);
+  const [vendorCode, setVendorCode] = useState<string | null>(null);
+  const [loadingVendorCode, setLoadingVendorCode] = useState(false);
 
   // Charger le solde wallet au montage du modal
   useEffect(() => {
@@ -59,6 +61,22 @@ export default function ProductPaymentModal({
       loadWalletBalance();
     }
   }, [open, userId]);
+
+  // Charger le code du vendeur quand wallet est sélectionné
+  useEffect(() => {
+    if (open && paymentMethod === 'wallet' && cartItems.length > 0) {
+      loadVendorCode();
+    } else {
+      setVendorCode(null);
+    }
+  }, [open, paymentMethod, cartItems]);
+
+  // Réinitialiser le code vendeur à la fermeture
+  useEffect(() => {
+    if (!open) {
+      setVendorCode(null);
+    }
+  }, [open]);
 
   const loadWalletBalance = async () => {
     setLoadingBalance(true);
@@ -77,6 +95,57 @@ export default function ProductPaymentModal({
       setWalletBalance(0);
     } finally {
       setLoadingBalance(false);
+    }
+  };
+
+  const loadVendorCode = async () => {
+    setLoadingVendorCode(true);
+    try {
+      // Récupérer le premier vendeur du panier
+      const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId;
+      
+      if (!firstVendorId) {
+        setVendorCode(null);
+        return;
+      }
+
+      // Récupérer le code du vendeur et le user_id
+      const { data: vendorData, error: vendorError } = await supabase
+        .from('vendors')
+        .select('user_id, vendor_code')
+        .eq('id', firstVendorId)
+        .single();
+
+      if (vendorError || !vendorData) {
+        console.error('[ProductPayment] Error loading vendor:', vendorError);
+        setVendorCode(null);
+        return;
+      }
+
+      // Si vendor_code existe, l'utiliser
+      if (vendorData.vendor_code) {
+        setVendorCode(vendorData.vendor_code);
+      } else {
+        // Sinon récupérer le public_id du wallet
+        const { data: walletData, error: walletError } = await supabase
+          .from('wallets')
+          .select('public_id')
+          .eq('user_id', vendorData.user_id)
+          .eq('currency', 'GNF')
+          .single();
+
+        if (walletError || !walletData?.public_id) {
+          console.error('[ProductPayment] Error loading wallet code:', walletError);
+          setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase());
+        } else {
+          setVendorCode(walletData.public_id);
+        }
+      }
+    } catch (error) {
+      console.error('[ProductPayment] Error loading vendor code:', error);
+      setVendorCode(null);
+    } finally {
+      setLoadingVendorCode(false);
     }
   };
 
@@ -245,8 +314,24 @@ export default function ProductPaymentModal({
           <DialogDescription>
             Montant total: <span className="font-bold text-lg">{totalAmount.toLocaleString()} GNF</span>
             {paymentMethod === 'wallet' && (
-              <div className="mt-2">
-                Solde disponible: <span className="font-semibold">{walletBalance?.toLocaleString() || 0} GNF</span>
+              <div className="mt-2 space-y-1">
+                <div>
+                  Solde disponible: <span className="font-semibold">{walletBalance?.toLocaleString() || 0} GNF</span>
+                </div>
+                {vendorCode && (
+                  <div className="flex items-center gap-2 mt-2 p-2 bg-primary/10 rounded-md">
+                    <Wallet className="w-4 h-4 text-primary" />
+                    <span className="text-sm">
+                      ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span>
+                    </span>
+                  </div>
+                )}
+                {loadingVendorCode && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Chargement ID vendeur...
+                  </div>
+                )}
               </div>
             )}
           </DialogDescription>
