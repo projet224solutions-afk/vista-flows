@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 import { CommissionService } from '@/services/commissionService';
 import { 
   Wallet, 
@@ -36,10 +37,12 @@ export default function PlatformRevenueOverview() {
   const fetchRevenueData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 [PlatformRevenue] Chargement des revenus...');
       const data = await CommissionService.getAllServicesRevenue();
+      console.log('✅ [PlatformRevenue] Revenus chargés:', data);
       setRevenues(data);
     } catch (error: any) {
-      console.error('Erreur chargement revenus:', error);
+      console.error('❌ [PlatformRevenue] Erreur chargement revenus:', error);
       toast.error('Erreur lors du chargement des revenus');
     } finally {
       setLoading(false);
@@ -55,6 +58,32 @@ export default function PlatformRevenueOverview() {
 
   useEffect(() => {
     fetchRevenueData();
+
+    // S'abonner aux changements de transactions en temps réel
+    console.log('📡 [PlatformRevenue] Abonnement temps réel activé');
+    const channel = supabase
+      .channel('platform-revenue-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallet_transactions',
+        },
+        (payload) => {
+          console.log('💰 [PlatformRevenue] Transaction détectée:', payload);
+          // Recharger les données après un délai pour laisser la transaction se finaliser
+          setTimeout(() => {
+            fetchRevenueData();
+          }, 1000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔌 [PlatformRevenue] Déconnexion temps réel');
+      channel.unsubscribe();
+    };
   }, []);
 
   const getServiceIcon = (serviceName: string) => {

@@ -121,11 +121,13 @@ export class CommissionService {
 
       // Filtrer selon le type de service
       if (serviceName === 'wallet_transfer') {
-        query = query.eq('transaction_type', 'transfer');
+        // Inclure tous les types de transferts : transfer, deposit, withdraw
+        query = query.in('transaction_type', ['transfer', 'deposit', 'withdraw', 'credit']);
       } else if (serviceName === 'subscription') {
         query = query.eq('transaction_type', 'subscription');
       } else {
-        query = query.like('transaction_type', `${serviceName}_%`);
+        // Pour les autres services (marketplace, taxi, delivery, livreur)
+        query = query.or(`transaction_type.eq.${serviceName},transaction_type.like.${serviceName}_%`);
       }
 
       if (startDate) {
@@ -140,8 +142,18 @@ export class CommissionService {
 
       if (error) throw error;
 
-      const totalRevenue = data?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-      const totalCommission = data?.reduce((sum, t) => sum + Number(t.fee), 0) || 0;
+      console.log(`📊 [CommissionService] Service ${serviceName}:`, {
+        count: data?.length,
+        transactions: data?.map(t => ({ type: t.transaction_type, amount: t.amount, fee: t.fee }))
+      });
+
+      // Calculer uniquement les montants positifs (revenus) pour éviter d'annuler avec les retraits
+      const totalRevenue = data?.reduce((sum, t) => {
+        const amount = Number(t.amount);
+        return sum + (amount > 0 ? amount : 0);
+      }, 0) || 0;
+      
+      const totalCommission = data?.reduce((sum, t) => sum + Number(t.fee || 0), 0) || 0;
       const transactionCount = data?.length || 0;
 
       return {
