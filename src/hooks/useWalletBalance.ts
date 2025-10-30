@@ -24,7 +24,7 @@ export function useWalletBalance(userId: string | undefined) {
             .from('wallets')
             .insert({
               user_id: userId,
-              balance: 10000, // Solde initial de bienvenue
+              balance: 0,
               currency: 'GNF'
             })
             .select('balance, currency')
@@ -38,17 +38,6 @@ export function useWalletBalance(userId: string | undefined) {
           if (newWallet) {
             setBalance(newWallet.balance || 0);
             setCurrency(newWallet.currency || 'GNF');
-            
-            // Créer une transaction de crédit initial
-            await supabase.from('wallet_transactions').insert({
-              transaction_id: `INIT-${userId.slice(0, 8)}`,
-              transaction_type: 'credit',
-              amount: 10000,
-              net_amount: 10000,
-              receiver_wallet_id: userId,
-              description: 'Crédit de bienvenue',
-              status: 'completed'
-            });
           }
         } else {
           throw error;
