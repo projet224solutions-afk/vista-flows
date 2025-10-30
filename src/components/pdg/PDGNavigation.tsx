@@ -32,6 +32,7 @@ const categories: NavCategory[] = [
     color: 'from-blue-500 to-blue-600',
     items: [
       { value: 'finance', label: 'Finances', icon: DollarSign },
+      { value: 'revenue-analytics', label: '💼 Revenus PDG', icon: BarChart3 },
       { value: 'users', label: 'Utilisateurs', icon: Users },
       { value: 'products', label: 'Produits', icon: Package },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },

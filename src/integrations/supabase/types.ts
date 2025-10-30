@@ -3275,6 +3275,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pdg_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           action: string
@@ -4214,6 +4244,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenus_pdg: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          percentage_applied: number
+          service_id: string | null
+          source_type: string
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          percentage_applied: number
+          service_id?: string | null
+          source_type: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          percentage_applied?: number
+          service_id?: string | null
+          source_type?: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -7512,6 +7578,17 @@ export type Database = {
         Args: { p_currency?: string; p_user_id: string }
         Returns: string
       }
+      get_pdg_revenue_stats: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          purchase_fees_revenue: number
+          purchase_transaction_count: number
+          total_revenue: number
+          transaction_count: number
+          wallet_fees_revenue: number
+          wallet_transaction_count: number
+        }[]
+      }
       get_personalized_recommendations: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
@@ -7747,6 +7824,18 @@ export type Database = {
           p_sender_code: string
         }
         Returns: Json
+      }
+      record_pdg_revenue: {
+        Args: {
+          p_amount: number
+          p_metadata?: Json
+          p_percentage: number
+          p_service_id?: string
+          p_source_type: string
+          p_transaction_id?: string
+          p_user_id?: string
+        }
+        Returns: string
       }
       record_platform_revenue: {
         Args: {
