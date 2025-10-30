@@ -7263,6 +7263,15 @@ export type Database = {
         Args: { p_role?: string; p_user_id: string }
         Returns: Json
       }
+      create_user_with_wallet: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_password: string
+          p_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Json
+      }
       credit_wallet: {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
@@ -7470,6 +7479,10 @@ export type Database = {
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       get_finance_stats: { Args: never; Returns: Json }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
+      get_or_create_wallet: {
+        Args: { p_currency?: string; p_user_id: string }
+        Returns: string
+      }
       get_personalized_recommendations: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
