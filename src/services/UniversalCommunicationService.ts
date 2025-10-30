@@ -341,12 +341,29 @@ class UniversalCommunicationService {
    */
   async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
     try {
-      const { error } = await supabase.rpc('mark_messages_as_read', {
-        p_conversation_id: conversationId,
-        p_user_id: userId
-      });
+      // Si c'est une conversation directe (ID commence par "direct_")
+      if (conversationId.startsWith('direct_')) {
+        const otherUserId = conversationId.replace('direct_', '');
+        
+        // Marquer comme lus les messages reçus de l'autre utilisateur
+        const { error } = await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString() })
+          .is('conversation_id', null)
+          .eq('sender_id', otherUserId)
+          .eq('recipient_id', userId)
+          .is('read_at', null);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Conversation normale avec conversation_id
+        const { error } = await supabase.rpc('mark_messages_as_read', {
+          p_conversation_id: conversationId,
+          p_user_id: userId
+        });
+
+        if (error) throw error;
+      }
 
       // Audit log
       await this.logAudit(userId, 'message_read', conversationId);
