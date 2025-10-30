@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAgentSubAgentsData, type SubAgent } from '@/hooks/useAgentSubAgentsData';
+import { useAgentSubAgentsData, type SubAgent, type AgentProfile, type SubAgentStats } from '@/hooks/useAgentSubAgentsData';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 // Schéma de validation pour le sous-agent
@@ -31,8 +33,21 @@ const subAgentSchema = z.object({
     .max(100, { message: "Le taux de commission ne peut pas dépasser 100%" })
 });
 
-export default function AgentSubAgentsManagement() {
-  const { subAgents, agentProfile, loading, stats, createSubAgent, updateSubAgent, deleteSubAgent, toggleSubAgentStatus } = useAgentSubAgentsData();
+export interface AgentSubAgentsManagementProps {
+  agentId?: string;
+}
+
+export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsManagementProps = {}) {
+  const { user } = useAuth();
+  const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
+  const [agentProfile, setAgentProfile] = useState<AgentProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<SubAgentStats>({
+    totalSubAgents: 0,
+    activeSubAgents: 0,
+    inactiveSubAgents: 0,
+    averageCommission: 0,
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +65,212 @@ export default function AgentSubAgentsManagement() {
       manage_products: false
     }
   });
+
+  // Charger le profil de l'agent
+  useEffect(() => {
+    const loadAgentProfile = async () => {
+      if (!user?.id && !agentId) return;
+
+      try {
+        let query = supabase.from('agents_management').select('*');
+        
+        // Si agentId est fourni, charger directement cet agent
+        if (agentId) {
+          query = query.eq('id', agentId);
+        } else {
+          // Sinon charger l'agent lié à l'utilisateur
+          query = query.eq('user_id', user.id).eq('is_active', true);
+        }
+
+        const { data, error } = await query.single();
+
+        if (error) throw error;
+
+        const profile: AgentProfile = {
+          id: data.id,
+          pdg_id: data.pdg_id,
+          user_id: data.user_id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || undefined,
+          agent_code: data.agent_code,
+          permissions: Array.isArray(data.permissions) ? (data.permissions as string[]) : [],
+          is_active: data.is_active,
+          can_create_sub_agent: data.can_create_sub_agent || false,
+          commission_rate: Number(data.commission_rate) || 0,
+        };
+        
+        setAgentProfile(profile);
+      } catch (error) {
+        console.error('Erreur chargement agent:', error);
+        toast.error('Erreur lors du chargement du profil agent');
+      }
+    };
+
+    loadAgentProfile();
+  }, [user?.id, agentId]);
+
+  // Charger les sous-agents
+  useEffect(() => {
+    const loadSubAgents = async () => {
+      if (!agentProfile?.id) return;
+
+      try {
+        setLoading(true);
+
+        const { data: subAgentsData, error: subAgentsError } = await supabase
+          .from('agents_management')
+          .select('*')
+          .eq('parent_agent_id', agentProfile.id)
+          .order('created_at', { ascending: false });
+
+        if (subAgentsError) {
+          console.error('Erreur récupération sous-agents:', subAgentsError);
+          throw subAgentsError;
+        }
+
+        const subAgentsWithStats: SubAgent[] = [];
+        
+        for (const subAgent of (subAgentsData || [])) {
+          const { count: usersCount } = await supabase
+            .from('agent_created_users')
+            .select('*', { count: 'exact', head: true })
+            .eq('agent_id', subAgent.id);
+
+          subAgentsWithStats.push({
+            id: subAgent.id,
+            pdg_id: subAgent.pdg_id,
+            parent_agent_id: subAgent.parent_agent_id || agentProfile.id,
+            agent_code: subAgent.agent_code,
+            name: subAgent.name,
+            email: subAgent.email,
+            phone: subAgent.phone || '',
+            is_active: subAgent.is_active,
+            permissions: Array.isArray(subAgent.permissions) ? (subAgent.permissions as string[]) : [],
+            commission_rate: Number(subAgent.commission_rate) || 0,
+            created_at: subAgent.created_at,
+            updated_at: subAgent.updated_at || undefined,
+            total_users_created: usersCount || 0,
+          });
+        }
+
+        setSubAgents(subAgentsWithStats);
+
+        const activeSubAgents = subAgentsWithStats.filter(a => a.is_active).length;
+        const avgCommission = subAgentsWithStats.length > 0
+          ? subAgentsWithStats.reduce((sum, a) => sum + (Number(a.commission_rate) || 0), 0) / subAgentsWithStats.length
+          : 0;
+
+        setStats({
+          totalSubAgents: subAgentsWithStats.length,
+          activeSubAgents,
+          inactiveSubAgents: subAgentsWithStats.length - activeSubAgents,
+          averageCommission: avgCommission,
+        });
+      } catch (error) {
+        console.error('Erreur chargement sous-agents:', error);
+        toast.error('Erreur lors du chargement des sous-agents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSubAgents();
+  }, [agentProfile?.id]);
+
+  const createSubAgent = async (subAgentData: {
+    name: string;
+    email: string;
+    phone: string;
+    permissions: string[];
+    commission_rate?: number;
+  }) => {
+    if (!agentProfile?.id || !agentProfile?.pdg_id) {
+      toast.error('Profil agent non trouvé');
+      return null;
+    }
+
+    if (!agentProfile.can_create_sub_agent) {
+      toast.error('Vous n\'avez pas la permission de créer des sous-agents');
+      return null;
+    }
+
+    try {
+      const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}`;
+
+      const { data, error } = await supabase.functions.invoke('create-sub-agent', {
+        body: {
+          pdg_id: agentProfile.pdg_id,
+          parent_agent_id: agentProfile.id,
+          agent_code: agentCode,
+          name: subAgentData.name.trim(),
+          email: subAgentData.email.trim().toLowerCase(),
+          phone: subAgentData.phone.trim(),
+          permissions: subAgentData.permissions,
+          commission_rate: subAgentData.commission_rate || 5,
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Sous-agent créé avec succès');
+      // Recharger la liste
+      const loadEvent = new Event('load');
+      window.dispatchEvent(loadEvent);
+      window.location.reload();
+      return data?.agent;
+    } catch (error: any) {
+      console.error('Erreur création sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la création');
+      return null;
+    }
+  };
+
+  const updateSubAgent = async (subAgentId: string, updates: Partial<SubAgent>) => {
+    try {
+      const { error } = await supabase
+        .from('agents_management')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', subAgentId);
+
+      if (error) throw error;
+
+      toast.success('Sous-agent mis à jour avec succès');
+      window.location.reload();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur mise à jour sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la mise à jour');
+      return false;
+    }
+  };
+
+  const deleteSubAgent = async (subAgentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agents_management')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', subAgentId);
+
+      if (error) throw error;
+
+      toast.success('Sous-agent désactivé avec succès');
+      window.location.reload();
+      return true;
+    } catch (error: any) {
+      console.error('Erreur suppression sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la suppression');
+      return false;
+    }
+  };
+
+  const toggleSubAgentStatus = async (subAgentId: string, isActive: boolean) => {
+    return updateSubAgent(subAgentId, { is_active: isActive });
+  };
 
   const handleCreateSubAgent = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -270,7 +270,7 @@ export default function AgentDashboard() {
           </TabsContent>
 
           <TabsContent value="sub-agents">
-            <AgentSubAgentsManagement />
+            <AgentSubAgentsManagement agentId={agent.id} />
           </TabsContent>
         </Tabs>
       </div>
