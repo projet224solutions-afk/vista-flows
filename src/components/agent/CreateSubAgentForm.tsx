@@ -7,6 +7,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+// Schéma de validation pour le sous-agent
+const subAgentSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
+    .max(100, { message: "Le nom ne peut pas dépasser 100 caractères" }),
+  email: z.string()
+    .trim()
+    .email({ message: "Email invalide" })
+    .max(255, { message: "L'email ne peut pas dépasser 255 caractères" }),
+  phone: z.string()
+    .trim()
+    .min(8, { message: "Le téléphone doit contenir au moins 8 chiffres" })
+    .max(15, { message: "Le téléphone ne peut pas dépasser 15 chiffres" })
+    .regex(/^[0-9]+$/, { message: "Le téléphone ne doit contenir que des chiffres" }),
+  commission_rate: z.number()
+    .min(0, { message: "Le taux de commission doit être positif" })
+    .max(100, { message: "Le taux de commission ne peut pas dépasser 100%" })
+});
 
 interface CreateSubAgentFormProps {
   parentAgentId: string;
@@ -33,8 +54,17 @@ export function CreateSubAgentForm({ parentAgentId, pdgId }: CreateSubAgentFormP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.phone) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+    // Validation des données du formulaire
+    const validationResult = subAgentSchema.safeParse({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      commission_rate: formData.commission_rate
+    });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      toast.error(firstError.message);
       return;
     }
 
@@ -48,23 +78,22 @@ export function CreateSubAgentForm({ parentAgentId, pdgId }: CreateSubAgentFormP
         .filter(([_, value]) => value)
         .map(([key]) => key);
 
-      const { data, error } = await supabase
-        .from('agents_management')
-        .insert({
+      // Appeler l'edge function pour créer le sous-agent
+      const { data, error } = await supabase.functions.invoke('create-sub-agent', {
+        body: {
           pdg_id: pdgId,
+          parent_agent_id: parentAgentId,
           agent_code: agentCode,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
           permissions: permissions,
-          commission_rate: formData.commission_rate,
-          can_create_sub_agent: false, // Les sous-agents ne peuvent pas créer d'autres sous-agents
-          is_active: true,
-        })
-        .select()
-        .single();
+          commission_rate: formData.commission_rate
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success('Sous-agent créé avec succès!');
       setFormData({

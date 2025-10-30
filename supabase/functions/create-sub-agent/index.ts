@@ -1,138 +1,158 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body = await req.json();
-    const { agentToken, name, email, phone, commission_rate, permissions, pdgId } = body;
-
-    if (!agentToken) {
-      return new Response(
-        JSON.stringify({ error: 'Token agent requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!name || !email || !phone) {
-      return new Response(
-        JSON.stringify({ error: 'Nom, email et téléphone requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Créer un client Supabase avec service_role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
+        global: {
+          headers: { Authorization: req.headers.get("Authorization")! },
+        },
       }
     );
 
-    // Vérifier que le token agent est valide et que l'agent a la permission
-    const { data: parentAgent, error: agentError } = await supabaseAdmin
-      .from('agents_management')
-      .select('id, pdg_id, is_active, can_create_sub_agent, permissions')
-      .eq('access_token', agentToken)
+    // Vérifier l'authentification
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Non authentifié" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { 
+      pdg_id,
+      parent_agent_id, 
+      agent_code, 
+      name, 
+      email, 
+      phone, 
+      permissions, 
+      commission_rate 
+    } = await req.json();
+
+    // Validation des données
+    if (!pdg_id || !parent_agent_id || !name || !email || !phone) {
+      return new Response(
+        JSON.stringify({ error: "Données manquantes (pdg_id, parent_agent_id, name, email, phone requis)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Vérifier que l'utilisateur connecté est bien l'agent parent
+    const { data: parentAgent, error: parentError } = await supabaseClient
+      .from("agents_management")
+      .select("*")
+      .eq("id", parent_agent_id)
+      .eq("user_id", user.id)
       .single();
 
-    if (agentError || !parentAgent) {
-      console.error('Agent non trouvé:', agentError);
+    if (parentError || !parentAgent) {
+      console.error("Agent parent non trouvé:", parentError);
       return new Response(
-        JSON.stringify({ error: 'Token agent invalide' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Vous n'êtes pas autorisé à créer des sous-agents" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!parentAgent.is_active) {
-      return new Response(
-        JSON.stringify({ error: 'Agent parent inactif' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Vérifier que l'agent parent a la permission de créer des sous-agents
     if (!parentAgent.can_create_sub_agent) {
       return new Response(
-        JSON.stringify({ error: 'Vous n\'avez pas la permission de créer des sous-agents' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Vous n'avez pas la permission de créer des sous-agents" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Vérifier si l'email existe déjà
-    const { data: existingAgent } = await supabaseAdmin
-      .from('agents_management')
-      .select('id')
-      .eq('email', email)
-      .single();
+    // Vérifier que l'agent parent est actif
+    if (!parentAgent.is_active) {
+      return new Response(
+        JSON.stringify({ error: "Votre compte agent est inactif" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Vérifier que l'email n'est pas déjà utilisé
+    const { data: existingAgent } = await supabaseClient
+      .from("agents_management")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
 
     if (existingAgent) {
       return new Response(
-        JSON.stringify({ error: 'Cet email est déjà utilisé par un autre agent' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Cet email est déjà utilisé par un autre agent" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Générer un code agent unique
-    const agentCode = `SA-${Date.now().toString().slice(-6)}`;
-    
-    // Générer un token d'accès unique
-    const accessToken = crypto.randomUUID();
-
     // Créer le sous-agent
-    const { data: newSubAgent, error: createError } = await supabaseAdmin
-      .from('agents_management')
+    const { data: newAgent, error: insertError } = await supabaseClient
+      .from("agents_management")
       .insert({
-        pdg_id: pdgId || parentAgent.pdg_id,
-        name,
-        email,
-        phone,
-        agent_code: agentCode,
+        pdg_id: pdg_id,
+        parent_agent_id: parent_agent_id,
+        agent_code: agent_code,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        permissions: permissions || [],
         commission_rate: commission_rate || 5,
-        permissions: permissions || ['create_users', 'view_reports'],
-        can_create_sub_agent: false, // Les sous-agents ne peuvent pas créer d'autres sous-agents par défaut
+        can_create_sub_agent: false, // Les sous-agents ne peuvent pas créer d'autres sous-agents
         is_active: true,
-        access_token: accessToken,
       })
       .select()
       .single();
 
-    if (createError) {
-      console.error('Erreur création sous-agent:', createError);
+    if (insertError) {
+      console.error("Erreur création sous-agent:", insertError);
       return new Response(
-        JSON.stringify({ error: 'Erreur lors de la création du sous-agent' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: insertError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log('Sous-agent créé avec succès:', newSubAgent.agent_code);
+    // Log de l'action dans audit_logs
+    await supabaseClient
+      .from("audit_logs")
+      .insert({
+        actor_id: user.id,
+        action: "SUB_AGENT_CREATED",
+        target_type: "agent",
+        target_id: newAgent.id,
+        data_json: {
+          agent_code: agent_code,
+          name: name,
+          email: email,
+          parent_agent_id: parent_agent_id,
+        },
+      });
+
+    console.log("Sous-agent créé avec succès:", newAgent.agent_code);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        agent: newSubAgent,
-        message: 'Sous-agent créé avec succès',
-        accessUrl: `/agent/${accessToken}`
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: true, agent: newAgent }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error("Erreur create-sub-agent:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erreur inconnue" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

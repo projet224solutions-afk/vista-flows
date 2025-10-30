@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
+import { CreateSubAgentForm } from '@/components/agent/CreateSubAgentForm';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 
 export default function AgentDashboard() {
@@ -247,11 +248,11 @@ export default function AgentDashboard() {
                 loadAgentData();
               }}
             />
-            {agent.permissions?.includes('create_sub_agents') && (
-              <Button className="h-20" variant="outline">
-                <Users className="w-6 h-6 mr-2" />
-                Créer un Sous-Agent
-              </Button>
+            {agent.can_create_sub_agent && (
+              <CreateSubAgentForm 
+                parentAgentId={agent.id}
+                pdgId={agent.pdg_id}
+              />
             )}
             {agent.permissions?.includes('manage_users') && (
               <Button 

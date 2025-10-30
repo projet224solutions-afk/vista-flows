@@ -55,7 +55,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.create-sub-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.agent-toggle-user-status]
 verify_jwt = false
