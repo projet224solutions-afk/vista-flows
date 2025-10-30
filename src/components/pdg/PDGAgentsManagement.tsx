@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,20 @@ interface AgentUser {
   user_role: string;
 }
 
+interface SubAgent {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  agent_code: string;
+  commission_rate: number;
+  is_active: boolean;
+  permissions: string[];
+  access_token?: string;
+  total_users_created?: number;
+  created_at: string;
+}
+
 export default function PDGAgentsManagement() {
   const { agents, pdgProfile, loading, stats, createAgent, updateAgent, deleteAgent, toggleAgentStatus } = usePDGAgentsData();
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +48,11 @@ export default function PDGAgentsManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set());
+  const [expandedSubAgents, setExpandedSubAgents] = useState<Set<string>>(new Set());
   const [agentUsersMap, setAgentUsersMap] = useState<Record<string, AgentUser[]>>({});
+  const [agentSubAgentsMap, setAgentSubAgentsMap] = useState<Record<string, SubAgent[]>>({});
   const [loadingUsersMap, setLoadingUsersMap] = useState<Record<string, boolean>>({});
+  const [loadingSubAgentsMap, setLoadingSubAgentsMap] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -188,6 +205,58 @@ export default function PDGAgentsManagement() {
           toast.error('Erreur lors du chargement des utilisateurs');
         } finally {
           setLoadingUsersMap({ ...loadingUsersMap, [agent.id]: false });
+        }
+      }
+    }
+  };
+
+  const handleToggleSubAgents = async (agent: Agent) => {
+    const isExpanded = expandedSubAgents.has(agent.id);
+    
+    if (isExpanded) {
+      // Réduire
+      const newExpanded = new Set(expandedSubAgents);
+      newExpanded.delete(agent.id);
+      setExpandedSubAgents(newExpanded);
+    } else {
+      // Étendre et charger les sous-agents si pas déjà chargés
+      const newExpanded = new Set(expandedSubAgents);
+      newExpanded.add(agent.id);
+      setExpandedSubAgents(newExpanded);
+
+      if (!agentSubAgentsMap[agent.id]) {
+        setLoadingSubAgentsMap({ ...loadingSubAgentsMap, [agent.id]: true });
+
+        try {
+          const { data, error } = await supabase
+            .from('agents_management')
+            .select('*')
+            .eq('parent_agent_id', agent.id)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          // Compter les utilisateurs créés par chaque sous-agent
+          const subAgentsWithCounts = await Promise.all(
+            (data || []).map(async (subAgent) => {
+              const { count } = await supabase
+                .from('agent_created_users')
+                .select('*', { count: 'exact', head: true })
+                .eq('agent_id', subAgent.id);
+              
+              return {
+                ...subAgent,
+                total_users_created: count || 0
+              } as SubAgent;
+            })
+          );
+
+          setAgentSubAgentsMap({ ...agentSubAgentsMap, [agent.id]: subAgentsWithCounts });
+        } catch (error: any) {
+          console.error('Erreur chargement sous-agents:', error);
+          toast.error('Erreur lors du chargement des sous-agents');
+        } finally {
+          setLoadingSubAgentsMap({ ...loadingSubAgentsMap, [agent.id]: false });
         }
       }
     }
@@ -563,6 +632,98 @@ export default function PDGAgentsManagement() {
                     </div>
                   )}
                 </div>
+                
+                {/* Section Sous-Agents */}
+                {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
+                  <div className="border-t pt-3 mt-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleSubAgents(agent)}
+                      className="w-full justify-between"
+                    >
+                      <span className="text-sm font-medium">
+                        Sous-agents créés: {agentSubAgentsMap[agent.id]?.length ?? 0}
+                      </span>
+                      <Eye className={`w-4 h-4 transition-transform ${expandedSubAgents.has(agent.id) ? 'rotate-180' : ''}`} />
+                    </Button>
+
+                    {expandedSubAgents.has(agent.id) && (
+                      <div className="mt-3 space-y-2">
+                        {loadingSubAgentsMap[agent.id] ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                          </div>
+                        ) : agentSubAgentsMap[agent.id]?.length > 0 ? (
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {agentSubAgentsMap[agent.id].map((subAgent) => (
+                              <div 
+                                key={subAgent.id} 
+                                className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 text-xs space-y-1"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium flex items-center gap-2">
+                                    <UserCog className="w-3.5 h-3.5 text-purple-600" />
+                                    {subAgent.name}
+                                  </span>
+                                  <Badge variant={subAgent.is_active ? 'default' : 'secondary'} className="text-xs">
+                                    {subAgent.is_active ? 'Actif' : 'Inactif'}
+                                  </Badge>
+                                </div>
+                                <div className="text-muted-foreground">
+                                  <div>📧 {subAgent.email}</div>
+                                  {subAgent.phone && <div>📱 {subAgent.phone}</div>}
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span>Code: {subAgent.agent_code}</span>
+                                    <span>Commission: {subAgent.commission_rate}%</span>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span>Utilisateurs: {subAgent.total_users_created || 0}</span>
+                                    <span>{new Date(subAgent.created_at).toLocaleDateString('fr-FR')}</span>
+                                  </div>
+                                </div>
+                                {subAgent.permissions && subAgent.permissions.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {subAgent.permissions.map((perm) => (
+                                      <Badge key={perm} variant="outline" className="text-xs">
+                                        {perm.replace(/_/g, ' ')}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                {subAgent.access_token && (
+                                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="text-xs font-mono text-blue-600 truncate flex-1">
+                                        {window.location.origin}/agent/{subAgent.access_token}
+                                      </p>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
+                                          toast.success('Lien copié!');
+                                        }}
+                                      >
+                                        <Copy className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-sm text-muted-foreground">
+                            Aucun sous-agent créé
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between text-sm pb-3">
                   <span className="text-muted-foreground">Commissions gagnées:</span>
                   <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
