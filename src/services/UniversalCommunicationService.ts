@@ -72,12 +72,31 @@ class UniversalCommunicationService {
    */
   async getConversations(userId: string): Promise<Conversation[]> {
     try {
-      const { data, error } = await supabase.rpc('get_user_conversations', {
+      // Récupérer les conversations normales (avec conversation_id)
+      const { data: normalConvs, error: convError } = await supabase.rpc('get_user_conversations', {
         p_user_id: userId
       });
 
-      if (error) throw error;
-      return data || [];
+      if (convError) throw convError;
+
+      // Récupérer les conversations de messages directs (sans conversation_id)
+      const { data: directConvs, error: directError } = await supabase.rpc('get_user_direct_message_conversations', {
+        p_user_id: userId
+      });
+
+      if (directError) throw directError;
+
+      // Fusionner et trier par date de dernier message
+      const allConversations = [
+        ...(normalConvs || []),
+        ...(directConvs || [])
+      ].sort((a, b) => {
+        const dateA = new Date(a.last_message_at || a.created_at);
+        const dateB = new Date(b.last_message_at || b.created_at);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      return allConversations;
     } catch (error) {
       console.error('Erreur récupération conversations:', error);
       throw error;
@@ -154,6 +173,35 @@ class UniversalCommunicationService {
    */
   async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
     try {
+      // Si c'est une conversation directe (ID commence par "direct_")
+      if (conversationId.startsWith('direct_')) {
+        const otherUserId = conversationId.replace('direct_', '');
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.user) throw new Error('Non authentifié');
+        
+        const currentUserId = session.session.user.id;
+        
+        const { data, error } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            sender:profiles!messages_sender_id_fkey (
+              first_name,
+              last_name,
+              email,
+              avatar_url
+            )
+          `)
+          .is('conversation_id', null)
+          .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUserId})`)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+        if (error) throw error;
+        return ((data || []) as any[]).reverse();
+      }
+      
+      // Conversation normale avec conversation_id
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -186,14 +234,35 @@ class UniversalCommunicationService {
     content: string
   ): Promise<Message> {
     try {
-      // Obtenir le destinataire
+      // Si c'est une conversation directe (ID commence par "direct_")
+      if (conversationId.startsWith('direct_')) {
+        const recipientId = conversationId.replace('direct_', '');
+        
+        const { data, error } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: senderId,
+            recipient_id: recipientId,
+            content,
+            type: 'text',
+            status: 'sent'
+          } as any)
+          .select()
+          .single();
+
+        if (error) throw error;
+        await this.logAudit(senderId, 'message_sent', data.id);
+        return data as any;
+      }
+      
+      // Obtenir le destinataire pour conversation normale
       const conversation = await this.getConversationById(conversationId);
       const recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
 
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId, // 🔧 AJOUT DU conversation_id
+          conversation_id: conversationId,
           sender_id: senderId,
           recipient_id: recipientId,
           content,

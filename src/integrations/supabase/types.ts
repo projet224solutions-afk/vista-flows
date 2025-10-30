@@ -7438,6 +7438,21 @@ export type Database = {
         }[]
       }
       get_user_custom_id: { Args: { p_user_id: string }; Returns: string }
+      get_user_direct_message_conversations: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          creator_id: string
+          id: string
+          last_message_at: string
+          last_message_preview: string
+          name: string
+          other_user_id: string
+          participants: Json
+          type: string
+          unread_count: number
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       has_active_installation: {
         Args: { bureau_uuid: string }
