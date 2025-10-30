@@ -777,6 +777,51 @@ export type Database = {
           },
         ]
       }
+      bureau_wallets: {
+        Row: {
+          balance: number
+          bureau_id: string
+          created_at: string | null
+          currency: string
+          id: string
+          updated_at: string | null
+          wallet_status: string
+        }
+        Insert: {
+          balance?: number
+          bureau_id: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          updated_at?: string | null
+          wallet_status?: string
+        }
+        Update: {
+          balance?: number
+          bureau_id?: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          updated_at?: string | null
+          wallet_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bureau_wallets_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: true
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_wallets_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: true
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bureaus: {
         Row: {
           access_token: string | null

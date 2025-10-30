@@ -22,7 +22,7 @@ import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegrat
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 import PWAInstallButton from '@/components/pwa/PWAInstallButton';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
-import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -244,12 +244,6 @@ export default function BureauDashboard() {
                 </div>
               )}
             </div>
-            {bureau.user_id && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <UserIdDisplay layout="horizontal" showBadge={true} size="sm" />
-                <WalletBalanceDisplay userId={bureau.user_id} compact={true} />
-              </div>
-            )}
           </div>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
