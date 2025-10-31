@@ -19,7 +19,8 @@ import {
   Smartphone,
   Brain,
   Map,
-  Key
+  Key,
+  Database
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -45,6 +46,15 @@ export default function SystemConfiguration() {
       secretName: 'GOOGLE_CLOUD_API_KEY',
       testEndpoint: 'test-google-cloud-api',
       documentation: 'https://console.cloud.google.com'
+    },
+    {
+      name: 'Firebase Firestore',
+      icon: Database,
+      status: 'testing',
+      required: true,
+      description: 'Base de données pour synchronisation offline',
+      secretName: 'FIREBASE_WEB_API_KEY',
+      documentation: 'https://console.firebase.google.com'
     },
     {
       name: 'OpenAI API',
@@ -107,7 +117,7 @@ export default function SystemConfiguration() {
       const data = await response.json();
       
       if (data.status === 'success' && data.services) {
-        // Mettre à jour le statut de chaque service
+        // Mettre à jour le statut de chaque service depuis l'API
         setServices(prev => prev.map(service => {
           const apiService = data.services.find((s: any) => s.name === service.name);
           if (apiService) {
@@ -119,16 +129,48 @@ export default function SystemConfiguration() {
           return service;
         }));
 
-        // Afficher un message de résumé
-        if (data.summary.allRequiredConfigured) {
-          toast.success('Tous les services requis sont configurés !', {
-            description: `${data.summary.configured}/${data.summary.total} services configurés`
-          });
-        } else {
-          toast.warning('Configuration incomplète', {
-            description: `${data.summary.requiredConfigured}/${data.summary.requiredTotal} services requis configurés`
-          });
+        // Test Firestore côté client
+        try {
+          const { firestore } = await import('@/lib/firebaseClient');
+          const { collection, getDocs, limit, query } = await import('firebase/firestore');
+          
+          if (firestore) {
+            // Essayer d'accéder à Firestore
+            const testQuery = query(collection(firestore, 'test'), limit(1));
+            await getDocs(testQuery);
+            
+            // Mise à jour du statut Firestore
+            setServices(prev => prev.map(service =>
+              service.name === 'Firebase Firestore'
+                ? { ...service, status: 'configured' }
+                : service
+            ));
+          }
+        } catch (firestoreError: any) {
+          console.error('Firestore test failed:', firestoreError);
+          setServices(prev => prev.map(service =>
+            service.name === 'Firebase Firestore'
+              ? { ...service, status: 'error' }
+              : service
+          ));
         }
+
+        // Afficher un message de résumé
+        setTimeout(() => {
+          const currentConfigured = services.filter(s => s.status === 'configured').length;
+          const currentRequired = services.filter(s => s.required).length;
+          const currentRequiredConfigured = services.filter(s => s.required && s.status === 'configured').length;
+          
+          if (currentRequiredConfigured === currentRequired) {
+            toast.success('Tous les services requis sont configurés !', {
+              description: `${currentConfigured}/${services.length} services configurés`
+            });
+          } else {
+            toast.warning('Configuration incomplète', {
+              description: `${currentRequiredConfigured}/${currentRequired} services requis configurés`
+            });
+          }
+        }, 500);
       }
     } catch (error: any) {
       console.error('Error testing services:', error);
@@ -334,7 +376,15 @@ export default function SystemConfiguration() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">2. Stripe</h4>
+            <h4 className="font-medium">2. Firebase Firestore</h4>
+            <p className="text-sm text-muted-foreground">
+              Créez un projet Firebase, activez Firestore Database. Copiez les clés de configuration web (apiKey, projectId, etc.) depuis les paramètres du projet.
+              Essentiel pour la synchronisation offline et le stockage des données.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">3. Stripe</h4>
             <p className="text-sm text-muted-foreground">
               Créez un compte sur stripe.com, récupérez votre clé secrète (sk_test_... pour les tests).
               Nécessaire pour accepter les paiements par carte.
@@ -342,21 +392,21 @@ export default function SystemConfiguration() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">3. OpenAI (Optionnel)</h4>
+            <h4 className="font-medium">4. OpenAI (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Créez une clé API sur platform.openai.com pour activer la génération automatique de descriptions produits.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">4. Agora (Optionnel)</h4>
+            <h4 className="font-medium">5. Agora (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Pour les appels vidéo/audio, créez un projet sur console.agora.io et récupérez l'App ID et le Certificate.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">5. Orange Money (Optionnel)</h4>
+            <h4 className="font-medium">6. Orange Money (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Pour les paiements mobile money, inscrivez-vous sur developer.orange.com et demandez un accès API.
             </p>

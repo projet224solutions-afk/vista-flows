@@ -23,7 +23,18 @@ serve(async (req) => {
       description: 'Géolocalisation, Geocoding, Directions'
     });
 
-    // 2. OpenAI
+    // 2. Firebase Firestore
+    const firebaseApiKey = Deno.env.get('FIREBASE_WEB_API_KEY');
+    const firebaseProjectId = Deno.env.get('FIREBASE_PROJECT_ID');
+    services.push({
+      name: 'Firebase Firestore',
+      configured: !!firebaseApiKey && !!firebaseProjectId,
+      required: true,
+      secretName: 'FIREBASE_WEB_API_KEY, FIREBASE_PROJECT_ID',
+      description: 'Base de données pour synchronisation offline'
+    });
+
+    // 3. OpenAI
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     services.push({
       name: 'OpenAI API',
@@ -33,7 +44,7 @@ serve(async (req) => {
       description: 'Génération IA de descriptions produits'
     });
 
-    // 3. Stripe
+    // 4. Stripe
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     services.push({
       name: 'Stripe',
@@ -43,7 +54,7 @@ serve(async (req) => {
       description: 'Paiements par carte bancaire'
     });
 
-    // 4. Agora
+    // 5. Agora
     const agoraAppId = Deno.env.get('AGORA_APP_ID');
     const agoraCert = Deno.env.get('AGORA_APP_CERTIFICATE');
     services.push({
@@ -54,7 +65,7 @@ serve(async (req) => {
       description: 'Appels vidéo et audio'
     });
 
-    // 5. Orange Money
+    // 6. Orange Money
     const orangeKey = Deno.env.get('ORANGE_MONEY_API_KEY');
     services.push({
       name: 'Orange Money',
