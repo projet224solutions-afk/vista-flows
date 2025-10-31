@@ -74,25 +74,26 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
         try {
             if (!userId) return;
 
+            console.log('[TaxiMotoHistory] Loading ride history for user:', userId);
+
             const { data: trips, error } = await supabase
                 .from('taxi_trips')
-                .select(`
-                    *,
-                    driver:taxi_drivers(
-                        user_id,
-                        vehicle_type
-                    )
-                `)
+                .select('*')
                 .eq('customer_id', userId)
                 .in('status', ['completed', 'cancelled'])
                 .order('created_at', { ascending: false })
                 .limit(50);
 
-            if (error) throw error;
+            if (error) {
+                console.error('[TaxiMotoHistory] Error loading history:', error);
+                throw error;
+            }
+
+            console.log('[TaxiMotoHistory] Loaded trips:', trips?.length || 0);
 
             const formattedRides: RideHistory[] = (trips || []).map(trip => ({
                 id: trip.id,
-                date: trip.created_at,
+                date: trip.requested_at || trip.created_at,
                 pickupAddress: trip.pickup_address || 'Adresse non disponible',
                 destinationAddress: trip.dropoff_address || 'Adresse non disponible',
                 distance: trip.distance_km || 0,
@@ -102,15 +103,16 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 driver: {
                     name: 'Conducteur',
                     rating: 4.5,
-                    vehicleType: trip.driver?.vehicle_type || 'moto_rapide'
+                    vehicleType: 'Moto-Taxi'
                 },
-                rating: trip.rating || undefined,
+                rating: trip.customer_rating || undefined,
                 paymentMethod: trip.payment_method || 'wallet_224'
             }));
 
+            console.log('[TaxiMotoHistory] Formatted rides:', formattedRides.length);
             setRides(formattedRides);
         } catch (error) {
-            console.error('Erreur chargement historique:', error);
+            console.error('[TaxiMotoHistory] Error loading history:', error);
             toast.error('Impossible de charger l\'historique');
         } finally {
             setLoading(false);
