@@ -160,16 +160,19 @@ export default function TaxiMotoBooking({
             console.log('[TaxiMotoBooking] Fare calculated:', fareCalculation);
             
             // Formater le prix pour l'affichage
-            if (fareCalculation && typeof fareCalculation.total === 'number') {
+            const totalPrice = fareCalculation.total_fare || fareCalculation.total;
+            const basePrice = fareCalculation.base_fare || 0;
+            
+            if (fareCalculation && typeof totalPrice === 'number') {
                 setPriceEstimate({
-                    totalPrice: Math.round(fareCalculation.total),
+                    totalPrice: Math.round(totalPrice),
                     distance: route.distance,
                     duration: route.duration,
-                    basePrice: Math.round(fareCalculation.base_fare),
+                    basePrice: Math.round(basePrice),
                     currency: 'GNF'
                 });
             } else {
-                console.error('Prix invalide retourné:', fareCalculation);
+                console.error('[TaxiMotoBooking] Prix invalide retourné:', fareCalculation);
                 setPriceEstimate(null);
                 toast.error('Erreur lors du calcul du prix');
             }
