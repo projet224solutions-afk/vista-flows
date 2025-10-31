@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2 } from 'lucide-react';
+import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -57,21 +57,49 @@ export function GoogleMapsNavigation({
     duration: number;
   } | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
-  // Charger Google Maps API
+  // Récupérer la clé API Google Maps depuis le backend
   useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('google-maps-config');
+        
+        if (error) throw error;
+        
+        if (data?.apiKey) {
+          setApiKey(data.apiKey);
+        } else {
+          toast.error('Clé Google Maps non configurée');
+        }
+      } catch (error) {
+        console.error('Erreur récupération clé API:', error);
+        toast.error('Impossible de charger Google Maps');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApiKey();
+  }, []);
+
+  // Charger Google Maps API avec la vraie clé
+  useEffect(() => {
+    if (!apiKey) return;
+
     if (window.google && window.google.maps) {
       setMapLoaded(true);
       return;
     }
 
-    // Créer le script Google Maps
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDx8-pGBRiKg7yP0ZqbLKLm84DmGRPNs1w&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
       setMapLoaded(true);
+      toast.success('Google Maps chargé');
     };
     script.onerror = () => {
       toast.error('Erreur de chargement de Google Maps');
@@ -84,9 +112,9 @@ export function GoogleMapsNavigation({
         existingScript.remove();
       }
     };
-  }, []);
+  }, [apiKey]);
 
-  // Initialiser la carte quand Google Maps est chargé
+  // Initialiser la carte
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || !window.google) return;
 
@@ -119,7 +147,27 @@ export function GoogleMapsNavigation({
         strokeOpacity: 0.8
       }
     });
-  }, [mapLoaded]);
+
+    // Ajouter le marqueur du chauffeur immédiatement
+    if (currentLocation) {
+      driverMarker.current = new window.google.maps.Marker({
+        position: center,
+        map: mapInstance.current,
+        title: 'Ma position',
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: '#3B82F6',
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3
+        },
+        animation: window.google.maps.Animation.DROP
+      });
+    }
+
+    toast.success('Carte initialisée');
+  }, [mapLoaded, currentLocation]);
 
   // Mettre à jour la position du chauffeur
   useEffect(() => {
@@ -254,28 +302,25 @@ export function GoogleMapsNavigation({
     toast.success("Navigation ouverte dans Google Maps");
   };
 
-  if (!activeRide) {
+  if (loading) {
     return (
       <Card className="bg-white/95 backdrop-blur-sm shadow-lg">
         <CardContent className="pt-12 pb-12 text-center">
-          <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+          <Loader2 className="w-16 h-16 mx-auto mb-4 text-blue-500 animate-spin" />
           <h3 className="text-lg font-semibold text-gray-600 mb-2">
-            Aucune course active
+            Chargement de la carte...
           </h3>
-          <p className="text-sm text-gray-500">
-            Acceptez une course pour démarrer la navigation
-          </p>
         </CardContent>
       </Card>
     );
   }
 
-  const isGoingToPickup = activeRide.status === 'accepted' || activeRide.status === 'arriving';
-  const statusLabel = isGoingToPickup ? "Récupération du client" : "En direction de la destination";
+  const showMap = mapLoaded && currentLocation;
+  const hasActiveRide = !!activeRide;
 
   return (
     <div className="space-y-4">
-      {/* Carte Google Maps */}
+      {/* Carte Google Maps - Affichée toujours */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="flex items-center justify-between">
@@ -284,9 +329,13 @@ export function GoogleMapsNavigation({
               <span className="text-lg">Navigation GPS</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-blue-600 text-white">
-                {statusLabel}
-              </Badge>
+              {hasActiveRide && (
+                <Badge className="bg-blue-600 text-white">
+                  {activeRide!.status === 'accepted' || activeRide!.status === 'arriving' 
+                    ? "Récupération du client" 
+                    : "En direction de la destination"}
+                </Badge>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -298,17 +347,52 @@ export function GoogleMapsNavigation({
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div 
-            ref={mapRef} 
-            className="w-full h-[400px]"
-            style={{ minHeight: '400px' }}
-          />
+        <CardContent className="p-0 relative">
+          {!showMap ? (
+            <div className="w-full h-[400px] flex items-center justify-center bg-gray-100">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
+                <p className="text-gray-600">Chargement de la carte...</p>
+              </div>
+            </div>
+          ) : (
+            <div 
+              ref={mapRef} 
+              className="w-full h-[400px]"
+              style={{ minHeight: '400px' }}
+            />
+          )}
+          
+          {/* Badge de statut sur la carte */}
+          {showMap && !hasActiveRide && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+              <Badge className="bg-gray-700 text-white px-4 py-2">
+                En attente d'une course
+              </Badge>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Informations de route */}
-      {routeInfo && (
+      {/* Informations de position actuelle */}
+      {currentLocation && (
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="w-8 h-8 text-green-600" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-700">Ma position actuelle</p>
+                <p className="text-xs font-mono text-gray-600">
+                  📍 {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Informations de route - Uniquement si course active */}
+      {hasActiveRide && routeInfo && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardContent className="pt-4">
             <div className="grid grid-cols-2 gap-3">
@@ -332,8 +416,9 @@ export function GoogleMapsNavigation({
         </Card>
       )}
 
-      {/* Informations client et itinéraire */}
-      <Card>
+      {/* Informations client et itinéraire - Uniquement si course active */}
+      {hasActiveRide && activeRide && (
+        <Card>
         <CardContent className="pt-4 space-y-3">
           {/* Client */}
           <div className="bg-gray-50 rounded-lg p-3">
@@ -406,6 +491,22 @@ export function GoogleMapsNavigation({
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {/* Message si pas de course active */}
+      {!hasActiveRide && (
+        <Card className="bg-white/95 backdrop-blur-sm">
+          <CardContent className="pt-8 pb-8 text-center">
+            <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              Aucune course active
+            </h3>
+            <p className="text-sm text-gray-500">
+              Acceptez une course pour démarrer la navigation guidée
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
