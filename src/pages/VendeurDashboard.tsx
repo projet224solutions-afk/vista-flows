@@ -50,6 +50,8 @@ import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
 import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
 import PWAInstallButton from "@/components/pwa/PWAInstallButton";
 import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
+import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
+import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -392,6 +394,9 @@ export default function VendeurDashboard() {
             </div>
           </header>
 
+          {/* Subscription expiry banner */}
+          <SubscriptionExpiryBanner />
+
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
@@ -421,6 +426,7 @@ export default function VendeurDashboard() {
               <Route path="test-ai" element={<GeminiAITest />} />
               <Route path="test-google-cloud" element={<GoogleCloudVerification />} />
               <Route path="offline-sync" element={<OfflineSyncPanel />} />
+              <Route path="subscription" element={<SubscriptionRenewalPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </main>

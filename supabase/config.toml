@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.subscription-expiry-check]
 verify_jwt = false
 
+[functions.renew-subscription]
+verify_jwt = true
+
 [functions.generate-unique-id]
 verify_jwt = false
 
