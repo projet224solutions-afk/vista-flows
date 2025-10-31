@@ -34,8 +34,6 @@ const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSet
 const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
-const PDGRevenueAnalytics = lazy(() => import('@/components/pdg/PDGRevenueAnalytics'));
-const SubscriptionManagement = lazy(() => import('@/components/pdg/SubscriptionManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -379,18 +377,6 @@ export default function PDG224Solutions() {
               {activeTab === 'drivers' && (
                 <ErrorBoundary>
                   <PDGDrivers />
-                </ErrorBoundary>
-              )}
-
-              {activeTab === 'revenue-analytics' && (
-                <ErrorBoundary>
-                  <PDGRevenueAnalytics />
-                </ErrorBoundary>
-              )}
-
-              {activeTab === 'subscriptions' && (
-                <ErrorBoundary>
-                  <SubscriptionManagement />
                 </ErrorBoundary>
               )}
 

@@ -1,12 +1,12 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -21,6 +21,9 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useFinanceData } from '@/hooks/useFinanceData';
 import PlatformRevenueOverview from './PlatformRevenueOverview';
+
+const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
+const SubscriptionManagement = lazy(() => import('./SubscriptionManagement'));
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
@@ -101,13 +104,47 @@ export default function PDGFinance() {
 
   return (
     <Tabs defaultValue="overview" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-        <TabsTrigger value="overview">Revenus Plateforme</TabsTrigger>
-        <TabsTrigger value="transactions">Transactions</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+        <TabsTrigger value="overview">
+          <DollarSign className="w-4 h-4 mr-2" />
+          Revenus
+        </TabsTrigger>
+        <TabsTrigger value="transactions">
+          <Wallet className="w-4 h-4 mr-2" />
+          Transactions
+        </TabsTrigger>
+        <TabsTrigger value="pdg-revenue">
+          <BarChart3 className="w-4 h-4 mr-2" />
+          PDG
+        </TabsTrigger>
+        <TabsTrigger value="subscriptions">
+          <Sparkles className="w-4 h-4 mr-2" />
+          Abonnements
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
         <PlatformRevenueOverview />
+      </TabsContent>
+
+      <TabsContent value="pdg-revenue" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <PDGRevenueAnalytics />
+        </Suspense>
+      </TabsContent>
+
+      <TabsContent value="subscriptions" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <SubscriptionManagement />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="transactions" className="space-y-8">
