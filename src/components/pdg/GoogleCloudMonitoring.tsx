@@ -60,13 +60,55 @@ export default function GoogleCloudMonitoring() {
           status: 'error',
           error: 'Aucun résultat trouvé'
         });
+        toast.error('Aucun résultat trouvé');
       }
     } catch (error: any) {
       updateTest('geocoding', {
         status: 'error',
         error: error.message
       });
-      toast.error('Erreur de géocodage', { description: error.message });
+      toast.error('Erreur de géocodage', { 
+        description: 'Vérifiez que la clé API Google Cloud est configurée et que les APIs sont activées'
+      });
+    }
+  };
+
+  const testApiConfiguration = async () => {
+    try {
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/test-google-cloud-api`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        toast.success('Configuration API validée', {
+          description: data.message
+        });
+        return true;
+      } else {
+        toast.error('Problème de configuration', {
+          description: data.message,
+          duration: 10000
+        });
+        
+        if (data.instructions) {
+          console.error('Instructions de configuration:', data.instructions);
+        }
+        return false;
+      }
+    } catch (error: any) {
+      toast.error('Erreur de test de configuration', {
+        description: error.message
+      });
+      return false;
     }
   };
 
@@ -151,6 +193,16 @@ export default function GoogleCloudMonitoring() {
   };
 
   const testAll = async () => {
+    // D'abord tester la configuration
+    const configOk = await testApiConfiguration();
+    if (!configOk) {
+      toast.error('Configuration invalide', {
+        description: 'Veuillez configurer la clé API Google Cloud avant de continuer',
+        duration: 5000
+      });
+      return;
+    }
+    
     await testGeolocation();
     await testGeocoding();
     await testReverseGeocoding();
@@ -204,6 +256,10 @@ export default function GoogleCloudMonitoring() {
                 placeholder="Adresse à géocoder"
                 className="flex-1"
               />
+              <Button onClick={testApiConfiguration} variant="outline">
+                <Activity className="w-4 h-4 mr-2" />
+                Vérifier Config
+              </Button>
               <Button onClick={testAll} variant="default">
                 <Activity className="w-4 h-4 mr-2" />
                 Tout tester

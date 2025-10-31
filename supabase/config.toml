@@ -75,3 +75,6 @@ verify_jwt = false
 [functions.agent-delete-user]
 verify_jwt = false
 
+[functions.test-google-cloud-api]
+verify_jwt = false
+
