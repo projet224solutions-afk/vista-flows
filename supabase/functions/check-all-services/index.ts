@@ -34,7 +34,38 @@ serve(async (req) => {
       description: 'Base de données pour synchronisation offline'
     });
 
-    // 3. OpenAI
+    // 3. Lovable AI (Gemini)
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    let lovableWorking = false;
+    if (lovableApiKey) {
+      try {
+        // Test Lovable AI avec un appel simple
+        const testResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [{ role: 'user', content: 'test' }],
+            max_tokens: 5
+          })
+        });
+        lovableWorking = testResponse.ok;
+      } catch (e) {
+        console.error('Lovable AI test failed:', e);
+      }
+    }
+    services.push({
+      name: 'Lovable AI (Gemini)',
+      configured: !!lovableApiKey && lovableWorking,
+      required: true,
+      secretName: 'LOVABLE_API_KEY',
+      description: 'IA Gemini pour assistant intelligent'
+    });
+
+    // 4. OpenAI
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     services.push({
       name: 'OpenAI API',
@@ -44,7 +75,7 @@ serve(async (req) => {
       description: 'Génération IA de descriptions produits'
     });
 
-    // 4. Stripe
+    // 5. Stripe
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     services.push({
       name: 'Stripe',
@@ -54,7 +85,7 @@ serve(async (req) => {
       description: 'Paiements par carte bancaire'
     });
 
-    // 5. Agora
+    // 6. Agora
     const agoraAppId = Deno.env.get('AGORA_APP_ID');
     const agoraCert = Deno.env.get('AGORA_APP_CERTIFICATE');
     services.push({
@@ -65,7 +96,7 @@ serve(async (req) => {
       description: 'Appels vidéo et audio'
     });
 
-    // 6. Orange Money
+    // 7. Orange Money
     const orangeKey = Deno.env.get('ORANGE_MONEY_API_KEY');
     services.push({
       name: 'Orange Money',

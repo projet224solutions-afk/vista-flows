@@ -20,7 +20,8 @@ import {
   Brain,
   Map,
   Key,
-  Database
+  Database,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,6 +56,15 @@ export default function SystemConfiguration() {
       description: 'Base de données pour synchronisation offline',
       secretName: 'FIREBASE_WEB_API_KEY',
       documentation: 'https://console.firebase.google.com'
+    },
+    {
+      name: 'Lovable AI (Gemini)',
+      icon: Sparkles,
+      status: 'testing',
+      required: true,
+      description: 'IA Gemini pour assistant intelligent',
+      secretName: 'LOVABLE_API_KEY',
+      documentation: 'https://docs.lovable.dev/features/ai'
     },
     {
       name: 'OpenAI API',
@@ -384,7 +394,15 @@ export default function SystemConfiguration() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">3. Stripe</h4>
+            <h4 className="font-medium">3. Lovable AI (Gemini)</h4>
+            <p className="text-sm text-muted-foreground">
+              Le service Lovable AI est automatiquement configuré avec votre workspace. Il fournit l'accès à Google Gemini et d'autres modèles IA.
+              Nécessite des crédits dans votre workspace Lovable.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">4. Stripe</h4>
             <p className="text-sm text-muted-foreground">
               Créez un compte sur stripe.com, récupérez votre clé secrète (sk_test_... pour les tests).
               Nécessaire pour accepter les paiements par carte.
@@ -392,21 +410,21 @@ export default function SystemConfiguration() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">4. OpenAI (Optionnel)</h4>
+            <h4 className="font-medium">5. OpenAI (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Créez une clé API sur platform.openai.com pour activer la génération automatique de descriptions produits.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">5. Agora (Optionnel)</h4>
+            <h4 className="font-medium">6. Agora (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Pour les appels vidéo/audio, créez un projet sur console.agora.io et récupérez l'App ID et le Certificate.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">6. Orange Money (Optionnel)</h4>
+            <h4 className="font-medium">7. Orange Money (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
               Pour les paiements mobile money, inscrivez-vous sur developer.orange.com et demandez un accès API.
             </p>
