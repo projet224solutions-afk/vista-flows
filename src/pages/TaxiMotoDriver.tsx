@@ -42,6 +42,7 @@ import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
 import { GPSNavigation } from "@/components/taxi-moto/GPSNavigation";
 import { InteractiveMapNavigation } from "@/components/taxi-moto/InteractiveMapNavigation";
 import { GoogleMapsNavigation } from "@/components/taxi-moto/GoogleMapsNavigation";
+import { GPSPermissionHelper } from "@/components/taxi-moto/GPSPermissionHelper";
 import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
@@ -1119,11 +1120,21 @@ export default function TaxiMotoDriver() {
 
                     {/* Navigation GPS */}
                     <TabsContent value="gps-navigation" className="mt-0">
-                        <GoogleMapsNavigation
-                            activeRide={activeRide}
-                            currentLocation={location}
-                            onContactCustomer={contactCustomer}
-                        />
+                        {!location ? (
+                            <GPSPermissionHelper
+                                onLocationGranted={() => {
+                                    getCurrentLocation();
+                                    toast.success('GPS activé - Chargement de la carte...');
+                                }}
+                                currentError={null}
+                            />
+                        ) : (
+                            <GoogleMapsNavigation
+                                activeRide={activeRide}
+                                currentLocation={location}
+                                onContactCustomer={contactCustomer}
+                            />
+                        )}
                     </TabsContent>
 
                     {/* Gains - Composant dédié avec connexion temps réel */}
