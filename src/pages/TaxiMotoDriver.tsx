@@ -1123,7 +1123,10 @@ export default function TaxiMotoDriver() {
                         {!location ? (
                             <GPSPermissionHelper
                                 onLocationGranted={() => {
-                                    getCurrentLocation();
+                                    getCurrentLocation().catch(err => {
+                                        console.error('[TaxiMotoDriver] GPS error:', err);
+                                        toast.error('Erreur GPS - Veuillez réessayer');
+                                    });
                                     toast.success('GPS activé - Chargement de la carte...');
                                 }}
                                 currentError={null}

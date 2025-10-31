@@ -80,7 +80,10 @@ export default function TaxiMotoClient() {
   });
 
   useEffect(() => {
-    getCurrentLocation();
+    getCurrentLocation().catch(err => {
+      console.error('[TaxiMotoClient] GPS error:', err);
+      // L'erreur est affichée par le composant GPSPermissionHelper
+    });
     loadNearbyDrivers();
   }, []);
 

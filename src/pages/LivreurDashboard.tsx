@@ -63,7 +63,10 @@ export default function LivreurDashboard() {
 
   // Charger la position GPS au montage
   useEffect(() => {
-    getCurrentLocation();
+    getCurrentLocation().catch(err => {
+      console.error('[LivreurDashboard] GPS error:', err);
+      // L'erreur est gérée par le hook et affichée dans l'interface
+    });
   }, [getCurrentLocation]);
 
   // Recharger les livraisons quand on bascule sur l'onglet missions
