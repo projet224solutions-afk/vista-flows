@@ -30,6 +30,7 @@ const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatMan
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
 const GoogleCloudMonitoring = lazy(() => import('@/components/pdg/GoogleCloudMonitoring'));
+const SystemConfiguration = lazy(() => import('@/components/pdg/SystemConfiguration'));
 const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSettings'));
 const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
@@ -298,7 +299,7 @@ export default function PDG224Solutions() {
 
               {activeTab === 'config' && (
                 <ErrorBoundary>
-                  <PDGConfig />
+                  <SystemConfiguration />
                 </ErrorBoundary>
               )}
 

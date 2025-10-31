@@ -1,0 +1,97 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const services = [];
+
+    // 1. Google Cloud API
+    const googleCloudKey = Deno.env.get('GOOGLE_CLOUD_API_KEY');
+    services.push({
+      name: 'Google Cloud APIs',
+      configured: !!googleCloudKey,
+      required: true,
+      secretName: 'GOOGLE_CLOUD_API_KEY',
+      description: 'Géolocalisation, Geocoding, Directions'
+    });
+
+    // 2. OpenAI
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    services.push({
+      name: 'OpenAI API',
+      configured: !!openaiKey,
+      required: false,
+      secretName: 'OPENAI_API_KEY',
+      description: 'Génération IA de descriptions produits'
+    });
+
+    // 3. Stripe
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    services.push({
+      name: 'Stripe',
+      configured: !!stripeKey,
+      required: true,
+      secretName: 'STRIPE_SECRET_KEY',
+      description: 'Paiements par carte bancaire'
+    });
+
+    // 4. Agora
+    const agoraAppId = Deno.env.get('AGORA_APP_ID');
+    const agoraCert = Deno.env.get('AGORA_APP_CERTIFICATE');
+    services.push({
+      name: 'Agora',
+      configured: !!agoraAppId && !!agoraCert,
+      required: false,
+      secretName: 'AGORA_APP_ID, AGORA_APP_CERTIFICATE',
+      description: 'Appels vidéo et audio'
+    });
+
+    // 5. Orange Money
+    const orangeKey = Deno.env.get('ORANGE_MONEY_API_KEY');
+    services.push({
+      name: 'Orange Money',
+      configured: !!orangeKey,
+      required: false,
+      secretName: 'ORANGE_MONEY_API_KEY',
+      description: 'Paiements mobile money'
+    });
+
+    const configuredCount = services.filter(s => s.configured).length;
+    const requiredConfigured = services.filter(s => s.required && s.configured).length;
+    const requiredTotal = services.filter(s => s.required).length;
+
+    return new Response(
+      JSON.stringify({
+        status: 'success',
+        summary: {
+          total: services.length,
+          configured: configuredCount,
+          requiredConfigured,
+          requiredTotal,
+          allRequiredConfigured: requiredConfigured === requiredTotal
+        },
+        services,
+        timestamp: new Date().toISOString()
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error: any) {
+    console.error('Check services error:', error);
+    return new Response(
+      JSON.stringify({ 
+        status: 'error',
+        message: error.message 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
+  }
+});
