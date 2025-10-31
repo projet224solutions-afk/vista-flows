@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { mapService } from "@/services/mapService";
 import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
-import { RidesService } from "@/services/taxi/ridesService";
+import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LocationCoordinates {
@@ -191,7 +191,7 @@ export default function TaxiMotoBooking({
         setBookingInProgress(true);
 
         try {
-            const ride = await RidesService.createRide({
+            const ride = await TaxiMotoService.createRide({
                 pickupLat: pickupCoords.latitude,
                 pickupLng: pickupCoords.longitude,
                 dropoffLat: destinationCoords.latitude,
@@ -200,8 +200,7 @@ export default function TaxiMotoBooking({
                 dropoffAddress: destinationAddress || 'Destination',
                 distanceKm: routeInfo?.distance || 0,
                 durationMin: routeInfo?.duration || 0,
-                estimatedPrice: priceEstimate.totalPrice,
-                vehicleType: selectedVehicleType
+                estimatedPrice: priceEstimate.totalPrice
             });
 
             onRideCreated(ride);
