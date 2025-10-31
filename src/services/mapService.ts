@@ -65,6 +65,8 @@ class MapService {
   // Calculer un itinéraire via Google Directions API
   async calculateRoute(start: Location, end: Location): Promise<Route> {
     try {
+      console.log('[MapService] Calculating route from', start, 'to', end);
+      
       const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
       
@@ -81,16 +83,21 @@ class MapService {
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('[MapService] Route data received:', data);
 
       if (data.error) {
         throw new Error(data.error);
       }
       
       return {
-        distance: data.distance / 1000, // convertir mètres en km
-        duration: Math.ceil(data.duration / 60), // convertir secondes en minutes
-        coordinates: [start, end] // Google ne renvoie pas les coordonnées détaillées dans notre config
+        distance: data.distance, // déjà en km
+        duration: data.duration, // déjà en minutes
+        coordinates: [start, end]
       };
     } catch (error) {
       console.error('Erreur Google Directions API, utilisation du fallback:', error);
@@ -107,6 +114,8 @@ class MapService {
   // Géocode une adresse via Google Geocoding API
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
     try {
+      console.log('[MapService] Geocoding address:', address);
+      
       const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
       
@@ -122,7 +131,12 @@ class MapService {
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('[MapService] Geocoding results:', data);
 
       if (data.error) {
         throw new Error(data.error);

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { mapService } from "@/services/mapService";
-import { pricingService, getVehicleTypeInfo } from "@/services/pricingService";
+import { getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
@@ -147,16 +147,29 @@ export default function TaxiMotoBooking({
         try {
             // Obtenir l'itinéraire
             const route = await mapService.getRoute(pickupCoords, destinationCoords);
+            console.log('[TaxiMotoBooking] Route calculated:', route);
             setRouteInfo(route);
 
-            // Calculer le prix pour le type sélectionné
-            const price = pricingService.calculatePrice(route.distance, route.duration);
+            // Calculer le prix via le service backend
+            const fareCalculation = await TaxiMotoService.calculateFare(
+                route.distance,
+                route.duration,
+                1.0 // surge multiplier
+            );
             
-            // Valider que l'objet prix a toutes les propriétés nécessaires
-            if (price && typeof price.totalPrice === 'number') {
-                setPriceEstimate(price);
+            console.log('[TaxiMotoBooking] Fare calculated:', fareCalculation);
+            
+            // Formater le prix pour l'affichage
+            if (fareCalculation && typeof fareCalculation.total === 'number') {
+                setPriceEstimate({
+                    totalPrice: Math.round(fareCalculation.total),
+                    distance: route.distance,
+                    duration: route.duration,
+                    basePrice: Math.round(fareCalculation.base_fare),
+                    currency: 'GNF'
+                });
             } else {
-                console.error('Prix invalide retourné:', price);
+                console.error('Prix invalide retourné:', fareCalculation);
                 setPriceEstimate(null);
                 toast.error('Erreur lors du calcul du prix');
             }
@@ -188,6 +201,13 @@ export default function TaxiMotoBooking({
             return;
         }
 
+        console.log('[TaxiMotoBooking] Starting booking with:', {
+            pickupCoords,
+            destinationCoords,
+            priceEstimate,
+            routeInfo
+        });
+
         setBookingInProgress(true);
 
         try {
@@ -203,6 +223,7 @@ export default function TaxiMotoBooking({
                 estimatedPrice: priceEstimate.totalPrice
             });
 
+            console.log('[TaxiMotoBooking] Ride created successfully:', ride);
             onRideCreated(ride);
             toast.success('🚀 Réservation confirmée ! Recherche d\'un conducteur...');
 
@@ -215,7 +236,7 @@ export default function TaxiMotoBooking({
             setPriceEstimate(null);
 
         } catch (error) {
-            console.error('Erreur réservation:', error);
+            console.error('[TaxiMotoBooking] Booking error:', error);
             toast.error('Erreur lors de la réservation');
         } finally {
             setBookingInProgress(false);

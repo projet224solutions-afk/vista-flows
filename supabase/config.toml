@@ -76,7 +76,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.calculate-route]
-verify_jwt = true
+verify_jwt = false
 
 [functions.google-maps-config]
 verify_jwt = true
