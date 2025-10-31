@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { origin, destination, mode = 'driving' } = await req.json();
-    const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    const GOOGLE_CLOUD_API_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY');
 
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
+    if (!GOOGLE_CLOUD_API_KEY) {
+      throw new Error('Google Cloud API key not configured');
     }
 
     if (!origin || !destination) {
@@ -23,7 +23,7 @@ serve(async (req) => {
     }
 
     // Calculer l'itinéraire avec Google Directions API
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&mode=${mode}&key=${GOOGLE_MAPS_API_KEY}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&mode=${mode}&key=${GOOGLE_CLOUD_API_KEY}`;
 
     const response = await fetch(url);
     const data = await response.json();

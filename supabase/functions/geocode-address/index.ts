@@ -12,22 +12,22 @@ serve(async (req) => {
 
   try {
     const { address, lat, lng, type } = await req.json();
-    const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    const GOOGLE_CLOUD_API_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY');
 
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
+    if (!GOOGLE_CLOUD_API_KEY) {
+      throw new Error('Google Cloud API key not configured');
     }
 
     let url = '';
     
     // Geocoding : adresse → coordonnées
     if (type === 'geocode' && address) {
-      url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`;
+      url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_CLOUD_API_KEY}`;
     }
     
     // Reverse geocoding : coordonnées → adresse
     else if (type === 'reverse' && lat && lng) {
-      url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`;
+      url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_CLOUD_API_KEY}`;
     }
     
     else {

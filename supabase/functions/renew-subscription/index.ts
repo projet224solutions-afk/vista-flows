@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       // Deduct from wallet
       const { data: wallet } = await supabase
         .from('wallets')
-        .select('balance')
+        .select('id, balance')
         .eq('user_id', user.id)
         .single();
 
