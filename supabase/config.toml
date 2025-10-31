@@ -54,9 +54,6 @@ verify_jwt = true
 [functions.geocode-address]
 verify_jwt = false
 
-[functions.calculate-route]
-verify_jwt = false
-
 [functions.mapbox-proxy]
 verify_jwt = false
 
@@ -78,3 +75,5 @@ verify_jwt = false
 [functions.check-all-services]
 verify_jwt = false
 
+[functions.calculate-route]
+verify_jwt = true

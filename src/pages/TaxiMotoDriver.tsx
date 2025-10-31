@@ -40,6 +40,8 @@ import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
 import { GPSNavigation } from "@/components/taxi-moto/GPSNavigation";
+import { InteractiveMapNavigation } from "@/components/taxi-moto/InteractiveMapNavigation";
+import { GoogleMapsNavigation } from "@/components/taxi-moto/GoogleMapsNavigation";
 import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
@@ -1117,7 +1119,7 @@ export default function TaxiMotoDriver() {
 
                     {/* Navigation GPS */}
                     <TabsContent value="gps-navigation" className="mt-0">
-                        <GPSNavigation
+                        <GoogleMapsNavigation
                             activeRide={activeRide}
                             currentLocation={location}
                             onContactCustomer={contactCustomer}
