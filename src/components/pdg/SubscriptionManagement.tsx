@@ -209,13 +209,32 @@ export default function SubscriptionManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
+      // Résoudre l'ID utilisateur (accepte UUID ou custom_id)
+      let resolvedUserId = freeSubscriptionData.userId;
+      
+      // Si ce n'est pas un UUID, chercher dans user_ids
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(freeSubscriptionData.userId)) {
+        const { data: userIdData, error: userIdError } = await supabase
+          .from('user_ids')
+          .select('user_id')
+          .eq('custom_id', freeSubscriptionData.userId.toUpperCase())
+          .single();
+
+        if (userIdError || !userIdData) {
+          throw new Error(`Code utilisateur "${freeSubscriptionData.userId}" non trouvé`);
+        }
+
+        resolvedUserId = userIdData.user_id;
+      }
+
       // Calculer la date de fin
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + days);
 
       // Créer l'abonnement gratuit
       const { error } = await supabase.from('subscriptions').insert({
-        user_id: freeSubscriptionData.userId,
+        user_id: resolvedUserId,
         plan_id: freeSubscriptionData.planId,
         price_paid_gnf: 0,
         billing_cycle: 'custom',
