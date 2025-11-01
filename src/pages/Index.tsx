@@ -23,6 +23,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { useHomeProducts } from "@/hooks/useHomeProducts";
 import { useHomeCategories } from "@/hooks/useHomeCategories";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 // Services principaux avec données dynamiques
 const getMainServices = (stats: any) => [
@@ -107,10 +108,12 @@ const formatPrice = (price: number) => {
   }).format(price) + ' GNF';
 };
 
-export default function IndexAlibaba() {
+function IndexAlibaba() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  useRoleRedirect();
+  
+  // Hooks avec gestion d'erreur
+  const roleRedirectResult = useRoleRedirect();
   const { profile } = useAuth();
   
   // Chargement des données réelles depuis Supabase
@@ -137,7 +140,18 @@ export default function IndexAlibaba() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Erreur de chargement</h2>
+            <p className="text-gray-600 mb-4">Une erreur est survenue lors du chargement de la page.</p>
+            <Button onClick={() => window.location.reload()}>Recharger la page</Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header moderne */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -443,5 +457,8 @@ export default function IndexAlibaba() {
       {/* Footer de navigation */}
       <QuickFooter />
     </div>
+    </ErrorBoundary>
   );
 }
+
+export default IndexAlibaba;
