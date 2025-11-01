@@ -6058,6 +6058,7 @@ export type Database = {
           platform_fee: number | null
           price_total: number | null
           requested_at: string | null
+          ride_code: string | null
           started_at: string | null
           status: string | null
         }
@@ -6085,6 +6086,7 @@ export type Database = {
           platform_fee?: number | null
           price_total?: number | null
           requested_at?: string | null
+          ride_code?: string | null
           started_at?: string | null
           status?: string | null
         }
@@ -6112,6 +6114,7 @@ export type Database = {
           platform_fee?: number | null
           price_total?: number | null
           requested_at?: string | null
+          ride_code?: string | null
           started_at?: string | null
           status?: string | null
         }
