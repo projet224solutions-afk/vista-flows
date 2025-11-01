@@ -56,7 +56,7 @@ export class TaxiMotoService {
     lng: number,
     radiusKm: number = 5
   ): Promise<NearbyDriver[]> {
-    const { data, error } = await supabase.rpc('find_nearby_drivers' as any, {
+    const { data, error } = await supabase.rpc('find_nearby_taxi_drivers' as any, {
       p_lat: lat,
       p_lng: lng,
       p_radius_km: radiusKm
