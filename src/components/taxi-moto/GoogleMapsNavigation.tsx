@@ -479,13 +479,13 @@ export function GoogleMapsNavigation({
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">Prix course</p>
               <p className="text-lg font-bold text-green-600">
-                {activeRide.estimatedPrice.toLocaleString()} GNF
+                {(activeRide.estimatedPrice || 0).toLocaleString()} GNF
               </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">Mes gains</p>
               <p className="text-lg font-bold text-blue-600">
-                {activeRide.estimatedEarnings.toLocaleString()} GNF
+                {(activeRide.estimatedEarnings || 0).toLocaleString()} GNF
               </p>
             </div>
           </div>
