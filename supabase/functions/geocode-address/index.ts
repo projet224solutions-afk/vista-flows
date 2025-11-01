@@ -18,6 +18,28 @@ serve(async (req) => {
       throw new Error('Google Cloud API key not configured');
     }
 
+    // Validation des paramètres
+    if (type === 'geocode') {
+      if (!address || address.trim() === '') {
+        return new Response(
+          JSON.stringify({ error: 'Address is required for geocoding' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    } else if (type === 'reverse') {
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+        return new Response(
+          JSON.stringify({ error: 'Valid latitude and longitude are required for reverse geocoding' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    } else {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request type. Use "geocode" or "reverse"' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     let url = '';
     
     // Geocoding : adresse → coordonnées
@@ -29,15 +51,28 @@ serve(async (req) => {
     else if (type === 'reverse' && lat && lng) {
       url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_CLOUD_API_KEY}`;
     }
-    
-    else {
-      throw new Error('Invalid request type or missing parameters');
-    }
 
+    console.log(`[geocode-address] Request: type=${type}, address="${address}", lat=${lat}, lng=${lng}`);
+    
     const response = await fetch(url);
     const data = await response.json();
 
+    console.log(`[geocode-address] Google API response status: ${data.status}`);
+
+    if (data.status === 'ZERO_RESULTS') {
+      return new Response(
+        JSON.stringify({ 
+          error: 'No results found', 
+          message: type === 'geocode' 
+            ? `Aucune adresse trouvée pour: "${address}". Veuillez vérifier l'adresse.`
+            : `Aucune adresse trouvée pour les coordonnées: ${lat}, ${lng}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
     if (data.status !== 'OK') {
+      console.error(`[geocode-address] Google API error: ${data.status}`, data);
       throw new Error(`Geocoding error: ${data.status}`);
     }
 
