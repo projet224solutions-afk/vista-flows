@@ -81,6 +81,8 @@ export default function TaxiMotoBooking({
     const [destinationSuggestions, setDestinationSuggestions] = useState<unknown[]>([]);
     const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
     const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+    const [pickupSearchQuery, setPickupSearchQuery] = useState('');
+    const [destinationSearchQuery, setDestinationSearchQuery] = useState('');
 
     // Coordonnées sélectionnées
     const [pickupCoords, setPickupCoords] = useState<LocationCoordinates | null>(null);
@@ -100,23 +102,48 @@ export default function TaxiMotoBooking({
     };
 
     /**
-     * Géocode une adresse
+     * Géocode une adresse avec debouncing
      */
     const geocodeAddress = useCallback(async (address: string, isPickup: boolean) => {
-        if (address.length < 3) return;
+        // Longueur minimale de 5 caractères pour éviter les requêtes inutiles
+        if (address.length < 5) {
+            // Masquer les suggestions si trop court
+            if (isPickup) {
+                setShowPickupSuggestions(false);
+            } else {
+                setShowDestinationSuggestions(false);
+            }
+            return;
+        }
 
         try {
             const results = await mapService.geocodeAddress(address);
 
-            if (isPickup) {
-                setPickupSuggestions(results);
-                setShowPickupSuggestions(true);
+            if (results && results.length > 0) {
+                if (isPickup) {
+                    setPickupSuggestions(results);
+                    setShowPickupSuggestions(true);
+                } else {
+                    setDestinationSuggestions(results);
+                    setShowDestinationSuggestions(true);
+                }
             } else {
-                setDestinationSuggestions(results);
-                setShowDestinationSuggestions(true);
+                // Pas de résultats, masquer les suggestions
+                if (isPickup) {
+                    setShowPickupSuggestions(false);
+                } else {
+                    setShowDestinationSuggestions(false);
+                }
             }
         } catch (error) {
-            console.error('Erreur géocodage:', error);
+            console.warn('[TaxiMotoBooking] Geocoding error:', error);
+            // Ne pas afficher d'erreur à l'utilisateur pour éviter le spam
+            // Masquer simplement les suggestions
+            if (isPickup) {
+                setShowPickupSuggestions(false);
+            } else {
+                setShowDestinationSuggestions(false);
+            }
         }
     }, []);
 
@@ -254,6 +281,30 @@ export default function TaxiMotoBooking({
         }
     }, [pickupCoords, destinationCoords, selectedVehicleType, calculateRouteAndPrice]);
 
+    // Debouncing pour le geocoding du pickup
+    useEffect(() => {
+        if (pickupSearchQuery.length >= 5) {
+            const timer = setTimeout(() => {
+                geocodeAddress(pickupSearchQuery, true);
+            }, 800);
+            return () => clearTimeout(timer);
+        } else if (pickupSearchQuery.length > 0 && pickupSearchQuery.length < 5) {
+            setShowPickupSuggestions(false);
+        }
+    }, [pickupSearchQuery, geocodeAddress]);
+
+    // Debouncing pour le geocoding de la destination
+    useEffect(() => {
+        if (destinationSearchQuery.length >= 5) {
+            const timer = setTimeout(() => {
+                geocodeAddress(destinationSearchQuery, false);
+            }, 800);
+            return () => clearTimeout(timer);
+        } else if (destinationSearchQuery.length > 0 && destinationSearchQuery.length < 5) {
+            setShowDestinationSuggestions(false);
+        }
+    }, [destinationSearchQuery, geocodeAddress]);
+
     return (
         <div className="space-y-4">
             {/* Formulaire de réservation */}
@@ -273,11 +324,12 @@ export default function TaxiMotoBooking({
                         <div className="flex gap-2">
                             <div className="flex-1 relative">
                                 <Input
-                                    placeholder="Saisissez votre adresse de départ"
+                                    placeholder="Saisissez votre adresse de départ (min. 5 caractères)"
                                     value={pickupAddress}
                                     onChange={(e) => {
-                                        setPickupAddress(e.target.value);
-                                        geocodeAddress(e.target.value, true);
+                                        const value = e.target.value;
+                                        setPickupAddress(value);
+                                        setPickupSearchQuery(value);
                                     }}
                                     className="pl-10"
                                 />
@@ -316,11 +368,12 @@ export default function TaxiMotoBooking({
                         </label>
                         <div className="relative">
                             <Input
-                                placeholder="Où voulez-vous aller ?"
+                                placeholder="Où voulez-vous aller ? (min. 5 caractères)"
                                 value={destinationAddress}
                                 onChange={(e) => {
-                                    setDestinationAddress(e.target.value);
-                                    geocodeAddress(e.target.value, false);
+                                    const value = e.target.value;
+                                    setDestinationAddress(value);
+                                    setDestinationSearchQuery(value);
                                 }}
                                 className="pl-10"
                             />
