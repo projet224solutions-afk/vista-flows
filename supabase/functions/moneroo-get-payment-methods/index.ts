@@ -5,20 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface PaymentRequest {
-  amount: number;
-  currency: string;
-  description: string;
-  customer: {
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  return_url: string;
-  methods?: string[];
-  metadata?: Record<string, any>;
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -50,19 +36,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get request body
-    const paymentData: PaymentRequest = await req.json();
-    console.log('Payment request:', { ...paymentData, amount: paymentData.amount });
-
-    // Validate required fields
-    if (!paymentData.amount || !paymentData.currency || !paymentData.description) {
-      return new Response(
-        JSON.stringify({ error: 'Champs requis manquants' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Prepare Moneroo API request
+    // Get Moneroo secret key
     const monerooSecretKey = Deno.env.get('MONEROO_SECRET_KEY');
     if (!monerooSecretKey) {
       console.error('MONEROO_SECRET_KEY not configured');
@@ -72,30 +46,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const monerooPayload = {
-      amount: paymentData.amount,
-      currency: paymentData.currency,
-      description: paymentData.description,
-      customer: paymentData.customer,
-      return_url: paymentData.return_url,
-      methods: paymentData.methods || ['om_gn', 'mtn_gn', 'moov_gn'],
-      metadata: {
-        ...paymentData.metadata,
-        user_id: user.id,
-      },
-    };
-
-    console.log('Calling Moneroo API...');
+    console.log('Fetching payment methods from Moneroo...');
     
-    // Call Moneroo API
-    const monerooResponse = await fetch('https://api.moneroo.io/v1/payments/initialize', {
-      method: 'POST',
+    // Call Moneroo API to get payment methods
+    const monerooResponse = await fetch('https://api.moneroo.io/v1/utils/payment/methods', {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${monerooSecretKey}`,
         'Accept': 'application/json',
       },
-      body: JSON.stringify(monerooPayload),
     });
 
     const monerooData = await monerooResponse.json();
@@ -105,48 +64,38 @@ Deno.serve(async (req) => {
       console.error('Moneroo API error:', monerooData);
       return new Response(
         JSON.stringify({ 
-          error: 'Erreur lors de l\'initialisation du paiement',
+          error: 'Erreur lors de la récupération des méthodes',
           details: monerooData 
         }),
         { status: monerooResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Store payment record in database
-    const { error: dbError } = await supabaseClient
-      .from('moneroo_payments')
-      .insert({
-        user_id: user.id,
-        payment_id: monerooData.id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: 'pending',
-        checkout_url: monerooData.checkout_url,
-        metadata: paymentData.metadata,
-      });
+    // Filter for Guinea (GN) mobile money methods
+    const guineaMethods = monerooData.data?.filter((method: any) => 
+      method.code && (
+        method.code.includes('gn') ||
+        method.code.includes('guinea') ||
+        method.currency === 'GNF'
+      )
+    ) || [];
 
-    if (dbError) {
-      console.error('Database error:', dbError);
-      // Continue anyway, as payment was initialized
-    }
-
-    console.log('Payment initialized successfully:', monerooData.id);
+    console.log('Guinea payment methods found:', guineaMethods.length);
 
     return new Response(
       JSON.stringify({
         success: true,
-        payment_id: monerooData.id,
-        checkout_url: monerooData.checkout_url,
-        status: monerooData.status,
+        methods: guineaMethods,
+        all_methods: monerooData.data,
       }),
       { 
-        status: 201, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
 
   } catch (error) {
-    console.error('Error in moneroo-initialize-payment:', error);
+    console.error('Error in moneroo-get-payment-methods:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Erreur serveur',

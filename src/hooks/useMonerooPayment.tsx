@@ -34,7 +34,7 @@ export const useMonerooPayment = () => {
         body: {
           ...paymentData,
           currency: paymentData.currency || 'GNF',
-          methods: paymentData.methods || ['lengopay_orange_money_gn', 'lengopay_mtn_momo_gn', 'lengopay_moov_money_gn'],
+          methods: paymentData.methods || ['om_gn', 'mtn_gn', 'moov_gn'],
           return_url: `${window.location.origin}/payment-success`,
         },
       });

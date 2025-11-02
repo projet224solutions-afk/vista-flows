@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.moneroo-verify-payment]
 verify_jwt = true
 
+[functions.moneroo-get-payment-methods]
+verify_jwt = true
+
 [functions.create-product]
 verify_jwt = true
 
