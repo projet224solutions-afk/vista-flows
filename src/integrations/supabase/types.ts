@@ -3198,6 +3198,84 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_links: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          description: string | null
+          devise: string
+          expires_at: string
+          frais: number
+          id: string
+          metadata: Json | null
+          montant: number
+          paid_at: string | null
+          payment_id: string
+          payment_method: string | null
+          produit: string
+          status: string
+          total: number
+          transaction_id: string | null
+          updated_at: string
+          vendeur_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          devise?: string
+          expires_at: string
+          frais?: number
+          id?: string
+          metadata?: Json | null
+          montant: number
+          paid_at?: string | null
+          payment_id: string
+          payment_method?: string | null
+          produit: string
+          status?: string
+          total: number
+          transaction_id?: string | null
+          updated_at?: string
+          vendeur_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          devise?: string
+          expires_at?: string
+          frais?: number
+          id?: string
+          metadata?: Json | null
+          montant?: number
+          paid_at?: string | null
+          payment_id?: string
+          payment_method?: string | null
+          produit?: string
+          status?: string
+          total?: number
+          transaction_id?: string | null
+          updated_at?: string
+          vendeur_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_vendeur_id_fkey"
+            columns: ["vendeur_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_schedules: {
         Row: {
           amount: number
@@ -7863,6 +7941,10 @@ export type Database = {
       }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_payment_link_vendor: {
+        Args: { _payment_link_id: string; _vendor_user_id: string }
         Returns: boolean
       }
       log_api_usage: {
