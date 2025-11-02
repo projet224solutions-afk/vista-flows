@@ -139,7 +139,7 @@ export function useCommunicationData() {
           status,
           created_at,
           sender_id,
-          sender:sender_id(
+          sender:profiles!messages_sender_id_fkey(
             first_name,
             last_name
           )
