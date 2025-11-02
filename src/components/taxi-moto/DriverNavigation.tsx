@@ -417,6 +417,47 @@ export function DriverNavigation({
               Arrivé à destination - Terminer la course
             </Button>
           )}
+
+          {/* Bouton d'annulation - Disponible pour tous les statuts */}
+          <Button
+            onClick={async () => {
+              const confirmed = window.confirm(
+                '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
+                'Le client sera notifié et vous pourriez recevoir une pénalité.'
+              );
+              
+              if (confirmed) {
+                setLoading(true);
+                try {
+                  const { error } = await supabase
+                    .from('taxi_trips')
+                    .update({ 
+                      status: 'cancelled_by_driver',
+                      cancel_reason: 'Annulée par le conducteur',
+                      cancelled_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', activeRide.id);
+
+                  if (error) throw error;
+
+                  toast.success('✅ Course annulée');
+                  setActiveRide(null);
+                } catch (error) {
+                  console.error('❌ Erreur annulation:', error);
+                  toast.error('Impossible d\'annuler la course');
+                } finally {
+                  setLoading(false);
+                }
+              }
+            }}
+            variant="outline"
+            className="w-full border-red-300 text-red-700 hover:bg-red-50"
+            size="lg"
+            disabled={loading}
+          >
+            ❌ Annuler la course
+          </Button>
         </CardContent>
       </Card>
     </div>

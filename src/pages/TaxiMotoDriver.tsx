@@ -868,6 +868,44 @@ export default function TaxiMotoDriver() {
     };
 
     /**
+     * Annule la course en cours
+     */
+    const cancelActiveRide = async () => {
+        if (!activeRide || !driverId) return;
+
+        // Demander confirmation
+        const confirmed = window.confirm(
+            '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
+            'Le client sera notifié et vous pourriez recevoir une pénalité.'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            console.log('❌ Annulation de la course:', activeRide.id);
+            
+            // Annuler la course avec statut spécifique conducteur
+            await TaxiMotoService.updateRideStatus(activeRide.id, 'cancelled_by_driver', {
+                cancel_reason: 'Annulée par le conducteur',
+                cancelled_at: new Date().toISOString()
+            });
+            
+            // Réinitialiser l'état
+            setActiveRide(null);
+            setNavigationActive(false);
+            
+            toast.success('✅ Course annulée avec succès');
+            
+            // Recharger les stats
+            loadDriverStats();
+            loadRideHistory();
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'annulation:', error);
+            toast.error('Impossible d\'annuler la course');
+        }
+    };
+
+    /**
      * Termine la course
      */
     const completeRide = async () => {

@@ -474,6 +474,42 @@ export function GoogleMapsNavigation({
             Ouvrir dans Google Maps
           </Button>
 
+          {/* Bouton d'annulation */}
+          <Button
+            onClick={async () => {
+              const confirmed = window.confirm(
+                '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
+                'Le client sera notifié et vous pourriez recevoir une pénalité.'
+              );
+              
+              if (confirmed) {
+                try {
+                  const { error } = await supabase
+                    .from('taxi_trips')
+                    .update({ 
+                      status: 'cancelled_by_driver',
+                      cancel_reason: 'Annulée par le conducteur',
+                      cancelled_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', activeRide.id);
+
+                  if (error) throw error;
+
+                  toast.success('✅ Course annulée');
+                  window.location.reload();
+                } catch (error) {
+                  console.error('❌ Erreur annulation:', error);
+                  toast.error('Impossible d\'annuler la course');
+                }
+              }
+            }}
+            variant="outline"
+            className="w-full border-red-300 text-red-700 hover:bg-red-50"
+          >
+            ❌ Annuler la course
+          </Button>
+
           {/* Revenus */}
           <div className="grid grid-cols-2 gap-3 pt-2 border-t">
             <div className="text-center">

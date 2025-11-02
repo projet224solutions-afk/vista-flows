@@ -34,13 +34,15 @@ interface ActiveRideCardProps {
   onUpdateStatus: (newStatus: 'arriving' | 'picked_up' | 'in_progress') => void;
   onContactCustomer: (phone: string) => void;
   onNavigate: (coords: { latitude: number; longitude: number }) => void;
+  onCancelRide?: () => void;
 }
 
 export function ActiveRideCard({ 
   ride, 
   onUpdateStatus, 
   onContactCustomer,
-  onNavigate 
+  onNavigate,
+  onCancelRide 
 }: ActiveRideCardProps) {
   const getStatusInfo = () => {
     switch (ride.status) {
@@ -165,22 +167,34 @@ export function ActiveRideCard({
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={() => onNavigate(targetLocation)}
-            variant="outline"
-            className="h-12 bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700 font-semibold"
-          >
-            <Navigation className="w-4 h-4 mr-2" />
-            Navigation
-          </Button>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => onNavigate(targetLocation)}
+              variant="outline"
+              className="h-12 bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700 font-semibold"
+            >
+              <Navigation className="w-4 h-4 mr-2" />
+              Navigation
+            </Button>
 
-          <Button
-            onClick={() => onUpdateStatus(statusInfo.nextAction as any)}
-            className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg"
-          >
-            ✅ {statusInfo.nextLabel}
-          </Button>
+            <Button
+              onClick={() => onUpdateStatus(statusInfo.nextAction as any)}
+              className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg"
+            >
+              ✅ {statusInfo.nextLabel}
+            </Button>
+          </div>
+
+          {onCancelRide && (
+            <Button
+              onClick={onCancelRide}
+              variant="outline"
+              className="w-full h-12 bg-red-50 hover:bg-red-100 border-red-300 text-red-700 font-semibold"
+            >
+              ❌ Annuler la course
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
