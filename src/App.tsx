@@ -51,6 +51,7 @@ const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
 const MigrateIds = lazy(() => import("./pages/Admin/MigrateIds"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
+const AffiliateRedirect = lazy(() => import("./pages/AffiliateRedirect"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -95,6 +96,9 @@ function App() {
               <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/profil" element={<Profil />} />
+              
+              {/* Affiliate Routes */}
+              <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
 
               {/* Dashboard Routes */}
               <Route
