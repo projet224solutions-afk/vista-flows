@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       description: paymentData.description,
       customer: paymentData.customer,
       return_url: paymentData.return_url,
-      methods: paymentData.methods || ['om_gn', 'mtn_gn', 'moov_gn'],
+      methods: paymentData.methods || ['orange_gn', 'mtn_gn'],
       metadata: {
         ...paymentData.metadata,
         user_id: user.id,

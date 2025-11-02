@@ -16,9 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const PAYMENT_METHODS = [
-  { id: 'om_gn', name: 'Orange Money', logo: '🟠' },
+  { id: 'orange_gn', name: 'Orange Money', logo: '🟠' },
   { id: 'mtn_gn', name: 'MTN Mobile Money', logo: '🟡' },
-  { id: 'moov_gn', name: 'Moov Money', logo: '🔵' },
 ];
 
 interface MonerooPaymentDialogProps {
@@ -42,7 +41,7 @@ export function MonerooPaymentDialog({
   const { toast } = useToast();
   const { initializePayment, loading } = useMonerooPayment();
   const [amount, setAmount] = useState(defaultAmount);
-  const [selectedMethod, setSelectedMethod] = useState<string>('om_gn');
+  const [selectedMethod, setSelectedMethod] = useState<string>('orange_gn');
 
   const handlePayment = async () => {
     if (!user || !profile) {
