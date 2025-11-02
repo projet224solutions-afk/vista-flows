@@ -20,7 +20,7 @@ interface Booking {
   total_amount: number;
   payment_status: string;
   created_at: string;
-  profiles?: {
+  client?: {
     full_name?: string;
     phone?: string;
   };
@@ -46,7 +46,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
         .from('service_bookings')
         .select(`
           *,
-          profiles:client_id (
+          client:client_id (
             full_name,
             phone
           )
@@ -167,12 +167,12 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
                             </div>
                             <div>
                               <h4 className="font-semibold text-lg">
-                                {booking.profiles?.full_name || 'Client'}
+                                {booking.client?.full_name || 'Client'}
                               </h4>
-                              {booking.profiles?.phone && (
+                              {booking.client?.phone && (
                                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                                   <Phone className="w-3 h-3" />
-                                  {booking.profiles.phone}
+                                  {booking.client.phone}
                                 </p>
                               )}
                             </div>
