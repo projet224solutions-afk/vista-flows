@@ -220,11 +220,24 @@ export function useCommunicationData() {
   // Envoyer un message
   const sendMessage = useCallback(async (conversationId: string, content: string, senderId: string) => {
     try {
+      // Récupérer l'ID du destinataire (l'autre participant de la conversation)
+      const { data: otherParticipant, error: participantError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', senderId)
+        .single();
+
+      if (participantError || !otherParticipant) {
+        throw new Error('Impossible de trouver le destinataire');
+      }
+
       const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: senderId,
+          recipient_id: otherParticipant.user_id,
           content: content,
           type: 'text',
           status: 'sent'
