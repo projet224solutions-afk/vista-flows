@@ -34,17 +34,29 @@ export const useMonerooPayment = () => {
         body: {
           ...paymentData,
           currency: paymentData.currency || 'GNF',
-          methods: paymentData.methods || ['om_gn', 'mtn_gn', 'moov_gn'],
+          methods: paymentData.methods || ['orange_gn', 'mtn_gn'],
           return_url: `${window.location.origin}/payment-success`,
         },
       });
 
       if (error) {
         console.error('Error initializing payment:', error);
+        
+        // Analyser le message d'erreur
+        const errorMessage = error.message || '';
+        let displayMessage = 'Impossible d\'initialiser le paiement';
+        
+        // Détecter l'erreur de configuration Moneroo
+        if (errorMessage.includes('No payment methods enabled') || 
+            errorMessage.includes('payment methods enabled for this currency')) {
+          displayMessage = '⚠️ Configuration requise: Veuillez activer Orange Money et MTN MoMo pour la Guinée (GNF) dans votre tableau de bord Moneroo sur app.moneroo.io';
+        }
+        
         toast({
-          title: 'Erreur',
-          description: 'Impossible d\'initialiser le paiement',
+          title: 'Erreur de configuration',
+          description: displayMessage,
           variant: 'destructive',
+          duration: 10000, // Afficher plus longtemps pour ce message important
         });
         return null;
       }
