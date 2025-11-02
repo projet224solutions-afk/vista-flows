@@ -1,5 +1,14 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[functions.moneroo-initialize-payment]
+verify_jwt = true
+
+[functions.moneroo-webhook]
+verify_jwt = false
+
+[functions.moneroo-verify-payment]
+verify_jwt = true
+
 [functions.create-product]
 verify_jwt = true
 
