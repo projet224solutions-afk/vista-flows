@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import VirtualCardButton from "@/components/VirtualCardButton";
+import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function Payment() {
     balance_after: number;
     receiver_id?: string;
   } | null>(null);
+  const [showMonerooDialog, setShowMonerooDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -293,7 +295,15 @@ export default function Payment() {
                   </h2>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setShowMonerooDialog(true)}
+                >
+                  <Wallet className="h-4 w-4" />
+                  Recharger
+                </Button>
                 <VirtualCardButton />
                 <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
                   <DialogTrigger asChild>
@@ -510,6 +520,22 @@ export default function Payment() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Dialog de recharge Moneroo */}
+        <MonerooPaymentDialog
+          open={showMonerooDialog}
+          onOpenChange={setShowMonerooDialog}
+          defaultAmount={10000}
+          description="Rechargez votre wallet via Orange Money, MTN ou Moov"
+          metadata={{ wallet_recharge: true }}
+          onSuccess={(paymentId) => {
+            console.log('Paiement initié:', paymentId);
+            toast({
+              title: 'Paiement en cours',
+              description: 'Complétez le paiement sur la page qui s\'est ouverte',
+            });
+          }}
+        />
       </div>
     </div>
   );
