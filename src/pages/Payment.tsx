@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
+import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -368,8 +369,11 @@ export default function Payment() {
           </CardContent>
         </Card>
 
+        {/* Statistiques mensuelles */}
+        <WalletMonthlyStats />
+
         {/* Transactions récentes */}
-        <Card className="mb-6">
+        <Card className="mt-6 mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
