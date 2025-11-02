@@ -8677,6 +8677,7 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "completed"
+        | "processing"
       payment_method: "mobile_money" | "card" | "cash" | "bank_transfer"
       payment_method_type:
         | "card"
@@ -8868,6 +8869,7 @@ export const Constants = {
         "delivered",
         "cancelled",
         "completed",
+        "processing",
       ],
       payment_method: ["mobile_money", "card", "cash", "bank_transfer"],
       payment_method_type: [
