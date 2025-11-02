@@ -6036,6 +6036,8 @@ export type Database = {
       taxi_trips: {
         Row: {
           accepted_at: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
           completed_at: string | null
           customer_id: string
           declined_drivers: string[] | null
@@ -6065,6 +6067,8 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           customer_id: string
           declined_drivers?: string[] | null
@@ -6094,6 +6098,8 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           customer_id?: string
           declined_drivers?: string[] | null
