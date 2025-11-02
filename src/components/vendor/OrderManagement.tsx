@@ -62,6 +62,7 @@ const statusColors: Record<string, string> = {
   shipped: 'bg-orange-100 text-orange-800',
   in_transit: 'bg-orange-100 text-orange-800',
   delivered: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800'
 };
 
@@ -74,6 +75,7 @@ const statusLabels: Record<string, string> = {
   shipped: 'Expédiée',
   in_transit: 'En transit',
   delivered: 'Livrée',
+  completed: 'Terminée',
   cancelled: 'Annulée'
 };
 
@@ -348,7 +350,7 @@ export default function OrderManagement() {
       );
     }
     
-    if (!['cancelled', 'delivered'].includes(order.status)) {
+    if (!['cancelled', 'delivered', 'completed'].includes(order.status)) {
       actions.push(
         <Button 
           key="cancel" 
