@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AffiliateManagement({ shopId }: { shopId?: string }) {
   const { user } = useAuth();
@@ -118,8 +119,18 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
               />
               <Button 
                 size="sm" 
-                onClick={() => {
-                  navigator.clipboard.writeText(link);
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(link);
+                    toast.success("Lien copié avec succès !", {
+                      description: "Le lien d'affiliation a été copié dans le presse-papiers"
+                    });
+                  } catch (error) {
+                    console.error('Erreur copie:', error);
+                    toast.error("Erreur lors de la copie", {
+                      description: "Impossible de copier le lien. Veuillez réessayer."
+                    });
+                  }
                 }}
               >
                 Copier
