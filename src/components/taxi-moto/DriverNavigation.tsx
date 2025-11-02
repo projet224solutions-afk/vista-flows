@@ -426,29 +426,41 @@ export function DriverNavigation({
                 'Le client sera notifié et vous pourriez recevoir une pénalité.'
               );
               
-              if (confirmed) {
-                setLoading(true);
-                try {
-                  const { error } = await supabase
-                    .from('taxi_trips')
-                    .update({ 
-                      status: 'cancelled_by_driver',
-                      cancel_reason: 'Annulée par le conducteur',
-                      cancelled_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', activeRide.id);
+              if (!confirmed) return;
+              
+              setLoading(true);
+              try {
+                console.log('🚫 Annulation de la course:', activeRide.id);
+                
+                const { error } = await supabase
+                  .from('taxi_trips')
+                  .update({ 
+                    status: 'cancelled',
+                    cancel_reason: 'Annulée par le conducteur',
+                    cancelled_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', activeRide.id);
 
-                  if (error) throw error;
-
-                  toast.success('✅ Course annulée');
-                  setActiveRide(null);
-                } catch (error) {
-                  console.error('❌ Erreur annulation:', error);
-                  toast.error('Impossible d\'annuler la course');
-                } finally {
-                  setLoading(false);
+                if (error) {
+                  console.error('❌ Erreur DB:', error);
+                  throw error;
                 }
+
+                console.log('✅ Course annulée avec succès dans la DB');
+                
+                toast.success('✅ Course annulée avec succès');
+                
+                // Réinitialiser l'état local
+                setActiveRide(null);
+                
+                // Recharger pour vérifier
+                await loadActiveRide();
+              } catch (error) {
+                console.error('❌ Erreur annulation:', error);
+                toast.error('Impossible d\'annuler la course. Veuillez réessayer.');
+              } finally {
+                setLoading(false);
               }
             }}
             variant="outline"
