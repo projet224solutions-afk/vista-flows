@@ -11,8 +11,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+
+const PAYMENT_METHODS = [
+  { id: 'lengopay_orange_money_gn', name: 'Orange Money', logo: '🟠' },
+  { id: 'lengopay_mtn_momo_gn', name: 'MTN Mobile Money', logo: '🟡' },
+  { id: 'lengopay_moov_money_gn', name: 'Moov Money', logo: '🔵' },
+];
 
 interface MonerooPaymentDialogProps {
   open: boolean;
@@ -35,6 +42,7 @@ export function MonerooPaymentDialog({
   const { toast } = useToast();
   const { initializePayment, loading } = useMonerooPayment();
   const [amount, setAmount] = useState(defaultAmount);
+  const [selectedMethod, setSelectedMethod] = useState<string>('lengopay_orange_money_gn');
 
   const handlePayment = async () => {
     if (!user || !profile) {
@@ -64,6 +72,7 @@ export function MonerooPaymentDialog({
         first_name: profile.first_name || 'Utilisateur',
         last_name: profile.last_name || '',
       },
+      methods: [selectedMethod],
       metadata,
     });
 
@@ -103,6 +112,21 @@ export function MonerooPaymentDialog({
               placeholder="Entrez le montant"
               min={0}
             />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Méthode de paiement</Label>
+            <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod}>
+              {PAYMENT_METHODS.map((method) => (
+                <div key={method.id} className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-accent cursor-pointer">
+                  <RadioGroupItem value={method.id} id={method.id} />
+                  <Label htmlFor={method.id} className="flex items-center gap-2 cursor-pointer flex-1">
+                    <span className="text-2xl">{method.logo}</span>
+                    <span>{method.name}</span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
 
           <div className="space-y-2">

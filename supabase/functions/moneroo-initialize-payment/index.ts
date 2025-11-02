@@ -15,6 +15,7 @@ interface PaymentRequest {
     last_name: string;
   };
   return_url: string;
+  methods?: string[];
   metadata?: Record<string, any>;
 }
 
@@ -77,6 +78,7 @@ Deno.serve(async (req) => {
       description: paymentData.description,
       customer: paymentData.customer,
       return_url: paymentData.return_url,
+      methods: paymentData.methods || ['lengopay_orange_money_gn', 'lengopay_mtn_momo_gn', 'lengopay_moov_money_gn'],
       metadata: {
         ...paymentData.metadata,
         user_id: user.id,
