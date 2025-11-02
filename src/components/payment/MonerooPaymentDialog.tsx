@@ -95,13 +95,13 @@ export function MonerooPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Paiement Moneroo</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 overflow-y-auto max-h-[60vh] pr-2">
           <div className="space-y-2">
             <Label htmlFor="amount">Montant (GNF)</Label>
             <Input
@@ -155,7 +155,7 @@ export function MonerooPaymentDialog({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0 pt-4 border-t">
           <Button
             onClick={handlePayment}
             disabled={loading || amount <= 0}

@@ -470,14 +470,14 @@ export default function Payment() {
 
         {/* Dialog de confirmation du paiement */}
         <AlertDialog open={showPaymentPreview} onOpenChange={setShowPaymentPreview}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
+          <AlertDialogContent className="max-h-[90vh] flex flex-col">
+            <AlertDialogHeader className="flex-shrink-0">
               <AlertDialogTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5" />
                 Confirmer le paiement
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
-                <div className="space-y-4 pt-4">
+                <div className="space-y-4 pt-4 max-h-[60vh] overflow-y-auto pr-2">
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">💰 Montant</span>
@@ -512,7 +512,7 @@ export default function Payment() {
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
+            <AlertDialogFooter className="flex-shrink-0 mt-4">
               <AlertDialogCancel disabled={processing}>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmPayment} disabled={processing}>
                 {processing ? 'Traitement...' : 'Confirmer le paiement'}
