@@ -6061,6 +6061,7 @@ export type Database = {
           ride_code: string | null
           started_at: string | null
           status: string | null
+          updated_at: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -6089,6 +6090,7 @@ export type Database = {
           ride_code?: string | null
           started_at?: string | null
           status?: string | null
+          updated_at?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -6117,6 +6119,7 @@ export type Database = {
           ride_code?: string | null
           started_at?: string | null
           status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
