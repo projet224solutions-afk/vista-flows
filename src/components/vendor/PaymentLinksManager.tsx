@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Link, Plus, Copy, Share2, Eye, Trash2, RefreshCw, 
   DollarSign, Calendar, User, CreditCard, AlertCircle,
@@ -76,18 +77,78 @@ export default function PaymentLinksManager() {
   const loadPaymentLinks = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/payments/vendor/${user?.id}?${new URLSearchParams({
-        status: filters.status === 'all' ? '' : filters.status,
-        search: filters.search
-      })}`);
       
-      if (response.ok) {
-        const data = await response.json();
-        setPaymentLinks(data.payment_links);
-        setStats(data.stats);
-      } else {
-        throw new Error('Erreur lors du chargement');
+      if (!user?.id) return;
+
+      // Récupérer l'ID du vendeur
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!vendor) {
+        throw new Error('Vendeur non trouvé');
       }
+
+      // Construire la requête avec filtres
+      let query = (supabase as any)
+        .from('payment_links')
+        .select(`
+          *,
+          client:profiles!payment_links_client_id_fkey(
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('vendeur_id', vendor.id)
+        .order('created_at', { ascending: false });
+
+      // Appliquer le filtre de statut
+      if (filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+
+      // Appliquer le filtre de recherche
+      if (filters.search) {
+        query = query.or(`description.ilike.%${filters.search}%,payment_id.ilike.%${filters.search}%`);
+      }
+
+      const { data: links, error } = await query;
+
+      if (error) throw error;
+
+      // Formater les données
+      const formattedLinks = (links || []).map((link: any) => ({
+        ...link,
+        client: link.client ? {
+          name: `${link.client.first_name || ''} ${link.client.last_name || ''}`.trim(),
+          email: link.client.email
+        } : undefined
+      })) as PaymentLink[];
+
+      setPaymentLinks(formattedLinks);
+
+      // Calculer les statistiques
+      const totalRevenue = formattedLinks
+        .filter(l => l.status === 'success')
+        .reduce((sum, l) => sum + (l.total || 0), 0);
+
+      setStats({
+        total_links: formattedLinks.length,
+        pending_payments: formattedLinks.filter(l => l.status === 'pending').length,
+        successful_payments: formattedLinks.filter(l => l.status === 'success').length,
+        expired_payments: formattedLinks.filter(l => l.status === 'expired').length,
+        failed_payments: formattedLinks.filter(l => l.status === 'failed').length,
+        total_revenue: totalRevenue,
+        total_fees: formattedLinks
+          .filter(l => l.status === 'success')
+          .reduce((sum, l) => sum + (l.frais || 0), 0),
+        avg_payment_amount: formattedLinks.length > 0 ? totalRevenue / formattedLinks.filter(l => l.status === 'success').length : 0
+      });
+
     } catch (error) {
       console.error('Erreur chargement liens paiement:', error);
       toast({
