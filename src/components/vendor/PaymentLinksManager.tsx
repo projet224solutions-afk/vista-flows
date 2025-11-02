@@ -173,41 +173,70 @@ export default function PaymentLinksManager() {
 
     try {
       setCreating(true);
-      const response = await fetch('/api/payments/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          vendeur_id: user?.id,
-          montant: parseFloat(formData.montant)
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "Succès",
-          description: "Lien de paiement créé avec succès !",
-        });
-        
-        // Afficher le lien généré
-        setShowCreateModal(false);
-        setFormData({ produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
-        loadPaymentLinks();
-        
-        // Copier le lien automatiquement
-        navigator.clipboard.writeText(data.payment_link.url);
-        toast({
-          title: "Lien copié",
-          description: "Le lien de paiement a été copié dans le presse-papiers",
-        });
-      } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Erreur lors de la création');
+      
+      if (!user?.id) {
+        throw new Error('Utilisateur non connecté');
       }
-    } catch (error) {
+
+      // Récupérer l'ID du vendeur
+      const { data: vendor, error: vendorError } = await (supabase as any)
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (vendorError || !vendor) {
+        throw new Error('Vendeur non trouvé');
+      }
+
+      const montant = parseFloat(formData.montant);
+      const frais = montant * 0.01; // 1% de frais
+      const total = montant + frais;
+
+      // Générer un ID de paiement unique
+      const paymentId = `PAY${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      // Créer le lien de paiement
+      const { data: paymentLink, error: insertError } = await (supabase as any)
+        .from('payment_links')
+        .insert({
+          payment_id: paymentId,
+          vendeur_id: vendor.id,
+          client_id: formData.client_id || null,
+          produit: formData.produit,
+          description: formData.description || null,
+          montant: montant,
+          frais: frais,
+          total: total,
+          devise: formData.devise,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 jours
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Générer l'URL du lien
+      const paymentUrl = `${window.location.origin}/payment/${paymentId}`;
+
+      toast({
+        title: "Succès",
+        description: "Lien de paiement créé avec succès !",
+      });
+      
+      // Afficher le lien généré
+      setShowCreateModal(false);
+      setFormData({ produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+      loadPaymentLinks();
+      
+      // Copier le lien automatiquement
+      navigator.clipboard.writeText(paymentUrl);
+      toast({
+        title: "Lien copié",
+        description: "Le lien de paiement a été copié dans le presse-papiers",
+      });
+    } catch (error: any) {
       console.error('Erreur création lien:', error);
       toast({
         title: "Erreur",
