@@ -84,22 +84,19 @@ export interface PromoCode {
 
 export interface SupportTicket {
   id: string;
-  customer_id: string;
-  order_id?: string;
-  product_id?: string;
+  ticket_number: string;
+  requester_id: string;
+  vendor_id?: string;
   subject: string;
-  description?: string;
+  description: string;
+  category: string;
   priority: string;
   status: string;
   assigned_to?: string;
-  resolution?: string;
   created_at: string;
-  customer?: {
-    user_id: string;
-  };
-  product?: {
-    name: string;
-  };
+  updated_at: string;
+  resolved_at?: string;
+  closed_at?: string;
 }
 
 export function useVendorStats() {
@@ -447,17 +444,9 @@ export function useSupportTickets() {
 
         const { data, error: fetchError } = await supabase
           .from('support_tickets')
-          .select(`
-            *,
-            customer:customers(
-              user_id
-            ),
-            product:products(
-              name
-            )
-          `)
+          .select('*')
           .eq('vendor_id', vendor.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false});
 
         if (fetchError) throw fetchError;
         setTickets(data || []);

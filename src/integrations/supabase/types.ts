@@ -5277,81 +5277,94 @@ export type Database = {
           },
         ]
       }
-      support_tickets: {
+      support_ticket_messages: {
         Row: {
-          assigned_to: string | null
-          created_at: string | null
-          customer_id: string
-          description: string | null
+          attachments: Json | null
+          created_at: string
           id: string
-          order_id: string | null
-          priority: string | null
-          product_id: string | null
-          resolution: string | null
-          status: string | null
-          subject: string
-          updated_at: string | null
-          vendor_id: string
+          is_internal: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
         }
         Insert: {
-          assigned_to?: string | null
-          created_at?: string | null
-          customer_id: string
-          description?: string | null
+          attachments?: Json | null
+          created_at?: string
           id?: string
-          order_id?: string | null
-          priority?: string | null
-          product_id?: string | null
-          resolution?: string | null
-          status?: string | null
-          subject: string
-          updated_at?: string | null
-          vendor_id: string
+          is_internal?: boolean
+          message: string
+          sender_id: string
+          ticket_id: string
         }
         Update: {
-          assigned_to?: string | null
-          created_at?: string | null
-          customer_id?: string
-          description?: string | null
+          attachments?: Json | null
+          created_at?: string
           id?: string
-          order_id?: string | null
-          priority?: string | null
-          product_id?: string | null
-          resolution?: string | null
-          status?: string | null
-          subject?: string
-          updated_at?: string | null
-          vendor_id?: string
+          is_internal?: boolean
+          message?: string
+          sender_id?: string
+          ticket_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "support_tickets_assigned_to_fkey"
-            columns: ["assigned_to"]
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
             isOneToOne: false
-            referencedRelation: "vendor_employees"
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "support_tickets_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_tickets_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          closed_at: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          requester_id: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          ticket_number: string | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          closed_at?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          requester_id: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          ticket_number?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          requester_id?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          ticket_number?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
           {
             foreignKeyName: "support_tickets_vendor_id_fkey"
             columns: ["vendor_id"]
