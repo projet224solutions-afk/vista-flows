@@ -151,10 +151,20 @@ export default function TaxiMotoDriver() {
                         table: 'taxi_trips',
                         filter: `driver_id=eq.${driverId}`
                     },
-                    () => {
-                        console.log('📊 Course updated, refreshing stats...');
+                    (payload) => {
+                        console.log('📊 Course updated, refreshing data...', payload);
+                        
+                        // Si la course est annulée ou terminée, réinitialiser activeRide
+                        if (payload.new && (payload.new.status === 'cancelled' || payload.new.status === 'completed')) {
+                            console.log('🚫 Course annulée ou terminée, nettoyage de activeRide');
+                            setActiveRide(null);
+                            setNavigationActive(false);
+                        }
+                        
+                        // Recharger toutes les données
                         loadDriverStats();
                         loadRideHistory();
+                        loadActiveRide();
                     }
                 )
                 .subscribe();
@@ -885,7 +895,7 @@ export default function TaxiMotoDriver() {
             console.log('❌ Annulation de la course:', activeRide.id);
             
             // Annuler la course avec statut spécifique conducteur
-            await TaxiMotoService.updateRideStatus(activeRide.id, 'cancelled_by_driver', {
+            await TaxiMotoService.updateRideStatus(activeRide.id, 'cancelled', {
                 cancel_reason: 'Annulée par le conducteur',
                 cancelled_at: new Date().toISOString()
             });

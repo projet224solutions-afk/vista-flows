@@ -203,7 +203,18 @@ export function GoogleMapsNavigation({
 
   // Tracer la route quand il y a une course active
   useEffect(() => {
-    if (!mapLoaded || !directionsService.current || !directionsRenderer.current || !activeRide || !currentLocation) return;
+    if (!mapLoaded || !directionsRenderer.current) return;
+
+    // Si pas de course active, nettoyer la carte
+    if (!activeRide) {
+      console.log('🧹 Nettoyage de la carte - pas de course active');
+      directionsRenderer.current.setDirections({ routes: [] });
+      setRouteInfo(null);
+      return;
+    }
+
+    // Si pas de position ou de service, ne rien faire
+    if (!directionsService.current || !currentLocation) return;
 
     const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
       ? activeRide.pickup.coords
@@ -226,6 +237,8 @@ export function GoogleMapsNavigation({
       optimizeWaypoints: true
     };
 
+    console.log('🗺️ Calcul de la route:', { origin, destination });
+
     directionsService.current.route(request, (result: any, status: any) => {
       if (status === window.google.maps.DirectionsStatus.OK) {
         directionsRenderer.current.setDirections(result);
@@ -240,8 +253,10 @@ export function GoogleMapsNavigation({
           distance: distanceKm,
           duration: durationMin
         });
+
+        console.log('✅ Route calculée:', { distanceKm, durationMin });
       } else {
-        console.error('Erreur calcul route:', status);
+        console.error('❌ Erreur calcul route:', status);
         toast.error('Impossible de calculer la route');
       }
     });
@@ -484,20 +499,37 @@ export function GoogleMapsNavigation({
               
               if (confirmed) {
                 try {
+                  console.log('🚫 Annulation de la course:', activeRide.id);
+                  
                   const { error } = await supabase
                     .from('taxi_trips')
                     .update({ 
-                      status: 'cancelled_by_driver',
+                      status: 'cancelled',
                       cancel_reason: 'Annulée par le conducteur',
                       cancelled_at: new Date().toISOString(),
                       updated_at: new Date().toISOString()
                     })
                     .eq('id', activeRide.id);
 
-                  if (error) throw error;
+                  if (error) {
+                    console.error('❌ Erreur DB:', error);
+                    throw error;
+                  }
 
-                  toast.success('✅ Course annulée');
-                  window.location.reload();
+                  console.log('✅ Course annulée dans la DB');
+                  
+                  toast.success('✅ Course annulée avec succès');
+                  
+                  // Nettoyer immédiatement la carte
+                  if (directionsRenderer.current) {
+                    directionsRenderer.current.setDirections({ routes: [] });
+                  }
+                  setRouteInfo(null);
+                  
+                  // Recharger la page pour mettre à jour tous les composants
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
                 } catch (error) {
                   console.error('❌ Erreur annulation:', error);
                   toast.error('Impossible d\'annuler la course');
