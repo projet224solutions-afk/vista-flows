@@ -128,6 +128,8 @@ export function useCommunicationData() {
   // Charger les messages d'une conversation
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select(`
@@ -137,7 +139,7 @@ export function useCommunicationData() {
           status,
           created_at,
           sender_id,
-          profiles!inner(
+          sender:sender_id(
             first_name,
             last_name
           )
@@ -151,16 +153,16 @@ export function useCommunicationData() {
       }
 
       const formattedMessages: Message[] = messagesData?.map(msg => {
-        const profile = (msg.profiles as unknown);
+        const sender = msg.sender as any;
         return {
           id: msg.id,
-          sender: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Utilisateur',
+          sender: sender ? `${sender.first_name || ''} ${sender.last_name || ''}`.trim() : 'Utilisateur',
           content: msg.content,
           timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', {
             hour: '2-digit',
             minute: '2-digit'
           }),
-          isOwn: false, // TODO: Vérifier si c'est l'utilisateur actuel
+          isOwn: msg.sender_id === currentUser?.id,
           type: msg.type || 'text',
           status: msg.status || 'sent'
         };
@@ -170,6 +172,7 @@ export function useCommunicationData() {
     } catch (error) {
       console.error('❌ Erreur chargement messages:', error);
       setError('Erreur lors du chargement des messages');
+      toast.error('Impossible de charger les messages');
     }
   }, []);
 
