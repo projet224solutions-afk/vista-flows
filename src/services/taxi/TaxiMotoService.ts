@@ -211,8 +211,8 @@ export class TaxiMotoService {
       updateData.in_progress_at = new Date().toISOString();
     } else if (status === 'completed') {
       updateData.completed_at = new Date().toISOString();
-    } else if (status === 'cancelled') {
-      updateData.cancelled_at = new Date().toISOString();
+    } else if (status.includes('cancelled')) {
+      updateData.cancelled_at = updateData.cancelled_at || new Date().toISOString();
     }
 
     const { error } = await supabase

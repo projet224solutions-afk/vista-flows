@@ -28,7 +28,7 @@ export function useTaxiMoto() {
         .from('taxi_trips')
         .select('*')
         .eq('customer_id', user.user.id)
-        .in('status', ['requested', 'accepted', 'driver_arriving', 'started', 'in_progress'])
+        .not('status', 'in', '(completed,cancelled,cancelled_by_customer,cancelled_by_driver)')
         .order('requested_at', { ascending: false })
         .limit(1)
         .maybeSingle();
