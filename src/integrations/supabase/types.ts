@@ -7452,6 +7452,10 @@ export type Database = {
         Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
+      can_vendor_view_customer: {
+        Args: { _customer_id: string; _vendor_user_id: string }
+        Returns: boolean
+      }
       can_view_message: {
         Args: { _message_id: string; _user_id: string }
         Returns: boolean
