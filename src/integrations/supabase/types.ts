@@ -511,6 +511,45 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_fixes: {
+        Row: {
+          created_at: string | null
+          error_pattern: string
+          fix_code: string | null
+          fix_description: string
+          fix_type: string
+          id: string
+          is_active: boolean | null
+          success_rate: number | null
+          times_applied: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_pattern: string
+          fix_code?: string | null
+          fix_description: string
+          fix_type: string
+          id?: string
+          is_active?: boolean | null
+          success_rate?: number | null
+          times_applied?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_pattern?: string
+          fix_code?: string | null
+          fix_description?: string
+          fix_type?: string
+          id?: string
+          is_active?: boolean | null
+          success_rate?: number | null
+          times_applied?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           bureau_id: string | null
@@ -5796,6 +5835,96 @@ export type Database = {
           },
         ]
       }
+      system_errors: {
+        Row: {
+          admin_acknowledged_at: string | null
+          admin_notified: boolean | null
+          created_at: string | null
+          error_message: string
+          error_type: string | null
+          fix_applied: boolean | null
+          fix_description: string | null
+          fixed_at: string | null
+          id: string
+          metadata: Json | null
+          module: string
+          severity: string | null
+          stack_trace: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_acknowledged_at?: string | null
+          admin_notified?: boolean | null
+          created_at?: string | null
+          error_message: string
+          error_type?: string | null
+          fix_applied?: boolean | null
+          fix_description?: string | null
+          fixed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          module: string
+          severity?: string | null
+          stack_trace?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_acknowledged_at?: string | null
+          admin_notified?: boolean | null
+          created_at?: string | null
+          error_message?: string
+          error_type?: string | null
+          fix_applied?: boolean | null
+          fix_description?: string | null
+          fixed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          module?: string
+          severity?: string | null
+          stack_trace?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_health: {
+        Row: {
+          api_response_time: number | null
+          cpu_usage: number | null
+          db_connections: number | null
+          error_rate: number | null
+          id: string
+          memory_usage: number | null
+          metadata: Json | null
+          status: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          api_response_time?: number | null
+          cpu_usage?: number | null
+          db_connections?: number | null
+          error_rate?: number | null
+          id?: string
+          memory_usage?: number | null
+          metadata?: Json | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          api_response_time?: number | null
+          cpu_usage?: number | null
+          db_connections?: number | null
+          error_rate?: number | null
+          id?: string
+          memory_usage?: number | null
+          metadata?: Json | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string | null
@@ -8041,6 +8170,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
