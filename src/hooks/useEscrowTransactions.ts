@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface EscrowLog {
+  id: string;
+  escrow_id: string;
+  action: string;
+  performed_by: string | null;
+  note: string | null;
+  metadata: any;
+  created_at: string;
+}
+
 export interface EscrowTransaction {
   id: string;
   order_id: string;
@@ -12,12 +22,19 @@ export interface EscrowTransaction {
   status: 'pending' | 'released' | 'refunded' | 'dispute';
   commission_percent: number;
   commission_amount: number;
+  transaction_id?: string;
+  available_to_release_at?: string;
+  released_by?: string;
+  auto_release_enabled: boolean;
+  dispute_reason?: string;
+  metadata?: any;
   created_at: string;
   updated_at: string;
 }
 
 export function useEscrowTransactions() {
   const [transactions, setTransactions] = useState<EscrowTransaction[]>([]);
+  const [logs, setLogs] = useState<Record<string, EscrowLog[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +54,21 @@ export function useEscrowTransactions() {
       toast.error('Erreur lors du chargement des transactions escrow');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLogs = async (escrowId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('escrow_logs')
+        .select('*')
+        .eq('escrow_id', escrowId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLogs(prev => ({ ...prev, [escrowId]: (data || []) as EscrowLog[] }));
+    } catch (err: any) {
+      console.error('Erreur lors du chargement des logs:', err);
     }
   };
 
@@ -137,12 +169,14 @@ export function useEscrowTransactions() {
 
   return {
     transactions,
+    logs,
     loading,
     error,
     initiateEscrow,
     releaseEscrow,
     refundEscrow,
     disputeEscrow,
+    loadLogs,
     refresh: loadTransactions
   };
 }

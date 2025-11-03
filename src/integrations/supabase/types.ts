@@ -1703,6 +1703,7 @@ export type Database = {
           created_at: string
           currency: string
           custom_id: string
+          escrow_id: string | null
           id: string
           metadata: Json | null
           method: string
@@ -1717,6 +1718,7 @@ export type Database = {
           created_at?: string
           currency?: string
           custom_id?: string
+          escrow_id?: string | null
           id?: string
           metadata?: Json | null
           method?: string
@@ -1731,6 +1733,7 @@ export type Database = {
           created_at?: string
           currency?: string
           custom_id?: string
+          escrow_id?: string | null
           id?: string
           metadata?: Json | null
           method?: string
@@ -1740,49 +1743,135 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escrow_logs: {
+        Row: {
+          action: string
+          created_at: string
+          escrow_id: string
+          id: string
+          metadata: Json | null
+          note: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          escrow_id: string
+          id?: string
+          metadata?: Json | null
+          note?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          escrow_id?: string
+          id?: string
+          metadata?: Json | null
+          note?: string | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_logs_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_logs_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escrow_transactions: {
         Row: {
           amount: number
+          auto_release_enabled: boolean | null
+          available_to_release_at: string | null
           commission_amount: number | null
           commission_percent: number | null
           created_at: string | null
           currency: string | null
+          dispute_reason: string | null
           id: string
+          metadata: Json | null
           order_id: string
           payer_id: string
           receiver_id: string
+          released_by: string | null
           status: string | null
+          transaction_id: string | null
           updated_at: string | null
         }
         Insert: {
           amount: number
+          auto_release_enabled?: boolean | null
+          available_to_release_at?: string | null
           commission_amount?: number | null
           commission_percent?: number | null
           created_at?: string | null
           currency?: string | null
+          dispute_reason?: string | null
           id?: string
+          metadata?: Json | null
           order_id: string
           payer_id: string
           receiver_id: string
+          released_by?: string | null
           status?: string | null
+          transaction_id?: string | null
           updated_at?: string | null
         }
         Update: {
           amount?: number
+          auto_release_enabled?: boolean | null
+          available_to_release_at?: string | null
           commission_amount?: number | null
           commission_percent?: number | null
           created_at?: string | null
           currency?: string | null
+          dispute_reason?: string | null
           id?: string
+          metadata?: Json | null
           order_id?: string
           payer_id?: string
           receiver_id?: string
+          released_by?: string | null
           status?: string | null
+          transaction_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "enhanced_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escrows: {
         Row: {
@@ -7360,6 +7449,25 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_dashboard: {
+        Row: {
+          amount: number | null
+          available_to_release_at: string | null
+          commission_amount: number | null
+          commission_percent: number | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          log_count: number | null
+          order_id: string | null
+          payer_email: string | null
+          payer_name: string | null
+          receiver_email: string | null
+          receiver_name: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -7578,6 +7686,14 @@ export type Database = {
       agent_can_create_sub_agents: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      auto_release_escrows: {
+        Args: never
+        Returns: {
+          escrow_id: string
+          message: string
+          success: boolean
+        }[]
       }
       calculate_commission: {
         Args: {
@@ -8026,16 +8142,29 @@ export type Database = {
         Args: { p_amount: number; p_driver_id: string }
         Returns: undefined
       }
-      initiate_escrow: {
-        Args: {
-          p_amount: number
-          p_currency?: string
-          p_order_id: string
-          p_payer_id: string
-          p_receiver_id: string
-        }
-        Returns: string
-      }
+      initiate_escrow:
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_order_id: string
+              p_payer_id: string
+              p_receiver_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_auto_release_days?: number
+              p_currency?: string
+              p_metadata?: Json
+              p_order_id: string
+              p_payer_id: string
+              p_receiver_id: string
+            }
+            Returns: string
+          }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean
@@ -8055,6 +8184,16 @@ export type Database = {
       log_api_usage: {
         Args: { p_cost?: number; p_service_type: string }
         Returns: undefined
+      }
+      log_escrow_action: {
+        Args: {
+          p_action: string
+          p_escrow_id: string
+          p_metadata?: Json
+          p_note?: string
+          p_performed_by: string
+        }
+        Returns: string
       }
       log_taxi_action: {
         Args: {
@@ -8237,11 +8376,22 @@ export type Database = {
         }
         Returns: string
       }
-      refund_escrow: { Args: { p_escrow_id: string }; Returns: boolean }
-      release_escrow: {
-        Args: { p_commission_percent?: number; p_escrow_id: string }
-        Returns: boolean
-      }
+      refund_escrow:
+        | { Args: { p_escrow_id: string; p_reason?: string }; Returns: boolean }
+        | { Args: { p_escrow_id: string }; Returns: boolean }
+      release_escrow:
+        | {
+            Args: {
+              p_commission_percent?: number
+              p_escrow_id: string
+              p_released_by?: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: { p_commission_percent?: number; p_escrow_id: string }
+            Returns: boolean
+          }
       release_taxi_lock:
         | {
             Args: {
