@@ -104,3 +104,6 @@ verify_jwt = true
 
 [functions.competitive-analysis]
 verify_jwt = true
+
+[functions.security-analysis]
+verify_jwt = true
