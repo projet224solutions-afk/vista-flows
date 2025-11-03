@@ -51,6 +51,11 @@ export default function PDG224Solutions() {
   const { aiActive, insights } = usePDGAIAssistant();
 
   const handleTabChange = useCallback((tab: string) => {
+    // Redirection vers le centre de commande
+    if (tab === 'command-center') {
+      navigate('/pdg/command-center');
+      return;
+    }
     // Redirection vers la page de debug si c'est l'onglet debug
     if (tab === 'debug') {
       navigate('/pdg/debug');
@@ -208,6 +213,15 @@ export default function PDG224Solutions() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate('/pdg/command-center')}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Activity className="w-4 h-4" />
+                  Centre de Commande
+                </Button>
                 <Button
                   variant="default"
                   size="sm"

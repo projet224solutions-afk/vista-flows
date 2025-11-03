@@ -33,6 +33,7 @@ const UserActivationPage = lazy(() => import("./components/agent-system/UserActi
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 const PdgDebugPanel = lazy(() => import("./pages/PdgDebugPanel"));
+const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
@@ -211,6 +212,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <PdgDebugPanel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pdg/command-center"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <PdgCommandCenter />
                   </ProtectedRoute>
                 }
               />
