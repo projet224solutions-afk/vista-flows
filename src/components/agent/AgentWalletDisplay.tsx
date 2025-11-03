@@ -28,69 +28,22 @@ export function AgentWalletDisplay({
     try {
       setLoading(true);
       
-      // Récupérer l'agent pour obtenir le PDG
-      const { data: agent, error: agentError } = await supabase
-        .from('agents_management')
-        .select('pdg_id')
-        .eq('id', agentId)
+      // Récupérer le wallet de l'agent directement depuis agent_wallets
+      const { data: agentWallet, error: walletError } = await supabase
+        .from('agent_wallets')
+        .select('id, balance, currency')
+        .eq('agent_id', agentId)
         .single();
 
-      if (agentError) throw agentError;
+      if (walletError) {
+        console.error('❌ Erreur chargement wallet agent:', walletError);
+        throw walletError;
+      }
 
-      if (agent?.pdg_id) {
-        // Chercher le wallet du PDG
-        const { data: pdgData, error: pdgError } = await supabase
-          .from('pdg_management')
-          .select('user_id')
-          .eq('id', agent.pdg_id)
-          .single();
-
-        if (pdgError) throw pdgError;
-
-        if (pdgData?.user_id) {
-          const { data: userWallet, error: walletError } = await supabase
-            .from('wallets')
-            .select('id, balance, currency')
-            .eq('user_id', pdgData.user_id)
-            .single();
-
-          if (walletError) {
-            // Si le wallet n'existe pas, le créer
-            if (walletError.code === 'PGRST116') {
-              const { data: newWallet, error: createError } = await supabase
-                .from('wallets')
-                .insert({
-                  user_id: pdgData.user_id,
-                  balance: 10000,
-                  currency: 'GNF'
-                })
-                .select('id, balance, currency')
-                .single();
-
-              if (!createError && newWallet) {
-                // Créer une transaction de crédit initial
-                await supabase.from('wallet_transactions').insert({
-                  transaction_id: `INIT-${pdgData.user_id.slice(0, 8)}`,
-                  transaction_type: 'credit',
-                  amount: 10000,
-                  net_amount: 10000,
-                  receiver_wallet_id: newWallet.id,
-                  description: 'Crédit de bienvenue PDG',
-                  status: 'completed',
-                  currency: 'GNF'
-                });
-
-                setWalletId(newWallet.id);
-                setBalance(newWallet.balance || 0);
-                setCurrency(newWallet.currency || 'GNF');
-              }
-            }
-          } else if (userWallet) {
-            setWalletId(userWallet.id);
-            setBalance(userWallet.balance || 0);
-            setCurrency(userWallet.currency || 'GNF');
-          }
-        }
+      if (agentWallet) {
+        setWalletId(agentWallet.id);
+        setBalance(agentWallet.balance || 0);
+        setCurrency(agentWallet.currency || 'GNF');
       }
     } catch (error) {
       console.error('Erreur chargement wallet agent:', error);
@@ -101,6 +54,30 @@ export function AgentWalletDisplay({
 
   useEffect(() => {
     loadWallet();
+
+    // Subscribe to wallet changes
+    if (agentId) {
+      const channel = supabase
+        .channel(`agent-wallet-${agentId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'agent_wallets',
+            filter: `agent_id=eq.${agentId}`,
+          },
+          () => {
+            console.log('💰 Wallet agent mis à jour');
+            loadWallet();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
+    }
   }, [agentId]);
 
   const formatAmount = (amount: number) => {
