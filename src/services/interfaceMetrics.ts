@@ -10,6 +10,21 @@ export interface RealInterfaceMetrics {
   lastActivity?: string;
 }
 
+export interface GlobalStats {
+  total_users: number;
+  total_vendors: number;
+  total_clients: number;
+  total_drivers: number;
+  total_agents: number;
+  total_products: number;
+  total_orders: number;
+  total_deliveries: number;
+  total_errors: number;
+  critical_errors: number;
+  pending_errors: number;
+  fixed_errors: number;
+}
+
 export class InterfaceMetricsService {
   // Récupérer toutes les métriques en une fois depuis la vue sécurisée
   static async getAllMetrics(): Promise<RealInterfaceMetrics[]> {
@@ -99,7 +114,7 @@ export class InterfaceMetricsService {
   }
 
   // Méthode helper pour obtenir les stats globales via RPC
-  static async getGlobalStats() {
+  static async getGlobalStats(): Promise<GlobalStats | null> {
     try {
       const { data, error } = await supabase.rpc('get_pdg_dashboard_stats');
       
@@ -108,7 +123,7 @@ export class InterfaceMetricsService {
         return null;
       }
 
-      return data;
+      return data as unknown as GlobalStats;
     } catch (error) {
       console.error('Error calling get_pdg_dashboard_stats:', error);
       return null;
