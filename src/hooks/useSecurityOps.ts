@@ -2,11 +2,41 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Database } from '@/integrations/supabase/types';
 
-type SecurityIncident = Database['public']['Tables']['security_incidents']['Row'];
-type SecurityAlert = Database['public']['Tables']['security_alerts']['Row'];
-type BlockedIP = Database['public']['Tables']['blocked_ips']['Row'];
+export interface SecurityIncident {
+  id: string;
+  incident_type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  status: 'open' | 'investigating' | 'contained' | 'resolved' | 'closed';
+  title: string;
+  description?: string;
+  source_ip?: string;
+  target_service?: string;
+  detected_at: string;
+  created_at: string;
+}
+
+export interface SecurityAlert {
+  id: string;
+  incident_id: string | null;
+  alert_type: string;
+  severity: string;
+  message: string;
+  description?: string;
+  acknowledged: boolean;
+  source: string | null;
+  created_at: string;
+  auto_actions?: any;
+}
+
+export interface BlockedIP {
+  id: string;
+  ip_address: string;
+  reason: string;
+  blocked_at: string;
+  expires_at: string | null;
+  is_active: boolean;
+}
 
 export interface SecurityStats {
   total_incidents: number;
@@ -20,8 +50,6 @@ export interface SecurityStats {
   avg_mttr_minutes: number;
   keys_need_rotation: number;
 }
-
-export type { SecurityIncident, SecurityAlert, BlockedIP };
 
 export function useSecurityOps(autoLoad?: boolean) {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
@@ -55,7 +83,20 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (incidentsError) throw incidentsError;
-      setIncidents(incidentsData || []);
+      
+      const mappedIncidents: SecurityIncident[] = (incidentsData || []).map(i => ({
+        id: i.id,
+        incident_type: i.incident_type,
+        severity: i.severity as 'critical' | 'high' | 'medium' | 'low',
+        status: i.status as 'open' | 'investigating' | 'contained' | 'resolved' | 'closed',
+        title: i.title,
+        description: i.description || undefined,
+        source_ip: (i.source_ip as string) || undefined,
+        target_service: (i as any).target_service || undefined,
+        detected_at: i.detected_at,
+        created_at: i.created_at,
+      }));
+      setIncidents(mappedIncidents);
 
       // Charger les alertes
       const { data: alertsData, error: alertsError } = await supabase
@@ -65,7 +106,20 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (alertsError) throw alertsError;
-      setAlerts(alertsData || []);
+      
+      const mappedAlerts: SecurityAlert[] = (alertsData || []).map(a => ({
+        id: a.id,
+        incident_id: a.incident_id,
+        alert_type: a.alert_type,
+        severity: a.severity,
+        message: a.description,
+        description: a.description,
+        acknowledged: a.acknowledged,
+        source: a.source,
+        created_at: a.created_at,
+        auto_actions: a.auto_actions
+      }));
+      setAlerts(mappedAlerts);
 
       // Charger les IPs bloquées
       const { data: blockedData, error: blockedError } = await supabase
@@ -75,39 +129,42 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (blockedError) throw blockedError;
-      setBlockedIPs(blockedData || []);
+      
+      const mappedBlocked: BlockedIP[] = (blockedData || []).map(b => ({
+        id: b.id,
+        ip_address: String(b.ip_address),
+        reason: b.reason,
+        blocked_at: b.blocked_at,
+        expires_at: b.expires_at,
+        is_active: b.is_active
+      }));
+      setBlockedIPs(mappedBlocked);
 
-      // Charger les statistiques depuis la vue
-      const { data: statsData, error: statsError } = await supabase
-        .from('security_stats')
-        .select('*')
-        .single();
+      // Calculer les statistiques manuellement
+      const totalIncidents = mappedIncidents.length;
+      const criticalIncidents = mappedIncidents.filter(i => i.severity === 'critical').length;
+      const openIncidents = mappedIncidents.filter(i => i.status === 'open').length;
+      const incidents24h = mappedIncidents.filter(i => {
+        const created = new Date(i.created_at);
+        const now = new Date();
+        return (now.getTime() - created.getTime()) < 24 * 60 * 60 * 1000;
+      }).length;
 
-      if (statsError) {
-        console.warn('Erreur stats:', statsError);
-        // Calculer les stats manuellement si la vue n'existe pas
-        setStats({
-          total_incidents: incidentsData?.length || 0,
-          critical_incidents: incidentsData?.filter(i => i.severity === 'critical').length || 0,
-          open_incidents: incidentsData?.filter(i => i.status === 'open').length || 0,
-          incidents_24h: incidentsData?.filter(i => {
-            const created = new Date(i.created_at);
-            const now = new Date();
-            return (now.getTime() - created.getTime()) < 24 * 60 * 60 * 1000;
-          }).length || 0,
-          total_alerts: alertsData?.length || 0,
-          pending_alerts: alertsData?.filter(a => !a.acknowledged).length || 0,
-          blocked_ips: blockedData?.length || 0,
-          active_blocks: blockedData?.filter(b => {
-            if (!b.expires_at) return true;
-            return new Date(b.expires_at) > new Date();
-          }).length || 0,
-          avg_mttr_minutes: 0,
-          keys_need_rotation: 0,
-        });
-      } else {
-        setStats(statsData);
-      }
+      setStats({
+        total_incidents: totalIncidents,
+        critical_incidents: criticalIncidents,
+        open_incidents: openIncidents,
+        incidents_24h: incidents24h,
+        total_alerts: mappedAlerts.length,
+        pending_alerts: mappedAlerts.filter(a => !a.acknowledged).length,
+        blocked_ips: mappedBlocked.length,
+        active_blocks: mappedBlocked.filter(b => {
+          if (!b.expires_at) return true;
+          return new Date(b.expires_at) > new Date();
+        }).length,
+        avg_mttr_minutes: 0,
+        keys_need_rotation: 0,
+      });
 
       toast.success('Données de sécurité chargées');
     } catch (err: any) {
