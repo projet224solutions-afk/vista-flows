@@ -2,11 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { toast } from 'sonner';
-import { initiateEscrow, releaseEscrow, refundEscrow } from '@/services/EscrowClient';
 import { usePaymentSchedules, useCustomerCredits } from "@/hooks/useVendorData";
 import { CreditCard, AlertTriangle, CheckCircle, Clock, Filter, Download } from "lucide-react";
 import { useState } from "react";
+import EscrowManagementDialog from "./EscrowManagementDialog";
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -27,6 +26,7 @@ export default function PaymentManagement() {
   const { credits, loading: creditsLoading, error: creditsError } = useCustomerCredits();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
 
   const filteredSchedules = schedules.filter(schedule => {
     const matchesStatus = filterStatus === 'all' || schedule.status === filterStatus;
@@ -66,7 +66,7 @@ export default function PaymentManagement() {
             <Download className="w-4 h-4 mr-2" />
             Exporter
           </Button>
-          <Button onClick={() => toast.info('Utilisez les actions escrow sur les commandes')}>Escrow</Button>
+          <Button onClick={() => setEscrowDialogOpen(true)}>Escrow</Button>
         </div>
       </div>
 
@@ -276,6 +276,11 @@ export default function PaymentManagement() {
           )}
         </CardContent>
       </Card>
+
+      <EscrowManagementDialog 
+        open={escrowDialogOpen} 
+        onOpenChange={setEscrowDialogOpen} 
+      />
     </div>
   );
 }

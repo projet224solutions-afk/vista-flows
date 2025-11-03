@@ -1742,6 +1742,48 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          commission_amount: number | null
+          commission_percent: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          order_id: string
+          payer_id: string
+          receiver_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          commission_amount?: number | null
+          commission_percent?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id: string
+          payer_id: string
+          receiver_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_amount?: number | null
+          commission_percent?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id?: string
+          payer_id?: string
+          receiver_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       escrows: {
         Row: {
           amount: number
@@ -7675,6 +7717,7 @@ export type Database = {
         Returns: Json
       }
       disablelongtransactions: { Args: never; Returns: string }
+      dispute_escrow: { Args: { p_escrow_id: string }; Returns: boolean }
       dropgeometrycolumn:
         | {
             Args: {
@@ -7983,6 +8026,16 @@ export type Database = {
         Args: { p_amount: number; p_driver_id: string }
         Returns: undefined
       }
+      initiate_escrow: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_order_id: string
+          p_payer_id: string
+          p_receiver_id: string
+        }
+        Returns: string
+      }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean
@@ -8183,6 +8236,11 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      refund_escrow: { Args: { p_escrow_id: string }; Returns: boolean }
+      release_escrow: {
+        Args: { p_commission_percent?: number; p_escrow_id: string }
+        Returns: boolean
       }
       release_taxi_lock:
         | {
