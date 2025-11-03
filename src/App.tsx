@@ -34,6 +34,7 @@ const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 const PdgDebugPanel = lazy(() => import("./pages/PdgDebugPanel"));
 const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
+const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
@@ -220,6 +221,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <PdgCommandCenter />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pdg/security"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <PdgSecurity />
                   </ProtectedRoute>
                 }
               />
