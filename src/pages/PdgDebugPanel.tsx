@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, CheckCircle, RefreshCw, XCircle, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, RefreshCw, XCircle, Zap, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PdgDebugPanel() {
+  const navigate = useNavigate();
   const [errors, setErrors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
@@ -178,9 +180,19 @@ export default function PdgDebugPanel() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Surveillance & Debug - PDG</h1>
-          <p className="text-muted-foreground">Panneau de contrôle système 224SOLUTIONS</p>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/pdg')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Surveillance & Debug - PDG</h1>
+            <p className="text-muted-foreground">Panneau de contrôle système 224SOLUTIONS</p>
+          </div>
         </div>
         <Button onClick={loadErrors} disabled={loading} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
