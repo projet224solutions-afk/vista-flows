@@ -5544,6 +5544,53 @@ export type Database = {
           },
         ]
       }
+      suspicious_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          vendor_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity: string
+          vendor_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suspicious_activities_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicat_badges: {
         Row: {
           badge_number: string
@@ -6751,6 +6798,50 @@ export type Database = {
           },
         ]
       }
+      vendor_analytics: {
+        Row: {
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          top_product_id: string | null
+          total_orders: number | null
+          total_sales: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          top_product_id?: string | null
+          total_orders?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          top_product_id?: string | null
+          total_orders?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_analytics_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_employees: {
         Row: {
           created_at: string | null
@@ -6838,6 +6929,147 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_kyc: {
+        Row: {
+          created_at: string | null
+          id: string
+          id_document_type: string | null
+          id_document_url: string | null
+          phone_number: string | null
+          phone_verified: boolean | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string | null
+          vendor_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          id_document_type?: string | null
+          id_document_url?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          id_document_type?: string | null
+          id_document_url?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_kyc_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_notifications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_trust_score: {
+        Row: {
+          account_age_days: number | null
+          cancelled_orders: number | null
+          created_at: string | null
+          disputes: number | null
+          id: string
+          last_calculated_at: string | null
+          response_time_avg: number | null
+          score: number | null
+          successful_orders: number | null
+          total_sales: number | null
+          vendor_id: string
+        }
+        Insert: {
+          account_age_days?: number | null
+          cancelled_orders?: number | null
+          created_at?: string | null
+          disputes?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          response_time_avg?: number | null
+          score?: number | null
+          successful_orders?: number | null
+          total_sales?: number | null
+          vendor_id: string
+        }
+        Update: {
+          account_age_days?: number | null
+          cancelled_orders?: number | null
+          created_at?: string | null
+          disputes?: number | null
+          id?: string
+          last_calculated_at?: string | null
+          response_time_avg?: number | null
+          score?: number | null
+          successful_orders?: number | null
+          total_sales?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_trust_score_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7740,6 +7972,10 @@ export type Database = {
         Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
+      calculate_vendor_trust_score: {
+        Args: { p_vendor_id: string }
+        Returns: number
+      }
       can_vendor_view_customer: {
         Args: { _customer_id: string; _vendor_user_id: string }
         Returns: boolean
@@ -7818,6 +8054,16 @@ export type Database = {
           p_role?: Database["public"]["Enums"]["user_role"]
         }
         Returns: Json
+      }
+      create_vendor_notification: {
+        Args: {
+          p_data?: Json
+          p_message: string
+          p_title: string
+          p_type: string
+          p_vendor_id: string
+        }
+        Returns: string
       }
       credit_wallet: {
         Args: { credit_amount: number; receiver_user_id: string }
