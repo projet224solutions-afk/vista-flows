@@ -52,6 +52,9 @@ import PWAInstallButton from "@/components/pwa/PWAInstallButton";
 import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
 import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
+import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
+import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
+import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -186,30 +189,8 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
-      {/* Stats principales (réelles) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {mainStats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
-                  {stat.change && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                    </div>
-                  )}
-                </div>
-                <div className={`p-3 rounded-xl ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Analytics Dashboard intégré */}
+      <VendorAnalyticsDashboard />
 
       {/* Activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -249,31 +230,14 @@ export default function VendeurDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Alertes & Notifications</CardTitle>
-            <CardDescription>Actions requises</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-yellow-900">Stock faible</p>
-                  <p className="text-sm text-yellow-700">{stats?.low_stock_count ?? 0} produits nécessitent un réapprovisionnement</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-blue-900">Nouvelles commandes</p>
-                  <p className="text-sm text-blue-700">{stats?.orders_pending ?? 0} nouvelles commandes à traiter</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Notifications intégrées */}
+        <div>
+          <VendorNotificationsPanel />
+        </div>
       </div>
+
+      {/* Panneau de sécurité */}
+      <VendorSecurityPanel />
 
       {/* Actions rapides */}
       <Card>
