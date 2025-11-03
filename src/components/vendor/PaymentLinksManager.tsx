@@ -8,49 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import {
-  Link, Plus, Copy, Share2, Eye, Trash2, RefreshCw, 
-  DollarSign, Calendar, User, CreditCard, AlertCircle,
-  CheckCircle, Clock, XCircle, ExternalLink
+  Link, Plus, Copy, Share2, RefreshCw, 
+  DollarSign, CheckCircle, Clock, XCircle, AlertCircle, ExternalLink,
+  Calendar, User
 } from 'lucide-react';
 
-interface PaymentLink {
-  id: string;
-  payment_id: string;
-  produit: string;
-  description?: string;
-  montant: number;
-  frais: number;
-  total: number;
-  devise: string;
-  status: 'pending' | 'success' | 'failed' | 'expired' | 'cancelled';
-  expires_at: string;
-  created_at: string;
-  client?: {
-    name: string;
-    email: string;
-  };
-}
-
-interface PaymentStats {
-  total_links: number;
-  successful_payments: number;
-  pending_payments: number;
-  failed_payments: number;
-  expired_payments: number;
-  total_revenue: number;
-  total_fees: number;
-  avg_payment_amount: number;
-}
-
 export default function PaymentLinksManager() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
-  const [stats, setStats] = useState<PaymentStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    paymentLinks,
+    stats,
+    loading,
+    loadPaymentLinks,
+    createPaymentLink: createLink
+  } = usePaymentLinks();
+  
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   
@@ -69,99 +43,16 @@ export default function PaymentLinksManager() {
     search: ''
   });
 
-  // Charger les données
+  // Recharger quand les filtres changent
   useEffect(() => {
-    loadPaymentLinks();
-  }, [filters]);
+    loadPaymentLinks(filters);
+  }, [filters.status, filters.search]);
 
-  const loadPaymentLinks = async () => {
-    try {
-      setLoading(true);
-      
-      if (!user?.id) return;
-
-      // Récupérer l'ID du vendeur
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!vendor) {
-        throw new Error('Vendeur non trouvé');
-      }
-
-      // Construire la requête avec filtres
-      let query = (supabase as any)
-        .from('payment_links')
-        .select(`
-          *,
-          client:profiles!payment_links_client_id_fkey(
-            id,
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('vendeur_id', vendor.id)
-        .order('created_at', { ascending: false });
-
-      // Appliquer le filtre de statut
-      if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-
-      // Appliquer le filtre de recherche
-      if (filters.search) {
-        query = query.or(`description.ilike.%${filters.search}%,payment_id.ilike.%${filters.search}%`);
-      }
-
-      const { data: links, error } = await query;
-
-      if (error) throw error;
-
-      // Formater les données
-      const formattedLinks = (links || []).map((link: any) => ({
-        ...link,
-        client: link.client ? {
-          name: `${link.client.first_name || ''} ${link.client.last_name || ''}`.trim(),
-          email: link.client.email
-        } : undefined
-      })) as PaymentLink[];
-
-      setPaymentLinks(formattedLinks);
-
-      // Calculer les statistiques
-      const totalRevenue = formattedLinks
-        .filter(l => l.status === 'success')
-        .reduce((sum, l) => sum + (l.total || 0), 0);
-
-      setStats({
-        total_links: formattedLinks.length,
-        pending_payments: formattedLinks.filter(l => l.status === 'pending').length,
-        successful_payments: formattedLinks.filter(l => l.status === 'success').length,
-        expired_payments: formattedLinks.filter(l => l.status === 'expired').length,
-        failed_payments: formattedLinks.filter(l => l.status === 'failed').length,
-        total_revenue: totalRevenue,
-        total_fees: formattedLinks
-          .filter(l => l.status === 'success')
-          .reduce((sum, l) => sum + (l.frais || 0), 0),
-        avg_payment_amount: formattedLinks.length > 0 ? totalRevenue / formattedLinks.filter(l => l.status === 'success').length : 0
-      });
-
-    } catch (error) {
-      console.error('Erreur chargement liens paiement:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les liens de paiement",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleRefresh = () => {
+    loadPaymentLinks(filters);
   };
 
-  const createPaymentLink = async () => {
+  const handleCreatePaymentLink = async () => {
     if (!formData.produit || !formData.montant) {
       toast({
         title: "Erreur",
@@ -173,76 +64,31 @@ export default function PaymentLinksManager() {
 
     try {
       setCreating(true);
-      
-      if (!user?.id) {
-        throw new Error('Utilisateur non connecté');
-      }
 
-      // Récupérer l'ID du vendeur
-      const { data: vendor, error: vendorError } = await (supabase as any)
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (vendorError || !vendor) {
-        throw new Error('Vendeur non trouvé');
-      }
-
-      const montant = parseFloat(formData.montant);
-      const frais = montant * 0.01; // 1% de frais
-      const total = montant + frais;
-
-      // Générer un ID de paiement unique
-      const paymentId = `PAY${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-      // Créer le lien de paiement
-      const { data: paymentLink, error: insertError } = await (supabase as any)
-        .from('payment_links')
-        .insert({
-          payment_id: paymentId,
-          vendeur_id: vendor.id,
-          client_id: formData.client_id || null,
-          produit: formData.produit,
-          description: formData.description || null,
-          montant: montant,
-          frais: frais,
-          total: total,
-          devise: formData.devise,
-          status: 'pending',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 jours
-        })
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      // Générer l'URL du lien
-      const paymentUrl = `${window.location.origin}/payment/${paymentId}`;
-
-      toast({
-        title: "Succès",
-        description: "Lien de paiement créé avec succès !",
+      const paymentId = await createLink({
+        produit: formData.produit,
+        description: formData.description,
+        montant: parseFloat(formData.montant),
+        devise: formData.devise,
+        client_id: formData.client_id || undefined
       });
-      
-      // Afficher le lien généré
-      setShowCreateModal(false);
-      setFormData({ produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
-      loadPaymentLinks();
-      
-      // Copier le lien automatiquement
-      navigator.clipboard.writeText(paymentUrl);
-      toast({
-        title: "Lien copié",
-        description: "Le lien de paiement a été copié dans le presse-papiers",
-      });
+
+      if (paymentId) {
+        const paymentUrl = `${window.location.origin}/payment/${paymentId}`;
+        
+        // Copier le lien automatiquement
+        navigator.clipboard.writeText(paymentUrl);
+        toast({
+          title: "Lien copié",
+          description: "Le lien de paiement a été copié dans le presse-papiers",
+        });
+
+        // Réinitialiser le formulaire
+        setShowCreateModal(false);
+        setFormData({ produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+      }
     } catch (error: any) {
       console.error('Erreur création lien:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de créer le lien de paiement",
-        variant: "destructive"
-      });
     } finally {
       setCreating(false);
     }
@@ -386,7 +232,7 @@ export default function PaymentLinksManager() {
         </div>
         
         <div className="flex gap-2">
-          <Button onClick={loadPaymentLinks} variant="outline" size="sm">
+          <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
             Actualiser
           </Button>
@@ -484,7 +330,7 @@ export default function PaymentLinksManager() {
                 <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                   Annuler
                 </Button>
-                <Button onClick={createPaymentLink} disabled={creating}>
+                <Button onClick={handleCreatePaymentLink} disabled={creating}>
                   {creating ? (
                     <>
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
