@@ -44,7 +44,7 @@ export function useEscrowTransactions() {
       const { data, error } = await supabase
         .from('escrow_transactions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false});
 
       if (error) throw error;
       setTransactions((data || []) as EscrowTransaction[]);
@@ -147,6 +147,22 @@ export function useEscrowTransactions() {
     }
   };
 
+  const requestRelease = async (escrowId: string) => {
+    try {
+      await supabase.rpc('log_escrow_action', {
+        p_escrow_id: escrowId,
+        p_action: 'requested_release',
+        p_performed_by: (await supabase.auth.getUser()).data.user?.id,
+        p_note: 'Demande de libération par le vendeur'
+      });
+      toast.success('Demande de libération envoyée');
+      await loadTransactions();
+    } catch (err: any) {
+      toast.error('Erreur lors de la demande');
+      throw err;
+    }
+  };
+
   useEffect(() => {
     loadTransactions();
 
@@ -176,6 +192,7 @@ export function useEscrowTransactions() {
     releaseEscrow,
     refundEscrow,
     disputeEscrow,
+    requestRelease,
     loadLogs,
     refresh: loadTransactions
   };

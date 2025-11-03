@@ -1,78 +1,62 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-Deno.serve(async (req) => {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("🔄 Starting auto-release escrow cron job");
 
-    console.log('🚀 Starting escrow auto-release job...');
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
     // Call the auto_release_escrows function
-    const { data, error } = await supabase.rpc('auto_release_escrows');
+    const { data, error } = await supabase.rpc("auto_release_escrows");
 
     if (error) {
-      console.error('❌ Error during auto-release:', error);
-      return new Response(
-        JSON.stringify({ success: false, error: error.message }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      console.error("❌ Error in auto_release_escrows:", error);
+      throw error;
     }
 
     const results = data || [];
     const successCount = results.filter((r: any) => r.success).length;
     const failureCount = results.filter((r: any) => !r.success).length;
 
-    console.log(`✅ Auto-release completed: ${successCount} succeeded, ${failureCount} failed`);
-
-    // Send notifications for released escrows
-    for (const result of results) {
-      if (result.success) {
-        // Get escrow details
-        const { data: escrow } = await supabase
-          .from('escrow_transactions')
-          .select('*, payer:profiles!payer_id(email, first_name), receiver:profiles!receiver_id(email, first_name)')
-          .eq('id', result.escrow_id)
-          .single();
-
-        if (escrow) {
-          // Notify receiver
-          await supabase.from('notifications').insert({
-            user_id: escrow.receiver_id,
-            type: 'escrow_released',
-            title: 'Fonds libérés automatiquement',
-            message: `Les fonds de ${escrow.amount} ${escrow.currency} ont été libérés automatiquement dans votre wallet.`,
-            metadata: { escrow_id: escrow.id, order_id: escrow.order_id }
-          });
-
-          // Notify payer
-          await supabase.from('notifications').insert({
-            user_id: escrow.payer_id,
-            type: 'escrow_released',
-            title: 'Transaction escrow complétée',
-            message: `Les fonds de ${escrow.amount} ${escrow.currency} ont été transférés au vendeur.`,
-            metadata: { escrow_id: escrow.id, order_id: escrow.order_id }
-          });
-        }
-      }
+    console.log(`✅ Auto-release completed: ${successCount} success, ${failureCount} failures`);
+    
+    if (failureCount > 0) {
+      const failures = results.filter((r: any) => !r.success);
+      console.log("Failed releases:", JSON.stringify(failures, null, 2));
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         processed: results.length,
-        successCount,
-        failureCount,
-        results 
+        successful: successCount,
+        failed: failureCount,
+        results: results,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
-    console.error('❌ Unexpected error:', error);
+  } catch (error) {
+    console.error("❌ Cron job error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ success: false, error: error?.message || 'Unknown error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
