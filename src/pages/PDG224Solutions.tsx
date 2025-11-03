@@ -50,6 +50,20 @@ export default function PDG224Solutions() {
   // Hook IA Assistant
   const { aiActive, insights } = usePDGAIAssistant();
 
+  const handleTabChange = useCallback((tab: string) => {
+    // Redirection vers la page de debug si c'est l'onglet debug
+    if (tab === 'debug') {
+      navigate('/pdg/debug');
+      return;
+    }
+    // Redirection vers la page API Supervision si c'est l'onglet API
+    if (tab === 'api') {
+      navigate('/pdg/api-supervision');
+      return;
+    }
+    setActiveTab(tab);
+  }, [navigate]);
+
   useEffect(() => {
     // Si pas d'utilisateur, rediriger vers auth
     if (!user && !profileLoading) {
@@ -259,7 +273,7 @@ export default function PDG224Solutions() {
           {/* Navigation */}
           <PDGNavigation 
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             aiActive={aiActive}
           />
 

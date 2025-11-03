@@ -63,6 +63,7 @@ const categories: NavCategory[] = [
       { value: 'config', label: 'Configuration', icon: Settings },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench },
       { value: 'api', label: 'API', icon: Key },
+      { value: 'debug', label: 'Debug & Surveillance', icon: Zap, badge: true },
     ]
   },
   {
