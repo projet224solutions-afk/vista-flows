@@ -160,16 +160,16 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
                   <span className="font-medium">Type:</span>
                   <span className="text-muted-foreground">{incident.incident_type}</span>
                 </div>
-                {incident.source_ip && (
+                {(incident as any).source_ip && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">IP Source:</span>
-                    <span className="text-muted-foreground">{incident.source_ip}</span>
+                    <span className="text-muted-foreground">{String((incident as any).source_ip)}</span>
                   </div>
                 )}
-                {incident.target_service && (
+                {(incident as any).target_service && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Service:</span>
-                    <span className="text-muted-foreground">{incident.target_service}</span>
+                    <span className="text-muted-foreground">{String((incident as any).target_service)}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">

@@ -86,15 +86,15 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Ban className="h-5 w-5 text-destructive" />
-                    {block.ip_address}
+                    {String(block.ip_address)}
                   </CardTitle>
                   <CardDescription>{block.reason}</CardDescription>
                 </div>
                 <div className="flex gap-2 items-center">
-                  {block.blocked_by_system && (
+                  {(block as any).blocked_by_system && (
                     <Badge variant="secondary">Auto</Badge>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => onUnblock(block.ip_address)}>
+                  <Button size="sm" variant="outline" onClick={() => onUnblock(String(block.ip_address))}>
                     <Unlock className="h-4 w-4 mr-1" />
                     Débloquer
                   </Button>
@@ -106,7 +106,7 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Bloqué le:</span>
                   <span className="text-muted-foreground">
-                    {new Date(block.created_at).toLocaleString('fr-FR')}
+                    {new Date(block.blocked_at).toLocaleString('fr-FR')}
                   </span>
                 </div>
                 {block.expires_at && (

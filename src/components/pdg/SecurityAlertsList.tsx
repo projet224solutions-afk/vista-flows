@@ -31,17 +31,17 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
 
       <div className="space-y-3">
         {alerts.map((alert) => (
-          <Card key={alert.id} className={!alert.is_acknowledged ? 'border-yellow-500' : ''}>
+          <Card key={alert.id} className={!alert.acknowledged ? 'border-yellow-500' : ''}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  {alert.is_acknowledged ? (
+                  {alert.acknowledged ? (
                     <Check className="h-5 w-5 text-green-500" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-yellow-500 animate-pulse" />
                   )}
                   <div>
-                    <CardTitle className="text-base">{alert.message}</CardTitle>
+                    <CardTitle className="text-base">{alert.description}</CardTitle>
                     <CardDescription className="mt-1">
                       {alert.alert_type} • {new Date(alert.created_at).toLocaleString('fr-FR')}
                     </CardDescription>
@@ -51,7 +51,7 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
                   <Badge variant={getSeverityColor(alert.severity)}>
                     {alert.severity}
                   </Badge>
-                  {!alert.is_acknowledged && (
+                  {!alert.acknowledged && (
                     <Button size="sm" variant="outline" onClick={() => onAcknowledge(alert.id)}>
                       <Check className="h-4 w-4 mr-1" />
                       Reconnaître
@@ -60,11 +60,11 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
                 </div>
               </div>
             </CardHeader>
-            {alert.auto_action_taken && (
+            {alert.auto_actions && (
               <CardContent>
                 <div className="flex items-center gap-2 text-sm">
                   <Badge variant="secondary">Action Auto</Badge>
-                  <span className="text-muted-foreground">{alert.auto_action_taken}</span>
+                  <span className="text-muted-foreground">{JSON.stringify(alert.auto_actions)}</span>
                 </div>
               </CardContent>
             )}

@@ -4980,6 +4980,54 @@ export type Database = {
           },
         ]
       }
+      security_detection_rules: {
+        Row: {
+          action: string
+          conditions: Json
+          created_at: string | null
+          false_positive_count: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          metadata: Json | null
+          name: string
+          rule_type: string
+          severity: string
+          threshold: Json | null
+          true_positive_count: number | null
+        }
+        Insert: {
+          action: string
+          conditions: Json
+          created_at?: string | null
+          false_positive_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          metadata?: Json | null
+          name: string
+          rule_type: string
+          severity: string
+          threshold?: Json | null
+          true_positive_count?: number | null
+        }
+        Update: {
+          action?: string
+          conditions?: Json
+          created_at?: string | null
+          false_positive_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          metadata?: Json | null
+          name?: string
+          rule_type?: string
+          severity?: string
+          threshold?: Json | null
+          true_positive_count?: number | null
+        }
+        Relationships: []
+      }
       security_incidents: {
         Row: {
           affected_users: string[] | null
@@ -5031,6 +5079,135 @@ export type Database = {
           source_ip?: unknown
           status?: string
           title?: string
+        }
+        Relationships: []
+      }
+      security_keys: {
+        Row: {
+          compromised_at: string | null
+          created_at: string | null
+          id: string
+          is_compromised: boolean | null
+          key_name: string
+          key_type: string
+          last_rotated_at: string | null
+          metadata: Json | null
+          next_rotation_at: string | null
+          rotation_frequency_days: number | null
+          status: string
+        }
+        Insert: {
+          compromised_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_compromised?: boolean | null
+          key_name: string
+          key_type: string
+          last_rotated_at?: string | null
+          metadata?: Json | null
+          next_rotation_at?: string | null
+          rotation_frequency_days?: number | null
+          status?: string
+        }
+        Update: {
+          compromised_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_compromised?: boolean | null
+          key_name?: string
+          key_type?: string
+          last_rotated_at?: string | null
+          metadata?: Json | null
+          next_rotation_at?: string | null
+          rotation_frequency_days?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
+      security_metrics: {
+        Row: {
+          alerts_count: number | null
+          blocked_ips_count: number | null
+          created_at: string | null
+          false_positives: number | null
+          id: string
+          incidents_count: number | null
+          metadata: Json | null
+          metric_date: string
+          mttd_minutes: number | null
+          mttr_minutes: number | null
+          true_positives: number | null
+        }
+        Insert: {
+          alerts_count?: number | null
+          blocked_ips_count?: number | null
+          created_at?: string | null
+          false_positives?: number | null
+          id?: string
+          incidents_count?: number | null
+          metadata?: Json | null
+          metric_date: string
+          mttd_minutes?: number | null
+          mttr_minutes?: number | null
+          true_positives?: number | null
+        }
+        Update: {
+          alerts_count?: number | null
+          blocked_ips_count?: number | null
+          created_at?: string | null
+          false_positives?: number | null
+          id?: string
+          incidents_count?: number | null
+          metadata?: Json | null
+          metric_date?: string
+          mttd_minutes?: number | null
+          mttr_minutes?: number | null
+          true_positives?: number | null
+        }
+        Relationships: []
+      }
+      security_playbooks: {
+        Row: {
+          auto_execute: boolean | null
+          created_at: string | null
+          execution_count: number | null
+          id: string
+          incident_type: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          metadata: Json | null
+          name: string
+          severity_threshold: string | null
+          steps: Json
+          updated_at: string | null
+        }
+        Insert: {
+          auto_execute?: boolean | null
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          incident_type: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          metadata?: Json | null
+          name: string
+          severity_threshold?: string | null
+          steps: Json
+          updated_at?: string | null
+        }
+        Update: {
+          auto_execute?: boolean | null
+          created_at?: string | null
+          execution_count?: number | null
+          id?: string
+          incident_type?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          metadata?: Json | null
+          name?: string
+          severity_threshold?: string | null
+          steps?: Json
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -7909,6 +8086,21 @@ export type Database = {
         }
         Relationships: []
       }
+      security_stats: {
+        Row: {
+          active_blocks: number | null
+          avg_mttr_minutes: number | null
+          blocked_ips: number | null
+          critical_incidents: number | null
+          incidents_24h: number | null
+          keys_need_rotation: number | null
+          open_incidents: number | null
+          pending_alerts: number | null
+          total_alerts: number | null
+          total_incidents: number | null
+        }
+        Relationships: []
+      }
       user_search_view: {
         Row: {
           custom_id: string | null
@@ -8094,6 +8286,15 @@ export type Database = {
           success: boolean
         }[]
       }
+      block_ip_address: {
+        Args: {
+          p_auto_block?: boolean
+          p_duration_hours?: number
+          p_ip_address: string
+          p_reason: string
+        }
+        Returns: string
+      }
       calculate_commission: {
         Args: {
           p_amount: number
@@ -8198,6 +8399,18 @@ export type Database = {
       create_default_expense_categories: {
         Args: { p_vendor_id: string }
         Returns: undefined
+      }
+      create_security_incident: {
+        Args: {
+          p_description: string
+          p_incident_type: string
+          p_indicators?: Json
+          p_severity: string
+          p_source_ip?: string
+          p_target_service?: string
+          p_title: string
+        }
+        Returns: string
       }
       create_taxi_notification: {
         Args: {

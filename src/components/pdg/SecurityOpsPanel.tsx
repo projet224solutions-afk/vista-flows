@@ -216,9 +216,9 @@ const SecurityOpsPanel: React.FC = () => {
                         <Badge variant={getSeverityColor(alert.severity)}>
                           {alert.severity}
                         </Badge>
-                        <span className="text-sm">{alert.message}</span>
+                        <span className="text-sm">{alert.description}</span>
                       </div>
-                      {!alert.is_acknowledged && (
+                      {!alert.acknowledged && (
                         <Button
                           size="sm"
                           variant="outline"

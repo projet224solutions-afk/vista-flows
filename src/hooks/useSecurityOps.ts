@@ -2,39 +2,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Database } from '@/integrations/supabase/types';
 
-export interface SecurityIncident {
-  id: string;
-  incident_type: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  status: 'open' | 'investigating' | 'contained' | 'resolved' | 'closed';
-  title: string;
-  description?: string;
-  source_ip?: string;
-  target_service?: string;
-  detected_at: string;
-  created_at: string;
-}
-
-export interface SecurityAlert {
-  id: string;
-  alert_type: string;
-  severity: string;
-  message: string;
-  is_acknowledged: boolean;
-  auto_action_taken?: string;
-  created_at: string;
-}
-
-export interface BlockedIP {
-  id: string;
-  ip_address: string;
-  reason: string;
-  blocked_at: string;
-  blocked_by_system: boolean;
-  created_at: string;
-  expires_at?: string;
-}
+type SecurityIncident = Database['public']['Tables']['security_incidents']['Row'];
+type SecurityAlert = Database['public']['Tables']['security_alerts']['Row'];
+type BlockedIP = Database['public']['Tables']['blocked_ips']['Row'];
 
 export interface SecurityStats {
   total_incidents: number;
@@ -48,6 +20,8 @@ export interface SecurityStats {
   avg_mttr_minutes: number;
   keys_need_rotation: number;
 }
+
+export type { SecurityIncident, SecurityAlert, BlockedIP };
 
 export function useSecurityOps(autoLoad?: boolean) {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
@@ -122,7 +96,7 @@ export function useSecurityOps(autoLoad?: boolean) {
             return (now.getTime() - created.getTime()) < 24 * 60 * 60 * 1000;
           }).length || 0,
           total_alerts: alertsData?.length || 0,
-          pending_alerts: alertsData?.filter(a => !a.is_acknowledged).length || 0,
+          pending_alerts: alertsData?.filter(a => !a.acknowledged).length || 0,
           blocked_ips: blockedData?.length || 0,
           active_blocks: blockedData?.filter(b => {
             if (!b.expires_at) return true;
@@ -157,13 +131,13 @@ export function useSecurityOps(autoLoad?: boolean) {
     try {
       const { error } = await supabase
         .from('security_alerts')
-        .update({ is_acknowledged: true })
+        .update({ acknowledged: true })
         .eq('id', alertId);
 
       if (error) throw error;
 
       setAlerts(alerts.map(a => 
-        a.id === alertId ? { ...a, is_acknowledged: true } : a
+        a.id === alertId ? { ...a, acknowledged: true } : a
       ));
       
       toast.success('Alerte reconnue');
