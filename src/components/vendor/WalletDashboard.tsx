@@ -74,7 +74,7 @@ export default function WalletDashboard() {
   }, [wallet]);
 
   const handleDeposit = useCallback(async () => {
-    if (!userId || !wallet) return;
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -111,7 +111,7 @@ export default function WalletDashboard() {
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
