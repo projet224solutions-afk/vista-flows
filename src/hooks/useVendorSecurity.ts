@@ -47,32 +47,34 @@ export const useVendorSecurity = () => {
       setLoading(true);
 
       // Charger KYC
-      const { data: kycData } = await supabase
-        .from('vendor_kyc')
+      const { data: kycData, error: kycError } = await supabase
+        .from('vendor_kyc' as any)
         .select('*')
         .eq('vendor_id', user.id)
-        .single();
-
-      setKyc(kycData);
+        .maybeSingle();
+      
+      if (kycError) console.error('Error loading KYC:', kycError);
+      setKyc(kycData as any);
 
       // Charger Trust Score
-      const { data: scoreData } = await supabase
-        .from('vendor_trust_score')
+      const { data: scoreData, error: scoreError } = await supabase
+        .from('vendor_trust_score' as any)
         .select('*')
         .eq('vendor_id', user.id)
-        .single();
-
-      setTrustScore(scoreData);
+        .maybeSingle();
+      
+      if (scoreError) console.error('Error loading trust score:', scoreError);
+      setTrustScore(scoreData as any);
 
       // Charger activités suspectes
       const { data: activitiesData } = await supabase
-        .from('suspicious_activities')
+        .from('suspicious_activities' as any)
         .select('*')
         .eq('vendor_id', user.id)
         .eq('resolved', false)
         .order('created_at', { ascending: false });
 
-      setSuspiciousActivities(activitiesData || []);
+      setSuspiciousActivities((activitiesData as any) || []);
     } catch (error) {
       console.error('Erreur chargement sécurité:', error);
     } finally {
@@ -89,7 +91,7 @@ export const useVendorSecurity = () => {
 
     try {
       const { error } = await supabase
-        .from('vendor_kyc')
+        .from('vendor_kyc' as any)
         .upsert({
           vendor_id: user.id,
           phone_number: data.phone_number,

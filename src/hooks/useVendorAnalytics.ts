@@ -32,19 +32,21 @@ export const useVendorAnalytics = () => {
       setLoading(true);
 
       // Récupérer les analytics d'aujourd'hui
-      const { data: todayData } = await supabase
-        .from('vendor_analytics')
+      const { data: todayData, error: todayError } = await supabase
+        .from('vendor_analytics' as any)
         .select('*')
         .eq('vendor_id', user.id)
         .eq('date', new Date().toISOString().split('T')[0])
-        .single();
+        .maybeSingle();
+      
+      if (todayError) console.error('Error loading today analytics:', todayError);
 
       // Récupérer les 7 derniers jours
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       const { data: weekData } = await supabase
-        .from('vendor_analytics')
+        .from('vendor_analytics' as any)
         .select('*')
         .eq('vendor_id', user.id)
         .gte('date', sevenDaysAgo.toISOString().split('T')[0])
@@ -55,7 +57,7 @@ export const useVendorAnalytics = () => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const { data: monthData } = await supabase
-        .from('vendor_analytics')
+        .from('vendor_analytics' as any)
         .select('*')
         .eq('vendor_id', user.id)
         .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
@@ -63,22 +65,24 @@ export const useVendorAnalytics = () => {
 
       // Récupérer les produits les plus vendus
       const { data: topProducts } = await supabase
-        .from('payment_links')
+        .from('payment_links' as any)
         .select('product_name, id')
         .eq('vendor_id', user.id)
         .eq('status', 'completed')
         .limit(5);
 
+      const todayAnalytics: VendorAnalytics = {
+        date: (todayData as any)?.date || new Date().toISOString().split('T')[0],
+        totalSales: (todayData as any)?.total_sales || 0,
+        totalOrders: (todayData as any)?.total_orders || 0,
+        conversionRate: (todayData as any)?.conversion_rate || 0
+      };
+
       setAnalytics({
-        today: todayData || {
-          date: new Date().toISOString().split('T')[0],
-          totalSales: 0,
-          totalOrders: 0,
-          conversionRate: 0
-        },
-        week: weekData || [],
-        month: monthData || [],
-        topProducts: topProducts?.map(p => ({
+        today: todayAnalytics,
+        week: (weekData as any) || [],
+        month: (monthData as any) || [],
+        topProducts: topProducts?.map((p: any) => ({
           id: p.id,
           name: p.product_name,
           sales: 0

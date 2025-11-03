@@ -24,7 +24,7 @@ export const useVendorNotifications = () => {
 
     try {
       const { data, error } = await supabase
-        .from('vendor_notifications')
+        .from('vendor_notifications' as any)
         .select('*')
         .eq('vendor_id', user.id)
         .order('created_at', { ascending: false })
@@ -32,8 +32,8 @@ export const useVendorNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      setNotifications((data as any) || []);
+      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
     } finally {
@@ -44,7 +44,7 @@ export const useVendorNotifications = () => {
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from('vendor_notifications')
+        .from('vendor_notifications' as any)
         .update({ read: true })
         .eq('id', notificationId);
 
@@ -64,7 +64,7 @@ export const useVendorNotifications = () => {
 
     try {
       const { error } = await supabase
-        .from('vendor_notifications')
+        .from('vendor_notifications' as any)
         .update({ read: true })
         .eq('vendor_id', user.id)
         .eq('read', false);
