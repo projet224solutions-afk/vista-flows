@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, Activity, Key, Plus, RefreshCw, 
   TrendingUp, TrendingDown, Shield, Bell, Settings,
-  CheckCircle2, XCircle, Clock, Zap
+  CheckCircle2, XCircle, Clock, Zap, ArrowLeft
 } from 'lucide-react';
 import { ApiMonitoringService, ApiConnection, ApiAlert } from '@/services/apiMonitoring';
 import { maskApiKey } from '@/services/apiEncryption';
@@ -40,6 +41,7 @@ const STATUS_LABELS = {
 const API_TYPE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function ApiSupervision() {
+  const navigate = useNavigate();
   const [apis, setApis] = useState<ApiConnection[]>([]);
   const [alerts, setAlerts] = useState<ApiAlert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,14 +146,24 @@ export default function ApiSupervision() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Shield className="h-8 w-8 text-primary" />
-              Supervision des API
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Monitoring intelligent avec 224Guard
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/pdg')}
+              className="hover:bg-muted"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-3">
+                <Shield className="h-8 w-8 text-primary" />
+                Supervision des API
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Monitoring intelligent avec 224Guard
+              </p>
+            </div>
           </div>
           <div className="flex gap-3">
             <Button
