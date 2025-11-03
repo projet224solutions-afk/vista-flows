@@ -208,6 +208,15 @@ export default function PDG224Solutions() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setActiveTab('security')}
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Shield className="w-4 h-4" />
+                  Défense & Riposte
+                </Button>
                 {!mfaVerified && (
                   <Button
                     variant="outline"
