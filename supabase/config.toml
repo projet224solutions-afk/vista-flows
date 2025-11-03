@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.google-maps-config]
 verify_jwt = true
+
+[functions.competitive-analysis]
+verify_jwt = true

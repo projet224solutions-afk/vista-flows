@@ -225,11 +225,20 @@ export default function PDG224Solutions() {
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => setActiveTab('security')}
+                  onClick={() => navigate('/pdg/security')}
                   className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
                 >
                   <Shield className="w-4 h-4" />
                   Défense & Riposte
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => navigate('/pdg/competitive-analysis')}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Activity className="w-4 h-4" />
+                  Analyse Concurrentielle IA
                 </Button>
                 {!mfaVerified && (
                   <Button
