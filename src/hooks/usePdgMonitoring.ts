@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { errorMonitor } from '@/services/errorMonitor';
 import { ApiMonitoringService } from '@/services/apiMonitoring';
+import { InterfaceMetricsService } from '@/services/interfaceMetrics';
 
 export interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
@@ -100,20 +101,8 @@ export function usePdgMonitoring() {
         .order('timestamp', { ascending: false })
         .limit(10);
 
-      // Calculer les métriques des interfaces
-      const interfaces = [
-        'Vendeurs', 'Clients', 'Livreurs', 'Agents', 
-        'Bureaux Syndicats', 'Transitaires', 'Taxi-motos'
-      ];
-
-      const metrics: InterfaceMetrics[] = interfaces.map(iface => ({
-        interface: iface,
-        activeUsers: Math.floor(Math.random() * 100), // TODO: Connecter aux vraies données
-        transactions: Math.floor(Math.random() * 1000),
-        errors: errors.filter(e => e.module?.toLowerCase().includes(iface.toLowerCase())).length,
-        performance: 85 + Math.random() * 15
-      }));
-
+      // Charger les vraies métriques des interfaces
+      const metrics = await InterfaceMetricsService.getAllMetrics();
       setInterfaceMetrics(metrics);
 
       // Calculer le statut des services
@@ -157,7 +146,7 @@ export function usePdgMonitoring() {
         autoFixedErrors: errorStats.fixed,
         pendingErrors: errorStats.pending,
         systemHealth: healthScore,
-        activeInterfaces: interfaces.length,
+        activeInterfaces: metrics.length,
         totalTransactions: metrics.reduce((sum, m) => sum + m.transactions, 0),
         avgResponseTime: services.reduce((sum, s) => sum + (s.responseTime || 0), 0) / services.length
       });
@@ -207,18 +196,49 @@ export function usePdgMonitoring() {
     };
   }, [realTimeEnabled, loadMonitoringData]);
 
-  // Exécuter une correction automatique
-  const runAutoFix = async (errorId: string) => {
+  // Analyser une erreur avec l'IA
+  const analyzeErrorWithAI = async (errorId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('fix-error', {
-        body: { errorId }
+      const { data, error } = await supabase.functions.invoke('ai-error-analyzer', {
+        body: { 
+          error: { id: errorId },
+          context: { stats, systemHealth }
+        }
       });
 
       if (error) throw error;
 
-      toast.success('Correction appliquée avec succès');
+      toast.success('Analyse IA terminée');
       await loadMonitoringData();
       return data;
+    } catch (error: any) {
+      console.error('Erreur analyse IA:', error);
+      toast.error('Erreur lors de l\'analyse IA');
+      return null;
+    }
+  };
+
+  // Exécuter une correction automatique
+  const runAutoFix = async (errorId: string) => {
+    try {
+      // D'abord analyser avec l'IA
+      const analysis = await analyzeErrorWithAI(errorId);
+      
+      if (analysis?.analysis?.autoFixable) {
+        // Appliquer le fix automatique
+        const { data, error } = await supabase.functions.invoke('fix-error', {
+          body: { errorId }
+        });
+
+        if (error) throw error;
+
+        toast.success('Correction automatique appliquée avec succès');
+        await loadMonitoringData();
+        return data;
+      } else {
+        toast.warning('Cette erreur nécessite une intervention manuelle');
+        return analysis;
+      }
     } catch (error: any) {
       console.error('Erreur auto-fix:', error);
       toast.error('Erreur lors de la correction automatique');
@@ -285,6 +305,7 @@ export function usePdgMonitoring() {
     setRealTimeEnabled,
     loadMonitoringData,
     runAutoFix,
+    analyzeErrorWithAI,
     askAICopilot,
     detectAnomalies
   };

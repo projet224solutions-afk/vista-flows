@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePdgMonitoring } from '@/hooks/usePdgMonitoring';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Activity, 
   AlertTriangle, 
@@ -32,6 +33,7 @@ export default function PdgCommandCenter() {
     realTimeEnabled,
     setRealTimeEnabled,
     loadMonitoringData,
+    analyzeErrorWithAI,
     askAICopilot,
     detectAnomalies
   } = usePdgMonitoring();
@@ -39,6 +41,8 @@ export default function PdgCommandCenter() {
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [recentErrors, setRecentErrors] = useState<any[]>([]);
+  const [analyzingError, setAnalyzingError] = useState<string | null>(null);
 
   const handleAskAI = async () => {
     if (!aiQuery.trim()) return;
@@ -51,6 +55,29 @@ export default function PdgCommandCenter() {
       setAiResponse(response.answer || 'Pas de réponse');
     }
   };
+
+  const handleAnalyzeError = async (errorId: string) => {
+    setAnalyzingError(errorId);
+    await analyzeErrorWithAI(errorId);
+    setAnalyzingError(null);
+    loadMonitoringData();
+  };
+
+  // Charger les erreurs récentes
+  useEffect(() => {
+    const loadRecentErrors = async () => {
+      const { data } = await supabase
+        .from('system_errors')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (data) {
+        setRecentErrors(data);
+      }
+    };
+    loadRecentErrors();
+  }, [stats]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -373,43 +400,117 @@ export default function PdgCommandCenter() {
 
           {/* Auto-Fixes */}
           <TabsContent value="fixes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Correctifs Automatiques</CardTitle>
-                <CardDescription>
-                  {autoFixes.length} correctifs actifs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-3">
-                    {autoFixes.map((fix) => (
-                      <Card key={fix.id}>
-                        <CardContent className="pt-6">
-                          <div className="space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-1 flex-1">
-                                <h4 className="font-semibold">{fix.fix_description}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Pattern: {fix.error_pattern}
-                                </p>
+            <div className="space-y-4">
+              {/* Erreurs récentes à analyser */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Erreurs Récentes - Analyse IA</CardTitle>
+                  <CardDescription>
+                    Cliquez sur "Analyser avec IA" pour obtenir une solution automatique
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-3">
+                      {recentErrors.map((error) => (
+                        <Card key={error.id} className="bg-muted/30">
+                          <CardContent className="pt-6">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={
+                                    error.severity === 'critique' ? 'destructive' :
+                                    error.severity === 'modérée' ? 'secondary' : 'outline'
+                                  }>
+                                    {error.severity}
+                                  </Badge>
+                                  <span className="font-semibold">{error.module}</span>
+                                </div>
+                                <p className="text-sm">{error.error_message}</p>
+                                {error.metadata?.ai_analysis && (
+                                  <div className="mt-2 p-3 bg-background rounded-lg space-y-2">
+                                    <p className="text-xs font-semibold text-primary">
+                                      Analyse IA:
+                                    </p>
+                                    <p className="text-xs">{error.metadata.ai_analysis.cause}</p>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant={
+                                        error.metadata.ai_analysis.autoFixable 
+                                          ? 'default' 
+                                          : 'secondary'
+                                      }>
+                                        {error.metadata.ai_analysis.autoFixable 
+                                          ? 'Auto-fixable' 
+                                          : 'Manuel'}
+                                      </Badge>
+                                      <Badge variant="outline">
+                                        Priorité: {error.metadata.ai_analysis.priority}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                              <Badge variant={fix.is_active ? 'default' : 'secondary'}>
-                                {fix.is_active ? 'Actif' : 'Inactif'}
-                              </Badge>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAnalyzeError(error.id)}
+                                disabled={analyzingError === error.id}
+                                className="gap-2"
+                              >
+                                {analyzingError === error.id ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Brain className="h-4 w-4" />
+                                )}
+                                Analyser avec IA
+                              </Button>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>Appliqué: {fix.times_applied} fois</span>
-                              <span>Taux de réussite: {fix.success_rate.toFixed(1)}%</span>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* Correctifs actifs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Correctifs Automatiques Actifs</CardTitle>
+                  <CardDescription>
+                    {autoFixes.length} correctifs générés par l'IA
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-3">
+                      {autoFixes.map((fix) => (
+                        <Card key={fix.id}>
+                          <CardContent className="pt-6">
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1 flex-1">
+                                  <h4 className="font-semibold">{fix.fix_description}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    Pattern: {fix.error_pattern}
+                                  </p>
+                                </div>
+                                <Badge variant={fix.is_active ? 'default' : 'secondary'}>
+                                  {fix.is_active ? 'Actif' : 'Inactif'}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span>Appliqué: {fix.times_applied} fois</span>
+                                <span>Taux de réussite: {fix.success_rate.toFixed(1)}%</span>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* IA Copilote */}
