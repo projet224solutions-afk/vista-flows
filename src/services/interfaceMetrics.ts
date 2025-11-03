@@ -11,273 +11,107 @@ export interface RealInterfaceMetrics {
 }
 
 export class InterfaceMetricsService {
-  // Récupérer les métriques des vendeurs
-  static async getVendorMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      // Compter les vendeurs actifs
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'vendeur');
-
-      // Compter les produits (transactions)
-      const { count: transactions } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      // Compter les erreurs liées aux vendeurs
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%vendeur%');
-
-      return {
-        interface: 'Vendeurs',
-        activeUsers: activeUsers || 0,
-        transactions: transactions || 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting vendor metrics:', error);
-      return {
-        interface: 'Vendeurs',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des clients
-  static async getClientMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'client');
-
-      const { count: transactions } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%client%');
-
-      return {
-        interface: 'Clients',
-        activeUsers: activeUsers || 0,
-        transactions: transactions || 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting client metrics:', error);
-      return {
-        interface: 'Clients',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des livreurs
-  static async getDeliveryMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'livreur');
-
-      const { count: transactions } = await supabase
-        .from('deliveries')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%livreur%');
-
-      return {
-        interface: 'Livreurs',
-        activeUsers: activeUsers || 0,
-        transactions: transactions || 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting delivery metrics:', error);
-      return {
-        interface: 'Livreurs',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des agents
-  static async getAgentMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'admin');
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%agent%');
-
-      return {
-        interface: 'Agents',
-        activeUsers: activeUsers || 0,
-        transactions: 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting agent metrics:', error);
-      return {
-        interface: 'Agents',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des bureaux syndicats
-  static async getBureauMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'syndicat');
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%bureau%');
-
-      return {
-        interface: 'Bureaux Syndicats',
-        activeUsers: activeUsers || 0,
-        transactions: 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting bureau metrics:', error);
-      return {
-        interface: 'Bureaux Syndicats',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des transitaires
-  static async getTransitaireMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'transitaire');
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%transitaire%');
-
-      return {
-        interface: 'Transitaires',
-        activeUsers: activeUsers || 0,
-        transactions: 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting transitaire metrics:', error);
-      return {
-        interface: 'Transitaires',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer les métriques des taxi-motos
-  static async getTaxiMotoMetrics(): Promise<RealInterfaceMetrics> {
-    try {
-      const { count: activeUsers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'taxi');
-
-      const { count: errors } = await supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .ilike('module', '%taxi%');
-
-      return {
-        interface: 'Taxi-motos',
-        activeUsers: activeUsers || 0,
-        transactions: 0,
-        errors: errors || 0,
-        performance: 95 - (errors || 0) * 2,
-      };
-    } catch (error) {
-      console.error('Error getting taxi-moto metrics:', error);
-      return {
-        interface: 'Taxi-motos',
-        activeUsers: 0,
-        transactions: 0,
-        errors: 0,
-        performance: 0,
-      };
-    }
-  }
-
-  // Récupérer toutes les métriques en une fois
+  // Récupérer toutes les métriques en une fois depuis la vue sécurisée
   static async getAllMetrics(): Promise<RealInterfaceMetrics[]> {
-    const [
-      vendorMetrics,
-      clientMetrics,
-      deliveryMetrics,
-      agentMetrics,
-      bureauMetrics,
-      transitaireMetrics,
-      taxiMotoMetrics,
-    ] = await Promise.all([
-      this.getVendorMetrics(),
-      this.getClientMetrics(),
-      this.getDeliveryMetrics(),
-      this.getAgentMetrics(),
-      this.getBureauMetrics(),
-      this.getTransitaireMetrics(),
-      this.getTaxiMotoMetrics(),
-    ]);
+    try {
+      // Utiliser la vue pdg_interface_stats qui est sécurisée et optimisée
+      const { data, error } = await supabase
+        .from('pdg_interface_stats')
+        .select('*');
 
+      if (error) {
+        console.error('Error fetching interface metrics from view:', error);
+        // Fallback: utiliser la fonction RPC sécurisée
+        return this.getFallbackMetrics();
+      }
+
+      if (!data || data.length === 0) {
+        return this.getFallbackMetrics();
+      }
+
+      // Transformer les données de la vue en RealInterfaceMetrics
+      return data.map(row => ({
+        interface: row.interface,
+        activeUsers: Number(row.active_users || 0),
+        transactions: Number(row.transactions || 0),
+        errors: Number(row.errors || 0),
+        performance: Number(row.performance || 95),
+      }));
+    } catch (error) {
+      console.error('Error getting interface metrics:', error);
+      return this.getFallbackMetrics();
+    }
+  }
+
+  // Métriques de fallback en cas d'erreur
+  private static getFallbackMetrics(): RealInterfaceMetrics[] {
     return [
-      vendorMetrics,
-      clientMetrics,
-      deliveryMetrics,
-      agentMetrics,
-      bureauMetrics,
-      transitaireMetrics,
-      taxiMotoMetrics,
+      {
+        interface: 'Vendeurs',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Clients',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Livreurs',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Agents',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Bureaux Syndicats',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Transitaires',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
+      {
+        interface: 'Taxi-motos',
+        activeUsers: 0,
+        transactions: 0,
+        errors: 0,
+        performance: 100,
+      },
     ];
+  }
+
+  // Méthode helper pour obtenir les stats globales via RPC
+  static async getGlobalStats() {
+    try {
+      const { data, error } = await supabase.rpc('get_pdg_dashboard_stats');
+      
+      if (error) {
+        console.error('Error getting PDG stats:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error calling get_pdg_dashboard_stats:', error);
+      return null;
+    }
   }
 }

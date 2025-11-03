@@ -8086,6 +8086,16 @@ export type Database = {
         }
         Relationships: []
       }
+      pdg_interface_stats: {
+        Row: {
+          active_users: number | null
+          errors: number | null
+          interface: string | null
+          performance: number | null
+          transactions: number | null
+        }
+        Relationships: []
+      }
       security_stats: {
         Row: {
           active_blocks: number | null
@@ -8675,6 +8685,7 @@ export type Database = {
         Args: { p_currency?: string; p_user_id: string }
         Returns: string
       }
+      get_pdg_dashboard_stats: { Args: never; Returns: Json }
       get_pdg_revenue_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {

@@ -77,8 +77,10 @@ export function usePdgMonitoring() {
   const loadMonitoringData = useCallback(async () => {
     setLoading(true);
     try {
+      // Charger les stats globales via la fonction RPC sécurisée
+      const globalStats = await InterfaceMetricsService.getGlobalStats();
+      
       // Charger les erreurs système
-      const errors = await errorMonitor.getRecentErrors(100);
       const errorStats = await errorMonitor.getErrorStats();
 
       // Charger les connexions API
@@ -101,7 +103,7 @@ export function usePdgMonitoring() {
         .order('timestamp', { ascending: false })
         .limit(10);
 
-      // Charger les vraies métriques des interfaces
+      // Charger les vraies métriques des interfaces depuis la vue sécurisée
       const metrics = await InterfaceMetricsService.getAllMetrics();
       setInterfaceMetrics(metrics);
 
@@ -124,6 +126,12 @@ export function usePdgMonitoring() {
           status: apiConnections.length > 0 ? 'online' : 'degraded',
           responseTime: 38,
           errorRate: 0.5
+        },
+        {
+          name: 'Monitoring System',
+          status: (errorStats?.total || 0) < 50 ? 'online' : 'degraded',
+          responseTime: 25,
+          errorRate: 0.2
         }
       ];
 
@@ -132,22 +140,32 @@ export function usePdgMonitoring() {
         ? healthData.filter(h => h.status === 'healthy').length / healthData.length * 100
         : 100;
 
+      // Si on a des métriques, ajuster le score de santé
+      const totalErrors = errorStats?.total || 0;
+      const adjustedHealthScore = totalErrors > 0 
+        ? Math.max(50, healthScore - (totalErrors * 0.5))
+        : healthScore;
+
       setSystemHealth({
-        status: healthScore > 80 ? 'healthy' : healthScore > 50 ? 'warning' : 'critical',
+        status: adjustedHealthScore > 80 ? 'healthy' : adjustedHealthScore > 50 ? 'warning' : 'critical',
         uptime: 99.9,
         lastCheck: new Date().toISOString(),
         services
       });
 
+      // Utiliser les stats globales si disponibles
+      const totalTransactions = globalStats?.total_orders || 
+        metrics.reduce((sum, m) => sum + m.transactions, 0);
+
       // Calculer les statistiques globales
       setStats({
-        totalErrors: errorStats.total,
-        criticalErrors: errorStats.critical,
-        autoFixedErrors: errorStats.fixed,
-        pendingErrors: errorStats.pending,
-        systemHealth: healthScore,
+        totalErrors: errorStats?.total || 0,
+        criticalErrors: errorStats?.critical || 0,
+        autoFixedErrors: errorStats?.fixed || 0,
+        pendingErrors: errorStats?.pending || 0,
+        systemHealth: adjustedHealthScore,
         activeInterfaces: metrics.length,
-        totalTransactions: metrics.reduce((sum, m) => sum + m.transactions, 0),
+        totalTransactions: totalTransactions,
         avgResponseTime: services.reduce((sum, s) => sum + (s.responseTime || 0), 0) / services.length
       });
 
