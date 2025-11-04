@@ -83,6 +83,17 @@ export default function LivreurDashboard() {
     });
   }, [getCurrentLocation]);
 
+  // Mettre à jour la position du driver toutes les 30 secondes si en ligne
+  useEffect(() => {
+    if (!driver?.is_online || !location) return;
+
+    const intervalId = setInterval(() => {
+      updateLocation({ lat: location.latitude, lng: location.longitude });
+    }, 30000); // Toutes les 30 secondes
+
+    return () => clearInterval(intervalId);
+  }, [driver?.is_online, location, updateLocation]);
+
   // Recharger les livraisons quand on bascule sur l'onglet missions
   useEffect(() => {
     if (activeTab === 'missions' && !currentDelivery && !currentRide) {
@@ -184,22 +195,26 @@ export default function LivreurDashboard() {
   const handleCompleteWithProof = async (photoUrl: string, signature: string) => {
     if (!currentDelivery) return;
     try {
-      await completeDeliveryFn(currentDelivery.id);
-      
-      // Enregistrer photo et signature
-      await supabase
+      // Enregistrer photo et signature dans la BD
+      const { error: updateError } = await supabase
         .from('deliveries')
         .update({
           proof_photo_url: photoUrl,
           client_signature: signature
         })
         .eq('id', currentDelivery.id);
+
+      if (updateError) throw updateError;
+
+      // Terminer la livraison
+      await completeDeliveryFn(currentDelivery.id);
       
       setShowProofUpload(false);
       setActiveTab('history');
       toast.success('🎉 Livraison terminée avec succès!');
     } catch (error) {
       console.error('Error completing delivery:', error);
+      toast.error('Erreur lors de la finalisation');
     }
   };
 
@@ -532,13 +547,6 @@ export default function LivreurDashboard() {
                         Terminer & Confirmer
                       </Button>
                       
-                      {/* Modal de preuve de livraison */}
-                      {showProofUpload && (
-                        <DeliveryProofUpload
-                          deliveryId={currentDelivery.id}
-                          onProofUploaded={handleCompleteWithProof}
-                        />
-                      )}
                       <Button 
                         onClick={reportProblem} 
                         variant="destructive"
@@ -776,6 +784,15 @@ export default function LivreurDashboard() {
       
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
+
+      {/* Modal de preuve de livraison */}
+      {showProofUpload && currentDelivery && (
+        <DeliveryProofUpload
+          deliveryId={currentDelivery.id}
+          onProofUploaded={handleCompleteWithProof}
+          onCancel={() => setShowProofUpload(false)}
+        />
+      )}
     </div>
   );
 }

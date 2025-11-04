@@ -6,15 +6,23 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Check, Upload } from 'lucide-react';
+import { Camera, Check, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface DeliveryProofUploadProps {
   deliveryId: string;
   onProofUploaded: (photoUrl: string, signature: string) => void;
+  onCancel: () => void;
 }
 
-export function DeliveryProofUpload({ deliveryId, onProofUploaded }: DeliveryProofUploadProps) {
+export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: DeliveryProofUploadProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [signature, setSignature] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -46,9 +54,6 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded }: DeliveryPro
 
     setUploading(true);
     try {
-      // Simuler l'upload (à remplacer par votre logique d'upload réelle)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
       onProofUploaded(photoPreview, signature);
       toast.success('✅ Preuve enregistrée avec succès !');
     } catch (error) {
@@ -114,11 +119,15 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded }: DeliveryPro
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Confirmation de livraison</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Confirmation de livraison</DialogTitle>
+          <DialogDescription>
+            Prenez une photo et récupérez la signature du client
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 mt-4">
         {/* Photo de preuve */}
         <div className="space-y-3">
           <label className="text-sm font-medium">📸 Photo de la livraison</label>
@@ -210,7 +219,16 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded }: DeliveryPro
             </>
           )}
         </Button>
-      </CardContent>
-    </Card>
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          className="w-full"
+        >
+          <X className="h-4 w-4 mr-2" />
+          Annuler
+        </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
