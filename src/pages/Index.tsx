@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -119,8 +119,29 @@ function IndexAlibaba() {
   const { isMobile, isTablet } = useResponsive();
   
   // Hooks avec gestion d'erreur
-  const roleRedirectResult = useRoleRedirect();
-  const { profile } = useAuth();
+  useRoleRedirect();
+  const { profile, user, loading } = useAuth();
+
+  // Redirection automatique si l'utilisateur est connecté
+  useEffect(() => {
+    if (!loading && user && profile) {
+      const roleRoutes = {
+        admin: '/admin',
+        vendeur: '/vendeur',
+        livreur: '/livreur',
+        taxi: '/taxi-moto/driver',
+        syndicat: '/syndicat',
+        transitaire: '/transitaire',
+        client: '/client'
+      };
+      
+      const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
+      if (expectedRoute) {
+        console.log(`🔄 Redirection automatique vers ${expectedRoute}`);
+        navigate(expectedRoute, { replace: true });
+      }
+    }
+  }, [user, profile, loading, navigate]);
   
   // Chargement des données réelles depuis Supabase
   const { stats, loading: statsLoading } = useHomeStats();
