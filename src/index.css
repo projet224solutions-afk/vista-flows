@@ -51,11 +51,13 @@ All colors MUST be HSL.
     --vendeur-accent: 211 100% 95%;
     --vendeur-gradient: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 39%));
 
-    /* Livreur - Logistics Orange & Premium Black */
-    --livreur-primary: 25 95% 53%;
-    --livreur-secondary: 220 13% 18%;
-    --livreur-accent: 25 95% 95%;
-    --livreur-gradient: linear-gradient(135deg, hsl(25 95% 53%), hsl(220 13% 18%));
+    /* Livreur - Style africain vibrant : Orange Guinée + Vert Forêt */
+    --livreur-primary: 25 98% 55%; /* Orange africain vibrant #FF8C1A */
+    --livreur-secondary: 145 65% 35%; /* Vert forêt guinéen */
+    --livreur-accent: 45 100% 92%; /* Jaune soleil léger */
+    --livreur-gold: 45 100% 51%; /* Or africain */
+    --livreur-gradient: linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%));
+    --livreur-gradient-warm: linear-gradient(135deg, hsl(25 98% 55%), hsl(45 100% 51%));
 
     /* Taxi/Moto - Transport Yellow & Urban Grey */
     --taxi-primary: 51 100% 50%;

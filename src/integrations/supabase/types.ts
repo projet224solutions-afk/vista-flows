@@ -1662,6 +1662,53 @@ export type Database = {
           },
         ]
       }
+      delivery_pricing: {
+        Row: {
+          base_price: number
+          created_at: string | null
+          currency: string | null
+          delivery_id: string | null
+          distance_price: number
+          id: string
+          pricing_details: Json | null
+          service_fee: number | null
+          surge_price: number | null
+          total_price: number
+        }
+        Insert: {
+          base_price: number
+          created_at?: string | null
+          currency?: string | null
+          delivery_id?: string | null
+          distance_price: number
+          id?: string
+          pricing_details?: Json | null
+          service_fee?: number | null
+          surge_price?: number | null
+          total_price: number
+        }
+        Update: {
+          base_price?: number
+          created_at?: string | null
+          currency?: string | null
+          delivery_id?: string | null
+          distance_price?: number
+          id?: string
+          pricing_details?: Json | null
+          service_fee?: number | null
+          surge_price?: number | null
+          total_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pricing_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_tracking: {
         Row: {
           accuracy: number | null
@@ -3583,6 +3630,45 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          metadata: Json | null
+          method_type: string
+          phone_number: string | null
+          provider: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          method_type: string
+          phone_number?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          method_type?: string
+          phone_number?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_schedules: {
         Row: {
           amount: number
@@ -3880,6 +3966,42 @@ export type Database = {
           tax_rate?: number
           updated_at?: string
           vendor_id?: string
+        }
+        Relationships: []
+      }
+      pricing_zones: {
+        Row: {
+          base_price: number
+          coordinates: unknown
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          price_per_km: number
+          surge_multiplier: number | null
+          updated_at: string | null
+          zone_name: string
+        }
+        Insert: {
+          base_price?: number
+          coordinates: unknown
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_per_km?: number
+          surge_multiplier?: number | null
+          updated_at?: string | null
+          zone_name: string
+        }
+        Update: {
+          base_price?: number
+          coordinates?: unknown
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_per_km?: number
+          surge_multiplier?: number | null
+          updated_at?: string | null
+          zone_name?: string
         }
         Relationships: []
       }
@@ -8511,6 +8633,21 @@ export type Database = {
           commission_rate: number
           config_id: string
           total_amount: number
+        }[]
+      }
+      calculate_delivery_price: {
+        Args: {
+          p_delivery_lat: number
+          p_delivery_lng: number
+          p_pickup_lat: number
+          p_pickup_lng: number
+        }
+        Returns: {
+          base_price: number
+          distance_km: number
+          distance_price: number
+          surge_multiplier: number
+          total_price: number
         }[]
       }
       calculate_distance_km: {
