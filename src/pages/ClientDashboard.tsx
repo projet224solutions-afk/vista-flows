@@ -28,6 +28,7 @@ import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { supabase } from "@/lib/supabaseClient";
 import useResponsive from "@/hooks/useResponsive";
 import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -609,6 +610,9 @@ export default function ClientDashboard() {
           customerId={customerId}
         />
       )}
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

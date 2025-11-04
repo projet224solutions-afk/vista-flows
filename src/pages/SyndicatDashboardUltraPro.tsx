@@ -54,6 +54,7 @@ import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboa
 import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 interface SyndicateMember {
     id: string;
@@ -781,6 +782,9 @@ export default function SyndicatDashboardUltraPro() {
                     </div>
                 </DialogContent>
             </Dialog>
+            
+            {/* Widget de communication flottant */}
+            <CommunicationWidget position="bottom-right" showNotifications={true} />
         </div>
     );
 }

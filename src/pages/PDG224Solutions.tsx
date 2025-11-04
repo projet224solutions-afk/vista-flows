@@ -15,6 +15,7 @@ import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 import PDGNavigation from '@/components/pdg/PDGNavigation';
 import { PDGDashboardHome } from '@/components/pdg/PDGDashboardHome';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
@@ -489,6 +490,9 @@ export default function PDG224Solutions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

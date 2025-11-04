@@ -26,6 +26,7 @@ import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
 import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -648,6 +649,9 @@ export default function BureauDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

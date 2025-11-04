@@ -55,6 +55,7 @@ import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewal
 import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
 import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -396,6 +397,9 @@ export default function VendeurDashboard() {
           </main>
         </div>
       </div>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </SidebarProvider>
   );
 }

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -236,6 +237,9 @@ export default function TransitaireDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

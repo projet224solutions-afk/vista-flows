@@ -48,6 +48,7 @@ import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
 import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 interface Agent {
   id: string;
@@ -986,6 +987,9 @@ export default function AgentDashboardPublic() {
           </Card>
         </div>
       </main>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

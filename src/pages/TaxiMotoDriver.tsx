@@ -53,6 +53,7 @@ import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -1250,6 +1251,9 @@ export default function TaxiMotoDriver() {
 
             {/* Bannière d'installation PWA */}
             <InstallPromptBanner />
+            
+            {/* Widget de communication flottant */}
+            <CommunicationWidget position="bottom-right" showNotifications={true} />
         </div>
     );
 }

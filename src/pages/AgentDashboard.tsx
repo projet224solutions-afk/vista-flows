@@ -12,6 +12,7 @@ import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -300,6 +301,9 @@ export default function AgentDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

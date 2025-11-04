@@ -21,6 +21,7 @@ import { NearbyDeliveriesListener } from "@/components/delivery/NearbyDeliveries
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -683,6 +684,9 @@ export default function LivreurDashboard() {
           </TabsContent>
         </Tabs>
       </ResponsiveContainer>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }
