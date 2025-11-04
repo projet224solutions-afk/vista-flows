@@ -119,14 +119,20 @@ function IndexAlibaba() {
   const { isMobile, isTablet } = useResponsive();
   
   // Hooks avec gestion d'erreur
-  useRoleRedirect();
   const { profile, user, loading } = useAuth();
 
-  // Redirection automatique si l'utilisateur est connecté
+  // Redirection automatique si l'utilisateur est connecté - CRITIQUE pour persistance
   useEffect(() => {
-    if (!loading && user && profile) {
+    // Attendre que le chargement soit terminé
+    if (loading) {
+      console.log('🔄 Chargement de la session en cours...');
+      return;
+    }
+
+    // Si utilisateur connecté avec profil
+    if (user && profile) {
       const roleRoutes = {
-        admin: '/admin',
+        admin: '/pdg',
         vendeur: '/vendeur',
         livreur: '/livreur',
         taxi: '/taxi-moto/driver',
@@ -137,9 +143,15 @@ function IndexAlibaba() {
       
       const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
       if (expectedRoute) {
-        console.log(`🔄 Redirection automatique vers ${expectedRoute}`);
+        console.log(`✅ Session active détectée - Redirection vers ${expectedRoute} (rôle: ${profile.role})`);
         navigate(expectedRoute, { replace: true });
+      } else {
+        console.warn('⚠️ Rôle non reconnu:', profile.role);
       }
+    } else if (user && !profile) {
+      console.log('⏳ Utilisateur connecté mais profil en cours de chargement...');
+    } else {
+      console.log('👋 Aucune session active - Affichage page publique');
     }
   }, [user, profile, loading, navigate]);
   

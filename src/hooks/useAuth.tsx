@@ -171,6 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setProfileLoading(true);
+    console.log('🔄 Chargement profil pour:', user.email);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -179,25 +180,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('❌ Erreur chargement profil:', error);
         setProfileLoading(false);
         return;
       }
 
+      console.log('✅ Profil chargé:', data.role, data.email);
       setProfile(data);
     } catch (error) {
-      console.error('Error in refreshProfile:', error);
+      console.error('❌ Erreur dans refreshProfile:', error);
     } finally {
       setProfileLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session - CRITIQUE pour restaurer la session au rechargement
     const getInitialSession = async () => {
+      console.log('🔍 Vérification session existante...');
       const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      
+      if (session) {
+        console.log('✅ Session restaurée:', session.user.email);
+        setSession(session);
+        setUser(session.user);
+      } else {
+        console.log('❌ Aucune session active');
+        setSession(null);
+        setUser(null);
+      }
       setLoading(false);
     };
 
@@ -206,6 +217,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔔 Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
