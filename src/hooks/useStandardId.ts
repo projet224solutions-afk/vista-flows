@@ -1,6 +1,6 @@
 /**
  * 🆔 HOOK: GESTION DES IDs STANDARDISÉS 224SOLUTIONS
- * Format universel: AAA0001 (3 lettres + 4+ chiffres séquentiels)
+ * Format universel: 224-XXX-XXX (224 + 3 chiffres + 3 chiffres)
  */
 
 import { useState } from 'react';
@@ -62,7 +62,7 @@ export const useStandardId = () => {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Génère un ID standardisé via l'Edge Function
+   * Génère un ID standardisé au format 224-XXX-XXX
    */
   const generateStandardId = async (
     scope: string,
@@ -72,26 +72,27 @@ export const useStandardId = () => {
     setError(null);
 
     try {
-      const prefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'GEN';
-      
-      const { data, error: funcError } = await supabase.functions.invoke(
-        'generate-unique-id',
-        {
-          body: { scope, prefix, batch: 1 }
-        }
-      );
+      // Générer un ID au format 224-XXX-XXX
+      // XXX = 3 chiffres aléatoires entre 000 et 999
+      const firstPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const secondPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const generatedId = `224-${firstPart}-${secondPart}`;
 
-      if (funcError) throw funcError;
+      // Vérifier si l'ID existe déjà
+      const { data: existingId } = await supabase
+        .from('profiles')
+        .select('public_id')
+        .eq('public_id', generatedId)
+        .single();
 
-      if (!data?.success || !data?.ids?.[0]) {
-        throw new Error('Génération d\'ID échouée');
+      // Si l'ID existe, régénérer (récursif)
+      if (existingId) {
+        return generateStandardId(scope, false);
       }
 
-      const generatedId = data.ids[0];
-
       if (showToast) {
-        toast.success(`ID généré: ${generatedId}`, {
-          description: `Préfixe: ${prefix} • Scope: ${scope}`
+        toast.success(`ID 224Solutions généré: ${generatedId}`, {
+          description: `Format: 224-XXX-XXX`
         });
       }
 
@@ -168,11 +169,12 @@ export const useStandardId = () => {
   };
 
   /**
-   * Valide le format d'un ID standardisé
+   * Valide le format d'un ID standardisé 224Solutions
    */
   const validateStandardId = (id: string): boolean => {
-    // Format: 3 lettres majuscules + au moins 4 chiffres
-    return /^[A-Z]{3}\d{4,}$/.test(id);
+    // Format: 224-XXX-XXX (224 suivi de - puis 3 chiffres - 3 chiffres)
+    // Accepte aussi l'ancien format pour la rétrocompatibilité
+    return /^224-\d{3}-\d{3}$/.test(id) || /^[A-Z]{3}\d{4,}$/.test(id);
   };
 
   /**

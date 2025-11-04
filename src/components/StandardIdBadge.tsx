@@ -64,29 +64,41 @@ export function StandardIdBadge({
     lg: 'text-base px-3 py-1.5'
   };
 
-  // Extraire préfixe (4 chiffres) et lettres (3 lettres) pour styling
-  const prefix = formattedId.substring(0, 4); // 0002
-  const letters = formattedId.substring(4);     // ABC
-
+  // Déterminer le format d'affichage
+  const is224Format = formattedId.startsWith('224-');
+  
   return (
     <Badge
       variant={variant}
       className={cn(
-        'font-mono font-semibold tracking-wide',
+        'font-mono font-semibold tracking-wider',
         sizeClasses[size],
         copyable && 'cursor-pointer hover:opacity-80 transition-opacity',
+        is224Format && 'bg-gradient-to-r from-orange-500/10 to-green-600/10 border-orange-500/30',
         className
       )}
       onClick={handleCopy}
     >
-      {showIcon && <Hash className="w-3 h-3 mr-1" />}
-      <span className="text-primary font-bold">{prefix}</span>
-      <span className="text-muted-foreground">{letters}</span>
+      {showIcon && <Hash className="w-3 h-3 mr-1.5" />}
+      {is224Format ? (
+        <>
+          <span className="font-bold" style={{ color: 'hsl(25 98% 55%)' }}>224</span>
+          <span className="text-muted-foreground">-</span>
+          <span className="font-bold" style={{ color: 'hsl(145 65% 35%)' }}>{formattedId.substring(4, 7)}</span>
+          <span className="text-muted-foreground">-</span>
+          <span className="font-bold" style={{ color: 'hsl(25 98% 55%)' }}>{formattedId.substring(8)}</span>
+        </>
+      ) : (
+        <>
+          <span className="text-primary font-bold">{formattedId.substring(0, 3)}</span>
+          <span className="text-muted-foreground">{formattedId.substring(3)}</span>
+        </>
+      )}
       {copyable && (
         copied ? (
-          <Check className="w-3 h-3 ml-1 text-green-500" />
+          <Check className="w-3 h-3 ml-1.5 text-green-500" />
         ) : (
-          <Copy className="w-3 h-3 ml-1 opacity-50" />
+          <Copy className="w-3 h-3 ml-1.5 opacity-50" />
         )
       )}
     </Badge>
