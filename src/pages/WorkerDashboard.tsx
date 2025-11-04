@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Bike, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function WorkerDashboard() {
   const { token } = useParams();
@@ -278,6 +279,9 @@ export default function WorkerDashboard() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

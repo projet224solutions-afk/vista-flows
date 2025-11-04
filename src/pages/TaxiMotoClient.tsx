@@ -29,6 +29,7 @@ import { useRideNotifications } from "@/hooks/useRideNotifications";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import useResponsive from "@/hooks/useResponsive";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 interface Driver {
   id: string;
@@ -336,6 +337,9 @@ export default function TaxiMotoClient() {
 
       {/* Bannière d'installation PWA */}
       <InstallPromptBanner />
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

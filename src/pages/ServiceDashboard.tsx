@@ -10,6 +10,7 @@ import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { RestaurantMenu } from '@/components/professional-services/modules/RestaurantMenu';
 import { EcommerceProducts } from '@/components/professional-services/modules/EcommerceProducts';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function ServiceDashboard() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -226,6 +227,9 @@ export default function ServiceDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }
