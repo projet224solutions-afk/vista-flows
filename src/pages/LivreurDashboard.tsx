@@ -333,28 +333,18 @@ export default function LivreurDashboard() {
             )}
           </div>
           
-          {/* Boutons de navigation */}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => window.location.href = '/delivery-request'}
-              style={{ 
-                background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
-                color: 'white'
-              }}
-              className="gap-2"
-            >
-              <Package className="h-4 w-4" />
-              {!isMobile && 'Nouvelle Livraison'}
-            </Button>
-            <Button
-              onClick={() => window.location.href = '/taxi-moto'}
-              variant="outline"
-              className="gap-2 border-orange-500/30"
-            >
-              <Car className="h-4 w-4" />
-              {!isMobile && 'Taxi-Moto'}
-            </Button>
-          </div>
+          {/* Bouton de navigation */}
+          <Button
+            onClick={() => window.location.href = '/delivery-request'}
+            style={{ 
+              background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
+              color: 'white'
+            }}
+            className="gap-2"
+          >
+            <Package className="h-4 w-4" />
+            {!isMobile && 'Nouvelle Livraison'}
+          </Button>
         </div>
 
         {/* Onglets de navigation - Responsive */}
