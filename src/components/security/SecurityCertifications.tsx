@@ -1,13 +1,13 @@
 /**
  * CERTIFICATIONS DE SÉCURITÉ
- * Gestion des certifications ISO 27001, PCI-DSS
+ * Gestion des certifications ISO 27001, PCI-DSS - Connecté à Supabase
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, Clock, AlertTriangle, RefreshCw, Download } from "lucide-react";
+import { Shield, CheckCircle2, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,20 +31,17 @@ export function SecurityCertifications() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger les certifications depuis Supabase
-  useEffect(() => {
-    loadCertifications();
-  }, []);
-
   const loadCertifications = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('security_certifications')
         .select('*')
+        .order('status', { ascending: false })
         .order('progress', { ascending: false });
 
       if (error) throw error;
+      
       setCertifications((data || []) as Certification[]);
     } catch (error) {
       console.error('Erreur chargement certifications:', error);
@@ -54,18 +51,9 @@ export function SecurityCertifications() {
     }
   };
 
-  const handleDownloadCertificate = async (certId: string, certName: string) => {
-    try {
-      const cert = certifications.find(c => c.id === certId);
-      if (cert?.certificate_url) {
-        window.open(cert.certificate_url, '_blank');
-      } else {
-        toast.info(`Certificat ${certName} en cours de préparation`);
-      }
-    } catch (error) {
-      toast.error('Erreur lors du téléchargement');
-    }
-  };
+  useEffect(() => {
+    loadCertifications();
+  }, []);
 
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
@@ -83,10 +71,18 @@ export function SecurityCertifications() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-12 flex items-center justify-center">
-          <div className="flex items-center gap-3">
-            <RefreshCw className="w-5 h-5 animate-spin text-primary" />
-            <p className="text-muted-foreground">Chargement des certifications...</p>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary animate-pulse" />
+            Certifications de Sécurité
+          </CardTitle>
+          <CardDescription>
+            Chargement des certifications...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Chargement en cours...
           </div>
         </CardContent>
       </Card>
@@ -107,21 +103,20 @@ export function SecurityCertifications() {
             </CardDescription>
           </div>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={loadCertifications}
             disabled={loading}
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Actualiser
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {certifications.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-8 text-muted-foreground">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune certification enregistrée</p>
+            <p>Aucune certification trouvée</p>
           </div>
         ) : (
           <>
@@ -133,7 +128,7 @@ export function SecurityCertifications() {
                     <p className="text-sm text-muted-foreground">{cert.description}</p>
                     {cert.issuing_authority && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Organisme: {cert.issuing_authority}
+                        Autorité: {cert.issuing_authority}
                       </p>
                     )}
                   </div>
@@ -147,39 +142,28 @@ export function SecurityCertifications() {
                   <Progress value={cert.progress} className="h-2" />
                 </div>
                 {cert.valid_until && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {cert.valid_from && `Du ${new Date(cert.valid_from).toLocaleDateString('fr-FR')} `}
-                      Valide jusqu'au {new Date(cert.valid_until).toLocaleDateString('fr-FR')}
-                    </span>
-                    {cert.certificate_url && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownloadCertificate(cert.id, cert.name)}
-                        className="h-7 text-xs"
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Télécharger
-                      </Button>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Valide jusqu'au {new Date(cert.valid_until).toLocaleDateString('fr-FR')}
+                  </p>
+                )}
+                {cert.valid_from && (
+                  <p className="text-xs text-muted-foreground">
+                    Obtenue le {new Date(cert.valid_from).toLocaleDateString('fr-FR')}
+                  </p>
+                )}
+                {cert.certificate_url && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto"
+                    onClick={() => window.open(cert.certificate_url, '_blank')}
+                  >
+                    Voir le certificat →
+                  </Button>
                 )}
               </div>
             ))}
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => {
-                const certified = certifications.filter(c => c.status === 'certified');
-                if (certified.length > 0) {
-                  toast.success(`${certified.length} certification(s) disponible(s) au téléchargement`);
-                } else {
-                  toast.info('Aucun rapport de conformité disponible pour le moment');
-                }
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
+            <Button variant="outline" className="w-full">
               Télécharger les rapports de conformité
             </Button>
           </>
