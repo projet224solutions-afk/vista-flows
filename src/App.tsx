@@ -25,6 +25,9 @@ const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
 const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
+const DriverProfile = lazy(() => import("./pages/driver/DriverProfile"));
+const DriverSettings = lazy(() => import("./pages/driver/DriverSettings"));
+const DriverHelp = lazy(() => import("./pages/driver/DriverHelp"));
 const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"));
@@ -133,6 +136,30 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['livreur', 'admin']}>
                     <LivreurDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/livreur/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                    <DriverProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/livreur/settings"
+                element={
+                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                    <DriverSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/livreur/help"
+                element={
+                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                    <DriverHelp />
                   </ProtectedRoute>
                 }
               />

@@ -27,6 +27,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { DriverLayout } from "@/components/driver/DriverLayout";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -271,7 +272,8 @@ export default function LivreurDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-responsive">
+    <DriverLayout currentPage="dashboard">
+    <div className="p-responsive">
       {/* Listener temps réel pour nouvelles livraisons */}
       <NearbyDeliveriesListener 
         enabled={!currentDelivery && !currentRide}
@@ -782,9 +784,6 @@ export default function LivreurDashboard() {
         </Tabs>
       </ResponsiveContainer>
       
-      {/* Widget de communication flottant */}
-      <CommunicationWidget position="bottom-right" showNotifications={true} />
-
       {/* Modal de preuve de livraison */}
       {showProofUpload && currentDelivery && (
         <DeliveryProofUpload
@@ -794,5 +793,6 @@ export default function LivreurDashboard() {
         />
       )}
     </div>
+    </DriverLayout>
   );
 }
