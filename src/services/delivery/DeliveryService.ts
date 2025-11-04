@@ -132,7 +132,7 @@ export class DeliveryService {
   }
 
   /**
-   * Démarrer une livraison
+   * Démarrer une livraison (colis récupéré)
    */
   static async startDelivery(deliveryId: string): Promise<void> {
     try {
@@ -151,6 +151,27 @@ export class DeliveryService {
       if (error) throw error;
 
       await this.logDeliveryAction(deliveryId, 'started', user.user.id);
+
+      // Envoyer notification au client (via le champ client_id dans metadata)
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user.user.id)
+          .single();
+
+        await supabase.functions.invoke('send-delivery-notification', {
+          body: {
+            deliveryId,
+            clientId: user.user.id, // Sera récupéré depuis la livraison dans la fonction
+            type: 'picked_up',
+            driverName: profile ? `${profile.first_name} ${profile.last_name}` : 'Le livreur'
+          }
+        });
+      } catch (notifError) {
+        console.error('[DeliveryService] Error sending notification:', notifError);
+        // Ne pas bloquer la livraison si la notification échoue
+      }
     } catch (error) {
       console.error('[DeliveryService] Error starting delivery:', error);
       throw error;

@@ -18,6 +18,7 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Messages = lazy(() => import("./pages/Messages"));
 const ServicesProximite = lazy(() => import("./pages/ServicesProximite"));
 const Tracking = lazy(() => import("./pages/Tracking"));
+const ClientTrackingPage = lazy(() => import("./pages/ClientTrackingPage"));
 const Profil = lazy(() => import("./pages/Profil"));
 const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
 const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
@@ -106,6 +107,7 @@ function App() {
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
+              <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
               
               {/* Affiliate Routes */}
