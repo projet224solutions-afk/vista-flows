@@ -18,8 +18,10 @@ import {
   Shield,
   Database,
   Users,
-  ArrowLeft
+  ArrowLeft,
+  Bell
 } from 'lucide-react';
+import AlertsDashboard from '@/components/pdg/AlertsDashboard';
 import { useNavigate } from 'react-router-dom';
 
 export default function PdgCommandCenter() {
@@ -221,6 +223,10 @@ export default function PdgCommandCenter() {
               <Activity className="h-4 w-4 mr-2" />
               Vue d'ensemble
             </TabsTrigger>
+            <TabsTrigger value="alerts">
+              <Bell className="h-4 w-4 mr-2" />
+              Alertes
+            </TabsTrigger>
             <TabsTrigger value="services">
               <Database className="h-4 w-4 mr-2" />
               Services
@@ -241,6 +247,78 @@ export default function PdgCommandCenter() {
 
           {/* Vue d'ensemble */}
           <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>État des Services</CardTitle>
+                  <CardDescription>
+                    Dernière vérification: {new Date(systemHealth.lastCheck).toLocaleString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {systemHealth.services.map((service) => (
+                      <div key={service.name} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {getHealthIcon(service.status)}
+                          <div>
+                            <p className="font-medium">{service.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {service.responseTime}ms • Erreurs: {service.errorRate}%
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={getStatusColor(service.status)}>
+                          {service.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Actions Rapides</CardTitle>
+                  <CardDescription>Outils de diagnostic et correction</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={detectAnomalies}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Détecter les Anomalies
+                  </Button>
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() => navigate('/pdg/debug')}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Voir les Erreurs Détaillées
+                  </Button>
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() => navigate('/pdg/security')}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Centre de Sécurité
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Alertes Dashboard */}
+          <TabsContent value="alerts">
+            <AlertsDashboard />
+          </TabsContent>
+
+          {/* Services */}
+          <TabsContent value="services">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
