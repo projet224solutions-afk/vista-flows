@@ -49,6 +49,7 @@ const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
 const InstallPWA = lazy(() => import("./pages/InstallPWA"));
+const InstallMobileApp = lazy(() => import("./pages/InstallMobileApp"));
 const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
 const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
@@ -84,6 +85,7 @@ function App() {
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
               <Route path="/install" element={<InstallPWA />} />
+              <Route path="/install-app" element={<InstallMobileApp />} />
 
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />

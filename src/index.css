@@ -191,4 +191,54 @@ All colors MUST be HSL.
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out;
   }
+
+  /* Mobile-first optimizations for PWA */
+  @media (max-width: 768px) {
+    /* Améliorer les zones tactiles */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Désactiver le zoom sur les inputs */
+    input, select, textarea {
+      font-size: 16px;
+    }
+
+    /* Optimiser les cartes sur mobile */
+    .card {
+      border-radius: 0.75rem;
+    }
+
+    /* Améliorer la lisibilité */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Gérer le safe area sur iOS */
+    .safe-area-inset {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+
+  /* PWA standalone mode - cacher les éléments web */
+  @media (display-mode: standalone) {
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+
+  /* Améliorer les performances tactiles */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Scrolling fluide sur iOS */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
 }

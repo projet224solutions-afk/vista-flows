@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRideNotifications } from "@/hooks/useRideNotifications";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
+import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 
 interface Driver {
   id: string;
@@ -318,6 +319,9 @@ export default function TaxiMotoClient() {
           </CardContent>
         </Card>
       )}
+
+      {/* Bannière d'installation PWA */}
+      <InstallPromptBanner />
     </div>
   );
 }

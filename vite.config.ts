@@ -17,16 +17,16 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: '224Solutions - Bureau Syndicat',
-        short_name: '224Syndicat',
-        description: 'Application Bureau Syndicat 224Solutions - Gestion des motos, membres et signalements hors ligne',
-        theme_color: '#1e40af',
+        name: '224Solutions - Multi-Services (Taxi-Moto, Livraison, E-Commerce)',
+        short_name: '224Solutions',
+        description: 'Plateforme complète : réservation taxi-moto, livraison, e-commerce et gestion syndicale en Guinée',
+        theme_color: '#3B82F6',
         background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'any',
+        orientation: 'portrait',
         scope: '/',
         start_url: '/?source=pwa',
-        categories: ['business', 'productivity'],
+        categories: ['business', 'productivity', 'travel', 'lifestyle'],
         icons: [
           {
             src: 'pwa-192x192.png',

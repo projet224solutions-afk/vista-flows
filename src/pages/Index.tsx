@@ -24,6 +24,7 @@ import { useHomeStats } from "@/hooks/useHomeStats";
 import { useHomeProducts } from "@/hooks/useHomeProducts";
 import { useHomeCategories } from "@/hooks/useHomeCategories";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 
 // Services principaux avec données dynamiques
 const getMainServices = (stats: any) => [
@@ -455,6 +456,7 @@ function IndexAlibaba() {
       </section>
 
       {/* Footer de navigation */}
+      <InstallPromptBanner />
       <QuickFooter />
     </div>
     </ErrorBoundary>
