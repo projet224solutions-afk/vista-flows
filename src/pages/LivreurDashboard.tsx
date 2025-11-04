@@ -814,9 +814,6 @@ export default function LivreurDashboard() {
           onCancel={() => setShowProofUpload(false)}
         />
       )}
-      
-      {/* Widget de communication flottant */}
-      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
     </DriverLayout>
   );
