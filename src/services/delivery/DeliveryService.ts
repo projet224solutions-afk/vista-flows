@@ -82,11 +82,12 @@ export class DeliveryService {
         } as NearbyDelivery;
       });
 
-      // Filtrer par distance si des coordonnées sont disponibles
-      if (lat && lng) {
+      // Filtrer par distance si des coordonnées GPS sont valides
+      if (lat && lng && lat !== 0 && lng !== 0 && radiusKm < 99999) {
         return deliveries.filter((delivery: NearbyDelivery) => {
           if (!delivery.pickup_lat || !delivery.pickup_lng) return true; // Garder ceux sans coordonnées
           const distance = this.calculateDistance(lat, lng, delivery.pickup_lat, delivery.pickup_lng);
+          delivery.distance_km = distance;
           return distance <= radiusKm;
         });
       }

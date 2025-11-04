@@ -76,15 +76,26 @@ export default function LivreurDashboard() {
 
   // Recharger les livraisons quand on bascule sur l'onglet missions
   useEffect(() => {
-    if (activeTab === 'missions' && location && !currentDelivery && !currentRide) {
-      findNearbyDeliveries(location.latitude, location.longitude, 10);
+    if (activeTab === 'missions' && !currentDelivery && !currentRide) {
+      if (location) {
+        findNearbyDeliveries(location.latitude, location.longitude, 10);
+      } else {
+        // Charger toutes les livraisons même sans GPS
+        findNearbyDeliveries(0, 0, 99999);
+      }
     }
   }, [activeTab, location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // Charger les livraisons à proximité quand la position change
+  // Charger les livraisons à proximité quand la position change OU au montage
   useEffect(() => {
-    if (location && !currentDelivery && !currentRide) {
-      findNearbyDeliveries(location.latitude, location.longitude, 10);
+    // Charger sans filtrage GPS au montage si pas de location
+    if (!currentDelivery && !currentRide) {
+      if (location) {
+        findNearbyDeliveries(location.latitude, location.longitude, 10);
+      } else {
+        // Charger toutes les livraisons même sans GPS
+        findNearbyDeliveries(0, 0, 99999);
+      }
     }
   }, [location, currentDelivery, currentRide, findNearbyDeliveries]);
 
@@ -296,16 +307,39 @@ export default function LivreurDashboard() {
 
           {/* 📦 Liste des livraisons disponibles */}
           <TabsContent value="missions" className="space-y-3">
+            {/* Alerte GPS si non activé */}
+            {!location && (
+              <Card className="p-4 bg-yellow-500/10 border-yellow-500/30">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="font-medium text-yellow-700">GPS désactivé</p>
+                    <p className="text-sm text-yellow-600">
+                      Activez le GPS pour voir les missions à proximité et filtrer par distance
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {nearbyDeliveries.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="font-medium">Aucune livraison disponible</p>
                   <p className="text-sm mt-1">
-                    {!location 
-                      ? "Activez le GPS pour voir les missions à proximité"
-                      : "Les nouvelles livraisons apparaîtront ici"}
+                    Les nouvelles livraisons apparaîtront ici automatiquement
                   </p>
+                  {location && (
+                    <Button 
+                      onClick={() => findNearbyDeliveries(location.latitude, location.longitude, 10)}
+                      variant="outline"
+                      className="mt-4"
+                    >
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Actualiser
+                    </Button>
+                  )}
                 </div>
               </Card>
             ) : (
