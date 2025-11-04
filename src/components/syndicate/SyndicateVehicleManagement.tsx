@@ -515,11 +515,11 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     Ajouter un Véhicule
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md">
+                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
-                                    <DialogTitle>Nouveau Véhicule</DialogTitle>
+                                    <DialogTitle>Enregistrement de Véhicule</DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4">
+                                <div className="space-y-6 pb-4">
                                     <div>
                                         <Label htmlFor="member_id">Propriétaire *</Label>
                                         <Select
@@ -620,139 +620,150 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     </div>
 
                                     {/* Section de téléchargement de documents et photos */}
-                                    <div className="border-t pt-4 mt-4">
-                                        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                                            <Upload className="w-4 h-4" />
-                                            Documents et Photos
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 mt-6 bg-gray-50">
+                                        <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-blue-600">
+                                            <Upload className="w-5 h-5" />
+                                            Téléchargement de Documents et Photos
                                         </h3>
+                                        <p className="text-sm text-gray-600 mb-4">Formats acceptés: PDF, JPG, PNG. Taille max: 5MB par fichier</p>
                                         
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Document d'immatriculation */}
-                                            <div>
-                                                <Label htmlFor="registration_document" className="flex items-center gap-2">
-                                                    <FileText className="w-4 h-4" />
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <Label htmlFor="registration_document" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <FileText className="w-4 h-4 text-blue-600" />
                                                     Document d'Immatriculation
                                                 </Label>
-                                                <div className="mt-2">
-                                                    <Input
-                                                        id="registration_document"
-                                                        type="file"
-                                                        accept=".pdf,.jpg,.jpeg,.png"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setUploadedFiles(prev => ({ ...prev, registration_document: file }));
-                                                                toast.success('Document d\'immatriculation ajouté');
+                                                <Input
+                                                    id="registration_document"
+                                                    type="file"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                e.target.value = '';
+                                                                return;
                                                             }
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    />
-                                                    {uploadedFiles.registration_document && (
-                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            {uploadedFiles.registration_document.name}
+                                                            setUploadedFiles(prev => ({ ...prev, registration_document: file }));
+                                                            toast.success('Document d\'immatriculation ajouté');
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                {uploadedFiles.registration_document && (
+                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
+                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            {uploadedFiles.registration_document.name} ({(uploadedFiles.registration_document.size / 1024).toFixed(2)} KB)
                                                         </p>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Assurance */}
-                                            <div>
-                                                <Label htmlFor="insurance_document" className="flex items-center gap-2">
-                                                    <Shield className="w-4 h-4" />
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <Label htmlFor="insurance_document" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <Shield className="w-4 h-4 text-blue-600" />
                                                     Document d'Assurance
                                                 </Label>
-                                                <div className="mt-2">
-                                                    <Input
-                                                        id="insurance_document"
-                                                        type="file"
-                                                        accept=".pdf,.jpg,.jpeg,.png"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setUploadedFiles(prev => ({ ...prev, insurance_document: file }));
-                                                                toast.success('Document d\'assurance ajouté');
+                                                <Input
+                                                    id="insurance_document"
+                                                    type="file"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                e.target.value = '';
+                                                                return;
                                                             }
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    />
-                                                    {uploadedFiles.insurance_document && (
-                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            {uploadedFiles.insurance_document.name}
+                                                            setUploadedFiles(prev => ({ ...prev, insurance_document: file }));
+                                                            toast.success('Document d\'assurance ajouté');
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                {uploadedFiles.insurance_document && (
+                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
+                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            {uploadedFiles.insurance_document.name} ({(uploadedFiles.insurance_document.size / 1024).toFixed(2)} KB)
                                                         </p>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Contrôle technique */}
-                                            <div>
-                                                <Label htmlFor="technical_control" className="flex items-center gap-2">
-                                                    <Settings className="w-4 h-4" />
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <Label htmlFor="technical_control" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <Settings className="w-4 h-4 text-blue-600" />
                                                     Contrôle Technique
                                                 </Label>
-                                                <div className="mt-2">
-                                                    <Input
-                                                        id="technical_control"
-                                                        type="file"
-                                                        accept=".pdf,.jpg,.jpeg,.png"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setUploadedFiles(prev => ({ ...prev, technical_control: file }));
-                                                                toast.success('Document de contrôle technique ajouté');
+                                                <Input
+                                                    id="technical_control"
+                                                    type="file"
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                e.target.value = '';
+                                                                return;
                                                             }
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    />
-                                                    {uploadedFiles.technical_control && (
-                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            {uploadedFiles.technical_control.name}
+                                                            setUploadedFiles(prev => ({ ...prev, technical_control: file }));
+                                                            toast.success('Document de contrôle technique ajouté');
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                {uploadedFiles.technical_control && (
+                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
+                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            {uploadedFiles.technical_control.name} ({(uploadedFiles.technical_control.size / 1024).toFixed(2)} KB)
                                                         </p>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Photo du véhicule */}
-                                            <div>
-                                                <Label htmlFor="vehicle_photo" className="flex items-center gap-2">
-                                                    <Car className="w-4 h-4" />
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <Label htmlFor="vehicle_photo" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <Car className="w-4 h-4 text-blue-600" />
                                                     Photo du Véhicule
                                                 </Label>
-                                                <div className="mt-2">
-                                                    <Input
-                                                        id="vehicle_photo"
-                                                        type="file"
-                                                        accept=".jpg,.jpeg,.png,.webp"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                // Vérifier la taille du fichier (max 5MB)
-                                                                if (file.size > 5 * 1024 * 1024) {
-                                                                    toast.error('La photo ne doit pas dépasser 5MB');
-                                                                    return;
-                                                                }
-                                                                setUploadedFiles(prev => ({ ...prev, vehicle_photo: file }));
-                                                                toast.success('Photo du véhicule ajoutée');
+                                                <Input
+                                                    id="vehicle_photo"
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                toast.error('La photo ne doit pas dépasser 5MB');
+                                                                e.target.value = '';
+                                                                return;
                                                             }
-                                                        }}
-                                                        className="cursor-pointer"
-                                                    />
-                                                    {uploadedFiles.vehicle_photo && (
-                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            {uploadedFiles.vehicle_photo.name}
+                                                            setUploadedFiles(prev => ({ ...prev, vehicle_photo: file }));
+                                                            toast.success('Photo du véhicule ajoutée');
+                                                        }
+                                                    }}
+                                                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                {uploadedFiles.vehicle_photo && (
+                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
+                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            {uploadedFiles.vehicle_photo.name} ({(uploadedFiles.vehicle_photo.size / 1024).toFixed(2)} KB)
                                                         </p>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-
-                                        <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
-                                            <AlertTriangle className="w-3 h-3" />
-                                            Formats acceptés: PDF, JPG, PNG (max 5MB par fichier)
-                                        </p>
                                     </div>
 
                                     <div className="flex gap-2 pt-4">
