@@ -86,6 +86,14 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         color: ''
     });
 
+    // États pour les fichiers uploadés
+    const [uploadedFiles, setUploadedFiles] = useState({
+        registration_document: null as File | null,
+        insurance_document: null as File | null,
+        technical_control: null as File | null,
+        vehicle_photo: null as File | null
+    });
+
     // Liste des membres (simulée)
     const [members] = useState([
         { id: '1', name: 'Ibrahima Ndiaye', member_id: 'MBR-2025-00001' },
@@ -225,8 +233,28 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 color: ''
             });
 
+            // Réinitialiser les fichiers
+            setUploadedFiles({
+                registration_document: null,
+                insurance_document: null,
+                technical_control: null,
+                vehicle_photo: null
+            });
+
             setShowAddDialog(false);
-            toast.success('Véhicule ajouté avec succès ! Badge numérique généré.');
+            
+            // Message de succès avec détails des documents uploadés
+            const uploadedDocs = [];
+            if (uploadedFiles.registration_document) uploadedDocs.push('Immatriculation');
+            if (uploadedFiles.insurance_document) uploadedDocs.push('Assurance');
+            if (uploadedFiles.technical_control) uploadedDocs.push('Contrôle technique');
+            if (uploadedFiles.vehicle_photo) uploadedDocs.push('Photo');
+            
+            if (uploadedDocs.length > 0) {
+                toast.success(`Véhicule ajouté avec succès ! Documents: ${uploadedDocs.join(', ')}`);
+            } else {
+                toast.success('Véhicule ajouté avec succès ! Badge numérique généré.');
+            }
 
         } catch (error) {
             console.error('Erreur ajout véhicule:', error);
@@ -589,6 +617,142 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                 placeholder="Rouge"
                                             />
                                         </div>
+                                    </div>
+
+                                    {/* Section de téléchargement de documents et photos */}
+                                    <div className="border-t pt-4 mt-4">
+                                        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                                            <Upload className="w-4 h-4" />
+                                            Documents et Photos
+                                        </h3>
+                                        
+                                        <div className="space-y-4">
+                                            {/* Document d'immatriculation */}
+                                            <div>
+                                                <Label htmlFor="registration_document" className="flex items-center gap-2">
+                                                    <FileText className="w-4 h-4" />
+                                                    Document d'Immatriculation
+                                                </Label>
+                                                <div className="mt-2">
+                                                    <Input
+                                                        id="registration_document"
+                                                        type="file"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                setUploadedFiles(prev => ({ ...prev, registration_document: file }));
+                                                                toast.success('Document d\'immatriculation ajouté');
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    />
+                                                    {uploadedFiles.registration_document && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            {uploadedFiles.registration_document.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Assurance */}
+                                            <div>
+                                                <Label htmlFor="insurance_document" className="flex items-center gap-2">
+                                                    <Shield className="w-4 h-4" />
+                                                    Document d'Assurance
+                                                </Label>
+                                                <div className="mt-2">
+                                                    <Input
+                                                        id="insurance_document"
+                                                        type="file"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                setUploadedFiles(prev => ({ ...prev, insurance_document: file }));
+                                                                toast.success('Document d\'assurance ajouté');
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    />
+                                                    {uploadedFiles.insurance_document && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            {uploadedFiles.insurance_document.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Contrôle technique */}
+                                            <div>
+                                                <Label htmlFor="technical_control" className="flex items-center gap-2">
+                                                    <Settings className="w-4 h-4" />
+                                                    Contrôle Technique
+                                                </Label>
+                                                <div className="mt-2">
+                                                    <Input
+                                                        id="technical_control"
+                                                        type="file"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                setUploadedFiles(prev => ({ ...prev, technical_control: file }));
+                                                                toast.success('Document de contrôle technique ajouté');
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    />
+                                                    {uploadedFiles.technical_control && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            {uploadedFiles.technical_control.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Photo du véhicule */}
+                                            <div>
+                                                <Label htmlFor="vehicle_photo" className="flex items-center gap-2">
+                                                    <Car className="w-4 h-4" />
+                                                    Photo du Véhicule
+                                                </Label>
+                                                <div className="mt-2">
+                                                    <Input
+                                                        id="vehicle_photo"
+                                                        type="file"
+                                                        accept=".jpg,.jpeg,.png,.webp"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                // Vérifier la taille du fichier (max 5MB)
+                                                                if (file.size > 5 * 1024 * 1024) {
+                                                                    toast.error('La photo ne doit pas dépasser 5MB');
+                                                                    return;
+                                                                }
+                                                                setUploadedFiles(prev => ({ ...prev, vehicle_photo: file }));
+                                                                toast.success('Photo du véhicule ajoutée');
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    />
+                                                    {uploadedFiles.vehicle_photo && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            {uploadedFiles.vehicle_photo.name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            Formats acceptés: PDF, JPG, PNG (max 5MB par fichier)
+                                        </p>
                                     </div>
 
                                     <div className="flex gap-2 pt-4">
