@@ -33,6 +33,8 @@ export default function Auth() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const navigate = useNavigate();
 
   // Form data
@@ -257,6 +259,54 @@ export default function Auth() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Validation de l'email
+      const emailSchema = z.string().email("Adresse email invalide");
+      emailSchema.parse(resetEmail);
+
+      // Envoyer l'email de réinitialisation avec le bon redirect URL
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setSuccess("✅ Email de réinitialisation envoyé ! Vérifiez votre boîte mail et suivez les instructions.");
+      setResetEmail('');
+      
+      // Retour au formulaire de connexion après 3 secondes
+      setTimeout(() => {
+        setShowResetPassword(false);
+        setSuccess(null);
+      }, 3000);
+    } catch (err) {
+      let errorMessage = 'Une erreur est survenue';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      // Gestion des erreurs de validation Zod
+      if (err && typeof err === 'object' && 'issues' in err) {
+        const zodError = err as any;
+        errorMessage = zodError.issues[0]?.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+      console.error('Erreur réinitialisation mot de passe:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header avec 224SOLUTIONS et boutons */}
@@ -411,13 +461,30 @@ export default function Auth() {
         </div>
       )}
 
-      {/* Formulaire de connexion/inscription */}
+      {/* Formulaire de connexion/inscription/reset */}
       {!showServiceSelection && (
         <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
+            {/* Bouton retour pour le reset password */}
+            {showResetPassword && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowResetPassword(false);
+                  setError(null);
+                  setSuccess(null);
+                  setResetEmail('');
+                }}
+                className="gap-2 mb-4"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour à la connexion
+              </Button>
+            )}
+
             {/* Messages d'information */}
-            {!showSignup && (
+            {!showSignup && !showResetPassword && (
               <>
                 <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-blue-800 text-sm">
@@ -446,7 +513,59 @@ export default function Auth() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Formulaire de réinitialisation de mot de passe */}
+            {showResetPassword ? (
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                {error && (
+                  <Alert className="bg-red-50 border-red-200">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800">
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {success && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <AlertCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {success}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe.
+                  </p>
+                  <Label htmlFor="reset-email">Adresse email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    'Envoyer le lien de réinitialisation'
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -635,7 +754,11 @@ export default function Auth() {
                 <div className="text-right">
                   <button
                     type="button"
-                    onClick={() => {/* TODO: Implémenter récupération mot de passe */}}
+                    onClick={() => {
+                      setShowResetPassword(true);
+                      setError(null);
+                      setSuccess(null);
+                    }}
                     className="text-sm text-purple-600 hover:underline"
                   >
                     Mot de passe oublié ?
@@ -665,6 +788,7 @@ export default function Auth() {
                     setShowSignup(!showSignup);
                     setSelectedRole(null);
                     setError(null);
+                    setSuccess(null);
                   }}
                   className="text-sm text-purple-600 font-medium hover:underline"
                 >
@@ -672,6 +796,7 @@ export default function Auth() {
                 </button>
               </div>
             </form>
+            )}
           </CardContent>
         </Card>
       </div>
