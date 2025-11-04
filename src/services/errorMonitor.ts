@@ -23,9 +23,16 @@ export interface AutoFix {
 
 class ErrorMonitorService {
   private static instance: ErrorMonitorService;
+  private errorQueue: Map<string, SystemError> = new Map();
+  private flushTimer: NodeJS.Timeout | null = null;
+  private readonly FLUSH_INTERVAL = 2000; // 2 secondes
+  private readonly MAX_QUEUE_SIZE = 50;
+  private processedErrors: Set<string> = new Set();
+  private readonly DEDUP_WINDOW = 5000; // 5 secondes pour déduplication
 
   private constructor() {
     this.setupGlobalErrorHandlers();
+    this.startPeriodicFlush();
   }
 
   static getInstance(): ErrorMonitorService {
@@ -35,9 +42,39 @@ class ErrorMonitorService {
     return ErrorMonitorService.instance;
   }
 
+  private generateErrorHash(error: SystemError): string {
+    // Créer un hash unique basé sur les propriétés importantes
+    return `${error.module}-${error.error_type}-${error.error_message.substring(0, 100)}`;
+  }
+
+  private isDuplicate(error: SystemError): boolean {
+    const hash = this.generateErrorHash(error);
+    const now = Date.now();
+    
+    // Vérifier si l'erreur a déjà été traitée récemment
+    if (this.processedErrors.has(hash)) {
+      return true;
+    }
+    
+    // Ajouter au cache de déduplication
+    this.processedErrors.add(hash);
+    
+    // Nettoyer le cache après la fenêtre de déduplication
+    setTimeout(() => {
+      this.processedErrors.delete(hash);
+    }, this.DEDUP_WINDOW);
+    
+    return false;
+  }
+
   private setupGlobalErrorHandlers() {
-    // Intercepter les erreurs non gérées
+    // 1. Intercepter les erreurs JavaScript non gérées
     window.addEventListener('error', (event) => {
+      // Ignorer les erreurs de chargement de ressources (gérées séparément)
+      if (event.target !== window) {
+        return;
+      }
+
       this.logError({
         module: 'frontend_global',
         error_type: 'uncaught_exception',
@@ -54,7 +91,7 @@ class ErrorMonitorService {
       });
     });
 
-    // Intercepter les promesses rejetées non gérées avec capture améliorée
+    // 2. Intercepter les promesses rejetées non gérées avec capture améliorée
     window.addEventListener('unhandledrejection', (event) => {
       // Prévenir le comportement par défaut pour éviter les logs en double
       event.preventDefault();
@@ -76,7 +113,6 @@ class ErrorMonitorService {
       else if (typeof reason === 'string') {
         errorMessage = reason;
         errorType = 'string_rejection';
-        // Tenter de capturer la stack trace depuis l'endroit actuel
         stackTrace = new Error().stack || 'No stack trace';
       }
       // Cas 3: Object avec message
@@ -110,44 +146,103 @@ class ErrorMonitorService {
       });
     });
 
-    // Intercepter les erreurs de chargement de ressources
+    // 3. Intercepter les erreurs de chargement de ressources (images, scripts, CSS)
     window.addEventListener('error', (event) => {
-      if (event.target !== window && (event.target as any)?.src) {
+      const target = event.target as any;
+      
+      // Vérifier que c'est bien une erreur de ressource
+      if (target !== window && target?.src) {
+        const resourceUrl = target.src || target.href;
+        const resourceType = target.tagName?.toLowerCase() || 'unknown';
+        
+        // Ignorer certaines ressources non critiques
+        const shouldIgnore = 
+          resourceUrl.includes('analytics') ||
+          resourceUrl.includes('tracking') ||
+          resourceUrl.includes('ads');
+        
+        if (shouldIgnore) return;
+        
         this.logError({
           module: 'frontend_resource',
           error_type: 'resource_load_error',
-          error_message: `Failed to load resource: ${(event.target as any).src}`,
+          error_message: `Failed to load ${resourceType}: ${resourceUrl}`,
           stack_trace: 'Resource loading error',
           severity: 'mineure',
           metadata: {
-            resourceUrl: (event.target as any).src,
-            resourceType: (event.target as any).tagName,
+            resourceUrl,
+            resourceType,
             timestamp: new Date().toISOString(),
+            currentUrl: window.location.href,
           },
         });
       }
-    }, true); // Use capture phase to catch resource errors
+    }, true); // Use capture phase
+  }
+
+  private startPeriodicFlush() {
+    // Vider la queue périodiquement
+    this.flushTimer = setInterval(() => {
+      this.flushErrorQueue();
+    }, this.FLUSH_INTERVAL);
+  }
+
+  private async flushErrorQueue() {
+    if (this.errorQueue.size === 0) return;
+
+    const errors = Array.from(this.errorQueue.values());
+    this.errorQueue.clear();
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Insertion en batch pour optimiser les performances
+      const errorRecords = errors.map(error => ({
+        ...error,
+        user_id: user?.id,
+        created_at: new Date().toISOString(),
+      }));
+
+      const { error: dbError } = await supabase
+        .from('system_errors')
+        .insert(errorRecords);
+
+      if (dbError) {
+        console.error('Failed to log errors to database:', dbError);
+      } else {
+        console.log(`✅ Logged ${errors.length} error(s) to database`);
+      }
+
+      // Tenter des corrections automatiques pour les erreurs critiques
+      for (const error of errors.filter(e => e.severity === 'critique')) {
+        await this.tryAutoFix(error);
+      }
+    } catch (e) {
+      console.error('Error flushing error queue:', e);
+    }
   }
 
   async logError(error: SystemError): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Enregistrer l'erreur dans la base de données
-      const { error: dbError } = await supabase
-        .from('system_errors')
-        .insert({
-          ...error,
-          user_id: user?.id,
-          created_at: new Date().toISOString(),
-        });
-
-      if (dbError) {
-        console.error('Failed to log error to database:', dbError);
+      // Vérifier la duplication
+      if (this.isDuplicate(error)) {
+        console.log('⚠️ Duplicate error ignored:', error.error_message);
+        return;
       }
 
-      // Tenter une correction automatique
-      await this.tryAutoFix(error);
+      // Ajouter à la queue
+      const hash = this.generateErrorHash(error);
+      this.errorQueue.set(hash, error);
+
+      // Si la queue est trop grande, forcer un flush
+      if (this.errorQueue.size >= this.MAX_QUEUE_SIZE) {
+        await this.flushErrorQueue();
+      }
+
+      // Log immédiat pour les erreurs critiques
+      if (error.severity === 'critique') {
+        await this.flushErrorQueue();
+      }
     } catch (e) {
       console.error('Error logging system error:', e);
     }
@@ -268,6 +363,20 @@ class ErrorMonitorService {
       return null;
     }
   }
+
+  // Cleanup sur déchargement de la page
+  public async cleanup() {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+    }
+    await this.flushErrorQueue();
+  }
 }
 
+// Créer l'instance singleton
 export const errorMonitor = ErrorMonitorService.getInstance();
+
+// Cleanup automatique avant déchargement
+window.addEventListener('beforeunload', () => {
+  errorMonitor.cleanup();
+});
