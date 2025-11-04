@@ -40,17 +40,36 @@ export default function Auth() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
 
-  // Détecter si on vient d'un lien de réinitialisation
+  // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const isReset = params.get('reset') === 'true';
+    const checkResetSession = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const isReset = params.get('reset') === 'true' || hashParams.get('type') === 'recovery';
+      
+      if (isReset) {
+        console.log('🔑 Lien de réinitialisation détecté, vérification de la session...');
+        
+        // Attendre un moment pour que Supabase traite le hash
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Vérifier qu'on a bien une session active
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.log('✅ Session de réinitialisation active');
+          setShowNewPasswordForm(true);
+          setShowResetPassword(false);
+          setIsLogin(false);
+        } else {
+          console.error('❌ Aucune session trouvée:', error);
+          setError('Session de réinitialisation expirée ou invalide. Veuillez demander un nouveau lien de réinitialisation.');
+          setShowResetPassword(true);
+        }
+      }
+    };
     
-    if (isReset) {
-      console.log('🔑 Lien de réinitialisation détecté');
-      setShowNewPasswordForm(true);
-      setShowResetPassword(false);
-      setIsLogin(false);
-    }
+    checkResetSession();
   }, []);
 
   // Form data
@@ -330,6 +349,15 @@ export default function Auth() {
     setSuccess(null);
 
     try {
+      // Vérifier d'abord qu'on a une session active
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Session expirée. Veuillez demander un nouveau lien de réinitialisation.");
+      }
+
+      console.log('🔐 Session active, mise à jour du mot de passe...');
+
       // Validation du nouveau mot de passe
       if (newPassword.length < 6) {
         throw new Error("Le mot de passe doit faire au moins 6 caractères");
@@ -345,12 +373,17 @@ export default function Auth() {
       });
 
       if (error) {
+        console.error('❌ Erreur Supabase:', error);
         throw error;
       }
 
+      console.log('✅ Mot de passe mis à jour avec succès');
       setSuccess("✅ Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
       setNewPassword('');
       setConfirmNewPassword('');
+      
+      // Se déconnecter pour forcer une nouvelle connexion avec le nouveau mot de passe
+      await supabase.auth.signOut();
       
       // Retour au formulaire de connexion après 2 secondes
       setTimeout(() => {
@@ -367,7 +400,7 @@ export default function Auth() {
       }
       
       setError(errorMessage);
-      console.error('Erreur changement mot de passe:', err);
+      console.error('❌ Erreur changement mot de passe:', err);
     } finally {
       setLoading(false);
     }
