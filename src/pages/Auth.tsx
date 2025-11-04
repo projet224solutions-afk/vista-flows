@@ -34,8 +34,24 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
+
+  // Détecter si on vient d'un lien de réinitialisation
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isReset = params.get('reset') === 'true';
+    
+    if (isReset) {
+      console.log('🔑 Lien de réinitialisation détecté');
+      setShowNewPasswordForm(true);
+      setShowResetPassword(false);
+      setIsLogin(false);
+    }
+  }, []);
 
   // Form data
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -307,6 +323,56 @@ export default function Auth() {
     }
   };
 
+  const handleNewPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Validation du nouveau mot de passe
+      if (newPassword.length < 6) {
+        throw new Error("Le mot de passe doit faire au moins 6 caractères");
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        throw new Error("Les mots de passe ne correspondent pas");
+      }
+
+      // Mettre à jour le mot de passe
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setSuccess("✅ Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
+      setNewPassword('');
+      setConfirmNewPassword('');
+      
+      // Retour au formulaire de connexion après 2 secondes
+      setTimeout(() => {
+        setShowNewPasswordForm(false);
+        setIsLogin(true);
+        setSuccess(null);
+        navigate('/auth');
+      }, 2000);
+    } catch (err) {
+      let errorMessage = 'Une erreur est survenue';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      console.error('Erreur changement mot de passe:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header avec 224SOLUTIONS et boutons */}
@@ -561,6 +627,101 @@ export default function Auth() {
                     </>
                   ) : (
                     'Envoyer le lien de réinitialisation'
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setShowResetPassword(false);
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                >
+                  Retour à la connexion
+                </Button>
+              </form>
+            ) : showNewPasswordForm ? (
+              <form onSubmit={handleNewPasswordSubmit} className="space-y-4">
+                {error && (
+                  <Alert className="bg-red-50 border-red-200">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800">
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {success && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <AlertCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {success}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    🔐 Choisissez votre nouveau mot de passe.
+                  </p>
+                  <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Minimum 6 caractères"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-new-password">Confirmer le mot de passe</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-new-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Retapez votre mot de passe"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Réinitialisation en cours...
+                    </>
+                  ) : (
+                    'Réinitialiser mon mot de passe'
                   )}
                 </Button>
               </form>
