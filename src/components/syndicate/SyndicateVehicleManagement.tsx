@@ -78,6 +78,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     // Formulaire d'ajout de véhicule
     const [formData, setFormData] = useState({
         member_id: '',
+        owner_name: '',
         serial_number: '',
         license_plate: '',
         vehicle_type: 'motorcycle' as SyndicateVehicle['vehicle_type'],
@@ -183,18 +184,37 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
      * Ajoute un nouveau véhicule dans Supabase
      */
     const addVehicle = async () => {
-        if (!formData.member_id || !formData.serial_number || !formData.license_plate) {
+        if (!formData.owner_name || !formData.serial_number || !formData.license_plate) {
             toast.error('Veuillez remplir les champs obligatoires');
             return;
         }
 
         try {
+            // Chercher ou créer le membre
+            let memberId = formData.member_id;
+            
+            if (!memberId) {
+                // Créer un nouveau membre
+                const { data: newMember, error: memberError } = await supabase
+                    .from('members')
+                    .insert({
+                        bureau_id: bureauId,
+                        name: formData.owner_name,
+                        status: 'active'
+                    })
+                    .select()
+                    .single();
+                
+                if (memberError) throw memberError;
+                memberId = newMember.id;
+            }
+
             // Insérer le véhicule dans Supabase
             const { data, error } = await supabase
                 .from('vehicles')
                 .insert({
                     bureau_id: bureauId,
-                    owner_member_id: formData.member_id,
+                    owner_member_id: memberId,
                     serial_number: formData.serial_number,
                     type: formData.vehicle_type,
                     brand: formData.brand || null,
@@ -210,6 +230,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             // Réinitialiser le formulaire
             setFormData({
                 member_id: '',
+                owner_name: '',
                 serial_number: '',
                 license_plate: '',
                 vehicle_type: 'motorcycle',
@@ -524,22 +545,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                 </DialogHeader>
                                 <div className="space-y-6 pb-4">
                                     <div>
-                                        <Label htmlFor="member_id">Propriétaire *</Label>
-                                        <Select
-                                            value={formData.member_id}
-                                            onValueChange={(value) => setFormData(prev => ({ ...prev, member_id: value }))}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner un membre" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {members.map(member => (
-                                                    <SelectItem key={member.id} value={member.id}>
-                                                        {member.name} ({member.member_id})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <Label htmlFor="owner_name">Nom du Propriétaire *</Label>
+                                        <Input
+                                            id="owner_name"
+                                            value={formData.owner_name}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
+                                            placeholder="Nom complet du propriétaire"
+                                        />
                                     </div>
 
                                     <div>
