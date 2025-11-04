@@ -60,6 +60,7 @@ const MigrateIds = lazy(() => import("./pages/Admin/MigrateIds"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazy(() => import("./pages/AffiliateRedirect"));
+const DeliveryRequest = lazy(() => import("./pages/DeliveryRequest"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -99,6 +100,7 @@ function App() {
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/devis" element={<Devis />} />
+              <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
