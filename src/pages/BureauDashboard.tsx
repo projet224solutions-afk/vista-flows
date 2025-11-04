@@ -16,6 +16,7 @@ import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
 import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
 import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
+import SyndicateVehicleManagement from '@/components/syndicate/SyndicateVehicleManagement';
 import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
 import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator';
 import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration';
@@ -535,17 +536,9 @@ export default function BureauDashboard() {
           {bureau && (
             <>
               <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-                <Card className="xl:col-span-3">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bike className="w-5 h-5" />
-                      Enregistrement de Véhicule
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MotoRegistrationForm bureauId={bureau.id} onSuccess={loadBureauData} />
-                  </CardContent>
-                </Card>
+                <div className="xl:col-span-3">
+                  <SyndicateVehicleManagement bureauId={bureau.id} />
+                </div>
                 <div className="space-y-4">
                   <MotoSecurityNotifications bureauId={bureau.id} />
                 </div>
@@ -556,7 +549,7 @@ export default function BureauDashboard() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Bike className="w-5 h-5" />
-                      Gestion des Véhicules
+                      Ancienne Interface (Backup)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
