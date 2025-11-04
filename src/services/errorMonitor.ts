@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { alertingService } from './alertingService';
 
 export interface SystemError {
   id?: string;
@@ -211,6 +212,15 @@ class ErrorMonitorService {
         console.error('Failed to log errors to database:', dbError);
       } else {
         console.log(`✅ Logged ${errors.length} error(s) to database`);
+        
+        // Déclencher la vérification des alertes après avoir loggé les erreurs
+        if (errors.length > 0) {
+          try {
+            alertingService['checkForAlerts']?.();
+          } catch (e) {
+            console.error('Error triggering alert check:', e);
+          }
+        }
       }
 
       // Tenter des corrections automatiques pour les erreurs critiques
