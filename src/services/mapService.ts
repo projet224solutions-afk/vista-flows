@@ -138,6 +138,12 @@ class MapService {
       const data = await response.json();
       console.log('[MapService] Geocoding results:', data);
 
+      // Gérer le cas où aucun résultat n'est trouvé
+      if (data.status === 'ZERO_RESULTS') {
+        console.warn('[MapService] No geocoding results:', data.message);
+        return [];
+      }
+
       if (data.error) {
         throw new Error(data.error);
       }
@@ -182,6 +188,12 @@ class MapService {
       });
 
       const data = await response.json();
+
+      // Gérer le cas où aucun résultat n'est trouvé
+      if (data.status === 'ZERO_RESULTS') {
+        console.warn('[MapService] No reverse geocoding results:', data.message);
+        return 'Adresse inconnue';
+      }
 
       if (data.error) {
         throw new Error(data.error);

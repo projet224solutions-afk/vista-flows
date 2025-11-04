@@ -49,6 +49,12 @@ export class GeolocationService {
         return null;
       }
 
+      // Gérer le cas ZERO_RESULTS avec un message informatif
+      if (data?.status === 'ZERO_RESULTS') {
+        console.warn('No geocoding results:', data.message);
+        return null;
+      }
+
       if (data?.status !== 'OK' || !data?.results?.[0]) {
         console.error('No results found');
         return null;
@@ -84,6 +90,12 @@ export class GeolocationService {
 
       if (error) {
         console.error('Reverse geocoding error:', error);
+        return null;
+      }
+
+      // Gérer le cas ZERO_RESULTS avec un message informatif
+      if (data?.status === 'ZERO_RESULTS') {
+        console.warn('No reverse geocoding results:', data.message);
         return null;
       }
 

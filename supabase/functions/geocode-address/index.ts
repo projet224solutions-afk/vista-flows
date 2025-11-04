@@ -62,12 +62,13 @@ serve(async (req) => {
     if (data.status === 'ZERO_RESULTS') {
       return new Response(
         JSON.stringify({ 
-          error: 'No results found', 
+          status: 'ZERO_RESULTS',
+          results: [],
           message: type === 'geocode' 
-            ? `Aucune adresse trouvée pour: "${address}". Veuillez vérifier l'adresse.`
+            ? `Aucune adresse trouvée pour: "${address}". Veuillez vérifier l'orthographe ou essayez une adresse plus précise (ex: "M'balia, Conakry, Guinée").`
             : `Aucune adresse trouvée pour les coordonnées: ${lat}, ${lng}`
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
