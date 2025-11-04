@@ -54,15 +54,17 @@ export default function CompetitiveAnalysis() {
 
       if (error) throw error;
 
-      if (data?.success) {
+      if (data?.success && data?.analysis) {
         setCompetitiveAnalysis(data.analysis);
         toast.success('Analyse comparative terminée');
       } else {
         throw new Error(data?.error || 'Erreur lors de l\'analyse');
       }
     } catch (error: any) {
-      console.error('Error running analysis:', error);
+      console.error('Error running competitive analysis:', error);
       toast.error(error.message || 'Erreur lors de l\'analyse comparative');
+      // Reset state on error
+      setCompetitiveAnalysis(null);
     } finally {
       setLoadingCompetitive(false);
     }
@@ -78,10 +80,14 @@ export default function CompetitiveAnalysis() {
       if (data?.analysis) {
         setSecurityAnalysis(data.analysis);
         toast.success('Analyse de sécurité terminée');
+      } else {
+        throw new Error('Aucune analyse reçue');
       }
     } catch (error: any) {
       console.error('Security analysis error:', error);
       toast.error('Erreur lors de l\'analyse de sécurité: ' + error.message);
+      // Reset state on error
+      setSecurityAnalysis(null);
     } finally {
       setLoadingSecurity(false);
     }
@@ -100,67 +106,42 @@ export default function CompetitiveAnalysis() {
   };
 
   const getEffortColor = (effort: string) => {
-    if (effort === 'low') return 'default';
-    if (effort === 'medium') return 'secondary';
-    return 'outline';
-  };
-
-  const getCriteriaIcon = (criteria: string) => {
-    switch (criteria.toLowerCase()) {
-      case 'sécurité':
-      case 'authentication':
-      case 'encryption':
-        return <Shield className="w-4 h-4" />;
-      case 'fiabilité':
-      case 'monitoring':
-        return <Award className="w-4 h-4" />;
-      case 'fonctionnalité':
-      case 'infrastructure':
-        return <Zap className="w-4 h-4" />;
-      case 'innovation':
-      case 'fraud_detection':
-      case 'compliance':
-        return <TrendingUp className="w-4 h-4" />;
-      default:
-        return <BarChart3 className="w-4 h-4" />;
-    }
+    if (effort === 'high') return 'destructive';
+    if (effort === 'medium') return 'default';
+    return 'secondary';
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-responsive">
+    <div className="min-h-screen bg-background">
       <ResponsiveContainer>
-        <div className="space-y-4 md:space-y-6">
-          {/* Header Responsive */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 md:gap-3 mb-2">
-                <BarChart3 className={`text-primary ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
-                <h1 className={`font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
-                  Analyse Comparative IA
-                </h1>
-              </div>
-              <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
-                Comparaison 224Solutions vs Grandes Plateformes
+        <div className="space-y-6 py-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/pdg')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold">Analyse Concurrentielle</h1>
+              <p className="text-muted-foreground">
+                Comparaison avec les leaders du marché
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/pdg')}
-              className="gap-2"
-              size={isMobile ? "sm" : "default"}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {!isMobile && 'Retour'}
-            </Button>
           </div>
 
-          <Tabs defaultValue="competitive" className="space-y-4 md:space-y-6">
+          {/* Tabs */}
+          <Tabs defaultValue="competitive" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="competitive" className="text-xs md:text-sm">
-                {isMobile ? 'Concurrentiel' : 'Analyse Concurrentielle'}
+              <TabsTrigger value="competitive" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Analyse Compétitive
               </TabsTrigger>
-              <TabsTrigger value="security" className="text-xs md:text-sm">
-                {isMobile ? 'Sécurité' : 'Analyse de Sécurité'}
+              <TabsTrigger value="security" className="gap-2">
+                <Shield className="w-4 h-4" />
+                Sécurité vs Concurrents
               </TabsTrigger>
             </TabsList>
 
@@ -170,28 +151,25 @@ export default function CompetitiveAnalysis() {
                 <CardHeader>
                   <CardTitle>Lancer l'Analyse Comparative</CardTitle>
                   <CardDescription>
-                    Analyse IA de 224Solutions vs {competitors.join(', ')}
+                    Analyse IA comparative de 224Solutions vs les géants du marché
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Plateformes comparées:</h4>
+                      <h4 className="font-semibold mb-2">Concurrents analysés:</h4>
                       <div className="flex flex-wrap gap-2">
-                        <Badge variant="default">224Solutions</Badge>
-                        {competitors.map(c => (
-                          <Badge key={c} variant="secondary">{c}</Badge>
+                        {competitors.map((comp) => (
+                          <Badge key={comp} variant="outline">{comp}</Badge>
                         ))}
                       </div>
                     </div>
+                    
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Critères d'analyse:</h4>
+                      <h4 className="font-semibold mb-2">Critères d'évaluation:</h4>
                       <div className="flex flex-wrap gap-2">
-                        {criteria.map(c => (
-                          <Badge key={c} variant="outline" className="gap-1">
-                            {getCriteriaIcon(c)}
-                            {c}
-                          </Badge>
+                        {criteria.map((crit) => (
+                          <Badge key={crit} variant="secondary">{crit}</Badge>
                         ))}
                       </div>
                     </div>
@@ -203,12 +181,12 @@ export default function CompetitiveAnalysis() {
                     >
                       {loadingCompetitive ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin" />
                           Analyse en cours...
                         </>
                       ) : (
                         <>
-                          <TrendingUp className="w-4 h-4" />
+                          <BarChart3 className="w-5 h-5" />
                           Lancer l'Analyse IA
                         </>
                       )}
@@ -223,7 +201,7 @@ export default function CompetitiveAnalysis() {
                 <Card className="border-primary/20 bg-primary/5">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-primary" />
+                      <Award className="w-6 h-6 text-primary" />
                       Résumé de l'Analyse
                     </CardTitle>
                   </CardHeader>
@@ -238,67 +216,77 @@ export default function CompetitiveAnalysis() {
                   desktopCols={3} 
                   gap={isMobile ? "sm" : "md"}
                 >
-                  {competitiveAnalysis.platforms.map((platform) => (
+                  {competitiveAnalysis.platforms && competitiveAnalysis.platforms.map((platform) => (
                     <Card key={platform.name} className={platform.name === '224Solutions' ? 'border-primary/50 shadow-lg' : ''}>
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                           <span>{platform.name}</span>
                           {platform.name === '224Solutions' && (
-                            <Badge variant="default">Notre Plateforme</Badge>
+                            <Badge variant="default" className="gap-1">
+                              <Award className="w-3 h-3" />
+                              Notre solution
+                            </Badge>
                           )}
                         </CardTitle>
+                        {platform.overall_score !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <Progress value={platform.overall_score} className="flex-1" />
+                            <span className={`text-sm font-semibold ${getScoreColor(platform.overall_score)}`}>
+                              {platform.overall_score.toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="space-y-3">
-                          {Object.entries(platform.scores).map(([criterion, score]) => (
-                            <div key={criterion}>
-                              <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="flex items-center gap-1">
-                                  {getCriteriaIcon(criterion)}
-                                  {criterion}
-                                </span>
-                                <span className={`font-bold ${getScoreColor(score)}`}>
-                                  {score}/10
+                        {platform.scores && Object.keys(platform.scores).length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold">Scores par critère</h4>
+                            {Object.entries(platform.scores).map(([criterion, score]) => (
+                              <div key={criterion} className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">{criterion}</span>
+                                <span className={`font-semibold ${getScoreColor(score as number)}`}>
+                                  {typeof score === 'number' ? score.toFixed(1) : score}/10
                                 </span>
                               </div>
-                              <Progress value={score * 10} className="h-2" />
-                            </div>
-                          ))}
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-semibold text-green-600 mb-2">Forces</h4>
-                          <ul className="space-y-1 text-xs">
-                            {platform.strengths.map((strength, i) => (
-                              <li key={i} className="flex items-start gap-1">
-                                <span className="text-green-600 mt-0.5">✓</span>
-                                <span>{strength}</span>
-                              </li>
                             ))}
-                          </ul>
-                        </div>
+                          </div>
+                        )}
 
-                        <div>
-                          <h4 className="text-sm font-semibold text-orange-600 mb-2">Faiblesses</h4>
-                          <ul className="space-y-1 text-xs">
-                            {platform.weaknesses.map((weakness, i) => (
-                              <li key={i} className="flex items-start gap-1">
-                                <span className="text-orange-600 mt-0.5">!</span>
-                                <span>{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        {platform.strengths && platform.strengths.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
+                              ✓ Points forts
+                            </h4>
+                            <ul className="text-sm space-y-1 text-muted-foreground">
+                              {platform.strengths.map((strength, i) => (
+                                <li key={i}>• {strength}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {platform.weaknesses && platform.weaknesses.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
+                              ✗ Faiblesses
+                            </h4>
+                            <ul className="text-sm space-y-1 text-muted-foreground">
+                              {platform.weaknesses.map((weakness, i) => (
+                                <li key={i}>• {weakness}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
 
                         {platform.innovations && platform.innovations.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-semibold text-blue-600 mb-2">Innovations</h4>
-                            <ul className="space-y-1 text-xs">
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                              <Zap className="w-3 h-3 inline mr-1" />
+                              Innovations
+                            </h4>
+                            <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.innovations.map((innovation, i) => (
-                                <li key={i} className="flex items-start gap-1">
-                                  <span className="text-blue-600 mt-0.5">★</span>
-                                  <span>{innovation}</span>
-                                </li>
+                                <li key={i}>• {innovation}</li>
                               ))}
                             </ul>
                           </div>
@@ -308,24 +296,53 @@ export default function CompetitiveAnalysis() {
                   ))}
                 </ResponsiveGrid>
 
-                <Card className="border-blue-500/20 bg-blue-500/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-blue-600" />
-                      Recommandations Stratégiques
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {competitiveAnalysis.recommendations.map((rec, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <span className="text-blue-600 font-bold mt-0.5">{i + 1}.</span>
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                {competitiveAnalysis.ranking && competitiveAnalysis.ranking.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Classement Général</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {competitiveAnalysis.ranking.map((platform, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                              index === 0 ? 'bg-yellow-500 text-white' :
+                              index === 1 ? 'bg-gray-400 text-white' :
+                              index === 2 ? 'bg-orange-600 text-white' :
+                              'bg-muted'
+                            }`}>
+                              <span className="font-bold">{index + 1}</span>
+                            </div>
+                            <span className={`font-semibold ${platform === '224Solutions' ? 'text-primary' : ''}`}>
+                              {platform}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {competitiveAnalysis.recommendations && competitiveAnalysis.recommendations.length > 0 && (
+                  <Card className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                        <TrendingUp className="w-5 h-5" />
+                        Recommandations Stratégiques
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {competitiveAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm">
+                            <span className="text-blue-600 font-bold mt-0.5">{i + 1}.</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="flex justify-center">
                   <Button
@@ -342,150 +359,130 @@ export default function CompetitiveAnalysis() {
                 </div>
               </>
             )}
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="w-6 h-6 text-primary" />
-                  Analyse de Sécurité Complète
-                </CardTitle>
-                <CardDescription>
-                  Évaluation détaillée de la sécurité de 224Solutions vs Amazon, Alibaba, Odoo et Africa Coin
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={runSecurityAnalysis} 
-                  disabled={loadingSecurity}
-                  size="lg"
-                  className="w-full sm:w-auto"
-                >
-                  {loadingSecurity ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Analyse en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />
-                      Lancer l'analyse de sécurité
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            <TabsContent value="security" className="space-y-6">
+            {!securityAnalysis && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Analyse de Sécurité Comparative</CardTitle>
+                  <CardDescription>
+                    Évaluation de la sécurité de 224Solutions face aux standards des leaders
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <Lock className="w-5 h-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold mb-1">Analyse approfondie</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Cette analyse compare nos mesures de sécurité avec celles des géants du marché
+                          et identifie les axes d'amélioration prioritaires.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={runSecurityAnalysis}
+                      disabled={loadingSecurity}
+                      className="w-full gap-2"
+                      size="lg"
+                    >
+                      {loadingSecurity ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Analyse en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="w-5 h-5" />
+                          Lancer l'Analyse de Sécurité
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {securityAnalysis && (
               <div className="space-y-6">
-                <Card>
+                <Card className="border-primary/20 bg-primary/5">
                   <CardHeader>
-                    <CardTitle>Résumé Exécutif</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="w-6 h-6 text-primary" />
+                      Résumé de l'Analyse de Sécurité
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">{securityAnalysis.summary}</p>
+                    <p className="text-sm leading-relaxed">{securityAnalysis.summary}</p>
                   </CardContent>
                 </Card>
 
-                {securityAnalysis.ranking && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Classement par Sécurité</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ol className="space-y-2">
-                        {securityAnalysis.ranking.map((platform: string, index: number) => (
-                          <li key={platform} className="flex items-center gap-3">
-                            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
-                              {index + 1}
-                            </span>
-                            <span className="text-lg font-medium">{platform}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <div className="grid gap-6">
-                  {securityAnalysis.platforms.map((platform) => (
-                    <Card key={platform.name} className={platform.name === '224Solutions' ? 'border-primary' : ''}>
+                <ResponsiveGrid 
+                  mobileCols={1} 
+                  tabletCols={2} 
+                  desktopCols={3}
+                  gap={isMobile ? "sm" : "md"}
+                >
+                  {securityAnalysis.platforms && securityAnalysis.platforms.map((platform) => (
+                    <Card key={platform.name} className={platform.name === '224Solutions' ? 'border-primary/50 shadow-lg' : ''}>
                       <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-2">
-                            <Shield className="w-5 h-5" />
-                            {platform.name}
-                          </CardTitle>
-                          {platform.overall_score && (
-                            <span className={`text-3xl font-bold ${getScoreColor(platform.overall_score)}`}>
-                              {platform.overall_score}/100
-                            </span>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>{platform.name}</span>
+                          {platform.name === '224Solutions' && (
+                            <Badge variant="default" className="gap-1">
+                              <Shield className="w-3 h-3" />
+                              Notre solution
+                            </Badge>
                           )}
-                        </div>
+                        </CardTitle>
+                        {platform.overall_score !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <Progress value={platform.overall_score} className="flex-1" />
+                            <span className={`text-sm font-semibold ${getScoreColor(platform.overall_score)}`}>
+                              {platform.overall_score.toFixed(1)}%
+                            </span>
+                          </div>
+                        )}
                       </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-3">
-                          <h4 className="font-semibold">Scores Détaillés</h4>
-                          {Object.entries(platform.scores).map(([key, value]: [string, any]) => (
-                            <div key={key} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span className="capitalize flex items-center gap-1">
-                                  {getCriteriaIcon(key)}
-                                  {key.replace('_', ' ')}
+                      <CardContent className="space-y-4">
+                        {platform.scores && Object.keys(platform.scores).length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold">Scores de sécurité</h4>
+                            {Object.entries(platform.scores).map(([criterion, score]) => (
+                              <div key={criterion} className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">{criterion}</span>
+                                <span className={`font-semibold ${getScoreColor(score as number)}`}>
+                                  {typeof score === 'number' ? score.toFixed(1) : score}/10
                                 </span>
-                                <span className="font-medium">{value}/{key === 'authentication' || key === 'encryption' ? '20' : '15'}</span>
                               </div>
-                              <Progress 
-                                value={(value / (key === 'authentication' || key === 'encryption' ? 20 : 15)) * 100} 
-                                className="h-2"
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        <div>
-                          <h4 className="font-semibold mb-2 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-green-600" />
-                            Points Forts
-                          </h4>
-                          <ul className="space-y-1">
-                            {platform.strengths.map((strength: string, idx: number) => (
-                              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                                <span className="text-green-600 mt-1">✓</span>
-                                <span>{strength}</span>
-                              </li>
                             ))}
-                          </ul>
-                        </div>
+                          </div>
+                        )}
 
-                        <div>
-                          <h4 className="font-semibold mb-2 flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-red-600" />
-                            Faiblesses
-                          </h4>
-                          <ul className="space-y-1">
-                            {platform.weaknesses.map((weakness: string, idx: number) => (
-                              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                                <span className="text-red-600 mt-1">⚠</span>
-                                <span>{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {platform.recommendations && (
-                          <div>
-                            <h4 className="font-semibold mb-2 flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-blue-600" />
-                              Recommandations
+                        {platform.strengths && platform.strengths.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
+                              ✓ Points forts sécurité
                             </h4>
-                            <ul className="space-y-1">
-                              {platform.recommendations.map((rec: string, idx: number) => (
-                                <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                                  <span className="text-blue-600 mt-1">→</span>
-                                  <span>{rec}</span>
-                                </li>
+                            <ul className="text-sm space-y-1 text-muted-foreground">
+                              {platform.strengths.map((strength, i) => (
+                                <li key={i}>• {strength}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {platform.weaknesses && platform.weaknesses.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
+                              ✗ Vulnérabilités
+                            </h4>
+                            <ul className="text-sm space-y-1 text-muted-foreground">
+                              {platform.weaknesses.map((weakness, i) => (
+                                <li key={i}>• {weakness}</li>
                               ))}
                             </ul>
                           </div>
@@ -493,10 +490,10 @@ export default function CompetitiveAnalysis() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                </ResponsiveGrid>
 
-                {securityAnalysis.solutions_224_priorities && (
-                  <Card className="border-primary">
+                {securityAnalysis.solutions_224_priorities && securityAnalysis.solutions_224_priorities.length > 0 && (
+                  <Card className="border-blue-200 dark:border-blue-900">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Zap className="w-6 h-6 text-primary" />
