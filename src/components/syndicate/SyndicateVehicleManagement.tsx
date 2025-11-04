@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,77 +95,82 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         vehicle_photo: null as File | null
     });
 
-    // Liste des membres (simulée)
-    const [members] = useState([
-        { id: '1', name: 'Ibrahima Ndiaye', member_id: 'MBR-2025-00001' },
-        { id: '2', name: 'Fatou Sall', member_id: 'MBR-2025-00002' },
-        { id: '3', name: 'Moussa Ba', member_id: 'MBR-2025-00003' }
-    ]);
+    // Liste des membres (chargée depuis Supabase)
+    const [members, setMembers] = useState<{ id: string; name: string; member_id: string }[]>([]);
 
     useEffect(() => {
         loadVehicles();
+        loadMembers();
     }, [bureauId]);
 
     /**
-     * Charge la liste des véhicules
+     * Charge la liste des membres
+     */
+    const loadMembers = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('members')
+                .select('id, name')
+                .eq('bureau_id', bureauId)
+                .eq('status', 'active');
+
+            if (error) throw error;
+
+            setMembers(data?.map(m => ({
+                id: m.id,
+                name: m.name,
+                member_id: m.id
+            })) || []);
+        } catch (error) {
+            console.error('Erreur chargement membres:', error);
+        }
+    };
+
+    /**
+     * Charge la liste des véhicules depuis Supabase
      */
     const loadVehicles = async () => {
         try {
-            // Simuler le chargement depuis Supabase
-            const mockVehicles: SyndicateVehicle[] = [
-                {
-                    id: '1',
-                    member_id: '1',
-                    member_name: 'Ibrahima Ndiaye',
-                    serial_number: 'MT-2024-001234',
-                    license_plate: 'DK-1234-AB',
-                    vehicle_type: 'motorcycle',
-                    brand: 'Yamaha',
-                    model: 'XTZ 125',
-                    year: 2023,
-                    color: 'Rouge',
-                    digital_badge_id: 'BDG-20250930-ABC12345',
-                    qr_code_data: JSON.stringify({
-                        vehicle_id: '1',
-                        serial_number: 'MT-2024-001234',
-                        owner: 'Ibrahima Ndiaye',
-                        bureau: bureauId,
-                        issued_date: '2025-09-30'
-                    }),
-                    status: 'active',
-                    verified: true,
-                    verified_at: '2025-09-25T14:00:00Z',
-                    badge_generated_at: '2025-09-25T14:30:00Z',
-                    created_at: '2025-09-25T10:00:00Z'
-                },
-                {
-                    id: '2',
-                    member_id: '2',
-                    member_name: 'Fatou Sall',
-                    serial_number: 'MT-2024-005678',
-                    license_plate: 'DK-5678-CD',
-                    vehicle_type: 'motorcycle',
-                    brand: 'Honda',
-                    model: 'CB 125',
-                    year: 2024,
-                    color: 'Bleu',
-                    digital_badge_id: 'BDG-20250930-DEF67890',
-                    qr_code_data: JSON.stringify({
-                        vehicle_id: '2',
-                        serial_number: 'MT-2024-005678',
-                        owner: 'Fatou Sall',
-                        bureau: bureauId,
-                        issued_date: '2025-09-30'
-                    }),
-                    status: 'active',
-                    verified: true,
-                    verified_at: '2025-09-26T10:00:00Z',
-                    badge_generated_at: '2025-09-26T10:30:00Z',
-                    created_at: '2025-09-26T09:00:00Z'
-                }
-            ];
+            setLoading(true);
+            
+            const { data, error } = await supabase
+                .from('vehicles')
+                .select(`
+                    *,
+                    owner:members!owner_member_id(id, name)
+                `)
+                .eq('bureau_id', bureauId)
+                .order('created_at', { ascending: false });
 
-            setVehicles(mockVehicles);
+            if (error) throw error;
+
+            const formattedVehicles: SyndicateVehicle[] = (data || []).map(v => ({
+                id: v.id,
+                member_id: v.owner_member_id || '',
+                member_name: v.owner?.name || 'N/A',
+                serial_number: v.serial_number || '',
+                license_plate: v.serial_number || '',
+                vehicle_type: (v.type?.toLowerCase() || 'motorcycle') as SyndicateVehicle['vehicle_type'],
+                brand: v.brand || undefined,
+                model: v.model || undefined,
+                year: v.year || undefined,
+                color: undefined,
+                digital_badge_id: `BDG-${v.id?.substring(0, 8)}`,
+                qr_code_data: JSON.stringify({
+                    vehicle_id: v.id,
+                    serial_number: v.serial_number,
+                    owner: v.owner?.name,
+                    bureau: bureauId,
+                    issued_date: v.created_at
+                }),
+                status: (v.status || 'active') as SyndicateVehicle['status'],
+                verified: true,
+                verified_at: v.created_at,
+                badge_generated_at: v.created_at,
+                created_at: v.created_at
+            }));
+
+            setVehicles(formattedVehicles);
         } catch (error) {
             console.error('Erreur chargement véhicules:', error);
             toast.error('Impossible de charger les véhicules');
@@ -174,7 +180,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     };
 
     /**
-     * Ajoute un nouveau véhicule
+     * Ajoute un nouveau véhicule dans Supabase
      */
     const addVehicle = async () => {
         if (!formData.member_id || !formData.serial_number || !formData.license_plate) {
@@ -182,44 +188,24 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             return;
         }
 
-        // Vérifier l'unicité du numéro de série
-        if (vehicles.some(v => v.serial_number === formData.serial_number)) {
-            toast.error('Ce numéro de série existe déjà');
-            return;
-        }
-
         try {
-            const selectedMember = members.find(m => m.id === formData.member_id);
-            const badgeId = generateBadgeId();
+            // Insérer le véhicule dans Supabase
+            const { data, error } = await supabase
+                .from('vehicles')
+                .insert({
+                    bureau_id: bureauId,
+                    owner_member_id: formData.member_id,
+                    serial_number: formData.serial_number,
+                    type: formData.vehicle_type,
+                    brand: formData.brand || null,
+                    model: formData.model || null,
+                    year: formData.year ? parseInt(formData.year) : null,
+                    status: 'active'
+                })
+                .select()
+                .single();
 
-            const qrCodeData = JSON.stringify({
-                vehicle_id: Date.now().toString(),
-                serial_number: formData.serial_number,
-                owner: selectedMember?.name,
-                bureau: bureauId,
-                issued_date: new Date().toISOString().split('T')[0]
-            });
-
-            const newVehicle: SyndicateVehicle = {
-                id: Date.now().toString(),
-                member_id: formData.member_id,
-                member_name: selectedMember?.name || '',
-                serial_number: formData.serial_number,
-                license_plate: formData.license_plate,
-                vehicle_type: formData.vehicle_type,
-                brand: formData.brand || undefined,
-                model: formData.model || undefined,
-                year: formData.year ? parseInt(formData.year) : undefined,
-                color: formData.color || undefined,
-                digital_badge_id: badgeId,
-                qr_code_data: qrCodeData,
-                status: 'active',
-                verified: false,
-                badge_generated_at: new Date().toISOString(),
-                created_at: new Date().toISOString()
-            };
-
-            setVehicles(prev => [...prev, newVehicle]);
+            if (error) throw error;
 
             // Réinitialiser le formulaire
             setFormData({
@@ -240,6 +226,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 technical_control: null,
                 vehicle_photo: null
             });
+
+            // Recharger la liste
+            await loadVehicles();
 
             setShowAddDialog(false);
             
@@ -272,29 +261,43 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     };
 
     /**
-     * Vérifie un véhicule
+     * Vérifie un véhicule dans Supabase
      */
-    const verifyVehicle = (vehicleId: string) => {
-        setVehicles(prev => prev.map(v =>
-            v.id === vehicleId
-                ? {
-                    ...v,
-                    verified: true,
-                    verified_at: new Date().toISOString()
-                }
-                : v
-        ));
-        toast.success('Véhicule vérifié avec succès');
+    const verifyVehicle = async (vehicleId: string) => {
+        try {
+            const { error } = await supabase
+                .from('vehicles')
+                .update({ status: 'active' })
+                .eq('id', vehicleId);
+
+            if (error) throw error;
+
+            await loadVehicles();
+            toast.success('Véhicule vérifié avec succès');
+        } catch (error) {
+            console.error('Erreur vérification véhicule:', error);
+            toast.error('Erreur lors de la vérification');
+        }
     };
 
     /**
-     * Suspend un véhicule
+     * Suspend un véhicule dans Supabase
      */
-    const suspendVehicle = (vehicleId: string) => {
-        setVehicles(prev => prev.map(v =>
-            v.id === vehicleId ? { ...v, status: 'suspended' } : v
-        ));
-        toast.success('Véhicule suspendu');
+    const suspendVehicle = async (vehicleId: string) => {
+        try {
+            const { error } = await supabase
+                .from('vehicles')
+                .update({ status: 'suspended' })
+                .eq('id', vehicleId);
+
+            if (error) throw error;
+
+            await loadVehicles();
+            toast.success('Véhicule suspendu');
+        } catch (error) {
+            console.error('Erreur suspension véhicule:', error);
+            toast.error('Erreur lors de la suspension');
+        }
     };
 
     /**
