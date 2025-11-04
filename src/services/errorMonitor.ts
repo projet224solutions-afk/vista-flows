@@ -41,30 +41,92 @@ class ErrorMonitorService {
       this.logError({
         module: 'frontend_global',
         error_type: 'uncaught_exception',
-        error_message: event.message,
-        stack_trace: event.error?.stack,
+        error_message: event.message || 'Uncaught exception without message',
+        stack_trace: event.error?.stack || 'No stack trace available',
         severity: 'modérée',
         metadata: {
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
+          filename: event.filename || 'unknown',
+          lineno: event.lineno || 0,
+          colno: event.colno || 0,
+          errorType: event.error?.constructor?.name || 'unknown',
+          timestamp: new Date().toISOString(),
         },
       });
     });
 
-    // Intercepter les promesses rejetées non gérées
+    // Intercepter les promesses rejetées non gérées avec capture améliorée
     window.addEventListener('unhandledrejection', (event) => {
+      // Prévenir le comportement par défaut pour éviter les logs en double
+      event.preventDefault();
+      
+      // Déterminer le type de raison
+      const reason = event.reason;
+      let errorMessage = 'Unknown promise rejection';
+      let stackTrace = 'No stack trace available';
+      let errorType = 'unknown';
+      let additionalContext: any = {};
+
+      // Cas 1: Error object standard
+      if (reason instanceof Error) {
+        errorMessage = reason.message || 'Error without message';
+        stackTrace = reason.stack || 'No stack trace';
+        errorType = reason.constructor.name;
+      }
+      // Cas 2: String
+      else if (typeof reason === 'string') {
+        errorMessage = reason;
+        errorType = 'string_rejection';
+        // Tenter de capturer la stack trace depuis l'endroit actuel
+        stackTrace = new Error().stack || 'No stack trace';
+      }
+      // Cas 3: Object avec message
+      else if (reason && typeof reason === 'object') {
+        errorMessage = reason.message || reason.error || JSON.stringify(reason);
+        errorType = 'object_rejection';
+        stackTrace = reason.stack || new Error().stack || 'No stack trace';
+        additionalContext = { rejectionDetails: reason };
+      }
+      // Cas 4: Null, undefined ou autre
+      else {
+        errorMessage = `Promise rejected with value: ${String(reason)}`;
+        errorType = typeof reason;
+        stackTrace = new Error().stack || 'No stack trace';
+      }
+
       this.logError({
         module: 'frontend_promise',
         error_type: 'unhandled_rejection',
-        error_message: event.reason?.message || String(event.reason),
-        stack_trace: event.reason?.stack,
+        error_message: errorMessage,
+        stack_trace: stackTrace,
         severity: 'modérée',
         metadata: {
-          promise: event.promise,
+          promiseState: 'rejected',
+          rejectionType: errorType,
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          ...additionalContext,
         },
       });
     });
+
+    // Intercepter les erreurs de chargement de ressources
+    window.addEventListener('error', (event) => {
+      if (event.target !== window && (event.target as any)?.src) {
+        this.logError({
+          module: 'frontend_resource',
+          error_type: 'resource_load_error',
+          error_message: `Failed to load resource: ${(event.target as any).src}`,
+          stack_trace: 'Resource loading error',
+          severity: 'mineure',
+          metadata: {
+            resourceUrl: (event.target as any).src,
+            resourceType: (event.target as any).tagName,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+    }, true); // Use capture phase to catch resource errors
   }
 
   async logError(error: SystemError): Promise<void> {
