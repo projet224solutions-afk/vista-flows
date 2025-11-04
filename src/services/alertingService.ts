@@ -227,13 +227,11 @@ class AlertingService {
       } : undefined,
     });
 
-    // Enregistrer dans la base de données (optionnel - nécessite migration)
-    // Note: La table system_alerts devra être créée via migration Supabase
+    // Enregistrer dans la base de données
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Temporairement désactivé jusqu'à la création de la table
-      /* await supabase.from('system_alerts').insert({
+      await supabase.from('system_alerts').insert({
         title: alert.title,
         message: alert.message,
         severity: alert.severity,
@@ -246,24 +244,9 @@ class AlertingService {
           autoFix: alert.autoFix,
           timestamp: new Date().toISOString(),
         },
-      }); */
+      });
       
-      // À la place, on log dans system_errors avec un type spécial
-      if (alert.severity === 'critical' || alert.severity === 'high') {
-        await supabase.from('system_errors').insert({
-          module: alert.module,
-          error_type: 'system_alert',
-          error_message: `${alert.title}: ${alert.message}`,
-          severity: alert.severity === 'critical' ? 'critique' : 'modérée',
-          user_id: user?.id,
-          metadata: {
-            alert: true,
-            suggestedFix: alert.suggestedFix,
-            actionable: alert.actionable,
-            autoFix: alert.autoFix,
-          },
-        });
-      }
+      console.log('✅ Alerte enregistrée dans system_alerts');
     } catch (error) {
       console.error('Failed to log alert to database:', error);
     }

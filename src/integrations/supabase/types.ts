@@ -6060,6 +6060,57 @@ export type Database = {
           },
         ]
       }
+      system_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          module: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          suggested_fix: string | null
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          module: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          status?: string
+          suggested_fix?: string | null
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          module?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          suggested_fix?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       system_errors: {
         Row: {
           admin_acknowledged_at: string | null
@@ -8156,6 +8207,16 @@ export type Database = {
           pending_alerts: number | null
           total_alerts: number | null
           total_incidents: number | null
+        }
+        Relationships: []
+      }
+      system_alerts_summary: {
+        Row: {
+          acknowledged_count: number | null
+          active_count: number | null
+          count: number | null
+          resolved_count: number | null
+          severity: string | null
         }
         Relationships: []
       }
