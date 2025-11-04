@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, TrendingUp, Zap, Award, ArrowLeft, Loader2, BarChart3, Lock } from 'lucide-react';
+import { Shield, TrendingUp, Zap, Award, ArrowLeft, Loader2, BarChart3, Lock, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,34 +37,51 @@ interface AnalysisResult {
 export default function CompetitiveAnalysis() {
   const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
-  const [loadingCompetitive, setLoadingCompetitive] = useState(false);
-  const [loadingSecurity, setLoadingSecurity] = useState(false);
+  const [loadingCompetitive, setLoadingCompetitive] = useState<boolean>(false);
+  const [loadingSecurity, setLoadingSecurity] = useState<boolean>(false);
   const [competitiveAnalysis, setCompetitiveAnalysis] = useState<AnalysisResult | null>(null);
   const [securityAnalysis, setSecurityAnalysis] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const competitors = ['Amazon', 'Alibaba', 'Odoo', 'AliExpress', 'Africa Coin'];
   const criteria = ['Sécurité', 'Fiabilité', 'Fonctionnalité', 'Innovation'];
 
   const runCompetitiveAnalysis = async () => {
     setLoadingCompetitive(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('competitive-analysis', {
         body: { competitors, criteria }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Erreur API: ${error.message}`);
+      }
 
       if (data?.success && data?.analysis) {
+        // Validation des données reçues
+        if (!data.analysis.platforms || !Array.isArray(data.analysis.platforms)) {
+          throw new Error('Format de données invalide: platforms manquant');
+        }
+        
         setCompetitiveAnalysis(data.analysis);
-        toast.success('Analyse comparative terminée');
+        setError(null);
+        toast.success('✅ Analyse comparative terminée avec succès');
       } else {
-        throw new Error(data?.error || 'Erreur lors de l\'analyse');
+        throw new Error(data?.error || 'Aucune analyse reçue du serveur');
       }
     } catch (error: any) {
-      console.error('Error running competitive analysis:', error);
-      toast.error(error.message || 'Erreur lors de l\'analyse comparative');
-      // Reset state on error
+      const errorMessage = error?.message || 'Erreur inconnue lors de l\'analyse';
+      console.error('❌ Error running competitive analysis:', {
+        error,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+      
+      setError(errorMessage);
       setCompetitiveAnalysis(null);
+      toast.error(`Échec de l'analyse: ${errorMessage}`);
     } finally {
       setLoadingCompetitive(false);
     }
@@ -72,22 +89,38 @@ export default function CompetitiveAnalysis() {
 
   const runSecurityAnalysis = async () => {
     setLoadingSecurity(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('security-analysis');
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Erreur API: ${error.message}`);
+      }
       
       if (data?.analysis) {
+        // Validation des données
+        if (!data.analysis.platforms || !Array.isArray(data.analysis.platforms)) {
+          throw new Error('Format de données invalide: platforms manquant');
+        }
+        
         setSecurityAnalysis(data.analysis);
-        toast.success('Analyse de sécurité terminée');
+        setError(null);
+        toast.success('✅ Analyse de sécurité terminée avec succès');
       } else {
-        throw new Error('Aucune analyse reçue');
+        throw new Error('Aucune analyse reçue du serveur');
       }
     } catch (error: any) {
-      console.error('Security analysis error:', error);
-      toast.error('Erreur lors de l\'analyse de sécurité: ' + error.message);
-      // Reset state on error
+      const errorMessage = error?.message || 'Erreur inconnue';
+      console.error('❌ Security analysis error:', {
+        error,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+      
+      setError(errorMessage);
       setSecurityAnalysis(null);
+      toast.error(`Échec de l'analyse de sécurité: ${errorMessage}`);
     } finally {
       setLoadingSecurity(false);
     }
@@ -146,6 +179,28 @@ export default function CompetitiveAnalysis() {
             </TabsList>
 
           <TabsContent value="competitive" className="space-y-6">
+            {error && (
+              <Card className="border-destructive bg-destructive/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-destructive mb-1">Erreur détectée</h4>
+                      <p className="text-sm text-muted-foreground">{error}</p>
+                      <Button
+                        onClick={() => setError(null)}
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                      >
+                        Fermer
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {!competitiveAnalysis && (
               <Card>
                 <CardHeader>
@@ -196,7 +251,7 @@ export default function CompetitiveAnalysis() {
               </Card>
             )}
 
-            {competitiveAnalysis && (
+            {competitiveAnalysis && competitiveAnalysis.platforms && (
               <>
                 <Card className="border-primary/20 bg-primary/5">
                   <CardHeader>
@@ -206,7 +261,9 @@ export default function CompetitiveAnalysis() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm leading-relaxed">{competitiveAnalysis.summary}</p>
+                    <p className="text-sm leading-relaxed">
+                      {competitiveAnalysis.summary || 'Analyse comparative complétée.'}
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -216,7 +273,7 @@ export default function CompetitiveAnalysis() {
                   desktopCols={3} 
                   gap={isMobile ? "sm" : "md"}
                 >
-                  {competitiveAnalysis.platforms && competitiveAnalysis.platforms.map((platform) => (
+                  {competitiveAnalysis.platforms?.map((platform) => (
                     <Card key={platform.name} className={platform.name === '224Solutions' ? 'border-primary/50 shadow-lg' : ''}>
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between">
@@ -296,7 +353,7 @@ export default function CompetitiveAnalysis() {
                   ))}
                 </ResponsiveGrid>
 
-                {competitiveAnalysis.ranking && competitiveAnalysis.ranking.length > 0 && (
+                {competitiveAnalysis?.ranking && competitiveAnalysis.ranking.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Classement Général</CardTitle>
@@ -323,7 +380,7 @@ export default function CompetitiveAnalysis() {
                   </Card>
                 )}
 
-                {competitiveAnalysis.recommendations && competitiveAnalysis.recommendations.length > 0 && (
+                {competitiveAnalysis?.recommendations && competitiveAnalysis.recommendations.length > 0 && (
                   <Card className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">

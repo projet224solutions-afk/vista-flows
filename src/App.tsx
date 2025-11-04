@@ -35,10 +35,7 @@ const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
 const PdgDebugPanel = lazy(() => import("./pages/PdgDebugPanel"));
 const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
 const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
-const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis").catch(error => {
-  console.error('Error loading CompetitiveAnalysis:', error);
-  return { default: () => <div className="p-8 text-center">Erreur de chargement du composant. Veuillez rafraîchir la page.</div> };
-}));
+const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));

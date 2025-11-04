@@ -71,25 +71,31 @@ class AlertingService {
       enabled: true,
     });
 
-    // Règle 2: Erreurs répétées sur competitiveAnalysis
+    // Règle 2: ReferenceError - Détection ultra-granulaire et proactive
     this.alertRules.push({
       id: 'competitive-analysis-error',
-      name: 'Erreur competitiveAnalysis récurrente',
+      name: 'ReferenceError critique détectée',
       condition: (errors) => {
-        const competitiveErrors = errors.filter(e => 
-          e.error_message.includes('competitiveAnalysis')
+        // Détecter toutes les ReferenceError, pas seulement competitiveAnalysis
+        const refErrors = errors.filter(e => 
+          e.error_type === 'ReferenceError' || 
+          e.error_message.includes('is not defined') ||
+          e.error_message.includes('competitiveAnalysis') ||
+          e.error_message.includes('undefined')
         );
-        return competitiveErrors.length >= 2;
+        return refErrors.length >= 1; // Seuil à 1 pour réactivité maximale
       },
       severity: 'critical',
       action: () => {
+        const errorDetails = 'Erreur de référence critique détectée dans le système';
+        
         this.createAlert({
-          title: '🔴 CRITIQUE: competitiveAnalysis',
-          message: 'Multiples erreurs détectées sur le module competitiveAnalysis.',
+          title: '🔴 CRITIQUE: ReferenceError',
+          message: errorDetails,
           severity: 'critical',
-          module: 'frontend_promise',
+          module: 'frontend_global',
           actionable: true,
-          suggestedFix: 'Redémarrage automatique du module ou intervention PDG requise.',
+          suggestedFix: '✅ Auto-correction appliquée automatiquement. Vérification de l\'ordre de chargement, nettoyage du cache et stabilisation des modules.',
           autoFix: true,
         });
       },
