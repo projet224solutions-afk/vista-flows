@@ -26,10 +26,13 @@ import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { IdSystemIndicator } from "@/components/IdSystemIndicator";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { supabase } from "@/lib/supabaseClient";
+import useResponsive from "@/hooks/useResponsive";
+import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const responsive = useResponsive();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -132,48 +135,62 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Premium */}
+      {/* Header Premium - Responsive */}
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
+        <div className={`container flex ${responsive.isMobile ? 'h-14' : 'h-16'} items-center justify-between ${responsive.isMobile ? 'px-3' : 'px-4'}`}>
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-client-gradient flex items-center justify-center shadow-elegant">
-                <ShoppingBag className="w-6 h-6 text-white" />
+              <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg bg-client-gradient flex items-center justify-center shadow-elegant`}>
+                <ShoppingBag className={`${responsive.isMobile ? 'w-4 h-4' : 'w-6 h-6'} text-white`} />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold text-foreground">224SOLUTIONS</h1>
-                  <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 md:gap-2">
+                  <h1 className={`${responsive.isMobile ? 'text-sm' : 'text-lg'} font-bold text-foreground truncate`}>
+                    {responsive.isMobile ? '224SOL' : '224SOLUTIONS'}
+                  </h1>
+                  {!responsive.isMobile && (
+                    <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">Marketplace</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">Marketplace</p>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher des produits..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 border-border focus-visible:ring-client-primary"
-              />
+          {/* Barre de recherche - Cachée sur mobile, visible sur tablette+ */}
+          {!responsive.isMobile && (
+            <div className="flex-1 max-w-md mx-4 lg:mx-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 border-border focus-visible:ring-client-primary"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:block">
-              <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
-            </div>
-            <QuickTransferButton variant="ghost" size="icon" showText={false} />
+          {/* Actions - Responsive */}
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            {!responsive.isMobile && (
+              <div className="hidden lg:block">
+                <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
+              </div>
+            )}
+            <QuickTransferButton 
+              variant="ghost" 
+              size={responsive.isMobile ? 'icon' : 'icon'} 
+              showText={false} 
+            />
             <Button
               variant="ghost"
-              size="icon"
+              size={responsive.isMobile ? 'icon' : 'icon'}
               className="relative"
               onClick={() => setActiveTab('cart')}
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
               {cartItems.length > 0 && (
                 <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-client-primary text-xs">
                   {cartItems.length}
@@ -181,58 +198,113 @@ export default function ClientDashboard() {
               )}
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setActiveTab('profile')}
-            >
-              <User className="w-5 h-5" />
-            </Button>
+            {!responsive.isMobile && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <User className="w-5 h-5" />
+                </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </>
+            )}
+            
+            {/* Menu mobile */}
+            {responsive.isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
+        
+        {/* Barre de recherche mobile */}
+        {responsive.isMobile && (
+          <div className="px-3 pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher des produits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
-      <main className="container px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-muted/50">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <Home className="w-4 h-4 mr-2" />
-              Vue d'ensemble
-            </TabsTrigger>
-            <TabsTrigger value="products" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <Grid3X3 className="w-4 h-4 mr-2" />
-              Produits
-            </TabsTrigger>
-            <TabsTrigger value="cart" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Panier
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <Package className="w-4 h-4 mr-2" />
-              Commandes
-            </TabsTrigger>
-            <TabsTrigger value="communication" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Messages
-            </TabsTrigger>
-            <TabsTrigger value="copilot" className="data-[state=active]:bg-client-primary data-[state=active]:text-white">
-              <Bot className="w-4 h-4 mr-2" />
-              Assistant IA
-            </TabsTrigger>
-          </TabsList>
+      <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Navigation par onglets - Responsive */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-6 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+              <TabsTrigger 
+                value="overview" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Vue d'ensemble</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Vue</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="products" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Grid3X3 className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                Produits
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cart" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <ShoppingCart className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                Panier
+              </TabsTrigger>
+              <TabsTrigger 
+                value="orders" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Package className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Commandes</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Cmd</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="communication" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <MessageSquare className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Messages</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Msg</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="copilot" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Assistant IA</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>IA</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Vue d'ensemble */}
-          <TabsContent value="overview" className="space-y-6 animate-fade-in">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <TabsContent value="overview" className="space-y-4 md:space-y-6 animate-fade-in">
+            <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
               {/* Profil utilisateur */}
               <div className="lg:col-span-2">
                 <UserProfileCard showWalletDetails={false} />
@@ -242,9 +314,9 @@ export default function ClientDashboard() {
               <div>
                 <IdSystemIndicator />
               </div>
-            </div>
+            </ResponsiveGrid>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
               {/* Wallet et transactions */}
               <div className="lg:col-span-2">
                 <UniversalWalletTransactions />
@@ -252,48 +324,48 @@ export default function ClientDashboard() {
               {/* Statistiques rapides */}
               <Card className="shadow-elegant">
                 <CardHeader>
-                  <CardTitle className="text-lg">Statistiques</CardTitle>
-                  <CardDescription>Votre activité</CardDescription>
+                  <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 md:space-y-4">
                   <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-client-primary/10 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-client-primary" />
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center`}>
+                        <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Commandes</p>
-                        <p className="text-2xl font-bold text-foreground">{orders.length}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{orders.length}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-orange-600" />
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center`}>
+                        <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">En cours</p>
-                        <p className="text-2xl font-bold text-foreground">{activeOrders.length}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{activeOrders.length}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                        <Heart className="w-5 h-5 text-purple-600" />
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center`}>
+                        <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
                       </div>
                        <div>
-                        <p className="text-sm text-muted-foreground">Favoris</p>
-                        <p className="text-2xl font-bold text-foreground">{favorites.length}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">Favoris</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{favorites.length}</p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </ResponsiveGrid>
 
             {/* Produits recommandés */}
             <Card className="shadow-elegant">

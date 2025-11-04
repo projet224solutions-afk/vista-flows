@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRideNotifications } from "@/hooks/useRideNotifications";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
+import useResponsive from "@/hooks/useResponsive";
 
 interface Driver {
   id: string;
@@ -62,6 +63,7 @@ interface CurrentRide {
 export default function TaxiMotoClient() {
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
+  const responsive = useResponsive();
 
   const [activeTab, setActiveTab] = useState('booking');
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
@@ -181,42 +183,51 @@ export default function TaxiMotoClient() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-background pb-20">
-      {/* Header */}
+      {/* Header Responsive */}
       <header className="bg-card/90 backdrop-blur-sm border-b sticky top-0 z-40 shadow-sm">
-        <div className="px-4 py-4">
+        <div className={responsive.isMobile ? 'px-3 py-3' : 'px-6 py-4'}>
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-xl font-bold text-foreground">
-                  Taxi-Moto 224Solutions
+            <div className="flex-1 min-w-0">
+              <div className={`flex items-center ${responsive.isMobile ? 'gap-2' : 'gap-3'} mb-1`}>
+                <h1 className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground truncate`}>
+                  {responsive.isMobile ? 'Taxi-Moto' : 'Taxi-Moto 224Solutions'}
                 </h1>
-                <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
+                {!responsive.isMobile && (
+                  <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
+                )}
               </div>
               <div className="flex items-center gap-2">
-                <User className="w-3 h-3 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
+                <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <span className={`${responsive.isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground truncate`}>
                   {profile?.first_name || 'Client'}
                 </span>
                 {location && (
                   <>
                     <span className="text-muted-foreground">•</span>
-                    <MapPin className="w-3 h-3 text-green-500" />
-                    <span className="text-xs text-muted-foreground">GPS actif</span>
+                    <MapPin className="w-3 h-3 text-green-500 flex-shrink-0" />
+                    {!responsive.isMobile && (
+                      <span className="text-xs text-muted-foreground">GPS actif</span>
+                    )}
                   </>
                 )}
               </div>
+              {responsive.isMobile && (
+                <div className="mt-1">
+                  <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {currentRide && (
-                <Badge variant="default" className="bg-green-500">
-                  Course active
+                <Badge variant="default" className={`bg-green-500 ${responsive.isMobile ? 'text-xs px-2' : ''}`}>
+                  {responsive.isMobile ? 'Actif' : 'Course active'}
                 </Badge>
               )}
               <Button
                 onClick={handleSignOut}
                 variant="outline"
-                size="sm"
+                size={responsive.isMobile ? 'icon' : 'sm'}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -225,26 +236,26 @@ export default function TaxiMotoClient() {
         </div>
       </header>
 
-      {/* Conducteurs à proximité */}
+      {/* Conducteurs à proximité - Responsive */}
       {location && nearbyDrivers.length > 0 && activeTab === 'booking' && (
-        <Card className="mx-4 mt-4 bg-card/90 backdrop-blur-sm border-0 shadow-lg">
-          <CardContent className="p-4">
+        <Card className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} bg-card/90 backdrop-blur-sm border-0 shadow-lg`}>
+          <CardContent className={responsive.isMobile ? 'p-3' : 'p-4'}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {nearbyDrivers.length} conducteurs disponibles
+              <div className="flex-1">
+                <p className={`${responsive.isMobile ? 'text-xs' : 'text-sm'} font-medium text-foreground`}>
+                  {nearbyDrivers.length} conducteur{nearbyDrivers.length > 1 ? 's' : ''} {responsive.isMobile ? '' : 'disponibles'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Le plus proche à {nearbyDrivers[0].distance}km
+                  {responsive.isMobile ? `${nearbyDrivers[0].distance}km` : `Le plus proche à ${nearbyDrivers[0].distance}km`}
                 </p>
               </div>
-              <div className="flex -space-x-2">
-                {nearbyDrivers.slice(0, 3).map((driver) => (
+              <div className={`flex ${responsive.isMobile ? '-space-x-1' : '-space-x-2'}`}>
+                {nearbyDrivers.slice(0, responsive.isMobile ? 2 : 3).map((driver) => (
                   <div
                     key={driver.id}
-                    className="w-8 h-8 rounded-full bg-primary/10 border-2 border-card flex items-center justify-center"
+                    className={`${responsive.isMobile ? 'w-7 h-7' : 'w-8 h-8'} rounded-full bg-primary/10 border-2 border-card flex items-center justify-center`}
                   >
-                    <User className="w-4 h-4 text-primary" />
+                    <User className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
                   </div>
                 ))}
               </div>
@@ -253,24 +264,27 @@ export default function TaxiMotoClient() {
         </Card>
       )}
 
-      {/* Navigation par onglets */}
-      <div className="px-4 mt-4">
+      {/* Navigation par onglets - Responsive */}
+      <div className={responsive.isMobile ? 'px-3 mt-3' : 'px-4 mt-4'}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-card/80 backdrop-blur-sm">
-            <TabsTrigger value="booking">
-              <Navigation className="w-4 h-4 mr-1" />
-              Réserver
+          <TabsList className={`grid w-full grid-cols-3 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
+            <TabsTrigger value="booking" className={responsive.isMobile ? 'text-xs' : ''}>
+              <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
+              {!responsive.isMobile && 'Réserver'}
+              {responsive.isMobile && <span className="ml-1">Réserver</span>}
             </TabsTrigger>
-            <TabsTrigger value="tracking" disabled={!currentRide}>
-              <Clock className="w-4 h-4 mr-1" />
-              Suivi
+            <TabsTrigger value="tracking" disabled={!currentRide} className={responsive.isMobile ? 'text-xs' : ''}>
+              <Clock className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
+              {!responsive.isMobile && 'Suivi'}
+              {responsive.isMobile && <span className="ml-1">Suivi</span>}
               {currentRide && (
                 <span className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="history">
-              <History className="w-4 h-4 mr-1" />
-              Historique
+            <TabsTrigger value="history" className={responsive.isMobile ? 'text-xs' : ''}>
+              <History className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
+              {!responsive.isMobile && 'Historique'}
+              {responsive.isMobile && <span className="ml-1">Histo</span>}
             </TabsTrigger>
           </TabsList>
 
@@ -298,22 +312,22 @@ export default function TaxiMotoClient() {
         </Tabs>
       </div>
 
-      {/* Statistiques rapides */}
+      {/* Statistiques rapides - Responsive */}
       {activeTab === 'booking' && (
-        <Card className="mx-4 mt-4 bg-card/90 backdrop-blur-sm border-0 shadow-lg">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
+        <Card className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} bg-card/90 backdrop-blur-sm border-0 shadow-lg`}>
+          <CardContent className={responsive.isMobile ? 'p-3' : 'p-4'}>
+            <div className={`grid grid-cols-3 ${responsive.isMobile ? 'gap-2' : 'gap-4'} text-center`}>
               <div>
-                <div className="text-2xl font-bold text-primary">4.8</div>
-                <div className="text-xs text-muted-foreground">Note moyenne</div>
+                <div className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-primary`}>4.8</div>
+                <div className="text-xs text-muted-foreground">{responsive.isMobile ? 'Note' : 'Note moyenne'}</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">2 min</div>
-                <div className="text-xs text-muted-foreground">Temps d'attente</div>
+                <div className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-green-600`}>2 min</div>
+                <div className="text-xs text-muted-foreground">{responsive.isMobile ? 'Attente' : 'Temps d\'attente'}</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">24/7</div>
-                <div className="text-xs text-muted-foreground">Disponibilité</div>
+                <div className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-blue-600`}>24/7</div>
+                <div className="text-xs text-muted-foreground">Dispo.</div>
               </div>
             </div>
           </CardContent>
