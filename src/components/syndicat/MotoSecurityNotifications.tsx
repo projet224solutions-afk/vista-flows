@@ -10,9 +10,11 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: string;
-  is_read: boolean;
-  created_at: string;
+  alert_type: string;
+  severity?: string;
+  is_read: boolean | null;
+  is_critical: boolean | null;
+  created_at: string | null;
 }
 
 interface Props {
@@ -27,8 +29,8 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase as any)
-        .from('moto_security_notifications')
+      const { data, error } = await supabase
+        .from('syndicate_alerts')
         .select('*')
         .eq('bureau_id', bureauId)
         .order('created_at', { ascending: false })
@@ -36,8 +38,8 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
       if (error) throw error;
       
-      setNotifications(data as Notification[] || []);
-      setUnreadCount((data as Notification[])?.filter(n => !n.is_read).length || 0);
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
       toast.error('Erreur lors du chargement des notifications');
@@ -50,14 +52,14 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
     loadNotifications();
 
     // Subscribe to real-time updates
-    const channel = (supabase as any)
+    const channel = supabase
       .channel('security_notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'moto_security_notifications',
+          table: 'syndicate_alerts',
           filter: `bureau_id=eq.${bureauId}`
         },
         (payload: any) => {
@@ -76,22 +78,24 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const { error } = await (supabase as any)
-        .from('moto_security_notifications')
+      const { error } = await supabase
+        .from('syndicate_alerts')
         .update({ is_read: true })
         .eq('id', notificationId);
 
       if (error) throw error;
       loadNotifications();
+      toast.success('Notification marquée comme lue');
     } catch (error) {
       console.error('Erreur marquage notification:', error);
+      toast.error('Erreur lors du marquage de la notification');
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      const { error } = await (supabase as any)
-        .from('moto_security_notifications')
+      const { error } = await supabase
+        .from('syndicate_alerts')
         .update({ is_read: true })
         .eq('bureau_id', bureauId)
         .eq('is_read', false);
@@ -102,15 +106,21 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
       loadNotifications();
     } catch (error) {
       console.error('Erreur marquage notifications:', error);
+      toast.error('Erreur lors du marquage des notifications');
     }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
       case 'alert':
+      case 'critical':
+      case 'security':
         return <AlertTriangle className="w-5 h-5 text-red-500" />;
       case 'success':
+      case 'resolved':
         return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+      case 'info':
+      case 'maintenance':
       default:
         return <Info className="w-5 h-5 text-blue-500" />;
     }
@@ -162,26 +172,36 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
                 className={`p-4 rounded-lg border transition-colors ${
                   notification.is_read
                     ? 'bg-background border-border'
-                    : 'bg-primary/5 border-primary/20'
+                    : notification.is_critical 
+                      ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900'
+                      : 'bg-primary/5 border-primary/20'
                 }`}
               >
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 mt-1">
-                    {getIcon(notification.type)}
+                    {getIcon(notification.alert_type)}
                   </div>
                   <div className="flex-1 space-y-1">
-                    <div className="flex items-start justify-between">
-                      <h4 className="font-medium text-sm">{notification.title}</h4>
-                      {!notification.is_read && (
-                        <Badge variant="secondary" className="ml-2">Nouveau</Badge>
-                      )}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                        {notification.is_critical && (
+                          <Badge variant="destructive" className="text-xs">Critique</Badge>
+                        )}
+                        {!notification.is_read && (
+                          <Badge variant="secondary" className="text-xs">Nouveau</Badge>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {notification.message}
                     </p>
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-xs text-muted-foreground">
-                        {new Date(notification.created_at).toLocaleString('fr-FR')}
+                        {notification.created_at 
+                          ? new Date(notification.created_at).toLocaleString('fr-FR')
+                          : 'Date inconnue'
+                        }
                       </span>
                       {!notification.is_read && (
                         <Button
