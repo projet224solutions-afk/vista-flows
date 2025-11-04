@@ -8,14 +8,14 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* 224SOLUTIONS E-Commerce Design System - Blanc & Beige */
-    /* Fond principal: Blanc pur #FFFFFF (0 0% 100%) */
-    --background: 0 0% 100%;
+    /* 224SOLUTIONS E-Commerce Design System - Blanc & Beige Ultra Léger */
+    /* Fond principal: Blanc crème très léger #FAFAF8 (60 20% 98%) */
+    --background: 60 20% 98%;
     /* Texte: Noir doux #1A1A1A */
     --foreground: 0 0% 10%;
 
-    /* Carte: Beige clair #F5F5DC (60 56% 91%) */
-    --card: 60 56% 91%;
+    /* Carte: Blanc pur avec ombre beige #FFFFFF (0 0% 100%) */
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
@@ -25,12 +25,12 @@ All colors MUST be HSL.
     --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Beige moyen #E6D7C3 (35 35% 82%) */
-    --secondary: 35 35% 82%;
+    /* Secondary: Beige très léger #FAF8F5 (40 30% 97%) */
+    --secondary: 40 30% 97%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 35 25% 90%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 20% 95%;
+    --muted-foreground: 0 0% 45%;
 
     --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -39,8 +39,8 @@ All colors MUST be HSL.
     --destructive: 0 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 25% 85%;
-    --input: 35 25% 90%;
+    --border: 40 20% 92%;
+    --input: 40 15% 96%;
     --ring: 211 100% 50%;
 
     /* Role-based color schemes */
@@ -87,12 +87,12 @@ All colors MUST be HSL.
     --client-accent: 142 71% 95%;
     --client-gradient: linear-gradient(135deg, hsl(142 71% 45%), hsl(0 0% 100%));
 
-    /* Global gradients and effects - 224SOLUTIONS Blanc & Beige */
-    --gradient-elegant: linear-gradient(135deg, hsl(211 100% 96%), hsl(35 35% 95%));
+    /* Global gradients and effects - 224SOLUTIONS Élégant */
+    --gradient-elegant: linear-gradient(135deg, hsl(211 100% 97%), hsl(40 30% 98%));
     --gradient-neon: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 45%));
-    --shadow-elegant: 0 8px 30px hsl(0 0% 0% / 0.08);
-    --shadow-glow: 0 0 30px hsl(211 100% 50% / 0.25);
-    --shadow-card: 0 2px 12px hsl(0 0% 0% / 0.06);
+    --shadow-elegant: 0 4px 20px hsl(40 20% 70% / 0.12);
+    --shadow-glow: 0 0 30px hsl(211 100% 50% / 0.2);
+    --shadow-card: 0 2px 8px hsl(40 30% 70% / 0.08);
 
     --radius: 0.75rem;
 

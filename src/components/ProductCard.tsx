@@ -51,14 +51,14 @@ export default function ProductCard({
   }, [images.length]);
 
   return (
-    <Card className="overflow-hidden hover:shadow-glow transition-all duration-500 hover:scale-[1.02] group bg-card border-border animate-bounce-in">
+    <Card className="overflow-hidden hover:shadow-glow transition-all duration-500 hover:scale-[1.02] group bg-card border-border/50 animate-bounce-in shadow-card">
       <div className="relative">
         {images.length > 1 ? (
           <Carousel className="w-full" opts={{ loop: true }}>
             <CarouselContent>
               {images.map((img, index) => (
                 <CarouselItem key={index}>
-                  <div className="relative h-48 bg-secondary/30 rounded-t-2xl overflow-hidden">
+                  <div className="relative h-48 bg-gradient-to-br from-secondary to-muted rounded-t-2xl overflow-hidden">
                     <img 
                       src={img} 
                       alt={`${title} - Image ${index + 1}`}
@@ -68,8 +68,8 @@ export default function ProductCard({
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="left-2 bg-white/90 border-primary/30 text-foreground hover:bg-primary hover:text-white" />
-            <CarouselNext className="right-2 bg-white/90 border-primary/30 text-foreground hover:bg-primary hover:text-white" />
+            <CarouselPrevious className="left-2 bg-white/95 border-primary/20 text-foreground hover:bg-primary hover:text-white shadow-md" />
+            <CarouselNext className="right-2 bg-white/95 border-primary/20 text-foreground hover:bg-primary hover:text-white shadow-md" />
             
             {/* Pagination dots */}
             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1.5 z-10">
@@ -88,7 +88,7 @@ export default function ProductCard({
             </div>
           </Carousel>
         ) : (
-          <div className="relative h-48 bg-secondary/30 rounded-t-2xl overflow-hidden">
+          <div className="relative h-48 bg-gradient-to-br from-secondary to-muted rounded-t-2xl overflow-hidden">
             <img 
               src={images[0]} 
               alt={title}
@@ -98,13 +98,13 @@ export default function ProductCard({
         )}
         
         {isPremium && (
-          <Badge className="absolute top-3 left-3 bg-primary text-white shadow-glow border-0 font-poppins">
+          <Badge className="absolute top-3 left-3 bg-primary text-white shadow-glow border-0 font-poppins font-semibold">
             Premium
           </Badge>
         )}
       </div>
       
-      <CardContent className="p-5 space-y-3">
+      <CardContent className="p-5 space-y-3 bg-gradient-to-b from-white to-secondary/20">
         <h3 className="font-poppins font-bold text-foreground mb-2 line-clamp-2 h-12 text-base">
           {title}
         </h3>
