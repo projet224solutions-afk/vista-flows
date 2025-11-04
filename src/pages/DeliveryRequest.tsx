@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DeliveryRequestUberStyle } from '@/components/delivery/DeliveryRequestUberStyle';
+import { DeliveryRequestById } from '@/components/delivery/DeliveryRequestById';
 
 export default function DeliveryRequest() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function DeliveryRequest() {
 
       {/* Contenu principal */}
       <div className="container max-w-2xl mx-auto px-4 py-6">
-        <DeliveryRequestUberStyle onDeliveryCreated={handleDeliveryCreated} />
+        <DeliveryRequestById onDeliveryCreated={handleDeliveryCreated} />
       </div>
     </div>
   );

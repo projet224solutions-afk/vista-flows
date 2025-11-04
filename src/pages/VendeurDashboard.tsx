@@ -56,6 +56,7 @@ import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDas
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
 import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -384,7 +385,7 @@ export default function VendeurDashboard() {
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
               <Route path="debts" element={<DebtManagement />} />
               <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
-              <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
+              <Route path="delivery" element={<VendorDeliveriesPanel />} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />

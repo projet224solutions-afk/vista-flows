@@ -5,10 +5,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NearbyDeliveriesPanel } from '@/components/delivery/NearbyDeliveriesPanel';
 import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -375,6 +376,9 @@ export default function LivreurDashboard() {
 
           {/* 📦 Liste des livraisons disponibles */}
           <TabsContent value="missions" className="space-y-3">
+            {/* Panneau des colis à proximité */}
+            <NearbyDeliveriesPanel />
+
             {/* Alerte GPS si non activé */}
             {!location && (
               <Card className="p-4 bg-yellow-500/10 border-yellow-500/30">
