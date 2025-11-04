@@ -140,10 +140,10 @@ export function usePdgMonitoring() {
         ? healthData.filter(h => h.status === 'healthy').length / healthData.length * 100
         : 100;
 
-      // Si on a des métriques, ajuster le score de santé
-      const totalErrors = errorStats?.total || 0;
-      const adjustedHealthScore = totalErrors > 0 
-        ? Math.max(50, healthScore - (totalErrors * 0.5))
+      // Si on a des métriques, ajuster le score de santé (uniquement avec les erreurs actives)
+      const activeErrors = errorStats?.pending || 0;
+      const adjustedHealthScore = activeErrors > 0 
+        ? Math.max(50, healthScore - (activeErrors * 0.5))
         : healthScore;
 
       setSystemHealth({
