@@ -323,6 +323,9 @@ export default function LivreurDashboard() {
             <p className="text-sm md:text-base text-muted-foreground">
               Bienvenue {profile?.first_name || 'Livreur'} - 224Solutions Delivery
             </p>
+            <div className="mt-1">
+              <UserIdDisplay />
+            </div>
             {(currentDelivery || currentRide) && (
               <Badge 
                 variant="default" 
