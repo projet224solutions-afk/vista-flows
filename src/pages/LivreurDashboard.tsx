@@ -13,11 +13,16 @@ import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
+import { useDriver } from "@/hooks/useDriver";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { NearbyDeliveriesListener } from "@/components/delivery/NearbyDeliveriesListener";
+import { DriverStatusToggle } from "@/components/driver/DriverStatusToggle";
+import { EarningsDisplay } from "@/components/driver/EarningsDisplay";
+import { DeliveryProofUpload } from "@/components/driver/DeliveryProofUpload";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
@@ -28,6 +33,10 @@ export default function LivreurDashboard() {
   const { location, getCurrentLocation } = useCurrentLocation();
   const { isMobile, isTablet } = useResponsive();
   const [activeTab, setActiveTab] = useState('missions');
+  const [showProofUpload, setShowProofUpload] = useState(false);
+
+  // Hook pour le profil et statut du driver
+  const { driver, stats, goOnline, goOffline, pause, updateLocation, uploadProof } = useDriver();
 
   // Hook pour les livraisons
   const {
@@ -170,13 +179,25 @@ export default function LivreurDashboard() {
   };
 
   /**
-   * Terminer une livraison
+   * Terminer une livraison avec preuve
    */
-  const handleCompleteDelivery = async () => {
+  const handleCompleteWithProof = async (photoUrl: string, signature: string) => {
     if (!currentDelivery) return;
     try {
       await completeDeliveryFn(currentDelivery.id);
+      
+      // Enregistrer photo et signature
+      await supabase
+        .from('deliveries')
+        .update({
+          proof_photo_url: photoUrl,
+          client_signature: signature
+        })
+        .eq('id', currentDelivery.id);
+      
+      setShowProofUpload(false);
       setActiveTab('history');
+      toast.success('🎉 Livraison terminée avec succès!');
     } catch (error) {
       console.error('Error completing delivery:', error);
     }
@@ -247,8 +268,34 @@ export default function LivreurDashboard() {
       />
 
       <ResponsiveContainer maxWidth="full">
+        {/* Statut du livreur Online/Offline */}
+        {driver && (
+          <DriverStatusToggle
+            status={driver.status}
+            isOnline={driver.is_online}
+            onGoOnline={goOnline}
+            onGoOffline={goOffline}
+            onPause={pause}
+          />
+        )}
+
+        {/* Statistiques de gains */}
+        {driver && (
+          <div className="mt-4">
+            <EarningsDisplay
+              totalEarnings={driver.earnings_total || 0}
+              todayEarnings={stats.todayEarnings}
+              todayDeliveries={stats.todayDeliveries}
+              weekEarnings={stats.weekEarnings}
+              weekDeliveries={stats.weekDeliveries}
+              monthEarnings={stats.monthEarnings}
+              monthDeliveries={stats.monthDeliveries}
+            />
+          </div>
+        )}
+
         {/* En-tête avec informations utilisateur - Responsive */}
-        <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-4">
+        <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-4 mt-6">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 md:gap-3 mb-1 flex-wrap">
               <h1 className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
@@ -477,13 +524,21 @@ export default function LivreurDashboard() {
                         </Button>
                       )}
                       <Button 
-                        onClick={handleCompleteDelivery} 
+                        onClick={() => setShowProofUpload(true)} 
                         disabled={loading}
                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" /> 
-                        Livraison terminée
+                        Terminer & Confirmer
                       </Button>
+                      
+                      {/* Modal de preuve de livraison */}
+                      {showProofUpload && (
+                        <DeliveryProofUpload
+                          deliveryId={currentDelivery.id}
+                          onProofUploaded={handleCompleteWithProof}
+                        />
+                      )}
                       <Button 
                         onClick={reportProblem} 
                         variant="destructive"

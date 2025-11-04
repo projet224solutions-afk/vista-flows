@@ -1477,59 +1477,95 @@ export type Database = {
       }
       deliveries: {
         Row: {
+          accepted_at: string | null
           actual_delivery_time: string | null
           actual_pickup_time: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          client_id: string | null
+          client_signature: string | null
+          completed_at: string | null
           created_at: string | null
           customer_rating: number | null
           delivery_address: Json
           delivery_fee: number | null
           distance_km: number | null
+          driver_earning: number | null
           driver_id: string | null
           driver_notes: string | null
+          end_time: string | null
           estimated_delivery_time: string | null
           estimated_pickup_time: string | null
           id: string
           order_id: string
           pickup_address: Json
+          price: number | null
+          proof_photo_url: string | null
           public_id: string | null
+          start_time: string | null
+          started_at: string | null
           status: Database["public"]["Enums"]["delivery_status"] | null
           updated_at: string | null
         }
         Insert: {
+          accepted_at?: string | null
           actual_delivery_time?: string | null
           actual_pickup_time?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          client_id?: string | null
+          client_signature?: string | null
+          completed_at?: string | null
           created_at?: string | null
           customer_rating?: number | null
           delivery_address: Json
           delivery_fee?: number | null
           distance_km?: number | null
+          driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
+          end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
           id?: string
           order_id: string
           pickup_address: Json
+          price?: number | null
+          proof_photo_url?: string | null
           public_id?: string | null
+          start_time?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
           updated_at?: string | null
         }
         Update: {
+          accepted_at?: string | null
           actual_delivery_time?: string | null
           actual_pickup_time?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          client_id?: string | null
+          client_signature?: string | null
+          completed_at?: string | null
           created_at?: string | null
           customer_rating?: number | null
           delivery_address?: Json
           delivery_fee?: number | null
           distance_km?: number | null
+          driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
+          end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
           id?: string
           order_id?: string
           pickup_address?: Json
+          price?: number | null
+          proof_photo_url?: string | null
           public_id?: string | null
+          start_time?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
           updated_at?: string | null
         }
@@ -1720,14 +1756,22 @@ export type Database = {
       }
       drivers: {
         Row: {
+          commission_rate: number | null
           created_at: string | null
           current_location: unknown
+          earnings_total: number | null
+          email: string | null
+          full_name: string | null
           id: string
           is_online: boolean | null
           is_verified: boolean | null
+          last_location: unknown
           license_number: string
+          phone_number: string | null
           public_id: string | null
           rating: number | null
+          status: string | null
+          syndic_id: string | null
           total_deliveries: number | null
           updated_at: string | null
           user_id: string
@@ -1735,14 +1779,22 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
         Insert: {
+          commission_rate?: number | null
           created_at?: string | null
           current_location?: unknown
+          earnings_total?: number | null
+          email?: string | null
+          full_name?: string | null
           id?: string
           is_online?: boolean | null
           is_verified?: boolean | null
+          last_location?: unknown
           license_number: string
+          phone_number?: string | null
           public_id?: string | null
           rating?: number | null
+          status?: string | null
+          syndic_id?: string | null
           total_deliveries?: number | null
           updated_at?: string | null
           user_id: string
@@ -1750,14 +1802,22 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
         Update: {
+          commission_rate?: number | null
           created_at?: string | null
           current_location?: unknown
+          earnings_total?: number | null
+          email?: string | null
+          full_name?: string | null
           id?: string
           is_online?: boolean | null
           is_verified?: boolean | null
+          last_location?: unknown
           license_number?: string
+          phone_number?: string | null
           public_id?: string | null
           rating?: number | null
+          status?: string | null
+          syndic_id?: string | null
           total_deliveries?: number | null
           updated_at?: string | null
           user_id?: string
@@ -7178,42 +7238,60 @@ export type Database = {
         Row: {
           brand: string | null
           bureau_id: string | null
+          chassis_number: string | null
           created_at: string | null
           id: string
+          insurance_expiration: string | null
           insurance_expiry: string | null
+          is_stolen: boolean | null
           last_inspection: string | null
           model: string | null
           owner_member_id: string | null
+          photo_url: string | null
+          registration_number: string | null
           serial_number: string | null
           status: string | null
+          tech_control_expiration: string | null
           type: string | null
           year: number | null
         }
         Insert: {
           brand?: string | null
           bureau_id?: string | null
+          chassis_number?: string | null
           created_at?: string | null
           id?: string
+          insurance_expiration?: string | null
           insurance_expiry?: string | null
+          is_stolen?: boolean | null
           last_inspection?: string | null
           model?: string | null
           owner_member_id?: string | null
+          photo_url?: string | null
+          registration_number?: string | null
           serial_number?: string | null
           status?: string | null
+          tech_control_expiration?: string | null
           type?: string | null
           year?: number | null
         }
         Update: {
           brand?: string | null
           bureau_id?: string | null
+          chassis_number?: string | null
           created_at?: string | null
           id?: string
+          insurance_expiration?: string | null
           insurance_expiry?: string | null
+          is_stolen?: boolean | null
           last_inspection?: string | null
           model?: string | null
           owner_member_id?: string | null
+          photo_url?: string | null
+          registration_number?: string | null
           serial_number?: string | null
           status?: string | null
+          tech_control_expiration?: string | null
           type?: string | null
           year?: number | null
         }
