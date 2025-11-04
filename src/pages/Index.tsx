@@ -17,6 +17,7 @@ import {
   Zap,
   Globe,
   Clock,
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -25,6 +26,9 @@ import { useHomeProducts } from "@/hooks/useHomeProducts";
 import { useHomeCategories } from "@/hooks/useHomeCategories";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 
 // Services principaux avec données dynamiques
 const getMainServices = (stats: any) => [
@@ -112,6 +116,7 @@ const formatPrice = (price: number) => {
 function IndexAlibaba() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
   
   // Hooks avec gestion d'erreur
   const roleRedirectResult = useRoleRedirect();
@@ -153,112 +158,143 @@ function IndexAlibaba() {
       }
     >
       <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header moderne */}
+      {/* Header moderne responsive */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-purple-600">224SOLUTIONS</h1>
-              <div className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" onClick={() => navigate('/marketplace')}>
-                  Marketplace
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/services')}>
-                  Services
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/about')}>
-                  À propos
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 md:gap-4">
+              <h1 className={`font-bold text-purple-600 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                224SOLUTIONS
+              </h1>
+              {!isMobile && (
+                <div className="hidden md:flex items-center gap-6">
+                  <Button variant="ghost" onClick={() => navigate('/marketplace')}>
+                    Marketplace
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate('/services')}>
+                    Services
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate('/about')}>
+                    À propos
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              )}
               {profile ? (
-                <Button onClick={() => navigate(`/${profile.role}`)}>
-                  Mon Espace
+                <Button 
+                  onClick={() => navigate(`/${profile.role}`)}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {isMobile ? 'Espace' : 'Mon Espace'}
                 </Button>
               ) : (
-                <Button onClick={() => navigate('/auth')}>
-                  Se connecter
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {isMobile ? 'Connexion' : 'Se connecter'}
                 </Button>
               )}
             </div>
           </div>
-        </div>
+        </ResponsiveContainer>
       </header>
 
-      {/* Hero Section avec recherche */}
-      <section className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Votre Marketplace <br />
-            <span className="text-yellow-300">Multi-Services</span>
-          </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Découvrez des milliers de produits et services de qualité.
-            Achetez, vendez et connectez-vous avec notre communauté.
-          </p>
+      {/* Hero Section avec recherche - Responsive */}
+      <section className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white py-8 md:py-16">
+        <ResponsiveContainer>
+          <div className="text-center">
+            <h1 className="text-responsive font-bold mb-4 md:mb-6">
+              Votre Marketplace <br className="hidden sm:block" />
+              <span className="text-yellow-300">Multi-Services</span>
+            </h1>
+            <p className={`mb-6 md:mb-8 max-w-2xl mx-auto opacity-90 ${isMobile ? 'text-base' : 'text-xl'}`}>
+              Découvrez des milliers de produits et services de qualité.
+              {!isMobile && <br />}
+              Achetez, vendez et connectez-vous avec notre communauté.
+            </p>
 
-          {/* Barre de recherche */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="flex bg-white rounded-full p-2 shadow-lg">
-              <Input
-                type="text"
-                placeholder="Rechercher des produits, services, vendeurs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:ring-0"
-              />
-              <Button
-                className="bg-purple-600 hover:bg-purple-700 rounded-full px-8"
-                onClick={() => navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`)}
-              >
-                <Search className="w-5 h-5" />
-              </Button>
+            {/* Barre de recherche */}
+            <div className="max-w-2xl mx-auto mb-6 md:mb-8">
+              <div className="flex bg-white rounded-full p-1 md:p-2 shadow-lg">
+                <Input
+                  type="text"
+                  placeholder={isMobile ? "Rechercher..." : "Rechercher des produits, services, vendeurs..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:ring-0 text-sm md:text-base"
+                />
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 rounded-full px-4 md:px-8"
+                  size={isMobile ? "sm" : "default"}
+                  onClick={() => navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`)}
+                >
+                  <Search className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Stats rapides - Données réelles */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold">
-                {statsLoading ? '...' : `${stats.totalProducts}+`}
+            {/* Stats rapides - Responsive */}
+            <ResponsiveGrid 
+              mobileCols={2} 
+              tabletCols={4} 
+              desktopCols={4} 
+              gap="md" 
+              className="max-w-4xl mx-auto"
+            >
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalProducts}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Produits</div>
               </div>
-              <div className="text-sm opacity-80">Produits</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">
-                {statsLoading ? '...' : `${stats.totalVendors}+`}
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalVendors}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Vendeurs</div>
               </div>
-              <div className="text-sm opacity-80">Vendeurs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">
-                {statsLoading ? '...' : `${stats.totalServices}+`}
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalServices}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Services</div>
               </div>
-              <div className="text-sm opacity-80">Services</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">
-                {statsLoading ? '...' : `${stats.totalClients}+`}
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalClients}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Clients</div>
               </div>
-              <div className="text-sm opacity-80">Clients</div>
-            </div>
+            </ResponsiveGrid>
           </div>
-        </div>
+        </ResponsiveContainer>
       </section>
 
-      {/* Nos Services - Section principale comme dans l'image */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Nos services</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+      {/* Nos Services - Responsive */}
+      <section className="py-8 md:py-16 bg-white">
+        <ResponsiveContainer>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="heading-responsive font-bold text-gray-800 mb-2 md:mb-4">Nos services</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm md:text-base">
               Découvrez notre gamme complète de services pour répondre à tous vos besoins
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <ResponsiveGrid 
+            mobileCols={1} 
+            tabletCols={2} 
+            desktopCols={4} 
+            gap={isMobile ? "sm" : "lg"}
+            className="max-w-6xl mx-auto"
+          >
             {getMainServices(stats).map((service) => {
               const Icon = service.icon;
               return (
@@ -284,8 +320,8 @@ function IndexAlibaba() {
                 </Card>
               );
             })}
-          </div>
-        </div>
+          </ResponsiveGrid>
+        </ResponsiveContainer>
       </section>
 
       {/* Catégories populaires */}

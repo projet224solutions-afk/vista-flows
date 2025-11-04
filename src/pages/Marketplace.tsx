@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 
 const PAGE_LIMIT = 12;
 
@@ -37,6 +39,7 @@ interface Product {
 export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isMobile, isTablet } = useResponsive();
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
@@ -100,23 +103,32 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
+      {/* Header Responsive */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Marketplace</h1>
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Rechercher des produits..."
-            showFilter
-            onFilter={() => setShowFilters(!showFilters)}
-          />
-        </div>
+        <ResponsiveContainer autoPadding>
+          <div className="flex items-center justify-between">
+            <h1 className="heading-responsive font-bold text-foreground">Marketplace</h1>
+            {isMobile && (
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
+          <div className="mt-4">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Rechercher des produits..."
+              showFilter
+              onFilter={() => setShowFilters(!showFilters)}
+            />
+          </div>
+        </ResponsiveContainer>
       </header>
 
-      {/* Categories */}
-      <section className="px-4 py-4 border-b border-border">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+      {/* Categories Responsive */}
+      <section className="p-responsive border-b border-border">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
           {categories.map((category) => (
             <Badge
               key={category.id}
@@ -134,43 +146,43 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filters & View Controls */}
-      <section className="px-4 py-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <ArrowUpDown className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+      {/* Filters & View Controls Responsive */}
+      <section className="p-responsive border-b border-border">
+        <div className="flex items-center justify-between gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className={isMobile ? "w-32 text-xs" : "w-40"}>
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
                 <SelectItem value="newest">Plus récents</SelectItem>
                 <SelectItem value="popular">Popularité</SelectItem>
                 <SelectItem value="price_asc">Prix croissant</SelectItem>
                 <SelectItem value="price_desc">Prix décroissant</SelectItem>
                 <SelectItem value="rating">Mieux notés</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            </SelectContent>
+          </Select>
 
-          <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="h-8 w-8 p-0"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="h-8 w-8 p-0"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 w-8 p-0"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 w-8 p-0"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {showFilters && (
@@ -211,10 +223,12 @@ export default function Marketplace() {
         )}
       </section>
 
-      {/* Results */}
-      <section className="px-4 py-4">
+      {/* Results Responsive */}
+      <section className="p-responsive">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-muted-foreground">{products.length} / {total} résultats</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            {products.length} / {total} résultats
+          </p>
         </div>
 
         {loading ? (
@@ -224,7 +238,13 @@ export default function Marketplace() {
             <p className="text-muted-foreground">Aucun produit trouvé</p>
           </div>
         ) : (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+          <ResponsiveGrid 
+            mobileCols={1} 
+            tabletCols={2} 
+            desktopCols={3} 
+            gap={isMobile ? "sm" : "md"}
+            className={viewMode === 'list' ? 'grid-cols-1' : ''}
+          >
             {products.map((product) => (
               <ProductCard 
                 key={product.id} 
@@ -240,14 +260,15 @@ export default function Marketplace() {
                 isPremium={product.is_hot}
               />
             ))}
-          </div>
+          </ResponsiveGrid>
         )}
 
         {hasMore && !loading && (
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 md:mt-6">
             <Button 
               onClick={loadMore} 
               disabled={loading}
+              size={isMobile ? "sm" : "default"}
             >
               {loading ? 'Chargement...' : 'Voir plus'}
             </Button>

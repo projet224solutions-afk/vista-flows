@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 
 // Types pour les données réelles
 interface ServiceStats {
@@ -23,6 +25,7 @@ interface ServiceStats {
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceStats, setServiceStats] = useState<ServiceStats[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -120,16 +123,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
+      {/* Header Responsive */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-4">
+        <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-vendeur-gradient rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className={`bg-vendeur-gradient rounded-lg flex items-center justify-center ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}`}>
+                <span className="text-white font-bold text-base md:text-lg">M</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">MarketPlace</h1>
+                <h1 className={`font-bold text-foreground ${isMobile ? 'text-lg' : 'text-xl'}`}>
+                  MarketPlace
+                </h1>
                 <p className="text-xs text-muted-foreground flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
                   Conakry, Guinée
@@ -157,7 +162,7 @@ export default function Home() {
             onChange={setSearchQuery}
             showFilter
           />
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* Bannière de bienvenue */}
@@ -238,10 +243,12 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Services à proximité */}
-      <section className="px-4 py-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">Services à proximité</h2>
-        <div className="grid grid-cols-3 gap-4">
+      {/* Services à proximité - Responsive */}
+      <section className="p-responsive">
+        <h2 className="heading-responsive font-bold text-foreground mb-4">
+          Services à proximité
+        </h2>
+        <ResponsiveGrid mobileCols={2} tabletCols={3} desktopCols={3} gap={isMobile ? "sm" : "md"}>
           {serviceStats.map((service) => (
             <Card 
               key={service.id} 
@@ -259,14 +266,20 @@ export default function Home() {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </ResponsiveGrid>
       </section>
 
-      {/* Derniers articles */}
-      <section className="px-4 py-6">
+      {/* Derniers articles - Responsive */}
+      <section className="p-responsive">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">Derniers produits</h2>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/marketplace')}>
+          <h2 className="heading-responsive font-bold text-foreground">
+            Derniers produits
+          </h2>
+          <Button 
+            variant="ghost" 
+            size={isMobile ? "sm" : "default"} 
+            onClick={() => navigate('/marketplace')}
+          >
             Voir tout
           </Button>
         </div>
@@ -284,7 +297,7 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap={isMobile ? "sm" : "md"}>
             {universalProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -300,7 +313,7 @@ export default function Home() {
                 isPremium={product.is_hot}
               />
             ))}
-          </div>
+          </ResponsiveGrid>
         )}
       </section>
 

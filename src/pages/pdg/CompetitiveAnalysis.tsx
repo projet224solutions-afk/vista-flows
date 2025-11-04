@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useResponsive } from '@/hooks/useResponsive';
+import { ResponsiveContainer, ResponsiveGrid } from '@/components/responsive/ResponsiveContainer';
 
 interface PlatformScore {
   name: string;
@@ -34,6 +36,7 @@ interface AnalysisResult {
 
 export default function CompetitiveAnalysis() {
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
   const [loadingCompetitive, setLoadingCompetitive] = useState(false);
   const [loadingSecurity, setLoadingSecurity] = useState(false);
   const [competitiveAnalysis, setCompetitiveAnalysis] = useState<AnalysisResult | null>(null);
@@ -124,36 +127,42 @@ export default function CompetitiveAnalysis() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <BarChart3 className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Analyse Comparative IA
-              </h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-responsive">
+      <ResponsiveContainer>
+        <div className="space-y-4 md:space-y-6">
+          {/* Header Responsive */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 md:gap-3 mb-2">
+                <BarChart3 className={`text-primary ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
+                <h1 className={`font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
+                  Analyse Comparative IA
+                </h1>
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
+                Comparaison 224Solutions vs Grandes Plateformes
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              Comparaison 224Solutions vs Grandes Plateformes
-            </p>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/pdg')}
+              className="gap-2"
+              size={isMobile ? "sm" : "default"}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {!isMobile && 'Retour'}
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/pdg')}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
-          </Button>
-        </div>
 
-        <Tabs defaultValue="competitive" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="competitive">Analyse Concurrentielle</TabsTrigger>
-            <TabsTrigger value="security">Analyse de Sécurité</TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="competitive" className="space-y-4 md:space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="competitive" className="text-xs md:text-sm">
+                {isMobile ? 'Concurrentiel' : 'Analyse Concurrentielle'}
+              </TabsTrigger>
+              <TabsTrigger value="security" className="text-xs md:text-sm">
+                {isMobile ? 'Sécurité' : 'Analyse de Sécurité'}
+              </TabsTrigger>
+            </TabsList>
 
           <TabsContent value="competitive" className="space-y-6">
             {!competitiveAnalysis && (
@@ -223,7 +232,12 @@ export default function CompetitiveAnalysis() {
                   </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <ResponsiveGrid 
+                  mobileCols={1} 
+                  tabletCols={2} 
+                  desktopCols={3} 
+                  gap={isMobile ? "sm" : "md"}
+                >
                   {competitiveAnalysis.platforms.map((platform) => (
                     <Card key={platform.name} className={platform.name === '224Solutions' ? 'border-primary/50 shadow-lg' : ''}>
                       <CardHeader>
@@ -292,7 +306,7 @@ export default function CompetitiveAnalysis() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                </ResponsiveGrid>
 
                 <Card className="border-blue-500/20 bg-blue-500/5">
                   <CardHeader>
@@ -516,9 +530,10 @@ export default function CompetitiveAnalysis() {
                 )}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
-      </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </ResponsiveContainer>
     </div>
   );
 }

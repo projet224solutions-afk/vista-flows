@@ -1,7 +1,7 @@
 /**
- * LIVREUR - INTERFACE COMPLÈTE
+ * LIVREUR - INTERFACE COMPLÈTE RESPONSIVE
  * 224Solutions Delivery System  
- * Toutes les fonctionnalités du Taxi-Moto intégrées
+ * Toutes les fonctionnalités du Taxi-Moto intégrées + Responsive
  */
 
 import { useState, useEffect } from 'react';
@@ -18,10 +18,14 @@ import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { NearbyDeliveriesListener } from "@/components/delivery/NearbyDeliveriesListener";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
+  const { isMobile, isTablet } = useResponsive();
   const [activeTab, setActiveTab] = useState('missions');
 
   // Hook pour les livraisons
@@ -219,7 +223,7 @@ export default function LivreurDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-responsive">
       {/* Listener temps réel pour nouvelles livraisons */}
       <NearbyDeliveriesListener 
         enabled={!currentDelivery && !currentRide}
@@ -230,30 +234,32 @@ export default function LivreurDashboard() {
         }}
       />
 
-      <div className="max-w-4xl mx-auto">
-        {/* En-tête avec informations utilisateur */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold">🚴 Livreur - 224Solutions</h1>
-              <UserIdDisplay layout="horizontal" showBadge={true} />
+      <ResponsiveContainer maxWidth="full">
+        {/* En-tête avec informations utilisateur - Responsive */}
+        <div className="flex items-center justify-between mb-4 md:mb-6 flex-wrap gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 flex-wrap">
+              <h1 className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                🚴 Livreur - 224Solutions
+              </h1>
+              {!isMobile && <UserIdDisplay layout="horizontal" showBadge={true} />}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground">
               Bienvenue {profile?.first_name || 'Livreur'}
             </p>
             {(currentDelivery || currentRide) && (
-              <Badge variant="default" className="mt-1">
+              <Badge variant="default" className="mt-1 text-xs">
                 {currentDelivery ? 'Livraison en cours' : 'Course en cours'}
               </Badge>
             )}
           </div>
           <div className="flex flex-col gap-2 items-end">
-            <Badge variant={location ? 'default' : 'secondary'} className="gap-2">
+            <Badge variant={location ? 'default' : 'secondary'} className="gap-2 text-xs">
               <Navigation className="h-3 w-3" />
               GPS {location ? 'Actif' : 'Inactif'}
             </Badge>
             {nearbyDeliveries.length > 0 && (
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 text-xs">
                 <Bell className="h-3 w-3" />
                 {nearbyDeliveries.length} nouvelles
               </Badge>
@@ -261,26 +267,30 @@ export default function LivreurDashboard() {
           </div>
         </div>
 
-        {/* Onglets de navigation */}
+        {/* Onglets de navigation - Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 bg-card/80 mb-6">
-            <TabsTrigger value="missions">
-              📦 Missions
+          <TabsList className={`grid bg-card/80 mb-4 md:mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
+            <TabsTrigger value="missions" className="text-xs md:text-sm">
+              📦 {isMobile ? '' : 'Missions'}
               {nearbyDeliveries.length > 0 && (
-                <Badge variant="secondary" className="ml-2">{nearbyDeliveries.length}</Badge>
+                <Badge variant="secondary" className="ml-1 md:ml-2 text-xs">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide}>
-              🚚 En cours
-              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-2">1</Badge>}
+            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm">
+              🚚 {isMobile ? '' : 'En cours'}
+              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 md:ml-2 text-xs">1</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="history">
-              📋 Historique
-              {(deliveryHistory.length + rideHistory.length) > 0 && (
-                <Badge variant="outline" className="ml-2">{deliveryHistory.length + rideHistory.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="wallet">💰 Solde</TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="history" className="text-xs md:text-sm">
+                  📋 Historique
+                  {(deliveryHistory.length + rideHistory.length) > 0 && (
+                    <Badge variant="outline" className="ml-2 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="wallet" className="text-xs md:text-sm">💰 Solde</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           {/* 📦 Liste des livraisons disponibles */}
@@ -298,7 +308,8 @@ export default function LivreurDashboard() {
                 </div>
               </Card>
             ) : (
-              nearbyDeliveries.map((delivery) => (
+              <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={2} gap={isMobile ? "sm" : "md"}>
+                {nearbyDeliveries.map((delivery) => (
                 <Card key={delivery.id} className="shadow-md hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start gap-4">
@@ -355,7 +366,8 @@ export default function LivreurDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+                ))}
+              </ResponsiveGrid>
             )}
           </TabsContent>
 
@@ -670,7 +682,7 @@ export default function LivreurDashboard() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 }
