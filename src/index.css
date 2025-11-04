@@ -8,29 +8,29 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* 224SOLUTIONS E-Commerce Design System */
-    /* Fond principal: Noir profond #0D0D0D (0 0% 5%) */
-    --background: 0 0% 5%;
-    /* Texte: Blanc pur #FFFFFF */
-    --foreground: 0 0% 100%;
+    /* 224SOLUTIONS E-Commerce Design System - Blanc & Beige */
+    /* Fond principal: Blanc pur #FFFFFF (0 0% 100%) */
+    --background: 0 0% 100%;
+    /* Texte: Noir doux #1A1A1A */
+    --foreground: 0 0% 10%;
 
-    /* Carte: Gris foncé #1E1E1E (0 0% 12%) */
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 100%;
+    /* Carte: Beige clair #F5F5DC (60 56% 91%) */
+    --card: 60 56% 91%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
     /* Accent: Bleu électrique #007BFF (211 100% 50%) */
     --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Bordures: Gris argenté #1E1E1E */
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Beige moyen #E6D7C3 (35 35% 82%) */
+    --secondary: 35 35% 82%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 35 25% 90%;
+    --muted-foreground: 0 0% 40%;
 
     --accent: 211 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -39,8 +39,8 @@ All colors MUST be HSL.
     --destructive: 0 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
+    --border: 35 25% 85%;
+    --input: 35 25% 90%;
     --ring: 211 100% 50%;
 
     /* Role-based color schemes */
@@ -87,12 +87,12 @@ All colors MUST be HSL.
     --client-accent: 142 71% 95%;
     --client-gradient: linear-gradient(135deg, hsl(142 71% 45%), hsl(0 0% 100%));
 
-    /* Global gradients and effects - 224SOLUTIONS */
-    --gradient-elegant: linear-gradient(135deg, hsl(211 100% 50% / 0.2), hsl(168 100% 39% / 0.15));
-    --gradient-neon: linear-gradient(135deg, hsl(211 100% 20%), hsl(0 0% 5%));
-    --shadow-elegant: 0 8px 30px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 40px hsl(211 100% 50% / 0.4);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.25);
+    /* Global gradients and effects - 224SOLUTIONS Blanc & Beige */
+    --gradient-elegant: linear-gradient(135deg, hsl(211 100% 96%), hsl(35 35% 95%));
+    --gradient-neon: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 45%));
+    --shadow-elegant: 0 8px 30px hsl(0 0% 0% / 0.08);
+    --shadow-glow: 0 0 30px hsl(211 100% 50% / 0.25);
+    --shadow-card: 0 2px 12px hsl(0 0% 0% / 0.06);
 
     --radius: 0.75rem;
 
@@ -107,23 +107,23 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* 224SOLUTIONS Dark mode (déjà sombre par défaut) */
-    --background: 0 0% 5%;
-    --foreground: 0 0% 100%;
+    /* 224SOLUTIONS Dark mode - Beige foncé élégant */
+    --background: 35 20% 15%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 100%;
+    --card: 35 20% 20%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 35 20% 20%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 35 25% 30%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 20%;
+    --muted: 35 20% 25%;
     --muted-foreground: 0 0% 70%;
 
     --accent: 211 100% 50%;
@@ -132,8 +132,8 @@ All colors MUST be HSL.
     --destructive: 0 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
+    --border: 35 20% 30%;
+    --input: 35 20% 25%;
     --ring: 211 100% 50%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

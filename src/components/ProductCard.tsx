@@ -51,14 +51,14 @@ export default function ProductCard({
   }, [images.length]);
 
   return (
-    <Card className="overflow-hidden hover:shadow-glow transition-all duration-500 hover:scale-[1.02] group bg-card border-border/50 animate-bounce-in backdrop-blur-card">
+    <Card className="overflow-hidden hover:shadow-glow transition-all duration-500 hover:scale-[1.02] group bg-card border-border animate-bounce-in">
       <div className="relative">
         {images.length > 1 ? (
           <Carousel className="w-full" opts={{ loop: true }}>
             <CarouselContent>
               {images.map((img, index) => (
                 <CarouselItem key={index}>
-                  <div className="relative h-48 bg-black/20 backdrop-blur-xs rounded-t-2xl overflow-hidden">
+                  <div className="relative h-48 bg-secondary/30 rounded-t-2xl overflow-hidden">
                     <img 
                       src={img} 
                       alt={`${title} - Image ${index + 1}`}
@@ -68,8 +68,8 @@ export default function ProductCard({
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="left-2 bg-black/50 border-primary/30 text-white hover:bg-primary/20" />
-            <CarouselNext className="right-2 bg-black/50 border-primary/30 text-white hover:bg-primary/20" />
+            <CarouselPrevious className="left-2 bg-white/90 border-primary/30 text-foreground hover:bg-primary hover:text-white" />
+            <CarouselNext className="right-2 bg-white/90 border-primary/30 text-foreground hover:bg-primary hover:text-white" />
             
             {/* Pagination dots */}
             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1.5 z-10">
@@ -80,7 +80,7 @@ export default function ProductCard({
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     index === currentImageIndex 
                       ? 'bg-primary w-6 shadow-glow' 
-                      : 'bg-white/40 hover:bg-white/60'
+                      : 'bg-foreground/40 hover:bg-foreground/60'
                   }`}
                   aria-label={`Image ${index + 1}`}
                 />
@@ -88,7 +88,7 @@ export default function ProductCard({
             </div>
           </Carousel>
         ) : (
-          <div className="relative h-48 bg-black/20 backdrop-blur-xs rounded-t-2xl overflow-hidden">
+          <div className="relative h-48 bg-secondary/30 rounded-t-2xl overflow-hidden">
             <img 
               src={images[0]} 
               alt={title}
