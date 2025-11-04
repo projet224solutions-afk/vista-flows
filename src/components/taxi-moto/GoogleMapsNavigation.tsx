@@ -59,6 +59,8 @@ export function GoogleMapsNavigation({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const mapInitialized = useRef(false);
+  const lastCleanupLog = useRef(0);
 
   // Récupérer la clé API Google Maps depuis le backend
   useEffect(() => {
@@ -114,9 +116,9 @@ export function GoogleMapsNavigation({
     };
   }, [apiKey]);
 
-  // Initialiser la carte
+  // Initialiser la carte (une seule fois)
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current || !window.google) return;
+    if (!mapLoaded || !mapRef.current || !window.google || mapInitialized.current) return;
 
     const center = currentLocation 
       ? { lat: currentLocation.latitude, lng: currentLocation.longitude }
@@ -166,6 +168,7 @@ export function GoogleMapsNavigation({
       });
     }
 
+    mapInitialized.current = true;
     toast.success('Carte initialisée');
   }, [mapLoaded, currentLocation]);
 
@@ -205,9 +208,13 @@ export function GoogleMapsNavigation({
   useEffect(() => {
     if (!mapLoaded || !directionsRenderer.current) return;
 
-    // Si pas de course active, nettoyer la carte
+    // Si pas de course active, nettoyer la carte (log limité)
     if (!activeRide) {
-      console.log('🧹 Nettoyage de la carte - pas de course active');
+      const now = Date.now();
+      if (now - lastCleanupLog.current > 30000) { // Log max toutes les 30 secondes
+        console.log('🧹 Nettoyage de la carte - pas de course active');
+        lastCleanupLog.current = now;
+      }
       directionsRenderer.current.setDirections({ routes: [] });
       setRouteInfo(null);
       return;
