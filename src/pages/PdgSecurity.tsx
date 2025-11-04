@@ -13,6 +13,7 @@ import { BugBountyProgram } from '@/components/security/BugBountyProgram';
 import { AdvancedMFA } from '@/components/security/AdvancedMFA';
 import { MLFraudDetection } from '@/components/security/MLFraudDetection';
 import { SIEMDashboard } from '@/components/security/SIEMDashboard';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function PdgSecurity() {
   const navigate = useNavigate();
@@ -305,6 +306,9 @@ export default function PdgSecurity() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

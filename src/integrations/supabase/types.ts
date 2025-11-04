@@ -4980,6 +4980,54 @@ export type Database = {
           },
         ]
       }
+      security_certifications: {
+        Row: {
+          certificate_url: string | null
+          certification_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          issuing_authority: string | null
+          metadata: Json | null
+          name: string
+          progress: number
+          status: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          certificate_url?: string | null
+          certification_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          issuing_authority?: string | null
+          metadata?: Json | null
+          name: string
+          progress?: number
+          status?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          certificate_url?: string | null
+          certification_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          issuing_authority?: string | null
+          metadata?: Json | null
+          name?: string
+          progress?: number
+          status?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       security_detection_rules: {
         Row: {
           action: string
