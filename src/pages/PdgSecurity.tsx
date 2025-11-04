@@ -1,14 +1,22 @@
 import { useState } from 'react';
-import { Shield, AlertTriangle, Lock, Activity, Eye, Ban, FileText } from 'lucide-react';
+import { Shield, AlertTriangle, Lock, Activity, Eye, Ban, FileText, Key, Bug, Brain, Database, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { useResponsive } from '@/hooks/useResponsive';
+import { ResponsiveGrid } from '@/components/responsive/ResponsiveContainer';
+import { SecurityCertifications } from '@/components/security/SecurityCertifications';
+import { BugBountyProgram } from '@/components/security/BugBountyProgram';
+import { AdvancedMFA } from '@/components/security/AdvancedMFA';
+import { MLFraudDetection } from '@/components/security/MLFraudDetection';
+import { SIEMDashboard } from '@/components/security/SIEMDashboard';
 
 export default function PdgSecurity() {
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
   const [selectedTab, setSelectedTab] = useState('overview');
 
   return (
@@ -47,28 +55,48 @@ export default function PdgSecurity() {
 
         {/* Main Content Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2">
-            <TabsTrigger value="overview" className="gap-2">
-              <Shield className="w-4 h-4" />
-              Vue d'ensemble
+          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4 lg:grid-cols-9'} gap-1`}>
+            <TabsTrigger value="overview" className="gap-1 text-xs md:text-sm">
+              <Shield className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Vue'}
             </TabsTrigger>
-            <TabsTrigger value="threats" className="gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Menaces
+            <TabsTrigger value="certifications" className="gap-1 text-xs md:text-sm">
+              <Award className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Certif'}
             </TabsTrigger>
-            <TabsTrigger value="monitoring" className="gap-2">
-              <Eye className="w-4 h-4" />
-              Surveillance
+            <TabsTrigger value="bugbounty" className="gap-1 text-xs md:text-sm">
+              <Bug className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Bounty'}
             </TabsTrigger>
-            <TabsTrigger value="blocked" className="gap-2">
-              <Ban className="w-4 h-4" />
-              Bloqués
+            <TabsTrigger value="mfa" className="gap-1 text-xs md:text-sm">
+              <Key className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'MFA'}
+            </TabsTrigger>
+            <TabsTrigger value="fraud" className="gap-1 text-xs md:text-sm">
+              <Brain className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Fraude ML'}
+            </TabsTrigger>
+            <TabsTrigger value="siem" className="gap-1 text-xs md:text-sm">
+              <Database className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'SIEM'}
+            </TabsTrigger>
+            <TabsTrigger value="threats" className="gap-1 text-xs md:text-sm">
+              <AlertTriangle className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Menaces'}
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="gap-1 text-xs md:text-sm">
+              <Eye className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Surveil'}
+            </TabsTrigger>
+            <TabsTrigger value="blocked" className="gap-1 text-xs md:text-sm">
+              <Ban className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && 'Bloqués'}
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="md">
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -126,7 +154,7 @@ export default function PdgSecurity() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </ResponsiveGrid>
 
             <Card>
               <CardHeader>
@@ -189,6 +217,31 @@ export default function PdgSecurity() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Certifications Tab */}
+          <TabsContent value="certifications" className="space-y-4">
+            <SecurityCertifications />
+          </TabsContent>
+
+          {/* Bug Bounty Tab */}
+          <TabsContent value="bugbounty" className="space-y-4">
+            <BugBountyProgram />
+          </TabsContent>
+
+          {/* Advanced MFA Tab */}
+          <TabsContent value="mfa" className="space-y-4">
+            <AdvancedMFA />
+          </TabsContent>
+
+          {/* ML Fraud Detection Tab */}
+          <TabsContent value="fraud" className="space-y-4">
+            <MLFraudDetection />
+          </TabsContent>
+
+          {/* SIEM Tab */}
+          <TabsContent value="siem" className="space-y-4">
+            <SIEMDashboard />
           </TabsContent>
 
           {/* Threats Tab */}
