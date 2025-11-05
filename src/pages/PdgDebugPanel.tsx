@@ -116,11 +116,19 @@ export default function PdgDebugPanel() {
     setFixingAll(true);
     
     try {
+      console.log('Toutes les erreurs:', errors.map(e => ({
+        id: e.id,
+        severity: e.severity,
+        fix_applied: e.fix_applied,
+        module: e.module
+      })));
+
       const criticalErrors = errors.filter(
         (e) => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée')
       );
 
-      console.log('Erreurs à corriger:', criticalErrors.length);
+      console.log('Erreurs critiques/modérées non corrigées:', criticalErrors.length);
+      console.log('Détail:', criticalErrors);
 
       if (criticalErrors.length === 0) {
         toast({
