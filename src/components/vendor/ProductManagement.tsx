@@ -58,6 +58,7 @@ export default function ProductManagement() {
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [lowStockFilter, setLowStockFilter] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -151,7 +152,10 @@ export default function ProductManagement() {
       (statusFilter === 'active' && product.is_active) ||
       (statusFilter === 'inactive' && !product.is_active);
 
-    return matchesSearch && matchesStatus;
+    const matchesLowStock = !lowStockFilter || 
+      (product.stock_quantity <= product.low_stock_threshold);
+
+    return matchesSearch && matchesStatus && matchesLowStock;
   });
 
   const handleSaveProduct = async () => {
@@ -998,7 +1002,10 @@ export default function ProductManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${lowStockFilter ? 'ring-2 ring-orange-600' : ''}`}
+          onClick={() => setLowStockFilter(!lowStockFilter)}
+        >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-600" />
@@ -1029,7 +1036,7 @@ export default function ProductManagement() {
       {/* Filtres */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1048,6 +1055,15 @@ export default function ProductManagement() {
               <option value="active">Produits actifs</option>
               <option value="inactive">Produits inactifs</option>
             </select>
+            {lowStockFilter && (
+              <Badge 
+                variant="outline" 
+                className="border-orange-600 text-orange-600 cursor-pointer"
+                onClick={() => setLowStockFilter(false)}
+              >
+                Stock faible uniquement ✕
+              </Badge>
+            )}
             <Filter className="w-4 h-4 text-muted-foreground" />
           </div>
         </CardContent>
