@@ -703,110 +703,110 @@ export default function PaymentLinksManager() {
           <ScrollArea className="h-full">
             <div className="px-6 py-4">
               {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                Chargement...
-              </div>
-            ) : paymentLinks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Aucun lien de paiement</p>
-                <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
-              </div>
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                  Chargement...
+                </div>
+              ) : paymentLinks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">Aucun lien de paiement</p>
+                  <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {paymentLinks.map((link) => (
-                  <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
-                          <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
-                            {getStatusIcon(link.status)}
-                            <span className="capitalize">{link.status}</span>
-                          </Badge>
-                        </div>
-                        
-                        {link.description && (
-                          <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
-                        )}
-                        
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1 font-medium">
-                            <DollarSign className="w-3 h-3" />
-                            {formatCurrency(link.total, link.devise)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(link.created_at).toLocaleDateString('fr-FR', { 
-                              day: '2-digit', 
-                              month: 'short' 
-                            })}
-                          </span>
-                          {link.client && (
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {link.client.name}
-                            </span>
+                    <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
+                            <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
+                              {getStatusIcon(link.status)}
+                              <span className="capitalize">{link.status}</span>
+                            </Badge>
+                          </div>
+                          
+                          {link.description && (
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
                           )}
+                          
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1 font-medium">
+                              <DollarSign className="w-3 h-3" />
+                              {formatCurrency(link.total, link.devise)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(link.created_at).toLocaleDateString('fr-FR', { 
+                                day: '2-digit', 
+                                month: 'short' 
+                              })}
+                            </span>
+                            {link.client && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {link.client.name}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyPaymentLink(link.payment_id)}
-                          className="h-8 w-8 p-0"
-                          title="Copier le lien"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
                         
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => sharePaymentLink(link.payment_id)}
-                          className="h-8 w-8 p-0"
-                          title="Partager"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-
-                        {link.status === 'pending' && (
+                        <div className="flex items-center gap-1 shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditLink(link)}
+                            onClick={() => copyPaymentLink(link.payment_id)}
                             className="h-8 w-8 p-0"
-                            title="Modifier"
+                            title="Copier le lien"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Copy className="w-4 h-4" />
                           </Button>
-                        )}
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
-                          className="h-8 w-8 p-0"
-                          title="Ouvrir"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => sharePaymentLink(link.payment_id)}
+                            className="h-8 w-8 p-0"
+                            title="Partager"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteLink(link.payment_id, link.produit)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                          {link.status === 'pending' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditLink(link)}
+                              className="h-8 w-8 p-0"
+                              title="Modifier"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
+                            className="h-8 w-8 p-0"
+                            title="Ouvrir"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteLink(link.payment_id, link.produit)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   ))}
                 </div>
               )}
