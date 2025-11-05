@@ -32,39 +32,55 @@ export default function VendorAnalytics() {
   const [loading, setLoading] = useState(true);
 
   const loadAnalytics = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('Loading analytics for user:', user.id);
 
       // Récupérer le vendor_id
-      const { data: vendor } = await supabase
+      const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      if (!vendor) return;
+      console.log('Vendor data:', vendor, 'Error:', vendorError);
+
+      if (!vendor) {
+        console.log('No vendor found for user');
+        setLoading(false);
+        return;
+      }
 
       // Récupérer les liens de paiement réussis
-      const { data: paymentLinks } = await supabase
+      const { data: paymentLinks, error: linksError } = await supabase
         .from('payment_links')
         .select('id, created_at, total, produit, client_id')
         .eq('vendeur_id', vendor.id)
         .eq('status', 'success');
 
+      console.log('Payment links:', paymentLinks?.length, 'Error:', linksError);
+
       // Récupérer les commandes
-      const { data: orders } = await supabase
+      const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, total_amount, customer_id, status')
         .eq('vendor_id', vendor.id);
 
+      console.log('Orders:', orders?.length, 'Error:', ordersError);
+
       // Récupérer les produits actifs
-      const { data: products } = await supabase
+      const { data: products, error: productsError } = await supabase
         .from('products')
         .select('*')
         .eq('vendor_id', vendor.id)
         .eq('is_active', true);
+
+      console.log('Products:', products?.length, 'Error:', productsError);
 
       // Calculer le revenu total
       const totalRevenue = (paymentLinks || []).reduce((sum, link) => sum + (link.total || 0), 0) +
@@ -144,6 +160,15 @@ export default function VendorAnalytics() {
         ordersThisMonth: thisMonthOrders,
         salesByDay,
         topProducts
+      });
+
+      console.log('Analytics loaded:', {
+        totalRevenue,
+        totalOrders,
+        totalCustomers: uniqueCustomers,
+        totalProducts: products?.length || 0,
+        salesByDay: salesByDay.length,
+        topProducts: topProducts.length
       });
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
