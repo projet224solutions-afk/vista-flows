@@ -46,13 +46,24 @@ export default function PaymentLinksManager() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // Formulaire de création
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    product_id: string;
+    produit: string;
+    description: string;
+    montant: string;
+    devise: string;
+    client_id: string;
+    remise: string;
+    type_remise: 'percentage' | 'fixed';
+  }>({
     product_id: '',
     produit: '',
     description: '',
     montant: '',
     devise: 'GNF',
-    client_id: ''
+    client_id: '',
+    remise: '0',
+    type_remise: 'percentage'
   });
 
   // Filtres
@@ -119,7 +130,9 @@ export default function PaymentLinksManager() {
         product_id: product.id,
         produit: product.name,
         description: product.description || '',
-        montant: product.price.toString()
+        montant: product.price.toString(),
+        remise: '0',
+        type_remise: 'percentage'
       });
     }
   };
@@ -146,7 +159,9 @@ export default function PaymentLinksManager() {
         description: formData.description,
         montant: parseFloat(formData.montant),
         devise: formData.devise,
-        client_id: formData.client_id || undefined
+        client_id: formData.client_id || undefined,
+        remise: parseFloat(formData.remise),
+        type_remise: formData.type_remise
       });
 
       if (paymentId) {
@@ -162,7 +177,7 @@ export default function PaymentLinksManager() {
         // Réinitialiser le formulaire
         setShowCreateModal(false);
         setSelectedProduct(null);
-        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
       }
     } catch (error: any) {
       console.error('Erreur création lien:', error);
@@ -225,7 +240,9 @@ export default function PaymentLinksManager() {
       description: link.description || '',
       montant: link.montant.toString(),
       devise: link.devise,
-      client_id: link.client?.public_id || ''
+      client_id: link.client?.public_id || '',
+      remise: (link.remise || 0).toString(),
+      type_remise: link.type_remise || 'percentage'
     });
     setShowEditModal(true);
   };
@@ -244,8 +261,20 @@ export default function PaymentLinksManager() {
       setUpdating(true);
 
       const newMontant = parseFloat(formData.montant);
-      const newFrais = newMontant * 0.01;
-      const newTotal = newMontant + newFrais;
+      const newRemise = parseFloat(formData.remise);
+      let montantApresRemise = newMontant;
+      
+      // Calculer le montant après remise
+      if (newRemise > 0) {
+        if (formData.type_remise === 'percentage') {
+          montantApresRemise = newMontant * (1 - newRemise / 100);
+        } else {
+          montantApresRemise = newMontant - newRemise;
+        }
+      }
+      
+      const newFrais = montantApresRemise * 0.01;
+      const newTotal = montantApresRemise + newFrais;
 
       // Si un client_id est fourni, trouver l'UUID correspondant
       let clientUuid: string | null = null;
@@ -274,6 +303,8 @@ export default function PaymentLinksManager() {
           produit: formData.produit,
           description: formData.description || null,
           montant: newMontant,
+          remise: newRemise,
+          type_remise: formData.type_remise,
           frais: newFrais,
           total: newTotal,
           devise: formData.devise,
@@ -290,7 +321,7 @@ export default function PaymentLinksManager() {
 
       setShowEditModal(false);
       setEditingLink(null);
-      setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+      setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
       await loadPaymentLinks(filters);
     } catch (error: any) {
       console.error('Erreur mise à jour:', error);
@@ -556,14 +587,84 @@ export default function PaymentLinksManager() {
                   </p>
                 </div>
                 
+                {/* Section Remise */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-base font-semibold">Remise (Réduction)</Label>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="remise">Montant remise</Label>
+                      <Input
+                        id="remise"
+                        type="number"
+                        min="0"
+                        value={formData.remise}
+                        onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="type_remise">Type</Label>
+                      <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
+                        <SelectTrigger id="type_remise">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">Pourcentage (%)</SelectItem>
+                          <SelectItem value="fixed">Montant fixe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                
                 {formData.montant && (
-                  <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="p-3 bg-blue-50 rounded-lg space-y-1">
                     <p className="text-sm text-blue-800">
-                      <strong>Résumé :</strong><br />
-                      Montant : {formatCurrency(parseFloat(formData.montant) || 0, formData.devise)}<br />
-                      Frais (1%) : {formatCurrency((parseFloat(formData.montant) || 0) * 0.01, formData.devise)}<br />
-                      <strong>Total : {formatCurrency((parseFloat(formData.montant) || 0) * 1.01, formData.devise)}</strong>
+                      <strong>Résumé :</strong>
                     </p>
+                    {(() => {
+                      const montant = parseFloat(formData.montant) || 0;
+                      const remise = parseFloat(formData.remise) || 0;
+                      let montantApresRemise = montant;
+                      
+                      if (remise > 0) {
+                        if (formData.type_remise === 'percentage') {
+                          montantApresRemise = montant * (1 - remise / 100);
+                        } else {
+                          montantApresRemise = montant - remise;
+                        }
+                      }
+                      
+                      const frais = montantApresRemise * 0.01;
+                      const total = montantApresRemise + frais;
+                      
+                      return (
+                        <>
+                          <p className="text-xs text-blue-700">
+                            Montant initial : {formatCurrency(montant, formData.devise)}
+                          </p>
+                          {remise > 0 && (
+                            <p className="text-xs text-green-700 font-semibold">
+                              Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                              {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
+                            </p>
+                          )}
+                          <p className="text-xs text-blue-700">
+                            Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            Frais (1%) : {formatCurrency(frais, formData.devise)}
+                          </p>
+                          <p className="text-sm text-blue-900 font-bold mt-2">
+                            Total à payer : {formatCurrency(total, formData.devise)}
+                          </p>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -780,12 +881,84 @@ export default function PaymentLinksManager() {
               </p>
             </div>
             
+            {/* Section Remise dans le modal d'édition */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-base font-semibold">Remise (Réduction)</Label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="edit-remise">Montant remise</Label>
+                  <Input
+                    id="edit-remise"
+                    type="number"
+                    min="0"
+                    value={formData.remise}
+                    onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit-type_remise">Type</Label>
+                  <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
+                    <SelectTrigger id="edit-type_remise">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">Pourcentage (%)</SelectItem>
+                      <SelectItem value="fixed">Montant fixe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
             {formData.montant && (
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="p-3 bg-blue-50 rounded-lg space-y-1">
                 <p className="text-sm text-blue-800">
-                  <strong>Total:</strong> {new Intl.NumberFormat('fr-FR').format(parseFloat(formData.montant) * 1.01)} {formData.devise}
-                  <span className="text-xs ml-2">(dont 1% de frais)</span>
+                  <strong>Résumé :</strong>
                 </p>
+                {(() => {
+                  const montant = parseFloat(formData.montant) || 0;
+                  const remise = parseFloat(formData.remise) || 0;
+                  let montantApresRemise = montant;
+                  
+                  if (remise > 0) {
+                    if (formData.type_remise === 'percentage') {
+                      montantApresRemise = montant * (1 - remise / 100);
+                    } else {
+                      montantApresRemise = montant - remise;
+                    }
+                  }
+                  
+                  const frais = montantApresRemise * 0.01;
+                  const total = montantApresRemise + frais;
+                  
+                  return (
+                    <>
+                      <p className="text-xs text-blue-700">
+                        Montant initial : {new Intl.NumberFormat('fr-FR').format(montant)} {formData.devise}
+                      </p>
+                      {remise > 0 && (
+                        <p className="text-xs text-green-700 font-semibold">
+                          Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                          {' '}({new Intl.NumberFormat('fr-FR').format(montant - montantApresRemise)} {formData.devise})
+                        </p>
+                      )}
+                      <p className="text-xs text-blue-700">
+                        Montant après remise : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Frais (1%) : {new Intl.NumberFormat('fr-FR').format(frais)} {formData.devise}
+                      </p>
+                      <p className="text-sm text-blue-900 font-bold mt-2">
+                        Total à payer : {new Intl.NumberFormat('fr-FR').format(total)} {formData.devise}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
@@ -794,7 +967,7 @@ export default function PaymentLinksManager() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingLink(null);
-                  setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+                  setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
                 }}
                 variant="outline"
                 className="flex-1"

@@ -41,6 +41,8 @@ export interface CreatePaymentLinkData {
   montant: number;
   devise: string;
   client_id?: string;
+  remise?: number;
+  type_remise?: 'percentage' | 'fixed';
 }
 
 export function usePaymentLinks() {
@@ -177,8 +179,20 @@ export function usePaymentLinks() {
     }
 
     try {
-      const frais = data.montant * 0.01; // 1% de frais
-      const total = data.montant + frais;
+      // Calculer le montant après remise
+      let montantFinal = data.montant;
+      const remise = data.remise || 0;
+      
+      if (remise > 0) {
+        if (data.type_remise === 'percentage') {
+          montantFinal = data.montant * (1 - remise / 100);
+        } else {
+          montantFinal = data.montant - remise;
+        }
+      }
+      
+      const frais = montantFinal * 0.01; // 1% de frais
+      const total = montantFinal + frais;
 
       // Générer un ID de paiement unique au format simple
       const timestamp = Date.now();
@@ -215,6 +229,8 @@ export function usePaymentLinks() {
           produit: data.produit,
           description: data.description || null,
           montant: data.montant,
+          remise: remise,
+          type_remise: data.type_remise || 'percentage',
           frais: frais,
           total: total,
           devise: data.devise,
