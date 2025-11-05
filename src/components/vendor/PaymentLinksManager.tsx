@@ -215,6 +215,9 @@ export default function PaymentLinksManager() {
   };
 
   const handleEditLink = (link: any) => {
+    console.log('Editing link:', link);
+    console.log('Client data:', link.client);
+    
     setEditingLink(link);
     setFormData({
       product_id: '',
