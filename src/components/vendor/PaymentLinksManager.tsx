@@ -472,7 +472,7 @@ export default function PaymentLinksManager() {
                 Créer
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>Créer un lien de paiement</DialogTitle>
                 <DialogDescription>
@@ -480,196 +480,198 @@ export default function PaymentLinksManager() {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="product">Sélectionner un produit *</Label>
-                  <Select value={formData.product_id} onValueChange={handleProductSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisir un produit..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingProducts ? (
-                        <SelectItem value="loading" disabled>Chargement...</SelectItem>
-                      ) : products.length === 0 ? (
-                        <SelectItem value="empty" disabled>Aucun produit disponible</SelectItem>
-                      ) : (
-                        products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            <div className="flex items-center gap-2">
-                              <Package className="w-4 h-4" />
-                              {product.name} - {new Intl.NumberFormat('fr-FR').format(product.price)} GNF
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {products.length === 0 && !loadingProducts && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Ajoutez d'abord des produits dans votre stock
-                    </p>
-                  )}
-                </div>
-
-                {selectedProduct && selectedProduct.images && selectedProduct.images.length > 0 && (
-                  <div className="rounded-lg overflow-hidden border">
-                    <img 
-                      src={selectedProduct.images[0]} 
-                      alt={selectedProduct.name}
-                      className="w-full h-32 object-cover"
-                    />
-                  </div>
-                )}
-                
-                <div>
-                  <Label htmlFor="produit">Nom du produit *</Label>
-                  <Input
-                    id="produit"
-                    value={formData.produit}
-                    onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
-                    placeholder="Nom du produit"
-                    required
-                    disabled={!!selectedProduct}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Description du produit ou service..."
-                    rows={3}
-                    disabled={!!selectedProduct}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+              <ScrollArea className="flex-1 px-1">
+                <div className="space-y-4 pr-4">
                   <div>
-                    <Label htmlFor="montant">Montant *</Label>
+                    <Label htmlFor="product">Sélectionner un produit *</Label>
+                    <Select value={formData.product_id} onValueChange={handleProductSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un produit..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingProducts ? (
+                          <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                        ) : products.length === 0 ? (
+                          <SelectItem value="empty" disabled>Aucun produit disponible</SelectItem>
+                        ) : (
+                          products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              <div className="flex items-center gap-2">
+                                <Package className="w-4 h-4" />
+                                {product.name} - {new Intl.NumberFormat('fr-FR').format(product.price)} GNF
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {products.length === 0 && !loadingProducts && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ajoutez d'abord des produits dans votre stock
+                      </p>
+                    )}
+                  </div>
+
+                  {selectedProduct && selectedProduct.images && selectedProduct.images.length > 0 && (
+                    <div className="rounded-lg overflow-hidden border">
+                      <img 
+                        src={selectedProduct.images[0]} 
+                        alt={selectedProduct.name}
+                        className="w-full h-32 object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  <div>
+                    <Label htmlFor="produit">Nom du produit *</Label>
                     <Input
-                      id="montant"
-                      type="number"
-                      value={formData.montant}
-                      onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                      placeholder="0"
+                      id="produit"
+                      value={formData.produit}
+                      onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
+                      placeholder="Nom du produit"
                       required
                       disabled={!!selectedProduct}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="devise">Devise</Label>
-                    <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="GNF">GNF</SelectItem>
-                        <SelectItem value="FCFA">FCFA</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="client_id">ID Client (optionnel)</Label>
-                  <Input
-                    id="client_id"
-                    value={formData.client_id}
-                    onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                    placeholder="Ex: USR0002"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Laissez vide pour un lien public accessible à tous
-                  </p>
-                </div>
-                
-                {/* Section Remise */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <Label className="text-base font-semibold">Remise (Réduction)</Label>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Description du produit ou service..."
+                      rows={3}
+                      disabled={!!selectedProduct}
+                    />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="remise">Montant remise</Label>
+                      <Label htmlFor="montant">Montant *</Label>
                       <Input
-                        id="remise"
+                        id="montant"
                         type="number"
-                        min="0"
-                        value={formData.remise}
-                        onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                        value={formData.montant}
+                        onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
                         placeholder="0"
+                        required
+                        disabled={!!selectedProduct}
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="type_remise">Type</Label>
-                      <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
-                        <SelectTrigger id="type_remise">
+                      <Label htmlFor="devise">Devise</Label>
+                      <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-                          <SelectItem value="fixed">Montant fixe</SelectItem>
+                          <SelectItem value="GNF">GNF</SelectItem>
+                          <SelectItem value="FCFA">FCFA</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                </div>
-                
-                {formData.montant && (
-                  <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                    <p className="text-sm text-blue-800">
-                      <strong>Résumé :</strong>
+                  
+                  <div>
+                    <Label htmlFor="client_id">ID Client (optionnel)</Label>
+                    <Input
+                      id="client_id"
+                      value={formData.client_id}
+                      onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                      placeholder="Ex: USR0002"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Laissez vide pour un lien public accessible à tous
                     </p>
-                    {(() => {
-                      const montant = parseFloat(formData.montant) || 0;
-                      const remise = parseFloat(formData.remise) || 0;
-                      let montantApresRemise = montant;
-                      
-                      if (remise > 0) {
-                        if (formData.type_remise === 'percentage') {
-                          montantApresRemise = montant * (1 - remise / 100);
-                        } else {
-                          montantApresRemise = montant - remise;
-                        }
-                      }
-                      
-                      return (
-                        <>
-                          <p className="text-xs text-blue-700">
-                            Montant initial : {formatCurrency(montant, formData.devise)}
-                          </p>
-                          {remise > 0 && (
-                            <>
-                              <p className="text-xs text-green-700 font-semibold">
-                                Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                                {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
-                              </p>
-                              <p className="text-xs text-blue-700">
-                                Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
-                              </p>
-                            </>
-                          )}
-                          <p className="text-sm text-blue-900 font-bold mt-2">
-                            Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            (Les frais de traitement seront ajoutés pour le client)
-                          </p>
-                        </>
-                      );
-                    })()}
                   </div>
-                )}
-              </div>
+                  
+                  {/* Section Remise */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-base font-semibold">Remise (Réduction)</Label>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="remise">Montant remise</Label>
+                        <Input
+                          id="remise"
+                          type="number"
+                          min="0"
+                          value={formData.remise}
+                          onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                          placeholder="0"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="type_remise">Type</Label>
+                        <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
+                          <SelectTrigger id="type_remise">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">Pourcentage (%)</SelectItem>
+                            <SelectItem value="fixed">Montant fixe</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {formData.montant && (
+                    <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                      <p className="text-sm text-blue-800">
+                        <strong>Résumé :</strong>
+                      </p>
+                      {(() => {
+                        const montant = parseFloat(formData.montant) || 0;
+                        const remise = parseFloat(formData.remise) || 0;
+                        let montantApresRemise = montant;
+                        
+                        if (remise > 0) {
+                          if (formData.type_remise === 'percentage') {
+                            montantApresRemise = montant * (1 - remise / 100);
+                          } else {
+                            montantApresRemise = montant - remise;
+                          }
+                        }
+                        
+                        return (
+                          <>
+                            <p className="text-xs text-blue-700">
+                              Montant initial : {formatCurrency(montant, formData.devise)}
+                            </p>
+                            {remise > 0 && (
+                              <>
+                                <p className="text-xs text-green-700 font-semibold">
+                                  Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                                  {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
+                                </p>
+                                <p className="text-xs text-blue-700">
+                                  Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
+                                </p>
+                              </>
+                            )}
+                            <p className="text-sm text-blue-900 font-bold mt-2">
+                              Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              (Les frais de traitement seront ajoutés pour le client)
+                            </p>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
               
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-4 shrink-0">
                 <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                   Annuler
                 </Button>
@@ -713,98 +715,98 @@ export default function PaymentLinksManager() {
             ) : (
               <div className="space-y-3 py-4">
                 {paymentLinks.map((link) => (
-                <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
-                        <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
-                          {getStatusIcon(link.status)}
-                          <span className="capitalize">{link.status}</span>
-                        </Badge>
-                      </div>
-                      
-                      {link.description && (
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
-                      )}
-                      
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1 font-medium">
-                          <DollarSign className="w-3 h-3" />
-                          {formatCurrency(link.total, link.devise)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(link.created_at).toLocaleDateString('fr-FR', { 
-                            day: '2-digit', 
-                            month: 'short' 
-                          })}
-                        </span>
-                        {link.client && (
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {link.client.name}
-                          </span>
+                  <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
+                          <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
+                            {getStatusIcon(link.status)}
+                            <span className="capitalize">{link.status}</span>
+                          </Badge>
+                        </div>
+                        
+                        {link.description && (
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
                         )}
+                        
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1 font-medium">
+                            <DollarSign className="w-3 h-3" />
+                            {formatCurrency(link.total, link.devise)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(link.created_at).toLocaleDateString('fr-FR', { 
+                              day: '2-digit', 
+                              month: 'short' 
+                            })}
+                          </span>
+                          {link.client && (
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {link.client.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyPaymentLink(link.payment_id)}
-                        className="h-8 w-8 p-0"
-                        title="Copier le lien"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
                       
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => sharePaymentLink(link.payment_id)}
-                        className="h-8 w-8 p-0"
-                        title="Partager"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-
-                      {link.status === 'pending' && (
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEditLink(link)}
+                          onClick={() => copyPaymentLink(link.payment_id)}
                           className="h-8 w-8 p-0"
-                          title="Modifier"
+                          title="Copier le lien"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Copy className="w-4 h-4" />
                         </Button>
-                      )}
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
-                        className="h-8 w-8 p-0"
-                        title="Ouvrir"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => sharePaymentLink(link.payment_id)}
+                          className="h-8 w-8 p-0"
+                          title="Partager"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </Button>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteLink(link.payment_id, link.produit)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        {link.status === 'pending' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditLink(link)}
+                            className="h-8 w-8 p-0"
+                            title="Modifier"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
+                          className="h-8 w-8 p-0"
+                          title="Ouvrir"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteLink(link.payment_id, link.produit)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
               </div>
             )}
           </ScrollArea>
@@ -813,7 +815,7 @@ export default function PaymentLinksManager() {
 
       {/* Modal de modification */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Modifier le lien de paiement</DialogTitle>
             <DialogDescription>
@@ -821,179 +823,168 @@ export default function PaymentLinksManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-produit">Produit / Service *</Label>
-              <Input
-                id="edit-produit"
-                value={formData.produit}
-                onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
-                placeholder="Nom du produit"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description du produit"
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
+          <ScrollArea className="flex-1 px-1">
+            <div className="space-y-4 pr-4">
               <div>
-                <Label htmlFor="edit-montant">Montant *</Label>
+                <Label htmlFor="edit-produit">Produit / Service *</Label>
                 <Input
-                  id="edit-montant"
-                  type="number"
-                  value={formData.montant}
-                  onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                  placeholder="0"
+                  id="edit-produit"
+                  value={formData.produit}
+                  onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
+                  placeholder="Nom du produit"
                 />
               </div>
               
               <div>
-                <Label htmlFor="edit-devise">Devise</Label>
-                <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
-                  <SelectTrigger id="edit-devise">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GNF">GNF</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="edit-client_id">ID Client (optionnel)</Label>
-              <Input
-                id="edit-client_id"
-                value={formData.client_id}
-                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                placeholder="Ex: USR0002"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Laissez vide pour un lien public accessible à tous
-              </p>
-            </div>
-            
-            {/* Section Remise dans le modal d'édition */}
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-base font-semibold">Remise (Réduction)</Label>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Description du produit"
+                  rows={3}
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="edit-remise">Montant remise</Label>
+                  <Label htmlFor="edit-montant">Montant *</Label>
                   <Input
-                    id="edit-remise"
+                    id="edit-montant"
                     type="number"
-                    min="0"
-                    value={formData.remise}
-                    onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                    value={formData.montant}
+                    onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
                     placeholder="0"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="edit-type_remise">Type</Label>
-                  <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
-                    <SelectTrigger id="edit-type_remise">
+                  <Label htmlFor="edit-devise">Devise</Label>
+                  <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
+                    <SelectTrigger id="edit-devise">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-                      <SelectItem value="fixed">Montant fixe</SelectItem>
+                      <SelectItem value="GNF">GNF</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            </div>
-            
-            {formData.montant && (
-              <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                <p className="text-sm text-blue-800">
-                  <strong>Résumé :</strong>
+              
+              <div>
+                <Label htmlFor="edit-client_id">ID Client (optionnel)</Label>
+                <Input
+                  id="edit-client_id"
+                  value={formData.client_id}
+                  onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                  placeholder="Ex: USR0002"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Laissez vide pour un lien public accessible à tous
                 </p>
-                {(() => {
-                  const montant = parseFloat(formData.montant) || 0;
-                  const remise = parseFloat(formData.remise) || 0;
-                  let montantApresRemise = montant;
-                  
-                  if (remise > 0) {
-                    if (formData.type_remise === 'percentage') {
-                      montantApresRemise = montant * (1 - remise / 100);
-                    } else {
-                      montantApresRemise = montant - remise;
-                    }
-                  }
-                  
-                  return (
-                    <>
-                      <p className="text-xs text-blue-700">
-                        Montant initial : {new Intl.NumberFormat('fr-FR').format(montant)} {formData.devise}
-                      </p>
-                      {remise > 0 && (
-                        <>
-                          <p className="text-xs text-green-700 font-semibold">
-                            Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                            {' '}({new Intl.NumberFormat('fr-FR').format(montant - montantApresRemise)} {formData.devise})
-                          </p>
-                          <p className="text-xs text-blue-700">
-                            Montant après remise : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
-                          </p>
-                        </>
-                      )}
-                      <p className="text-sm text-blue-900 font-bold mt-2">
-                        Montant à demander : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        (Les frais de traitement seront ajoutés pour le client)
-                      </p>
-                    </>
-                  );
-                })()}
               </div>
-            )}
-            
-            <div className="flex gap-2 pt-2">
-              <Button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingLink(null);
-                  setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
-                }}
-                variant="outline"
-                className="flex-1"
-                disabled={updating}
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleUpdateLink}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                disabled={updating || !formData.produit || !formData.montant}
-              >
-                {updating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  <>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Mettre à jour
-                  </>
-                )}
-              </Button>
+              
+              {/* Section Remise dans le modal d'édition */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-base font-semibold">Remise (Réduction)</Label>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="edit-remise">Montant remise</Label>
+                    <Input
+                      id="edit-remise"
+                      type="number"
+                      min="0"
+                      value={formData.remise}
+                      onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="edit-type_remise">Type</Label>
+                    <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
+                      <SelectTrigger id="edit-type_remise">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Pourcentage (%)</SelectItem>
+                        <SelectItem value="fixed">Montant fixe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              
+              {formData.montant && (
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-sm text-blue-800">
+                    <strong>Résumé :</strong>
+                  </p>
+                  {(() => {
+                    const montant = parseFloat(formData.montant) || 0;
+                    const remise = parseFloat(formData.remise) || 0;
+                    let montantApresRemise = montant;
+                    
+                    if (remise > 0) {
+                      if (formData.type_remise === 'percentage') {
+                        montantApresRemise = montant * (1 - remise / 100);
+                      } else {
+                        montantApresRemise = montant - remise;
+                      }
+                    }
+                    
+                    return (
+                      <>
+                        <p className="text-xs text-blue-700">
+                          Montant initial : {formatCurrency(montant, formData.devise)}
+                        </p>
+                        {remise > 0 && (
+                          <>
+                            <p className="text-xs text-green-700 font-semibold">
+                              Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                              {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
+                            </p>
+                          </>
+                        )}
+                        <p className="text-sm text-blue-900 font-bold mt-2">
+                          Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          (Les frais de traitement seront ajoutés pour le client)
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
+          </ScrollArea>
+          
+          <div className="flex justify-end gap-2 pt-4 shrink-0">
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleUpdateLink} disabled={updating}>
+              {updating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Mise à jour...
+                </>
+              ) : (
+                <>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Mettre à jour
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
