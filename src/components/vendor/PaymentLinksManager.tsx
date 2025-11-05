@@ -480,7 +480,7 @@ export default function PaymentLinksManager() {
                 </DialogDescription>
               </DialogHeader>
               
-              <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+              <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
                 <div className="space-y-4 px-1 pr-4 pb-2">
                   <div>
                     <Label htmlFor="product">Sélectionner un produit *</Label>
@@ -695,13 +695,14 @@ export default function PaymentLinksManager() {
       </div>
 
       {/* Liste des liens de paiement avec scroll */}
-      <Card className="flex-1 flex flex-col min-h-0">
+      <Card className="flex-1 flex flex-col overflow-hidden">
         <CardHeader className="pb-3 shrink-0">
           <CardTitle className="text-lg">Mes liens de paiement</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-full px-6">
-            {loading ? (
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="px-6 py-4">
+              {loading ? (
               <div className="flex items-center justify-center py-8">
                 <RefreshCw className="w-6 h-6 animate-spin mr-2" />
                 Chargement...
@@ -712,9 +713,9 @@ export default function PaymentLinksManager() {
                 <p className="font-medium">Aucun lien de paiement</p>
                 <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
               </div>
-            ) : (
-              <div className="space-y-3 py-4">
-                {paymentLinks.map((link) => (
+              ) : (
+                <div className="space-y-3">
+                  {paymentLinks.map((link) => (
                   <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -806,9 +807,10 @@ export default function PaymentLinksManager() {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </ScrollArea>
         </CardContent>
       </Card>
@@ -823,7 +825,7 @@ export default function PaymentLinksManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+          <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
             <div className="space-y-4 px-1 pr-4 pb-2">
               <div>
                 <Label htmlFor="edit-produit">Produit / Service *</Label>
