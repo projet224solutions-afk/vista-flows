@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NearbyDeliveriesPanel } from '@/components/delivery/NearbyDeliveriesPanel';
 import { toast } from "sonner";
-import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car } from "lucide-react";
+import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/Res
 import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { DriverLayout } from "@/components/driver/DriverLayout";
+import DeliveryChat from "@/components/delivery/DeliveryChat";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -36,6 +38,7 @@ export default function LivreurDashboard() {
   const { isMobile, isTablet } = useResponsive();
   const [activeTab, setActiveTab] = useState('missions');
   const [showProofUpload, setShowProofUpload] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // Hook pour le profil et statut du driver
   const { driver, stats, goOnline, goOffline, pause, updateLocation, uploadProof } = useDriver();
@@ -560,16 +563,26 @@ export default function LivreurDashboard() {
                           🚀 Démarrer la livraison
                         </Button>
                       )}
-                      <Button 
-                        onClick={() => setShowProofUpload(true)} 
-                        disabled={loading}
-                        className="w-full text-white"
-                        size="lg"
-                        style={{ background: 'linear-gradient(135deg, hsl(145 65% 35%), hsl(145 65% 45%))' }}
-                      >
-                        <CheckCircle className="w-5 h-5 mr-2" /> 
-                        ✅ Terminer & Confirmer
-                      </Button>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          onClick={() => setShowChat(true)} 
+                          variant="outline"
+                          className="w-full border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" /> 
+                          Chat
+                        </Button>
+                        <Button 
+                          onClick={() => setShowProofUpload(true)} 
+                          disabled={loading}
+                          className="w-full text-white"
+                          style={{ background: 'linear-gradient(135deg, hsl(145 65% 35%), hsl(145 65% 45%))' }}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" /> 
+                          Terminer
+                        </Button>
+                      </div>
                       
                       <Button 
                         onClick={reportProblem} 
@@ -805,6 +818,25 @@ export default function LivreurDashboard() {
           </TabsContent>
         </Tabs>
       </ResponsiveContainer>
+      
+      {/* Dialog de chat pour communication avec client/vendeur */}
+      <Dialog open={showChat} onOpenChange={setShowChat}>
+        <DialogContent className="max-w-2xl h-[600px] p-0">
+          <DialogHeader className="px-6 pt-6 pb-0">
+            <DialogTitle>Communication - Livraison</DialogTitle>
+          </DialogHeader>
+          {currentDelivery && user && (
+            <div className="flex-1 px-6 pb-6 h-full overflow-hidden">
+              <DeliveryChat
+                deliveryId={currentDelivery.id}
+                recipientId={currentDelivery.client_id}
+                recipientName="Client"
+                recipientRole="client"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Modal de preuve de livraison */}
       {showProofUpload && currentDelivery && (
