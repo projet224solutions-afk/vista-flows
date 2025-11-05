@@ -40,6 +40,30 @@ export default function Home() {
   // Charger les statistiques des services à proximité
   useEffect(() => {
     loadServiceStats();
+    
+    // Mise à jour automatique toutes les 30 secondes
+    const interval = setInterval(loadServiceStats, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Écouter les changements de statut des livreurs en temps réel
+  useEffect(() => {
+    const driversChannel = supabase
+      .channel('drivers_availability')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'drivers'
+      }, () => {
+        console.log('Changement détecté dans les livreurs - mise à jour...');
+        loadServiceStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(driversChannel);
+    };
   }, []);
 
   // Charger les notifications
@@ -51,22 +75,30 @@ export default function Home() {
 
   const loadServiceStats = async () => {
     try {
-      // Compter les vendeurs/boutiques
+      // Compter les vendeurs/boutiques actifs
       const { count: vendorsCount } = await supabase
         .from('vendors')
         .select('*', { count: 'exact', head: true });
 
-      // Compter les conducteurs de taxi-moto
+      // Compter les conducteurs de taxi-moto disponibles
       const { count: driversCount } = await supabase
         .from('drivers')
         .select('*', { count: 'exact', head: true })
-        .eq('vehicle_type', 'moto');
+        .eq('vehicle_type', 'moto')
+        .eq('is_online', true);
 
-      // Compter les livreurs
+      // Compter les livreurs disponibles (truck, bicycle)
       const { count: deliveryDriversCount } = await supabase
         .from('drivers')
         .select('*', { count: 'exact', head: true })
-        .eq('vehicle_type', 'truck');
+        .in('vehicle_type', ['truck', 'bicycle'])
+        .eq('is_online', true);
+
+      console.log('📊 Stats chargées:', {
+        boutiques: vendorsCount,
+        taxiMotos: driversCount,
+        livreurs: deliveryDriversCount
+      });
 
       setServiceStats([
         {
@@ -79,17 +111,38 @@ export default function Home() {
           id: 'taxi',
           title: 'Taxi-Motos',
           icon: <Car className="w-6 h-6 text-taxi-primary" />,
-          count: `${driversCount || 0}`
+          count: `${driversCount || 0} en ligne`
         },
         {
           id: 'livraison',
           title: 'Livraison',
           icon: <Truck className="w-6 h-6 text-livreur-primary" />,
-          count: `${deliveryDriversCount || 0}`
+          count: `${deliveryDriversCount || 0} disponibles`
         }
       ]);
     } catch (error) {
-      console.error('Erreur chargement statistiques:', error);
+      console.error('❌ Erreur chargement statistiques:', error);
+      // Afficher des valeurs par défaut en cas d'erreur
+      setServiceStats([
+        {
+          id: 'boutiques',
+          title: 'Boutiques',
+          icon: <Store className="w-6 h-6 text-vendeur-primary" />,
+          count: '0'
+        },
+        {
+          id: 'taxi',
+          title: 'Taxi-Motos',
+          icon: <Car className="w-6 h-6 text-taxi-primary" />,
+          count: '0 en ligne'
+        },
+        {
+          id: 'livraison',
+          title: 'Livraison',
+          icon: <Truck className="w-6 h-6 text-livreur-primary" />,
+          count: '0 disponibles'
+        }
+      ]);
     }
   };
 
