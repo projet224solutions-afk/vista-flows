@@ -1621,6 +1621,42 @@ export type Database = {
           },
         ]
       }
+      delivery_messages: {
+        Row: {
+          content: string
+          created_at: string
+          delivery_id: string
+          id: string
+          is_read: boolean
+          message_type: string
+          recipient_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          delivery_id: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          recipient_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          recipient_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_notifications: {
         Row: {
           created_at: string
@@ -6645,6 +6681,42 @@ export type Database = {
           metadata?: Json | null
           resource_id?: string
           resource_type?: string
+        }
+        Relationships: []
+      }
+      taxi_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message_type: string
+          recipient_id: string
+          ride_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          recipient_id: string
+          ride_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          recipient_id?: string
+          ride_id?: string
+          sender_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
