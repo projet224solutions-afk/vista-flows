@@ -88,19 +88,13 @@ export default function PdgDebugPanel() {
       if (response.ok) {
         toast({
           title: 'Succès',
-          description: data.message || 'Correction appliquée avec succès',
+          description: data.message || 'Erreur supprimée avec succès',
         });
 
-        // Mettre à jour l'erreur localement
-        setErrors(
-          errors.map((e) =>
-            e.id === errorId
-              ? { ...e, fix_applied: true, status: 'fixed', fix_description: data.fix_description }
-              : e
-          )
-        );
+        // Retirer l'erreur de la liste locale
+        setErrors(errors.filter((e) => e.id !== errorId));
       } else {
-        throw new Error(data.error || 'Erreur lors de la correction');
+        throw new Error(data.error || 'Erreur lors de la suppression');
       }
     } catch (error) {
       console.error('Error fixing manually:', error);
@@ -167,22 +161,16 @@ export default function PdgDebugPanel() {
             }
           );
 
-          if (response.ok) {
-            fixed++;
-            console.log('Erreur corrigée:', error.id);
-            // Mettre à jour localement
-            setErrors(prev =>
-              prev.map((e) =>
-                e.id === error.id
-                  ? { ...e, fix_applied: true, status: 'fixed' }
-                  : e
-              )
-            );
-          } else {
-            const errorData = await response.json();
-            console.error('Échec correction:', error.id, errorData);
-            failed++;
-          }
+        if (response.ok) {
+          fixed++;
+          console.log('Erreur supprimée:', error.id);
+          // Retirer l'erreur de la liste locale
+          setErrors(prev => prev.filter((e) => e.id !== error.id));
+        } else {
+          const errorData = await response.json();
+          console.error('Échec suppression:', error.id, errorData);
+          failed++;
+        }
         } catch (err) {
           failed++;
           console.error('Erreur lors de la correction:', error.id, err);
@@ -191,7 +179,7 @@ export default function PdgDebugPanel() {
 
       toast({
         title: 'Correction terminée',
-        description: `✅ ${fixed} corrigée(s) • ❌ ${failed} échouée(s)`,
+        description: `✅ ${fixed} supprimée(s) • ❌ ${failed} échouée(s)`,
         variant: fixed > 0 ? 'default' : 'destructive',
       });
 

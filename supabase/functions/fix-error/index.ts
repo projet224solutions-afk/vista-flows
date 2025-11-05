@@ -105,27 +105,24 @@ serve(async (req) => {
       }
     }
 
-    // Mettre à jour l'erreur
-    const { error: updateError } = await supabaseClient
+    // Supprimer l'erreur au lieu de la marquer comme corrigée
+    const { error: deleteError } = await supabaseClient
       .from('system_errors')
-      .update({
-        fix_applied: true,
-        fix_description: fixDescription,
-        status: 'fixed',
-        fixed_at: new Date().toISOString(),
-        admin_notified: true,
-        admin_acknowledged_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('id', errorId);
 
-    if (updateError) {
-      throw updateError;
+    if (deleteError) {
+      console.error('Error deleting error:', deleteError);
+      throw deleteError;
     }
+
+    console.log(`Error ${errorId} successfully deleted`);
+
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Correction appliquée avec succès',
+        message: 'Erreur supprimée avec succès',
         fix_description: fixDescription,
       }),
       {
