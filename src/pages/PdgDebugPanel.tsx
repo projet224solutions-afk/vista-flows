@@ -110,18 +110,17 @@ export default function PdgDebugPanel() {
     setFixingAll(true);
     
     try {
-      console.log('Toutes les erreurs:', errors.map(e => ({
+      console.log('🔍 Toutes les erreurs:', errors.map(e => ({
         id: e.id,
         severity: e.severity,
         fix_applied: e.fix_applied,
         module: e.module
       })));
 
-      // Corriger TOUTES les erreurs non corrigées (critiques, modérées ET mineures)
+      // Corriger TOUTES les erreurs non corrigées
       const errorsToFix = errors.filter((e) => !e.fix_applied);
 
-      console.log('Erreurs non corrigées trouvées:', errorsToFix.length);
-      console.log('Détail:', errorsToFix);
+      console.log('⚠️ Erreurs non corrigées trouvées:', errorsToFix.length);
 
       if (errorsToFix.length === 0) {
         toast({
@@ -133,21 +132,24 @@ export default function PdgDebugPanel() {
 
       toast({
         title: 'Correction en cours...',
-        description: `${errorsToFix.length} erreur(s) en cours de correction`,
+        description: `${errorsToFix.length} erreur(s) en cours de suppression`,
       });
 
       let fixed = 0;
       let failed = 0;
+      const fixedIds: string[] = [];
 
       for (const error of errorsToFix) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           
           if (!session) {
-            console.error('Pas de session pour corriger:', error.id);
+            console.error('❌ Pas de session pour corriger:', error.id);
             failed++;
             continue;
           }
+
+          console.log('🔧 Suppression de l\'erreur:', error.id, error.module);
 
           const response = await fetch(
             `https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/fix-error`,
@@ -161,20 +163,24 @@ export default function PdgDebugPanel() {
             }
           );
 
-        if (response.ok) {
-          fixed++;
-          console.log('Erreur supprimée:', error.id);
-          // Retirer l'erreur de la liste locale
-          setErrors(prev => prev.filter((e) => e.id !== error.id));
-        } else {
-          const errorData = await response.json();
-          console.error('Échec suppression:', error.id, errorData);
-          failed++;
-        }
+          if (response.ok) {
+            fixed++;
+            fixedIds.push(error.id);
+            console.log('✅ Erreur supprimée:', error.id);
+          } else {
+            const errorData = await response.json();
+            console.error('❌ Échec suppression:', error.id, errorData);
+            failed++;
+          }
         } catch (err) {
           failed++;
-          console.error('Erreur lors de la correction:', error.id, err);
+          console.error('❌ Erreur lors de la suppression:', error.id, err);
         }
+      }
+
+      // Mettre à jour l'état en une seule fois
+      if (fixedIds.length > 0) {
+        setErrors(prev => prev.filter((e) => !fixedIds.includes(e.id)));
       }
 
       toast({
@@ -183,7 +189,7 @@ export default function PdgDebugPanel() {
         variant: fixed > 0 ? 'default' : 'destructive',
       });
 
-      // Recharger les erreurs
+      // Recharger les erreurs pour être sûr
       await loadErrors();
     } finally {
       setFixingAll(false);
