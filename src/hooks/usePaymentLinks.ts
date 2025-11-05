@@ -40,7 +40,6 @@ export interface CreatePaymentLinkData {
   description?: string;
   montant: number;
   devise: string;
-  client_id?: string;
 }
 
 export function usePaymentLinks() {
@@ -190,7 +189,7 @@ export function usePaymentLinks() {
         .insert({
           payment_id: paymentId,
           vendeur_id: vendorId,
-          client_id: data.client_id || null,
+          client_id: null, // Pas de client spécifique - lien public
           produit: data.produit,
           description: data.description || null,
           montant: data.montant,

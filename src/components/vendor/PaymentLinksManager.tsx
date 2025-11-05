@@ -46,8 +46,7 @@ export default function PaymentLinksManager() {
     produit: '',
     description: '',
     montant: '',
-    devise: 'GNF',
-    client_id: ''
+    devise: 'GNF'
   });
 
   // Filtres
@@ -140,8 +139,7 @@ export default function PaymentLinksManager() {
         produit: formData.produit,
         description: formData.description,
         montant: parseFloat(formData.montant),
-        devise: formData.devise,
-        client_id: formData.client_id || undefined
+        devise: formData.devise
       });
 
       if (paymentId) {
@@ -157,7 +155,7 @@ export default function PaymentLinksManager() {
         // Réinitialiser le formulaire
         setShowCreateModal(false);
         setSelectedProduct(null);
-        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF' });
       }
     } catch (error: any) {
       console.error('Erreur création lien:', error);
@@ -416,16 +414,6 @@ export default function PaymentLinksManager() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="client_id">ID Client (optionnel)</Label>
-                  <Input
-                    id="client_id"
-                    value={formData.client_id}
-                    onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                    placeholder="ID du client destinataire"
-                  />
                 </div>
                 
                 {formData.montant && (
