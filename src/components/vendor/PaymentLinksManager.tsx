@@ -9,11 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Link, Plus, Copy, Share2, RefreshCw, 
   DollarSign, CheckCircle, Clock, XCircle, AlertCircle, ExternalLink,
-  Calendar, User
+  Calendar, User, Package
 } from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  images?: string[];
+}
 
 export default function PaymentLinksManager() {
   const { toast } = useToast();
@@ -27,9 +36,13 @@ export default function PaymentLinksManager() {
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // Formulaire de création
   const [formData, setFormData] = useState({
+    product_id: '',
     produit: '',
     description: '',
     montant: '',
@@ -43,10 +56,68 @@ export default function PaymentLinksManager() {
     search: ''
   });
 
+  // Charger les produits du vendeur
+  useEffect(() => {
+    loadVendorProducts();
+  }, []);
+
   // Recharger quand les filtres changent
   useEffect(() => {
     loadPaymentLinks(filters);
   }, [filters.status, filters.search]);
+
+  const loadVendorProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      // Récupérer le vendeur
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!vendor) return;
+
+      // Récupérer les produits actifs du vendeur
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, description, images')
+        .eq('vendor_id', vendor.id)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les produits",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleProductSelect = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setFormData({
+        ...formData,
+        product_id: product.id,
+        produit: product.name,
+        description: product.description || '',
+        montant: product.price.toString()
+      });
+    }
+  };
 
   const handleRefresh = () => {
     loadPaymentLinks(filters);
@@ -85,7 +156,8 @@ export default function PaymentLinksManager() {
 
         // Réinitialiser le formulaire
         setShowCreateModal(false);
-        setFormData({ produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+        setSelectedProduct(null);
+        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
       }
     } catch (error: any) {
       console.error('Erreur création lien:', error);
@@ -248,19 +320,60 @@ export default function PaymentLinksManager() {
               <DialogHeader>
                 <DialogTitle>Créer un lien de paiement</DialogTitle>
                 <DialogDescription>
-                  Générez un lien sécurisé pour recevoir des paiements
+                  Sélectionnez un produit de votre stock pour créer un lien de paiement
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
+                <div>
+                  <Label htmlFor="product">Sélectionner un produit *</Label>
+                  <Select value={formData.product_id} onValueChange={handleProductSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un produit..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingProducts ? (
+                        <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                      ) : products.length === 0 ? (
+                        <SelectItem value="empty" disabled>Aucun produit disponible</SelectItem>
+                      ) : (
+                        products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            <div className="flex items-center gap-2">
+                              <Package className="w-4 h-4" />
+                              {product.name} - {new Intl.NumberFormat('fr-FR').format(product.price)} GNF
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {products.length === 0 && !loadingProducts && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Ajoutez d'abord des produits dans votre stock
+                    </p>
+                  )}
+                </div>
+
+                {selectedProduct && selectedProduct.images && selectedProduct.images.length > 0 && (
+                  <div className="rounded-lg overflow-hidden border">
+                    <img 
+                      src={selectedProduct.images[0]} 
+                      alt={selectedProduct.name}
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="produit">Nom du produit *</Label>
                   <Input
                     id="produit"
                     value={formData.produit}
                     onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
-                    placeholder="Ex: iPhone 15 Pro"
+                    placeholder="Nom du produit"
                     required
+                    disabled={!!selectedProduct}
                   />
                 </div>
                 
@@ -272,6 +385,7 @@ export default function PaymentLinksManager() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Description du produit ou service..."
                     rows={3}
+                    disabled={!!selectedProduct}
                   />
                 </div>
                 
@@ -285,6 +399,7 @@ export default function PaymentLinksManager() {
                       onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
                       placeholder="0"
                       required
+                      disabled={!!selectedProduct}
                     />
                   </div>
                   
