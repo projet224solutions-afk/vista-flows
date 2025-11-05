@@ -250,76 +250,87 @@ export default function PdgDebugPanel() {
         )}
 
         {/* Errors Table */}
-        <Card>
-          <CardHeader>
+        <Card className="flex flex-col h-[calc(100vh-20rem)] sm:h-auto">
+          <CardHeader className="flex-shrink-0">
             <CardTitle className="text-lg md:text-xl">Erreurs Système</CardTitle>
             <CardDescription className="text-sm">Liste complète des erreurs détectées et leur statut</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 md:p-6">
-            <ScrollArea className="h-[calc(100vh-28rem)] md:h-[600px]">
+          <CardContent className="p-0 md:p-6 flex-1 overflow-hidden">
+            <ScrollArea className="h-full md:h-[500px]">
               <div className="rounded-md border">
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs md:text-sm">
-                    <thead className="bg-muted">
+                    <thead className="bg-muted sticky top-0 z-10">
                       <tr>
-                        <th className="p-2 md:p-3 text-left">Statut</th>
-                        <th className="p-2 md:p-3 text-left">Module</th>
-                        <th className="p-2 md:p-3 text-left">Message d'erreur</th>
-                        <th className="p-2 md:p-3 text-left">Gravité</th>
-                        <th className="p-2 md:p-3 text-left hidden sm:table-cell">Date</th>
-                        <th className="p-2 md:p-3 text-left">Actions</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap">Statut</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap">Module</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap">Message</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap">Gravité</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap hidden sm:table-cell">Date</th>
+                        <th className="p-2 md:p-3 text-left whitespace-nowrap">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {errors.map((error) => (
-                        <tr key={error.id} className="border-t hover:bg-muted/50">
-                          <td className="p-2 md:p-3">
-                            {getStatusIcon(error.status, error.fix_applied)}
-                          </td>
-                          <td className="p-2 md:p-3 font-medium text-xs md:text-sm">{error.module}</td>
-                          <td className="p-2 md:p-3 max-w-[150px] md:max-w-md truncate" title={error.error_message}>
-                            {error.error_message}
-                          </td>
-                          <td className="p-2 md:p-3">
-                            <Badge variant={getSeverityColor(error.severity)} className="text-xs">
-                              {error.severity}
-                            </Badge>
-                          </td>
-                          <td className="p-2 md:p-3 text-xs text-muted-foreground hidden sm:table-cell">
-                            {new Date(error.created_at).toLocaleString('fr-FR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </td>
-                          <td className="p-2 md:p-3">
-                            <div className="flex flex-col sm:flex-row gap-1 md:gap-2">
-                              {!error.fix_applied && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => fixManually(error.id)}
-                                  className="gap-1 text-xs"
-                                >
-                                  <CheckCircle className="h-3 w-3" />
-                                  <span className="hidden md:inline">Corriger</span>
-                                  <span className="md:hidden">Fix</span>
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => restartModule(error.module)}
-                                className="gap-1 text-xs"
-                              >
-                                <Zap className="h-3 w-3" />
-                                <span className="hidden md:inline">Redémarrer</span>
-                                <span className="md:hidden">Reset</span>
-                              </Button>
-                            </div>
+                      {errors.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                            <p>Aucune erreur détectée</p>
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        errors.map((error) => (
+                          <tr key={error.id} className="border-t hover:bg-muted/50">
+                            <td className="p-2 md:p-3">
+                              {getStatusIcon(error.status, error.fix_applied)}
+                            </td>
+                            <td className="p-2 md:p-3 font-medium text-xs md:text-sm whitespace-nowrap">
+                              {error.module}
+                            </td>
+                            <td className="p-2 md:p-3 max-w-[120px] sm:max-w-[200px] md:max-w-md truncate" title={error.error_message}>
+                              {error.error_message}
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <Badge variant={getSeverityColor(error.severity)} className="text-xs whitespace-nowrap">
+                                {error.severity}
+                              </Badge>
+                            </td>
+                            <td className="p-2 md:p-3 text-xs text-muted-foreground hidden sm:table-cell whitespace-nowrap">
+                              {new Date(error.created_at).toLocaleString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <div className="flex flex-col sm:flex-row gap-1 md:gap-2 whitespace-nowrap">
+                                {!error.fix_applied && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => fixManually(error.id)}
+                                    className="gap-1 text-xs h-7"
+                                  >
+                                    <CheckCircle className="h-3 w-3" />
+                                    <span className="hidden md:inline">Corriger</span>
+                                    <span className="md:hidden">Fix</span>
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => restartModule(error.module)}
+                                  className="gap-1 text-xs h-7"
+                                >
+                                  <Zap className="h-3 w-3" />
+                                  <span className="hidden md:inline">Redémarrer</span>
+                                  <span className="md:hidden">Reset</span>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
