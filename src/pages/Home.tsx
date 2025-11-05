@@ -117,8 +117,8 @@ export default function Home() {
     } else if (serviceId === 'taxi') {
       navigate('/taxi-moto');
     } else if (serviceId === 'livraison') {
-      // Rediriger vers l'interface client de livraison
-      navigate('/delivery');
+      // Rediriger vers l'interface livreur
+      navigate('/livreur');
     }
   };
 
