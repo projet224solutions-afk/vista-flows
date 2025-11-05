@@ -111,6 +111,74 @@ export default function PdgDebugPanel() {
     }
   };
 
+  const fixAllCritical = async () => {
+    const criticalErrors = errors.filter(
+      (e) => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée')
+    );
+
+    if (criticalErrors.length === 0) {
+      toast({
+        title: 'Aucune erreur à corriger',
+        description: 'Toutes les erreurs critiques et modérées sont déjà corrigées',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Correction en cours...',
+      description: `${criticalErrors.length} erreur(s) critique(s) en cours de correction`,
+    });
+
+    let fixed = 0;
+    let failed = 0;
+
+    for (const error of criticalErrors) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) continue;
+
+        const response = await fetch(
+          `https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/fix-error`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ errorId: error.id }),
+          }
+        );
+
+        if (response.ok) {
+          fixed++;
+          // Mettre à jour localement
+          setErrors(prev =>
+            prev.map((e) =>
+              e.id === error.id
+                ? { ...e, fix_applied: true, status: 'fixed' }
+                : e
+            )
+          );
+        } else {
+          failed++;
+        }
+      } catch (err) {
+        failed++;
+        console.error('Error fixing:', error.id, err);
+      }
+    }
+
+    toast({
+      title: 'Correction terminée',
+      description: `✅ ${fixed} corrigée(s) • ❌ ${failed} échouée(s)`,
+      variant: fixed > 0 ? 'default' : 'destructive',
+    });
+
+    // Recharger les erreurs
+    loadErrors();
+  };
+
   const restartModule = async (moduleName: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -196,10 +264,29 @@ export default function PdgDebugPanel() {
               <p className="text-sm text-muted-foreground">Panneau de contrôle système 224SOLUTIONS</p>
             </div>
           </div>
-          <Button onClick={loadErrors} disabled={loading} className="gap-2 w-full sm:w-auto" size="sm">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={fixAllCritical} 
+              disabled={loading || !errors.some(e => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée'))}
+              variant="default"
+              className="gap-2 flex-1 sm:flex-none"
+              size="sm"
+            >
+              <Zap className="h-4 w-4" />
+              <span className="hidden md:inline">Corriger Tout (Critiques)</span>
+              <span className="md:hidden">Tout Corriger</span>
+            </Button>
+            <Button 
+              onClick={loadErrors} 
+              disabled={loading} 
+              className="gap-2 flex-1 sm:flex-none" 
+              size="sm"
+              variant="outline"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline">Actualiser</span>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
