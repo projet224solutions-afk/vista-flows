@@ -446,11 +446,8 @@ export default function LivreurDashboard() {
                             <span className="line-clamp-2">{delivery.delivery_address || 'Adresse de livraison'}</span>
                           </div>
                         </div>
-                        {delivery.customer_name && (
-                          <p className="text-xs text-muted-foreground">Client: {delivery.customer_name}</p>
-                        )}
-                        {delivery.notes && (
-                          <p className="text-xs text-muted-foreground italic">Note: {delivery.notes}</p>
+                        {delivery.driver_notes && (
+                          <p className="text-xs text-muted-foreground italic">Note: {delivery.driver_notes}</p>
                         )}
                       </div>
                       <div className="text-right flex flex-col gap-2">
@@ -825,7 +822,7 @@ export default function LivreurDashboard() {
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle>Communication - Livraison</DialogTitle>
           </DialogHeader>
-          {currentDelivery && user && (
+          {currentDelivery && user && currentDelivery.client_id && (
             <div className="flex-1 px-6 pb-6 h-full overflow-hidden">
               <DeliveryChat
                 deliveryId={currentDelivery.id}

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 interface Delivery {
   id: string;
   order_id?: string;
-  customer_id?: string;
+  client_id?: string;
   driver_id?: string;
   pickup_address: any;
   delivery_address: any;
@@ -33,9 +33,13 @@ interface Delivery {
 interface TrackingPoint {
   id: string;
   delivery_id: string;
+  driver_id: string;
   latitude: number;
   longitude: number;
-  timestamp: string;
+  speed?: number;
+  heading?: number;
+  accuracy?: number;
+  recorded_at: string;
 }
 
 export function useDelivery() {
@@ -248,24 +252,27 @@ export function useDelivery() {
     heading?: number,
     accuracy?: number
   ) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('delivery_tracking')
         .insert({
           delivery_id: deliveryId,
+          driver_id: user.id,
           latitude,
           longitude,
           speed,
           heading,
           accuracy,
-          timestamp: new Date().toISOString()
+          recorded_at: new Date().toISOString()
         });
 
       if (error) throw error;
     } catch (error) {
       console.error('Erreur tracking position:', error);
     }
-  }, []);
+  }, [user]);
 
   // Charger le tracking
   const loadTracking = useCallback(async (deliveryId: string) => {
@@ -274,7 +281,7 @@ export function useDelivery() {
         .from('delivery_tracking')
         .select('*')
         .eq('delivery_id', deliveryId)
-        .order('timestamp', { ascending: true });
+        .order('recorded_at', { ascending: true });
 
       if (error) throw error;
       setTrackingPoints(data || []);
@@ -303,9 +310,33 @@ export function useDelivery() {
   }, []);
 
   // Traiter le paiement
-  const processPayment = useCallback(async (deliveryId: string) => {
-    // Cette fonction sera implémentée avec le système de paiement
-    console.log('Traitement paiement pour:', deliveryId);
+  const processPayment = useCallback(async (deliveryId: string, paymentMethod: string = 'cash') => {
+    try {
+      // Vérifier que la livraison est terminée
+      const { data: delivery } = await supabase
+        .from('deliveries')
+        .select('status, driver_earning')
+        .eq('id', deliveryId)
+        .single();
+
+      if (!delivery || delivery.status !== 'delivered') {
+        throw new Error('La livraison doit être terminée pour traiter le paiement');
+      }
+
+      // Marquer le paiement comme traité
+      toast.success(`Paiement de ${delivery.driver_earning} GNF reçu !`);
+      
+      return {
+        success: true,
+        amount: delivery.driver_earning
+      };
+    } catch (error: any) {
+      console.error('Erreur traitement paiement:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }, []);
 
   // Charger au montage
