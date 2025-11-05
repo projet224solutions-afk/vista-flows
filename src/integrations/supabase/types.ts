@@ -3567,9 +3567,11 @@ export type Database = {
           payment_id: string
           payment_method: string | null
           produit: string
+          remise: number | null
           status: string
           total: number
           transaction_id: string | null
+          type_remise: string | null
           updated_at: string
           vendeur_id: string
         }
@@ -3587,9 +3589,11 @@ export type Database = {
           payment_id: string
           payment_method?: string | null
           produit: string
+          remise?: number | null
           status?: string
           total: number
           transaction_id?: string | null
+          type_remise?: string | null
           updated_at?: string
           vendeur_id: string
         }
@@ -3607,9 +3611,11 @@ export type Database = {
           payment_id?: string
           payment_method?: string | null
           produit?: string
+          remise?: number | null
           status?: string
           total?: number
           transaction_id?: string | null
+          type_remise?: string | null
           updated_at?: string
           vendeur_id?: string
         }
