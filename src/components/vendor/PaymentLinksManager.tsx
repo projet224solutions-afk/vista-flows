@@ -752,7 +752,7 @@ export default function PaymentLinksManager() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-start gap-1 shrink-0 flex-wrap">
                           <Button
                             variant="ghost"
                             size="sm"
