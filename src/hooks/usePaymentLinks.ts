@@ -229,9 +229,32 @@ export function usePaymentLinks() {
       }
 
       if (newLink) {
+        // Si un client est spécifié, envoyer une notification
+        if (clientUuid) {
+          try {
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: clientUuid,
+                type: 'payment_link',
+                title: 'Nouveau lien de paiement',
+                message: `Vous avez reçu un lien de paiement pour ${data.produit}. Montant: ${data.montant} ${data.devise}`,
+                data: {
+                  payment_id: paymentId,
+                  payment_link: `${window.location.origin}/payment/${paymentId}`
+                },
+                is_read: false
+              });
+          } catch (notifError) {
+            console.error('Erreur envoi notification:', notifError);
+          }
+        }
+
         toast({
           title: "Succès",
-          description: "Lien de paiement créé avec succès !",
+          description: clientUuid 
+            ? "Lien créé et envoyé au client !" 
+            : "Lien de paiement créé avec succès !",
         });
 
         // Recharger les liens

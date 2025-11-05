@@ -166,28 +166,46 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const copyPaymentLink = (paymentId: string) => {
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/payment/${paymentId}`;
-    navigator.clipboard.writeText(link);
-    toast({
-      title: "Lien copié",
-      description: "Le lien de paiement a été copié dans le presse-papiers",
-    });
+  const copyPaymentLink = async (paymentId: string) => {
+    try {
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/payment/${paymentId}`;
+      await navigator.clipboard.writeText(link);
+      toast({
+        title: "Lien copié",
+        description: "Le lien de paiement a été copié dans le presse-papiers",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de copier le lien",
+        variant: "destructive"
+      });
+    }
   };
 
-  const sharePaymentLink = (paymentId: string) => {
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/payment/${paymentId}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'Lien de paiement 224SOLUTIONS',
-        text: 'Effectuez votre paiement via ce lien sécurisé',
-        url: link
-      });
-    } else {
-      copyPaymentLink(paymentId);
+  const sharePaymentLink = async (paymentId: string) => {
+    try {
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/payment/${paymentId}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Lien de paiement 224SOLUTIONS',
+          text: 'Effectuez votre paiement via ce lien sécurisé',
+          url: link
+        });
+        toast({
+          title: "Lien partagé",
+          description: "Le lien a été partagé avec succès",
+        });
+      } else {
+        // Fallback: copier le lien
+        await copyPaymentLink(paymentId);
+      }
+    } catch (error) {
+      console.error('Erreur partage:', error);
+      // Si l'utilisateur annule le partage, on ne montre pas d'erreur
     }
   };
 
