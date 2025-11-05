@@ -134,8 +134,9 @@ export default function VendeurDashboard() {
 
       const { data, error } = await supabase
         .from('orders')
-        .select(`order_number,total_amount,status,created_at,customer:customers(user_id)`)
+        .select(`order_number,total_amount,status,created_at,customer:customers!inner(user_id)`)
         .eq('vendor_id', vendor.id)
+        .neq('customer.user_id', user.id) // Exclude POS sales
         .order('created_at', { ascending: false })
         .limit(5);
       if (error) return;

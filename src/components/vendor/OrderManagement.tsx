@@ -135,7 +135,7 @@ export default function OrderManagement() {
         return;
       }
 
-      // Fetch orders with related data
+      // Fetch orders with related data (excluding POS sales)
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -152,6 +152,7 @@ export default function OrderManagement() {
           )
         `)
         .eq('vendor_id', vendor.id)
+        .neq('customers.user_id', user.id) // Exclude POS sales (where customer is the vendor)
         .order('created_at', { ascending: false });
 
       if (error) {
