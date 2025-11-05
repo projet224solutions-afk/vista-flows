@@ -508,6 +508,51 @@ export default function ProductManagement() {
     }
   };
 
+  const handleDeleteProduct = async (product: Product) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${product.name}" ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    try {
+      console.log('Suppression du produit:', product.id);
+      
+      // Supprimer les entrées liées dans inventory
+      await supabase.from('inventory').delete().eq('product_id', product.id);
+      
+      // Supprimer les entrées liées dans inventory_alerts
+      await supabase.from('inventory_alerts').delete().eq('product_id', product.id);
+      
+      // Supprimer les entrées liées dans inventory_history
+      await supabase.from('inventory_history').delete().eq('product_id', product.id);
+      
+      // Supprimer les entrées dans order_items
+      await supabase.from('order_items').delete().eq('product_id', product.id);
+      
+      // Supprimer le produit
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', product.id);
+      
+      if (error) throw error;
+      
+      // Mettre à jour l'état local
+      setProducts(prev => prev.filter(p => p.id !== product.id));
+      
+      toast({
+        title: "Produit supprimé",
+        description: `"${product.name}" a été supprimé avec succès.`
+      });
+    } catch (error: any) {
+      console.error('Erreur suppression produit:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le produit: " + error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) return <div className="p-4">Chargement des produits...</div>;
 
   return (
@@ -1113,6 +1158,14 @@ export default function ProductManagement() {
                     className={product.is_active ? 'text-green-600' : 'text-gray-400'}
                   >
                     <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => handleDeleteProduct(product)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
