@@ -129,18 +129,103 @@ export const useForensics = () => {
   const reconstructTimeline = async (incidentId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('security-forensics', {
-        body: {
-          action: 'reconstruct_timeline',
-          incidentId
-        }
+      console.log('🔍 Reconstruction timeline pour incident:', incidentId);
+      
+      // Récupérer tous les événements liés à cet incident depuis audit_logs
+      const { data: auditLogs, error: auditError } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .or(`id.eq.${incidentId},target_id.eq.${incidentId}`)
+        .order('created_at', { ascending: true });
+
+      if (auditError) {
+        console.error('Erreur récupération audit logs:', auditError);
+      }
+
+      // Récupérer les notifications liées
+      const { data: notifications, error: notifError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', incidentId)
+        .order('created_at', { ascending: true });
+
+      if (notifError) {
+        console.error('Erreur récupération notifications:', notifError);
+      }
+
+      // Récupérer les alertes de sécurité
+      const { data: alerts, error: alertError } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .or(`id.eq.${incidentId},incident_id.eq.${incidentId}`)
+        .order('created_at', { ascending: true });
+
+      if (alertError) {
+        console.error('Erreur récupération alertes:', alertError);
+      }
+
+      // Construire la timeline à partir de toutes les sources
+      const timelineEvents: IncidentTimeline[] = [];
+
+      // Ajouter les audit logs
+      auditLogs?.forEach(log => {
+        timelineEvents.push({
+          id: log.id,
+          incident_id: incidentId,
+          event_type: log.action || 'AUDIT_LOG',
+          timestamp: log.created_at,
+          description: `Action: ${log.action} - ${log.target_type || ''}`,
+          actor: log.actor_id,
+          source: 'audit_logs',
+          metadata: log.data_json
+        });
       });
 
-      if (error) throw error;
-      setTimeline(data.timeline || []);
-      toast.success('Timeline reconstruite avec succès');
-      return data;
+      // Ajouter les notifications
+      notifications?.forEach(notif => {
+        timelineEvents.push({
+          id: notif.id,
+          incident_id: incidentId,
+          event_type: notif.type || 'NOTIFICATION',
+          timestamp: notif.created_at,
+          description: notif.message,
+          actor: notif.user_id,
+          source: 'notifications',
+          metadata: null
+        });
+      });
+
+      // Ajouter les alertes
+      alerts?.forEach(alert => {
+        timelineEvents.push({
+          id: alert.id,
+          incident_id: incidentId,
+          event_type: alert.alert_type || 'SECURITY_ALERT',
+          timestamp: alert.created_at,
+          description: alert.description,
+          actor: alert.acknowledged_by || 'system',
+          source: 'security_alerts',
+          metadata: alert.auto_actions
+        });
+      });
+
+      // Trier par timestamp
+      timelineEvents.sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+
+      console.log('✅ Timeline reconstruite:', timelineEvents.length, 'événements');
+      setTimeline(timelineEvents);
+      
+      if (timelineEvents.length === 0) {
+        toast.info('Aucun événement trouvé pour cet incident');
+      } else {
+        toast.success(`Timeline reconstruite avec ${timelineEvents.length} événements`);
+      }
+      
+      return { timeline: timelineEvents };
     } catch (error: any) {
+      console.error('Erreur lors de la reconstruction:', error);
       toast.error('Erreur lors de la reconstruction: ' + error.message);
       throw error;
     } finally {

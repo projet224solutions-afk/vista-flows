@@ -1,8 +1,8 @@
-// 🔍 Forensics et analyse de sécurité
 import React, { useEffect, useState } from 'react';
 import { FileSearch, Database, Download, Brain, GitMerge, Clock, FileText, Share2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useForensics } from '@/hooks/useForensics';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
 
 const SecurityForensics: React.FC = () => {
   const {
@@ -336,13 +337,39 @@ const SecurityForensics: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="timeline-incident">ID Incident</Label>
+                <Label htmlFor="timeline-incident">Sélectionner un Incident</Label>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start text-left font-normal"
+                  onClick={async () => {
+                    // Charger les incidents récents depuis audit_logs
+                    const { data } = await supabase
+                      .from('audit_logs')
+                      .select('id, action, created_at, actor_id')
+                      .order('created_at', { ascending: false })
+                      .limit(10);
+                    
+                    if (data && data.length > 0) {
+                      toast.info(`${data.length} incidents récents trouvés`);
+                      console.log('Incidents récents:', data);
+                    }
+                  }}
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  Charger les incidents récents
+                </Button>
+              </div>
+              <div>
+                <Label htmlFor="timeline-incident-id">Ou entrer un ID d'Incident</Label>
                 <Input
-                  id="timeline-incident"
+                  id="timeline-incident-id"
                   value={selectedIncidentId}
                   onChange={(e) => setSelectedIncidentId(e.target.value)}
-                  placeholder="UUID de l'incident"
+                  placeholder="UUID de l'incident ou ID utilisateur"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vous pouvez aussi utiliser un ID utilisateur pour voir son historique
+                </p>
               </div>
               <Button 
                 className="w-full" 
@@ -362,7 +389,12 @@ const SecurityForensics: React.FC = () => {
                           {new Date(event.timestamp).toLocaleTimeString()}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium">{event.event_type}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{event.event_type}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {event.source}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">{event.description}</p>
                           {event.actor && (
                             <p className="text-xs text-muted-foreground mt-1">Par: {event.actor}</p>
