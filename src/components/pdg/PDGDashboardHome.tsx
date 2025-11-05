@@ -12,14 +12,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
+import { usePDGStats } from '@/hooks/usePDGStats';
 
 interface PDGDashboardHomeProps {
   onNavigate?: (tab: string) => void;
 }
 
 export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
-  const stats = useAdminUnifiedData(true);
+  const stats = usePDGStats();
 
   if (stats.loading) {
     return (
@@ -72,13 +72,13 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       description: `${stats.newUsersThisMonth || 0} nouveaux ce mois`
     },
     {
-      title: 'Utilisateurs Créés (Agents)',
-      value: (stats.totalUsersCreatedByAgents || 0).toLocaleString(),
-      change: `${(stats.agentCreatedUsersGrowth || 0) >= 0 ? '+' : ''}${stats.agentCreatedUsersGrowth || 0}%`,
-      trend: (stats.agentCreatedUsersGrowth || 0) >= 0 ? 'up' : 'down',
+      title: 'Agents Actifs',
+      value: (stats.activeAgents || 0).toLocaleString(),
+      change: '+0%',
+      trend: 'up',
       icon: UserCheck,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
-      description: `${stats.agentCreatedUsersThisMonth || 0} ce mois par agents`
+      description: `${stats.totalAgents || 0} agents au total`
     },
     {
       title: 'Commandes',
@@ -242,9 +242,9 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-xs text-muted-foreground">{stats.activeVendors || 0} actifs</p>
               </div>
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Services Pro</p>
-                <p className="text-2xl font-bold text-primary">{stats.totalServices || 0}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeServices || 0} disponibles</p>
+                <p className="text-sm text-muted-foreground">Agents</p>
+                <p className="text-2xl font-bold text-primary">{stats.totalAgents || 0}</p>
+                <p className="text-xs text-muted-foreground">{stats.activeAgents || 0} actifs</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Livreurs</p>
