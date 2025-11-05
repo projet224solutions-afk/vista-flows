@@ -1,13 +1,18 @@
 /**
- * DÉTECTION DE FRAUDE ML
+ * DÉTECTION DE FRAUDE ML - VERSION CONNECTÉE
  * Machine Learning pour détecter les fraudes en temps réel
+ * Intégré avec l'edge function fraud-detection
  */
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Activity, AlertTriangle, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Brain, Activity, AlertTriangle, TrendingDown, RefreshCw } from "lucide-react";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { Progress } from "@/components/ui/progress";
+import { useSecurityData } from "@/hooks/useSecurityData";
+import { toast } from "sonner";
 
 interface FraudMetrics {
   transactionsAnalyzed: number;
@@ -17,14 +22,6 @@ interface FraudMetrics {
   modelVersion: string;
 }
 
-const metrics: FraudMetrics = {
-  transactionsAnalyzed: 125847,
-  fraudDetected: 234,
-  falsePositives: 12,
-  accuracy: 98.7,
-  modelVersion: 'v2.3.1'
-};
-
 interface FraudPattern {
   id: string;
   pattern: string;
@@ -33,31 +30,59 @@ interface FraudPattern {
   riskLevel: 'high' | 'medium' | 'low';
 }
 
-const detectedPatterns: FraudPattern[] = [
-  {
-    id: '1',
-    pattern: 'Transactions multiples depuis différents pays',
-    confidence: 95,
-    occurrences: 45,
-    riskLevel: 'high'
-  },
-  {
-    id: '2',
-    pattern: 'Montants ronds répétitifs sous le seuil de vérification',
-    confidence: 88,
-    occurrences: 78,
-    riskLevel: 'high'
-  },
-  {
-    id: '3',
-    pattern: 'Changements fréquents de coordonnées bancaires',
-    confidence: 82,
-    occurrences: 23,
-    riskLevel: 'medium'
-  }
-];
-
 export function MLFraudDetection() {
+  const { fraudLogs, loading, refetch } = useSecurityData(true);
+  const [metrics, setMetrics] = useState<FraudMetrics>({
+    transactionsAnalyzed: 0,
+    fraudDetected: 0,
+    falsePositives: 0,
+    accuracy: 0,
+    modelVersion: 'v2.4.0'
+  });
+  const [detectedPatterns, setDetectedPatterns] = useState<FraudPattern[]>([]);
+
+  useEffect(() => {
+    if (fraudLogs) {
+      // Calculer les métriques depuis les logs réels
+      const highRiskCount = fraudLogs.filter(log => log.risk_level === 'high' || log.risk_level === 'critical').length;
+      const falsePos = fraudLogs.filter(log => log.reviewed && log.risk_level === 'low').length;
+      
+      setMetrics({
+        transactionsAnalyzed: fraudLogs.length,
+        fraudDetected: highRiskCount,
+        falsePositives: falsePos,
+        accuracy: fraudLogs.length > 0 ? ((fraudLogs.length - falsePos) / fraudLogs.length) * 100 : 0,
+        modelVersion: 'v2.4.0'
+      });
+
+      // Extraire les patterns des logs
+      const patterns: Record<string, FraudPattern> = {};
+      fraudLogs.forEach(log => {
+        if (log.flags && Array.isArray(log.flags)) {
+          log.flags.forEach((flag: string) => {
+            if (!patterns[flag]) {
+              patterns[flag] = {
+                id: flag,
+                pattern: flag,
+                confidence: 0,
+                occurrences: 0,
+                riskLevel: log.risk_level as 'high' | 'medium' | 'low' || 'medium'
+              };
+            }
+            patterns[flag].occurrences++;
+            patterns[flag].confidence = Math.min(95, patterns[flag].occurrences * 5);
+          });
+        }
+      });
+
+      setDetectedPatterns(Object.values(patterns).slice(0, 5));
+    }
+  }, [fraudLogs]);
+
+  const handleRefresh = () => {
+    refetch();
+    toast.success('Données de fraude actualisées');
+  };
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'high': return 'bg-red-500';
@@ -69,13 +94,25 @@ export function MLFraudDetection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Brain className="w-5 h-5 text-primary" />
-          Détection de Fraude ML
-        </CardTitle>
-        <CardDescription>
-          Intelligence artificielle pour prévenir la fraude en temps réel
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              Détection de Fraude ML
+            </CardTitle>
+            <CardDescription>
+              Intelligence artificielle prédictive - Données en temps réel
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={handleRefresh} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Métriques du modèle */}
@@ -105,11 +142,11 @@ export function MLFraudDetection() {
         {/* Info modèle */}
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Modèle actif</span>
-            <Badge className="bg-green-500">En production</Badge>
+            <span className="font-semibold text-sm">Modèle ML actif</span>
+            <Badge className="bg-green-500">Prédictif activé</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Version {metrics.modelVersion} • Entraîné sur {metrics.transactionsAnalyzed.toLocaleString()} transactions
+            Version {metrics.modelVersion} • Analyse comportementale en temps réel • {metrics.transactionsAnalyzed.toLocaleString()} transactions analysées
           </p>
         </div>
 
