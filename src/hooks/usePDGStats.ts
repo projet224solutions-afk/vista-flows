@@ -139,14 +139,13 @@ export function usePDGStats() {
         // Vendeurs
         supabase.from('vendors').select('id, is_active', { count: 'exact' }),
         
-        // Livreurs
-        supabase.from('drivers').select('id, is_online', { count: 'exact' }),
+        // Livreurs - Récupérer les données complètes pour le comptage
+        supabase.from('drivers').select('id, is_online'),
         
-        // Alertes API
+        // Alertes API - Récupérer toutes les alertes non résolues
         supabase.from('api_alerts')
-          .select('id', { count: 'exact' })
-          .eq('is_resolved', false)
-          .in('severity', ['critical', 'high']),
+          .select('id, severity, is_resolved')
+          .eq('is_resolved', false),
 
         // Agents
         supabase.from('agents_management').select('id, is_active', { count: 'exact' }),
@@ -201,9 +200,9 @@ export function usePDGStats() {
       const totalVendors = vendorsRes.count || 0;
       const activeVendors = vendorsRes.data?.filter(v => v.is_active).length || 0;
 
-      // Livreurs
-      const totalDrivers = driversRes.count || 0;
-      const onlineDrivers = driversRes.data?.filter(d => d.is_online).length || 0;
+      // Livreurs - Compter manuellement
+      const totalDrivers = driversRes.data?.length || 0;
+      const onlineDrivers = driversRes.data?.filter(d => d.is_online === true).length || 0;
 
       // Agents
       const totalAgents = agentsRes.count || 0;
@@ -240,7 +239,7 @@ export function usePDGStats() {
         activeAgents,
         totalBureaus,
         validatedBureaus,
-        criticalAlerts: apiAlertsRes.count || 0,
+        criticalAlerts: apiAlertsRes.data?.filter(a => a.severity === 'critical' || a.severity === 'high').length || 0,
         pendingValidations: pendingOrders,
         loading: false,
         error: null
