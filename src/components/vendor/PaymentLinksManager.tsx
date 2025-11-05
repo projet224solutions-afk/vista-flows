@@ -480,8 +480,8 @@ export default function PaymentLinksManager() {
                 </DialogDescription>
               </DialogHeader>
               
-              <ScrollArea className="flex-1 px-1">
-                <div className="space-y-4 pr-4">
+              <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+                <div className="space-y-4 px-1 pr-4 pb-2">
                   <div>
                     <Label htmlFor="product">Sélectionner un produit *</Label>
                     <Select value={formData.product_id} onValueChange={handleProductSelect}>
@@ -823,8 +823,8 @@ export default function PaymentLinksManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 px-1">
-            <div className="space-y-4 pr-4">
+          <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+            <div className="space-y-4 px-1 pr-4 pb-2">
               <div>
                 <Label htmlFor="edit-produit">Produit / Service *</Label>
                 <Input
