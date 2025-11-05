@@ -178,144 +178,156 @@ export default function PdgDebugPanel() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/pdg')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Surveillance & Debug - PDG</h1>
-            <p className="text-muted-foreground">Panneau de contrôle système 224SOLUTIONS</p>
-          </div>
-        </div>
-        <Button onClick={loadErrors} disabled={loading} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total</CardDescription>
-              <CardTitle className="text-3xl">{stats.total}</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="text-red-500">Critiques</CardDescription>
-              <CardTitle className="text-3xl text-red-500">{stats.critical}</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="text-yellow-500">Modérées</CardDescription>
-              <CardTitle className="text-3xl text-yellow-500">{stats.moderate}</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Mineures</CardDescription>
-              <CardTitle className="text-3xl">{stats.minor}</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="text-green-500">Corrigées</CardDescription>
-              <CardTitle className="text-3xl text-green-500">{stats.fixed}</CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="text-orange-500">En Attente</CardDescription>
-              <CardTitle className="text-3xl text-orange-500">{stats.pending}</CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
-      )}
-
-      {/* Errors Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Erreurs Système</CardTitle>
-          <CardDescription>Liste complète des erreurs détectées et leur statut</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[600px]">
-            <div className="rounded-md border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="p-3 text-left">Statut</th>
-                    <th className="p-3 text-left">Module</th>
-                    <th className="p-3 text-left">Message d'erreur</th>
-                    <th className="p-3 text-left">Gravité</th>
-                    <th className="p-3 text-left">Date</th>
-                    <th className="p-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {errors.map((error) => (
-                    <tr key={error.id} className="border-t hover:bg-muted/50">
-                      <td className="p-3">
-                        {getStatusIcon(error.status, error.fix_applied)}
-                      </td>
-                      <td className="p-3 font-medium">{error.module}</td>
-                      <td className="p-3 max-w-md truncate" title={error.error_message}>
-                        {error.error_message}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={getSeverityColor(error.severity)}>
-                          {error.severity}
-                        </Badge>
-                      </td>
-                      <td className="p-3 text-xs text-muted-foreground">
-                        {new Date(error.created_at).toLocaleString()}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          {!error.fix_applied && (
-                            <Button
-                              size="sm"
-                              onClick={() => fixManually(error.id)}
-                              className="gap-1"
-                            >
-                              <CheckCircle className="h-3 w-3" />
-                              Corriger
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => restartModule(error.module)}
-                            className="gap-1"
-                          >
-                            <Zap className="h-3 w-3" />
-                            Redémarrer
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-col sm:flex-row w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/pdg')}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold">Surveillance & Debug - PDG</h1>
+              <p className="text-sm text-muted-foreground">Panneau de contrôle système 224SOLUTIONS</p>
             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+          </div>
+          <Button onClick={loadErrors} disabled={loading} className="gap-2 w-full sm:w-auto" size="sm">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </div>
+
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-xs">Total</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl">{stats.total}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-red-500 text-xs">Critiques</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl text-red-500">{stats.critical}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-yellow-500 text-xs">Modérées</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl text-yellow-500">{stats.moderate}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-xs">Mineures</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl">{stats.minor}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-green-500 text-xs">Corrigées</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl text-green-500">{stats.fixed}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardDescription className="text-orange-500 text-xs">En Attente</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl text-orange-500">{stats.pending}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+        )}
+
+        {/* Errors Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg md:text-xl">Erreurs Système</CardTitle>
+            <CardDescription className="text-sm">Liste complète des erreurs détectées et leur statut</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6">
+            <ScrollArea className="h-[calc(100vh-28rem)] md:h-[600px]">
+              <div className="rounded-md border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs md:text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="p-2 md:p-3 text-left">Statut</th>
+                        <th className="p-2 md:p-3 text-left">Module</th>
+                        <th className="p-2 md:p-3 text-left">Message d'erreur</th>
+                        <th className="p-2 md:p-3 text-left">Gravité</th>
+                        <th className="p-2 md:p-3 text-left hidden sm:table-cell">Date</th>
+                        <th className="p-2 md:p-3 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {errors.map((error) => (
+                        <tr key={error.id} className="border-t hover:bg-muted/50">
+                          <td className="p-2 md:p-3">
+                            {getStatusIcon(error.status, error.fix_applied)}
+                          </td>
+                          <td className="p-2 md:p-3 font-medium text-xs md:text-sm">{error.module}</td>
+                          <td className="p-2 md:p-3 max-w-[150px] md:max-w-md truncate" title={error.error_message}>
+                            {error.error_message}
+                          </td>
+                          <td className="p-2 md:p-3">
+                            <Badge variant={getSeverityColor(error.severity)} className="text-xs">
+                              {error.severity}
+                            </Badge>
+                          </td>
+                          <td className="p-2 md:p-3 text-xs text-muted-foreground hidden sm:table-cell">
+                            {new Date(error.created_at).toLocaleString('fr-FR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                          <td className="p-2 md:p-3">
+                            <div className="flex flex-col sm:flex-row gap-1 md:gap-2">
+                              {!error.fix_applied && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => fixManually(error.id)}
+                                  className="gap-1 text-xs"
+                                >
+                                  <CheckCircle className="h-3 w-3" />
+                                  <span className="hidden md:inline">Corriger</span>
+                                  <span className="md:hidden">Fix</span>
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => restartModule(error.module)}
+                                className="gap-1 text-xs"
+                              >
+                                <Zap className="h-3 w-3" />
+                                <span className="hidden md:inline">Redémarrer</span>
+                                <span className="md:hidden">Reset</span>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
