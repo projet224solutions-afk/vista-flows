@@ -33,7 +33,8 @@ import {
   ShoppingBag,
   Check,
   Euro,
-  Eye
+  Eye,
+  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -44,7 +45,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  image?: string;
+  images?: string[];
   category: string;
   categoryId?: string | null;
   stock: number;
@@ -697,122 +698,119 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-5 max-w-5xl mx-auto p-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
                     {filteredProducts.map(product => (
                       <Card 
                         key={product.id} 
-                        className="group relative cursor-pointer overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-border/60 hover:border-primary/60 bg-card backdrop-blur-sm"
+                        className="group relative cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 border-border/50 hover:border-primary/40 bg-card/95 backdrop-blur-sm hover:-translate-y-1"
                         onClick={() => addToCart(product)}
                       >
-                        {/* Badge stock en position absolue */}
-                        <div className="absolute top-3 right-3 z-10">
-                          <Badge 
-                            variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
-                            className="shadow-lg backdrop-blur-sm bg-opacity-95 font-semibold px-3 py-1"
-                          >
-                            {product.stock} en stock
-                          </Badge>
-                        </div>
-
                         <CardContent className="p-0">
-                          {/* Image produit avec overlay gradient */}
-                          <div className="relative w-full h-48 bg-gradient-to-br from-muted/80 via-muted/60 to-muted/40 overflow-hidden">
-                            {/* Overlay gradient au survol */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            
-                            {/* Icône produit centrée */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="relative">
-                                {/* Cercle de fond animé */}
-                                <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl scale-75 group-hover:scale-100 transition-transform duration-500" />
-                                <Smartphone className="relative h-20 w-20 text-muted-foreground/60 group-hover:text-primary transition-all duration-500 group-hover:scale-110 drop-shadow-lg" />
-                              </div>
+                          {/* Image produit moderne */}
+                          <div className="relative w-full h-40 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden border-b-2 border-border/30">
+                            {/* Badge stock flottant */}
+                            <div className="absolute top-2 right-2 z-10">
+                              <Badge 
+                                variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
+                                className="shadow-lg font-bold text-xs px-2.5 py-0.5"
+                              >
+                                {product.stock}
+                              </Badge>
                             </div>
 
-                            {/* Effet de brillance au survol */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            {/* Image du produit ou icône */}
+                            {product.images && product.images.length > 0 ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors duration-500" />
+                                  <Package className="relative h-16 w-16 text-muted-foreground/40 group-hover:text-primary/60 transition-colors duration-300" />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Overlay gradient au survol */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                           
-                          {/* Contenu de la carte */}
-                          <div className="p-5 space-y-4">
-                            {/* Catégorie */}
-                            <div className="flex items-center gap-2">
-                              <div className="h-1 w-8 bg-primary/60 rounded-full" />
-                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                {product.category}
-                              </span>
-                            </div>
+                          {/* Contenu compact et professionnel */}
+                          <div className="p-4 space-y-3">
+                            {/* Catégorie compacte */}
+                            <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wide">
+                              {product.category}
+                            </Badge>
 
                             {/* Nom du produit */}
-                            <h3 className="font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem] group-hover:text-primary transition-colors duration-300">
+                            <h3 className="font-bold text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors duration-200">
                               {product.name}
                             </h3>
                             
-                            {/* Prix */}
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-xl blur-sm" />
-                              <div className="relative bg-gradient-to-br from-card via-muted/20 to-card border border-primary/30 rounded-xl p-4 flex items-baseline justify-center gap-2">
-                                <span className="text-3xl font-black text-primary tracking-tight">
+                            {/* Prix prominent */}
+                            <div className="flex items-baseline gap-1.5 justify-between">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-black text-primary">
                                   {product.price.toLocaleString()}
                                 </span>
-                                <span className="text-sm font-semibold text-muted-foreground">
+                                <span className="text-xs font-bold text-muted-foreground">
                                   GNF
                                 </span>
                               </div>
+                              
+                              {/* Quantité dans le panier */}
+                              {cart.find(item => item.id === product.id) && (
+                                <Badge variant="secondary" className="font-mono font-bold">
+                                  ×{cart.find(item => item.id === product.id)?.quantity}
+                                </Badge>
+                              )}
                             </div>
                             
-                            {/* Séparateur */}
-                            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                            <Separator className="my-2" />
 
-                            {/* Contrôles de quantité */}
-                            <div className="flex items-center justify-between gap-4 bg-muted/40 rounded-xl p-3 border border-border/50">
+                            {/* Actions compactes */}
+                            <div className="grid grid-cols-5 gap-1.5">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
                                 }}
-                                className="h-10 w-10 rounded-lg hover:bg-destructive/20 hover:text-destructive transition-all duration-300 border border-transparent hover:border-destructive/30"
+                                disabled={!cart.find(item => item.id === product.id)}
+                                className="h-9 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"
                               >
-                                <Minus className="h-5 w-5" />
+                                <Minus className="h-4 w-4" />
                               </Button>
                               
-                              <div className="flex-1 flex items-center justify-center">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-primary/10 blur-md rounded-lg" />
-                                  <div className="relative bg-card border-2 border-primary/40 rounded-lg px-4 py-2 min-w-[70px] flex items-center justify-center">
-                                    <span className="font-mono font-black text-2xl text-primary">
-                                      {cart.find(item => item.id === product.id)?.quantity || 0}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              
                               <Button
-                                variant="ghost"
+                                variant="default"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   addToCart(product);
                                 }}
-                                className="h-10 w-10 rounded-lg hover:bg-primary/20 hover:text-primary transition-all duration-300 border border-transparent hover:border-primary/30"
+                                className="col-span-3 h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg font-semibold"
                               >
-                                <Plus className="h-5 w-5" />
+                                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                                Ajouter
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(product);
+                                }}
+                                className="h-9 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+                              >
+                                <Plus className="h-4 w-4" />
                               </Button>
                             </div>
-
-                            {/* Bouton d'action principal */}
-                            <Button
-                              className="w-full h-11 bg-gradient-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                addToCart(product);
-                              }}
-                            >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              Ajouter au panier
-                            </Button>
                           </div>
                         </CardContent>
                       </Card>
