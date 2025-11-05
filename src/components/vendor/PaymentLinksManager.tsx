@@ -639,28 +639,27 @@ export default function PaymentLinksManager() {
                         }
                       }
                       
-                      const frais = montantApresRemise * 0.01;
-                      const total = montantApresRemise + frais;
-                      
                       return (
                         <>
                           <p className="text-xs text-blue-700">
                             Montant initial : {formatCurrency(montant, formData.devise)}
                           </p>
                           {remise > 0 && (
-                            <p className="text-xs text-green-700 font-semibold">
-                              Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                              {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
-                            </p>
+                            <>
+                              <p className="text-xs text-green-700 font-semibold">
+                                Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                                {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
+                              </p>
+                            </>
                           )}
-                          <p className="text-xs text-blue-700">
-                            Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
-                          </p>
-                          <p className="text-xs text-blue-700">
-                            Frais (1%) : {formatCurrency(frais, formData.devise)}
-                          </p>
                           <p className="text-sm text-blue-900 font-bold mt-2">
-                            Total à payer : {formatCurrency(total, formData.devise)}
+                            Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            (Les frais de traitement seront ajoutés pour le client)
                           </p>
                         </>
                       );
@@ -933,28 +932,27 @@ export default function PaymentLinksManager() {
                     }
                   }
                   
-                  const frais = montantApresRemise * 0.01;
-                  const total = montantApresRemise + frais;
-                  
                   return (
                     <>
                       <p className="text-xs text-blue-700">
                         Montant initial : {new Intl.NumberFormat('fr-FR').format(montant)} {formData.devise}
                       </p>
                       {remise > 0 && (
-                        <p className="text-xs text-green-700 font-semibold">
-                          Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                          {' '}({new Intl.NumberFormat('fr-FR').format(montant - montantApresRemise)} {formData.devise})
-                        </p>
+                        <>
+                          <p className="text-xs text-green-700 font-semibold">
+                            Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
+                            {' '}({new Intl.NumberFormat('fr-FR').format(montant - montantApresRemise)} {formData.devise})
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            Montant après remise : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
+                          </p>
+                        </>
                       )}
-                      <p className="text-xs text-blue-700">
-                        Montant après remise : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
-                      </p>
-                      <p className="text-xs text-blue-700">
-                        Frais (1%) : {new Intl.NumberFormat('fr-FR').format(frais)} {formData.devise}
-                      </p>
                       <p className="text-sm text-blue-900 font-bold mt-2">
-                        Total à payer : {new Intl.NumberFormat('fr-FR').format(total)} {formData.devise}
+                        Montant à demander : {new Intl.NumberFormat('fr-FR').format(montantApresRemise)} {formData.devise}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        (Les frais de traitement seront ajoutés pour le client)
                       </p>
                     </>
                   );
