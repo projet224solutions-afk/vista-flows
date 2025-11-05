@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Link, Plus, Copy, Share2, RefreshCw, 
   DollarSign, CheckCircle, Clock, XCircle, AlertCircle, ExternalLink,
-  Calendar, User, Package
+  Calendar, User, Package, Edit, Trash2
 } from 'lucide-react';
 
 interface Product {
@@ -31,11 +31,16 @@ export default function PaymentLinksManager() {
     stats,
     loading,
     loadPaymentLinks,
-    createPaymentLink: createLink
+    createPaymentLink: createLink,
+    updatePaymentLinkStatus,
+    deletePaymentLink
   } = usePaymentLinks();
   
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingLink, setEditingLink] = useState<any>(null);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -206,6 +211,83 @@ export default function PaymentLinksManager() {
     } catch (error) {
       console.error('Erreur partage:', error);
       // Si l'utilisateur annule le partage, on ne montre pas d'erreur
+    }
+  };
+
+  const handleEditLink = (link: any) => {
+    setEditingLink(link);
+    setFormData({
+      product_id: '',
+      produit: link.produit,
+      description: link.description || '',
+      montant: link.montant.toString(),
+      devise: link.devise,
+      client_id: ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateLink = async () => {
+    if (!editingLink || !formData.montant) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      const newMontant = parseFloat(formData.montant);
+      const newFrais = newMontant * 0.01;
+      const newTotal = newMontant + newFrais;
+
+      const { error } = await supabase
+        .from('payment_links')
+        .update({
+          produit: formData.produit,
+          description: formData.description || null,
+          montant: newMontant,
+          frais: newFrais,
+          total: newTotal,
+          devise: formData.devise
+        })
+        .eq('payment_id', editingLink.payment_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Lien de paiement mis à jour",
+      });
+
+      setShowEditModal(false);
+      setEditingLink(null);
+      setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+      await loadPaymentLinks(filters);
+    } catch (error: any) {
+      console.error('Erreur mise à jour:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le lien",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteLink = async (paymentId: string, produit: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le lien pour "${produit}" ?`)) {
+      return;
+    }
+
+    try {
+      await deletePaymentLink(paymentId);
+    } catch (error) {
+      console.error('Erreur suppression:', error);
     }
   };
 
@@ -560,6 +642,18 @@ export default function PaymentLinksManager() {
                       >
                         <Share2 className="w-4 h-4" />
                       </Button>
+
+                      {link.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLink(link)}
+                          className="h-8 w-8 p-0"
+                          title="Modifier"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
                       
                       <Button
                         variant="ghost"
@@ -570,6 +664,16 @@ export default function PaymentLinksManager() {
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteLink(link.payment_id, link.produit)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -578,6 +682,109 @@ export default function PaymentLinksManager() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de modification */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier le lien de paiement</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations du lien de paiement
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-produit">Produit / Service *</Label>
+              <Input
+                id="edit-produit"
+                value={formData.produit}
+                onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
+                placeholder="Nom du produit"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Description du produit"
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="edit-montant">Montant *</Label>
+                <Input
+                  id="edit-montant"
+                  type="number"
+                  value={formData.montant}
+                  onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="edit-devise">Devise</Label>
+                <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
+                  <SelectTrigger id="edit-devise">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GNF">GNF</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {formData.montant && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Total:</strong> {new Intl.NumberFormat('fr-FR').format(parseFloat(formData.montant) * 1.01)} {formData.devise}
+                  <span className="text-xs ml-2">(dont 1% de frais)</span>
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingLink(null);
+                  setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
+                }}
+                variant="outline"
+                className="flex-1"
+                disabled={updating}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleUpdateLink}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                disabled={updating || !formData.produit || !formData.montant}
+              >
+                {updating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Mise à jour...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Mettre à jour
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
