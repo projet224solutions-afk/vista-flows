@@ -1,8 +1,5 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
-[functions.firebase-config]
-verify_jwt = false
-
 [functions.moneroo-initialize-payment]
 verify_jwt = true
 
