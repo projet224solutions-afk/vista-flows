@@ -62,6 +62,7 @@ const Wallet = lazy(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazy(() => import("./pages/AffiliateRedirect"));
 const DeliveryRequest = lazy(() => import("./pages/DeliveryRequest"));
+const DeliveryClient = lazy(() => import("./pages/DeliveryClient"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -102,6 +103,7 @@ function App() {
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
+              <Route path="/delivery" element={<DeliveryClient />} />
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
