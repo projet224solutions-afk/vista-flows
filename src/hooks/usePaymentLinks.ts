@@ -94,6 +94,7 @@ export function usePaymentLinks() {
           *,
           client:profiles!payment_links_client_id_fkey(
             id,
+            public_id,
             first_name,
             last_name,
             email

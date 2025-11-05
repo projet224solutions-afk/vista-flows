@@ -222,7 +222,7 @@ export default function PaymentLinksManager() {
       description: link.description || '',
       montant: link.montant.toString(),
       devise: link.devise,
-      client_id: ''
+      client_id: link.client?.public_id || ''
     });
     setShowEditModal(true);
   };
@@ -244,6 +244,27 @@ export default function PaymentLinksManager() {
       const newFrais = newMontant * 0.01;
       const newTotal = newMontant + newFrais;
 
+      // Si un client_id est fourni, trouver l'UUID correspondant
+      let clientUuid: string | null = null;
+      if (formData.client_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('public_id', formData.client_id)
+          .single();
+
+        if (profileError || !profile) {
+          toast({
+            title: "Erreur",
+            description: "ID client introuvable",
+            variant: "destructive"
+          });
+          setUpdating(false);
+          return;
+        }
+        clientUuid = profile.id;
+      }
+
       const { error } = await supabase
         .from('payment_links')
         .update({
@@ -252,7 +273,8 @@ export default function PaymentLinksManager() {
           montant: newMontant,
           frais: newFrais,
           total: newTotal,
-          devise: formData.devise
+          devise: formData.devise,
+          client_id: clientUuid
         })
         .eq('payment_id', editingLink.payment_id);
 
@@ -740,6 +762,19 @@ export default function PaymentLinksManager() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="edit-client_id">ID Client (optionnel)</Label>
+              <Input
+                id="edit-client_id"
+                value={formData.client_id}
+                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                placeholder="Ex: USR0002"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Laissez vide pour un lien public accessible à tous
+              </p>
             </div>
             
             {formData.montant && (
