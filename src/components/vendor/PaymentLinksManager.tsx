@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import { supabase } from '@/integrations/supabase/client';
@@ -696,21 +697,22 @@ export default function PaymentLinksManager() {
         <CardHeader className="pb-3 shrink-0">
           <CardTitle className="text-lg">Mes liens de paiement</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-              Chargement...
-            </div>
-          ) : paymentLinks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">Aucun lien de paiement</p>
-              <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
-            </div>
-          ) : (
-            <div className="space-y-3 pb-4">
-              {paymentLinks.map((link) => (
+        <CardContent className="flex-1 p-0">
+          <ScrollArea className="h-full px-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                Chargement...
+              </div>
+            ) : paymentLinks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium">Aucun lien de paiement</p>
+                <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
+              </div>
+            ) : (
+              <div className="space-y-3 py-4">
+                {paymentLinks.map((link) => (
                 <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -803,8 +805,9 @@ export default function PaymentLinksManager() {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
+              </div>
+            )}
+          </ScrollArea>
         </CardContent>
       </Card>
 
