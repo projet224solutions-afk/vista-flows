@@ -774,15 +774,27 @@ export default function PaymentLinksManager() {
                           </Button>
 
                           {link.status === 'pending' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditLink(link)}
-                              className="h-8 w-8 p-0"
-                              title="Modifier"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditLink(link)}
+                                className="h-8 w-8 p-0"
+                                title="Modifier"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteLink(link.payment_id, link.produit)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                           
                           <Button
@@ -793,16 +805,6 @@ export default function PaymentLinksManager() {
                             title="Ouvrir"
                           >
                             <ExternalLink className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteLink(link.payment_id, link.produit)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
