@@ -123,30 +123,29 @@ export default function PdgDebugPanel() {
         module: e.module
       })));
 
-      const criticalErrors = errors.filter(
-        (e) => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée')
-      );
+      // Corriger TOUTES les erreurs non corrigées (critiques, modérées ET mineures)
+      const errorsToFix = errors.filter((e) => !e.fix_applied);
 
-      console.log('Erreurs critiques/modérées non corrigées:', criticalErrors.length);
-      console.log('Détail:', criticalErrors);
+      console.log('Erreurs non corrigées trouvées:', errorsToFix.length);
+      console.log('Détail:', errorsToFix);
 
-      if (criticalErrors.length === 0) {
+      if (errorsToFix.length === 0) {
         toast({
           title: 'Aucune erreur à corriger',
-          description: 'Toutes les erreurs critiques et modérées sont déjà corrigées',
+          description: 'Toutes les erreurs sont déjà corrigées',
         });
         return;
       }
 
       toast({
         title: 'Correction en cours...',
-        description: `${criticalErrors.length} erreur(s) en cours de correction`,
+        description: `${errorsToFix.length} erreur(s) en cours de correction`,
       });
 
       let fixed = 0;
       let failed = 0;
 
-      for (const error of criticalErrors) {
+      for (const error of errorsToFix) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           
@@ -298,7 +297,7 @@ export default function PdgDebugPanel() {
             >
               <Zap className={`h-4 w-4 ${fixingAll ? 'animate-pulse' : ''}`} />
               <span className="hidden md:inline">
-                {fixingAll ? 'Correction...' : 'Corriger Tout (Critiques)'}
+                {fixingAll ? 'Correction...' : 'Corriger Toutes les Erreurs'}
               </span>
               <span className="md:hidden">
                 {fixingAll ? 'En cours...' : 'Tout Corriger'}
