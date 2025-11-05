@@ -179,14 +179,15 @@ export function usePaymentLinks() {
       const frais = data.montant * 0.01; // 1% de frais
       const total = data.montant + frais;
 
-      // Générer un ID de paiement unique
-      const paymentId = `PAY${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      // Générer un ID de paiement unique au format simple
+      const timestamp = Date.now();
+      const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase();
+      const paymentId = `PAY-${timestamp}-${randomPart}`;
 
-      // Créer le lien via DataManager
-      const result = await dataManager.mutate({
-        table: 'payment_links',
-        operation: 'insert',
-        data: {
+      // Créer le lien directement dans Supabase
+      const { data: newLink, error } = await supabase
+        .from('payment_links')
+        .insert({
           payment_id: paymentId,
           vendeur_id: vendorId,
           client_id: data.client_id || null,
@@ -198,10 +199,16 @@ export function usePaymentLinks() {
           devise: data.devise,
           status: 'pending',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      });
+        })
+        .select()
+        .single();
 
-      if (result) {
+      if (error) {
+        console.error('Erreur création payment link:', error);
+        throw new Error(error.message);
+      }
+
+      if (newLink) {
         toast({
           title: "Succès",
           description: "Lien de paiement créé avec succès !",
