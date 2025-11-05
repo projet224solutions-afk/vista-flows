@@ -198,18 +198,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Get initial session - CRITIQUE pour restaurer la session au rechargement
     const getInitialSession = async () => {
       console.log('🔍 Vérification session existante...');
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        console.log('✅ Session restaurée:', session.user.email);
-        setSession(session);
-        setUser(session.user);
-      } else {
-        console.log('❌ Aucune session active');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Erreur lors de la récupération de la session:', error);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
+        if (session) {
+          console.log('✅ Session restaurée:', session.user.email);
+          setSession(session);
+          setUser(session.user);
+        } else {
+          console.log('ℹ️ Aucune session active - utilisateur non connecté');
+          setSession(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('❌ Erreur inattendue lors de la récupération de la session:', error);
         setSession(null);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     getInitialSession();
@@ -217,9 +232,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔔 Auth state change:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log('🔔 Auth state change:', event, session?.user?.email || 'no user');
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('👋 Utilisateur déconnecté');
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 Token rafraîchi');
+          setSession(session);
+          setUser(session?.user ?? null);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+        
         setLoading(false);
       }
     );

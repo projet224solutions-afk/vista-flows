@@ -46,9 +46,30 @@ export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
   const [agentsManagement, setAgentsManagement] = useState<LoadState<unknown[]>>({ data: null, loading: true });
   const [vendors, setVendors] = useState<LoadState<unknown[]>>({ data: null, loading: true });
   const [paymentLinks, setPaymentLinks] = useState<LoadState<unknown[]>>({ data: null, loading: true });
+  const [authChecked, setAuthChecked] = useState(false);
 
   const load = async () => {
     if (!enabled) return;
+    
+    // Vérifier qu'une session existe avant de charger les données
+    console.log('🔍 useAdminUnifiedData: Vérification session...');
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log('⚠️ useAdminUnifiedData: Pas de session active, attente de connexion');
+      setAuthChecked(true);
+      setProfiles({ data: [], loading: false, error: null });
+      setProducts({ data: [], loading: false, error: null });
+      setOrders({ data: [], loading: false, error: null });
+      setTransactions({ data: [], loading: false, error: null });
+      setPdgManagement({ data: [], loading: false, error: null });
+      setAgentsManagement({ data: [], loading: false, error: null });
+      setVendors({ data: [], loading: false, error: null });
+      setPaymentLinks({ data: [], loading: false, error: null });
+      return;
+    }
+    
+    console.log('✅ useAdminUnifiedData: Session active, chargement des données...');
     setProfiles((p) => ({ ...p, loading: true }));
     setProducts((p) => ({ ...p, loading: true }));
     setOrders((p) => ({ ...p, loading: true }));
@@ -70,6 +91,14 @@ export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
         supabase.from('payment_links').select('*').limit(1000),
       ]);
 
+      console.log('✅ useAdminUnifiedData: Données chargées', {
+        profiles: profRes.data?.length || 0,
+        products: prodRes.data?.length || 0,
+        orders: ordRes.data?.length || 0,
+        vendors: vendRes.data?.length || 0,
+        paymentLinks: payRes.data?.length || 0
+      });
+
       setProfiles({ data: profRes.data || [], loading: false, error: profRes.error?.message });
       setProducts({ data: prodRes.data || [], loading: false, error: prodRes.error?.message });
       setOrders({ data: ordRes.data || [], loading: false, error: ordRes.error?.message });
@@ -78,8 +107,10 @@ export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
       setAgentsManagement({ data: agRes.data || [], loading: false, error: agRes.error?.message });
       setVendors({ data: vendRes.data || [], loading: false, error: vendRes.error?.message });
       setPaymentLinks({ data: payRes.data || [], loading: false, error: payRes.error?.message });
+      setAuthChecked(true);
     } catch (e: unknown) {
       const msg = e?.message || String(e);
+      console.error('❌ useAdminUnifiedData: Erreur chargement:', msg);
       setProfiles({ data: [], loading: false, error: msg });
       setProducts({ data: [], loading: false, error: msg });
       setOrders({ data: [], loading: false, error: msg });
@@ -88,6 +119,7 @@ export function useAdminUnifiedData(enabled: boolean): AdminUnifiedData {
       setAgentsManagement({ data: [], loading: false, error: msg });
       setVendors({ data: [], loading: false, error: msg });
       setPaymentLinks({ data: [], loading: false, error: msg });
+      setAuthChecked(true);
     }
   };
 
