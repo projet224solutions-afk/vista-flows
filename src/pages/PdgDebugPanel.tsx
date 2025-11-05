@@ -12,6 +12,7 @@ export default function PdgDebugPanel() {
   const navigate = useNavigate();
   const [errors, setErrors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fixingAll, setFixingAll] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const { toast } = useToast();
 
@@ -112,71 +113,86 @@ export default function PdgDebugPanel() {
   };
 
   const fixAllCritical = async () => {
-    const criticalErrors = errors.filter(
-      (e) => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée')
-    );
+    setFixingAll(true);
+    
+    try {
+      const criticalErrors = errors.filter(
+        (e) => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée')
+      );
 
-    if (criticalErrors.length === 0) {
-      toast({
-        title: 'Aucune erreur à corriger',
-        description: 'Toutes les erreurs critiques et modérées sont déjà corrigées',
-      });
-      return;
-    }
+      console.log('Erreurs à corriger:', criticalErrors.length);
 
-    toast({
-      title: 'Correction en cours...',
-      description: `${criticalErrors.length} erreur(s) critique(s) en cours de correction`,
-    });
-
-    let fixed = 0;
-    let failed = 0;
-
-    for (const error of criticalErrors) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) continue;
-
-        const response = await fetch(
-          `https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/fix-error`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ errorId: error.id }),
-          }
-        );
-
-        if (response.ok) {
-          fixed++;
-          // Mettre à jour localement
-          setErrors(prev =>
-            prev.map((e) =>
-              e.id === error.id
-                ? { ...e, fix_applied: true, status: 'fixed' }
-                : e
-            )
-          );
-        } else {
-          failed++;
-        }
-      } catch (err) {
-        failed++;
-        console.error('Error fixing:', error.id, err);
+      if (criticalErrors.length === 0) {
+        toast({
+          title: 'Aucune erreur à corriger',
+          description: 'Toutes les erreurs critiques et modérées sont déjà corrigées',
+        });
+        return;
       }
+
+      toast({
+        title: 'Correction en cours...',
+        description: `${criticalErrors.length} erreur(s) en cours de correction`,
+      });
+
+      let fixed = 0;
+      let failed = 0;
+
+      for (const error of criticalErrors) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            console.error('Pas de session pour corriger:', error.id);
+            failed++;
+            continue;
+          }
+
+          const response = await fetch(
+            `https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/fix-error`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({ errorId: error.id }),
+            }
+          );
+
+          if (response.ok) {
+            fixed++;
+            console.log('Erreur corrigée:', error.id);
+            // Mettre à jour localement
+            setErrors(prev =>
+              prev.map((e) =>
+                e.id === error.id
+                  ? { ...e, fix_applied: true, status: 'fixed' }
+                  : e
+              )
+            );
+          } else {
+            const errorData = await response.json();
+            console.error('Échec correction:', error.id, errorData);
+            failed++;
+          }
+        } catch (err) {
+          failed++;
+          console.error('Erreur lors de la correction:', error.id, err);
+        }
+      }
+
+      toast({
+        title: 'Correction terminée',
+        description: `✅ ${fixed} corrigée(s) • ❌ ${failed} échouée(s)`,
+        variant: fixed > 0 ? 'default' : 'destructive',
+      });
+
+      // Recharger les erreurs
+      await loadErrors();
+    } finally {
+      setFixingAll(false);
     }
-
-    toast({
-      title: 'Correction terminée',
-      description: `✅ ${fixed} corrigée(s) • ❌ ${failed} échouée(s)`,
-      variant: fixed > 0 ? 'default' : 'destructive',
-    });
-
-    // Recharger les erreurs
-    loadErrors();
   };
 
   const restartModule = async (moduleName: string) => {
@@ -267,18 +283,22 @@ export default function PdgDebugPanel() {
           <div className="flex gap-2 w-full sm:w-auto">
             <Button 
               onClick={fixAllCritical} 
-              disabled={loading || !errors.some(e => !e.fix_applied && (e.severity === 'critique' || e.severity === 'modérée'))}
+              disabled={fixingAll || loading}
               variant="default"
               className="gap-2 flex-1 sm:flex-none"
               size="sm"
             >
-              <Zap className="h-4 w-4" />
-              <span className="hidden md:inline">Corriger Tout (Critiques)</span>
-              <span className="md:hidden">Tout Corriger</span>
+              <Zap className={`h-4 w-4 ${fixingAll ? 'animate-pulse' : ''}`} />
+              <span className="hidden md:inline">
+                {fixingAll ? 'Correction...' : 'Corriger Tout (Critiques)'}
+              </span>
+              <span className="md:hidden">
+                {fixingAll ? 'En cours...' : 'Tout Corriger'}
+              </span>
             </Button>
             <Button 
               onClick={loadErrors} 
-              disabled={loading} 
+              disabled={loading || fixingAll} 
               className="gap-2 flex-1 sm:flex-none" 
               size="sm"
               variant="outline"
