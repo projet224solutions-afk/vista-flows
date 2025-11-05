@@ -226,75 +226,75 @@ export default function PaymentLinksManager() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* En-tête avec statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="h-full flex flex-col space-y-4 p-4 overflow-hidden">
+      {/* En-tête avec statistiques - Version compacte */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3">
+              <Link className="w-6 h-6 text-blue-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Liens</p>
-                <p className="text-2xl font-bold">{stats?.total_links || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Liens</p>
+                <p className="text-xl font-bold">{stats?.total_links || 0}</p>
               </div>
-              <Link className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Paiements Réussis</p>
-                <p className="text-2xl font-bold text-green-600">{stats?.successful_payments || 0}</p>
+                <p className="text-xs text-muted-foreground">Réussis</p>
+                <p className="text-xl font-bold text-green-600">{stats?.successful_payments || 0}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3">
+              <Clock className="w-6 h-6 text-yellow-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-600">En Attente</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats?.pending_payments || 0}</p>
+                <p className="text-xs text-muted-foreground">En Attente</p>
+                <p className="text-xl font-bold text-yellow-600">{stats?.pending_payments || 0}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-6 h-6 text-blue-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Revenus Totaux</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-xs text-muted-foreground">Revenus</p>
+                <p className="text-lg font-bold text-blue-600">
                   {formatCurrency(stats?.total_revenue || 0, 'GNF')}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Actions et filtres */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex gap-2">
+      {/* Actions et filtres - Version compacte */}
+      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between shrink-0">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
           <Input
-            placeholder="Rechercher un produit..."
+            placeholder="Rechercher..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="w-64"
+            className="sm:w-48"
           />
           <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filtrer par statut" />
+            <SelectTrigger className="sm:w-40">
+              <SelectValue placeholder="Statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
               <SelectItem value="success">Réussi</SelectItem>
               <SelectItem value="failed">Échoué</SelectItem>
@@ -305,15 +305,14 @@ export default function PaymentLinksManager() {
         
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Actualiser
+            <RefreshCw className="w-4 h-4" />
           </Button>
           
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Créer un lien
+              <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-1" />
+                Créer
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
@@ -464,80 +463,89 @@ export default function PaymentLinksManager() {
         </div>
       </div>
 
-      {/* Liste des liens de paiement */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Mes liens de paiement</CardTitle>
+      {/* Liste des liens de paiement avec scroll */}
+      <Card className="flex-1 flex flex-col min-h-0">
+        <CardHeader className="pb-3 shrink-0">
+          <CardTitle className="text-lg">Mes liens de paiement</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="w-6 h-6 animate-spin mr-2" />
               Chargement...
             </div>
           ) : paymentLinks.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Link className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p>Aucun lien de paiement créé</p>
-              <p className="text-sm">Créez votre premier lien pour commencer à recevoir des paiements</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">Aucun lien de paiement</p>
+              <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 pb-4">
               {paymentLinks.map((link) => (
-                <div key={link.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">{link.produit}</h3>
-                        <Badge className={getStatusColor(link.status)}>
+                <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
+                        <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
                           {getStatusIcon(link.status)}
-                          <span className="ml-1 capitalize">{link.status}</span>
+                          <span className="capitalize">{link.status}</span>
                         </Badge>
                       </div>
                       
                       {link.description && (
-                        <p className="text-sm text-gray-600 mb-2">{link.description}</p>
+                        <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
                       )}
                       
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 font-medium">
+                          <DollarSign className="w-3 h-3" />
                           {formatCurrency(link.total, link.devise)}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(link.created_at).toLocaleDateString('fr-FR')}
+                          <Calendar className="w-3 h-3" />
+                          {new Date(link.created_at).toLocaleDateString('fr-FR', { 
+                            day: '2-digit', 
+                            month: 'short' 
+                          })}
                         </span>
                         {link.client && (
                           <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
+                            <User className="w-3 h-3" />
                             {link.client.name}
                           </span>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => copyPaymentLink(link.payment_id)}
+                        className="h-8 w-8 p-0"
+                        title="Copier le lien"
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
                       
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => sharePaymentLink(link.payment_id)}
+                        className="h-8 w-8 p-0"
+                        title="Partager"
                       >
                         <Share2 className="w-4 h-4" />
                       </Button>
                       
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
+                        className="h-8 w-8 p-0"
+                        title="Ouvrir"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
