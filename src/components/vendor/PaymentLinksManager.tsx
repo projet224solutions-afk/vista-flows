@@ -46,7 +46,8 @@ export default function PaymentLinksManager() {
     produit: '',
     description: '',
     montant: '',
-    devise: 'GNF'
+    devise: 'GNF',
+    client_id: ''
   });
 
   // Filtres
@@ -139,7 +140,8 @@ export default function PaymentLinksManager() {
         produit: formData.produit,
         description: formData.description,
         montant: parseFloat(formData.montant),
-        devise: formData.devise
+        devise: formData.devise,
+        client_id: formData.client_id || undefined
       });
 
       if (paymentId) {
@@ -155,7 +157,7 @@ export default function PaymentLinksManager() {
         // Réinitialiser le formulaire
         setShowCreateModal(false);
         setSelectedProduct(null);
-        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF' });
+        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '' });
       }
     } catch (error: any) {
       console.error('Erreur création lien:', error);
@@ -414,6 +416,19 @@ export default function PaymentLinksManager() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="client_id">ID Client (optionnel)</Label>
+                  <Input
+                    id="client_id"
+                    value={formData.client_id}
+                    onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                    placeholder="Ex: USR0002"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Laissez vide pour un lien public accessible à tous
+                  </p>
                 </div>
                 
                 {formData.montant && (

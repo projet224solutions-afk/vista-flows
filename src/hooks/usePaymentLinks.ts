@@ -40,6 +40,7 @@ export interface CreatePaymentLinkData {
   description?: string;
   montant: number;
   devise: string;
+  client_id?: string;
 }
 
 export function usePaymentLinks() {
@@ -183,13 +184,33 @@ export function usePaymentLinks() {
       const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase();
       const paymentId = `PAY-${timestamp}-${randomPart}`;
 
+      // Si un client_id est fourni, trouver l'UUID correspondant
+      let clientUuid: string | null = null;
+      if (data.client_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('public_id', data.client_id)
+          .single();
+
+        if (profileError || !profile) {
+          toast({
+            title: "Erreur",
+            description: "ID client introuvable",
+            variant: "destructive"
+          });
+          return null;
+        }
+        clientUuid = profile.id;
+      }
+
       // Créer le lien directement dans Supabase
       const { data: newLink, error } = await supabase
         .from('payment_links')
         .insert({
           payment_id: paymentId,
           vendeur_id: vendorId,
-          client_id: null, // Pas de client spécifique - lien public
+          client_id: clientUuid,
           produit: data.produit,
           description: data.description || null,
           montant: data.montant,
