@@ -439,11 +439,19 @@ export default function LivreurDashboard() {
                         <div className="space-y-1 text-sm">
                           <div className="flex items-start gap-2 text-muted-foreground">
                             <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-2">{delivery.pickup_address || 'Adresse de collecte'}</span>
+                            <span className="line-clamp-2">
+                              {typeof delivery.pickup_address === 'object' 
+                                ? delivery.pickup_address?.address 
+                                : delivery.pickup_address || 'Adresse de collecte'}
+                            </span>
                           </div>
                           <div className="flex items-start gap-2 text-muted-foreground">
                             <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-green-500" />
-                            <span className="line-clamp-2">{delivery.delivery_address || 'Adresse de livraison'}</span>
+                            <span className="line-clamp-2">
+                              {typeof delivery.delivery_address === 'object' 
+                                ? delivery.delivery_address?.address 
+                                : delivery.delivery_address || 'Adresse de livraison'}
+                            </span>
                           </div>
                         </div>
                         {delivery.driver_notes && (
