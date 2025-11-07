@@ -32,7 +32,7 @@ const statusColors = {
   rewarded: "bg-emerald-500",
 };
 
-export const BugBountyDashboard = () => {
+const BugBountyDashboard = () => {
   const queryClient = useQueryClient();
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [adminNotes, setAdminNotes] = useState("");
@@ -347,3 +347,5 @@ export const BugBountyDashboard = () => {
     </div>
   );
 };
+
+export default BugBountyDashboard;
