@@ -670,6 +670,149 @@ export type Database = {
           },
         ]
       }
+      bug_bounty_hall_of_fame: {
+        Row: {
+          created_at: string
+          highest_severity: string | null
+          id: string
+          rank: number | null
+          reporter_github: string | null
+          reporter_name: string
+          total_bugs_found: number
+          total_rewards: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          highest_severity?: string | null
+          id?: string
+          rank?: number | null
+          reporter_github?: string | null
+          reporter_name: string
+          total_bugs_found?: number
+          total_rewards?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          highest_severity?: string | null
+          id?: string
+          rank?: number | null
+          reporter_github?: string | null
+          reporter_name?: string
+          total_bugs_found?: number
+          total_rewards?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bug_bounty_rewards: {
+        Row: {
+          amount: number
+          bug_report_id: string
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: string
+        }
+        Insert: {
+          amount: number
+          bug_report_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+        }
+        Update: {
+          amount?: number
+          bug_report_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_bounty_rewards_bug_report_id_fkey"
+            columns: ["bug_report_id"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bug_reports: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          impact: string
+          proof_of_concept: string | null
+          reporter_email: string
+          reporter_github: string | null
+          reporter_name: string
+          resolved_at: string | null
+          reward_amount: number | null
+          severity: string
+          status: string
+          steps_to_reproduce: string
+          suggested_fix: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          impact: string
+          proof_of_concept?: string | null
+          reporter_email: string
+          reporter_github?: string | null
+          reporter_name: string
+          resolved_at?: string | null
+          reward_amount?: number | null
+          severity: string
+          status?: string
+          steps_to_reproduce: string
+          suggested_fix?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          impact?: string
+          proof_of_concept?: string | null
+          reporter_email?: string
+          reporter_github?: string | null
+          reporter_name?: string
+          resolved_at?: string | null
+          reward_amount?: number | null
+          severity?: string
+          status?: string
+          steps_to_reproduce?: string
+          suggested_fix?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bureau_access_logs: {
         Row: {
           access_type: string

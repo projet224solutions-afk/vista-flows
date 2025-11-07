@@ -36,6 +36,7 @@ const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSet
 const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
+const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -425,6 +426,12 @@ export default function PDG224Solutions() {
               {activeTab === 'drivers' && (
                 <ErrorBoundary>
                   <PDGDrivers />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'bug-bounty' && (
+                <ErrorBoundary>
+                  <BugBountyDashboard />
                 </ErrorBoundary>
               )}
 

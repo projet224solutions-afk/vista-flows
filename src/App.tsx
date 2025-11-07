@@ -63,6 +63,7 @@ const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazy(() => import("./pages/AffiliateRedirect"));
 const DeliveryRequest = lazy(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazy(() => import("./pages/DeliveryClient"));
+const BugBounty = lazy(() => import("./pages/BugBounty"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -310,6 +311,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Bug Bounty - Public */}
+              <Route path="/bug-bounty" element={<BugBounty />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

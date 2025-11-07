@@ -60,6 +60,7 @@ const categories: NavCategory[] = [
     color: 'from-purple-500 to-purple-600',
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield },
+      { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield },
       { value: 'config', label: 'Configuration', icon: Settings },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench },
       { value: 'api', label: 'API', icon: Key },
