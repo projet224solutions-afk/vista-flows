@@ -18,28 +18,8 @@ export class ServiceWorkerManager {
   }
 
   private init() {
-    // Nettoyer immédiatement au démarrage si nécessaire
-    this.checkAndCleanOnStartup();
-
-    // Écouter les erreurs critiques uniquement
-    window.addEventListener('error', (event) => {
-      if (this.isCriticalError(event.error)) {
-        console.error('Erreur critique détectée:', event.error);
-        this.handleError();
-      }
-    });
-
-    window.addEventListener('unhandledrejection', (event) => {
-      if (this.isCriticalError(event.reason)) {
-        console.error('Promise critique rejetée:', event.reason);
-        this.handleError();
-      }
-    });
-
-    // Gestion du service worker uniquement en production
-    if ('serviceWorker' in navigator && import.meta.env.PROD) {
-      this.setupServiceWorker();
-    }
+    // Ne rien faire - PWA désactivé pour éviter les problèmes de cache
+    console.log('✓ Service Worker Manager: PWA désactivé pour assurer la stabilité');
   }
 
   private isCriticalError(error: any): boolean {

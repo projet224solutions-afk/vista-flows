@@ -13,8 +13,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    VitePWA({
-      registerType: 'prompt',
+    mode !== "development" && VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: false,
+      strategies: 'injectManifest',
+      injectManifest: {
+        injectionPoint: undefined
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: '224Solutions - Multi-Services (Taxi-Moto, Livraison, E-Commerce)',
@@ -61,44 +66,10 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        navigateFallback: null,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkOnly',
-            options: {
-              cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 10
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              }
-            }
-          }
-        ],
         cleanupOutdatedCaches: true,
-        skipWaiting: false,
-        clientsClaim: false
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: []
       },
       devOptions: {
         enabled: false
