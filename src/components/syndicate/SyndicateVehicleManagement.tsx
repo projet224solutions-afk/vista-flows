@@ -184,8 +184,14 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
      * Ajoute un nouveau véhicule dans Supabase
      */
     const addVehicle = async () => {
-        if (!formData.owner_name || !formData.serial_number || !formData.license_plate) {
-            toast.error('Veuillez remplir les champs obligatoires');
+        if (!formData.serial_number || !formData.license_plate) {
+            toast.error('Veuillez remplir le numéro de série et la plaque d\'immatriculation');
+            return;
+        }
+
+        // Vérifier qu'un membre existe ou qu'un nouveau nom est fourni
+        if (!formData.member_id && !formData.owner_name) {
+            toast.error('Veuillez sélectionner un membre existant ou saisir le nom d\'un nouveau propriétaire');
             return;
         }
 
@@ -193,7 +199,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             // Chercher ou créer le membre
             let memberId = formData.member_id;
             
-            if (!memberId) {
+            if (!memberId && formData.owner_name) {
                 // Créer un nouveau membre
                 const { data: newMember, error: memberError } = await supabase
                     .from('members')
@@ -207,6 +213,11 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 
                 if (memberError) throw memberError;
                 memberId = newMember.id;
+            }
+            
+            if (!memberId) {
+                toast.error('Erreur: Aucun membre valide');
+                return;
             }
 
             // Insérer le véhicule dans Supabase
@@ -545,14 +556,47 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                 </DialogHeader>
                                 <div className="space-y-6 pb-4">
                                     <div>
-                                        <Label htmlFor="owner_name">Nom du Propriétaire *</Label>
-                                        <Input
-                                            id="owner_name"
-                                            value={formData.owner_name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
-                                            placeholder="Nom complet du propriétaire"
-                                        />
+                                        <Label htmlFor="member_select">Propriétaire *</Label>
+                                        <Select
+                                            value={formData.member_id || 'new'}
+                                            onValueChange={(value) => {
+                                                if (value === 'new') {
+                                                    setFormData(prev => ({ ...prev, member_id: '', owner_name: '' }));
+                                                } else {
+                                                    const member = members.find(m => m.id === value);
+                                                    setFormData(prev => ({ 
+                                                        ...prev, 
+                                                        member_id: value,
+                                                        owner_name: member?.name || ''
+                                                    }));
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Sélectionner un membre existant ou créer nouveau" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="new">➕ Nouveau propriétaire</SelectItem>
+                                                {members.map(member => (
+                                                    <SelectItem key={member.id} value={member.id}>
+                                                        {member.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
+
+                                    {(!formData.member_id || formData.member_id === '') && (
+                                        <div>
+                                            <Label htmlFor="owner_name">Nom du Nouveau Propriétaire *</Label>
+                                            <Input
+                                                id="owner_name"
+                                                value={formData.owner_name}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
+                                                placeholder="Nom complet du propriétaire"
+                                            />
+                                        </div>
+                                    )}
 
                                     <div>
                                         <Label htmlFor="serial_number">Numéro de Série *</Label>
