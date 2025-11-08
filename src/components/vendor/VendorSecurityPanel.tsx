@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useVendorSecurity } from '@/hooks/useVendorSecurity';
+import { VendorKYCForm } from './VendorKYCForm';
 import { Shield, CheckCircle, XCircle, AlertTriangle, RefreshCw, FileCheck } from 'lucide-react';
 
 export function VendorSecurityPanel() {
-  const { kyc, trustScore, suspiciousActivities, loading, calculateTrustScore } = useVendorSecurity();
+  const { kyc, trustScore, suspiciousActivities, loading, calculateTrustScore, reload } = useVendorSecurity();
+  const [showKYCForm, setShowKYCForm] = useState(false);
 
   if (loading) {
     return (
@@ -123,12 +126,20 @@ export function VendorSecurityPanel() {
               </div>
             )}
           </div>
+        ) : showKYCForm ? (
+          <VendorKYCForm 
+            onSuccess={() => {
+              setShowKYCForm(false);
+              reload();
+            }}
+            onCancel={() => setShowKYCForm(false)}
+          />
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
               Vérifiez votre identité pour augmenter votre score de confiance
             </p>
-            <Button>Commencer la vérification</Button>
+            <Button onClick={() => setShowKYCForm(true)}>Commencer la vérification</Button>
           </div>
         )}
       </Card>
