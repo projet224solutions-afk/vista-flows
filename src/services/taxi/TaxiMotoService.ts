@@ -5,6 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { supabaseCall, withRetry, handleApiError } from "@/utils/apiErrorHandler";
 
 type TaxiTrip = Database['public']['Tables']['taxi_trips']['Row'];
 
@@ -56,18 +57,24 @@ export class TaxiMotoService {
     lng: number,
     radiusKm: number = 5
   ): Promise<NearbyDriver[]> {
-    const { data, error } = await supabase.rpc('find_nearby_taxi_drivers' as any, {
-      p_lat: lat,
-      p_lng: lng,
-      p_radius_km: radiusKm
-    });
+    try {
+      const data = await supabaseCall(
+        async () => {
+          const { data, error } = await supabase.rpc('find_nearby_taxi_drivers' as any, {
+            p_lat: lat,
+            p_lng: lng,
+            p_radius_km: radiusKm
+          });
+          return { data, error };
+        },
+        { context: 'Recherche de chauffeurs', timeout: 15000 }
+      );
 
-    if (error) {
+      return (data as any) || [];
+    } catch (error) {
       console.error('[TaxiMotoService] Error finding nearby drivers:', error);
-      throw error;
+      return [];
     }
-
-    return (data as any) || [];
   }
 
   /**
@@ -78,16 +85,17 @@ export class TaxiMotoService {
     durationMin: number,
     surgeMultiplier: number = 1.0
   ): Promise<FareCalculation> {
-    const { data, error } = await supabase.rpc('calculate_taxi_fare' as any, {
-      p_distance_km: distanceKm,
-      p_duration_min: durationMin,
-      p_surge_multiplier: surgeMultiplier
-    });
-
-    if (error) {
-      console.error('[TaxiMotoService] Error calculating fare:', error);
-      throw error;
-    }
+    const data = await supabaseCall(
+      async () => {
+        const { data, error } = await supabase.rpc('calculate_taxi_fare' as any, {
+          p_distance_km: distanceKm,
+          p_duration_min: durationMin,
+          p_surge_multiplier: surgeMultiplier
+        });
+        return { data, error };
+      },
+      { context: 'Calcul du tarif', timeout: 10000 }
+    );
 
     return data as any;
   }
@@ -166,14 +174,26 @@ export class TaxiMotoService {
    * Accepter une course (chauffeur)
    */
   static async acceptRide(rideId: string, driverId: string): Promise<void> {
-    const { error } = await supabase.functions.invoke('taxi-accept-ride', {
-      body: { rideId, driverId }
-    });
+    await withRetry(
+      async () => {
+        const { error } = await supabase.functions.invoke('taxi-accept-ride', {
+          body: { rideId, driverId }
+        });
 
-    if (error) {
-      console.error('[TaxiMotoService] Error accepting ride:', error);
+        if (error) throw error;
+        return { data: null, error: null };
+      },
+      { 
+        maxRetries: 2,
+        timeout: 20000,
+        onRetry: (attempt) => {
+          console.log(`[TaxiMotoService] Retry accepting ride (attempt ${attempt})`);
+        }
+      }
+    ).catch((error) => {
+      handleApiError(error, 'Acceptation de la course');
       throw error;
-    }
+    });
   }
 
   /**
@@ -215,15 +235,20 @@ export class TaxiMotoService {
       updateData.cancelled_at = updateData.cancelled_at || new Date().toISOString();
     }
 
-    const { error } = await supabase
-      .from('taxi_trips')
-      .update(updateData)
-      .eq('id', rideId);
-
-    if (error) {
-      console.error('[TaxiMotoService] Error updating ride status:', error);
-      throw error;
-    }
+    await supabaseCall(
+      async () => {
+        const { data, error } = await supabase
+          .from('taxi_trips')
+          .update(updateData)
+          .eq('id', rideId);
+        return { data, error };
+      },
+      { 
+        context: 'Mise à jour du statut',
+        timeout: 15000,
+        maxRetries: 2
+      }
+    );
 
     // Logger l'action
     try {
@@ -390,15 +415,24 @@ export class TaxiMotoService {
       updateData.last_lng = currentLng;
     }
 
-    const { error } = await supabase
-      .from('taxi_drivers')
-      .update(updateData)
-      .eq('id', driverId);
-
-    if (error) {
-      console.error('[TaxiMotoService] Error updating driver status:', error);
-      throw error;
-    }
+    await supabaseCall(
+      async () => {
+        const { data, error } = await supabase
+          .from('taxi_drivers')
+          .update(updateData)
+          .eq('id', driverId);
+        return { data, error };
+      },
+      { 
+        context: 'Mise à jour du statut chauffeur',
+        silent: true, // Ne pas afficher d'erreur pour les mises à jour de statut
+        timeout: 10000,
+        maxRetries: 1
+      }
+    ).catch((error) => {
+      // Log silencieux pour ne pas perturber l'utilisateur
+      console.warn('[TaxiMotoService] Failed to update driver status:', error);
+    });
   }
 
   /**
