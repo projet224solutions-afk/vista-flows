@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, MoreHorizontal
+  Calendar, User, MapPin, Download, MoreHorizontal, Shield
 } from "lucide-react";
 
 interface Address {
@@ -18,6 +18,13 @@ interface Address {
   city: string;
   postal_code?: string;
   country: string;
+}
+
+interface EscrowInfo {
+  id: string;
+  status: string;
+  amount: number;
+  created_at: string;
 }
 
 interface Order {
@@ -34,6 +41,7 @@ interface Order {
   shipping_address: any; // Json from Supabase
   billing_address?: any; // Json from Supabase
   notes?: string;
+  metadata?: any;
   created_at: string;
   updated_at: string;
   customers?: {
@@ -51,6 +59,7 @@ interface Order {
       name: string;
     };
   }[];
+  escrow?: EscrowInfo;
 }
 
 const statusColors: Record<string, string> = {
@@ -160,8 +169,19 @@ export default function OrderManagement() {
         throw error;
       }
 
-      console.log('Orders loaded:', ordersData?.length || 0);
-      setOrders(ordersData || []);
+      // Charger les infos escrow pour chaque commande
+      const ordersWithEscrow = await Promise.all((ordersData || []).map(async (order) => {
+        const { data: escrow } = await supabase
+          .from('escrow_transactions')
+          .select('id, status, amount, created_at')
+          .eq('order_id', order.id)
+          .single();
+        
+        return { ...order, escrow: escrow || undefined };
+      }));
+
+      console.log('Orders loaded:', ordersWithEscrow.length);
+      setOrders(ordersWithEscrow);
     } catch (error) {
       console.error('Error in fetchOrders:', error);
       toast({
@@ -527,13 +547,27 @@ export default function OrderManagement() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge className={statusColors[order.status]}>
                       {statusLabels[order.status]}
                     </Badge>
                     <Badge className={paymentStatusColors[order.payment_status]}>
                       {paymentStatusLabels[order.payment_status]}
                     </Badge>
+                    {order.escrow && (
+                      <Badge className={
+                        order.escrow.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                        order.escrow.status === 'released' ? 'bg-green-100 text-green-800' :
+                        order.escrow.status === 'refunded' ? 'bg-gray-100 text-gray-800' :
+                        'bg-red-100 text-red-800'
+                      }>
+                        <Shield className="w-3 h-3 mr-1" />
+                        {order.escrow.status === 'pending' && 'Escrow en attente'}
+                        {order.escrow.status === 'released' && 'Paiement reçu'}
+                        {order.escrow.status === 'refunded' && 'Remboursé'}
+                        {order.escrow.status === 'dispute' && 'Litige'}
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -559,6 +593,12 @@ export default function OrderManagement() {
                         Remise: -{order.discount_amount.toLocaleString()} GNF
                       </p>
                     )}
+                    {order.escrow && order.escrow.status === 'pending' && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-orange-600">
+                        <Shield className="w-3 h-3" />
+                        <span>Fonds sécurisés en escrow</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Adresse de livraison</p>
@@ -568,6 +608,35 @@ export default function OrderManagement() {
                     </div>
                   </div>
                 </div>
+
+                {/* Info Escrow */}
+                {order.escrow && order.escrow.status === 'pending' && (
+                  <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <div className="flex items-start gap-2">
+                      <Shield className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                          Paiement sécurisé par Escrow
+                        </p>
+                        <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                          Le paiement de {order.escrow.amount.toLocaleString()} GNF est bloqué dans le système escrow.
+                          Vous recevrez les fonds quand le client confirmera la réception.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {order.escrow && order.escrow.status === 'released' && (
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-800 dark:text-green-200">
+                        Paiement reçu - Le client a confirmé la livraison
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="flex gap-2">

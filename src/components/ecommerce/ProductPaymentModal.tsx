@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Wallet, Banknote, Loader2, AlertCircle } from "lucide-react";
+import { Wallet, Banknote, Loader2, AlertCircle, Shield } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -194,73 +194,21 @@ export default function ProductPaymentModal({
 
         const vendorTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
 
-        // Si paiement wallet, effectuer le transfert
-        if (paymentMethod === 'wallet') {
-          // Vérifier le solde
-          if (walletBalance !== null && walletBalance < vendorTotal) {
-            toast.error('Solde insuffisant', {
-              description: 'Veuillez recharger votre wallet'
-            });
-            setProcessing(false);
-            return;
-          }
+        // Récupérer le user_id du vendeur
+        const { data: vendorData, error: vendorError } = await supabase
+          .from('vendors')
+          .select('user_id')
+          .eq('id', vendorId)
+          .single();
 
-          // Récupérer le user_id du vendeur
-          const { data: vendorData, error: vendorError } = await supabase
-            .from('vendors')
-            .select('user_id')
-            .eq('id', vendorId)
-            .single();
-
-          if (vendorError || !vendorData) {
-            toast.error('Erreur vendeur', {
-              description: 'Impossible de trouver le vendeur'
-            });
-            continue;
-          }
-
-          // Effectuer le transfert wallet
-          const { data: transferData, error: transferError } = await supabase.rpc('process_wallet_transaction', {
-            p_sender_id: userId,
-            p_receiver_id: vendorData.user_id,
-            p_amount: vendorTotal,
-            p_description: `Paiement commande - ${items.map(i => i.name).join(', ')}`
+        if (vendorError || !vendorData) {
+          toast.error('Erreur vendeur', {
+            description: 'Impossible de trouver le vendeur'
           });
-
-          if (transferError) {
-            console.error('[ProductPayment] Transfer error:', transferError);
-            toast.error('Erreur de paiement', {
-              description: transferError.message || 'Le transfert a échoué'
-            });
-            continue;
-          }
-
-          // Enregistrer la commission de la plateforme (2.5%)
-          const commissionRate = 2.5;
-          const commissionAmount = (vendorTotal * commissionRate) / 100;
-
-          const { error: revenueError } = await supabase
-            .from('platform_revenue')
-            .insert({
-              amount: commissionAmount,
-              revenue_type: 'product_commission',
-              source_transaction_id: typeof transferData === 'string' ? transferData : null,
-              metadata: {
-                commission_rate: commissionRate,
-                order_total: vendorTotal,
-                buyer_id: userId,
-                vendor_id: vendorData.user_id,
-                items_count: items.length
-              }
-            });
-
-          if (revenueError) {
-            console.error('[ProductPayment] Revenue tracking error:', revenueError);
-            // Ne pas bloquer la commande si l'enregistrement du revenu échoue
-          }
+          continue;
         }
 
-        // Créer la commande (order_number est généré automatiquement par la BD)
+        // Créer d'abord la commande pour obtenir l'order_id
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .insert([{
@@ -275,8 +223,8 @@ export default function ProductPaymentModal({
             payment_status: paymentMethod === 'wallet' ? 'paid' : 'pending',
             payment_method: paymentMethod === 'wallet' ? 'mobile_money' : 'cash',
             shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée' },
-            notes: `Paiement ${paymentMethod === 'wallet' ? 'Wallet' : 'à la livraison'}`
-          } as any]) // Type assertion pour éviter l'erreur order_number
+            notes: `Paiement ${paymentMethod === 'wallet' ? 'Wallet via Escrow' : 'à la livraison'}`
+          } as any])
           .select()
           .single();
 
@@ -284,6 +232,48 @@ export default function ProductPaymentModal({
           console.error('[ProductPayment] Order error:', orderError);
           toast.error('Erreur création commande');
           continue;
+        }
+
+        // Si paiement wallet, initier l'escrow au lieu du transfert direct
+        if (paymentMethod === 'wallet') {
+          // Vérifier le solde
+          if (walletBalance !== null && walletBalance < vendorTotal) {
+            toast.error('Solde insuffisant', {
+              description: 'Veuillez recharger votre wallet'
+            });
+            setProcessing(false);
+            return;
+          }
+
+          // Initier l'escrow - bloque les fonds dans le système
+          const { data: escrowId, error: escrowError } = await supabase.rpc('initiate_escrow', {
+            p_order_id: orderData.id,
+            p_payer_id: userId,
+            p_receiver_id: vendorData.user_id,
+            p_amount: vendorTotal,
+            p_currency: 'GNF'
+          });
+
+          if (escrowError) {
+            console.error('[ProductPayment] Escrow error:', escrowError);
+            // Annuler la commande si l'escrow échoue
+            await supabase.from('orders').delete().eq('id', orderData.id);
+            toast.error('Erreur de paiement', {
+              description: escrowError.message || 'L\'escrow a échoué'
+            });
+            continue;
+          }
+
+          console.log('✅ Escrow initiated:', escrowId);
+
+          // Mettre à jour la commande avec l'escrow_transaction_id
+          await supabase
+            .from('orders')
+            .update({ 
+              notes: `Paiement Wallet via Escrow - ID: ${escrowId}`,
+              metadata: { escrow_transaction_id: escrowId }
+            })
+            .eq('id', orderData.id);
         }
 
         // Créer les items de commande
@@ -306,8 +296,8 @@ export default function ProductPaymentModal({
 
       // Succès
       if (paymentMethod === 'wallet') {
-        toast.success('Paiement effectué !', {
-          description: `${totalAmount.toLocaleString()} GNF débités de votre wallet`
+        toast.success('Paiement sécurisé effectué !', {
+          description: `${totalAmount.toLocaleString()} GNF bloqués en escrow - Seront transférés à la livraison`
         });
       } else {
         toast.success('Commande créée !', {
@@ -334,30 +324,43 @@ export default function ProductPaymentModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Paiement de la commande</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            Paiement Sécurisé (Escrow)
+          </DialogTitle>
           <DialogDescription>
-            Montant total: <span className="font-bold text-lg">{totalAmount.toLocaleString()} GNF</span>
-            {paymentMethod === 'wallet' && (
-              <div className="mt-2 space-y-1">
-                <div>
-                  Solde disponible: <span className="font-semibold">{walletBalance?.toLocaleString() || 0} GNF</span>
-                </div>
-                {vendorCode && (
-                  <div className="flex items-center gap-2 mt-2 p-2 bg-primary/10 rounded-md">
-                    <Wallet className="w-4 h-4 text-primary" />
-                    <span className="text-sm">
-                      ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span>
+            <div className="space-y-2">
+              <div>
+                Montant total: <span className="font-bold text-lg">{totalAmount.toLocaleString()} GNF</span>
+              </div>
+              {paymentMethod === 'wallet' && (
+                <>
+                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+                    <Shield className="w-4 h-4 text-green-600" />
+                    <span className="text-xs text-green-800 dark:text-green-200">
+                      Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
                     </span>
                   </div>
-                )}
-                {loadingVendorCode && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Chargement ID vendeur...
+                  <div>
+                    Solde disponible: <span className="font-semibold">{walletBalance?.toLocaleString() || 0} GNF</span>
                   </div>
-                )}
-              </div>
-            )}
+                  {vendorCode && (
+                    <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-md">
+                      <Wallet className="w-4 h-4 text-primary" />
+                      <span className="text-sm">
+                        ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span>
+                      </span>
+                    </div>
+                  )}
+                  {loadingVendorCode && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Chargement ID vendeur...
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
