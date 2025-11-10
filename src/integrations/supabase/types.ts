@@ -5896,6 +5896,133 @@ export type Database = {
         }
         Relationships: []
       }
+      shipment_tracking: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          location: string | null
+          shipment_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          shipment_id: string
+          status: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          shipment_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_tracking_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipments: {
+        Row: {
+          cash_on_delivery: boolean | null
+          cod_amount: number | null
+          created_at: string | null
+          current_location: string | null
+          delivery_date: string | null
+          id: string
+          insurance: boolean | null
+          insurance_amount: number | null
+          item_type: string | null
+          package_description: string | null
+          pickup_date: string | null
+          pieces_count: number
+          receiver_address: string
+          receiver_name: string
+          receiver_phone: string
+          return_option: boolean | null
+          sender_address: string
+          sender_name: string
+          sender_phone: string
+          status: string
+          tracking_number: string
+          updated_at: string | null
+          vendor_id: string
+          weight: number
+        }
+        Insert: {
+          cash_on_delivery?: boolean | null
+          cod_amount?: number | null
+          created_at?: string | null
+          current_location?: string | null
+          delivery_date?: string | null
+          id?: string
+          insurance?: boolean | null
+          insurance_amount?: number | null
+          item_type?: string | null
+          package_description?: string | null
+          pickup_date?: string | null
+          pieces_count?: number
+          receiver_address: string
+          receiver_name: string
+          receiver_phone: string
+          return_option?: boolean | null
+          sender_address: string
+          sender_name: string
+          sender_phone: string
+          status?: string
+          tracking_number: string
+          updated_at?: string | null
+          vendor_id: string
+          weight?: number
+        }
+        Update: {
+          cash_on_delivery?: boolean | null
+          cod_amount?: number | null
+          created_at?: string | null
+          current_location?: string | null
+          delivery_date?: string | null
+          id?: string
+          insurance?: boolean | null
+          insurance_amount?: number | null
+          item_type?: string | null
+          package_description?: string | null
+          pickup_date?: string | null
+          pieces_count?: number
+          receiver_address?: string
+          receiver_name?: string
+          receiver_phone?: string
+          return_option?: boolean | null
+          sender_address?: string
+          sender_name?: string
+          sender_phone?: string
+          status?: string
+          tracking_number?: string
+          updated_at?: string | null
+          vendor_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sos_alerts: {
         Row: {
           address: string | null
@@ -9131,6 +9258,7 @@ export type Database = {
       }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
+      generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_custom_id: { Args: never; Returns: string }

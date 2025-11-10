@@ -6,9 +6,11 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Package, User, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Package, User, Clock, Truck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { ShipmentManager } from './shipment/ShipmentManager';
 
 interface VendorDelivery {
   id: string;
@@ -27,6 +29,7 @@ export function VendorDeliveriesPanel() {
   const [deliveries, setDeliveries] = useState<VendorDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [vendorId, setVendorId] = useState<string | null>(null);
+  const [showShipmentManager, setShowShipmentManager] = useState(false);
 
   useEffect(() => {
     loadVendorDeliveries();
@@ -114,16 +117,42 @@ export function VendorDeliveriesPanel() {
     );
   }
 
+  // Si on affiche le gestionnaire d'expéditions
+  if (showShipmentManager) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => setShowShipmentManager(false)}
+        >
+          ← Retour aux livraisons
+        </Button>
+        <ShipmentManager />
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Package className="h-5 w-5 text-orange-600" />
-          Mes colis à livrer
-        </CardTitle>
-        <CardDescription>
-          {deliveries.length} colis au total
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-orange-600" />
+              Mes colis à livrer
+            </CardTitle>
+            <CardDescription>
+              {deliveries.length} colis au total
+            </CardDescription>
+          </div>
+          <Button
+            onClick={() => setShowShipmentManager(true)}
+            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+          >
+            <Truck className="mr-2 h-4 w-4" />
+            Gestion expéditions
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
