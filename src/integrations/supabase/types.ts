@@ -3621,6 +3621,7 @@ export type Database = {
           customer_id: string
           discount_amount: number | null
           id: string
+          metadata: Json | null
           notes: string | null
           order_number: string
           payment_method: Database["public"]["Enums"]["payment_method"] | null
@@ -3641,6 +3642,7 @@ export type Database = {
           customer_id: string
           discount_amount?: number | null
           id?: string
+          metadata?: Json | null
           notes?: string | null
           order_number: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -3661,6 +3663,7 @@ export type Database = {
           customer_id?: string
           discount_amount?: number | null
           id?: string
+          metadata?: Json | null
           notes?: string | null
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -4112,6 +4115,27 @@ export type Database = {
           metadata?: Json | null
           revenue_type?: string
           source_transaction_id?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string | null
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: string
         }
         Relationships: []
       }
@@ -9048,6 +9072,10 @@ export type Database = {
           }
       enablelongtransactions: { Args: never; Returns: string }
       ensure_pdg_wallet: { Args: never; Returns: string }
+      ensure_wallet: {
+        Args: { p_currency?: string; p_user_id: string }
+        Returns: string
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       extract_number: { Args: { p_id: string }; Returns: number }
       extract_prefix: { Args: { p_id: string }; Returns: string }
@@ -9229,6 +9257,17 @@ export type Database = {
       get_or_create_wallet: {
         Args: { p_currency?: string; p_user_id: string }
         Returns: string
+      }
+      get_order_escrow: {
+        Args: { p_order_id: string }
+        Returns: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          status: string
+          updated_at: string
+        }[]
       }
       get_pdg_dashboard_stats: { Args: never; Returns: Json }
       get_pdg_revenue_stats: {
