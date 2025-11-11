@@ -162,7 +162,7 @@ export function usePaymentLinks() {
 
   const calculateStats = (links: PaymentLink[]) => {
     const successfulLinks = links.filter(l => l.status === 'success');
-    const totalRevenue = successfulLinks.reduce((sum, l) => sum + (l.total || 0), 0);
+    const totalRevenue = successfulLinks.reduce((sum, l) => sum + (l.montant || 0), 0); // Utiliser montant sans frais
 
     setStats({
       total_links: links.length,

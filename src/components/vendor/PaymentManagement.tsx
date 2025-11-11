@@ -62,14 +62,16 @@ export default function PaymentManagement() {
   const overdueCount = linksWithStatus.filter(l => l.displayStatus === 'overdue').length;
   const pendingCount = linksWithStatus.filter(l => l.displayStatus === 'pending').length;
   const successCount = linksWithStatus.filter(l => l.displayStatus === 'success').length;
-  const totalRevenue = stats?.total_revenue || 0;
+  const totalRevenue = linksWithStatus
+    .filter(l => l.displayStatus === 'success')
+    .reduce((sum, l) => sum + l.montant, 0); // Utiliser montant au lieu de total
 
   const overdueAmount = linksWithStatus
     .filter(l => l.displayStatus === 'overdue')
-    .reduce((sum, l) => sum + l.total, 0);
+    .reduce((sum, l) => sum + l.montant, 0);
   const pendingAmount = linksWithStatus
     .filter(l => l.displayStatus === 'pending')
-    .reduce((sum, l) => sum + l.total, 0);
+    .reduce((sum, l) => sum + l.montant, 0);
 
   if (loading) {
     return <div className="p-4">Chargement des données de paiement...</div>;
@@ -206,9 +208,9 @@ export default function PaymentManagement() {
                       </div>
                     </div>
                     <div className="text-right space-y-1">
-                      <p className="text-lg font-bold">{link.total.toFixed(0)} GNF</p>
+                      <p className="text-lg font-bold">{link.montant.toFixed(0)} GNF</p>
                       <p className="text-xs text-muted-foreground">
-                        Montant: {link.montant.toFixed(0)} + {link.frais.toFixed(0)} frais
+                        Montant du produit
                       </p>
                     </div>
                   </div>
