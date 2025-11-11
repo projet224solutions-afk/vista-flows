@@ -79,19 +79,19 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-agent-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-user-by-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.create-sub-agent]
 verify_jwt = true
 
 [functions.agent-toggle-user-status]
-verify_jwt = false
+verify_jwt = true
 
 [functions.agent-delete-user]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-all-services]
 verify_jwt = false

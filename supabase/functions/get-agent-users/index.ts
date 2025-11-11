@@ -12,104 +12,82 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const agentToken = body.agentToken || body.agent_access_token;
-
-    if (!agentToken) {
+    // ✅ JWT Authentication enabled
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Token agent requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Créer un client Supabase avec service_role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    // Vérifier que le token agent est valide
-    const { data: agent, error: agentError } = await supabaseAdmin
-      .from('agents_management')
-      .select('id, pdg_id, is_active, permissions')
-      .eq('access_token', agentToken)
-      .single();
-
-    if (agentError || !agent) {
-      return new Response(
-        JSON.stringify({ error: 'Token agent invalide' }),
+        JSON.stringify({ error: 'Non autorisé - token JWT manquant' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!agent.is_active) {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Agent inactif' }),
+        JSON.stringify({ error: 'Non authentifié' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // ✅ Verify authenticated user is an active agent
+    const { data: agent, error: agentError } = await supabaseAdmin
+      .from('agents_management')
+      .select('id, is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .single();
+
+    if (agentError || !agent) {
+      return new Response(
+        JSON.stringify({ error: 'Agent non trouvé ou inactif' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Récupérer les sous-agents de cet agent
-    const { data: subAgents } = await supabaseAdmin
-      .from('agents_management')
-      .select('id')
-      .eq('parent_agent_id', agent.id)
-      .eq('is_active', true);
-
-    // Créer une liste des IDs d'agents (agent + sous-agents)
-    const agentIds = [agent.id];
-    if (subAgents && subAgents.length > 0) {
-      agentIds.push(...subAgents.map(sa => sa.id));
-    }
-
-    // Récupérer les utilisateurs créés par cet agent et ses sous-agents
-    const { data: agentUsers, error: agentUsersError } = await supabaseAdmin
+    const { data: createdUsers, error: usersError } = await supabaseAdmin
       .from('agent_created_users')
-      .select('user_id, user_role, created_at, agent_id')
-      .in('agent_id', agentIds)
+      .select('user_id, user_email, user_role, created_at')
+      .eq('agent_id', agent.id)
       .order('created_at', { ascending: false });
 
-    if (agentUsersError) {
-      throw agentUsersError;
-    }
+    if (usersError) throw usersError;
 
-    if (!agentUsers || agentUsers.length === 0) {
-      return new Response(
-        JSON.stringify({ users: [] }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Récupérer les détails des profils utilisateurs
-    const userIds = agentUsers.map(u => u.user_id);
+    const userIds = createdUsers?.map(u => u.user_id) || [];
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, first_name, last_name, phone, role, is_active, public_id, created_at, country, city')
+      .select('id, first_name, last_name, phone, is_active, role')
       .in('id', userIds);
 
-    if (profilesError) {
-      throw profilesError;
-    }
+    if (profilesError) throw profilesError;
 
-    // Fusionner les données
-    const users = agentUsers.map((agentUser: any) => {
-      const profile = profiles?.find(p => p.id === agentUser.user_id);
+    const users = createdUsers?.map(cu => {
+      const profile = profiles?.find(p => p.id === cu.user_id);
       return {
-        ...profile,
-        created_by_agent: true,
-        user_role: agentUser.user_role,
-        agent_created_at: agentUser.created_at
+        id: cu.user_id,
+        email: cu.user_email,
+        role: cu.user_role,
+        first_name: profile?.first_name || '',
+        last_name: profile?.last_name || '',
+        phone: profile?.phone || '',
+        is_active: profile?.is_active ?? true,
+        created_at: cu.created_at
       };
-    }).filter(user => user.id); // Filtrer les utilisateurs sans profil
+    }) || [];
 
     return new Response(
-      JSON.stringify({ users }),
+      JSON.stringify({ success: true, users }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

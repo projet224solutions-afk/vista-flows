@@ -12,11 +12,43 @@ serve(async (req) => {
   }
 
   try {
-    const { agentToken, userId } = await req.json();
-
-    if (!agentToken || !userId) {
+    // ✅ JWT Authentication enabled
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Paramètres requis manquants' }),
+        JSON.stringify({ error: 'Non autorisé - token JWT manquant' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Non authentifié' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'userId requis' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ✅ Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      return new Response(
+        JSON.stringify({ error: 'userId invalide' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -24,25 +56,21 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Vérifier le token agent
+    // ✅ Verify authenticated user is an active agent
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')
-      .select('id, pdg_id, is_active, permissions')
-      .eq('access_token', agentToken)
+      .select('id, is_active, permissions')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
       .single();
 
-    if (agentError || !agent || !agent.is_active) {
+    if (agentError || !agent) {
       return new Response(
-        JSON.stringify({ error: 'Token agent invalide ou agent inactif' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Agent non trouvé ou inactif' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -53,15 +81,24 @@ serve(async (req) => {
       );
     }
 
-    // Supprimer l'utilisateur de auth.users
-    const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    
-    if (deleteAuthError) {
-      console.error('Erreur suppression auth:', deleteAuthError);
-      throw deleteAuthError;
+    // Verify the user was created by this agent
+    const { data: createdUser, error: createdUserError } = await supabaseAdmin
+      .from('agent_created_users')
+      .select('user_id')
+      .eq('agent_id', agent.id)
+      .eq('user_id', userId)
+      .single();
+
+    if (createdUserError || !createdUser) {
+      return new Response(
+        JSON.stringify({ error: 'Utilisateur non trouvé ou non créé par cet agent' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Log de l'action
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (deleteError) throw deleteError;
+
     await supabaseAdmin.from('audit_logs').insert({
       actor_id: agent.id,
       action: 'USER_DELETED',
