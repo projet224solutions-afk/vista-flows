@@ -9737,7 +9737,7 @@ export type Database = {
       release_escrow:
         | {
             Args: {
-              p_commission_percent?: number
+              p_commission_percent: number
               p_escrow_id: string
               p_released_by?: string
             }
