@@ -18,16 +18,9 @@ import {
   MessageSquare,
   Phone,
   Video,
-  Send,
-  Paperclip,
-  Image,
-  FileText,
-  X,
   Search,
   Bell,
   Users,
-  Check,
-  CheckCheck
 } from 'lucide-react';
 import {
   universalCommunicationService,
@@ -37,6 +30,8 @@ import {
 } from '@/services/UniversalCommunicationService';
 import AgoraVideoCall from './AgoraVideoCall';
 import AgoraAudioCall from './AgoraAudioCall';
+import ImprovedMessageInput from './ImprovedMessageInput';
+import MessageItem from './MessageItem';
 
 interface UniversalCommunicationHubProps {
   className?: string;
@@ -55,7 +50,6 @@ export default function UniversalCommunicationHub({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [userIdSearch, setUserIdSearch] = useState('');
   const [notifications, setNotifications] = useState<CommunicationNotification[]>([]);
@@ -63,11 +57,8 @@ export default function UniversalCommunicationHub({
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Charger les conversations
   useEffect(() => {
@@ -189,16 +180,35 @@ export default function UniversalCommunicationHub({
     }
   }, [selectedConversationId, conversations]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !user?.id) return;
+  const handleSendMessage = async (message: string, attachments?: File[]) => {
+    if (!selectedConversation || !user?.id) return;
+    if (!message.trim() && (!attachments || attachments.length === 0)) return;
 
     try {
-      await universalCommunicationService.sendTextMessage(
-        selectedConversation.id,
-        user.id,
-        newMessage
-      );
-      setNewMessage('');
+      // Envoyer les pièces jointes
+      if (attachments && attachments.length > 0) {
+        for (const file of attachments) {
+          const fileType = file.type.startsWith('image/') ? 'image' :
+                          file.type.startsWith('video/') ? 'video' :
+                          file.type.startsWith('audio/') ? 'audio' : 'file';
+
+          await universalCommunicationService.sendFileMessage(
+            selectedConversation.id,
+            user.id,
+            file,
+            fileType
+          );
+        }
+      }
+
+      // Envoyer le message texte si présent
+      if (message.trim()) {
+        await universalCommunicationService.sendTextMessage(
+          selectedConversation.id,
+          user.id,
+          message
+        );
+      }
     } catch (error) {
       toast({
         title: 'Erreur',
@@ -208,35 +218,35 @@ export default function UniversalCommunicationHub({
     }
   };
 
-  const handleSendFile = async () => {
-    if (!selectedFile || !selectedConversation || !user?.id) return;
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user?.id) return;
 
-    setIsUploading(true);
     try {
-      const fileType = selectedFile.type.startsWith('image/') ? 'image' :
-                      selectedFile.type.startsWith('video/') ? 'video' :
-                      selectedFile.type.startsWith('audio/') ? 'audio' : 'file';
-
-      await universalCommunicationService.sendFileMessage(
-        selectedConversation.id,
-        user.id,
-        selectedFile,
-        fileType
-      );
-
-      setSelectedFile(null);
-      toast({
-        title: 'Fichier envoyé',
-        description: 'Votre fichier a été envoyé avec succès'
-      });
+      await universalCommunicationService.deleteMessage(messageId, user.id);
+      setMessages(prev => prev.filter(m => m.id !== messageId));
     } catch (error) {
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'envoyer le fichier',
+        description: 'Impossible de supprimer le message',
         variant: 'destructive'
       });
-    } finally {
-      setIsUploading(false);
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!user?.id) return;
+
+    try {
+      await universalCommunicationService.editMessage(messageId, user.id, newContent);
+      setMessages(prev => prev.map(m => 
+        m.id === messageId ? { ...m, content: newContent } : m
+      ));
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le message',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -389,18 +399,6 @@ export default function UniversalCommunicationHub({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getMessageStatusIcon = (status: string) => {
-    switch (status) {
-      case 'sent':
-        return <Check className="h-3 w-3" />;
-      case 'delivered':
-      case 'read':
-        return <CheckCheck className="h-3 w-3" />;
-      default:
-        return null;
-    }
-  };
-
   const getOtherParticipant = (conversation: Conversation) => {
     return conversation.participants.find(p => p.user_id !== user?.id);
   };
@@ -542,116 +540,44 @@ export default function UniversalCommunicationHub({
 
                     {/* Messages */}
                     <ScrollArea className="flex-1 p-4">
-                      {messages.map((message) => {
-                        const isOwn = message.sender_id === user?.id;
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-[70%] rounded-lg p-3 ${
-                                isOwn
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted'
-                              }`}
-                            >
-                              {message.type === 'image' && message.file_url && (
-                                <img
-                                  src={message.file_url}
-                                  alt={message.file_name}
-                                  className="rounded mb-2 max-w-full"
-                                />
-                              )}
-                              {message.type === 'file' && message.file_url && (
-                                <a
-                                  href={message.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 mb-2 underline"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                  {message.file_name}
-                                </a>
-                              )}
-                              <p>{message.content}</p>
-                              <div className="flex items-center justify-between mt-1 text-xs opacity-70">
-                                <span>
-                                  {new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </span>
-                                {isOwn && getMessageStatusIcon(message.status)}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <div className="space-y-4">
+                        {messages.map((message) => {
+                          const isOwn = message.sender_id === user?.id;
+                          const otherParticipant = getOtherParticipant(selectedConversation);
+                          
+                          return (
+                            <MessageItem
+                              key={message.id}
+                              message={{
+                                id: message.id,
+                                content: message.content,
+                                timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }),
+                                isOwn,
+                                senderName: isOwn ? undefined : `${otherParticipant?.first_name} ${otherParticipant?.last_name}`,
+                                attachments: message.file_url ? [{
+                                  type: message.type,
+                                  url: message.file_url,
+                                  name: message.file_name || message.content
+                                }] : undefined
+                              }}
+                              onDelete={handleDeleteMessage}
+                              onEdit={handleEditMessage}
+                            />
+                          );
+                        })}
+                      </div>
                       <div ref={messagesEndRef} />
                     </ScrollArea>
 
                     {/* Input message */}
                     <div className="p-4 border-t">
-                      {selectedFile && (
-                        <div className="mb-2 p-2 bg-muted rounded flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {selectedFile.type.startsWith('image/') ? (
-                              <Image className="h-4 w-4" />
-                            ) : (
-                              <FileText className="h-4 w-4" />
-                            )}
-                            <span className="text-sm">{selectedFile.name}</span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedFile(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setSelectedFile(file);
-                          }}
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Paperclip className="h-4 w-4" />
-                        </Button>
-                        <Input
-                          placeholder="Votre message..."
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              if (selectedFile) {
-                                handleSendFile();
-                              } else {
-                                handleSendMessage();
-                              }
-                            }
-                          }}
-                          disabled={isUploading}
-                        />
-                        <Button
-                          onClick={selectedFile ? handleSendFile : handleSendMessage}
-                          disabled={(!newMessage.trim() && !selectedFile) || isUploading}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <ImprovedMessageInput
+                        onSendMessage={handleSendMessage}
+                        placeholder="Tapez votre message..."
+                      />
                     </div>
                   </>
                 ) : (

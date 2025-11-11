@@ -478,6 +478,66 @@ class UniversalCommunicationService {
   }
 
   /**
+   * Supprimer un message
+   */
+  async deleteMessage(messageId: string, userId: string): Promise<void> {
+    try {
+      // Vérifier que l'utilisateur est l'auteur du message
+      const { data: message, error: fetchError } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (message.sender_id !== userId) {
+        throw new Error('Vous ne pouvez supprimer que vos propres messages');
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+      await this.logAudit(userId, 'message_deleted', messageId);
+    } catch (error) {
+      console.error('Erreur suppression message:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Modifier un message
+   */
+  async editMessage(messageId: string, userId: string, newContent: string): Promise<void> {
+    try {
+      // Vérifier que l'utilisateur est l'auteur du message
+      const { data: message, error: fetchError } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (message.sender_id !== userId) {
+        throw new Error('Vous ne pouvez modifier que vos propres messages');
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: newContent })
+        .eq('id', messageId);
+
+      if (error) throw error;
+      await this.logAudit(userId, 'message_edited', messageId);
+    } catch (error) {
+      console.error('Erreur modification message:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Chercher des utilisateurs pour démarrer une conversation
    */
   async searchUsers(query: string): Promise<Array<{
