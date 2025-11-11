@@ -301,24 +301,32 @@ class UniversalCommunicationService {
     conversationId: string,
     senderId: string,
     file: File,
-    type: 'image' | 'video' | 'file' | 'audio' = 'file'
+    type: 'image' | 'video' | 'file' | 'voice' = 'file'
   ): Promise<Message> {
     try {
+      console.log('sendFileMessage appelé:', { conversationId, senderId, fileName: file.name, type });
+      
       // Upload du fichier
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `communication/${conversationId}/${fileName}`;
 
+      console.log('Upload fichier vers storage:', filePath);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('communication-files')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Erreur upload storage:', uploadError);
+        throw uploadError;
+      }
 
       // Obtenir l'URL publique
       const { data: { publicUrl } } = supabase.storage
         .from('communication-files')
         .getPublicUrl(filePath);
+
+      console.log('URL publique générée:', publicUrl);
 
       // Obtenir le destinataire
       let recipientId: string;
@@ -332,6 +340,7 @@ class UniversalCommunicationService {
         recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
       }
 
+      console.log('Insertion message dans DB:', { type, recipientId });
       const { data, error } = await supabase
         .from('messages')
         .insert({
@@ -348,11 +357,15 @@ class UniversalCommunicationService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur insertion message:', error);
+        throw error;
+      }
+      console.log('Message fichier inséré:', data.id);
       await this.logAudit(senderId, 'message_sent', data.id);
       return data as any;
     } catch (error) {
-      console.error('Erreur envoi fichier:', error);
+      console.error('Erreur envoi fichier (catch global):', error);
       throw error;
     }
   }

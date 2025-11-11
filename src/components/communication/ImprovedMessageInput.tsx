@@ -102,7 +102,7 @@ export default function ImprovedMessageInput({
             <div key={index} className="flex items-center gap-2 bg-background p-2 rounded border">
               {file.type.startsWith('image/') ? (
                 <ImageIcon className="w-4 h-4" />
-              ) : file.type.startsWith('audio/') ? (
+              ) : file.type.startsWith('audio/') || file.name.startsWith('audio_') ? (
                 <Mic className="w-4 h-4" />
               ) : (
                 <Paperclip className="w-4 h-4" />

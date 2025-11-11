@@ -164,6 +164,14 @@ export default function MessageItem({
                           alt={attachment.name}
                           className="max-w-[200px] rounded"
                         />
+                      ) : attachment.type.startsWith('audio/') || attachment.type === 'voice' ? (
+                        <audio 
+                          controls 
+                          src={attachment.url}
+                          className="max-w-[250px]"
+                        >
+                          Votre navigateur ne supporte pas l'élément audio.
+                        </audio>
                       ) : (
                         <a 
                           href={attachment.url} 

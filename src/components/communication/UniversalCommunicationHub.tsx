@@ -196,9 +196,17 @@ export default function UniversalCommunicationHub({
       // Envoyer les pièces jointes
       if (attachments && attachments.length > 0) {
         for (const file of attachments) {
-          const fileType = file.type.startsWith('image/') ? 'image' :
-                          file.type.startsWith('video/') ? 'video' :
-                          file.type.startsWith('audio/') ? 'audio' : 'file';
+          // Déterminer le type de fichier
+          let fileType: 'image' | 'video' | 'file' | 'voice' = 'file';
+          
+          if (file.type.startsWith('image/')) {
+            fileType = 'image';
+          } else if (file.type.startsWith('video/')) {
+            fileType = 'video';
+          } else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) {
+            // Les enregistrements vocaux et fichiers audio utilisent le type "voice"
+            fileType = 'voice';
+          }
 
           console.log('Envoi fichier:', { fileName: file.name, fileType, fileSize: file.size });
           await universalCommunicationService.sendFileMessage(
@@ -558,6 +566,21 @@ export default function UniversalCommunicationHub({
                           const isOwn = message.sender_id === user?.id;
                           const otherParticipant = getOtherParticipant(selectedConversation);
                           
+                          // Préparer les pièces jointes avec le bon type
+                          let attachments: { type: string; url: string; name: string }[] | undefined;
+                          if (message.file_url) {
+                            let displayType = message.type;
+                            // Normaliser le type pour l'affichage
+                            if (message.type === 'voice') {
+                              displayType = 'audio/webm';
+                            }
+                            attachments = [{
+                              type: displayType,
+                              url: message.file_url,
+                              name: message.file_name || message.content
+                            }];
+                          }
+                          
                           return (
                             <MessageItem
                               key={message.id}
@@ -570,11 +593,7 @@ export default function UniversalCommunicationHub({
                                 }),
                                 isOwn,
                                 senderName: isOwn ? undefined : `${otherParticipant?.first_name} ${otherParticipant?.last_name}`,
-                                attachments: message.file_url ? [{
-                                  type: message.type,
-                                  url: message.file_url,
-                                  name: message.file_name || message.content
-                                }] : undefined
+                                attachments
                               }}
                               onDelete={handleDeleteMessage}
                               onEdit={handleEditMessage}
