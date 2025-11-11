@@ -181,10 +181,18 @@ export default function UniversalCommunicationHub({
   }, [selectedConversationId, conversations]);
 
   const handleSendMessage = async (message: string, attachments?: File[]) => {
-    if (!selectedConversation || !user?.id) return;
-    if (!message.trim() && (!attachments || attachments.length === 0)) return;
+    if (!selectedConversation || !user?.id) {
+      console.error('Conversation ou utilisateur non défini', { selectedConversation, userId: user?.id });
+      return;
+    }
+    if (!message.trim() && (!attachments || attachments.length === 0)) {
+      console.log('Message vide sans pièces jointes');
+      return;
+    }
 
     try {
+      console.log('Envoi message:', { message, attachments, conversationId: selectedConversation.id });
+      
       // Envoyer les pièces jointes
       if (attachments && attachments.length > 0) {
         for (const file of attachments) {
@@ -192,6 +200,7 @@ export default function UniversalCommunicationHub({
                           file.type.startsWith('video/') ? 'video' :
                           file.type.startsWith('audio/') ? 'audio' : 'file';
 
+          console.log('Envoi fichier:', { fileName: file.name, fileType, fileSize: file.size });
           await universalCommunicationService.sendFileMessage(
             selectedConversation.id,
             user.id,
@@ -203,16 +212,20 @@ export default function UniversalCommunicationHub({
 
       // Envoyer le message texte si présent
       if (message.trim()) {
+        console.log('Envoi message texte:', message);
         await universalCommunicationService.sendTextMessage(
           selectedConversation.id,
           user.id,
           message
         );
       }
+      
+      console.log('Message envoyé avec succès');
     } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'envoyer le message',
+        description: error instanceof Error ? error.message : 'Impossible d\'envoyer le message',
         variant: 'destructive'
       });
     }

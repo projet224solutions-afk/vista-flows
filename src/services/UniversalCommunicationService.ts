@@ -234,9 +234,12 @@ class UniversalCommunicationService {
     content: string
   ): Promise<Message> {
     try {
+      console.log('sendTextMessage appelé:', { conversationId, senderId, contentLength: content.length });
+      
       // Si c'est une conversation directe (ID commence par "direct_")
       if (conversationId.startsWith('direct_')) {
         const recipientId = conversationId.replace('direct_', '');
+        console.log('Conversation directe détectée, recipient:', recipientId);
         
         const { data, error } = await supabase
           .from('messages')
@@ -250,14 +253,20 @@ class UniversalCommunicationService {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur insert message direct:', error);
+          throw error;
+        }
+        console.log('Message direct inséré:', data.id);
         await this.logAudit(senderId, 'message_sent', data.id);
         return data as any;
       }
       
       // Obtenir le destinataire pour conversation normale
+      console.log('Récupération de la conversation:', conversationId);
       const conversation = await this.getConversationById(conversationId);
       const recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
+      console.log('Recipient trouvé:', recipientId);
 
       const { data, error } = await supabase
         .from('messages')
@@ -272,11 +281,15 @@ class UniversalCommunicationService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur insert message conversation:', error);
+        throw error;
+      }
+      console.log('Message conversation inséré:', data.id);
       await this.logAudit(senderId, 'message_sent', data.id);
       return data as any;
     } catch (error) {
-      console.error('Erreur envoi message:', error);
+      console.error('Erreur envoi message (catch global):', error);
       throw error;
     }
   }
