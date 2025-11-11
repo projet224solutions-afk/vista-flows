@@ -107,6 +107,3 @@ verify_jwt = true
 
 [functions.security-analysis]
 verify_jwt = true
-
-[functions.update-payment-statuses]
-verify_jwt = false

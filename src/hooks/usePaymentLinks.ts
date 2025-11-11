@@ -89,14 +89,6 @@ export function usePaymentLinks() {
     try {
       setLoading(true);
 
-      // Appeler la fonction pour mettre à jour les statuts en retard
-      try {
-        await supabase.functions.invoke('update-payment-statuses');
-      } catch (error) {
-        console.error('Erreur mise à jour statuts:', error);
-        // Continue même si la mise à jour échoue
-      }
-
       // Utiliser DataManager pour la requête avec cache et realtime
       const queryConfig: any = {
         table: 'payment_links',
