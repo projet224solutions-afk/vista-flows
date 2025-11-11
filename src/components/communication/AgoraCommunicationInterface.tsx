@@ -4,7 +4,7 @@
  * Interface unifiée pour messagerie, appels audio et vidéo
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAgora } from '@/hooks/useAgora';
 import { useCommunicationData } from '@/hooks/useCommunicationData';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import AgoraVideoCall from './AgoraVideoCall';
 import AgoraAudioCall from './AgoraAudioCall';
+import ImprovedMessageInput from './ImprovedMessageInput';
+import MessageItem from './MessageItem';
 import { 
   MessageSquare, 
   Phone, 
@@ -34,7 +37,9 @@ import {
   Send,
   CheckCircle,
   Clock,
-  Wifi
+  Wifi,
+  UserPlus,
+  Trash2
 } from 'lucide-react';
 
 interface Contact {
@@ -55,8 +60,8 @@ export default function AgoraCommunicationInterface() {
   const [selectedContact, setSelectedContact] = useState<unknown>(null);
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
-  const [newMessage, setNewMessage] = useState('');
   const [localActiveConv, setLocalActiveConv] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Hooks pour les données
   const {
@@ -67,7 +72,9 @@ export default function AgoraCommunicationInterface() {
     loadConversations,
     loadMessages,
     sendMessage,
-    createConversation
+    createConversation,
+    deleteMessage,
+    editMessage
   } = useCommunicationData();
 
   const {
@@ -101,6 +108,11 @@ export default function AgoraCommunicationInterface() {
     }
   }, [user?.id, loadConversations]);
 
+  // Scroll automatique vers le bas
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const handleStartCall = async (contact: unknown, type: 'audio' | 'video') => {
     if (!isInitialized) {
       toast({
@@ -127,23 +139,39 @@ export default function AgoraCommunicationInterface() {
     }
   };
 
-    const handleSendMessage = async () => {
-        if (!newMessage.trim() || !localActiveConv) return;
+  const handleSendMessage = async (content: string, attachments?: File[]) => {
+    if (!localActiveConv) return;
 
-        try {
-            await sendMessage(localActiveConv, newMessage.trim(), user?.id || '');
-            setNewMessage('');
-        } catch (error) {
-            console.error('Erreur envoi message:', error);
-            toast({
-                title: "❌ Erreur",
-                description: "Impossible d'envoyer le message",
-                variant: "destructive"
-            });
-        }
-    };
+    try {
+      // TODO: Gérer l'upload des pièces jointes
+      await sendMessage(localActiveConv, content, user?.id || '');
+    } catch (error) {
+      console.error('Erreur envoi message:', error);
+      toast({
+        title: "❌ Erreur",
+        description: "Impossible d'envoyer le message",
+        variant: "destructive"
+      });
+    }
+  };
 
-    const handleCreateConversation = async (contact: Contact) => {
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await deleteMessage?.(messageId);
+    } catch (error) {
+      console.error('Erreur suppression message:', error);
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    try {
+      await editMessage?.(messageId, newContent);
+    } catch (error) {
+      console.error('Erreur modification message:', error);
+    }
+  };
+
+  const handleCreateConversation = async (contact: Contact) => {
         try {
             const conversation = await createConversation([contact.id], `Chat avec ${contact.name}`);
             if (conversation?.id) {
@@ -259,41 +287,26 @@ export default function AgoraCommunicationInterface() {
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-xs p-3 rounded-lg ${
-                              message.isOwn
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100'
-                            }`}
-                          >
-                            <div className="text-sm">{message.content}</div>
-                            <div className="text-xs opacity-70 mt-1">
-                              {message.timestamp}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Zone de saisie */}
-                    <div className="p-4 border-t">
-                      <div className="flex gap-2">
-                        <Input
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Tapez votre message..."
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        />
-                        <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                          <Send className="w-4 h-4" />
-                        </Button>
+                    <ScrollArea className="flex-1 p-4">
+                      <div className="space-y-4">
+                        {messages.map((message) => (
+                          <MessageItem
+                            key={message.id}
+                            message={message}
+                            onDelete={handleDeleteMessage}
+                            onEdit={handleEditMessage}
+                          />
+                        ))}
+                        <div ref={messagesEndRef} />
                       </div>
+                    </ScrollArea>
+
+                    {/* Zone de saisie améliorée */}
+                    <div className="p-4 border-t">
+                      <ImprovedMessageInput
+                        onSendMessage={handleSendMessage}
+                        placeholder="Tapez votre message..."
+                      />
                     </div>
                   </>
                 ) : (
