@@ -92,7 +92,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           insurance_amount: formData.insurance ? parseFloat(formData.insuranceAmount) || 0 : 0,
           return_option: formData.returnOption,
           status: 'created',
-        })
+        } as any)
         .select()
         .single();
 

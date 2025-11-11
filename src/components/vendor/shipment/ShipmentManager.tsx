@@ -7,14 +7,15 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, MapPin, Clock, TrendingUp } from 'lucide-react';
+import { Package, Plus, MapPin, Clock, TrendingUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ShipmentForm } from './ShipmentForm';
 import { ShipmentSuccess } from './ShipmentSuccess';
+import { ShipmentTracker } from './ShipmentTracker';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-type ViewMode = 'list' | 'create' | 'success';
+type ViewMode = 'list' | 'create' | 'success' | 'track';
 
 interface Shipment {
   id: string;
@@ -33,10 +34,36 @@ export function ShipmentManager() {
   const [loading, setLoading] = useState(true);
   const [successShipmentId, setSuccessShipmentId] = useState<string>('');
   const [successTrackingNumber, setSuccessTrackingNumber] = useState<string>('');
+  const [trackingShipmentId, setTrackingShipmentId] = useState<string>('');
 
   useEffect(() => {
     loadVendorAndShipments();
-  }, []);
+
+    // Écoute des mises à jour en temps réel pour toutes les expéditions du vendeur
+    if (!vendorId) return;
+
+    const channel = supabase
+      .channel('vendor-shipments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments',
+          filter: `vendor_id=eq.${vendorId}`,
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          // Recharger automatiquement la liste
+          loadVendorAndShipments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [vendorId]);
 
   const loadVendorAndShipments = async () => {
     setLoading(true);
@@ -90,6 +117,11 @@ export function ShipmentManager() {
   const handleBackToList = () => {
     setViewMode('list');
     loadVendorAndShipments();
+  };
+
+  const handleViewTracking = (shipmentId: string) => {
+    setTrackingShipmentId(shipmentId);
+    setViewMode('track');
   };
 
   const getStatusColor = (status: string) => {
@@ -171,6 +203,16 @@ export function ShipmentManager() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  // Mode suivi détaillé
+  if (viewMode === 'track') {
+    return (
+      <ShipmentTracker
+        shipmentId={trackingShipmentId}
+        onBack={handleBackToList}
+      />
     );
   }
 
@@ -298,6 +340,17 @@ export function ShipmentManager() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Bouton de suivi */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewTracking(shipment.id)}
+                      className="shrink-0"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Suivre
+                    </Button>
                   </div>
                 </div>
               ))
