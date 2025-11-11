@@ -9433,6 +9433,7 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
       get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products: {
