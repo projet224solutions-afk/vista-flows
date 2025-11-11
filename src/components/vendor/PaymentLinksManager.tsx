@@ -731,6 +731,18 @@ export default function PaymentLinksManager() {
                             <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
                           )}
                           
+                          {/* Lien de paiement cliquable */}
+                          <a
+                            href={`/payment/${link.payment_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline flex items-center gap-1 mb-2 break-all"
+                            title="Cliquer pour ouvrir le lien de paiement"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            {window.location.origin}/payment/{link.payment_id}
+                          </a>
+                          
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1 font-medium">
                               <DollarSign className="w-3 h-3" />
