@@ -144,12 +144,12 @@ export default function OrderManagement() {
         return;
       }
 
-      // Fetch orders with related data (including all customer orders and POS sales)
+      // Fetch only online customer orders (exclude POS sales)
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
           *,
-          customers!left(id, user_id),
+          customers!inner(id, user_id),
           order_items(
             id,
             product_id,
@@ -161,6 +161,7 @@ export default function OrderManagement() {
           )
         `)
         .eq('vendor_id', vendor.id)
+        .neq('customers.user_id', user.id) // Exclure les ventes POS (où le client est le vendeur)
         .order('created_at', { ascending: false });
 
       if (error) {
