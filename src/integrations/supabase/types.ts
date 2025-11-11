@@ -9528,6 +9528,10 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_payment_link_publicly_accessible: {
+        Args: { p_payment_id: string }
+        Returns: boolean
+      }
       is_payment_link_vendor: {
         Args: { _payment_link_id: string; _vendor_user_id: string }
         Returns: boolean
