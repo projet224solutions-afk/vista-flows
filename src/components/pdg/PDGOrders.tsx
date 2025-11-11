@@ -24,6 +24,7 @@ interface Order {
 export default function PDGOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vendorId, setVendorId] = useState<string | null>(null);
   const [stats, setStats] = useState({
     pending: 0,
     confirmed: 0,
@@ -31,17 +32,60 @@ export default function PDGOrders() {
     cancelled: 0
   });
 
+  const loadVendorProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Vous devez être connecté');
+        return null;
+      }
+
+      const { data: vendor, error } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error || !vendor) {
+        console.error('Erreur profil vendeur:', error);
+        toast.error('Profil vendeur introuvable');
+        return null;
+      }
+
+      return vendor.id;
+    } catch (error: any) {
+      console.error('Erreur chargement profil:', error);
+      return null;
+    }
+  };
+
   const loadOrders = async () => {
     try {
       setLoading(true);
+
+      // Récupérer le vendor_id si pas déjà fait
+      let currentVendorId = vendorId;
+      if (!currentVendorId) {
+        currentVendorId = await loadVendorProfile();
+        if (!currentVendorId) {
+          setLoading(false);
+          return;
+        }
+        setVendorId(currentVendorId);
+      }
+
+      console.log('Chargement commandes pour vendor:', currentVendorId);
+
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('vendor_id', currentVendorId)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
 
+      console.log('Orders loaded:', data?.length || 0);
       setOrders(data || []);
       
       // Calculer les stats
@@ -66,8 +110,8 @@ export default function PDGOrders() {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
       pending: { label: 'En attente', className: 'bg-yellow-500' },
-      confirmed: { label: 'Confirmée', className: 'bg-blue-500' },
-      completed: { label: 'Terminée', className: 'bg-green-500' },
+      confirmed: { label: 'En cours', className: 'bg-blue-500' },
+      delivered: { label: 'Livrée', className: 'bg-green-500' },
       cancelled: { label: 'Annulée', className: 'bg-red-500' }
     };
 
