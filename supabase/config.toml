@@ -150,7 +150,11 @@ verify_jwt = true
 [functions.enhance-product-image]
 verify_jwt = true
 
+[functions.generate-similar-image]
+verify_jwt = true
+
 [functions.generate-product-description]
 verify_jwt = true
+
 
 

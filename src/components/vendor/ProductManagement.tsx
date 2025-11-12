@@ -63,6 +63,7 @@ export default function ProductManagement() {
   const [generatingTags, setGeneratingTags] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [enhancingImages, setEnhancingImages] = useState(false);
+  const [generatingSimilar, setGeneratingSimilar] = useState(false);
   const [generatingSKU, setGeneratingSKU] = useState(false);
   const [generatingBarcode, setGeneratingBarcode] = useState(false);
   const [formData, setFormData] = useState({
@@ -883,6 +884,64 @@ export default function ProductManagement() {
     }
   };
 
+  const generateSimilarImage = async (sourceImageFile: File) => {
+    try {
+      setGeneratingSimilar(true);
+      toast({
+        title: "Génération en cours...",
+        description: "L'IA crée une image similaire basée sur votre photo"
+      });
+
+      // Convertir l'image en base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(sourceImageFile);
+      });
+      
+      const imageUrl = await base64Promise;
+
+      const { data, error } = await supabase.functions.invoke('generate-similar-image', {
+        body: {
+          imageUrl,
+          productName: formData.name
+        }
+      });
+
+      if (error) {
+        if (error.message?.includes('429')) {
+          throw new Error('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
+        }
+        if (error.message?.includes('402')) {
+          throw new Error('Crédits IA épuisés. Veuillez recharger votre compte.');
+        }
+        throw error;
+      }
+
+      if (data?.similarImageUrl) {
+        // Convertir l'image base64 en File
+        const response = await fetch(data.similarImageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `similar-${sourceImageFile.name}`, { type: 'image/png' });
+        
+        setSelectedImages(prev => [...prev, file]);
+        toast({
+          title: "Image similaire générée",
+          description: "L'image a été ajoutée à votre sélection"
+        });
+      }
+    } catch (error) {
+      console.error('Erreur génération image similaire:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de générer une image similaire",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingSimilar(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -1109,13 +1168,25 @@ export default function ProductManagement() {
                               alt={`Preview ${index + 1}`}
                               className="w-full h-24 object-cover rounded-lg"
                             />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => generateSimilarImage(file)}
+                                disabled={generatingSimilar}
+                                className="bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors"
+                                title="Générer une image similaire avec l'IA"
+                              >
+                                <Sparkles className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+                                title="Supprimer l'image"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
