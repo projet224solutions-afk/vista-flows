@@ -64,14 +64,14 @@ export default function PaymentManagement() {
   const successCount = linksWithStatus.filter(l => l.displayStatus === 'success').length;
   const totalRevenue = linksWithStatus
     .filter(l => l.displayStatus === 'success')
-    .reduce((sum, l) => sum + l.montant, 0); // Utiliser montant au lieu de total
+    .reduce((sum, l) => sum + l.total, 0); // Utiliser total (montant après réduction)
 
   const overdueAmount = linksWithStatus
     .filter(l => l.displayStatus === 'overdue')
-    .reduce((sum, l) => sum + l.montant, 0);
+    .reduce((sum, l) => sum + l.total, 0);
   const pendingAmount = linksWithStatus
     .filter(l => l.displayStatus === 'pending')
-    .reduce((sum, l) => sum + l.montant, 0);
+    .reduce((sum, l) => sum + l.total, 0);
 
   if (loading) {
     return <div className="p-4">Chargement des données de paiement...</div>;
@@ -208,9 +208,17 @@ export default function PaymentManagement() {
                       </div>
                     </div>
                     <div className="text-right space-y-1">
-                      <p className="text-lg font-bold">{link.montant.toFixed(0)} GNF</p>
+                      <p className="text-lg font-bold">{link.total.toFixed(0)} GNF</p>
+                      {link.remise && link.remise > 0 && (
+                        <p className="text-xs text-muted-foreground line-through">
+                          {link.montant.toFixed(0)} GNF
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
-                        Montant du produit
+                        {link.remise && link.remise > 0 
+                          ? `Remise: ${link.type_remise === 'percentage' ? `${link.remise}%` : `${link.remise.toFixed(0)} GNF`}`
+                          : 'Montant total'
+                        }
                       </p>
                     </div>
                   </div>

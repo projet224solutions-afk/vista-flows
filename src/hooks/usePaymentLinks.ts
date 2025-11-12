@@ -12,6 +12,8 @@ export interface PaymentLink {
   produit: string;
   description?: string;
   montant: number;
+  remise?: number;
+  type_remise?: 'percentage' | 'fixed';
   frais: number;
   total: number;
   devise: string;
