@@ -1,6 +1,6 @@
 /**
- * MODAL PAIEMENT TAXI-MOTO
- * Support: Card (Stripe), Orange Money, Wallet 224Solutions, Cash
+ * MODAL PAIEMENT LIVRAISONS
+ * Support Escrow universel pour toutes les méthodes de paiement
  */
 
 import { useState, useEffect } from 'react';
@@ -14,33 +14,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Smartphone, Wallet, Banknote, Loader2, Shield } from "lucide-react";
-import { PaymentsService, type PaymentMethod } from "@/services/taxi/paymentsService";
+import { Wallet, Banknote, Loader2, Shield, Package, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
-import { supabase } from "@/integrations/supabase/client";
 
-interface TaxiMotoPaymentModalProps {
+export type DeliveryPaymentMethod = 'wallet' | 'cash';
+
+interface DeliveryPaymentModalProps {
   open: boolean;
   onClose: () => void;
-  rideId: string;
+  deliveryId: string;
   amount: number;
   customerId: string;
-  driverId: string;
+  deliveryManId: string;
   onPaymentSuccess: () => void;
 }
 
-export default function TaxiMotoPaymentModal({
+export default function DeliveryPaymentModal({
   open,
   onClose,
-  rideId,
+  deliveryId,
   amount,
   customerId,
-  driverId,
+  deliveryManId,
   onPaymentSuccess
-}: TaxiMotoPaymentModalProps) {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
+}: DeliveryPaymentModalProps) {
+  const [paymentMethod, setPaymentMethod] = useState<DeliveryPaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
@@ -62,37 +63,23 @@ export default function TaxiMotoPaymentModal({
       if (error) throw error;
       setWalletBalance(data?.balance || 0);
     } catch (error) {
-      console.error('[TaxiPayment] Error loading balance:', error);
+      console.error('[DeliveryPayment] Error loading balance:', error);
       setWalletBalance(0);
     }
   };
 
   const paymentMethods = [
     {
-      id: 'wallet' as PaymentMethod,
+      id: 'wallet' as DeliveryPaymentMethod,
       name: 'Wallet 224Solutions',
       description: 'Paiement instantané depuis votre wallet',
       icon: Wallet,
       color: 'text-primary'
     },
     {
-      id: 'card' as PaymentMethod,
-      name: 'Carte bancaire',
-      description: 'Visa, Mastercard',
-      icon: CreditCard,
-      color: 'text-blue-600'
-    },
-    {
-      id: 'orange_money' as PaymentMethod,
-      name: 'Orange Money',
-      description: 'Paiement mobile',
-      icon: Smartphone,
-      color: 'text-orange-600'
-    },
-    {
-      id: 'cash' as PaymentMethod,
-      name: 'Espèces',
-      description: 'Paiement en liquide au conducteur',
+      id: 'cash' as DeliveryPaymentMethod,
+      name: 'Paiement à la livraison',
+      description: 'Payez en espèces au livreur',
       icon: Banknote,
       color: 'text-green-600'
     }
@@ -102,10 +89,10 @@ export default function TaxiMotoPaymentModal({
     setProcessing(true);
 
     try {
-      console.log('[TaxiPayment] Starting payment with escrow:', {
-        rideId,
+      console.log('[DeliveryPayment] Starting payment with escrow:', {
+        deliveryId,
         customerId,
-        driverId,
+        deliveryManId,
         amount,
         paymentMethod
       });
@@ -124,21 +111,20 @@ export default function TaxiMotoPaymentModal({
       // Créer l'escrow pour sécuriser le paiement
       const escrowResult = await UniversalEscrowService.createEscrow({
         buyer_id: customerId,
-        seller_id: driverId,
-        order_id: rideId,
+        seller_id: deliveryManId,
+        order_id: deliveryId,
         amount,
         currency: 'GNF',
-        transaction_type: 'taxi',
-        payment_provider: paymentMethod === 'wallet' ? 'wallet' : 
-                         paymentMethod === 'card' ? 'stripe' :
-                         paymentMethod === 'cash' ? 'cash' : 'wallet',
+        transaction_type: 'delivery',
+        payment_provider: paymentMethod === 'wallet' ? 'wallet' : 'cash',
         metadata: {
-          ride_id: rideId,
-          description: 'Paiement course taxi-moto'
+          delivery_id: deliveryId,
+          description: 'Paiement livraison'
         },
         escrow_options: {
-          auto_release_days: 1, // Libération auto après 1 jour pour taxi
-          commission_percent: 2.5
+          auto_release_days: 1, // Libération auto après 1 jour
+          commission_percent: 2.5,
+          require_signature: true // Signature requise pour livraison
         }
       });
 
@@ -146,30 +132,24 @@ export default function TaxiMotoPaymentModal({
         throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
       }
 
-      console.log('[TaxiPayment] ✅ Escrow created:', escrowResult.escrow_id);
-
-      // Note: L'escrow_id est stocké dans escrow_transactions.order_id
-      // Pas besoin de mettre à jour taxi_rides car la relation existe via order_id
+      console.log('[DeliveryPayment] ✅ Escrow created:', escrowResult.escrow_id);
 
       // Messages selon la méthode
       if (paymentMethod === 'wallet') {
         toast.success('Paiement sécurisé effectué !', {
-          description: `${amount.toLocaleString()} GNF bloqués en escrow - Seront transférés au chauffeur à la fin de la course`
+          description: `${amount.toLocaleString()} GNF bloqués en escrow - Seront transférés au livreur à la livraison`
         });
-      } else if (paymentMethod === 'cash') {
-        toast.success('Course confirmée !', {
-          description: 'Vous paierez en espèces au chauffeur'
+      } else {
+        toast.success('Livraison confirmée !', {
+          description: 'Vous paierez en espèces au livreur'
         });
-      } else if (paymentMethod === 'card') {
-        toast.info('Redirection vers le paiement sécurisé...');
-        // TODO: Intégrer Stripe
       }
 
       onPaymentSuccess();
       onClose();
 
     } catch (error) {
-      console.error('[TaxiPayment] Error:', error);
+      console.error('[DeliveryPayment] Error:', error);
       toast.error('Erreur de paiement', {
         description: error instanceof Error ? error.message : 'Veuillez réessayer'
       });
@@ -178,39 +158,50 @@ export default function TaxiMotoPaymentModal({
     }
   };
 
+  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
-            Paiement Sécurisé (Escrow)
+            Paiement Sécurisé Livraison
           </DialogTitle>
           <DialogDescription>
             <div className="space-y-2">
               <div>
                 Montant: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
               </div>
-              {paymentMethod === 'wallet' && walletBalance !== null && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Solde disponible:</span>
-                  <span className="font-semibold">{walletBalance.toLocaleString()} GNF</span>
-                </div>
-              )}
-              {(paymentMethod === 'wallet' || paymentMethod === 'card') && (
-                <Alert>
-                  <Shield className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    Vos fonds sont protégés par notre système Escrow jusqu'à la fin de la course
-                  </AlertDescription>
-                </Alert>
+              {paymentMethod === 'wallet' && (
+                <>
+                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+                    <Shield className="w-4 h-4 text-green-600" />
+                    <span className="text-xs text-green-800 dark:text-green-200">
+                      Vos fonds sont protégés jusqu'à confirmation de la livraison
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Solde disponible:</span>
+                    <span className="font-semibold">{walletBalance?.toLocaleString() || 0} GNF</span>
+                  </div>
+                </>
               )}
             </div>
           </DialogDescription>
         </DialogHeader>
 
+        {insufficientBalance && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Solde insuffisant. Veuillez recharger votre wallet pour continuer.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4 py-4">
-          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as DeliveryPaymentMethod)}>
             {paymentMethods.map((method) => {
               const Icon = method.icon;
               return (
@@ -242,7 +233,7 @@ export default function TaxiMotoPaymentModal({
           <Button
             onClick={handlePayment}
             className="flex-1"
-            disabled={processing || (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount)}
+            disabled={processing || insufficientBalance}
           >
             {processing ? (
               <>
@@ -250,8 +241,7 @@ export default function TaxiMotoPaymentModal({
                 Sécurisation...
               </>
             ) : (
-              paymentMethod === 'wallet' || paymentMethod === 'card' ? 'Payer en sécurité' : 
-              paymentMethod === 'cash' ? 'Confirmer la course' : 'Payer maintenant'
+              paymentMethod === 'wallet' ? 'Payer en sécurité' : 'Confirmer la livraison'
             )}
           </Button>
         </div>

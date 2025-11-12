@@ -16,6 +16,7 @@ import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
+import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -291,19 +292,56 @@ export default function Payment() {
     setShowPaymentPreview(false);
 
     try {
-      const { data, error } = await supabase.rpc('process_wallet_transaction', {
-        p_sender_id: user.id,
-        p_receiver_id: paymentPreview.receiver_id,
-        p_amount: paymentPreview.amount,
-        p_description: paymentDescription || 'Paiement via wallet'
-      });
+      // Créer un escrow pour le transfert wallet (optionnel selon le montant)
+      const shouldUseEscrow = paymentPreview.amount >= 10000; // Escrow pour montants >= 10,000 GNF
 
-      if (error) throw error;
+      if (shouldUseEscrow) {
+        console.log('[Payment] Using escrow for wallet transfer');
+        
+        // Créer l'escrow
+        const escrowResult = await UniversalEscrowService.createEscrow({
+          buyer_id: user.id,
+          seller_id: paymentPreview.receiver_id,
+          amount: paymentPreview.amount,
+          currency: 'GNF',
+          transaction_type: 'wallet_transfer',
+          payment_provider: 'wallet',
+          metadata: {
+            description: paymentDescription || 'Transfert wallet',
+            fee_amount: paymentPreview.fee_amount,
+            total_debit: paymentPreview.total_debit
+          },
+          escrow_options: {
+            auto_release_days: 0, // Libération immédiate pour les transferts wallet
+            commission_percent: 0  // Pas de commission supplémentaire
+          }
+        });
 
-      toast({
-        title: "Paiement effectué",
-        description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
-      });
+        if (!escrowResult.success) {
+          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
+        }
+
+        // L'escrow a bloqué les fonds et transféré automatiquement
+        toast({
+          title: "Transfert sécurisé effectué",
+          description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} GNF`
+        });
+      } else {
+        // Transfert direct sans escrow pour les petits montants
+        const { data, error } = await supabase.rpc('process_wallet_transaction', {
+          p_sender_id: user.id,
+          p_receiver_id: paymentPreview.receiver_id,
+          p_amount: paymentPreview.amount,
+          p_description: paymentDescription || 'Paiement via wallet'
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Paiement effectué",
+          description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
+        });
+      }
 
       setPaymentAmount('');
       setRecipientId('');

@@ -12,8 +12,10 @@ import { useTaxiMoto } from '@/hooks/useTaxiMoto';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 import TaxiMotoPaymentModal from './TaxiMotoPaymentModal';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export function TaxiMotoClientInterface() {
+  const { user } = useAuth();
   const {
     currentRide,
     nearbyDrivers,
@@ -257,11 +259,13 @@ export function TaxiMotoClientInterface() {
       )}
 
       {/* Modal de paiement */}
-      {currentRide && (
+      {currentRide && user && (
         <TaxiMotoPaymentModal
           open={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           rideId={currentRide.id}
+          customerId={user.id}
+          driverId={(currentRide as any).driver_id || ''}
           amount={(currentRide as any).estimated_price || (currentRide as any).price_total || 0}
           onPaymentSuccess={() => {
             setShowPaymentModal(false);

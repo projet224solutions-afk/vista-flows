@@ -10,19 +10,26 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Wallet, Smartphone, Banknote, Check, AlertCircle } from 'lucide-react';
+import { Wallet, Smartphone, Banknote, Check, AlertCircle, Shield } from 'lucide-react';
 import { Payment224Service, type PaymentMethod } from '@/services/payment/Payment224Service';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PaymentMethodSelectorProps {
   amount: number;
+  recipientId?: string;
+  transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'wallet_transfer';
+  enableEscrow?: boolean;
   onPaymentMethodSelected: (methodId: string, methodType: string) => void;
   onCancel: () => void;
 }
 
 export function PaymentMethodSelector({
   amount,
+  recipientId,
+  transactionType = 'wallet_transfer',
+  enableEscrow = true,
   onPaymentMethodSelected,
   onCancel,
 }: PaymentMethodSelectorProps) {
@@ -77,12 +84,24 @@ export function PaymentMethodSelector({
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle className="text-center">Méthode de paiement</CardTitle>
+        <CardTitle className="flex items-center justify-center gap-2">
+          {enableEscrow && <Shield className="h-5 w-5 text-primary" />}
+          Méthode de paiement
+          {enableEscrow && <Badge variant="outline" className="ml-2">Sécurisé par Escrow</Badge>}
+        </CardTitle>
         <div className="text-center mt-2">
           <p className="text-3xl font-bold text-primary">
             {amount.toLocaleString()} GNF
           </p>
           <p className="text-sm text-muted-foreground">Montant à payer</p>
+          {enableEscrow && transactionType !== 'wallet_transfer' && (
+            <Alert className="mt-3">
+              <Shield className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Vos fonds sont protégés jusqu'à confirmation de la transaction
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
