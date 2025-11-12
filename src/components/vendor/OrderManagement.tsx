@@ -645,9 +645,21 @@ export default function OrderManagement() {
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</p>
-                <p className="text-xl font-bold text-blue-700">
-                  {totalOnlineRevenue.toLocaleString()} GNF
+                <p className="text-sm text-muted-foreground mb-1">En cours</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">En attente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingOnlineOrders}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {deliveredOnlineOrders}
                 </p>
               </div>
             </div>
