@@ -101,7 +101,7 @@ export default function PDGEscrowManagement() {
     try {
       switch (actionType) {
         case 'release':
-          await releaseEscrow(selectedTransaction, 2.5);
+          await releaseEscrow(selectedTransaction);
           toast({
             title: "✅ Fonds libérés",
             description: "Les fonds ont été transférés au vendeur avec commission."

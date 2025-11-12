@@ -134,35 +134,60 @@ export function useEscrowTransactions() {
     }
   };
 
-  const releaseEscrow = async (escrowId: string, commissionPercent: number = 0) => {
+  const releaseEscrow = async (escrowId: string, notes?: string) => {
     try {
-      const { data, error } = await supabase.rpc('release_escrow', {
-        p_escrow_id: escrowId,
-        p_commission_percent: commissionPercent
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Vous devez être connecté');
+        throw new Error('Not authenticated');
+      }
+
+      const { data, error } = await supabase.functions.invoke('escrow-release', {
+        body: {
+          escrow_id: escrowId,
+          notes: notes
+        }
       });
 
       if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur inconnue');
+      }
+
       toast.success('Fonds libérés avec succès');
       await loadTransactions();
       return data;
     } catch (err: any) {
-      toast.error('Erreur lors de la libération des fonds');
+      toast.error(err.message || 'Erreur lors de la libération des fonds');
       throw err;
     }
   };
 
-  const refundEscrow = async (escrowId: string) => {
+  const refundEscrow = async (escrowId: string, reason?: string) => {
     try {
-      const { data, error } = await supabase.rpc('refund_escrow', {
-        p_escrow_id: escrowId
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Vous devez être connecté');
+        throw new Error('Not authenticated');
+      }
+
+      const { data, error } = await supabase.functions.invoke('escrow-refund', {
+        body: {
+          escrow_id: escrowId,
+          reason: reason
+        }
       });
 
       if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur inconnue');
+      }
+
       toast.success('Remboursement effectué avec succès');
       await loadTransactions();
       return data;
     } catch (err: any) {
-      toast.error('Erreur lors du remboursement');
+      toast.error(err.message || 'Erreur lors du remboursement');
       throw err;
     }
   };

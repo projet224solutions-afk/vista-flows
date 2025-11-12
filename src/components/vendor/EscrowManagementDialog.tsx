@@ -73,7 +73,7 @@ export default function EscrowManagementDialog({
     try {
       switch (actionType) {
         case 'release':
-          await releaseEscrow(selectedTransaction, 2.5);
+          await releaseEscrow(selectedTransaction);
           break;
         case 'refund':
           await refundEscrow(selectedTransaction);
