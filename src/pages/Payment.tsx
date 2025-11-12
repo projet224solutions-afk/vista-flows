@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,8 @@ import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 
 export default function Payment() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -49,8 +51,64 @@ export default function Payment() {
     if (user?.id) {
       loadWalletData();
       loadRecentTransactions();
+      loadProductPaymentInfo();
     }
   }, [user]);
+
+  // Charger les informations de paiement de produit
+  const loadProductPaymentInfo = async () => {
+    // Vérifier les query params
+    const productId = searchParams.get('productId');
+    const quantity = searchParams.get('quantity');
+    
+    // Vérifier le state
+    const stateData = location.state as any;
+    
+    if (productId || stateData?.productId) {
+      try {
+        const id = productId || stateData?.productId;
+        const qty = quantity ? parseInt(quantity) : stateData?.quantity || 1;
+        
+        // Charger les détails du produit
+        const { data: product, error } = await supabase
+          .from('products')
+          .select(`
+            id,
+            name,
+            price,
+            vendor_id,
+            vendors!inner(user_id)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (product) {
+          const totalAmount = product.price * qty;
+          
+          // Récupérer l'ID custom du vendeur
+          const { data: vendorData } = await supabase
+            .from('user_ids')
+            .select('custom_id')
+            .eq('user_id', product.vendors.user_id)
+            .single();
+
+          // Pré-remplir les champs
+          setPaymentAmount(totalAmount.toString());
+          if (vendorData?.custom_id) {
+            setRecipientId(vendorData.custom_id);
+          }
+          setPaymentDescription(`Achat: ${product.name} (x${qty})`);
+          
+          // Ouvrir automatiquement le dialog de paiement
+          setPaymentOpen(true);
+        }
+      } catch (error) {
+        console.error('Erreur chargement infos produit:', error);
+      }
+    }
+  };
 
   const loadWalletData = async () => {
     try {
@@ -329,6 +387,8 @@ export default function Payment() {
                           value={recipientId}
                           onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
                           maxLength={7}
+                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
                         />
                         <p className="text-xs text-muted-foreground">
                           Format: 3 lettres + 4 chiffres (ex: USR0001)
@@ -342,7 +402,14 @@ export default function Payment() {
                           placeholder="10000"
                           value={paymentAmount}
                           onChange={(e) => setPaymentAmount(e.target.value)}
+                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
                         />
+                        {(searchParams.get('productId') || location.state?.productId) && (
+                          <p className="text-xs text-green-600 font-medium">
+                            ✓ Montant défini automatiquement par le produit
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="payment-description">Description (optionnel)</Label>
@@ -351,6 +418,8 @@ export default function Payment() {
                           placeholder="Achat de produits..."
                           value={paymentDescription}
                           onChange={(e) => setPaymentDescription(e.target.value)}
+                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
                         />
                       </div>
                     </div>
