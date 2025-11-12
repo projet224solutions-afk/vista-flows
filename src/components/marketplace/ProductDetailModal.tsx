@@ -2,11 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -35,6 +36,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     if (productId && open) {
@@ -107,6 +109,24 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       console.error('Erreur lors de l\'achat:', error);
       toast.error('Erreur lors de la création du paiement');
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0],
+        vendor_id: product.vendor_id,
+        vendor_name: product.vendors?.business_name
+      });
+    }
+    
+    toast.success(`${quantity} produit(s) ajouté(s) au panier`);
+    onClose();
   };
 
   const handleContact = async () => {
@@ -298,6 +318,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Acheter maintenant
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleAddToCart}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter au panier ({quantity})
               </Button>
               <Button 
                 variant="outline" 

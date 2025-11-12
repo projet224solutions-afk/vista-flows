@@ -100,9 +100,46 @@ export default function Marketplace() {
     setShowProductModal(true);
   };
 
-  const handleProductContact = (productId: string) => {
-    setSelectedProductId(productId);
-    setShowProductModal(true);
+  const handleContactVendor = async (productId: string) => {
+    // Trouver le produit dans la liste
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      toast.error('Produit introuvable');
+      return;
+    }
+
+    if (!product.vendor_user_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
+
+    try {
+      if (!user) {
+        toast.error('Veuillez vous connecter pour contacter le vendeur');
+        navigate('/auth');
+        return;
+      }
+
+      // Créer un message initial
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendor_user_id,
+          content: initialMessage,
+          type: 'text'
+        });
+
+      if (error) throw error;
+
+      toast.success('Message envoyé au vendeur!');
+      navigate(`/messages?recipientId=${product.vendor_user_id}`);
+    } catch (error) {
+      console.error('Erreur lors du contact:', error);
+      toast.error('Impossible de contacter le vendeur');
+    }
   };
 
   return (
@@ -286,6 +323,7 @@ export default function Marketplace() {
                     vendor_id: product.vendor_id,
                     vendor_name: product.vendor_name
                   });
+                  toast.success('Produit ajouté au panier');
                 }}
                 onContact={() => handleContactVendor(product.id)}
                 isPremium={product.is_hot}

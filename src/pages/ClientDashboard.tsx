@@ -29,6 +29,8 @@ import { supabase } from "@/lib/supabaseClient";
 import useResponsive from "@/hooks/useResponsive";
 import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
+import { useCart } from "@/contexts/CartContext";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -62,6 +64,9 @@ export default function ClientDashboard() {
   const [communicationRefresh, setCommunicationRefresh] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const { addToCart: addToCartContext } = useCart();
 
   const handleSignOut = async () => {
     try {
@@ -117,18 +122,44 @@ export default function ClientDashboard() {
     toast.success('Commande créée avec succès');
   };
 
-  // Contacter le vendeur
+  // Ouvrir le modal de détails du produit
+  const handleProductClick = (productId: string) => {
+    setSelectedProductId(productId);
+    setShowProductModal(true);
+  };
+
+  // Contacter le vendeur via modal ou direct
   const handleContactVendor = async (product: any) => {
     if (!product.vendor_user_id) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
 
-    const conversationId = await contactVendor(product.vendor_user_id, product.vendor_name);
-    if (conversationId) {
-      setSelectedConversationId(conversationId);
-      setCommunicationRefresh(prev => prev + 1);
+    try {
+      if (!user) {
+        toast.error('Veuillez vous connecter');
+        return;
+      }
+
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendor_user_id,
+          content: initialMessage,
+          type: 'text'
+        });
+
+      if (error) throw error;
+
+      toast.success('Message envoyé au vendeur!');
       setActiveTab('communication');
+      setCommunicationRefresh(prev => prev + 1);
+    } catch (error) {
+      console.error('Erreur contact vendeur:', error);
+      toast.error('Impossible de contacter le vendeur');
     }
   };
 
@@ -394,12 +425,16 @@ export default function ClientDashboard() {
                         vendor={product.vendor_name}
                         rating={product.rating}
                         reviewCount={product.reviews_count}
-                        onBuy={() => {
-                          addToCart(product as any);
-                          handleCheckout();
-                        }}
+                        onBuy={() => handleProductClick(product.id)}
                         onAddToCart={() => {
-                          addToCart(product as any);
+                          addToCartContext({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.images?.[0],
+                            vendor_id: product.vendor_id,
+                            vendor_name: product.vendor_name
+                          });
                           toast.success('Produit ajouté au panier');
                         }}
                         onContact={() => handleContactVendor(product)}
@@ -444,12 +479,16 @@ export default function ClientDashboard() {
                         vendor={product.vendor_name}
                         rating={product.rating}
                         reviewCount={product.reviews_count}
-                        onBuy={() => {
-                          addToCart(product as any);
-                          handleCheckout();
-                        }}
+                        onBuy={() => handleProductClick(product.id)}
                         onAddToCart={() => {
-                          addToCart(product as any);
+                          addToCartContext({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.images?.[0],
+                            vendor_id: product.vendor_id,
+                            vendor_name: product.vendor_name
+                          });
                           toast.success('Produit ajouté au panier');
                         }}
                         onContact={() => handleContactVendor(product)}
@@ -619,6 +658,16 @@ export default function ClientDashboard() {
         />
       )}
       
+      {/* Modal de détails du produit */}
+      <ProductDetailModal
+        productId={selectedProductId}
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+      />
+
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
