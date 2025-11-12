@@ -611,18 +611,6 @@ export default function OrderManagement() {
                     .toLocaleString()} GNF
                 </p>
               </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">En attente</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {orders.filter(o => o.source === 'pos' && o.status === 'pending').length}
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {orders.filter(o => o.source === 'pos' && o.status === 'delivered').length}
-                </p>
-              </div>
             </div>
             <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
               Voir toutes les ventes POS
@@ -660,18 +648,6 @@ export default function OrderManagement() {
                 <p className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</p>
                 <p className="text-xl font-bold text-blue-700">
                   {totalOnlineRevenue.toLocaleString()} GNF
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">En attente</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {pendingOnlineOrders}
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {deliveredOnlineOrders}
                 </p>
               </div>
             </div>
