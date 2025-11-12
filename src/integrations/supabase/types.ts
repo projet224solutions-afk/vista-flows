@@ -3629,6 +3629,7 @@ export type Database = {
           public_id: string | null
           shipping_address: Json
           shipping_amount: number | null
+          source: Database["public"]["Enums"]["order_source"]
           status: Database["public"]["Enums"]["order_status"] | null
           subtotal: number
           tax_amount: number | null
@@ -3650,6 +3651,7 @@ export type Database = {
           public_id?: string | null
           shipping_address: Json
           shipping_amount?: number | null
+          source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal: number
           tax_amount?: number | null
@@ -3671,6 +3673,7 @@ export type Database = {
           public_id?: string | null
           shipping_address?: Json
           shipping_amount?: number | null
+          source?: Database["public"]["Enums"]["order_source"]
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number
           tax_amount?: number | null
@@ -10370,6 +10373,7 @@ export type Database = {
         | "cancelled"
       escrow_status_type: "holding" | "released" | "disputed" | "cancelled"
       message_type: "text" | "image" | "file" | "call" | "location"
+      order_source: "online" | "pos"
       order_status:
         | "pending"
         | "confirmed"
@@ -10562,6 +10566,7 @@ export const Constants = {
       ],
       escrow_status_type: ["holding", "released", "disputed", "cancelled"],
       message_type: ["text", "image", "file", "call", "location"],
+      order_source: ["online", "pos"],
       order_status: [
         "pending",
         "confirmed",

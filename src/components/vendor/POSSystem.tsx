@@ -350,7 +350,8 @@ export function POSSystem() {
           status: 'confirmed',
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
-          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`
+          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`,
+          source: 'pos'  // Identifier cette commande comme une vente POS
         })
         .select('id, order_number')
         .single();

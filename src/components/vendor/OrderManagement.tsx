@@ -145,7 +145,7 @@ export default function OrderManagement() {
       }
 
       // Fetch all vendor orders (will filter POS sales after)
-      // On charge toutes les commandes, puis on filtre les ventes POS côté client
+      // Charger uniquement les commandes en ligne (source='online')
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -162,6 +162,7 @@ export default function OrderManagement() {
           )
         `)
         .eq('vendor_id', vendor.id)
+        .eq('source', 'online')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -169,13 +170,8 @@ export default function OrderManagement() {
         throw error;
       }
 
-      // Filtrer les ventes POS (notes contient "Paiement POS")
-      const customerOrders = (ordersData || []).filter(order => 
-        !order.notes || !order.notes.includes('Paiement POS')
-      );
-
       // Charger les infos escrow pour chaque commande
-      const ordersWithEscrow = await Promise.all(customerOrders.map(async (order) => {
+      const ordersWithEscrow = await Promise.all((ordersData || []).map(async (order) => {
         const { data: escrow } = await supabase
           .from('escrow_transactions')
           .select('id, status, amount, created_at')
@@ -185,9 +181,7 @@ export default function OrderManagement() {
         return { ...order, escrow: escrow || undefined };
       }));
 
-      console.log('Orders loaded:', ordersWithEscrow.length);
-      console.log('Total orders (with POS):', ordersData?.length || 0);
-      console.log('Customer orders (without POS):', ordersWithEscrow.length);
+      console.log('Online orders loaded:', ordersWithEscrow.length);
       setOrders(ordersWithEscrow);
     } catch (error) {
       console.error('Error in fetchOrders:', error);
