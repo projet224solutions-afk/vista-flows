@@ -133,7 +133,9 @@ export default function EscrowManagementDialog({
                             <h4 className="font-medium">
                               {transaction.order?.order_number 
                                 ? `Commande: ${transaction.order.order_number}` 
-                                : `ID: ${transaction.order_id.slice(0, 8)}...`}
+                                : transaction.order_id 
+                                  ? `ID: ${transaction.order_id.slice(0, 8)}...`
+                                  : 'Commande sans ID'}
                             </h4>
                             <Badge className={config.className}>
                               <StatusIcon className="w-3 h-3 mr-1" />
@@ -153,7 +155,7 @@ export default function EscrowManagementDialog({
                             <div>
                               <p>ID Transaction:</p>
                               <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                                {transaction.id.slice(0, 16)}...
+                                {transaction.id ? transaction.id.slice(0, 16) + '...' : 'N/A'}
                               </p>
                             </div>
                           </div>

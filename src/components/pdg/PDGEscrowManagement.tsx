@@ -310,7 +310,9 @@ export default function PDGEscrowManagement() {
                             <h4 className="font-bold text-lg">
                               {transaction.order?.order_number 
                                 ? `Commande: ${transaction.order.order_number}` 
-                                : `ID: ${transaction.order_id.slice(0, 8)}...`}
+                                : transaction.order_id 
+                                  ? `ID: ${transaction.order_id.slice(0, 8)}...`
+                                  : 'Commande sans ID'}
                             </h4>
                             <Badge className={config.className}>
                               <StatusIcon className="w-3 h-3 mr-1" />
@@ -334,7 +336,7 @@ export default function PDGEscrowManagement() {
                                 <p>
                                   <span className="text-muted-foreground">ID Vendeur:</span>{' '}
                                   <span className="font-mono text-xs bg-white px-2 py-0.5 rounded">
-                                    {transaction.receiver.id.slice(0, 12)}...
+                                    {transaction.receiver.id ? transaction.receiver.id.slice(0, 12) + '...' : 'N/A'}
                                   </span>
                                 </p>
                               </div>
@@ -357,7 +359,7 @@ export default function PDGEscrowManagement() {
                             <div>
                               <p className="text-sm text-muted-foreground mb-1">ID Transaction</p>
                               <p className="text-xs font-mono bg-background px-2 py-1 rounded">
-                                {transaction.id.slice(0, 16)}...
+                                {transaction.id ? transaction.id.slice(0, 16) + '...' : 'N/A'}
                               </p>
                             </div>
                           </div>
