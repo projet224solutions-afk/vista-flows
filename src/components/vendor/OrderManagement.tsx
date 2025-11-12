@@ -780,23 +780,6 @@ export default function OrderManagement() {
         </CardContent>
       </Card>
 
-      {/* Tableau des Ventes en Ligne */}
-      <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
-            🌐 Ventes en Ligne ({filteredOnlineOrders.length})
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Commandes passées via l'interface du compte client
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Section des ventes en ligne</p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Tableau des Ventes POS */}
       <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
         <CardHeader>
