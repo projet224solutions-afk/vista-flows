@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import QuickFooter from "@/components/QuickFooter";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
@@ -64,6 +65,7 @@ const AffiliateRedirect = lazy(() => import("./pages/AffiliateRedirect"));
 const DeliveryRequest = lazy(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazy(() => import("./pages/DeliveryClient"));
 const BugBounty = lazy(() => import("./pages/BugBounty"));
+const Cart = lazy(() => import("./pages/Cart"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -82,10 +84,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<PageLoader />}>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Suspense fallback={<PageLoader />}>
               <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -99,6 +102,7 @@ function App() {
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
@@ -323,9 +327,10 @@ function App() {
             <QuickFooter />
           </Suspense>
         </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
+      </CartProvider>
+    </AuthProvider>
+  </BrowserRouter>
+</QueryClientProvider>
   );
 }
 

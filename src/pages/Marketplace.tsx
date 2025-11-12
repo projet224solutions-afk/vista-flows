@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { useCart } from "@/contexts/CartContext";
 
 const PAGE_LIMIT = 12;
 
@@ -40,6 +41,7 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
+  const { addToCart, getCartCount } = useCart();
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
@@ -108,11 +110,26 @@ export default function Marketplace() {
         <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between">
             <h1 className="heading-responsive font-bold text-foreground">Marketplace</h1>
-            {isMobile && (
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative"
+                onClick={() => navigate('/cart')}
+              >
+                <ShoppingCartIcon className="w-5 h-5" />
+                {getCartCount() > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    {getCartCount()}
+                  </Badge>
+                )}
               </Button>
-            )}
+              {isMobile && (
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              )}
+            </div>
           </div>
           <div className="mt-4">
             <SearchBar
@@ -257,8 +274,14 @@ export default function Marketplace() {
                 reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
                 onAddToCart={() => {
-                  toast.success('Produit ajouté au panier');
-                  handleProductClick(product.id);
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.images?.[0],
+                    vendor_id: product.vendor_id,
+                    vendor_name: product.vendor_name
+                  });
                 }}
                 onContact={() => handleContactVendor(product.id)}
                 isPremium={product.is_hot}
