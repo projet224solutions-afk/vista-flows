@@ -8338,6 +8338,54 @@ export type Database = {
           },
         ]
       }
+      vendor_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          order_id: string
+          rating: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          order_id: string
+          rating: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          order_id?: string
+          rating?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_ratings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_trust_score: {
         Row: {
           account_age_days: number | null
@@ -9832,6 +9880,10 @@ export type Database = {
           type: string
           unread_count: number
         }[]
+      }
+      get_vendor_average_rating: {
+        Args: { p_vendor_id: string }
+        Returns: Json
       }
       gettransactionid: { Args: never; Returns: unknown }
       has_active_installation: {
