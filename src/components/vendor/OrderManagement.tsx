@@ -47,6 +47,11 @@ interface Order {
   customers?: {
     id: string;
     user_id: string;
+    profiles?: {
+      first_name?: string;
+      last_name?: string;
+      phone?: string;
+    };
   };
   order_items?: {
     id: string;
@@ -145,12 +150,16 @@ export default function OrderManagement() {
       }
 
       // Fetch all vendor orders (will filter POS sales after)
-      // Charger uniquement les commandes en ligne (source='online')
+      // Charger uniquement les commandes en ligne (source='online') avec les infos clients
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
           *,
-          customers(id, user_id),
+          customers(
+            id, 
+            user_id,
+            profiles(first_name, last_name, phone)
+          ),
           order_items(
             id,
             product_id,
@@ -552,11 +561,28 @@ export default function OrderManagement() {
                   <div className="flex items-center gap-4">
                     <div>
                       <h3 className="font-semibold text-lg">{order.order_number}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                        <User className="w-4 h-4 ml-2" />
-                        Client ID: {order.customers?.user_id || 'N/A'}
+                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          <span className="font-medium">
+                            {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                              ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
+                              : 'Client non identifié'}
+                          </span>
+                          {order.customers?.profiles?.phone && (
+                            <span className="text-xs">• {order.customers.profiles.phone}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -617,7 +643,9 @@ export default function OrderManagement() {
                     <p className="text-sm font-medium text-muted-foreground">Adresse de livraison</p>
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 inline mr-1" />
-                      {(order.shipping_address as Address)?.city || 'Non spécifiée'}
+                      {typeof order.shipping_address === 'object' && order.shipping_address !== null
+                        ? `${(order.shipping_address as any).address || ''} ${(order.shipping_address as any).city || 'Conakry'}`
+                        : 'Adresse non spécifiée'}
                     </div>
                   </div>
                 </div>

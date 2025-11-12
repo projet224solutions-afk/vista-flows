@@ -223,7 +223,8 @@ export default function ProductPaymentModal({
             payment_status: paymentMethod === 'wallet' ? 'paid' : 'pending',
             payment_method: paymentMethod === 'wallet' ? 'mobile_money' : 'cash',
             shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée' },
-            notes: `Paiement ${paymentMethod === 'wallet' ? 'Wallet via Escrow' : 'à la livraison'}`
+            notes: `Paiement ${paymentMethod === 'wallet' ? 'Wallet via Escrow' : 'à la livraison'}`,
+            source: 'online'  // Marquer comme commande en ligne
           } as any])
           .select()
           .single();
