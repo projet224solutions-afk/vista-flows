@@ -192,18 +192,31 @@ export function useEscrowTransactions() {
     }
   };
 
-  const disputeEscrow = async (escrowId: string) => {
+  const disputeEscrow = async (escrowId: string, reason?: string) => {
     try {
-      const { data, error } = await supabase.rpc('dispute_escrow', {
-        p_escrow_id: escrowId
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Vous devez être connecté');
+        throw new Error('Not authenticated');
+      }
+
+      const { data, error } = await supabase.functions.invoke('escrow-dispute', {
+        body: {
+          escrow_id: escrowId,
+          reason: reason
+        }
       });
 
       if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur inconnue');
+      }
+
       toast.success('Litige ouvert avec succès');
       await loadTransactions();
       return data;
     } catch (err: any) {
-      toast.error('Erreur lors de l\'ouverture du litige');
+      toast.error(err.message || 'Erreur lors de l\'ouverture du litige');
       throw err;
     }
   };
