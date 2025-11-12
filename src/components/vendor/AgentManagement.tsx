@@ -133,7 +133,7 @@ export default function AgentManagement() {
         
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300">
+            <Button>
               <UserPlus className="h-4 w-4 mr-2" />
               Nouvel Agent
             </Button>
