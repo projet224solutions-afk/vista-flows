@@ -9205,28 +9205,17 @@ export type Database = {
         Args: { p_vendor_id: string }
         Returns: undefined
       }
-      create_escrow_transaction:
-        | {
-            Args: {
-              p_amount: number
-              p_buyer_id: string
-              p_currency?: string
-              p_order_id: string
-              p_seller_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_buyer_id: string
-              p_currency?: string
-              p_metadata?: Json
-              p_order_id: string
-              p_seller_id: string
-            }
-            Returns: string
-          }
+      create_escrow_transaction: {
+        Args: {
+          p_amount?: number
+          p_buyer_id: string
+          p_currency?: string
+          p_metadata?: Json
+          p_order_id?: string
+          p_seller_id: string
+        }
+        Returns: string
+      }
       create_security_incident: {
         Args: {
           p_description: string
@@ -9866,9 +9855,10 @@ export type Database = {
         }
         Returns: string
       }
-      refund_escrow:
-        | { Args: { p_escrow_id: string; p_reason?: string }; Returns: boolean }
-        | { Args: { p_escrow_id: string }; Returns: boolean }
+      refund_escrow: {
+        Args: { p_escrow_id: string; p_reason?: string }
+        Returns: boolean
+      }
       refund_escrow_funds: {
         Args: { p_admin_id: string; p_escrow_id: string; p_reason: string }
         Returns: boolean
