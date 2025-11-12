@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw
+  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw, Banknote
 } from "lucide-react";
 
 interface Address {
@@ -486,6 +486,30 @@ export default function OrderManagement() {
     }
 
     return actions;
+  };
+
+  // Actions spécifiques pour les ventes POS - uniquement remboursement
+  const getPOSOrderActions = (order: Order) => {
+    return [
+      <Button 
+        key="refund" 
+        size="sm"
+        className="bg-red-600 hover:bg-red-700 text-white"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm(`Êtes-vous sûr de vouloir rembourser la commande ${order.order_number} ?`)) {
+            toast({
+              title: "💰 Remboursement",
+              description: `Le remboursement de ${order.total_amount.toLocaleString()} GNF est en cours...`
+            });
+            // TODO: Implémenter la logique de remboursement
+          }
+        }}
+      >
+        <Banknote className="w-4 h-4 mr-1" />
+        Rembourser
+      </Button>
+    ];
   };
 
   // Statistics - Toutes les commandes
@@ -1144,7 +1168,7 @@ export default function OrderManagement() {
 
                   {/* Actions */}
                   <div className="flex gap-2 mt-4 flex-wrap">
-                    {getOrderStatusActions(order)}
+                    {getPOSOrderActions(order)}
                     <Button 
                       variant="outline" 
                       size="sm"
