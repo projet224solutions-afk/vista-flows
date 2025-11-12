@@ -319,11 +319,34 @@ export function usePaymentLinks() {
 
   const deletePaymentLink = async (paymentId: string) => {
     try {
-      await dataManager.mutate({
-        table: 'payment_links',
-        operation: 'delete',
-        filters: { payment_id: paymentId }
-      });
+      // Vérifier d'abord que le lien appartient au vendeur
+      const { data: linkToDelete, error: fetchError } = await supabase
+        .from('payment_links')
+        .select('id, payment_id, vendeur_id')
+        .eq('payment_id', paymentId)
+        .eq('vendeur_id', vendorId)
+        .single();
+
+      if (fetchError) {
+        console.error('Erreur récupération lien:', fetchError);
+        throw new Error('Lien de paiement introuvable');
+      }
+
+      if (!linkToDelete) {
+        throw new Error('Vous n\'êtes pas autorisé à supprimer ce lien');
+      }
+
+      // Supprimer le lien
+      const { error: deleteError } = await supabase
+        .from('payment_links')
+        .delete()
+        .eq('payment_id', paymentId)
+        .eq('vendeur_id', vendorId);
+
+      if (deleteError) {
+        console.error('Erreur suppression:', deleteError);
+        throw new Error(deleteError.message);
+      }
 
       toast({
         title: "Succès",
@@ -331,13 +354,15 @@ export function usePaymentLinks() {
       });
 
       await loadPaymentLinks();
+      return true;
     } catch (error: any) {
       console.error('Erreur suppression payment link:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le lien",
+        description: error.message || "Impossible de supprimer le lien",
         variant: "destructive"
       });
+      return false;
     }
   };
 
