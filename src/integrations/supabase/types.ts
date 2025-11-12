@@ -8005,63 +8005,87 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          badge_generated_at: string | null
           brand: string | null
           bureau_id: string | null
           chassis_number: string | null
+          color: string | null
           created_at: string | null
+          digital_badge_id: string | null
           id: string
           insurance_expiration: string | null
           insurance_expiry: string | null
           is_stolen: boolean | null
           last_inspection: string | null
+          license_plate: string | null
           model: string | null
           owner_member_id: string | null
           photo_url: string | null
+          qr_code_data: string | null
           registration_number: string | null
           serial_number: string | null
           status: string | null
           tech_control_expiration: string | null
           type: string | null
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
           year: number | null
         }
         Insert: {
+          badge_generated_at?: string | null
           brand?: string | null
           bureau_id?: string | null
           chassis_number?: string | null
+          color?: string | null
           created_at?: string | null
+          digital_badge_id?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null
           is_stolen?: boolean | null
           last_inspection?: string | null
+          license_plate?: string | null
           model?: string | null
           owner_member_id?: string | null
           photo_url?: string | null
+          qr_code_data?: string | null
           registration_number?: string | null
           serial_number?: string | null
           status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
           year?: number | null
         }
         Update: {
+          badge_generated_at?: string | null
           brand?: string | null
           bureau_id?: string | null
           chassis_number?: string | null
+          color?: string | null
           created_at?: string | null
+          digital_badge_id?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null
           is_stolen?: boolean | null
           last_inspection?: string | null
+          license_plate?: string | null
           model?: string | null
           owner_member_id?: string | null
           photo_url?: string | null
+          qr_code_data?: string | null
           registration_number?: string | null
           serial_number?: string | null
           status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
           year?: number | null
         }
         Relationships: [

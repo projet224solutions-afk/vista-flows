@@ -107,19 +107,22 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     /**
      * Charge la liste des membres
      */
+    /**
+     * Charge la liste des membres
+     */
     const loadMembers = async () => {
         try {
             const { data, error } = await supabase
-                .from('syndicate_members')
-                .select('id, name')
+                .from('syndicate_workers')
+                .select('id, nom')
                 .eq('bureau_id', bureauId)
-                .eq('status', 'active');
+                .eq('is_active', true);
 
             if (error) throw error;
 
             setMembers(data?.map(m => ({
                 id: m.id,
-                name: m.name,
+                name: m.nom,
                 member_id: m.id
             })) || []);
         } catch (error) {
@@ -130,28 +133,44 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     /**
      * Charge la liste des véhicules depuis Supabase
      */
+    /**
+     * Charge la liste des véhicules depuis Supabase
+     */
     const loadVehicles = async () => {
         try {
             setLoading(true);
             
             const { data, error } = await supabase
-                .from('syndicate_vehicles')
-                .select(`
-                    *,
-                    owner:syndicate_members!member_id(id, name)
-                `)
+                .from('vehicles')
+                .select('*')
                 .eq('bureau_id', bureauId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
+            // Récupérer les noms des membres
+            const memberIds = [...new Set(data?.map(v => v.owner_member_id).filter(Boolean))];
+            let memberNames: Record<string, string> = {};
+            
+            if (memberIds.length > 0) {
+                const { data: workersData } = await supabase
+                    .from('syndicate_workers')
+                    .select('id, nom')
+                    .in('id', memberIds);
+                
+                memberNames = workersData?.reduce((acc, w) => {
+                    acc[w.id] = w.nom;
+                    return acc;
+                }, {} as Record<string, string>) || {};
+            }
+
             const formattedVehicles: SyndicateVehicle[] = (data || []).map(v => ({
                 id: v.id,
-                member_id: v.member_id || '',
-                member_name: v.owner?.name || 'N/A',
+                member_id: v.owner_member_id || '',
+                member_name: memberNames[v.owner_member_id] || 'N/A',
                 serial_number: v.serial_number || '',
                 license_plate: v.license_plate || v.serial_number || '',
-                vehicle_type: (v.vehicle_type?.toLowerCase() || 'motorcycle') as SyndicateVehicle['vehicle_type'],
+                vehicle_type: (v.type?.toLowerCase() || 'motorcycle') as SyndicateVehicle['vehicle_type'],
                 brand: v.brand || undefined,
                 model: v.model || undefined,
                 year: v.year || undefined,
@@ -163,7 +182,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 qr_code_data: v.qr_code_data || JSON.stringify({
                     vehicle_id: v.id,
                     serial_number: v.serial_number,
-                    owner: v.owner?.name,
+                    owner: memberNames[v.owner_member_id] || 'N/A',
                     bureau: bureauId,
                     issued_date: v.created_at
                 }),
@@ -204,20 +223,25 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             let memberName = formData.owner_name;
             
             if (!memberId && formData.owner_name) {
-                // Créer un nouveau membre dans syndicate_members
+                // Créer un nouveau membre dans syndicate_workers
                 const { data: newMember, error: memberError } = await supabase
-                    .from('syndicate_members')
+                    .from('syndicate_workers')
                     .insert({
                         bureau_id: bureauId,
-                        name: formData.owner_name,
-                        status: 'active'
+                        nom: formData.owner_name,
+                        email: `temp_${Date.now()}@bureau.local`,
+                        telephone: '',
+                        access_token: `temp_${Date.now()}`,
+                        interface_url: '',
+                        access_level: 'member',
+                        is_active: true
                     })
                     .select()
                     .single();
                 
                 if (memberError) throw memberError;
                 memberId = newMember.id;
-                memberName = newMember.name;
+                memberName = newMember.nom;
             } else if (memberId) {
                 // Récupérer le nom du membre existant
                 const member = members.find(m => m.id === memberId);
@@ -243,15 +267,15 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 issued_date: new Date().toISOString()
             });
 
-            // Insérer le véhicule dans syndicate_vehicles (pas vehicles)
+            // Insérer le véhicule dans vehicles
             const { data, error } = await supabase
-                .from('syndicate_vehicles')
+                .from('vehicles')
                 .insert({
                     bureau_id: bureauId,
-                    member_id: memberId,
+                    owner_member_id: memberId,
                     serial_number: formData.serial_number,
                     license_plate: formData.license_plate,
-                    vehicle_type: formData.vehicle_type,
+                    type: formData.vehicle_type,
                     brand: formData.brand || null,
                     model: formData.model || null,
                     year: formData.year ? parseInt(formData.year) : null,
@@ -323,10 +347,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     /**
      * Vérifie un véhicule dans Supabase
      */
+    /**
+     * Vérifie un véhicule dans Supabase
+     */
     const verifyVehicle = async (vehicleId: string) => {
         try {
             const { error } = await supabase
-                .from('syndicate_vehicles')
+                .from('vehicles')
                 .update({ 
                     verified: true,
                     verified_at: new Date().toISOString(),
@@ -347,10 +374,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     /**
      * Suspend un véhicule dans Supabase
      */
+    /**
+     * Suspend un véhicule dans Supabase
+     */
     const suspendVehicle = async (vehicleId: string) => {
         try {
             const { error } = await supabase
-                .from('syndicate_vehicles')
+                .from('vehicles')
                 .update({ status: 'suspended' })
                 .eq('id', vehicleId);
 
