@@ -232,16 +232,27 @@ export default function Payment() {
 
       if (error) throw error;
 
+      console.log('[Payment] Preview response:', data);
+
+      // La fonction retourne un JSON, donc data est déjà l'objet complet
+      const result = data as any;
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la prévisualisation');
+      }
+
       const previewData = {
-        amount: (data as any)?.amount || 0,
-        fee_percent: (data as any)?.fee_percent || 0,
-        fee_amount: (data as any)?.fee_amount || 0,
-        total_debit: (data as any)?.total_debit || 0,
-        amount_received: (data as any)?.amount_received || 0,
-        current_balance: (data as any)?.current_balance || 0,
-        balance_after: (data as any)?.balance_after || 0,
+        amount: result.amount || 0,
+        fee_percent: result.fee_percent || 0,
+        fee_amount: result.fee_amount || 0,
+        total_debit: result.total_debit || 0,
+        amount_received: result.amount_received || 0,
+        current_balance: result.current_balance || 0,
+        balance_after: result.balance_after || 0,
         receiver_id: userData.user_id // Stocker le user_id pour la confirmation
       };
+
+      console.log('[Payment] Preview data extracted:', previewData);
 
       setPaymentPreview(previewData);
       setShowPaymentPreview(true);
