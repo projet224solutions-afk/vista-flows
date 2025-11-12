@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const PAGE_LIMIT = 12;
 
@@ -41,6 +42,7 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
+  const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
@@ -111,19 +113,21 @@ export default function Marketplace() {
           <div className="flex items-center justify-between">
             <h1 className="heading-responsive font-bold text-foreground">Marketplace</h1>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative"
-                onClick={() => navigate('/cart')}
-              >
-                <ShoppingCartIcon className="w-5 h-5" />
-                {getCartCount() > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                    {getCartCount()}
-                  </Badge>
-                )}
-              </Button>
+              {user && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => navigate('/cart')}
+                >
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  {getCartCount() > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {getCartCount()}
+                    </Badge>
+                  )}
+                </Button>
+              )}
               {isMobile && (
                 <Button variant="ghost" size="icon">
                   <Menu className="w-5 h-5" />

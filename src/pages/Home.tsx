@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, MapPin, Store, Utensils, Car, Truck, Plane } from "lucide-react";
+import { Bell, MapPin, Store, Utensils, Car, Truck, Plane, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
@@ -9,6 +10,7 @@ import ServiceCard from "@/components/ServiceCard";
 import QuickFooter from "@/components/QuickFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/contexts/CartContext";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -25,6 +27,7 @@ interface ServiceStats {
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToCart, getCartCount } = useCart();
   const { isMobile, isTablet } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceStats, setServiceStats] = useState<ServiceStats[]>([]);
@@ -194,19 +197,39 @@ export default function Home() {
               </div>
             </div>
             
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="relative"
-              onClick={() => navigate('/profil')}
-            >
-              <Bell className="w-5 h-5" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full text-xs text-white flex items-center justify-center">
-                  {notificationCount}
-                </span>
+            <div className="flex items-center gap-2">
+              {user && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => navigate('/cart')}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {getCartCount() > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    >
+                      {getCartCount()}
+                    </Badge>
+                  )}
+                </Button>
               )}
-            </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative"
+                onClick={() => navigate('/profil')}
+              >
+                <Bell className="w-5 h-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full text-xs text-white flex items-center justify-center">
+                    {notificationCount}
+                  </span>
+                )}
+              </Button>
+            </div>
           </div>
           
           <SearchBar 
@@ -362,8 +385,15 @@ export default function Home() {
                 reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
                 onAddToCart={() => {
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.images?.[0],
+                    vendor_id: product.vendor_id,
+                    vendor_name: product.vendor_name
+                  });
                   toast.success('Produit ajouté au panier');
-                  handleProductClick(product.id);
                 }}
                 onContact={() => navigate(`/messages?vendorId=${product.id}`)}
                 isPremium={product.is_hot}
