@@ -566,34 +566,79 @@ export default function OrderManagement() {
         <CardContent>
           <div className="space-y-4">
             {filteredOrders.map((order) => (
-              <div key={order.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{order.order_number}</h3>
-                      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          <span className="font-medium">
+              <div key={order.id} className="border-2 border-primary/20 rounded-lg p-6 hover:shadow-lg transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="font-bold text-xl text-primary">{order.order_number}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        ID: {order.id.slice(0, 8)}
+                      </Badge>
+                    </div>
+                    
+                    {/* Informations Client */}
+                    <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
+                      <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Informations Client
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Nom:</span>
+                          <span className="ml-2 font-semibold">
                             {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
                               ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
                               : 'Client non identifié'}
                           </span>
-                          {order.customers?.profiles?.phone && (
-                            <span className="text-xs">• {order.customers.profiles.phone}</span>
-                          )}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">ID Client:</span>
+                          <span className="ml-2 font-mono text-xs font-semibold">
+                            {order.customers?.user_id ? order.customers.user_id.slice(0, 8) : 'N/A'}
+                          </span>
+                        </div>
+                        {order.customers?.profiles?.phone && (
+                          <div>
+                            <span className="text-muted-foreground">Téléphone:</span>
+                            <span className="ml-2 font-semibold">{order.customers.profiles.phone}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-muted-foreground">Pays:</span>
+                          <span className="ml-2 font-semibold">
+                            {typeof order.shipping_address === 'object' && order.shipping_address !== null
+                              ? (order.shipping_address as any).country || 'Guinée'
+                              : 'Guinée'}
+                          </span>
                         </div>
                       </div>
+                      
+                      {/* Adresse de livraison détaillée */}
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div>
+                            <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
+                            <p className="font-medium text-sm">
+                              {typeof order.shipping_address === 'object' && order.shipping_address !== null
+                                ? `${(order.shipping_address as any).address || (order.shipping_address as any).street || 'Adresse non spécifiée'}, ${(order.shipping_address as any).city || 'Conakry'}, ${(order.shipping_address as any).country || 'Guinée'}`
+                                : 'Adresse non spécifiée'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Date de commande */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Commandé le {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
