@@ -10738,6 +10738,7 @@ export type Database = {
         | "syndicat"
         | "transitaire"
         | "client"
+        | "ceo"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
     }
     CompositeTypes: {
@@ -10936,6 +10937,7 @@ export const Constants = {
         "syndicat",
         "transitaire",
         "client",
+        "ceo",
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
     },
