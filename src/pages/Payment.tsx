@@ -56,6 +56,15 @@ export default function Payment() {
     }
   }, [user]);
 
+  // État pour stocker les infos produit
+  const [productPaymentInfo, setProductPaymentInfo] = useState<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    vendorId: string;
+    vendorUserId: string;
+  } | null>(null);
+
   // Charger les informations de paiement de produit
   const loadProductPaymentInfo = async () => {
     // Vérifier les query params
@@ -87,6 +96,15 @@ export default function Payment() {
 
         if (product) {
           const totalAmount = product.price * qty;
+          
+          // Stocker les infos produit pour créer la commande plus tard
+          setProductPaymentInfo({
+            productId: product.id,
+            productName: product.name,
+            quantity: qty,
+            vendorId: product.vendor_id,
+            vendorUserId: product.vendors.user_id
+          });
           
           // Récupérer l'ID custom du vendeur
           const { data: vendorData } = await supabase
@@ -292,28 +310,51 @@ export default function Payment() {
     setShowPaymentPreview(false);
 
     try {
-      // Créer un escrow pour le transfert wallet (optionnel selon le montant)
-      const shouldUseEscrow = paymentPreview.amount >= 10000; // Escrow pour montants >= 10,000 GNF
+      // Si c'est un paiement de produit, créer une commande d'abord
+      if (productPaymentInfo) {
+        console.log('[Payment] Creating product order:', productPaymentInfo);
 
-      if (shouldUseEscrow) {
-        console.log('[Payment] Using escrow for wallet transfer');
-        
-        // Créer l'escrow
+        // Créer la commande via la fonction PostgreSQL
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: user.id,
+          p_vendor_id: productPaymentInfo.vendorId,
+          p_items: [{
+            product_id: productPaymentInfo.productId,
+            quantity: productPaymentInfo.quantity,
+            price: paymentPreview.amount / productPaymentInfo.quantity
+          }],
+          p_total_amount: paymentPreview.amount,
+          p_payment_method: 'wallet',
+          p_shipping_address: {
+            address: 'Adresse de livraison',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
+
+        if (orderError || !orderResult || orderResult.length === 0) {
+          console.error('[Payment] Order creation failed:', orderError);
+          throw new Error(orderError?.message || 'Impossible de créer la commande');
+        }
+
+        const orderId = orderResult[0].order_id;
+        const orderNumber = orderResult[0].order_number;
+        console.log('[Payment] Order created:', { orderId, orderNumber });
+
+        // Créer l'escrow pour le produit
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: user.id,
-          seller_id: paymentPreview.receiver_id,
+          seller_id: productPaymentInfo.vendorUserId,
+          order_id: orderId,
           amount: paymentPreview.amount,
           currency: 'GNF',
-          transaction_type: 'wallet_transfer',
+          transaction_type: 'product',
           payment_provider: 'wallet',
           metadata: {
-            description: paymentDescription || 'Transfert wallet',
-            fee_amount: paymentPreview.fee_amount,
-            total_debit: paymentPreview.total_debit
-          },
-          escrow_options: {
-            auto_release_days: 0, // Libération immédiate pour les transferts wallet
-            commission_percent: 0  // Pas de commission supplémentaire
+            product_id: productPaymentInfo.productId,
+            product_name: productPaymentInfo.productName,
+            order_number: orderNumber,
+            description: paymentDescription || `Achat: ${productPaymentInfo.productName}`
           }
         });
 
@@ -321,26 +362,71 @@ export default function Payment() {
           throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
         }
 
-        // L'escrow a bloqué les fonds et transféré automatiquement
+        // Mettre à jour la commande avec l'escrow_transaction_id
+        await supabase
+          .from('orders')
+          .update({ 
+            metadata: { escrow_transaction_id: escrowResult.escrow_id },
+            payment_status: 'paid'
+          })
+          .eq('id', orderId);
+
         toast({
-          title: "Transfert sécurisé effectué",
-          description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} GNF`
+          title: "✅ Commande créée !",
+          description: `Commande ${orderNumber} - Paiement sécurisé par Escrow`
         });
+
+        // Réinitialiser l'info produit
+        setProductPaymentInfo(null);
       } else {
-        // Transfert direct sans escrow pour les petits montants
-        const { data, error } = await supabase.rpc('process_wallet_transaction', {
-          p_sender_id: user.id,
-          p_receiver_id: paymentPreview.receiver_id,
-          p_amount: paymentPreview.amount,
-          p_description: paymentDescription || 'Paiement via wallet'
-        });
+        // Transfert wallet normal (non-produit)
+        const shouldUseEscrow = paymentPreview.amount >= 10000;
 
-        if (error) throw error;
+        if (shouldUseEscrow) {
+          console.log('[Payment] Using escrow for wallet transfer');
+          
+          const escrowResult = await UniversalEscrowService.createEscrow({
+            buyer_id: user.id,
+            seller_id: paymentPreview.receiver_id,
+            amount: paymentPreview.amount,
+            currency: 'GNF',
+            transaction_type: 'wallet_transfer',
+            payment_provider: 'wallet',
+            metadata: {
+              description: paymentDescription || 'Transfert wallet',
+              fee_amount: paymentPreview.fee_amount,
+              total_debit: paymentPreview.total_debit
+            },
+            escrow_options: {
+              auto_release_days: 0,
+              commission_percent: 0
+            }
+          });
 
-        toast({
-          title: "Paiement effectué",
-          description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
-        });
+          if (!escrowResult.success) {
+            throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
+          }
+
+          toast({
+            title: "Transfert sécurisé effectué",
+            description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} GNF`
+          });
+        } else {
+          // Transfert direct sans escrow
+          const { data, error } = await supabase.rpc('process_wallet_transaction', {
+            p_sender_id: user.id,
+            p_receiver_id: paymentPreview.receiver_id,
+            p_amount: paymentPreview.amount,
+            p_description: paymentDescription || 'Paiement via wallet'
+          });
+
+          if (error) throw error;
+
+          toast({
+            title: "Paiement effectué",
+            description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
+          });
+        }
       }
 
       setPaymentAmount('');
