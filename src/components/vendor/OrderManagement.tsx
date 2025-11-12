@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, MoreHorizontal, Shield
+  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw
 } from "lucide-react";
 
 interface Address {
@@ -117,14 +117,45 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     fetchOrders();
+
+    // Mise à jour en temps réel des commandes
+    const channel = supabase
+      .channel('vendor-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `source=eq.online`
+        },
+        (payload) => {
+          console.log('🔔 Nouvelle commande reçue (realtime):', payload);
+          fetchOrders(); // Recharger toutes les commandes
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "🎉 Nouvelle commande!",
+              description: `Commande ${(payload.new as any).order_number} reçue`
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const fetchOrders = async () => {
     try {
+      setIsRefreshing(true);
       if (!user?.id) {
         console.error('User ID not available');
         setLoading(false);
@@ -149,7 +180,8 @@ export default function OrderManagement() {
         return;
       }
 
-      // Fetch all vendor orders (will filter POS sales after)
+      console.log('🔍 Fetching online orders for vendor:', vendor.id);
+
       // Charger uniquement les commandes en ligne (source='online') avec les infos clients
       const { data: ordersData, error } = await supabase
         .from('orders')
@@ -175,9 +207,11 @@ export default function OrderManagement() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching orders:', error);
+        console.error('❌ Error fetching orders:', error);
         throw error;
       }
+
+      console.log('✅ Orders fetched:', ordersData?.length || 0);
 
       // Charger les infos escrow pour chaque commande
       const ordersWithEscrow = await Promise.all((ordersData || []).map(async (order) => {
@@ -185,15 +219,19 @@ export default function OrderManagement() {
           .from('escrow_transactions')
           .select('id, status, amount, created_at')
           .eq('order_id', order.id)
-          .single();
+          .maybeSingle();
         
         return { ...order, escrow: escrow || undefined };
       }));
 
-      console.log('Online orders loaded:', ordersWithEscrow.length);
+      console.log('📦 Online orders loaded:', ordersWithEscrow.length);
       setOrders(ordersWithEscrow);
+
+      if (ordersWithEscrow.length === 0) {
+        console.warn('⚠️ Aucune commande en ligne trouvée. Vérifiez que les commandes sont créées avec source="online"');
+      }
     } catch (error) {
-      console.error('Error in fetchOrders:', error);
+      console.error('💥 Error in fetchOrders:', error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les commandes.",
@@ -201,6 +239,7 @@ export default function OrderManagement() {
       });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -423,6 +462,15 @@ export default function OrderManagement() {
           <p className="text-muted-foreground">Suivez et gérez toutes vos commandes clients</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={fetchOrders}
+            disabled={isRefreshing}
+            className="relative"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
           <Button variant="outline" onClick={() => {
             // Export functionality
             toast({
