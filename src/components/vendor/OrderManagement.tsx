@@ -27,17 +27,7 @@ interface EscrowInfo {
   created_at: string;
 }
 
-interface StandaloneEscrow {
-  id: string;
-  payer_id: string;
-  receiver_id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  created_at: string;
-  commission_percent: number;
-  commission_amount: number;
-}
+// Supprimé: StandaloneEscrow interface (non utilisé)
 
 interface Order {
   id: string;
@@ -124,7 +114,6 @@ export default function OrderManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [standaloneEscrows, setStandaloneEscrows] = useState<StandaloneEscrow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -243,28 +232,12 @@ export default function OrderManagement() {
       console.log('📦 ALL orders loaded (online + POS):', ordersWithEscrow.length);
       console.log('   - Online:', ordersWithEscrow.filter(o => o.source === 'online').length);
       console.log('   - POS:', ordersWithEscrow.filter(o => o.source === 'pos').length);
+      console.log('   - With Escrow:', ordersWithEscrow.filter(o => o.escrow).length);
+      
       setOrders(ordersWithEscrow);
 
-      // CORRECTION: Charger TOUS les escrows du vendeur (avec ou sans order_id)
-      console.log('🔍 Recherche TOUS les escrows pour user_id:', user.id);
-      const { data: allEscrowsData, error: escrowError } = await supabase
-        .from('escrow_transactions')
-        .select('*')
-        .eq('receiver_id', user.id)
-        .in('status', ['pending', 'held'])
-        .order('created_at', { ascending: false });
-
-      if (escrowError) {
-        console.error('❌ Erreur chargement escrows:', escrowError);
-      } else if (allEscrowsData) {
-        console.log('✅ TOUS les escrows chargés:', allEscrowsData.length, allEscrowsData);
-        // Filtrer ceux sans order_id pour affichage séparé
-        const escrowsWithoutOrder = allEscrowsData.filter(e => !e.order_id);
-        setStandaloneEscrows(escrowsWithoutOrder);
-      }
-
-      if (ordersWithEscrow.length === 0 && (!allEscrowsData || allEscrowsData.length === 0)) {
-        console.warn('⚠️ Aucune commande en ligne ni escrow trouvé.');
+      if (ordersWithEscrow.length === 0) {
+        console.warn('⚠️ Aucune commande trouvée.');
       }
     } catch (error) {
       console.error('💥 Error in fetchOrders:', error);
@@ -288,8 +261,28 @@ export default function OrderManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  // Filtrer uniquement les ventes en ligne
-  const onlineOrders = orders.filter(order => order.source === 'online');
+  // Filtrer uniquement les ventes en ligne et trier par priorité (escrow en premier)
+  const onlineOrders = orders
+    .filter(order => order.source === 'online')
+    .sort((a, b) => {
+      // Priorité 1: Commandes avec escrow en premier
+      const aHasEscrow = !!a.escrow;
+      const bHasEscrow = !!b.escrow;
+      if (aHasEscrow && !bHasEscrow) return -1;
+      if (!aHasEscrow && bHasEscrow) return 1;
+      
+      // Priorité 2: Statut escrow (pending/held avant released)
+      if (aHasEscrow && bHasEscrow) {
+        const aEscrowPending = ['pending', 'held'].includes(a.escrow!.status);
+        const bEscrowPending = ['pending', 'held'].includes(b.escrow!.status);
+        if (aEscrowPending && !bEscrowPending) return -1;
+        if (!aEscrowPending && bEscrowPending) return 1;
+      }
+      
+      // Priorité 3: Date (plus récent en premier)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
   const filteredOnlineOrders = onlineOrders.filter(order => {
     const matchesSearch = !searchTerm || 
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1032,16 +1025,19 @@ export default function OrderManagement() {
                       </Badge>
                       {order.escrow && (
                         <Badge className={
-                          order.escrow.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                          order.escrow.status === 'released' ? 'bg-green-100 text-green-800' :
-                          order.escrow.status === 'refunded' ? 'bg-gray-100 text-gray-800' :
+                          order.escrow.status === 'pending' || order.escrow.status === 'held' 
+                            ? 'bg-orange-100 text-orange-800 border-orange-300 border-2' :
+                          order.escrow.status === 'released' 
+                            ? 'bg-green-100 text-green-800' :
+                          order.escrow.status === 'refunded' 
+                            ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
                         }>
                           <Shield className="w-3 h-3 mr-1" />
-                          {order.escrow.status === 'pending' && 'Escrow en attente'}
-                          {order.escrow.status === 'released' && 'Paiement reçu'}
-                          {order.escrow.status === 'refunded' && 'Remboursé'}
-                          {order.escrow.status === 'dispute' && 'Litige'}
+                          {(order.escrow.status === 'pending' || order.escrow.status === 'held') && '🔒 Paiement sécurisé (Escrow)'}
+                          {order.escrow.status === 'released' && '✅ Paiement reçu'}
+                          {order.escrow.status === 'refunded' && '↩️ Remboursé'}
+                          {order.escrow.status === 'dispute' && '⚠️ Litige'}
                         </Badge>
                       )}
                     </div>
