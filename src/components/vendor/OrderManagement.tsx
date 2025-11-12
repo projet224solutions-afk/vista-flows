@@ -240,25 +240,25 @@ export default function OrderManagement() {
       console.log('📦 Online orders loaded:', ordersWithEscrow.length);
       setOrders(ordersWithEscrow);
 
-      // CORRECTION CRITIQUE: receiver_id contient le user_id, PAS le vendor_id!
-      // Charger les escrows sans commande (order_id NULL) pour ce vendeur via son user_id
-      console.log('🔍 Recherche escrows pour user_id:', user.id);
-      const { data: escrowsData, error: escrowError } = await supabase
+      // CORRECTION: Charger TOUS les escrows du vendeur (avec ou sans order_id)
+      console.log('🔍 Recherche TOUS les escrows pour user_id:', user.id);
+      const { data: allEscrowsData, error: escrowError } = await supabase
         .from('escrow_transactions')
         .select('*')
-        .eq('receiver_id', user.id)  // USER_ID pas vendor_id!
-        .is('order_id', null)
+        .eq('receiver_id', user.id)
         .in('status', ['pending', 'held'])
         .order('created_at', { ascending: false });
 
       if (escrowError) {
         console.error('❌ Erreur chargement escrows:', escrowError);
-      } else if (escrowsData) {
-        console.log('✅ Escrows en attente chargés:', escrowsData.length, escrowsData);
-        setStandaloneEscrows(escrowsData);
+      } else if (allEscrowsData) {
+        console.log('✅ TOUS les escrows chargés:', allEscrowsData.length, allEscrowsData);
+        // Filtrer ceux sans order_id pour affichage séparé
+        const escrowsWithoutOrder = allEscrowsData.filter(e => !e.order_id);
+        setStandaloneEscrows(escrowsWithoutOrder);
       }
 
-      if (ordersWithEscrow.length === 0 && (!escrowsData || escrowsData.length === 0)) {
+      if (ordersWithEscrow.length === 0 && (!allEscrowsData || allEscrowsData.length === 0)) {
         console.warn('⚠️ Aucune commande en ligne ni escrow trouvé.');
       }
     } catch (error) {
@@ -493,10 +493,10 @@ export default function OrderManagement() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-orange-700">
               <Shield className="w-5 h-5" />
-              💰 Escrows en attente ({standaloneEscrows.length})
+              💰 Paiements Escrow en Attente ({standaloneEscrows.length})
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Transactions escrow non liées à des commandes
+              Fonds sécurisés en attente de validation pour vos ventes
             </p>
           </CardHeader>
           <CardContent>
