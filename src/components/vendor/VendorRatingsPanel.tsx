@@ -60,29 +60,42 @@ export default function VendorRatingsPanel() {
 
       if (!vendorData) return;
 
-      // Récupérer toutes les notes
+      // Récupérer toutes les notes avec les infos du client
       const { data, error } = await supabase
         .from('vendor_ratings')
         .select(`
           *,
-          orders(order_number),
-          profiles:customer_id(first_name, last_name)
+          orders(order_number)
         `)
         .eq('vendor_id', vendorData.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setRatings(data || []);
+      // Récupérer les profils des clients séparément
+      const ratingsWithProfiles = await Promise.all((data || []).map(async (rating) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', rating.customer_id)
+          .maybeSingle();
+        
+        return {
+          ...rating,
+          profiles: profile || { first_name: '', last_name: '' }
+        };
+      }));
+
+      setRatings(ratingsWithProfiles);
 
       // Calculer les statistiques
-      if (data && data.length > 0) {
-        const total = data.length;
-        const sum = data.reduce((acc, r) => acc + r.rating, 0);
+      if (ratingsWithProfiles && ratingsWithProfiles.length > 0) {
+        const total = ratingsWithProfiles.length;
+        const sum = ratingsWithProfiles.reduce((acc, r) => acc + r.rating, 0);
         const avg = sum / total;
 
         const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-        data.forEach(r => {
+        ratingsWithProfiles.forEach(r => {
           dist[r.rating as keyof typeof dist]++;
         });
 

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
@@ -772,13 +773,19 @@ export default function OrderManagement() {
                             <User className="w-4 h-4" />
                             Informations Client
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                             <div>
                               <span className="text-muted-foreground">Nom:</span>
                               <span className="ml-2 font-semibold">
                                 {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
                                   ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
                                   : 'Client POS'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">ID Client:</span>
+                              <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
+                                {order.customers?.id.slice(0, 8)}...
                               </span>
                             </div>
                             {order.customers?.profiles?.phone && (
@@ -975,13 +982,19 @@ export default function OrderManagement() {
                             <User className="w-4 h-4" />
                             Informations Client
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                             <div>
                               <span className="text-muted-foreground">Nom:</span>
                               <span className="ml-2 font-semibold">
                                 {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
                                   ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
                                   : 'Client'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">ID Client:</span>
+                              <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
+                                {order.customers?.id.slice(0, 8)}...
                               </span>
                             </div>
                             {order.customers?.profiles?.phone && (
@@ -991,19 +1004,9 @@ export default function OrderManagement() {
                               </div>
                             )}
                           </div>
-                          {/* Adresse de livraison */}
+                          {/* Adresse de livraison géolocalisée */}
                           <div className="mt-3 pt-3 border-t border-border/50">
-                            <div className="flex items-start gap-2">
-                              <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                              <div>
-                                <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
-                                <p className="font-medium text-sm">
-                                  {typeof order.shipping_address === 'object' && order.shipping_address !== null
-                                    ? `${(order.shipping_address as any).address || (order.shipping_address as any).street || 'Adresse non spécifiée'}, ${(order.shipping_address as any).city || 'Conakry'}, ${(order.shipping_address as any).country || 'Guinée'}`
-                                    : 'Adresse non spécifiée'}
-                                </p>
-                              </div>
-                            </div>
+                            <GeocodedAddress address={order.shipping_address} />
                           </div>
                         </div>
                       )}
