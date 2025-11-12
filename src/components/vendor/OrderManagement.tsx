@@ -510,83 +510,107 @@ export default function OrderManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Section Escrows en attente */}
-      {standaloneEscrows.length > 0 && (
-        <Card className="border-2 border-orange-200 bg-orange-50/50">
+      {/* Boutons Ventes POS et En Ligne */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Bouton Ventes POS */}
+        <Card 
+          className="border-2 border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
+          onClick={() => {
+            document.querySelector('.pos-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-700">
-              <Shield className="w-5 h-5" />
-              💰 Paiements Escrow en Attente ({standaloneEscrows.length})
+            <CardTitle className="flex items-center gap-2 text-purple-700">
+              🛒 Ventes POS
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Fonds sécurisés en attente de validation pour vos ventes
+              Toutes les ventes passées par points de vente
             </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {standaloneEscrows.map(escrow => (
-                <Card key={escrow.id} className="border border-orange-200 hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-orange-100 text-orange-800">
-                            {escrow.status === 'held' ? '🔒 Fonds Bloqués' : '⏳ En attente'}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            ID: {escrow.id.slice(0, 8)}...
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Montant:</span>
-                            <span className="ml-2 font-semibold text-lg text-green-600">
-                              {escrow.amount.toLocaleString()} {escrow.currency}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Commission:</span>
-                            <span className="ml-2 font-medium">
-                              {escrow.commission_percent}% ({escrow.commission_amount.toLocaleString()} {escrow.currency})
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Créé le:</span>
-                            <span className="ml-2">
-                              {new Date(escrow.created_at).toLocaleDateString('fr-FR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                          onClick={() => {
-                            toast({
-                              title: "Détails Escrow",
-                              description: `Transaction: ${escrow.id}`
-                            });
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
+                <p className="text-3xl font-bold text-purple-700">
+                  {orders.filter(o => o.source === 'pos').length}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</p>
+                <p className="text-xl font-bold text-purple-700">
+                  {orders
+                    .filter(o => o.source === 'pos' && o.payment_status === 'paid')
+                    .reduce((sum, o) => sum + o.total_amount, 0)
+                    .toLocaleString()} GNF
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">En attente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {orders.filter(o => o.source === 'pos' && o.status === 'pending').length}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {orders.filter(o => o.source === 'pos' && o.status === 'delivered').length}
+                </p>
+              </div>
             </div>
+            <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
+              Voir toutes les ventes POS
+            </Button>
           </CardContent>
         </Card>
-      )}
+
+        {/* Bouton Ventes En Ligne */}
+        <Card 
+          className="border-2 border-blue-300 bg-blue-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
+          onClick={() => {
+            document.querySelector('.online-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-700">
+              🌐 Ventes En Ligne
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Toutes les ventes passées via le compte client
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {totalOnlineOrders}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</p>
+                <p className="text-xl font-bold text-blue-700">
+                  {totalOnlineRevenue.toLocaleString()} GNF
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">En attente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingOnlineOrders}
+                </p>
+              </div>
+              <div className="bg-white/80 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {deliveredOnlineOrders}
+                </p>
+              </div>
+            </div>
+            <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+              Voir toutes les ventes en ligne
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Gestion des Commandes</h2>
@@ -733,7 +757,7 @@ export default function OrderManagement() {
       </Card>
 
       {/* Tableau des Ventes en Ligne */}
-      <Card className="border-2 border-blue-200 bg-blue-50/30">
+      <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
             🌐 Ventes en Ligne ({filteredOnlineOrders.length})
@@ -947,6 +971,212 @@ export default function OrderManagement() {
                       <div className="text-sm text-muted-foreground">
                         <CreditCard className="w-4 h-4 inline mr-1" />
                         {order.payment_method || 'Non spécifié'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-4 flex-wrap">
+                    {getOrderStatusActions(order)}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOrder(order);
+                        setShowOrderDialog(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Détails
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tableau des Ventes POS */}
+      <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-700">
+            🛒 Ventes POS ({orders.filter(o => o.source === 'pos').length})
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Commandes passées via les points de vente
+          </p>
+        </CardHeader>
+        <CardContent>
+          {/* Statistiques Ventes POS */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xl font-bold">{orders.filter(o => o.source === 'pos').length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-yellow-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">En attente</p>
+                    <p className="text-xl font-bold text-yellow-600">
+                      {orders.filter(o => o.source === 'pos' && o.status === 'pending').length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">En cours</p>
+                    <p className="text-xl font-bold text-purple-600">
+                      {orders.filter(o => o.source === 'pos' && ['confirmed', 'processing'].includes(o.status)).length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Livrées</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {orders.filter(o => o.source === 'pos' && o.status === 'delivered').length}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-green-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">CA POS</p>
+                    <p className="text-lg font-bold">
+                      {orders
+                        .filter(o => o.source === 'pos' && o.payment_status === 'paid')
+                        .reduce((sum, o) => sum + o.total_amount, 0)
+                        .toLocaleString()} GNF
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Liste des ventes POS */}
+          <div className="space-y-4">
+            {orders.filter(o => o.source === 'pos').length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Aucune vente POS pour le moment</p>
+              </div>
+            ) : (
+              orders.filter(o => o.source === 'pos').map((order) => (
+                <div key={order.id} className="border-2 border-purple-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="font-bold text-xl text-purple-700">{order.order_number}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          ID: {order.id.slice(0, 8)}
+                        </Badge>
+                        <Badge className="bg-purple-500 text-white">
+                          🛒 Vente POS
+                        </Badge>
+                      </div>
+                      
+                      {/* Informations Client */}
+                      {order.customers && (
+                        <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
+                          <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            Informations Client
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Nom:</span>
+                              <span className="ml-2 font-semibold">
+                                {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
+                                  : 'Client POS'}
+                              </span>
+                            </div>
+                            {order.customers?.profiles?.phone && (
+                              <div>
+                                <span className="text-muted-foreground">Téléphone:</span>
+                                <span className="ml-2 font-semibold">{order.customers.profiles.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Date de vente */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Vendu le {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={statusColors[order.status]}>
+                        {statusLabels[order.status]}
+                      </Badge>
+                      <Badge className={paymentStatusColors[order.payment_status]}>
+                        {paymentStatusLabels[order.payment_status]}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Articles</p>
+                      <div className="text-sm">
+                        {order.order_items?.map((item, index) => (
+                          <div key={item.id}>
+                            {item.products.name} x{item.quantity}
+                            {index < (order.order_items?.length || 0) - 1 ? ', ' : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Montant total</p>
+                      <p className="text-xl font-bold text-purple-700">
+                        {order.total_amount.toLocaleString()} GNF
+                      </p>
+                      {order.discount_amount > 0 && (
+                        <p className="text-sm text-green-600">
+                          Remise: -{order.discount_amount.toLocaleString()} GNF
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
+                      <div className="text-sm text-muted-foreground">
+                        <CreditCard className="w-4 h-4 inline mr-1" />
+                        {order.payment_method || 'Espèces'}
                       </div>
                     </div>
                   </div>
