@@ -2063,6 +2063,7 @@ export type Database = {
           auto_escalate_at: string | null
           client_id: string
           created_at: string | null
+          decision_payload: Json | null
           description: string
           dispute_number: string
           dispute_type: string
@@ -2093,6 +2094,7 @@ export type Database = {
           auto_escalate_at?: string | null
           client_id: string
           created_at?: string | null
+          decision_payload?: Json | null
           description: string
           dispute_number?: string
           dispute_type: string
@@ -2123,6 +2125,7 @@ export type Database = {
           auto_escalate_at?: string | null
           client_id?: string
           created_at?: string | null
+          decision_payload?: Json | null
           description?: string
           dispute_number?: string
           dispute_type?: string
@@ -9249,7 +9252,12 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
-      auto_escalate_disputes: { Args: never; Returns: undefined }
+      auto_escalate_disputes: {
+        Args: never
+        Returns: {
+          escalated_count: number
+        }[]
+      }
       auto_release_escrows: {
         Args: never
         Returns: {
