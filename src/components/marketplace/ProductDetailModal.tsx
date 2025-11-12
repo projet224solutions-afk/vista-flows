@@ -285,8 +285,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {/* Total */}
             <div className="bg-accent p-4 rounded-lg">
               <div className="flex items-center justify-between text-lg font-semibold">
-                <span>Total</span>
-                <span className="text-primary">{(product.price * quantity).toLocaleString()} GNF</span>
+                <span className="text-accent-foreground">Total</span>
+                <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
               </div>
             </div>
 
