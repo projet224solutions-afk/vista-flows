@@ -332,7 +332,14 @@ export default function Payment() {
       <div className="container max-w-6xl mx-auto py-8">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            const productId = searchParams.get('productId') || location.state?.productId;
+            if (productId) {
+              navigate(`/product/${productId}`);
+            } else {
+              navigate('/marketplace');
+            }
+          }}
           className="mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
