@@ -39,6 +39,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -53,6 +54,7 @@ export default function ProductDetail() {
   const loadCustomerId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      setUserId(user.id);
       const { data } = await supabase
         .from('user_ids')
         .select('custom_id')
@@ -322,7 +324,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Modal de paiement */}
-      {product && customerId && (
+      {product && customerId && userId && (
         <ProductPaymentModal
           open={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
@@ -335,7 +337,7 @@ export default function ProductDetail() {
           }]}
           totalAmount={product.price * quantity}
           onPaymentSuccess={handlePaymentSuccess}
-          userId={supabase.auth.getUser().then(r => r.data.user?.id || '')}
+          userId={userId}
           customerId={customerId}
         />
       )}
