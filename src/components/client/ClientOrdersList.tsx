@@ -167,24 +167,18 @@ export default function ClientOrdersList() {
         return;
       }
 
-      // Libérer l'escrow
-      const { error: releaseError } = await supabase.rpc('release_escrow', {
-        p_escrow_id: escrow.id,
-        p_commission_percent: 2.5
+      // Appeler la fonction Edge pour confirmer la livraison
+      const { data, error } = await supabase.functions.invoke('confirm-delivery', {
+        body: {
+          order_id: selectedOrder.id
+        }
       });
 
-      if (releaseError) throw releaseError;
-
-      // Mettre à jour le statut de la commande
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ 
-          status: 'delivered',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedOrder.id);
-
-      if (updateError) throw updateError;
+      if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de la confirmation');
+      }
 
       toast.success('Livraison confirmée !', {
         description: 'Le vendeur a reçu le paiement'

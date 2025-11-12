@@ -129,3 +129,18 @@ verify_jwt = false
 [functions.escrow-auto-release]
 verify_jwt = false
 
+[functions.confirm-delivery]
+verify_jwt = true
+
+[functions.dispute-create]
+verify_jwt = true
+
+[functions.dispute-respond]
+verify_jwt = true
+
+[functions.dispute-ai-arbitrate]
+verify_jwt = true
+
+[functions.dispute-resolve]
+verify_jwt = true
+

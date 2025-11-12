@@ -10092,19 +10092,6 @@ export type Database = {
         Args: { p_admin_id: string; p_escrow_id: string; p_reason?: string }
         Returns: boolean
       }
-      release_escrow:
-        | {
-            Args: {
-              p_commission_percent: number
-              p_escrow_id: string
-              p_released_by?: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: { p_commission_percent?: number; p_escrow_id: string }
-            Returns: boolean
-          }
       release_escrow_funds: {
         Args: { p_admin_id?: string; p_escrow_id: string; p_notes?: string }
         Returns: boolean

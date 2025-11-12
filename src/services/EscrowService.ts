@@ -64,14 +64,22 @@ export class EscrowService {
     try {
       console.log('🔓 Releasing escrow:', { escrowId, commissionPercent });
 
-      const { data, error } = await supabase.rpc('release_escrow', {
-        p_escrow_id: escrowId,
-        p_commission_percent: commissionPercent
+      // Utiliser la fonction Edge pour libérer l'escrow
+      const { data, error } = await supabase.functions.invoke('escrow-release', {
+        body: {
+          escrow_id: escrowId,
+          notes: `Libération - Commission ${commissionPercent}%`
+        }
       });
 
       if (error) {
         console.error('❌ Escrow release error:', error);
         return { success: false, error: error.message };
+      }
+
+      if (!data?.success) {
+        console.error('❌ Escrow release failed:', data?.error);
+        return { success: false, error: data?.error || 'Échec de libération' };
       }
 
       console.log('✅ Escrow released:', data);
@@ -89,13 +97,22 @@ export class EscrowService {
     try {
       console.log('💸 Refunding escrow:', escrowId);
 
-      const { data, error } = await supabase.rpc('refund_escrow', {
-        p_escrow_id: escrowId
+      // Utiliser la fonction Edge pour rembourser l'escrow
+      const { data, error } = await supabase.functions.invoke('escrow-refund', {
+        body: {
+          escrow_id: escrowId,
+          notes: 'Remboursement client'
+        }
       });
 
       if (error) {
         console.error('❌ Escrow refund error:', error);
         return { success: false, error: error.message };
+      }
+
+      if (!data?.success) {
+        console.error('❌ Escrow refund failed:', data?.error);
+        return { success: false, error: data?.error || 'Échec du remboursement' };
       }
 
       console.log('✅ Escrow refunded:', data);

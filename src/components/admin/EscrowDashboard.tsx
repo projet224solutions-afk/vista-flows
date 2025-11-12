@@ -82,23 +82,43 @@ export function EscrowDashboard() {
 
     try {
       if (actionType === "release") {
-        const { error } = await supabase.rpc("release_escrow", {
-          p_escrow_id: selectedEscrow.id,
-          p_commission_percent: commissionPercent,
+        // Utiliser la fonction Edge pour libérer l'escrow
+        const { data, error } = await supabase.functions.invoke('escrow-release', {
+          body: {
+            escrow_id: selectedEscrow.id,
+            notes: `Libération manuelle par admin - Commission ${commissionPercent}%`
+          }
         });
+        
         if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors de la libération');
+        
         toast.success("Fonds libérés avec succès");
       } else if (actionType === "refund") {
-        const { error } = await supabase.rpc("refund_escrow", {
-          p_escrow_id: selectedEscrow.id,
+        // Utiliser la fonction Edge pour rembourser l'escrow
+        const { data, error } = await supabase.functions.invoke('escrow-refund', {
+          body: {
+            escrow_id: selectedEscrow.id,
+            notes: 'Remboursement manuel par admin'
+          }
         });
+        
         if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors du remboursement');
+        
         toast.success("Remboursement effectué");
       } else if (actionType === "hold") {
-        const { error } = await supabase.rpc("dispute_escrow", {
-          p_escrow_id: selectedEscrow.id,
+        // Utiliser la fonction Edge pour ouvrir un litige
+        const { data, error } = await supabase.functions.invoke('escrow-dispute', {
+          body: {
+            escrow_id: selectedEscrow.id,
+            reason: 'Litige ouvert par admin'
+          }
         });
+        
         if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors de l\'ouverture du litige');
+        
         toast.success("Escrow mis en litige");
       }
       
