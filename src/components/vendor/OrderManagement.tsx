@@ -519,8 +519,12 @@ export default function OrderManagement() {
   // Statistics - Ventes en ligne uniquement
   const totalOnlineOrders = onlineOrders.length;
   const pendingOnlineOrders = onlineOrders.filter(o => o.status === 'pending').length;
-  const processingOnlineOrders = onlineOrders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
-  const deliveredOnlineOrders = onlineOrders.filter(o => o.status === 'delivered').length;
+  const processingOnlineOrders = onlineOrders.filter(o => 
+    ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(o.status)
+  ).length;
+  const deliveredOnlineOrders = onlineOrders.filter(o => 
+    ['delivered', 'completed'].includes(o.status)
+  ).length;
   const totalOnlineRevenue = onlineOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
@@ -908,7 +912,7 @@ export default function OrderManagement() {
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">En cours</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
+                  {processingOnlineOrders}
                 </p>
               </CardContent>
             </Card>
@@ -930,8 +934,8 @@ export default function OrderManagement() {
             {onlineOrders.filter(order => {
               if (onlineStatusFilter === 'all') return true;
               if (onlineStatusFilter === 'pending') return order.status === 'pending';
-              if (onlineStatusFilter === 'processing') return order.status === 'processing';
-              if (onlineStatusFilter === 'delivered') return order.status === 'delivered';
+              if (onlineStatusFilter === 'processing') return ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(order.status);
+              if (onlineStatusFilter === 'delivered') return ['delivered', 'completed'].includes(order.status);
               return true;
             }).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -947,8 +951,8 @@ export default function OrderManagement() {
               onlineOrders.filter(order => {
                 if (onlineStatusFilter === 'all') return true;
                 if (onlineStatusFilter === 'pending') return order.status === 'pending';
-                if (onlineStatusFilter === 'processing') return order.status === 'processing';
-                if (onlineStatusFilter === 'delivered') return order.status === 'delivered';
+                if (onlineStatusFilter === 'processing') return ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(order.status);
+                if (onlineStatusFilter === 'delivered') return ['delivered', 'completed'].includes(order.status);
                 return true;
               }).map((order) => (
                 <div key={order.id} className="border-2 border-blue-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
