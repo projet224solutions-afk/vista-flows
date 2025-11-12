@@ -10050,7 +10050,7 @@ export type Database = {
         Returns: boolean
       }
       refund_escrow_funds: {
-        Args: { p_admin_id: string; p_escrow_id: string; p_reason: string }
+        Args: { p_admin_id: string; p_escrow_id: string; p_reason?: string }
         Returns: boolean
       }
       release_escrow:
@@ -10066,15 +10066,10 @@ export type Database = {
             Args: { p_commission_percent?: number; p_escrow_id: string }
             Returns: boolean
           }
-      release_escrow_funds:
-        | {
-            Args: { p_admin_id: string; p_escrow_id: string; p_notes?: string }
-            Returns: boolean
-          }
-        | {
-            Args: { p_admin_id?: string; p_escrow_id: string }
-            Returns: boolean
-          }
+      release_escrow_funds: {
+        Args: { p_admin_id?: string; p_escrow_id: string; p_notes?: string }
+        Returns: boolean
+      }
       release_taxi_lock:
         | {
             Args: {
