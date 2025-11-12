@@ -55,14 +55,29 @@ export default function ProductDetail() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUserId(user.id);
-      const { data } = await supabase
-        .from('user_ids')
-        .select('custom_id')
-        .eq('user_id', user.id)
-        .single();
       
-      if (data?.custom_id) {
-        setCustomerId(data.custom_id);
+      // CORRECTION: Charger le customer_id depuis la table customers (UUID), pas user_ids
+      console.log('🔍 [ProductDetail] Chargement customer_id pour user:', user.id);
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('❌ [ProductDetail] Erreur chargement customer_id:', error);
+        toast.error('Erreur de chargement du profil client');
+        return;
+      }
+
+      if (data) {
+        console.log('✅ [ProductDetail] Customer ID chargé:', data.id);
+        setCustomerId(data.id);
+      } else {
+        console.warn('⚠️ [ProductDetail] Aucun profil customer trouvé pour user:', user.id);
+        toast.error('Profil client manquant', {
+          description: 'Veuillez compléter votre profil client'
+        });
       }
     }
   };
