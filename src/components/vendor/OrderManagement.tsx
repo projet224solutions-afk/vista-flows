@@ -56,6 +56,7 @@ interface Order {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  source?: 'online' | 'pos';
   customers?: {
     id: string;
     user_id: string;
@@ -136,7 +137,7 @@ export default function OrderManagement() {
     if (!user) return;
     fetchOrders();
 
-    // Mise à jour en temps réel des commandes
+    // Mise à jour en temps réel des commandes (online ET pos)
     const channel = supabase
       .channel('vendor-orders-realtime')
       .on(
@@ -144,16 +145,16 @@ export default function OrderManagement() {
         {
           event: '*',
           schema: 'public',
-          table: 'orders',
-          filter: `source=eq.online`
+          table: 'orders'
         },
         (payload) => {
-          console.log('🔔 Nouvelle commande reçue (realtime):', payload);
+          console.log('🔔 Changement commande (realtime):', payload);
           fetchOrders(); // Recharger toutes les commandes
           
           if (payload.eventType === 'INSERT') {
+            const source = (payload.new as any).source;
             toast({
-              title: "🎉 Nouvelle commande!",
+              title: source === 'pos' ? "🛒 Nouvelle vente POS!" : "🎉 Nouvelle commande!",
               description: `Commande ${(payload.new as any).order_number} reçue`
             });
           }
@@ -193,9 +194,9 @@ export default function OrderManagement() {
         return;
       }
 
-      console.log('🔍 Fetching online orders for vendor:', vendor.id);
+      console.log('🔍 Fetching ALL orders (online + POS) for vendor:', vendor.id);
 
-      // Charger uniquement les commandes en ligne (source='online') avec les infos clients
+      // Charger TOUTES les commandes du vendeur (online ET pos) avec les infos clients
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -216,7 +217,7 @@ export default function OrderManagement() {
           )
         `)
         .eq('vendor_id', vendor.id)
-        .eq('source', 'online')
+        .in('source', ['online', 'pos'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -237,7 +238,9 @@ export default function OrderManagement() {
         return { ...order, escrow: escrow || undefined };
       }));
 
-      console.log('📦 Online orders loaded:', ordersWithEscrow.length);
+      console.log('📦 ALL orders loaded (online + POS):', ordersWithEscrow.length);
+      console.log('   - Online:', ordersWithEscrow.filter(o => o.source === 'online').length);
+      console.log('   - POS:', ordersWithEscrow.filter(o => o.source === 'pos').length);
       setOrders(ordersWithEscrow);
 
       // CORRECTION: Charger TOUS les escrows du vendeur (avec ou sans order_id)
@@ -729,6 +732,13 @@ export default function OrderManagement() {
                       <h3 className="font-bold text-xl text-primary">{order.order_number}</h3>
                       <Badge variant="outline" className="text-xs">
                         ID: {order.id.slice(0, 8)}
+                      </Badge>
+                      {/* Badge Source */}
+                      <Badge 
+                        variant={order.source === 'pos' ? 'default' : 'secondary'}
+                        className={order.source === 'pos' ? 'bg-purple-500 text-white' : 'bg-blue-500 text-white'}
+                      >
+                        {order.source === 'pos' ? '🛒 POS' : '🌐 Online'}
                       </Badge>
                     </div>
                     
