@@ -68,8 +68,8 @@ export default function ClientOrdersList() {
     if (user) {
       loadOrders();
       
-      // Configurer l'écoute en temps réel pour les nouvelles commandes
-      const channel = supabase
+      // Configurer l'écoute en temps réel pour les commandes ET les escrows
+      const ordersChannel = supabase
         .channel('client-orders-realtime')
         .on(
           'postgres_changes',
@@ -85,8 +85,26 @@ export default function ClientOrdersList() {
         )
         .subscribe();
 
+      // Écouter aussi les changements d'escrow pour mettre à jour le bouton
+      const escrowChannel = supabase
+        .channel('client-escrow-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'escrow_transactions'
+          },
+          (payload) => {
+            console.log('🔄 Mise à jour en temps réel des escrows:', payload);
+            loadOrders(); // Recharger les commandes et escrows
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(ordersChannel);
+        supabase.removeChannel(escrowChannel);
       };
     }
   }, [user]);
