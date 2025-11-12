@@ -534,6 +534,45 @@ export default function OrderManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Titre et actions */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Gestion des Commandes</h2>
+          <p className="text-muted-foreground">Suivez et gérez toutes vos commandes clients</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={fetchOrders}
+            disabled={isRefreshing}
+            className="relative"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+          <Button variant="outline" onClick={() => {
+            // Export functionality
+            toast({
+              title: "Export en cours",
+              description: "L'export des commandes sera bientôt disponible."
+            });
+          }}>
+            <Download className="w-4 h-4 mr-2" />
+            Exporter
+          </Button>
+          <Button variant="outline" onClick={() => {
+            // Report functionality
+            toast({
+              title: "Rapport généré",
+              description: "Le rapport des commandes sera bientôt disponible."
+            });
+          }}>
+            <FileText className="w-4 h-4 mr-2" />
+            Rapport
+          </Button>
+        </div>
+      </div>
+
       {/* Boutons Ventes POS et En Ligne */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Bouton Ventes POS */}
@@ -634,43 +673,6 @@ export default function OrderManagement() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Commandes</h2>
-          <p className="text-muted-foreground">Suivez et gérez toutes vos commandes clients</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={fetchOrders}
-            disabled={isRefreshing}
-            className="relative"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Actualiser
-          </Button>
-          <Button variant="outline" onClick={() => {
-            // Export functionality
-            toast({
-              title: "Export en cours",
-              description: "L'export des commandes sera bientôt disponible."
-            });
-          }}>
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
-          </Button>
-          <Button variant="outline" onClick={() => {
-            // Report functionality
-            toast({
-              title: "Rapport généré",
-              description: "Le rapport des commandes sera bientôt disponible."
-            });
-          }}>
-            <FileText className="w-4 h-4 mr-2" />
-            Rapport
-          </Button>
-        </div>
       </div>
 
       {/* Filtres */}
