@@ -209,14 +209,19 @@ export function useEscrowTransactions() {
 
       if (error) throw error;
       if (!data?.success) {
-        throw new Error(data?.error || 'Erreur inconnue');
+        const errorMsg = data?.error || 'Erreur inconnue';
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       toast.success('Litige ouvert avec succès');
       await loadTransactions();
       return data;
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de l\'ouverture du litige');
+      const errorMsg = err.message || 'Erreur lors de l\'ouverture du litige';
+      if (!errorMsg.includes('déjà ouvert')) {
+        toast.error(errorMsg);
+      }
       throw err;
     }
   };

@@ -85,7 +85,12 @@ Deno.serve(async (req) => {
 
     // Check if status allows dispute
     if (!['pending', 'held'].includes(escrow.status)) {
-      return new Response(JSON.stringify({ error: `Cannot dispute escrow with status: ${escrow.status}` }), {
+      console.log('[escrow-dispute] Cannot dispute - status is:', escrow.status);
+      return new Response(JSON.stringify({ 
+        error: escrow.status === 'dispute' 
+          ? 'Un litige est déjà ouvert pour cette transaction'
+          : `Impossible d'ouvrir un litige pour une transaction avec le statut: ${escrow.status}` 
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
