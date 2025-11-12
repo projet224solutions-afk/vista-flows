@@ -361,7 +361,11 @@ export default function Home() {
                 rating={product.rating}
                 reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
-                onContact={() => navigate(`/marketplace?product=${product.id}`)}
+                onAddToCart={() => {
+                  toast.success('Produit ajouté au panier');
+                  handleProductClick(product.id);
+                }}
+                onContact={() => navigate(`/messages?vendorId=${product.id}`)}
                 isPremium={product.is_hot}
               />
             ))}

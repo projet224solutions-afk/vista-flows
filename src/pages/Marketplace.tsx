@@ -256,7 +256,11 @@ export default function Marketplace() {
                 rating={product.rating}
                 reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
-                onContact={() => handleProductContact(product.id)}
+                onAddToCart={() => {
+                  toast.success('Produit ajouté au panier');
+                  handleProductClick(product.id);
+                }}
+                onContact={() => handleContactVendor(product.id)}
                 isPremium={product.is_hot}
               />
             ))}

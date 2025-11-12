@@ -398,6 +398,10 @@ export default function ClientDashboard() {
                           addToCart(product as any);
                           handleCheckout();
                         }}
+                        onAddToCart={() => {
+                          addToCart(product as any);
+                          toast.success('Produit ajouté au panier');
+                        }}
                         onContact={() => handleContactVendor(product)}
                         isPremium={product.is_hot}
                       />
@@ -443,6 +447,10 @@ export default function ClientDashboard() {
                         onBuy={() => {
                           addToCart(product as any);
                           handleCheckout();
+                        }}
+                        onAddToCart={() => {
+                          addToCart(product as any);
+                          toast.success('Produit ajouté au panier');
                         }}
                         onContact={() => handleContactVendor(product)}
                         isPremium={product.is_hot}
