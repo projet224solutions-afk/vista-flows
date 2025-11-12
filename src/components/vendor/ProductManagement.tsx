@@ -60,6 +60,7 @@ export default function ProductManagement() {
 
   const [lowStockFilter, setLowStockFilter] = useState(false);
   const [generatingCategory, setGeneratingCategory] = useState(false);
+  const [generatingTags, setGeneratingTags] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -581,6 +582,74 @@ export default function ProductManagement() {
     }
   };
 
+  const generateTags = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingTags(true);
+      
+      const productName = formData.name.toLowerCase();
+      const categoryName = formData.category_name || '';
+      let suggestedTags: string[] = [];
+
+      // Tags basés sur les catégories et caractéristiques communes
+      const tagsByCategory: Record<string, string[]> = {
+        'vêtements': ['mode', 'fashion', 'tendance', 'style', 'confort'],
+        'chaussures': ['confortable', 'durable', 'sport', 'casual', 'élégant'],
+        'électronique': ['high-tech', 'moderne', 'connecté', 'innovant', 'rapide'],
+        'alimentation': ['frais', 'bio', 'local', 'savoureux', 'sain'],
+        'beauté': ['soin', 'naturel', 'doux', 'efficace', 'premium'],
+        'sport': ['fitness', 'performance', 'entraînement', 'santé', 'actif'],
+        'maison': ['décoration', 'pratique', 'design', 'confort', 'moderne'],
+        'livre': ['lecture', 'culture', 'éducatif', 'divertissement'],
+        'jouets': ['enfant', 'éducatif', 'amusant', 'sécurisé', 'créatif'],
+      };
+
+      // Ajouter des tags génériques pertinents
+      suggestedTags.push('nouveau', 'qualité');
+
+      // Chercher des tags basés sur la catégorie
+      const lowerCategory = categoryName.toLowerCase();
+      for (const [category, tags] of Object.entries(tagsByCategory)) {
+        if (lowerCategory.includes(category) || productName.includes(category)) {
+          suggestedTags.push(...tags.slice(0, 3));
+          break;
+        }
+      }
+
+      // Si on a toujours pas assez de tags, ajouter des tags génériques basés sur le nom du produit
+      if (suggestedTags.length < 5) {
+        const words = formData.name.split(' ').filter(w => w.length > 3);
+        suggestedTags.push(...words.slice(0, 2).map(w => w.toLowerCase()));
+      }
+
+      // Enlever les doublons et limiter à 5 tags
+      const uniqueTags = [...new Set(suggestedTags)].slice(0, 5);
+      
+      setFormData(prev => ({ ...prev, tags: uniqueTags.join(', ') }));
+      toast({
+        title: "Tags suggérés",
+        description: `${uniqueTags.length} tags générés - Vous pouvez les modifier`,
+      });
+    } catch (error) {
+      console.error('Erreur génération tags:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de générer les tags",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingTags(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -810,9 +879,9 @@ export default function ProductManagement() {
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Description détaillée du produit..."
-                    rows={3}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Ex: Un smartphone haut de gamme avec écran OLED 6.7 pouces, processeur A17 Pro, caméra 48MP..."
+                      rows={3}
                   />
                   <Button
                     type="button"
@@ -847,7 +916,7 @@ export default function ProductManagement() {
                         id="category"
                         value={formData.category_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, category_name: e.target.value }))}
-                        placeholder="Saisir ou générer une catégorie"
+                        placeholder="Ex: Électronique, Vêtements, Alimentation..."
                         className="flex-1"
                       />
                       <Button
@@ -877,7 +946,7 @@ export default function ProductManagement() {
                       id="barcode"
                       value={formData.barcode}
                       onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                      placeholder="Code-barres"
+                      placeholder="Ex: 123456789012"
                     />
                   </div>
                 </div>
@@ -895,7 +964,7 @@ export default function ProductManagement() {
                       min="0"
                       value={formData.price}
                       onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                      placeholder="0"
+                      placeholder="Ex: 5000000"
                       className={!formData.price ? "border-red-300 focus:border-red-500" : ""}
                     />
                     {!formData.price && <p className="text-xs text-red-500">Le prix est obligatoire</p>}
@@ -908,7 +977,7 @@ export default function ProductManagement() {
                       min="0"
                       value={formData.compare_price}
                       onChange={(e) => setFormData(prev => ({ ...prev, compare_price: e.target.value }))}
-                      placeholder="0"
+                      placeholder="Ex: 6000000"
                     />
                   </div>
                   <div className="space-y-2">
@@ -919,7 +988,7 @@ export default function ProductManagement() {
                       min="0"
                       value={formData.cost_price}
                       onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
-                      placeholder="0"
+                      placeholder="Ex: 4000000"
                     />
                   </div>
                 </div>
@@ -940,7 +1009,7 @@ export default function ProductManagement() {
                       min="0"
                       value={formData.stock_quantity}
                       onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
-                      placeholder="0"
+                      placeholder="Ex: 50"
                     />
                   </div>
                   <div className="space-y-2">
@@ -963,7 +1032,7 @@ export default function ProductManagement() {
                       step="0.1"
                       value={formData.weight}
                       onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                      placeholder="0.0"
+                      placeholder="Ex: 0.5"
                     />
                   </div>
                 </div>
@@ -974,13 +1043,33 @@ export default function ProductManagement() {
                 <h4 className="font-medium text-sm text-muted-foreground">MÉTADONNÉES</h4>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
-                    <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                      placeholder="Ex: électronique, smartphone, apple"
-                    />
+                    <Label htmlFor="tags">
+                      Tags (séparés par des virgules)
+                      <span className="text-xs text-muted-foreground ml-2">(Optionnel)</span>
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="tags"
+                        value={formData.tags}
+                        onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                        placeholder="Ex: électronique, smartphone, apple, 5g, promotion"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generateTags}
+                        disabled={!formData.name || generatingTags}
+                        title="Générer des tags avec l'IA"
+                      >
+                        {generatingTags ? (
+                          <span className="animate-spin">⏳</span>
+                        ) : (
+                          <Sparkles className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground">Utilisez des virgules pour séparer les tags</p>
                   </div>
                   
