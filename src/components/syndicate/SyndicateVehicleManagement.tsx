@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import BadgeGeneratorDialog from './BadgeGeneratorDialog';
 import {
     Car,
     Plus,
@@ -34,7 +35,8 @@ import {
     MapPin,
     Settings,
     Printer,
-    Share2
+    Share2,
+    IdCard
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,6 +73,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [showAddDialog, setShowAddDialog] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState<SyndicateVehicle | null>(null);
     const [showBadgeDialog, setShowBadgeDialog] = useState(false);
+    const [showProfessionalBadgeDialog, setShowProfessionalBadgeDialog] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -440,34 +443,25 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     };
 
     /**
-     * Télécharge le badge
+     * Ouvre le dialog de génération de badge professionnel
      */
-    const downloadBadge = (vehicle: SyndicateVehicle) => {
-        // Simuler le téléchargement du badge
-        const badgeData = {
-            badge_id: vehicle.digital_badge_id,
-            vehicle_info: {
-                serial_number: vehicle.serial_number,
-                license_plate: vehicle.license_plate,
-                owner: vehicle.member_name,
-                type: vehicle.vehicle_type
-            },
-            qr_code: vehicle.qr_code_data,
-            bureau: bureauId,
-            generated_at: vehicle.badge_generated_at
-        };
-
-        console.log('📱 Badge téléchargé:', badgeData);
-        toast.success('Badge téléchargé avec succès');
+    const openProfessionalBadge = (vehicle: SyndicateVehicle) => {
+        setSelectedVehicle(vehicle);
+        setShowProfessionalBadgeDialog(true);
     };
 
     /**
-     * Imprime le badge
+     * Télécharge le badge (legacy - ouvre maintenant le badge professionnel)
+     */
+    const downloadBadge = (vehicle: SyndicateVehicle) => {
+        openProfessionalBadge(vehicle);
+    };
+
+    /**
+     * Imprime le badge (legacy - ouvre maintenant le badge professionnel)
      */
     const printBadge = (vehicle: SyndicateVehicle) => {
-        // Simuler l'impression du badge
-        console.log('🖨️ Badge envoyé à l\'imprimante:', vehicle.digital_badge_id);
-        toast.success('Badge envoyé à l\'imprimante');
+        openProfessionalBadge(vehicle);
     };
 
     /**
@@ -998,6 +992,14 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             <Button
                                                 size="sm"
                                                 variant="outline"
+                                                onClick={() => openProfessionalBadge(vehicle)}
+                                                title="Générer badge professionnel"
+                                            >
+                                                <IdCard className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
                                                 onClick={() => downloadBadge(vehicle)}
                                             >
                                                 <Download className="w-4 h-4" />
@@ -1079,11 +1081,29 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     <Printer className="w-4 h-4 mr-2" />
                                     Imprimer
                                 </Button>
-                            </div>
+                             </div>
                         </div>
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Dialog de génération de badge professionnel */}
+            {selectedVehicle && (
+                <BadgeGeneratorDialog
+                    open={showProfessionalBadgeDialog}
+                    onOpenChange={setShowProfessionalBadgeDialog}
+                    vehicleData={{
+                        id: selectedVehicle.id,
+                        member_name: selectedVehicle.member_name,
+                        member_id: selectedVehicle.member_id,
+                        license_plate: selectedVehicle.license_plate,
+                        vehicle_type: selectedVehicle.vehicle_type,
+                        badge_generated_at: selectedVehicle.badge_generated_at,
+                        digital_badge_id: selectedVehicle.digital_badge_id
+                    }}
+                    bureauName="224SOLUTIONS TAXI-MOTO"
+                />
+            )}
         </div>
     );
 }
