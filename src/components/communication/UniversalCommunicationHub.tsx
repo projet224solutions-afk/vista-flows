@@ -560,9 +560,10 @@ export default function UniversalCommunicationHub({
                     </div>
 
                     {/* Messages */}
-                    <ScrollArea className="flex-1 p-4">
-                      <div className="space-y-4">
-                        {messages.map((message) => {
+                    <div className="flex-1 overflow-hidden">
+                      <ScrollArea className="h-full p-4">
+                        <div className="space-y-4">
+                          {messages.map((message) => {
                           const isOwn = message.sender_id === user?.id;
                           const otherParticipant = getOtherParticipant(selectedConversation);
                           
@@ -599,10 +600,11 @@ export default function UniversalCommunicationHub({
                               onEdit={handleEditMessage}
                             />
                           );
-                        })}
-                      </div>
-                      <div ref={messagesEndRef} />
-                    </ScrollArea>
+                          })}
+                        </div>
+                        <div ref={messagesEndRef} />
+                      </ScrollArea>
+                    </div>
 
                     {/* Input message */}
                     <div className="p-4 border-t">
