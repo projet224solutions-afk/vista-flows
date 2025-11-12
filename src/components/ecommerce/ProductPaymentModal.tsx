@@ -167,7 +167,16 @@ export default function ProductPaymentModal({
   ];
 
   const handlePayment = async () => {
+    console.log('[ProductPayment] Starting payment process:', {
+      userId,
+      customerId,
+      cartItems: cartItems.length,
+      paymentMethod,
+      totalAmount
+    });
+
     if (!userId || !customerId || cartItems.length === 0) {
+      console.error('[ProductPayment] Missing information:', { userId, customerId, cartItems });
       toast.error('Informations manquantes');
       return;
     }
@@ -209,6 +218,13 @@ export default function ProductPaymentModal({
         }
 
         // Créer d'abord la commande pour obtenir l'order_id
+        console.log('[ProductPayment] Creating order:', {
+          customer_id: customerId,
+          vendor_id: vendorId,
+          total_amount: vendorTotal,
+          source: 'online'
+        });
+
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .insert([{
@@ -230,21 +246,40 @@ export default function ProductPaymentModal({
           .single();
 
         if (orderError || !orderData) {
-          console.error('[ProductPayment] Order error:', orderError);
-          toast.error('Erreur création commande');
+          console.error('[ProductPayment] Order creation failed:', {
+            error: orderError,
+            message: orderError?.message,
+            details: orderError?.details,
+            hint: orderError?.hint
+          });
+          toast.error('Erreur création commande', {
+            description: orderError?.message || 'Impossible de créer la commande'
+          });
           continue;
         }
+
+        console.log('[ProductPayment] Order created successfully:', orderData.id);
 
         // Si paiement wallet, initier l'escrow au lieu du transfert direct
         if (paymentMethod === 'wallet') {
           // Vérifier le solde
           if (walletBalance !== null && walletBalance < vendorTotal) {
+            console.error('[ProductPayment] Insufficient balance:', { walletBalance, vendorTotal });
             toast.error('Solde insuffisant', {
               description: 'Veuillez recharger votre wallet'
             });
+            // Annuler la commande
+            await supabase.from('orders').delete().eq('id', orderData.id);
             setProcessing(false);
             return;
           }
+
+          console.log('[ProductPayment] Initiating escrow:', {
+            order_id: orderData.id,
+            payer_id: userId,
+            receiver_id: vendorData.user_id,
+            amount: vendorTotal
+          });
 
           // Initier l'escrow - bloque les fonds dans le système
           const { data: escrowId, error: escrowError } = await supabase.rpc('initiate_escrow', {
@@ -256,7 +291,12 @@ export default function ProductPaymentModal({
           });
 
           if (escrowError) {
-            console.error('[ProductPayment] Escrow error:', escrowError);
+            console.error('[ProductPayment] Escrow initiation failed:', {
+              error: escrowError,
+              message: escrowError.message,
+              details: escrowError.details,
+              hint: escrowError.hint
+            });
             // Annuler la commande si l'escrow échoue
             await supabase.from('orders').delete().eq('id', orderData.id);
             toast.error('Erreur de paiement', {
@@ -265,16 +305,20 @@ export default function ProductPaymentModal({
             continue;
           }
 
-          console.log('✅ Escrow initiated:', escrowId);
+          console.log('✅ Escrow initiated successfully:', escrowId);
 
           // Mettre à jour la commande avec l'escrow_transaction_id
-          await supabase
+          const { error: updateError } = await supabase
             .from('orders')
             .update({ 
               notes: `Paiement Wallet via Escrow - ID: ${escrowId}`,
               metadata: { escrow_transaction_id: escrowId }
             })
             .eq('id', orderData.id);
+
+          if (updateError) {
+            console.error('[ProductPayment] Failed to update order with escrow ID:', updateError);
+          }
         }
 
         // Créer les items de commande
