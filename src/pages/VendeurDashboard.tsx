@@ -31,7 +31,6 @@ import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import InventoryManagement from "@/components/vendor/InventoryManagement";
 import MarketingManagement from "@/components/vendor/MarketingManagement";
-import WalletDashboard from "@/components/vendor/WalletDashboard";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
 import SupportTickets from "@/components/vendor/SupportTickets";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
@@ -380,7 +379,7 @@ export default function VendeurDashboard() {
               <Route path="agents" element={<AgentManagement />} />
               <Route path="prospects" element={<ProspectManagement />} />
               <Route path="marketing" element={<MarketingManagement />} />
-              <Route path="wallet" element={<WalletDashboard />} />
+              <Route path="wallet" element={<UniversalWalletTransactions />} />
               <Route path="payments" element={<PaymentManagement />} />
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
