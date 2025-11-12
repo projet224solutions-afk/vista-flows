@@ -33,6 +33,11 @@ const statusConfig = {
     className: 'bg-yellow-100 text-yellow-800',
     icon: Clock
   },
+  held: {
+    label: 'Bloqué',
+    className: 'bg-orange-100 text-orange-800',
+    icon: AlertCircle
+  },
   released: {
     label: 'Libéré',
     className: 'bg-green-100 text-green-800',
@@ -109,7 +114,7 @@ export default function EscrowManagementDialog({
           ) : (
             <div className="space-y-4">
               {transactions.map((transaction) => {
-                const config = statusConfig[transaction.status];
+                const config = statusConfig[transaction.status as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = config.icon;
 
                 return (
@@ -143,7 +148,7 @@ export default function EscrowManagementDialog({
                           </div>
                         </div>
 
-                        {transaction.status === 'pending' && (
+                        {(transaction.status === 'pending' || transaction.status === 'held') && (
                           <div className="flex gap-2 ml-4">
                             <Button
                               size="sm"
