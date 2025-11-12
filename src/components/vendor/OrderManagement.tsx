@@ -286,6 +286,17 @@ export default function OrderManagement() {
     return matchesSearch && matchesStatus;
   });
 
+  // Filtrer uniquement les ventes en ligne
+  const onlineOrders = orders.filter(order => order.source === 'online');
+  const filteredOnlineOrders = onlineOrders.filter(order => {
+    const matchesSearch = !searchTerm || 
+      order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
     if (updatingOrderId === orderId) {
       console.log('⏳ Update already in progress for order:', orderId);
@@ -477,12 +488,21 @@ export default function OrderManagement() {
     return actions;
   };
 
-  // Statistics
+  // Statistics - Toutes les commandes
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const processingOrders = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
   const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
   const totalRevenue = orders
+    .filter(o => o.payment_status === 'paid')
+    .reduce((sum, o) => sum + o.total_amount, 0);
+
+  // Statistics - Ventes en ligne uniquement
+  const totalOnlineOrders = onlineOrders.length;
+  const pendingOnlineOrders = onlineOrders.filter(o => o.status === 'pending').length;
+  const processingOnlineOrders = onlineOrders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
+  const deliveredOnlineOrders = onlineOrders.filter(o => o.status === 'delivered').length;
+  const totalOnlineRevenue = onlineOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
 
@@ -712,12 +732,254 @@ export default function OrderManagement() {
         </CardContent>
       </Card>
 
-      {/* Liste des commandes */}
+      {/* Tableau des Ventes en Ligne */}
+      <Card className="border-2 border-blue-200 bg-blue-50/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-700">
+            🌐 Ventes en Ligne ({filteredOnlineOrders.length})
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Commandes passées via l'interface du compte client
+          </p>
+        </CardHeader>
+        <CardContent>
+          {/* Statistiques Ventes en Ligne */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xl font-bold">{totalOnlineOrders}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-yellow-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">En attente</p>
+                    <p className="text-xl font-bold text-yellow-600">{pendingOnlineOrders}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-purple-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">En cours</p>
+                    <p className="text-xl font-bold text-purple-600">{processingOnlineOrders}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Livrées</p>
+                    <p className="text-xl font-bold text-green-600">{deliveredOnlineOrders}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-green-600" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">CA Online</p>
+                    <p className="text-lg font-bold">{totalOnlineRevenue.toLocaleString()} GNF</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Liste des commandes en ligne */}
+          <div className="space-y-4">
+            {filteredOnlineOrders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Aucune vente en ligne pour le moment</p>
+              </div>
+            ) : (
+              filteredOnlineOrders.map((order) => (
+                <div key={order.id} className="border-2 border-blue-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="font-bold text-xl text-blue-700">{order.order_number}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          ID: {order.id.slice(0, 8)}
+                        </Badge>
+                        <Badge className="bg-blue-500 text-white">
+                          🌐 Vente en ligne
+                        </Badge>
+                      </div>
+                      
+                      {/* Informations Client */}
+                      <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
+                        <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Informations Client
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Nom:</span>
+                            <span className="ml-2 font-semibold">
+                              {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                                ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
+                                : 'Client non identifié'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">ID Client:</span>
+                            <span className="ml-2 font-mono text-xs font-semibold">
+                              {order.customers?.user_id ? order.customers.user_id.slice(0, 8) : 'N/A'}
+                            </span>
+                          </div>
+                          {order.customers?.profiles?.phone && (
+                            <div>
+                              <span className="text-muted-foreground">Téléphone:</span>
+                              <span className="ml-2 font-semibold">{order.customers.profiles.phone}</span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-muted-foreground">Pays:</span>
+                            <span className="ml-2 font-semibold">
+                              {typeof order.shipping_address === 'object' && order.shipping_address !== null
+                                ? (order.shipping_address as any).country || 'Guinée'
+                                : 'Guinée'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Adresse de livraison détaillée */}
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div>
+                              <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
+                              <p className="font-medium text-sm">
+                                {typeof order.shipping_address === 'object' && order.shipping_address !== null
+                                  ? `${(order.shipping_address as any).address || (order.shipping_address as any).street || 'Adresse non spécifiée'}, ${(order.shipping_address as any).city || 'Conakry'}, ${(order.shipping_address as any).country || 'Guinée'}`
+                                  : 'Adresse non spécifiée'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Date de commande */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Commandé le {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={statusColors[order.status]}>
+                        {statusLabels[order.status]}
+                      </Badge>
+                      <Badge className={paymentStatusColors[order.payment_status]}>
+                        {paymentStatusLabels[order.payment_status]}
+                      </Badge>
+                      {order.escrow && (
+                        <Badge className={
+                          order.escrow.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                          order.escrow.status === 'released' ? 'bg-green-100 text-green-800' :
+                          order.escrow.status === 'refunded' ? 'bg-gray-100 text-gray-800' :
+                          'bg-red-100 text-red-800'
+                        }>
+                          <Shield className="w-3 h-3 mr-1" />
+                          {order.escrow.status === 'pending' && 'Escrow en attente'}
+                          {order.escrow.status === 'released' && 'Paiement reçu'}
+                          {order.escrow.status === 'refunded' && 'Remboursé'}
+                          {order.escrow.status === 'dispute' && 'Litige'}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Articles</p>
+                      <div className="text-sm">
+                        {order.order_items?.map((item, index) => (
+                          <div key={item.id}>
+                            {item.products.name} x{item.quantity}
+                            {index < (order.order_items?.length || 0) - 1 ? ', ' : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Montant total</p>
+                      <p className="text-xl font-bold text-blue-700">
+                        {order.total_amount.toLocaleString()} GNF
+                      </p>
+                      {order.discount_amount > 0 && (
+                        <p className="text-sm text-green-600">
+                          Remise: -{order.discount_amount.toLocaleString()} GNF
+                        </p>
+                      )}
+                      {order.escrow && order.escrow.status === 'pending' && (
+                        <div className="mt-2 flex items-center gap-1 text-xs text-orange-600">
+                          <Shield className="w-3 h-3" />
+                          <span>Fonds sécurisés en escrow</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
+                      <div className="text-sm text-muted-foreground">
+                        <CreditCard className="w-4 h-4 inline mr-1" />
+                        {order.payment_method || 'Non spécifié'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-4 flex-wrap">
+                    {getOrderStatusActions(order)}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOrder(order);
+                        setShowOrderDialog(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Détails
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Liste de toutes les commandes (Online + POS) */}
       <Card className="orders-list">
         <CardHeader>
           <CardTitle>
             {statusFilter === 'all' 
-              ? `Toutes les commandes (${filteredOrders.length})` 
+              ? `Toutes les commandes - Online + POS (${filteredOrders.length})` 
               : `Commandes ${statusLabels[statusFilter]?.toLowerCase() || statusFilter} (${filteredOrders.length})`
             }
           </CardTitle>
