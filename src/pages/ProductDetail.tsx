@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 
 interface Product {
   id: string;
@@ -36,12 +37,35 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
       loadProduct();
     }
   }, [id]);
+
+  useEffect(() => {
+    loadCustomerId();
+  }, []);
+
+  const loadCustomerId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      const { data } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data?.custom_id) {
+        setCustomerId(data.custom_id);
+      }
+    }
+  };
 
   const loadProduct = async () => {
     try {
@@ -76,7 +100,18 @@ export default function ProductDetail() {
       return;
     }
 
-    navigate(`/payment?productId=${product.id}&quantity=${quantity}`);
+    if (!customerId) {
+      toast.error('Erreur de chargement du profil');
+      return;
+    }
+
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success('Commande créée avec succès !');
+    setShowPaymentModal(false);
+    navigate('/client/dashboard');
   };
 
   const handleContact = async () => {
@@ -287,6 +322,25 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Modal de paiement */}
+      {product && customerId && userId && (
+        <ProductPaymentModal
+          open={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          cartItems={[{
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            vendorId: product.vendor_id,
+            quantity: quantity
+          }]}
+          totalAmount={product.price * quantity}
+          onPaymentSuccess={handlePaymentSuccess}
+          userId={userId}
+          customerId={customerId}
+        />
+      )}
     </div>
   );
 }
