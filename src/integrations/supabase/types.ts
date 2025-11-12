@@ -1980,6 +1980,187 @@ export type Database = {
         }
         Relationships: []
       }
+      dispute_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          details: Json | null
+          dispute_id: string
+          id: string
+          performed_by: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          details?: Json | null
+          dispute_id: string
+          id?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          details?: Json | null
+          dispute_id?: string
+          id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_actions_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispute_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          dispute_id: string
+          id: string
+          message: string
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          dispute_id: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          dispute_id?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_messages_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputes: {
+        Row: {
+          ai_analysis: Json | null
+          ai_confidence: number | null
+          ai_decision: string | null
+          ai_justification: string | null
+          arbitrated_at: string | null
+          auto_escalate_at: string | null
+          client_id: string
+          created_at: string | null
+          description: string
+          dispute_number: string
+          dispute_type: string
+          escalated_at: string | null
+          escrow_id: string | null
+          evidence_urls: Json | null
+          id: string
+          order_id: string
+          request_type: string
+          requested_amount: number | null
+          resolution: string | null
+          resolution_amount: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string | null
+          vendor_counter_offer: Json | null
+          vendor_id: string
+          vendor_response: string | null
+          vendor_response_date: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          ai_confidence?: number | null
+          ai_decision?: string | null
+          ai_justification?: string | null
+          arbitrated_at?: string | null
+          auto_escalate_at?: string | null
+          client_id: string
+          created_at?: string | null
+          description: string
+          dispute_number?: string
+          dispute_type: string
+          escalated_at?: string | null
+          escrow_id?: string | null
+          evidence_urls?: Json | null
+          id?: string
+          order_id: string
+          request_type: string
+          requested_amount?: number | null
+          resolution?: string | null
+          resolution_amount?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_counter_offer?: Json | null
+          vendor_id: string
+          vendor_response?: string | null
+          vendor_response_date?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          ai_confidence?: number | null
+          ai_decision?: string | null
+          ai_justification?: string | null
+          arbitrated_at?: string | null
+          auto_escalate_at?: string | null
+          client_id?: string
+          created_at?: string | null
+          description?: string
+          dispute_number?: string
+          dispute_type?: string
+          escalated_at?: string | null
+          escrow_id?: string | null
+          evidence_urls?: Json | null
+          id?: string
+          order_id?: string
+          request_type?: string
+          requested_amount?: number | null
+          resolution?: string | null
+          resolution_amount?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_counter_offer?: Json | null
+          vendor_id?: string
+          vendor_response?: string | null
+          vendor_response_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           commission_rate: number | null
@@ -9068,6 +9249,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      auto_escalate_disputes: { Args: never; Returns: undefined }
       auto_release_escrows: {
         Args: never
         Returns: {
