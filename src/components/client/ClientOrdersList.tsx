@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import VendorRatingDialog from './VendorRatingDialog';
 
 interface Order {
   id: string;
@@ -32,6 +33,7 @@ interface Order {
   payment_status: string;
   total_amount: number;
   created_at: string;
+  vendor_id: string;
   metadata?: any;
   vendors?: {
     business_name: string;
@@ -59,6 +61,8 @@ export default function ClientOrdersList() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in_progress' | 'delivered'>('all');
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingOrderData, setRatingOrderData] = useState<{ orderId: string; vendorId: string; vendorName: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -183,6 +187,14 @@ export default function ClientOrdersList() {
       toast.success('Livraison confirmée !', {
         description: 'Le vendeur a reçu le paiement'
       });
+
+      // Afficher la fenêtre de notation
+      setRatingOrderData({
+        orderId: selectedOrder.id,
+        vendorId: selectedOrder.vendor_id,
+        vendorName: selectedOrder.vendors?.business_name || 'ce vendeur'
+      });
+      setShowRatingDialog(true);
 
       // Recharger les commandes
       await loadOrders();
@@ -460,6 +472,20 @@ export default function ClientOrdersList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de notation du vendeur */}
+      {ratingOrderData && (
+        <VendorRatingDialog
+          open={showRatingDialog}
+          onOpenChange={setShowRatingDialog}
+          orderId={ratingOrderData.orderId}
+          vendorId={ratingOrderData.vendorId}
+          vendorName={ratingOrderData.vendorName}
+          onRatingSubmitted={() => {
+            setRatingOrderData(null);
+          }}
+        />
+      )}
     </>
   );
 }
