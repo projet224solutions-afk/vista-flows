@@ -10742,7 +10742,12 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "processing"
-      payment_method: "mobile_money" | "card" | "cash" | "bank_transfer"
+      payment_method:
+        | "mobile_money"
+        | "card"
+        | "cash"
+        | "bank_transfer"
+        | "wallet"
       payment_method_type:
         | "card"
         | "wallet"
@@ -10937,7 +10942,13 @@ export const Constants = {
         "completed",
         "processing",
       ],
-      payment_method: ["mobile_money", "card", "cash", "bank_transfer"],
+      payment_method: [
+        "mobile_money",
+        "card",
+        "cash",
+        "bank_transfer",
+        "wallet",
+      ],
       payment_method_type: [
         "card",
         "wallet",
