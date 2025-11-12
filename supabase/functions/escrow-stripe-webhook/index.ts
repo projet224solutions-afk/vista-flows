@@ -137,7 +137,7 @@ serve(async (req) => {
 
         // Send notification to buyer
         await supabase.from("communication_notifications").insert({
-          user_id: escrow.buyer_id,
+          user_id: escrow.payer_id,
           type: "escrow_failed",
           title: "Paiement échoué",
           body: `Le paiement de ${escrow.amount} ${escrow.currency} a échoué. Veuillez réessayer.`,

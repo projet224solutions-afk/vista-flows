@@ -197,9 +197,9 @@ serve(async (req) => {
 
     console.log(`✅ Escrow refunded: ${escrow_id}`);
 
-    // Send notification to buyer
+    // Send notification to payer (buyer)
     await supabase.from("communication_notifications").insert({
-      user_id: escrow.buyer_id,
+      user_id: escrow.payer_id,
       type: "escrow_refunded",
       title: "Remboursement effectué",
       body: `Remboursement effectué par 224SOLUTIONS : ${escrow.amount} ${escrow.currency}. Raison: ${reason}`,
@@ -211,9 +211,9 @@ serve(async (req) => {
       },
     });
 
-    // Send notification to seller
+    // Send notification to receiver (seller)
     await supabase.from("communication_notifications").insert({
-      user_id: escrow.seller_id,
+      user_id: escrow.receiver_id,
       type: "escrow_refunded",
       title: "Transaction remboursée",
       body: `La transaction de ${escrow.amount} ${escrow.currency} a été remboursée au client. Raison: ${reason}`,
