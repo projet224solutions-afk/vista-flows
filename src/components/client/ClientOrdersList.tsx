@@ -77,7 +77,7 @@ export default function ClientOrdersList() {
 
       if (!customer) return;
 
-      // Récupérer les commandes
+      // Récupérer uniquement les commandes en ligne (pas POS)
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -89,6 +89,7 @@ export default function ClientOrdersList() {
           )
         `)
         .eq('customer_id', customer.id)
+        .eq('source', 'online')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
