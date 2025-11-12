@@ -206,6 +206,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
      * Ajoute un nouveau véhicule dans Supabase
      */
     const addVehicle = async () => {
+        console.log('[VehicleAdd] Début ajout véhicule:', formData);
+        
         if (!formData.serial_number || !formData.license_plate) {
             toast.error('Veuillez remplir le numéro de série et la plaque d\'immatriculation');
             return;
@@ -223,6 +225,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             let memberName = formData.owner_name;
             
             if (!memberId && formData.owner_name) {
+                console.log('[VehicleAdd] Création nouveau membre:', formData.owner_name);
+                
                 // Créer un nouveau membre dans syndicate_workers
                 const { data: newMember, error: memberError } = await supabase
                     .from('syndicate_workers')
@@ -239,22 +243,30 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     .select()
                     .single();
                 
-                if (memberError) throw memberError;
+                if (memberError) {
+                    console.error('[VehicleAdd] Erreur création membre:', memberError);
+                    throw new Error(`Erreur création membre: ${memberError.message}`);
+                }
+                
                 memberId = newMember.id;
                 memberName = newMember.nom;
+                console.log('[VehicleAdd] Membre créé:', memberId);
             } else if (memberId) {
                 // Récupérer le nom du membre existant
                 const member = members.find(m => m.id === memberId);
                 memberName = member?.name || formData.owner_name;
+                console.log('[VehicleAdd] Membre existant:', memberId, memberName);
             }
             
             if (!memberId) {
+                console.error('[VehicleAdd] Aucun membre valide');
                 toast.error('Erreur: Aucun membre valide');
                 return;
             }
 
             // Générer un badge ID unique
             const badgeId = generateBadgeId();
+            const currentDate = new Date().toISOString();
             
             // Générer les données QR code
             const qrCodeData = JSON.stringify({
@@ -264,7 +276,15 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 owner: memberName,
                 bureau: bureauId,
                 type: formData.vehicle_type,
-                issued_date: new Date().toISOString()
+                issued_date: currentDate
+            });
+
+            console.log('[VehicleAdd] Insertion véhicule dans Supabase:', {
+                bureau_id: bureauId,
+                owner_member_id: memberId,
+                serial_number: formData.serial_number,
+                license_plate: formData.license_plate,
+                digital_badge_id: badgeId
             });
 
             // Insérer le véhicule dans vehicles
@@ -282,13 +302,19 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     color: formData.color || null,
                     digital_badge_id: badgeId,
                     qr_code_data: qrCodeData,
+                    badge_generated_at: currentDate,
                     status: 'active',
                     verified: false
                 })
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('[VehicleAdd] Erreur insertion Supabase:', error);
+                throw new Error(`Erreur BD: ${error.message}`);
+            }
+            
+            console.log('[VehicleAdd] Véhicule créé avec succès:', data);
 
             // Réinitialiser le formulaire
             setFormData({
