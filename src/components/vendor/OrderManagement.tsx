@@ -133,6 +133,7 @@ export default function OrderManagement() {
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeView, setActiveView] = useState<'pos' | 'online'>('pos');
+  const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
 
   useEffect(() => {
     if (!user) return;
@@ -885,7 +886,10 @@ export default function OrderManagement() {
         <CardContent>
           {/* Statistiques Ventes En Ligne - Compte Client */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card className="bg-white/80">
+            <Card 
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => setOnlineStatusFilter('all')}
+            >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
                 <p className="text-3xl font-bold text-blue-700">
@@ -893,7 +897,10 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/80">
+            <Card 
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'pending' ? 'ring-2 ring-yellow-500' : ''}`}
+              onClick={() => setOnlineStatusFilter('pending')}
+            >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">En attente</p>
                 <p className="text-2xl font-bold text-yellow-600">
@@ -901,7 +908,10 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/80">
+            <Card 
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'processing' ? 'ring-2 ring-blue-500' : ''}`}
+              onClick={() => setOnlineStatusFilter('processing')}
+            >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">En cours</p>
                 <p className="text-2xl font-bold text-blue-600">
@@ -909,7 +919,10 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/80">
+            <Card 
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'delivered' ? 'ring-2 ring-green-500' : ''}`}
+              onClick={() => setOnlineStatusFilter('delivered')}
+            >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">Livrées</p>
                 <p className="text-2xl font-bold text-green-600">
@@ -921,13 +934,30 @@ export default function OrderManagement() {
 
           {/* Liste des ventes En Ligne */}
           <div className="space-y-4">
-            {onlineOrders.length === 0 ? (
+            {onlineOrders.filter(order => {
+              if (onlineStatusFilter === 'all') return true;
+              if (onlineStatusFilter === 'pending') return order.status === 'pending';
+              if (onlineStatusFilter === 'processing') return order.status === 'processing';
+              if (onlineStatusFilter === 'delivered') return order.status === 'delivered';
+              return true;
+            }).length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune vente en ligne pour le moment</p>
+                <p>
+                  {onlineStatusFilter === 'all' 
+                    ? 'Aucune vente en ligne pour le moment'
+                    : `Aucune commande ${onlineStatusFilter === 'pending' ? 'en attente' : onlineStatusFilter === 'processing' ? 'en cours' : 'livrée'}`
+                  }
+                </p>
               </div>
             ) : (
-              onlineOrders.map((order) => (
+              onlineOrders.filter(order => {
+                if (onlineStatusFilter === 'all') return true;
+                if (onlineStatusFilter === 'pending') return order.status === 'pending';
+                if (onlineStatusFilter === 'processing') return order.status === 'processing';
+                if (onlineStatusFilter === 'delivered') return order.status === 'delivered';
+                return true;
+              }).map((order) => (
                 <div key={order.id} className="border-2 border-blue-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
