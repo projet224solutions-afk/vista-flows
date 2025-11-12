@@ -110,7 +110,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const loadMembers = async () => {
         try {
             const { data, error } = await supabase
-                .from('members')
+                .from('syndicate_members')
                 .select('id, name')
                 .eq('bureau_id', bureauId)
                 .eq('status', 'active');
@@ -135,10 +135,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             setLoading(true);
             
             const { data, error } = await supabase
-                .from('vehicles')
+                .from('syndicate_vehicles')
                 .select(`
                     *,
-                    owner:members!owner_member_id(id, name)
+                    owner:syndicate_members!member_id(id, name)
                 `)
                 .eq('bureau_id', bureauId)
                 .order('created_at', { ascending: false });
@@ -147,17 +147,20 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
             const formattedVehicles: SyndicateVehicle[] = (data || []).map(v => ({
                 id: v.id,
-                member_id: v.owner_member_id || '',
+                member_id: v.member_id || '',
                 member_name: v.owner?.name || 'N/A',
                 serial_number: v.serial_number || '',
-                license_plate: v.serial_number || '',
-                vehicle_type: (v.type?.toLowerCase() || 'motorcycle') as SyndicateVehicle['vehicle_type'],
+                license_plate: v.license_plate || v.serial_number || '',
+                vehicle_type: (v.vehicle_type?.toLowerCase() || 'motorcycle') as SyndicateVehicle['vehicle_type'],
                 brand: v.brand || undefined,
                 model: v.model || undefined,
                 year: v.year || undefined,
-                color: undefined,
-                digital_badge_id: `BDG-${v.id?.substring(0, 8)}`,
-                qr_code_data: JSON.stringify({
+                color: v.color || undefined,
+                registration_document_url: v.registration_document_url || undefined,
+                insurance_document_url: v.insurance_document_url || undefined,
+                technical_control_url: v.technical_control_url || undefined,
+                digital_badge_id: v.digital_badge_id || `BDG-${v.id?.substring(0, 8)}`,
+                qr_code_data: v.qr_code_data || JSON.stringify({
                     vehicle_id: v.id,
                     serial_number: v.serial_number,
                     owner: v.owner?.name,
@@ -165,9 +168,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     issued_date: v.created_at
                 }),
                 status: (v.status || 'active') as SyndicateVehicle['status'],
-                verified: true,
-                verified_at: v.created_at,
-                badge_generated_at: v.created_at,
+                verified: v.verified || false,
+                verified_at: v.verified_at,
+                badge_generated_at: v.badge_generated_at || v.created_at,
                 created_at: v.created_at
             }));
 
@@ -198,11 +201,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         try {
             // Chercher ou créer le membre
             let memberId = formData.member_id;
+            let memberName = formData.owner_name;
             
             if (!memberId && formData.owner_name) {
-                // Créer un nouveau membre
+                // Créer un nouveau membre dans syndicate_members
                 const { data: newMember, error: memberError } = await supabase
-                    .from('members')
+                    .from('syndicate_members')
                     .insert({
                         bureau_id: bureauId,
                         name: formData.owner_name,
@@ -213,6 +217,11 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 
                 if (memberError) throw memberError;
                 memberId = newMember.id;
+                memberName = newMember.name;
+            } else if (memberId) {
+                // Récupérer le nom du membre existant
+                const member = members.find(m => m.id === memberId);
+                memberName = member?.name || formData.owner_name;
             }
             
             if (!memberId) {
@@ -220,18 +229,37 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 return;
             }
 
-            // Insérer le véhicule dans Supabase
+            // Générer un badge ID unique
+            const badgeId = generateBadgeId();
+            
+            // Générer les données QR code
+            const qrCodeData = JSON.stringify({
+                vehicle_id: `TMP-${Date.now()}`,
+                serial_number: formData.serial_number,
+                license_plate: formData.license_plate,
+                owner: memberName,
+                bureau: bureauId,
+                type: formData.vehicle_type,
+                issued_date: new Date().toISOString()
+            });
+
+            // Insérer le véhicule dans syndicate_vehicles (pas vehicles)
             const { data, error } = await supabase
-                .from('vehicles')
+                .from('syndicate_vehicles')
                 .insert({
                     bureau_id: bureauId,
-                    owner_member_id: memberId,
+                    member_id: memberId,
                     serial_number: formData.serial_number,
-                    type: formData.vehicle_type,
+                    license_plate: formData.license_plate,
+                    vehicle_type: formData.vehicle_type,
                     brand: formData.brand || null,
                     model: formData.model || null,
                     year: formData.year ? parseInt(formData.year) : null,
-                    status: 'active'
+                    color: formData.color || null,
+                    digital_badge_id: badgeId,
+                    qr_code_data: qrCodeData,
+                    status: 'active',
+                    verified: false
                 })
                 .select()
                 .single();
@@ -298,8 +326,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const verifyVehicle = async (vehicleId: string) => {
         try {
             const { error } = await supabase
-                .from('vehicles')
-                .update({ status: 'active' })
+                .from('syndicate_vehicles')
+                .update({ 
+                    verified: true,
+                    verified_at: new Date().toISOString(),
+                    status: 'active' 
+                })
                 .eq('id', vehicleId);
 
             if (error) throw error;
@@ -318,7 +350,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const suspendVehicle = async (vehicleId: string) => {
         try {
             const { error } = await supabase
-                .from('vehicles')
+                .from('syndicate_vehicles')
                 .update({ status: 'suspended' })
                 .eq('id', vehicleId);
 
