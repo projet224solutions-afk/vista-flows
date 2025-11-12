@@ -99,6 +99,9 @@ export function usePDGStats() {
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+      console.log('[PDG Stats] Début chargement des statistiques...');
+      console.log('[PDG Stats] Date du premier jour du mois:', firstDayOfMonth.toISOString());
+
       // Requêtes parallèles pour performance
       const [
         profilesRes,
@@ -154,6 +157,10 @@ export function usePDGStats() {
         supabase.from('bureaus').select('id, validated_at', { count: 'exact' })
       ]);
 
+      console.log('[PDG Stats] Commandes totales:', ordersRes.count);
+      console.log('[PDG Stats] Commandes ce mois:', ordersThisMonthRes.count);
+      console.log('[PDG Stats] Commandes mois dernier:', ordersLastMonthRes.count);
+
       // Calculer les statistiques
       const totalUsers = profilesRes.count || 0;
       const newUsersThisMonth = profilesRes.data?.filter(p => 
@@ -175,6 +182,13 @@ export function usePDGStats() {
       const ordersGrowth = ordersLastMonth > 0
         ? ((ordersThisMonth - ordersLastMonth) / ordersLastMonth * 100)
         : 0;
+
+      console.log('[PDG Stats] Statistiques finales commandes:', {
+        totalOrders,
+        ordersThisMonth,
+        ordersLastMonth,
+        ordersGrowth: Math.round(ordersGrowth * 10) / 10
+      });
 
       // Revenue
       const completedTransactions = transactionsRes.data || [];
@@ -215,7 +229,7 @@ export function usePDGStats() {
       // Taux de conversion (commandes / utilisateurs)
       const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers * 100) : 0;
 
-      setStats({
+      const finalStats = {
         totalUsers,
         activeUsers: totalUsers, // Pour l'instant tous actifs
         newUsersThisMonth,
@@ -243,7 +257,10 @@ export function usePDGStats() {
         pendingValidations: pendingOrders,
         loading: false,
         error: null
-      });
+      };
+
+      console.log('[PDG Stats] Stats finales calculées:', finalStats);
+      setStats(finalStats);
     } catch (error: any) {
       console.error('Erreur chargement stats PDG:', error);
       setStats(prev => ({
