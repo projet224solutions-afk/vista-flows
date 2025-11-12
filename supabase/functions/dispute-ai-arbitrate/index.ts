@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       weights.response * response_score +
       weights.escrow * escrow_score;
 
-    const confidence = Math.min(0.98, Math.max(0.3, final_score));
+    let confidence = Math.min(0.98, Math.max(0.3, final_score));
 
     const analysis = {
       evidence_score,
