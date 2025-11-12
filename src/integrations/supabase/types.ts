@@ -2243,6 +2243,9 @@ export type Database = {
           released_by: string | null
           seller_id: string | null
           status: string | null
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
           transaction_id: string | null
           updated_at: string | null
         }
@@ -2269,6 +2272,9 @@ export type Database = {
           released_by?: string | null
           seller_id?: string | null
           status?: string | null
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
         }
@@ -2295,6 +2301,9 @@ export type Database = {
           released_by?: string | null
           seller_id?: string | null
           status?: string | null
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
         }
