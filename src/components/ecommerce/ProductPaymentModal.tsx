@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Escrow224Service } from "@/services/escrow224Service";
+import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 
 export type ProductPaymentMethod = 'wallet' | 'cash';
 
@@ -282,13 +283,19 @@ export default function ProductPaymentModal({
             amount: vendorTotal
           });
 
-          // Initier l'escrow - bloque les fonds dans le système via le service Escrow224
-          const escrowResult = await Escrow224Service.createEscrow({
+          // Initier l'escrow via le service universel
+          const escrowResult = await UniversalEscrowService.createEscrow({
             buyer_id: userId,
             seller_id: vendorData.user_id,
             order_id: orderData.id,
             amount: vendorTotal,
-            currency: 'GNF'
+            currency: 'GNF',
+            transaction_type: 'product',
+            payment_provider: 'wallet',
+            metadata: {
+              product_ids: items.map(i => i.id),
+              description: `Achat produits (${items.length} articles)`
+            }
           });
 
           if (!escrowResult.success) {
