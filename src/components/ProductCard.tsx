@@ -22,6 +22,7 @@ interface ProductCardProps {
   reviewCount: number;
   isPremium?: boolean;
   onBuy?: () => void;
+  onAddToCart?: () => void;
   onContact?: () => void;
 }
 
@@ -35,6 +36,7 @@ export default function ProductCard({
   reviewCount,
   isPremium,
   onBuy,
+  onAddToCart,
   onContact
 }: ProductCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -138,8 +140,15 @@ export default function ProductCard({
             className="flex-1 bg-primary hover:bg-primary/90 text-white glow-on-hover font-inter font-medium border-0 shadow-lg"
             size="sm"
           >
-            <ShoppingCart className="w-4 h-4 mr-2" />
             Acheter
+          </Button>
+          <Button 
+            onClick={onAddToCart}
+            variant="outline" 
+            size="sm"
+            className="border-primary/30 hover:bg-primary/10 hover:border-primary text-foreground"
+          >
+            <ShoppingCart className="w-4 h-4" />
           </Button>
           <Button 
             onClick={onContact}
