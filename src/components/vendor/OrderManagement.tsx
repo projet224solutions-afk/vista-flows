@@ -132,7 +132,7 @@ export default function OrderManagement() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeView, setActiveView] = useState<'pos' | 'online' | null>(null);
+  const [activeView, setActiveView] = useState<'pos' | 'online'>('pos');
 
   useEffect(() => {
     if (!user) return;
