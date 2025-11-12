@@ -250,12 +250,12 @@ export default function ProductDetail() {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <Button onClick={handleBuy} className="flex-1" size="lg">
-                <ShoppingCart className="w-5 h-5 mr-2" />
+              <Button onClick={handleBuy} className="flex-1">
+                <ShoppingCart className="w-4 h-4 mr-2" />
                 Acheter
               </Button>
-              <Button onClick={handleContact} variant="outline" size="lg">
-                <MessageCircle className="w-5 h-5" />
+              <Button onClick={handleContact} variant="outline">
+                <MessageCircle className="w-4 h-4" />
               </Button>
             </div>
 

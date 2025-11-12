@@ -238,7 +238,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-3xl font-bold text-primary">
-                  {product.price.toLocaleString('fr-GN')} GNF
+                  {product.price.toLocaleString()} GNF
                 </span>
                 <Badge variant="secondary">En stock</Badge>
               </div>
@@ -286,7 +286,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="bg-accent p-4 rounded-lg">
               <div className="flex items-center justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="text-primary">{(product.price * quantity).toLocaleString('fr-GN')} GNF</span>
+                <span className="text-primary">{(product.price * quantity).toLocaleString()} GNF</span>
               </div>
             </div>
 
@@ -294,19 +294,17 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="space-y-2">
               <Button 
                 className="w-full" 
-                size="lg"
                 onClick={handleBuy}
               >
-                <ShoppingCart className="w-5 h-5 mr-2" />
+                <ShoppingCart className="w-4 h-4 mr-2" />
                 Acheter maintenant
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full" 
-                size="lg"
                 onClick={handleContact}
               >
-                <MessageCircle className="w-5 h-5 mr-2" />
+                <MessageCircle className="w-4 h-4 mr-2" />
                 Contacter le vendeur
               </Button>
             </div>
