@@ -30,6 +30,15 @@ export interface EscrowTransaction {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  receiver?: {
+    id: string;
+    business_name: string;
+    user_id: string;
+  };
+  order?: {
+    id: string;
+    order_number: string;
+  };
 }
 
 export function useEscrowTransactions() {
@@ -41,17 +50,44 @@ export function useEscrowTransactions() {
   const loadTransactions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Charger les transactions escrow
+      const { data: escrowData, error: escrowError } = await supabase
         .from('escrow_transactions')
         .select('*')
         .order('created_at', { ascending: false});
 
-      if (error) throw error;
-      setTransactions((data || []) as EscrowTransaction[]);
+      if (escrowError) throw escrowError;
+      
+      // Charger les informations des vendeurs et commandes pour chaque transaction
+      const enrichedData = await Promise.all((escrowData || []).map(async (transaction) => {
+        // Charger les infos du vendeur
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, business_name, user_id')
+          .eq('id', transaction.receiver_id)
+          .maybeSingle();
+        
+        // Charger les infos de la commande
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('id, order_number')
+          .eq('id', transaction.order_id)
+          .maybeSingle();
+        
+        return {
+          ...transaction,
+          receiver: vendorData || undefined,
+          order: orderData || undefined
+        };
+      }));
+      
+      setTransactions(enrichedData as EscrowTransaction[]);
       setError(null);
     } catch (err: any) {
       setError(err.message);
       toast.error('Erreur lors du chargement des transactions escrow');
+      console.error('Erreur chargement escrow:', err);
     } finally {
       setLoading(false);
     }

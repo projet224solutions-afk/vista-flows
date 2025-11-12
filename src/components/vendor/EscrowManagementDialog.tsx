@@ -131,7 +131,9 @@ export default function EscrowManagementDialog({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium">
-                              Commande: {transaction.order_id}
+                              {transaction.order?.order_number 
+                                ? `Commande: ${transaction.order.order_number}` 
+                                : `ID: ${transaction.order_id.slice(0, 8)}...`}
                             </h4>
                             <Badge className={config.className}>
                               <StatusIcon className="w-3 h-3 mr-1" />
@@ -149,14 +151,25 @@ export default function EscrowManagementDialog({
                               </p>
                             </div>
                             <div>
-                              <p>Créé le: {new Date(transaction.created_at).toLocaleString('fr-FR', {
+                              <p>ID Transaction:</p>
+                              <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                                {transaction.id.slice(0, 16)}...
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 text-sm text-muted-foreground grid grid-cols-2 gap-2">
+                            <div>
+                              ⏰ Créé: {new Date(transaction.created_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
-                              })}</p>
-                              <p>Mis à jour: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
+                              })}
+                            </div>
+                            <div>
+                              🔄 Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
-                              })}</p>
+                              })}
                             </div>
                           </div>
                         </div>

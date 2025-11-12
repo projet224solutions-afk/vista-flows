@@ -305,53 +305,78 @@ export default function PDGEscrowManagement() {
                     <Card key={transaction.id} className="border-2 hover:shadow-lg transition-all">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
-                              <h4 className="font-bold text-lg">
-                                Commande: {transaction.order_id}
-                              </h4>
-                              <Badge className={config.className}>
-                                <StatusIcon className="w-3 h-3 mr-1" />
-                                {config.label}
-                              </Badge>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <h4 className="font-bold text-lg">
+                              {transaction.order?.order_number 
+                                ? `Commande: ${transaction.order.order_number}` 
+                                : `ID: ${transaction.order_id.slice(0, 8)}...`}
+                            </h4>
+                            <Badge className={config.className}>
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {config.label}
+                            </Badge>
+                          </div>
+                          
+                          {/* Informations Vendeur */}
+                          {transaction.receiver && (
+                            <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3 mb-3">
+                              <h5 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                🏪 Informations Vendeur
+                              </h5>
+                              <div className="text-sm space-y-1">
+                                <p>
+                                  <span className="text-muted-foreground">Nom:</span>{' '}
+                                  <span className="font-semibold text-foreground">
+                                    {transaction.receiver.business_name || 'Non spécifié'}
+                                  </span>
+                                </p>
+                                <p>
+                                  <span className="text-muted-foreground">ID Vendeur:</span>{' '}
+                                  <span className="font-mono text-xs bg-white px-2 py-0.5 rounded">
+                                    {transaction.receiver.id.slice(0, 12)}...
+                                  </span>
+                                </p>
+                              </div>
                             </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-1">Montant</p>
-                                <p className="text-xl font-bold text-foreground">
-                                  {transaction.amount.toLocaleString()} {transaction.currency}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-1">Commission</p>
-                                <p className="font-semibold text-foreground">
-                                  {transaction.commission_percent}% ({transaction.commission_amount.toLocaleString()} {transaction.currency})
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-1">ID Transaction</p>
-                                <p className="text-xs font-mono bg-background px-2 py-1 rounded">
-                                  {transaction.id.slice(0, 16)}...
-                                </p>
-                              </div>
+                          )}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-1">Montant</p>
+                              <p className="text-xl font-bold text-foreground">
+                                {transaction.amount.toLocaleString()} {transaction.currency}
+                              </p>
                             </div>
-
-                            <div className="mt-3 text-sm text-muted-foreground grid grid-cols-2 gap-2">
-                              <div>
-                                ⏰ Créé: {new Date(transaction.created_at).toLocaleString('fr-FR', {
-                                  dateStyle: 'short',
-                                  timeStyle: 'short'
-                                })}
-                              </div>
-                              <div>
-                                🔄 Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
-                                  dateStyle: 'short',
-                                  timeStyle: 'short'
-                                })}
-                              </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-1">Commission</p>
+                              <p className="font-semibold text-foreground">
+                                {transaction.commission_percent}% ({transaction.commission_amount.toLocaleString()} {transaction.currency})
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-1">ID Transaction</p>
+                              <p className="text-xs font-mono bg-background px-2 py-1 rounded">
+                                {transaction.id.slice(0, 16)}...
+                              </p>
                             </div>
                           </div>
+
+                          <div className="mt-3 text-sm text-muted-foreground grid grid-cols-2 gap-2">
+                            <div>
+                              ⏰ Créé: {new Date(transaction.created_at).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}
+                            </div>
+                            <div>
+                              🔄 Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}
+                            </div>
+                          </div>
+                        </div>
 
                           {isAdmin && (transaction.status === 'pending' || transaction.status === 'held') && (
                             <div className="flex flex-col gap-2 ml-6">
