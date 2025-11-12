@@ -32,7 +32,7 @@ const categories: NavCategory[] = [
     color: 'from-emerald-500 to-emerald-600',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
-      { value: 'escrow', label: 'Gestion Escrow', icon: Shield },
+      { value: 'escrow', label: 'Gestion Escrow', icon: Shield, badge: true },
     ]
   },
   {
