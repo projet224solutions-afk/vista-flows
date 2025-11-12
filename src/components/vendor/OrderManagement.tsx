@@ -132,6 +132,7 @@ export default function OrderManagement() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeView, setActiveView] = useState<'pos' | 'online' | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -579,7 +580,10 @@ export default function OrderManagement() {
         <Card 
           className="border-2 border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
           onClick={() => {
-            document.querySelector('.pos-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActiveView('pos');
+            setTimeout(() => {
+              document.querySelector('.pos-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
           }}
         >
           <CardHeader>
@@ -630,7 +634,10 @@ export default function OrderManagement() {
         <Card 
           className="border-2 border-blue-300 bg-blue-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
           onClick={() => {
-            document.querySelector('.online-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActiveView('online');
+            setTimeout(() => {
+              document.querySelector('.online-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
           }}
         >
           <CardHeader>
@@ -708,7 +715,8 @@ export default function OrderManagement() {
 
 
       {/* Tableau des Ventes POS */}
-      <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
+      {activeView === 'pos' && (
+        <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-purple-700">
             🛒 Ventes POS ({orders.filter(o => o.source === 'pos').length})
@@ -873,9 +881,11 @@ export default function OrderManagement() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Section des Ventes En Ligne */}
-      <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
+      {activeView === 'online' && (
+        <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
             🌐 Ventes En Ligne ({onlineOrders.length})
@@ -1065,6 +1075,7 @@ export default function OrderManagement() {
           </div>
         </CardContent>
       </Card>
+      )}
 
 
       {/* Dialog des détails de commande */}
