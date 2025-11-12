@@ -11,8 +11,9 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { 
   Package, CheckCircle, Clock, Truck, XCircle, 
-  Shield, AlertCircle, Loader2
+  Shield, AlertCircle, Loader2, ListFilter
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,10 +58,32 @@ export default function ClientOrdersList() {
   const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in_progress' | 'delivered'>('all');
 
   useEffect(() => {
     if (user) {
       loadOrders();
+      
+      // Configurer l'écoute en temps réel pour les nouvelles commandes
+      const channel = supabase
+        .channel('client-orders-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders'
+          },
+          (payload) => {
+            console.log('🔄 Mise à jour en temps réel des commandes:', payload);
+            loadOrders(); // Recharger les commandes
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -233,6 +256,29 @@ export default function ClientOrdersList() {
     );
   }
 
+  // Filtrer les commandes selon le filtre actif
+  const getFilteredOrders = () => {
+    if (activeFilter === 'all') return orders;
+    if (activeFilter === 'pending') {
+      // En attente = pending, confirmed, preparing, ready
+      return orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status));
+    }
+    if (activeFilter === 'in_progress') {
+      // En cours = in_transit
+      return orders.filter(o => o.status === 'in_transit');
+    }
+    if (activeFilter === 'delivered') {
+      // Livrées = delivered
+      return orders.filter(o => o.status === 'delivered');
+    }
+    return orders;
+  };
+
+  const filteredOrders = getFilteredOrders();
+  const pendingCount = orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)).length;
+  const inProgressCount = orders.filter(o => o.status === 'in_transit').length;
+  const deliveredCount = orders.filter(o => o.status === 'delivered').length;
+
   if (orders.length === 0) {
     return (
       <Card>
@@ -246,8 +292,65 @@ export default function ClientOrdersList() {
 
   return (
     <>
-      <div className="space-y-4">
-        {orders.map((order) => {
+      {/* Boutons de filtrage */}
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <ListFilter className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold">Filtrer mes commandes</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={activeFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('all')}
+              className="flex items-center gap-2"
+            >
+              <Package className="w-4 h-4" />
+              Toutes ({orders.length})
+            </Button>
+            <Button
+              variant={activeFilter === 'pending' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('pending')}
+              className="flex items-center gap-2"
+            >
+              <Clock className="w-4 h-4" />
+              En attente ({pendingCount})
+            </Button>
+            <Button
+              variant={activeFilter === 'in_progress' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('in_progress')}
+              className="flex items-center gap-2"
+            >
+              <Truck className="w-4 h-4" />
+              En cours ({inProgressCount})
+            </Button>
+            <Button
+              variant={activeFilter === 'delivered' ? 'default' : 'outline'}
+              onClick={() => setActiveFilter('delivered')}
+              className="flex items-center gap-2"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Livrées ({deliveredCount})
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Liste des commandes filtrées */}
+      {filteredOrders.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              {activeFilter === 'pending' && 'Aucune commande en attente actuellement'}
+              {activeFilter === 'in_progress' && 'Aucune commande en cours actuellement'}
+              {activeFilter === 'delivered' && 'Aucune commande livrée actuellement'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredOrders.map((order) => {
           const escrow = escrows[order.id];
           const canConfirmDelivery = order.status === 'in_transit' && escrow?.status === 'pending';
 
@@ -334,7 +437,8 @@ export default function ClientOrdersList() {
             </Card>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Dialog de confirmation */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
