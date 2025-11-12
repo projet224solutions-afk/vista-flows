@@ -883,30 +883,38 @@ export default function OrderManagement() {
           </p>
         </CardHeader>
         <CardContent>
-          {/* Statistiques Ventes En Ligne */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          {/* Statistiques Ventes En Ligne - Compte Client */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card className="bg-white/80">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4 text-blue-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total vente</p>
-                    <p className="text-xl font-bold">{onlineOrders.length}</p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {totalOnlineOrders}
+                </p>
               </CardContent>
             </Card>
             <Card className="bg-white/80">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-green-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">CA En Ligne</p>
-                    <p className="text-lg font-bold">
-                      {totalOnlineRevenue.toLocaleString()} GNF
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground mb-1">En cours</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground mb-1">En attente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingOnlineOrders}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/80">
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {deliveredOnlineOrders}
+                </p>
               </CardContent>
             </Card>
           </div>
