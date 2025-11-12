@@ -59,6 +59,7 @@ export default function ProductManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [lowStockFilter, setLowStockFilter] = useState(false);
+  const [generatingCategory, setGeneratingCategory] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -70,6 +71,7 @@ export default function ProductManagement() {
     stock_quantity: '',
     low_stock_threshold: '10',
     category_id: '',
+    category_name: '',
     weight: '',
     tags: '',
     is_active: true
@@ -229,13 +231,53 @@ export default function ProductManagement() {
         barcode: formData.barcode || null,
         stock_quantity: parseInt(formData.stock_quantity),
         low_stock_threshold: parseInt(formData.low_stock_threshold),
-        category_id: formData.category_id || null,
+        category_id: null as string | null,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         is_active: formData.is_active,
         vendor_id: vendor.id,
         images: imageUrls.length > 0 ? imageUrls : null
       };
+
+      // Gérer la catégorie : chercher ou créer si nécessaire
+      if (formData.category_name) {
+        // Chercher si la catégorie existe déjà
+        const { data: existingCategory } = await supabase
+          .from('categories')
+          .select('id')
+          .ilike('name', formData.category_name.trim())
+          .maybeSingle();
+
+        if (existingCategory) {
+          productData.category_id = existingCategory.id;
+        } else {
+          // Créer la nouvelle catégorie
+          const { data: newCategory, error: categoryError } = await supabase
+            .from('categories')
+            .insert([{ 
+              name: formData.category_name.trim(), 
+              is_active: true 
+            }])
+            .select('id')
+            .single();
+
+          if (categoryError) {
+            console.error('Erreur création catégorie:', categoryError);
+            // Continuer sans catégorie si échec
+          } else if (newCategory) {
+            productData.category_id = newCategory.id;
+            // Recharger les catégories
+            const { data: updatedCategories } = await supabase
+              .from('categories')
+              .select('id, name, is_active')
+              .eq('is_active', true)
+              .order('name');
+            if (updatedCategories) setCategories(updatedCategories);
+          }
+        }
+      } else if (formData.category_id) {
+        productData.category_id = formData.category_id;
+      }
 
       console.log('Données produit à sauvegarder:', productData);
 
@@ -368,6 +410,7 @@ export default function ProductManagement() {
       stock_quantity: '',
       low_stock_threshold: '10',
       category_id: '',
+      category_name: '',
       weight: '',
       tags: '',
       is_active: true
@@ -418,9 +461,8 @@ export default function ProductManagement() {
       setGeneratingDescription(true);
       
       // Trouver le nom de la catégorie
-      const categoryName = formData.category_id 
-        ? categories.find(c => c.id === formData.category_id)?.name 
-        : undefined;
+      const categoryName = formData.category_name || 
+        (formData.category_id ? categories.find(c => c.id === formData.category_id)?.name : undefined);
 
       const { data, error } = await supabase.functions.invoke('generate-product-description', {
         body: {
@@ -459,6 +501,86 @@ export default function ProductManagement() {
     }
   };
 
+  const generateCategory = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingCategory(true);
+      
+      // Utiliser l'IA pour suggérer une catégorie pertinente
+      const { data, error } = await supabase.functions.invoke('generate-product-description', {
+        body: {
+          productName: formData.name,
+          category: 'Générer une catégorie appropriée pour ce produit',
+          price: formData.price
+        }
+      });
+
+      if (error) {
+        if (error.message.includes('429')) {
+          throw new Error('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
+        }
+        if (error.message.includes('402')) {
+          throw new Error('Crédits IA épuisés. Veuillez recharger votre compte.');
+        }
+        throw error;
+      }
+
+      // Extraire une catégorie intelligente basée sur le nom du produit
+      const productName = formData.name.toLowerCase();
+      let suggestedCategory = '';
+
+      // Catégories communes basées sur des mots-clés
+      const categoryKeywords: Record<string, string[]> = {
+        'Vêtements': ['chemise', 'pantalon', 'robe', 'jupe', 'veste', 'manteau', 't-shirt', 'pull', 'jean'],
+        'Chaussures': ['chaussure', 'basket', 'sandale', 'botte', 'escarpin', 'sneaker'],
+        'Électronique': ['téléphone', 'ordinateur', 'tablette', 'écouteur', 'casque', 'moniteur', 'clavier', 'souris'],
+        'Alimentation': ['nourriture', 'boisson', 'fruit', 'légume', 'viande', 'poisson', 'pain', 'gâteau'],
+        'Beauté': ['parfum', 'crème', 'maquillage', 'cosmétique', 'shampoing', 'savon'],
+        'Sport': ['ballon', 'raquette', 'vélo', 'tapis', 'haltère', 'fitness'],
+        'Maison': ['meuble', 'décoration', 'cuisine', 'lit', 'table', 'chaise', 'lampe'],
+        'Livre': ['livre', 'roman', 'magazine', 'bd', 'manga'],
+        'Jouets': ['jouet', 'poupée', 'peluche', 'jeu', 'puzzle'],
+      };
+
+      // Chercher la catégorie la plus pertinente
+      for (const [category, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some(keyword => productName.includes(keyword))) {
+          suggestedCategory = category;
+          break;
+        }
+      }
+
+      // Si aucune catégorie n'est trouvée, utiliser une approche générique
+      if (!suggestedCategory) {
+        const words = formData.name.split(' ').filter(w => w.length > 3);
+        suggestedCategory = words[0] ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : 'Général';
+      }
+      
+      setFormData(prev => ({ ...prev, category_name: suggestedCategory }));
+      toast({
+        title: "Catégorie suggérée",
+        description: `"${suggestedCategory}" - Vous pouvez la modifier si nécessaire`,
+      });
+    } catch (error) {
+      console.error('Erreur génération catégorie:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de générer la catégorie",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingCategory(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -472,6 +594,7 @@ export default function ProductManagement() {
       stock_quantity: product.stock_quantity?.toString() || '0',
       low_stock_threshold: product.low_stock_threshold?.toString() || '10',
       category_id: product.category_id || '',
+      category_name: product.category_id ? categories.find(c => c.id === product.category_id)?.name || '' : '',
       weight: product.weight?.toString() || '',
       tags: product.tags?.join(', ') || '',
       is_active: product.is_active
@@ -719,41 +842,32 @@ export default function ProductManagement() {
                       Catégorie
                       <span className="text-xs text-muted-foreground ml-2">(Optionnel)</span>
                     </Label>
-                    <Select 
-                      value={formData.category_id || undefined} 
-                      onValueChange={(value) => {
-                        console.log('Catégorie sélectionnée:', value);
-                        setFormData(prev => ({ ...prev, category_id: value }));
-                      }}
-                    >
-                      <SelectTrigger className="bg-background border-2">
-                        <SelectValue placeholder={
-                          loading 
-                            ? "Chargement des catégories..." 
-                            : categories.length === 0 
-                              ? "Aucune catégorie disponible" 
-                              : "Sélectionner une catégorie (optionnel)"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background">
-                        {categories.length === 0 ? (
-                          <div className="p-4 text-sm text-muted-foreground text-center">
-                            Aucune catégorie disponible.
-                            <br />
-                            Créez d'abord des catégories dans les paramètres.
-                          </div>
+                    <div className="flex gap-2">
+                      <Input
+                        id="category"
+                        value={formData.category_name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, category_name: e.target.value }))}
+                        placeholder="Saisir ou générer une catégorie"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generateCategory}
+                        disabled={!formData.name || generatingCategory}
+                        title="Générer une catégorie avec l'IA"
+                      >
+                        {generatingCategory ? (
+                          <span className="animate-spin">⏳</span>
                         ) : (
-                          categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))
+                          <Sparkles className="w-4 h-4" />
                         )}
-                      </SelectContent>
-                    </Select>
-                    {formData.category_id && (
+                      </Button>
+                    </div>
+                    {formData.category_name && (
                       <p className="text-xs text-muted-foreground">
-                        Catégorie: {categories.find(c => c.id === formData.category_id)?.name || 'Inconnue'}
+                        Catégorie: {formData.category_name}
                       </p>
                     )}
                   </div>
