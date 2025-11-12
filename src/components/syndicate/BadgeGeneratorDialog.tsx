@@ -22,6 +22,8 @@ interface BadgeGeneratorDialogProps {
     vehicle_type: string;
     badge_generated_at: string;
     digital_badge_id?: string;
+    driver_photo_url?: string;
+    driver_date_of_birth?: string;
   };
   bureauName?: string;
 }
@@ -172,10 +174,12 @@ export default function BadgeGeneratorDialog({
             <TaxiMotoBadge
               ref={badgeRef}
               driverName={vehicleData.member_name}
+              driverPhoto={vehicleData.driver_photo_url}
               badgeId={vehicleData.digital_badge_id || vehicleData.id}
               memberId={vehicleData.member_id}
               vehicleType={vehicleData.vehicle_type}
               vehiclePlate={vehicleData.license_plate}
+              dateOfBirth={vehicleData.driver_date_of_birth ? new Date(vehicleData.driver_date_of_birth).toLocaleDateString('fr-FR') : undefined}
               joinedDate={joinedDate}
               expireDate={expireDate}
               bureauName={bureauName}

@@ -8012,6 +8012,8 @@ export type Database = {
           color: string | null
           created_at: string | null
           digital_badge_id: string | null
+          driver_date_of_birth: string | null
+          driver_photo_url: string | null
           id: string
           insurance_expiration: string | null
           insurance_expiry: string | null
@@ -8040,6 +8042,8 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           digital_badge_id?: string | null
+          driver_date_of_birth?: string | null
+          driver_photo_url?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null
@@ -8068,6 +8072,8 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           digital_badge_id?: string | null
+          driver_date_of_birth?: string | null
+          driver_photo_url?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import BadgeGeneratorDialog from './BadgeGeneratorDialog';
+import EditBadgeDialog from './EditBadgeDialog';
 import {
     Car,
     Plus,
@@ -74,9 +75,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [selectedVehicle, setSelectedVehicle] = useState<SyndicateVehicle | null>(null);
     const [showBadgeDialog, setShowBadgeDialog] = useState(false);
     const [showProfessionalBadgeDialog, setShowProfessionalBadgeDialog] = useState(false);
+    const [showEditBadgeDialog, setShowEditBadgeDialog] = useState(false);
+    const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [typeFilter, setTypeFilter] = useState<string>('all');
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     // Formulaire d'ajout de véhicule
     const [formData, setFormData] = useState({
@@ -88,7 +92,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         brand: '',
         model: '',
         year: '',
-        color: ''
+        color: '',
+        driver_photo_url: '',
+        driver_date_of_birth: ''
     });
 
     // États pour les fichiers uploadés
@@ -193,8 +199,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 verified: v.verified || false,
                 verified_at: v.verified_at,
                 badge_generated_at: v.badge_generated_at || v.created_at,
-                created_at: v.created_at
-            }));
+                created_at: v.created_at,
+                driver_photo_url: v.driver_photo_url,
+                driver_date_of_birth: v.driver_date_of_birth,
+            } as any));
 
             setVehicles(formattedVehicles);
         } catch (error) {
@@ -202,6 +210,59 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             toast.error('Impossible de charger les véhicules');
         } finally {
             setLoading(false);
+        }
+    };
+
+    /**
+     * Upload de la photo du conducteur
+     */
+    const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Vérifier le type de fichier
+        if (!file.type.startsWith('image/')) {
+            toast.error('Veuillez sélectionner une image');
+            return;
+        }
+
+        // Vérifier la taille (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('L\'image ne doit pas dépasser 5MB');
+            return;
+        }
+
+        try {
+            setUploadingPhoto(true);
+            toast.info('Upload de la photo en cours...');
+
+            // Créer un nom de fichier unique
+            const fileExt = file.name.split('.').pop();
+            const fileName = `temp-${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // Upload vers Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('driver-photos')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            // Obtenir l'URL publique
+            const { data: { publicUrl } } = supabase.storage
+                .from('driver-photos')
+                .getPublicUrl(filePath);
+
+            setFormData(prev => ({ ...prev, driver_photo_url: publicUrl }));
+            toast.success('Photo uploadée avec succès');
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            toast.error('Erreur lors de l\'upload de la photo');
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -306,6 +367,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     digital_badge_id: badgeId,
                     qr_code_data: qrCodeData,
                     badge_generated_at: currentDate,
+                    driver_photo_url: formData.driver_photo_url || null,
+                    driver_date_of_birth: formData.driver_date_of_birth || null,
                     status: 'active',
                     verified: false
                 })
@@ -329,7 +392,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 brand: '',
                 model: '',
                 year: '',
-                color: ''
+                color: '',
+                driver_photo_url: '',
+                driver_date_of_birth: ''
             });
 
             // Réinitialiser les fichiers
@@ -905,10 +970,54 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Photo du conducteur et date de naissance */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
+                                                <Label htmlFor="driver_photo" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <IdCard className="w-4 h-4 text-blue-600" />
+                                                    Photo du Conducteur (Badge)
+                                                </Label>
+                                                {formData.driver_photo_url && (
+                                                    <div className="flex justify-center mb-2">
+                                                        <img 
+                                                            src={formData.driver_photo_url} 
+                                                            alt="Photo du conducteur"
+                                                            className="w-20 h-20 object-cover rounded-lg border-2 border-border"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <Input
+                                                    id="driver_photo"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handlePhotoUpload}
+                                                    disabled={uploadingPhoto}
+                                                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                {uploadingPhoto && (
+                                                    <p className="text-xs text-blue-600 mt-2">Upload en cours...</p>
+                                                )}
+                                            </div>
+
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                <Label htmlFor="driver_dob" className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
+                                                    <Calendar className="w-4 h-4 text-blue-600" />
+                                                    Date de Naissance
+                                                </Label>
+                                                <Input
+                                                    id="driver_dob"
+                                                    type="date"
+                                                    value={formData.driver_date_of_birth}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, driver_date_of_birth: e.target.value }))}
+                                                    className="mt-8"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="flex gap-2 pt-4">
-                                        <Button onClick={addVehicle} className="flex-1">
+                                        <Button onClick={addVehicle} className="flex-1" disabled={uploadingPhoto}>
                                             Ajouter le Véhicule
                                         </Button>
                                         <Button
@@ -989,6 +1098,17 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex gap-1">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setSelectedVehicleForEdit(vehicle);
+                                                    setShowEditBadgeDialog(true);
+                                                }}
+                                                title="Modifier infos badge"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
@@ -1099,9 +1219,26 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         license_plate: selectedVehicle.license_plate,
                         vehicle_type: selectedVehicle.vehicle_type,
                         badge_generated_at: selectedVehicle.badge_generated_at,
-                        digital_badge_id: selectedVehicle.digital_badge_id
+                        digital_badge_id: selectedVehicle.digital_badge_id,
+                        driver_photo_url: (selectedVehicle as any).driver_photo_url,
+                        driver_date_of_birth: (selectedVehicle as any).driver_date_of_birth,
                     }}
                     bureauName="224SOLUTIONS TAXI-MOTO"
+                />
+            )}
+
+            {/* Dialog d'édition des informations du badge */}
+            {selectedVehicleForEdit && (
+                <EditBadgeDialog
+                    open={showEditBadgeDialog}
+                    onOpenChange={setShowEditBadgeDialog}
+                    vehicleData={{
+                        id: selectedVehicleForEdit.id,
+                        member_name: selectedVehicleForEdit.member_name,
+                        driver_photo_url: (selectedVehicleForEdit as any).driver_photo_url,
+                        driver_date_of_birth: (selectedVehicleForEdit as any).driver_date_of_birth,
+                    }}
+                    onUpdate={loadVehicles}
                 />
             )}
         </div>
