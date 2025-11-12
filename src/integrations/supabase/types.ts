@@ -2235,7 +2235,7 @@ export type Database = {
           id: string
           metadata: Json | null
           notes: string | null
-          order_id: string
+          order_id: string | null
           payer_id: string
           receiver_id: string
           refunded_at: string | null
@@ -2264,7 +2264,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           notes?: string | null
-          order_id: string
+          order_id?: string | null
           payer_id: string
           receiver_id: string
           refunded_at?: string | null
@@ -2293,7 +2293,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           notes?: string | null
-          order_id?: string
+          order_id?: string | null
           payer_id?: string
           receiver_id?: string
           refunded_at?: string | null
@@ -2308,6 +2308,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "escrow_transactions_transaction_id_fkey"
             columns: ["transaction_id"]
@@ -8797,7 +8804,15 @@ export type Database = {
           receiver_name: string | null
           status: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       geography_columns: {
         Row: {
