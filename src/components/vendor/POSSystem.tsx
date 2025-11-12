@@ -1055,7 +1055,7 @@ export function POSSystem() {
                     disabled={paymentMethod === 'cash' && receivedAmount < total}
                   >
                     <CheckSquare className="h-5 w-5 mr-2" />
-                    Valider la commande
+                    Valider la commande - {total.toLocaleString()} GNF
                   </Button>
                 </div>
               </div>
