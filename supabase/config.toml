@@ -107,3 +107,6 @@ verify_jwt = true
 
 [functions.security-analysis]
 verify_jwt = true
+
+[functions.communication-handler]
+verify_jwt = true
