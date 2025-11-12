@@ -19,7 +19,7 @@ export interface EscrowTransaction {
   receiver_id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'released' | 'refunded' | 'dispute';
+  status: 'pending' | 'held' | 'released' | 'refunded' | 'dispute';
   commission_percent: number;
   commission_amount: number;
   transaction_id?: string;
