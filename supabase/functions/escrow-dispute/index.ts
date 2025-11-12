@@ -81,8 +81,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check permissions - only admin/ceo or the payer can open a dispute
-    if (!isAdmin && user.id !== escrow.payer_id) {
+    // Check permissions - admin/ceo, payer, or receiver (vendor) can open a dispute
+    const isPayerOrReceiver = user.id === escrow.payer_id || (vendor?.user_id && user.id === vendor.user_id);
+    
+    if (!isAdmin && !isPayerOrReceiver) {
       return new Response(JSON.stringify({ error: 'Not authorized to dispute this escrow' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
