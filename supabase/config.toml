@@ -144,3 +144,13 @@ verify_jwt = true
 [functions.dispute-resolve]
 verify_jwt = true
 
+[functions.generate-product-image]
+verify_jwt = true
+
+[functions.enhance-product-image]
+verify_jwt = true
+
+[functions.generate-product-description]
+verify_jwt = true
+
+

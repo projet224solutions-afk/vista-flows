@@ -61,6 +61,8 @@ export default function ProductManagement() {
   const [lowStockFilter, setLowStockFilter] = useState(false);
   const [generatingCategory, setGeneratingCategory] = useState(false);
   const [generatingTags, setGeneratingTags] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [enhancingImages, setEnhancingImages] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -650,6 +652,134 @@ export default function ProductManagement() {
     }
   };
 
+  const generateProductImage = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingImage(true);
+      toast({
+        title: "Génération en cours...",
+        description: "L'IA crée une image professionnelle pour votre produit"
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-product-image', {
+        body: {
+          productName: formData.name,
+          category: formData.category_name,
+          description: formData.description
+        }
+      });
+
+      if (error) {
+        if (error.message?.includes('429')) {
+          throw new Error('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
+        }
+        if (error.message?.includes('402')) {
+          throw new Error('Crédits IA épuisés. Veuillez recharger votre compte.');
+        }
+        throw error;
+      }
+
+      if (data?.imageUrl) {
+        // Convertir l'image base64 en File
+        const response = await fetch(data.imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `${formData.name.replace(/\s+/g, '-')}-ai-generated.png`, { type: 'image/png' });
+        
+        setSelectedImages(prev => [...prev, file]);
+        toast({
+          title: "Image générée avec succès",
+          description: "L'image a été ajoutée à votre sélection"
+        });
+      }
+    } catch (error) {
+      console.error('Erreur génération image:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de générer l'image",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const enhanceSelectedImages = async () => {
+    if (selectedImages.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord sélectionner des images à améliorer",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setEnhancingImages(true);
+      toast({
+        title: "Amélioration en cours...",
+        description: `Traitement de ${selectedImages.length} image(s) avec l'IA`
+      });
+
+      const enhancedImages: File[] = [];
+
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        
+        // Convertir l'image en base64
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        const imageUrl = await base64Promise;
+
+        const { data, error } = await supabase.functions.invoke('enhance-product-image', {
+          body: { imageUrl }
+        });
+
+        if (error) {
+          console.error(`Erreur amélioration image ${i + 1}:`, error);
+          // Conserver l'image originale en cas d'erreur
+          enhancedImages.push(file);
+          continue;
+        }
+
+        if (data?.enhancedImageUrl) {
+          const response = await fetch(data.enhancedImageUrl);
+          const blob = await response.blob();
+          const enhancedFile = new File([blob], `enhanced-${file.name}`, { type: 'image/png' });
+          enhancedImages.push(enhancedFile);
+        } else {
+          enhancedImages.push(file);
+        }
+      }
+
+      setSelectedImages(enhancedImages);
+      toast({
+        title: "Images améliorées",
+        description: `${enhancedImages.length} image(s) ont été optimisées`
+      });
+    } catch (error) {
+      console.error('Erreur amélioration images:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible d'améliorer les images",
+        variant: "destructive"
+      });
+    } finally {
+      setEnhancingImages(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -817,8 +947,51 @@ export default function ProductManagement() {
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
+                      <Camera className="w-4 h-4 mr-2" />
                       Choisir des fichiers
                     </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={generateProductImage}
+                      disabled={generatingImage || !formData.name}
+                      title="Générer une image avec l'IA"
+                    >
+                      {generatingImage ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          Génération...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Générer avec IA
+                        </>
+                      )}
+                    </Button>
+                    {selectedImages.length > 0 && (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={enhanceSelectedImages}
+                        disabled={enhancingImages}
+                        title="Améliorer les images sélectionnées avec l'IA"
+                      >
+                        {enhancingImages ? (
+                          <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            Amélioration...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Améliorer {selectedImages.length} image(s)
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                   
                   {/* Affichage des nouvelles images sélectionnées */}
