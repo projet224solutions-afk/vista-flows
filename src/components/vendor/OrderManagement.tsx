@@ -449,17 +449,22 @@ export default function OrderManagement() {
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-          onClick={() => setStatusFilter('all')}
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-blue-500 active:scale-95"
+          onClick={() => {
+            setStatusFilter('all');
+            // Scroll vers la liste des commandes
+            document.querySelector('.orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
         >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Total commandes</p>
+                <p className="text-sm text-muted-foreground font-medium">Total commandes</p>
                 <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
             </div>
+            <p className="text-xs text-blue-600 mt-2 font-medium">Cliquez pour voir toutes</p>
           </CardContent>
         </Card>
         <Card 
@@ -549,9 +554,14 @@ export default function OrderManagement() {
       </Card>
 
       {/* Liste des commandes */}
-      <Card>
+      <Card className="orders-list">
         <CardHeader>
-          <CardTitle>Commandes récentes</CardTitle>
+          <CardTitle>
+            {statusFilter === 'all' 
+              ? `Toutes les commandes (${filteredOrders.length})` 
+              : `Commandes ${statusLabels[statusFilter]?.toLowerCase() || statusFilter} (${filteredOrders.length})`
+            }
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
