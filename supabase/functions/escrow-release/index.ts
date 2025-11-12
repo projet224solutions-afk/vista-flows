@@ -162,9 +162,9 @@ serve(async (req) => {
 
     console.log(`✅ Escrow released: ${escrow_id}`);
 
-    // Send notification to buyer
+    // Send notification to payer (buyer)
     await supabase.from("communication_notifications").insert({
-      user_id: escrow.buyer_id,
+      user_id: escrow.payer_id,
       type: "escrow_released",
       title: "Paiement débloqué",
       body: `Votre paiement de ${escrow.amount} ${escrow.currency} vient d'être débloqué.`,
@@ -175,9 +175,9 @@ serve(async (req) => {
       },
     });
 
-    // Send notification to seller
+    // Send notification to receiver (seller)
     await supabase.from("communication_notifications").insert({
-      user_id: escrow.seller_id,
+      user_id: escrow.receiver_id,
       type: "escrow_released",
       title: "Fonds reçus",
       body: `Vous avez reçu ${escrow.amount} ${escrow.currency} de votre vente.`,
