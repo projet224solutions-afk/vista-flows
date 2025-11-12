@@ -114,8 +114,18 @@ verify_jwt = true
 [functions.escrow-create]
 verify_jwt = false
 
+[functions.escrow-create-stripe]
+verify_jwt = true
+
 [functions.escrow-release]
 verify_jwt = true
 
 [functions.escrow-refund]
 verify_jwt = true
+
+[functions.escrow-stripe-webhook]
+verify_jwt = false
+
+[functions.escrow-auto-release]
+verify_jwt = false
+

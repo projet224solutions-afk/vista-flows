@@ -47,6 +47,26 @@ serve(async (req) => {
       );
     }
 
+    // Check if user is admin (CEO or admin role)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'ceo')) {
+      console.log("❌ User not authorized - admin/CEO only");
+      return new Response(
+        JSON.stringify({ success: false, error: "Admin or CEO authorization required" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log(`✅ Admin verified: ${user.id} (${profile.role})`);
+
     // Get request body
     const { escrow_id, notes } = await req.json();
 
@@ -85,6 +105,47 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // If Stripe PaymentIntent exists, capture it
+    if (escrow.stripe_payment_intent_id) {
+      console.log(`💳 Capturing Stripe PaymentIntent: ${escrow.stripe_payment_intent_id}`);
+      
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (stripeKey) {
+        try {
+          const Stripe = (await import("https://esm.sh/stripe@18.5.0")).default;
+          const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+          
+          const captured = await stripe.paymentIntents.capture(escrow.stripe_payment_intent_id);
+          console.log(`✅ Stripe PaymentIntent captured: ${captured.id}`, { status: captured.status });
+          
+          // Log the Stripe capture
+          await supabase.from("escrow_action_logs").insert({
+            escrow_id: escrow_id,
+            action_type: 'stripe_captured',
+            performed_by: user.id,
+            notes: `Stripe PaymentIntent captured: ${captured.id}`,
+            metadata: {
+              stripe_payment_intent_id: captured.id,
+              stripe_status: captured.status,
+            },
+          });
+        } catch (stripeError) {
+          console.error("❌ Stripe capture error:", stripeError);
+          const errorMessage = stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error';
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Stripe capture failed: ${errorMessage}`,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      }
     }
 
     // Call the database function to release funds
