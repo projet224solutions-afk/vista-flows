@@ -158,6 +158,18 @@ export function useClientData() {
   // Charger les commandes de l'utilisateur
   const loadOrders = useCallback(async (userId: string) => {
     try {
+      // Récupérer d'abord le customer_id à partir du user_id
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!customerData) {
+        console.log('❌ Aucun profil client trouvé');
+        return;
+      }
+
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -167,7 +179,7 @@ export function useClientData() {
           created_at,
           vendor_id
         `)
-        .eq('customer_id', userId)
+        .eq('customer_id', customerData.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
