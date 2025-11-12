@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Get escrow transaction details
     const { data: escrow, error: escrowFetchError } = await supabaseClient
       .from('escrow_transactions')
-      .select('*, receiver:vendors!escrow_transactions_receiver_id_fkey(user_id)')
+      .select('*')
       .eq('id', escrow_id)
       .single();
 
@@ -65,6 +65,13 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Get vendor details separately
+    const { data: vendor } = await supabaseClient
+      .from('vendors')
+      .select('user_id')
+      .eq('id', escrow.receiver_id)
+      .single();
 
     // Check if status allows dispute
     if (!['pending', 'held'].includes(escrow.status)) {
@@ -113,9 +120,9 @@ Deno.serve(async (req) => {
     const notifications = [];
     
     // Notify the receiver (vendor)
-    if (escrow.receiver?.user_id) {
+    if (vendor?.user_id) {
       notifications.push({
-        user_id: escrow.receiver.user_id,
+        user_id: vendor.user_id,
         type: 'escrow_dispute',
         title: '⚠️ Litige ouvert',
         body: `Un litige a été ouvert pour votre transaction escrow de ${escrow.amount} ${escrow.currency}`,
