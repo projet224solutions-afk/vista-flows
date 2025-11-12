@@ -8107,7 +8107,7 @@ export type Database = {
             foreignKeyName: "vehicles_owner_member_id_fkey"
             columns: ["owner_member_id"]
             isOneToOne: false
-            referencedRelation: "members"
+            referencedRelation: "syndicate_workers"
             referencedColumns: ["id"]
           },
         ]
