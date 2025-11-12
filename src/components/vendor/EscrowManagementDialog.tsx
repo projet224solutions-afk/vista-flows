@@ -149,8 +149,14 @@ export default function EscrowManagementDialog({
                               </p>
                             </div>
                             <div>
-                              <p>Créé le: {new Date(transaction.created_at).toLocaleDateString('fr-FR')}</p>
-                              <p>Mis à jour: {new Date(transaction.updated_at).toLocaleDateString('fr-FR')}</p>
+                              <p>Créé le: {new Date(transaction.created_at).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}</p>
+                              <p>Mis à jour: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}</p>
                             </div>
                           </div>
                         </div>
