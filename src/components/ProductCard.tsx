@@ -18,6 +18,8 @@ interface ProductCardProps {
   price: number;
   originalPrice?: number;
   vendor: string;
+  vendorRating?: number;
+  vendorRatingCount?: number;
   rating: number;
   reviewCount: number;
   isPremium?: boolean;
@@ -32,6 +34,8 @@ export default function ProductCard({
   price,
   originalPrice,
   vendor,
+  vendorRating = 0,
+  vendorRatingCount = 0,
   rating,
   reviewCount,
   isPremium,
@@ -119,7 +123,16 @@ export default function ProductCard({
           </div>
         </div>
         
-        <p className="text-sm text-muted-foreground mb-3 font-inter">{vendor}</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-muted-foreground font-inter">{vendor}</p>
+          {vendorRating > 0 && (
+            <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+              <span className="text-xs font-medium text-foreground">{vendorRating.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">({vendorRatingCount})</span>
+            </div>
+          )}
+        </div>
         
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

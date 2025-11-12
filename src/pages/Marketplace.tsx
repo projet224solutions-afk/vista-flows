@@ -311,6 +311,8 @@ export default function Marketplace() {
                 title={product.name}
                 price={product.price}
                 vendor={product.vendor_name}
+                vendorRating={product.vendor_rating}
+                vendorRatingCount={product.vendor_rating_count}
                 rating={product.rating}
                 reviewCount={product.reviews_count}
                 onBuy={() => handleProductClick(product.id)}
