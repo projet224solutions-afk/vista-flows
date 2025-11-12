@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,7 +110,7 @@ serve(async (req) => {
         .eq("role", "admin")
         .maybeSingle();
       
-      isPdgOwner = pdgProfile && parentAgent.pdg_id === authenticatedUserId;
+      isPdgOwner = !!(pdgProfile && parentAgent.pdg_id === authenticatedUserId);
     }
 
     // Pour l'interface publique avec access_token, on autorise si l'agent correspond

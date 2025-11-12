@@ -86,18 +86,10 @@ export function useFinanceData(autoLoad: boolean = false) {
       setStats(statsData);
       setTransactions(statsData.recent_transactions || []);
 
-      // Charger les détails des wallets séparément avec les profils
+      // Charger les détails des wallets (sans les profils pour éviter les erreurs de relation)
       const { data: walletsData, error: walletsError } = await supabase
         .from('wallets')
-        .select(`
-          *,
-          profiles:user_id (
-            first_name,
-            last_name,
-            phone,
-            email
-          )
-        `)
+        .select('*')
         .eq('wallet_status', 'active')
         .order('balance', { ascending: false })
         .limit(50);
