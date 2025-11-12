@@ -8118,6 +8118,60 @@ export type Database = {
           },
         ]
       }
+      vendor_agents: {
+        Row: {
+          access_token: string
+          agent_code: string
+          can_create_sub_agent: boolean | null
+          commission_rate: number | null
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          permissions: string[] | null
+          phone: string
+          total_commissions_earned: number | null
+          total_users_created: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          access_token: string
+          agent_code: string
+          can_create_sub_agent?: boolean | null
+          commission_rate?: number | null
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          permissions?: string[] | null
+          phone: string
+          total_commissions_earned?: number | null
+          total_users_created?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          access_token?: string
+          agent_code?: string
+          can_create_sub_agent?: boolean | null
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          permissions?: string[] | null
+          phone?: string
+          total_commissions_earned?: number | null
+          total_users_created?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       vendor_analytics: {
         Row: {
           conversion_rate: number | null
@@ -9667,6 +9721,8 @@ export type Database = {
       generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
+      generate_vendor_agent_access_token: { Args: never; Returns: string }
+      generate_vendor_agent_code: { Args: never; Returns: string }
       generate_vendor_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
