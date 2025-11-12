@@ -335,7 +335,8 @@ export function useClientData() {
             status: 'pending',
             payment_status: 'pending',
             payment_method: 'cash',
-            shipping_address: { address: 'Adresse par défaut', city: 'Conakry', country: 'Guinée' }
+            shipping_address: { address: 'Adresse par défaut', city: 'Conakry', country: 'Guinée' },
+            source: 'online'  // ✅ Marquer comme commande en ligne (client)
           })
           .select()
           .maybeSingle();
