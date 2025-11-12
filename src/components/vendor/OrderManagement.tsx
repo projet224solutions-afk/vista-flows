@@ -1010,7 +1010,7 @@ export default function OrderManagement() {
         </CardHeader>
         <CardContent>
           {/* Statistiques Ventes POS */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <Card className="bg-white/80">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -1018,45 +1018,6 @@ export default function OrderManagement() {
                   <div>
                     <p className="text-xs text-muted-foreground">Total vente</p>
                     <p className="text-xl font-bold">{orders.filter(o => o.source === 'pos').length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-yellow-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">En attente</p>
-                    <p className="text-xl font-bold text-yellow-600">
-                      {orders.filter(o => o.source === 'pos' && o.status === 'pending').length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">En cours</p>
-                    <p className="text-xl font-bold text-purple-600">
-                      {orders.filter(o => o.source === 'pos' && ['confirmed', 'processing'].includes(o.status)).length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Livrées</p>
-                    <p className="text-xl font-bold text-green-600">
-                      {orders.filter(o => o.source === 'pos' && o.status === 'delivered').length}
-                    </p>
                   </div>
                 </div>
               </CardContent>
