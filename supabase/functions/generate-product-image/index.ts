@@ -47,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
+        model: 'google/gemini-2.5-flash-image',
         messages: [
           {
             role: 'user',
@@ -80,14 +80,35 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Image generation response received');
+    console.log('Image generation response received:', JSON.stringify(data, null, 2));
     
-    // Extraire l'image générée
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Extraire l'image générée - vérifier différents chemins possibles
+    let imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    // Fallback: parfois l'image est directement dans le message
+    if (!imageUrl && data.choices?.[0]?.message?.content) {
+      const content = data.choices[0].message.content;
+      if (typeof content === 'string' && content.startsWith('data:image')) {
+        imageUrl = content;
+      }
+    }
+
+    // Fallback: vérifier si l'image est dans un tableau d'objets content
+    if (!imageUrl && Array.isArray(data.choices?.[0]?.message?.content)) {
+      for (const item of data.choices[0].message.content) {
+        if (item.type === 'image_url' && item.image_url?.url) {
+          imageUrl = item.image_url.url;
+          break;
+        }
+      }
+    }
     
     if (!imageUrl) {
-      throw new Error('No image was generated');
+      console.error('No image found in response. Full response:', JSON.stringify(data, null, 2));
+      throw new Error('No image was generated. Check logs for details.');
     }
+
+    console.log('Successfully extracted image URL (first 100 chars):', imageUrl.substring(0, 100));
 
     return new Response(
       JSON.stringify({ imageUrl }),

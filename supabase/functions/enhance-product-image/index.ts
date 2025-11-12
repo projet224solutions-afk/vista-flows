@@ -34,7 +34,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
+        model: 'google/gemini-2.5-flash-image',
         messages: [
           {
             role: 'user',
@@ -78,14 +78,35 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Image enhancement response received');
+    console.log('Image enhancement response received:', JSON.stringify(data, null, 2));
     
-    // Extraire l'image améliorée
-    const enhancedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Extraire l'image améliorée - vérifier différents chemins possibles
+    let enhancedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    // Fallback: parfois l'image est directement dans le message
+    if (!enhancedImageUrl && data.choices?.[0]?.message?.content) {
+      const content = data.choices[0].message.content;
+      if (typeof content === 'string' && content.startsWith('data:image')) {
+        enhancedImageUrl = content;
+      }
+    }
+
+    // Fallback: vérifier si l'image est dans un tableau d'objets content
+    if (!enhancedImageUrl && Array.isArray(data.choices?.[0]?.message?.content)) {
+      for (const item of data.choices[0].message.content) {
+        if (item.type === 'image_url' && item.image_url?.url) {
+          enhancedImageUrl = item.image_url.url;
+          break;
+        }
+      }
+    }
     
     if (!enhancedImageUrl) {
-      throw new Error('No enhanced image was generated');
+      console.error('No enhanced image found in response. Full response:', JSON.stringify(data, null, 2));
+      throw new Error('No enhanced image was generated. Check logs for details.');
     }
+
+    console.log('Successfully extracted enhanced image URL (first 100 chars):', enhancedImageUrl.substring(0, 100));
 
     return new Response(
       JSON.stringify({ enhancedImageUrl }),
