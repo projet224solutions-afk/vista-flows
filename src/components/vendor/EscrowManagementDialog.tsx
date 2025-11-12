@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEscrowTransactions } from '@/hooks/useEscrowTransactions';
-import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { AlertCircle, CheckCircle, Clock, XCircle, Bell } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,9 +60,12 @@ export default function EscrowManagementDialog({
   open,
   onOpenChange
 }: EscrowManagementDialogProps) {
-  const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow } = useEscrowTransactions();
+  const { profile } = useAuth();
+  const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow, requestRelease } = useEscrowTransactions();
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
-  const [actionType, setActionType] = useState<'release' | 'refund' | 'dispute' | null>(null);
+  const [actionType, setActionType] = useState<'release' | 'refund' | 'dispute' | 'request' | null>(null);
+  
+  const isAdmin = profile?.role === 'admin';
 
   const handleAction = async () => {
     if (!selectedTransaction) return;
@@ -69,13 +73,16 @@ export default function EscrowManagementDialog({
     try {
       switch (actionType) {
         case 'release':
-          await releaseEscrow(selectedTransaction, 0);
+          await releaseEscrow(selectedTransaction, 2.5);
           break;
         case 'refund':
           await refundEscrow(selectedTransaction);
           break;
         case 'dispute':
           await disputeEscrow(selectedTransaction);
+          break;
+        case 'request':
+          await requestRelease(selectedTransaction);
           break;
       }
       setSelectedTransaction(null);
@@ -85,7 +92,7 @@ export default function EscrowManagementDialog({
     }
   };
 
-  const openActionDialog = (transactionId: string, action: 'release' | 'refund' | 'dispute') => {
+  const openActionDialog = (transactionId: string, action: 'release' | 'refund' | 'dispute' | 'request') => {
     setSelectedTransaction(transactionId);
     setActionType(action);
   };
@@ -150,13 +157,24 @@ export default function EscrowManagementDialog({
 
                         {(transaction.status === 'pending' || transaction.status === 'held') && (
                           <div className="flex gap-2 ml-4">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => openActionDialog(transaction.id, 'release')}
-                            >
-                              Libérer
-                            </Button>
+                            {isAdmin ? (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => openActionDialog(transaction.id, 'release')}
+                              >
+                                Libérer (Admin)
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openActionDialog(transaction.id, 'request')}
+                              >
+                                <Bell className="w-4 h-4 mr-2" />
+                                Demander libération
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
@@ -190,12 +208,14 @@ export default function EscrowManagementDialog({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === 'release' && 'Libérer les fonds'}
+              {actionType === 'release' && 'Libérer les fonds (Admin)'}
+              {actionType === 'request' && 'Demander la libération'}
               {actionType === 'refund' && 'Rembourser la transaction'}
               {actionType === 'dispute' && 'Ouvrir un litige'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {actionType === 'release' && 'Les fonds seront transférés au bénéficiaire. Cette action est irréversible.'}
+              {actionType === 'release' && 'Les fonds seront transférés au vendeur avec commission. Cette action est irréversible.'}
+              {actionType === 'request' && 'Une notification sera envoyée à l\'administrateur pour demander la libération des fonds. Le client peut aussi confirmer la réception pour libérer automatiquement.'}
               {actionType === 'refund' && 'Les fonds seront retournés au payeur. Cette action est irréversible.'}
               {actionType === 'dispute' && 'Un litige sera ouvert sur cette transaction. Elle sera mise en attente.'}
             </AlertDialogDescription>
