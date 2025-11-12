@@ -240,17 +240,21 @@ export default function OrderManagement() {
       console.log('📦 Online orders loaded:', ordersWithEscrow.length);
       setOrders(ordersWithEscrow);
 
-      // Charger les escrows sans commande (order_id NULL) pour ce vendeur
+      // CORRECTION CRITIQUE: receiver_id contient le user_id, PAS le vendor_id!
+      // Charger les escrows sans commande (order_id NULL) pour ce vendeur via son user_id
+      console.log('🔍 Recherche escrows pour user_id:', user.id);
       const { data: escrowsData, error: escrowError } = await supabase
         .from('escrow_transactions')
         .select('*')
-        .eq('receiver_id', vendor.id)
+        .eq('receiver_id', user.id)  // USER_ID pas vendor_id!
         .is('order_id', null)
         .in('status', ['pending', 'held'])
         .order('created_at', { ascending: false });
 
-      if (!escrowError && escrowsData) {
-        console.log('💰 Escrows en attente chargés:', escrowsData.length);
+      if (escrowError) {
+        console.error('❌ Erreur chargement escrows:', escrowError);
+      } else if (escrowsData) {
+        console.log('✅ Escrows en attente chargés:', escrowsData.length, escrowsData);
         setStandaloneEscrows(escrowsData);
       }
 
