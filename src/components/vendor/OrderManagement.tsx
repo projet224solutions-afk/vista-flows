@@ -1016,7 +1016,7 @@ export default function OrderManagement() {
                 <div className="flex items-center gap-2">
                   <ShoppingCart className="w-4 h-4 text-purple-600" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xs text-muted-foreground">Total vente</p>
                     <p className="text-xl font-bold">{orders.filter(o => o.source === 'pos').length}</p>
                   </div>
                 </div>
