@@ -282,7 +282,6 @@ export function useClientData() {
   }, [products]);
 
   // Créer une commande
-  // Créer une commande
   const createOrder = useCallback(async (userId: string) => {
     if (cartItems.length === 0) {
       toast.error('Panier vide');
@@ -290,19 +289,7 @@ export function useClientData() {
     }
 
     try {
-      // Récupérer le customer_id à partir du user_id
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!customerData) {
-        toast.error('Profil client non trouvé');
-        return;
-      }
-
-      // Grouper les articles par vendeur (vendor_id, pas user_id)
+      // Grouper les articles par vendeur
       const itemsByVendor = cartItems.reduce((acc, item) => {
         const vendorKey = item.vendorId || 'unknown';
         if (!acc[vendorKey]) {
@@ -312,7 +299,7 @@ export function useClientData() {
         return acc;
       }, {} as Record<string, Product[]>);
 
-      // Créer une commande pour chaque vendeur
+      // Créer une commande pour chaque vendeur avec la nouvelle fonction
       for (const [vendorId, items] of Object.entries(itemsByVendor)) {
         if (vendorId === 'unknown') {
           console.error('❌ Produit sans vendeur:', items);
@@ -321,48 +308,31 @@ export function useClientData() {
 
         const vendorTotal = items.reduce((sum, item) => sum + item.price, 0);
 
-        // Créer la commande
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            customer_id: customerData.id,
-            vendor_id: vendorId,
-            total_amount: vendorTotal,
-            subtotal: vendorTotal,
-            tax_amount: 0,
-            shipping_amount: 0,
-            discount_amount: 0,
-            status: 'pending',
-            payment_status: 'pending',
-            payment_method: 'cash',
-            shipping_address: { address: 'Adresse par défaut', city: 'Conakry', country: 'Guinée' },
-            source: 'online'  // ✅ Marquer comme commande en ligne (client)
-          })
-          .select()
-          .maybeSingle();
+        // Utiliser la fonction PostgreSQL create_online_order
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: userId,
+          p_vendor_id: vendorId,
+          p_items: items.map(item => ({
+            product_id: item.id,
+            quantity: 1,
+            price: item.price
+          })),
+          p_total_amount: vendorTotal,
+          p_payment_method: 'cash',
+          p_shipping_address: {
+            address: 'Adresse par défaut',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
 
-        if (orderError || !orderData) {
+        if (orderError || !orderResult || orderResult.length === 0) {
           console.error('❌ Erreur création commande:', orderError);
           toast.error('Erreur lors de la création de la commande');
           continue;
         }
 
-        // Créer les items de commande
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(
-            items.map(item => ({
-              order_id: orderData.id,
-              product_id: item.id,
-              quantity: 1,
-              unit_price: item.price,
-              total_price: item.price
-            }))
-          );
-
-        if (itemsError) {
-          console.error('❌ Erreur création items:', itemsError);
-        }
+        console.log('✅ Commande créée:', orderResult[0].order_number);
       }
 
       // Vider le panier après commande

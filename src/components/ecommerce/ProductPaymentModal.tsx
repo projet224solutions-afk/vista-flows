@@ -205,6 +205,18 @@ export default function ProductPaymentModal({
 
         const vendorTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
 
+        // Vérifier le solde en premier si paiement wallet
+        if (paymentMethod === 'wallet') {
+          if (walletBalance !== null && walletBalance < vendorTotal) {
+            console.error('[ProductPayment] Insufficient balance:', { walletBalance, vendorTotal });
+            toast.error('Solde insuffisant', {
+              description: 'Veuillez recharger votre wallet'
+            });
+            setProcessing(false);
+            return;
+          }
+        }
+
         // Récupérer le user_id du vendeur
         const { data: vendorData, error: vendorError } = await supabase
           .from('vendors')
@@ -219,40 +231,36 @@ export default function ProductPaymentModal({
           continue;
         }
 
-        // Créer d'abord la commande pour obtenir l'order_id
-        console.log('[ProductPayment] Creating order:', {
-          customer_id: customerId,
+        // Utiliser la nouvelle fonction PostgreSQL pour créer la commande avec items
+        console.log('[ProductPayment] Creating order via create_online_order:', {
+          user_id: userId,
           vendor_id: vendorId,
+          items: items.map(i => ({ product_id: i.id, quantity: i.quantity || 1, price: i.price })),
           total_amount: vendorTotal,
-          source: 'online'
+          payment_method: paymentMethod
         });
 
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert([{
-            customer_id: customerId,
-            vendor_id: vendorId,
-            total_amount: vendorTotal,
-            subtotal: vendorTotal,
-            tax_amount: 0,
-            shipping_amount: 0,
-            discount_amount: 0,
-            status: 'pending',
-            payment_status: paymentMethod === 'wallet' ? 'paid' : 'pending',
-            payment_method: paymentMethod === 'wallet' ? 'mobile_money' : 'cash',
-            shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée' },
-            notes: `Paiement ${paymentMethod === 'wallet' ? 'Wallet via Escrow' : 'à la livraison'}`,
-            source: 'online'  // Marquer comme commande en ligne
-          } as any])
-          .select()
-          .single();
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: userId,
+          p_vendor_id: vendorId,
+          p_items: items.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity || 1,
+            price: item.price
+          })),
+          p_total_amount: vendorTotal,
+          p_payment_method: paymentMethod,
+          p_shipping_address: {
+            address: 'Adresse de livraison',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
 
-        if (orderError || !orderData) {
+        if (orderError || !orderResult || orderResult.length === 0) {
           console.error('[ProductPayment] Order creation failed:', {
             error: orderError,
-            message: orderError?.message,
-            details: orderError?.details,
-            hint: orderError?.hint
+            message: orderError?.message
           });
           toast.error('Erreur création commande', {
             description: orderError?.message || 'Impossible de créer la commande'
@@ -260,24 +268,14 @@ export default function ProductPaymentModal({
           continue;
         }
 
-        console.log('[ProductPayment] Order created successfully:', orderData.id);
+        const orderId = orderResult[0].order_id;
+        const orderNumber = orderResult[0].order_number;
+        console.log('[ProductPayment] Order created successfully:', { orderId, orderNumber });
 
-        // Si paiement wallet, initier l'escrow au lieu du transfert direct
+        // Si paiement wallet, initier l'escrow
         if (paymentMethod === 'wallet') {
-          // Vérifier le solde
-          if (walletBalance !== null && walletBalance < vendorTotal) {
-            console.error('[ProductPayment] Insufficient balance:', { walletBalance, vendorTotal });
-            toast.error('Solde insuffisant', {
-              description: 'Veuillez recharger votre wallet'
-            });
-            // Annuler la commande
-            await supabase.from('orders').delete().eq('id', orderData.id);
-            setProcessing(false);
-            return;
-          }
-
           console.log('[ProductPayment] Initiating escrow:', {
-            order_id: orderData.id,
+            order_id: orderId,
             buyer_id: userId,
             seller_id: vendorData.user_id,
             amount: vendorTotal
@@ -287,21 +285,20 @@ export default function ProductPaymentModal({
           const escrowResult = await UniversalEscrowService.createEscrow({
             buyer_id: userId,
             seller_id: vendorData.user_id,
-            order_id: orderData.id,
+            order_id: orderId,
             amount: vendorTotal,
             currency: 'GNF',
             transaction_type: 'product',
             payment_provider: 'wallet',
             metadata: {
               product_ids: items.map(i => i.id),
+              order_number: orderNumber,
               description: `Achat produits (${items.length} articles)`
             }
           });
 
           if (!escrowResult.success) {
             console.error('[ProductPayment] Escrow initiation failed:', escrowResult.error);
-            // Annuler la commande si l'escrow échoue
-            await supabase.from('orders').delete().eq('id', orderData.id);
             toast.error('Erreur de paiement', {
               description: escrowResult.error || 'L\'escrow a échoué'
             });
@@ -315,31 +312,14 @@ export default function ProductPaymentModal({
           const { error: updateError } = await supabase
             .from('orders')
             .update({ 
-              notes: `Paiement Wallet via Escrow - ID: ${escrowId}`,
-              metadata: { escrow_transaction_id: escrowId }
+              metadata: { escrow_transaction_id: escrowId },
+              payment_status: 'paid'
             })
-            .eq('id', orderData.id);
+            .eq('id', orderId);
 
           if (updateError) {
             console.error('[ProductPayment] Failed to update order with escrow ID:', updateError);
           }
-        }
-
-        // Créer les items de commande
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(
-            items.map(item => ({
-              order_id: orderData.id,
-              product_id: item.id,
-              quantity: item.quantity || 1,
-              unit_price: item.price,
-              total_price: item.price * (item.quantity || 1)
-            }))
-          );
-
-        if (itemsError) {
-          console.error('[ProductPayment] Items error:', itemsError);
         }
       }
 

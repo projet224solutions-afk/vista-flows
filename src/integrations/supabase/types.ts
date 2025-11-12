@@ -9430,6 +9430,21 @@ export type Database = {
         }
         Returns: string
       }
+      create_online_order: {
+        Args: {
+          p_items: Json
+          p_payment_method?: string
+          p_shipping_address?: Json
+          p_total_amount: number
+          p_user_id: string
+          p_vendor_id: string
+        }
+        Returns: {
+          customer_id: string
+          order_id: string
+          order_number: string
+        }[]
+      }
       create_security_incident: {
         Args: {
           p_description: string
