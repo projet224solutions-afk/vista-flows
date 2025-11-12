@@ -140,9 +140,9 @@ serve(async (req) => {
     console.log(`💰 Releasing escrow: ${escrow.id}`);
 
     // Call the database function to release funds with 2.5% commission
-    const { error: releaseError } = await supabase.rpc("release_escrow_funds", {
+    const { data: releaseData, error: releaseError } = await supabase.rpc("confirm_delivery_and_release_escrow", {
       p_escrow_id: escrow.id,
-      p_admin_id: user.id,
+      p_customer_id: user.id,
       p_notes: "Livraison confirmée par le client",
     });
 

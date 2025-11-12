@@ -9394,6 +9394,10 @@ export type Database = {
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      confirm_delivery_and_release_escrow: {
+        Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
+        Returns: Json
+      }
       convert_currency: {
         Args: {
           p_amount: number
