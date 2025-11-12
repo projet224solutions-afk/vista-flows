@@ -98,6 +98,7 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
