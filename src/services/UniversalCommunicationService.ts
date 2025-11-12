@@ -301,7 +301,7 @@ class UniversalCommunicationService {
     conversationId: string,
     senderId: string,
     file: File,
-    type: 'image' | 'video' | 'file' | 'voice' = 'file'
+    type: 'image' | 'video' | 'file' | 'audio' = 'file'
   ): Promise<Message> {
     try {
       console.log('sendFileMessage appelé:', { conversationId, senderId, fileName: file.name, type });

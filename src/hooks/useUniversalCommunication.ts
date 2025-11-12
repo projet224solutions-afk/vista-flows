@@ -85,7 +85,7 @@ export const useUniversalCommunication = () => {
   const sendFile = useCallback(async (
     conversationId: string,
     file: File,
-    type: 'image' | 'video' | 'file' | 'voice' = 'file'
+    type: 'image' | 'video' | 'file' | 'audio' = 'file'
   ) => {
     if (!user?.id) throw new Error('Non authentifié');
     

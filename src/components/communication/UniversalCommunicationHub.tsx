@@ -197,15 +197,15 @@ export default function UniversalCommunicationHub({
       if (attachments && attachments.length > 0) {
         for (const file of attachments) {
           // Déterminer le type de fichier
-          let fileType: 'image' | 'video' | 'file' | 'voice' = 'file';
+          let fileType: 'image' | 'video' | 'file' | 'audio' = 'file';
           
           if (file.type.startsWith('image/')) {
             fileType = 'image';
           } else if (file.type.startsWith('video/')) {
             fileType = 'video';
           } else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) {
-            // Les enregistrements vocaux et fichiers audio utilisent le type "voice"
-            fileType = 'voice';
+            // Les enregistrements vocaux et fichiers audio utilisent le type "audio"
+            fileType = 'audio';
           }
 
           console.log('Envoi fichier:', { fileName: file.name, fileType, fileSize: file.size });
@@ -572,7 +572,7 @@ export default function UniversalCommunicationHub({
                           if (message.file_url) {
                             let displayType = message.type;
                             // Normaliser le type pour l'affichage
-                            if (message.type === 'voice') {
+                            if (message.type === 'audio') {
                               displayType = 'audio/webm';
                             }
                             attachments = [{
