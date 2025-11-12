@@ -27,6 +27,18 @@ interface EscrowInfo {
   created_at: string;
 }
 
+interface StandaloneEscrow {
+  id: string;
+  payer_id: string;
+  receiver_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  commission_percent: number;
+  commission_amount: number;
+}
+
 interface Order {
   id: string;
   order_number: string;
@@ -111,6 +123,7 @@ export default function OrderManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [standaloneEscrows, setStandaloneEscrows] = useState<StandaloneEscrow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -227,8 +240,22 @@ export default function OrderManagement() {
       console.log('📦 Online orders loaded:', ordersWithEscrow.length);
       setOrders(ordersWithEscrow);
 
-      if (ordersWithEscrow.length === 0) {
-        console.warn('⚠️ Aucune commande en ligne trouvée. Vérifiez que les commandes sont créées avec source="online"');
+      // Charger les escrows sans commande (order_id NULL) pour ce vendeur
+      const { data: escrowsData, error: escrowError } = await supabase
+        .from('escrow_transactions')
+        .select('*')
+        .eq('receiver_id', vendor.id)
+        .is('order_id', null)
+        .in('status', ['pending', 'held'])
+        .order('created_at', { ascending: false });
+
+      if (!escrowError && escrowsData) {
+        console.log('💰 Escrows en attente chargés:', escrowsData.length);
+        setStandaloneEscrows(escrowsData);
+      }
+
+      if (ordersWithEscrow.length === 0 && (!escrowsData || escrowsData.length === 0)) {
+        console.warn('⚠️ Aucune commande en ligne ni escrow trouvé.');
       }
     } catch (error) {
       console.error('💥 Error in fetchOrders:', error);
@@ -456,6 +483,83 @@ export default function OrderManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Section Escrows en attente */}
+      {standaloneEscrows.length > 0 && (
+        <Card className="border-2 border-orange-200 bg-orange-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-700">
+              <Shield className="w-5 h-5" />
+              💰 Escrows en attente ({standaloneEscrows.length})
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Transactions escrow non liées à des commandes
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {standaloneEscrows.map(escrow => (
+                <Card key={escrow.id} className="border border-orange-200 hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-orange-100 text-orange-800">
+                            {escrow.status === 'held' ? '🔒 Fonds Bloqués' : '⏳ En attente'}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            ID: {escrow.id.slice(0, 8)}...
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Montant:</span>
+                            <span className="ml-2 font-semibold text-lg text-green-600">
+                              {escrow.amount.toLocaleString()} {escrow.currency}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Commission:</span>
+                            <span className="ml-2 font-medium">
+                              {escrow.commission_percent}% ({escrow.commission_amount.toLocaleString()} {escrow.currency})
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Créé le:</span>
+                            <span className="ml-2">
+                              {new Date(escrow.created_at).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                          onClick={() => {
+                            toast({
+                              title: "Détails Escrow",
+                              description: `Transaction: ${escrow.id}`
+                            });
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Gestion des Commandes</h2>
