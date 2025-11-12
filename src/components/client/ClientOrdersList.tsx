@@ -352,7 +352,7 @@ export default function ClientOrdersList() {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
           const escrow = escrows[order.id];
-          const canConfirmDelivery = order.status === 'in_transit' && escrow?.status === 'pending';
+          const canConfirmDelivery = order.status === 'in_transit' && (escrow?.status === 'pending' || escrow?.status === 'held');
 
           return (
             <Card key={order.id} className="overflow-hidden">
@@ -389,7 +389,7 @@ export default function ClientOrdersList() {
                 </div>
 
                 {/* Protection Escrow */}
-                {escrow && escrow.status === 'pending' && (
+                {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
                   <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                     <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
