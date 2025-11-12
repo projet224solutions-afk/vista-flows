@@ -67,11 +67,21 @@ Deno.serve(async (req) => {
     }
 
     // Get vendor details separately
-    const { data: vendor } = await supabaseClient
+    const { data: vendor, error: vendorError } = await supabaseClient
       .from('vendors')
       .select('user_id')
       .eq('id', escrow.receiver_id)
       .single();
+
+    console.log('[escrow-dispute] Permission check:', {
+      user_id: user.id,
+      payer_id: escrow.payer_id,
+      receiver_id: escrow.receiver_id,
+      vendor_user_id: vendor?.user_id,
+      vendor_error: vendorError,
+      is_admin: isAdmin,
+      profile_role: profile?.role
+    });
 
     // Check if status allows dispute
     if (!['pending', 'held'].includes(escrow.status)) {
@@ -85,7 +95,23 @@ Deno.serve(async (req) => {
     const isPayerOrReceiver = user.id === escrow.payer_id || (vendor?.user_id && user.id === vendor.user_id);
     
     if (!isAdmin && !isPayerOrReceiver) {
-      return new Response(JSON.stringify({ error: 'Not authorized to dispute this escrow' }), {
+      console.error('[escrow-dispute] Authorization failed:', {
+        user_id: user.id,
+        is_admin: isAdmin,
+        is_payer: user.id === escrow.payer_id,
+        is_vendor: vendor?.user_id && user.id === vendor.user_id,
+        vendor_exists: !!vendor
+      });
+      return new Response(JSON.stringify({ 
+        error: 'Not authorized to dispute this escrow',
+        debug: {
+          user_id: user.id,
+          payer_id: escrow.payer_id,
+          receiver_id: escrow.receiver_id,
+          vendor_found: !!vendor,
+          vendor_user_id: vendor?.user_id
+        }
+      }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
