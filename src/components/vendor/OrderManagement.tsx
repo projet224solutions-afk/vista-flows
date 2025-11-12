@@ -439,7 +439,10 @@ export default function OrderManagement() {
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+          onClick={() => setStatusFilter('all')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-blue-600" />
@@ -450,7 +453,10 @@ export default function OrderManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+          onClick={() => setStatusFilter('pending')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-yellow-600" />
@@ -461,7 +467,10 @@ export default function OrderManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+          onClick={() => setStatusFilter('processing')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-600" />
@@ -472,7 +481,10 @@ export default function OrderManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+          onClick={() => setStatusFilter('delivered')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
