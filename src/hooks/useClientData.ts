@@ -170,6 +170,7 @@ export function useClientData() {
         return;
       }
 
+      // Charger uniquement les commandes en ligne (source='online')
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -177,9 +178,12 @@ export function useClientData() {
           total_amount,
           status,
           created_at,
-          vendor_id
+          vendor_id,
+          order_number,
+          source
         `)
         .eq('customer_id', customerData.id)
+        .eq('source', 'online')
         .order('created_at', { ascending: false })
         .limit(20);
 

@@ -25,6 +25,7 @@ import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { IdSystemIndicator } from "@/components/IdSystemIndicator";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
+import ClientOrdersList from "@/components/client/ClientOrdersList";
 import { supabase } from "@/lib/supabaseClient";
 import useResponsive from "@/hooks/useResponsive";
 import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
@@ -575,49 +576,10 @@ export default function ClientDashboard() {
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Mes commandes</CardTitle>
-                <CardDescription>Suivez l'état de vos commandes</CardDescription>
+                <CardDescription>Suivez l'état de vos commandes et confirmez les livraisons</CardDescription>
               </CardHeader>
               <CardContent>
-                {orders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Aucune commande</h3>
-                    <p className="text-muted-foreground">Vos commandes apparaîtront ici</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orders.map((order) => (
-                      <Card key={order.id} className="hover:shadow-glow transition-all">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(order.date).toLocaleDateString('fr-FR')}
-                              </p>
-                            </div>
-                            <Badge className={
-                              order.status === 'completed' ? 'bg-client-primary' :
-                              order.status === 'processing' ? 'bg-orange-500' :
-                              'bg-muted'
-                            }>
-                              {order.status}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-lg font-bold text-client-primary">
-                              {formatPrice(order.total)}
-                            </p>
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4 mr-2" />
-                              Détails
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                <ClientOrdersList />
               </CardContent>
             </Card>
           </TabsContent>
