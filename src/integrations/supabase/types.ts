@@ -2123,6 +2123,57 @@ export type Database = {
           },
         ]
       }
+      escrow_action_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          escrow_id: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          notes: string | null
+          performed_by: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          escrow_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          performed_by?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          escrow_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          performed_by?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_action_logs_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_action_logs_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escrow_logs: {
         Row: {
           action: string
@@ -2170,9 +2221,12 @@ export type Database = {
       }
       escrow_transactions: {
         Row: {
+          admin_action: string | null
+          admin_id: string | null
           amount: number
           auto_release_enabled: boolean | null
           available_to_release_at: string | null
+          buyer_id: string | null
           commission_amount: number | null
           commission_percent: number | null
           created_at: string | null
@@ -2180,18 +2234,25 @@ export type Database = {
           dispute_reason: string | null
           id: string
           metadata: Json | null
+          notes: string | null
           order_id: string
           payer_id: string
           receiver_id: string
+          refunded_at: string | null
+          released_at: string | null
           released_by: string | null
+          seller_id: string | null
           status: string | null
           transaction_id: string | null
           updated_at: string | null
         }
         Insert: {
+          admin_action?: string | null
+          admin_id?: string | null
           amount: number
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
+          buyer_id?: string | null
           commission_amount?: number | null
           commission_percent?: number | null
           created_at?: string | null
@@ -2199,18 +2260,25 @@ export type Database = {
           dispute_reason?: string | null
           id?: string
           metadata?: Json | null
+          notes?: string | null
           order_id: string
           payer_id: string
           receiver_id: string
+          refunded_at?: string | null
+          released_at?: string | null
           released_by?: string | null
+          seller_id?: string | null
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          admin_action?: string | null
+          admin_id?: string | null
           amount?: number
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
+          buyer_id?: string | null
           commission_amount?: number | null
           commission_percent?: number | null
           created_at?: string | null
@@ -2218,10 +2286,14 @@ export type Database = {
           dispute_reason?: string | null
           id?: string
           metadata?: Json | null
+          notes?: string | null
           order_id?: string
           payer_id?: string
           receiver_id?: string
+          refunded_at?: string | null
+          released_at?: string | null
           released_by?: string | null
+          seller_id?: string | null
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
@@ -9109,6 +9181,28 @@ export type Database = {
         Args: { p_vendor_id: string }
         Returns: undefined
       }
+      create_escrow_transaction:
+        | {
+            Args: {
+              p_amount: number
+              p_buyer_id: string
+              p_currency?: string
+              p_order_id: string
+              p_seller_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_buyer_id: string
+              p_currency?: string
+              p_metadata?: Json
+              p_order_id: string
+              p_seller_id: string
+            }
+            Returns: string
+          }
       create_security_incident: {
         Args: {
           p_description: string
@@ -9383,6 +9477,19 @@ export type Database = {
         }[]
       }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
+      get_escrow_stats: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          held_amount: number
+          held_count: number
+          refunded_amount: number
+          refunded_count: number
+          released_amount: number
+          released_count: number
+          total_amount: number
+          total_transactions: number
+        }[]
+      }
       get_finance_stats: { Args: never; Returns: Json }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
       get_or_create_wallet: {
@@ -9738,6 +9845,10 @@ export type Database = {
       refund_escrow:
         | { Args: { p_escrow_id: string; p_reason?: string }; Returns: boolean }
         | { Args: { p_escrow_id: string }; Returns: boolean }
+      refund_escrow_funds: {
+        Args: { p_admin_id: string; p_escrow_id: string; p_reason: string }
+        Returns: boolean
+      }
       release_escrow:
         | {
             Args: {
@@ -9749,6 +9860,15 @@ export type Database = {
           }
         | {
             Args: { p_commission_percent?: number; p_escrow_id: string }
+            Returns: boolean
+          }
+      release_escrow_funds:
+        | {
+            Args: { p_admin_id: string; p_escrow_id: string; p_notes?: string }
+            Returns: boolean
+          }
+        | {
+            Args: { p_admin_id?: string; p_escrow_id: string }
             Returns: boolean
           }
       release_taxi_lock:
