@@ -412,14 +412,8 @@ export default function Payment() {
                           readOnly={searchParams.get('productId') !== null || location.state?.productId}
                           className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
                         />
-                        {(searchParams.get('productId') || location.state?.productId) && (
-                          <p className="text-xs text-green-600 font-medium">
-                            ✓ Montant défini automatiquement par le produit
-                          </p>
-                        )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="payment-description">Description (optionnel)</Label>
                         <Input
                           id="payment-description"
                           placeholder="Achat de produits..."
