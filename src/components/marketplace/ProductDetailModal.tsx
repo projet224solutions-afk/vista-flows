@@ -2,12 +2,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import ProductReviewsSection from "./ProductReviewsSection";
 
 interface Product {
   id: string;
@@ -221,12 +223,19 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="details">Détails du produit</TabsTrigger>
+            <TabsTrigger value="reviews">Avis clients</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <div className="grid md:grid-cols-2 gap-6">
           {/* Images */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-lg overflow-hidden bg-accent">
@@ -350,6 +359,15 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="reviews">
+        <ProductReviewsSection 
+          vendorId={product.vendor_id}
+          vendorName={product.vendors?.business_name || 'Vendeur'}
+        />
+      </TabsContent>
+    </Tabs>
       </DialogContent>
     </Dialog>
   );
