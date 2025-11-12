@@ -895,17 +895,17 @@ export default function OrderManagement() {
             </Card>
             <Card className="bg-white/80">
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">En cours</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
+                <p className="text-sm text-muted-foreground mb-1">En attente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {pendingOnlineOrders}
                 </p>
               </CardContent>
             </Card>
             <Card className="bg-white/80">
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">En attente</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {pendingOnlineOrders}
+                <p className="text-sm text-muted-foreground mb-1">En cours</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
                 </p>
               </CardContent>
             </Card>
