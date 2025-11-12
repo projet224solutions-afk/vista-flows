@@ -29,7 +29,6 @@ export default function EditBadgeDialog({
   vehicleData,
   onUpdate
 }: EditBadgeDialogProps) {
-  const [memberName, setMemberName] = useState(vehicleData.member_name);
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
   const [uploading, setUploading] = useState(false);
@@ -93,20 +92,22 @@ export default function EditBadgeDialog({
       const { error } = await supabase
         .from('vehicles')
         .update({
-          member_name: memberName,
           driver_photo_url: photoUrl || null,
           driver_date_of_birth: dateOfBirth || null,
         })
         .eq('id', vehicleData.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast.success('Informations mises à jour avec succès');
       onUpdate();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating badge info:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(`Erreur lors de la mise à jour: ${error.message || 'Erreur inconnue'}`);
     } finally {
       setSaving(false);
     }
@@ -163,20 +164,9 @@ export default function EditBadgeDialog({
             </p>
           </div>
 
-          {/* Nom du conducteur */}
-          <div className="space-y-2">
-            <Label htmlFor="member-name">Nom du conducteur</Label>
-            <Input
-              id="member-name"
-              value={memberName}
-              onChange={(e) => setMemberName(e.target.value)}
-              placeholder="Nom complet"
-            />
-          </div>
-
           {/* Date de naissance */}
           <div className="space-y-2">
-            <Label htmlFor="date-of-birth">Date de naissance</Label>
+            <Label htmlFor="date-of-birth">Date de naissance du conducteur</Label>
             <Input
               id="date-of-birth"
               type="date"
