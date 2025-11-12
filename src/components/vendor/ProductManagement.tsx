@@ -63,6 +63,8 @@ export default function ProductManagement() {
   const [generatingTags, setGeneratingTags] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [enhancingImages, setEnhancingImages] = useState(false);
+  const [generatingSKU, setGeneratingSKU] = useState(false);
+  const [generatingBarcode, setGeneratingBarcode] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -780,6 +782,107 @@ export default function ProductManagement() {
     }
   };
 
+  const generateSKU = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingSKU(true);
+
+      // Générer un SKU intelligent basé sur le nom du produit
+      const productName = formData.name.toUpperCase();
+      const words = productName.split(' ').filter(w => w.length > 2);
+      
+      // Prendre les premières lettres des mots principaux
+      let skuPrefix = '';
+      if (words.length >= 3) {
+        skuPrefix = words.slice(0, 3).map(w => w.substring(0, 3)).join('');
+      } else if (words.length === 2) {
+        skuPrefix = words[0].substring(0, 4) + words[1].substring(0, 4);
+      } else {
+        skuPrefix = words[0].substring(0, 6);
+      }
+
+      // Ajouter un identifiant unique
+      const timestamp = Date.now().toString().slice(-6);
+      const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      
+      const generatedSKU = `${skuPrefix}-${timestamp}-${randomNum}`;
+      
+      setFormData(prev => ({ ...prev, sku: generatedSKU }));
+      toast({
+        title: "SKU généré",
+        description: `Code SKU: ${generatedSKU}`
+      });
+    } catch (error) {
+      console.error('Erreur génération SKU:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le SKU",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingSKU(false);
+    }
+  };
+
+  const generateBarcode = async () => {
+    if (!formData.name) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord entrer le nom du produit",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setGeneratingBarcode(true);
+
+      // Générer un code-barres EAN-13 valide
+      // Format: 3 chiffres (préfixe GS1 Guinée fictif) + 9 chiffres (code produit) + 1 chiffre de contrôle
+      
+      const countryCode = '224'; // Code fictif pour la Guinée
+      
+      // Générer 9 chiffres basés sur le nom du produit et timestamp
+      const productHash = formData.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const timestamp = Date.now().toString().slice(-6);
+      const productCode = (productHash.toString() + timestamp).slice(0, 9).padStart(9, '0');
+      
+      // Calculer le chiffre de contrôle EAN-13
+      const codeWithoutChecksum = countryCode + productCode;
+      let sum = 0;
+      for (let i = 0; i < codeWithoutChecksum.length; i++) {
+        const digit = parseInt(codeWithoutChecksum[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+      }
+      const checksum = (10 - (sum % 10)) % 10;
+      
+      const generatedBarcode = codeWithoutChecksum + checksum;
+      
+      setFormData(prev => ({ ...prev, barcode: generatedBarcode }));
+      toast({
+        title: "Code-barres généré",
+        description: `EAN-13: ${generatedBarcode}`
+      });
+    } catch (error) {
+      console.error('Erreur génération code-barres:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le code-barres",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingBarcode(false);
+    }
+  };
+
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
@@ -1038,12 +1141,29 @@ export default function ProductManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sku">Code SKU</Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                      placeholder="Ex: IPH15PRO"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="sku"
+                        value={formData.sku}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                        placeholder="Ex: IPH15PRO-170123-45"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generateSKU}
+                        disabled={!formData.name || generatingSKU}
+                        title="Générer un SKU avec l'IA"
+                      >
+                        {generatingSKU ? (
+                          <span className="animate-spin">⏳</span>
+                        ) : (
+                          <Sparkles className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -1115,12 +1235,29 @@ export default function ProductManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="barcode">Code-barres</Label>
-                    <Input
-                      id="barcode"
-                      value={formData.barcode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
-                      placeholder="Ex: 123456789012"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="barcode"
+                        value={formData.barcode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                        placeholder="Ex: 2241234567890"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generateBarcode}
+                        disabled={!formData.name || generatingBarcode}
+                        title="Générer un code-barres avec l'IA"
+                      >
+                        {generatingBarcode ? (
+                          <span className="animate-spin">⏳</span>
+                        ) : (
+                          <Sparkles className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
