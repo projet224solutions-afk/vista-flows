@@ -9,11 +9,14 @@ import { Star, MessageSquare, User, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import VendorResponseToReview from './VendorResponseToReview';
 
 interface VendorRating {
   id: string;
   rating: number;
   comment: string | null;
+  vendor_response: string | null;
+  vendor_response_at: string | null;
   created_at: string;
   order_id: string;
   orders?: {
@@ -82,6 +85,8 @@ export default function VendorRatingsPanel() {
         
         return {
           ...rating,
+          vendor_response: rating.vendor_response || null,
+          vendor_response_at: rating.vendor_response_at || null,
           profiles: profile || { first_name: '', last_name: '' }
         };
       }));
@@ -238,11 +243,18 @@ export default function VendorRatingsPanel() {
               </div>
 
               {rating.comment && (
-                <div className="flex gap-2 p-3 bg-muted/50 rounded-lg">
+                <div className="flex gap-2 p-3 bg-muted/50 rounded-lg mb-3">
                   <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <p className="text-sm">{rating.comment}</p>
                 </div>
               )}
+
+              {/* Composant de réponse du vendeur */}
+              <VendorResponseToReview
+                ratingId={rating.id}
+                existingResponse={rating.vendor_response || undefined}
+                onResponseSubmitted={loadRatings}
+              />
 
               {rating.orders && (
                 <div className="mt-3 pt-3 border-t">

@@ -8348,6 +8348,8 @@ export type Database = {
           rating: number
           updated_at: string
           vendor_id: string
+          vendor_response: string | null
+          vendor_response_at: string | null
         }
         Insert: {
           comment?: string | null
@@ -8358,6 +8360,8 @@ export type Database = {
           rating: number
           updated_at?: string
           vendor_id: string
+          vendor_response?: string | null
+          vendor_response_at?: string | null
         }
         Update: {
           comment?: string | null
@@ -8368,6 +8372,8 @@ export type Database = {
           rating?: number
           updated_at?: string
           vendor_id?: string
+          vendor_response?: string | null
+          vendor_response_at?: string | null
         }
         Relationships: [
           {

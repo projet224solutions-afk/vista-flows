@@ -72,6 +72,8 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
         
         return {
           ...review,
+          vendor_response: review.vendor_response || null,
+          vendor_response_at: review.vendor_response_at || null,
           profiles: profile || { first_name: 'Client', last_name: '' }
         };
       }));
