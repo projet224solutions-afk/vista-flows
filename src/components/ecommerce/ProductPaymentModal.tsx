@@ -18,6 +18,7 @@ import { Wallet, Banknote, Loader2, AlertCircle, Shield } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Escrow224Service } from "@/services/escrow224Service";
 
 export type ProductPaymentMethod = 'wallet' | 'cash';
 
@@ -276,35 +277,31 @@ export default function ProductPaymentModal({
 
           console.log('[ProductPayment] Initiating escrow:', {
             order_id: orderData.id,
-            payer_id: userId,
-            receiver_id: vendorData.user_id,
+            buyer_id: userId,
+            seller_id: vendorData.user_id,
             amount: vendorTotal
           });
 
-          // Initier l'escrow - bloque les fonds dans le système
-          const { data: escrowId, error: escrowError } = await supabase.rpc('initiate_escrow', {
-            p_order_id: orderData.id,
-            p_payer_id: userId,
-            p_receiver_id: vendorData.user_id,
-            p_amount: vendorTotal,
-            p_currency: 'GNF'
+          // Initier l'escrow - bloque les fonds dans le système via le service Escrow224
+          const escrowResult = await Escrow224Service.createEscrow({
+            buyer_id: userId,
+            seller_id: vendorData.user_id,
+            order_id: orderData.id,
+            amount: vendorTotal,
+            currency: 'GNF'
           });
 
-          if (escrowError) {
-            console.error('[ProductPayment] Escrow initiation failed:', {
-              error: escrowError,
-              message: escrowError.message,
-              details: escrowError.details,
-              hint: escrowError.hint
-            });
+          if (!escrowResult.success) {
+            console.error('[ProductPayment] Escrow initiation failed:', escrowResult.error);
             // Annuler la commande si l'escrow échoue
             await supabase.from('orders').delete().eq('id', orderData.id);
             toast.error('Erreur de paiement', {
-              description: escrowError.message || 'L\'escrow a échoué'
+              description: escrowResult.error || 'L\'escrow a échoué'
             });
             continue;
           }
 
+          const escrowId = escrowResult.escrow_id;
           console.log('✅ Escrow initiated successfully:', escrowId);
 
           // Mettre à jour la commande avec l'escrow_transaction_id
