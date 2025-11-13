@@ -240,11 +240,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="grid md:grid-cols-2 gap-6">
           {/* Images */}
           <div className="space-y-4">
-            <div className="relative h-[500px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-6 border border-border/20">
+            <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
               <img
                 src={images[selectedImage]}
                 alt={product.name}
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
               />
             </div>
             {images.length > 1 && (
