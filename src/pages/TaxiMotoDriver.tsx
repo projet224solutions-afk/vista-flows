@@ -27,7 +27,8 @@ import {
     Settings,
     LogOut,
     Bell,
-    History
+    History,
+    Wallet
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
@@ -54,6 +55,7 @@ import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import UniversalWalletDashboard from "@/components/wallet/UniversalWalletDashboard";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -1114,7 +1116,7 @@ export default function TaxiMotoDriver() {
             {/* Navigation par onglets */}
             <div className="px-4 mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm relative">
+                    <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm relative">
                         <TabsTrigger value="dashboard">
                             <TrendingUp className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
@@ -1135,6 +1137,10 @@ export default function TaxiMotoDriver() {
                         <TabsTrigger value="gps-navigation">
                             <MapPin className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Navigation</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="wallet">
+                            <Wallet className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">Wallet</span>
                         </TabsTrigger>
                         <TabsTrigger value="earnings">
                             <DollarSign className="w-4 h-4 mr-1" />
@@ -1188,6 +1194,14 @@ export default function TaxiMotoDriver() {
                                 onContactCustomer={contactCustomer}
                             />
                         )}
+                    </TabsContent>
+
+                    {/* Wallet - Composant universel avec transactions */}
+                    <TabsContent value="wallet" className="mt-0">
+                        <UniversalWalletDashboard 
+                            userId={user?.id || ''} 
+                            showTransactions={true}
+                        />
                     </TabsContent>
 
                     {/* Gains - Composant dédié avec connexion temps réel */}

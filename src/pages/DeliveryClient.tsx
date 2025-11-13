@@ -22,7 +22,8 @@ import {
   Phone,
   Truck,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  Wallet
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import useResponsive from "@/hooks/useResponsive";
+import UniversalWalletDashboard from "@/components/wallet/UniversalWalletDashboard";
 
 interface Driver {
   id: string;
@@ -292,7 +294,7 @@ export default function DeliveryClient() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="booking" className="gap-2">
               <Package className="w-4 h-4" />
               {!isMobile && 'Commander'}
@@ -300,6 +302,10 @@ export default function DeliveryClient() {
             <TabsTrigger value="tracking" className="gap-2">
               <Clock className="w-4 h-4" />
               {!isMobile && 'Suivi'}
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="gap-2">
+              <Wallet className="w-4 h-4" />
+              {!isMobile && 'Wallet'}
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="w-4 h-4" />
@@ -491,6 +497,14 @@ export default function DeliveryClient() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Onglet Wallet */}
+          <TabsContent value="wallet">
+            <UniversalWalletDashboard 
+              userId={user?.id || ''} 
+              showTransactions={true}
+            />
           </TabsContent>
 
           {/* Onglet Historique */}
