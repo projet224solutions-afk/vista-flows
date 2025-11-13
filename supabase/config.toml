@@ -165,4 +165,10 @@ verify_jwt = true
 [functions.request-refund]
 verify_jwt = true
 
+[functions.create-pdg-agent]
+verify_jwt = true
+
+[functions.delete-pdg-agent]
+verify_jwt = true
+
 

@@ -268,23 +268,20 @@ export const usePDGAgentsData = () => {
     }
   }, [loadAgents]);
 
-  // Supprimer un agent (désactivation)
+  // Supprimer un agent définitivement (hard delete)
   const deleteAgent = useCallback(async (agentId: string) => {
     try {
-      const { data, error } = await supabase
-        .rpc('delete_agent' as any, {
-          p_agent_id: agentId
-        });
+      const { data, error } = await supabase.functions.invoke('delete-pdg-agent', {
+        body: { agent_id: agentId }
+      });
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string; message?: string };
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la suppression');
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la suppression');
       }
 
-      toast.success(result.message || 'Agent désactivé avec succès');
+      toast.success(data.message || 'Agent supprimé définitivement');
       await loadAgents(); // Recharger la liste
       return true;
     } catch (error: any) {
