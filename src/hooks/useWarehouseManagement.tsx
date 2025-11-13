@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useVendorId } from '@/hooks/useVendorId';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
 export interface Warehouse {
   id: string;
@@ -39,7 +39,7 @@ export interface StockMovement {
 }
 
 export const useWarehouseManagement = () => {
-  const { vendorId, loading: vendorLoading } = useVendorId();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseStocks, setWarehouseStocks] = useState<WarehouseStock[]>([]);
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);

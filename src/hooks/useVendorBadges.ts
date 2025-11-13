@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
 export interface VendorBadges {
   pendingOrders: number;
@@ -10,7 +10,7 @@ export interface VendorBadges {
 }
 
 export function useVendorBadges() {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [badges, setBadges] = useState<VendorBadges>({
     pendingOrders: 0,
     unreadExpenseAlerts: 0,
@@ -20,27 +20,15 @@ export function useVendorBadges() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading || !vendorId) return;
 
     const fetchBadges = async () => {
       try {
-        // Get vendor ID
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!vendor) {
-          setLoading(false);
-          return;
-        }
-
         // Fetch pending orders count
         const { count: pendingOrdersCount, error: ordersError } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('status', 'pending');
 
         if (ordersError) {
@@ -51,7 +39,7 @@ export function useVendorBadges() {
         const { count: unreadAlertsCount, error: alertsError } = await supabase
           .from('expense_alerts')
           .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('is_read', false);
 
         if (alertsError) {
@@ -62,7 +50,7 @@ export function useVendorBadges() {
         const { count: productsCount, error: productsError } = await supabase
           .from('products')
           .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('is_active', true);
 
         if (productsError) {
@@ -73,7 +61,7 @@ export function useVendorBadges() {
         const { data: inventoryData, error: inventoryError } = await supabase
           .from('inventory')
           .select('id, quantity, minimum_stock, product_id, products!inner(vendor_id)')
-          .eq('products.vendor_id', vendor.id);
+          .eq('products.vendor_id', vendorId);
 
         if (inventoryError) {
           console.error('Error fetching inventory:', inventoryError);
@@ -122,7 +110,7 @@ export function useVendorBadges() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [vendorId, vendorLoading]);
 
   return { badges, loading };
 }
