@@ -20,6 +20,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
   const loadWallet = async () => {
     if (!userId) {
       console.log('❌ WalletBalanceDisplay: userId manquant');
+      setLoading(false);
       return;
     }
 
@@ -35,7 +36,9 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
 
       if (error) {
         console.error('❌ Erreur Supabase wallet:', error);
-        throw error;
+        setLoading(false);
+        toast.error('Erreur de chargement du wallet');
+        return;
       }
 
       if (!data) {
@@ -47,7 +50,8 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
           
           if (rpcError) {
             console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
-            throw rpcError;
+            setLoading(false);
+            return;
           }
           
           console.log('✅ Wallet initialisé:', initResult);
@@ -60,19 +64,20 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
             .maybeSingle();
           
           if (reloadError || !reloadedWallet) {
-            throw new Error('Échec du rechargement du wallet après initialisation');
+            console.error('❌ Échec rechargement wallet:', reloadError);
+            setLoading(false);
+            return;
           }
           
           setWalletId(reloadedWallet.id);
           setBalance(reloadedWallet.balance || 0);
           setCurrency(reloadedWallet.currency || 'GNF');
           console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
-          return;
         } catch (initError) {
           console.error('❌ Échec initialisation wallet:', initError);
-          toast.error('Impossible d\'initialiser le wallet');
-          throw initError;
         }
+        setLoading(false);
+        return;
       }
 
       setWalletId(data.id);
@@ -81,7 +86,6 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
       console.log('✅ Wallet chargé:', { id: data.id, balance: data.balance, currency: data.currency });
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet:', error);
-      toast.error(`Erreur wallet: ${error?.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
