@@ -11,6 +11,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { AgentProvider } from '@/contexts/AgentContext';
+import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
 
 // Import des modules fonctionnels du vendeur
 import ProductManagement from '@/components/vendor/ProductManagement';
@@ -188,37 +190,38 @@ export default function VendorAgentInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10">
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg bg-vendeur-gradient">
-                  <Shield className="h-6 w-6 text-white" />
+    <AgentProvider agent={agent}>
+      <div className="min-h-screen bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10">
+        {/* Header */}
+        <div className="bg-white shadow-lg border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 rounded-lg bg-vendeur-gradient">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold">Espace Agent - Synchronisé</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {agent.name} • {agent.agent_code} • Accès aux données du vendeur
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">Espace Agent</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {agent.name} • {agent.agent_code}
-                  </p>
-                </div>
+                <Badge variant="outline" className="bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20">
+                  Agent Actif • Synchronisé
+                </Badge>
               </div>
-              <Badge variant="outline" className="bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20">
-                Agent Actif
-              </Badge>
+              <Button onClick={handleSignOut} variant="outline" size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                Déconnexion
+              </Button>
             </div>
-            <Button onClick={handleSignOut} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
-            </Button>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-white shadow flex-wrap">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
@@ -499,147 +502,144 @@ export default function VendorAgentInterface() {
           </TabsContent>
 
           <TabsContent value="dashboard">
-            {hasPermission('view_dashboard') ? (
+            <AgentModuleWrapper permission="view_dashboard">
               <VendorAnalytics />
-            ) : (
-              <Card className="border-0 shadow-elegant">
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Vous n'avez pas la permission d'accéder au Dashboard
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            </AgentModuleWrapper>
           </TabsContent>
 
           <TabsContent value="products">
-            {hasPermission('manage_products') ? (
+            <AgentModuleWrapper permission="manage_products">
               <ProductManagement />
-            ) : (
-              <Card className="border-0 shadow-elegant">
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Vous n'avez pas la permission de gérer les produits
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            </AgentModuleWrapper>
           </TabsContent>
 
           <TabsContent value="orders">
-            {hasPermission('manage_orders') ? (
+            <AgentModuleWrapper permission="manage_orders">
               <OrderManagement />
-            ) : (
-              <Card className="border-0 shadow-elegant">
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Vous n'avez pas la permission de gérer les commandes
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            </AgentModuleWrapper>
           </TabsContent>
 
           <TabsContent value="wallet">
-            {hasPermission('access_wallet') ? (
+            <AgentModuleWrapper permission="access_wallet">
               <UniversalWalletTransactions />
-            ) : (
-              <Card className="border-0 shadow-elegant">
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Vous n'avez pas la permission d'accéder au Wallet
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            </AgentModuleWrapper>
           </TabsContent>
 
           {/* Modules additionnels */}
           {hasPermission('access_pos') && (
             <TabsContent value="pos">
-              <POSSystemWrapper />
+              <AgentModuleWrapper>
+                <POSSystemWrapper />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_inventory') && (
             <TabsContent value="inventory">
-              <InventoryManagement />
+              <AgentModuleWrapper>
+                <InventoryManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_warehouse') && (
             <TabsContent value="warehouse">
-              <WarehouseManagement />
+              <AgentModuleWrapper>
+                <WarehouseManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_clients') && (
             <TabsContent value="clients">
-              <ClientManagement />
+              <AgentModuleWrapper>
+                <ClientManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_delivery') && (
             <TabsContent value="delivery">
-              <VendorDeliveriesPanel />
+              <AgentModuleWrapper>
+                <VendorDeliveriesPanel />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_payments') && (
             <TabsContent value="payments">
-              <PaymentManagement />
+              <AgentModuleWrapper>
+                <PaymentManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_payment_links') && (
             <TabsContent value="payment_links">
-              <PaymentLinksManager />
+              <AgentModuleWrapper>
+                <PaymentLinksManager />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('access_support') && (
             <TabsContent value="support">
-              <SupportTickets />
+              <AgentModuleWrapper>
+                <SupportTickets />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('access_communication') && (
             <TabsContent value="communication">
-              <UniversalCommunicationHub />
+              <AgentModuleWrapper>
+                <UniversalCommunicationHub />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_suppliers') && (
             <TabsContent value="suppliers">
-              <SupplierManagement />
+              <AgentModuleWrapper>
+                <SupplierManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_prospects') && (
             <TabsContent value="prospects">
-              <ProspectManagement />
+              <AgentModuleWrapper>
+                <ProspectManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_marketing') && (
             <TabsContent value="marketing">
-              <MarketingManagement />
+              <AgentModuleWrapper>
+                <MarketingManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_expenses') && (
             <TabsContent value="expenses">
-              <ExpenseManagementDashboard />
+              <AgentModuleWrapper>
+                <ExpenseManagementDashboard />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
 
           {hasPermission('manage_debts') && (
             <TabsContent value="debts">
-              <DebtManagement />
+              <AgentModuleWrapper>
+                <DebtManagement />
+              </AgentModuleWrapper>
             </TabsContent>
           )}
         </Tabs>
       </div>
     </div>
+    </AgentProvider>
   );
 }
