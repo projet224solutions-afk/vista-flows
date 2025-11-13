@@ -1,6 +1,7 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAgent } from '@/contexts/AgentContext';
 
 /**
  * Hook centralisé pour récupérer le vendor_id
@@ -10,25 +11,17 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export function useVendorId() {
   const { user } = useAuth();
+  const agentContext = useAgent(); // Utilise le contexte avec valeurs par défaut
   
-  // Essayer de récupérer depuis AgentContext si disponible
-  let agentVendorId: string | null = null;
-  try {
-    const { useAgent } = require('@/contexts/AgentContext');
-    const agentContext = useAgent();
-    agentVendorId = agentContext?.vendorId || null;
-  } catch {
-    // AgentContext pas disponible, mode vendeur direct
-  }
-
-  const [vendorId, setVendorId] = useState<string | null>(agentVendorId);
-  const [loading, setLoading] = useState(!agentVendorId);
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Si vendorId déjà fourni par AgentContext, pas besoin de fetch
-    if (agentVendorId) {
-      setVendorId(agentVendorId);
+    // Si vendorId fourni par AgentContext, l'utiliser directement
+    if (agentContext.vendorId) {
+      console.log('✅ Vendor ID depuis AgentContext:', agentContext.vendorId);
+      setVendorId(agentContext.vendorId);
       setLoading(false);
       return;
     }
@@ -42,6 +35,8 @@ export function useVendorId() {
 
       try {
         setLoading(true);
+        console.log('🔍 Récupération vendor_id pour user:', user.id);
+        
         const { data, error } = await supabase
           .from('vendors')
           .select('id')
@@ -50,9 +45,10 @@ export function useVendorId() {
 
         if (error) throw error;
         
+        console.log('✅ Vendor ID trouvé:', data?.id);
         setVendorId(data?.id || null);
       } catch (err: any) {
-        console.error('Erreur récupération vendor_id:', err);
+        console.error('❌ Erreur récupération vendor_id:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -60,7 +56,7 @@ export function useVendorId() {
     };
 
     fetchVendorId();
-  }, [user?.id, agentVendorId]);
+  }, [user?.id, agentContext.vendorId]);
 
   return { vendorId, loading, error };
 }

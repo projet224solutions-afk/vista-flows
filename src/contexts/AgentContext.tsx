@@ -20,14 +20,16 @@ interface AgentContextType {
   hasPermission: (permission: string) => boolean;
 }
 
-const AgentContext = createContext<AgentContextType | undefined>(undefined);
+const defaultContext: AgentContextType = {
+  agent: null,
+  vendorId: null,
+  hasPermission: () => false,
+};
+
+const AgentContext = createContext<AgentContextType>(defaultContext);
 
 export const useAgent = () => {
-  const context = useContext(AgentContext);
-  if (!context) {
-    throw new Error('useAgent must be used within AgentProvider');
-  }
-  return context;
+  return useContext(AgentContext);
 };
 
 interface AgentProviderProps {
