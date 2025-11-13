@@ -71,6 +71,8 @@ export default function UniversalWalletDashboard({
             const { data: initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: userId });
             
+            console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
+            
             if (rpcError) {
               console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
               toast.error(`Impossible d'initialiser le wallet: ${rpcError.message}`);
@@ -78,15 +80,16 @@ export default function UniversalWalletDashboard({
             }
             
             const result = initResult as any;
-            if (!result?.success) {
-              console.error('❌ Échec initialisation wallet:', result);
-              toast.error('Échec de l\'initialisation du wallet');
-              throw new Error('Échec initialisation wallet');
+            if (!result || !result.success) {
+              const errorMsg = result?.error || 'Échec initialisation wallet';
+              console.error('❌ Échec initialisation wallet:', errorMsg);
+              toast.error(errorMsg);
+              throw new Error(errorMsg);
             }
             
             console.log('✅ Wallet initialisé via RPC:', result);
             
-            // Recharger le wallet
+            // Recharger le wallet depuis la base de données
             const { data: reloadedWallet, error: reloadError } = await supabase
               .from('wallets')
               .select('*')
@@ -100,12 +103,12 @@ export default function UniversalWalletDashboard({
             
             console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
             setWallet(reloadedWallet);
-            toast.success('Wallet initialisé avec succès !');
+            toast.success('Wallet chargé avec succès !');
             setLoading(false);
             return;
           } catch (initError: any) {
             console.error('❌ Erreur lors de l\'initialisation:', initError);
-            toast.error(`Erreur: ${initError?.message || 'Impossible d\'initialiser le wallet'}`);
+            toast.error(`Erreur: ${initError?.message || 'Impossible de charger le wallet'}`);
             throw initError;
           }
         } else {

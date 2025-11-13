@@ -96,16 +96,19 @@ export const UniversalWalletTransactions = () => {
             const { data: initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: user.id });
             
+            console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
+            
             if (rpcError) throw rpcError;
             
             const result = initResult as any;
-            if (!result?.success) {
-              throw new Error('Échec initialisation wallet');
+            if (!result || !result.success) {
+              const errorMsg = result?.error || 'Échec initialisation wallet';
+              throw new Error(errorMsg);
             }
             
             console.log('✅ Wallet initialisé:', result);
             
-            // Recharger le wallet
+            // Recharger le wallet depuis la base de données
             const { data: reloadedWallet, error: reloadError } = await supabase
               .from('wallets')
               .select('*')
@@ -118,7 +121,7 @@ export const UniversalWalletTransactions = () => {
             return;
           } catch (initError) {
             console.error('❌ Erreur initialisation wallet:', initError);
-            toast.error('Impossible d\'initialiser le wallet');
+            toast.error('Impossible de charger le wallet');
             return;
           }
         } else {
