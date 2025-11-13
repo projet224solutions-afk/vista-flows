@@ -34,45 +34,78 @@ export default function VendorAgentInterface() {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
+    console.log('🚀 VendorAgentInterface - Initialisation avec token:', token);
+    
     if (!token) {
+      console.error('❌ Token manquant dans l\'URL');
       toast.error('Token d\'accès manquant');
-      navigate('/');
+      setLoading(false);
       return;
     }
+    
     loadAgentData(token);
-  }, [token, navigate]);
+  }, [token]);
 
-  const loadAgentData = async (token: string) => {
+  const loadAgentData = async (accessToken: string) => {
+    setLoading(true);
+    
     try {
-      console.log('🔍 Chargement agent avec token:', token);
+      console.log('🔍 Recherche agent avec token:', accessToken);
+      console.log('🔍 Longueur du token:', accessToken.length);
       
-      const { data, error } = await supabase
+      // Requête directe sans filtres supplémentaires d'abord
+      const { data: allAgents, error: listError } = await supabase
         .from('vendor_agents')
         .select('*')
-        .eq('access_token', token)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      console.log('📊 Résultat requête agent:', { data, error });
-
-      if (error) {
-        console.error('❌ Erreur Supabase:', error);
-        throw error;
+        .limit(10);
+      
+      console.log('📋 Liste des agents disponibles:', allAgents);
+      console.log('📋 Nombre d\'agents:', allAgents?.length || 0);
+      
+      if (listError) {
+        console.error('❌ Erreur liste agents:', listError);
       }
       
-      if (!data) {
+      // Requête spécifique pour cet agent
+      const { data: agentData, error: agentError } = await supabase
+        .from('vendor_agents')
+        .select('*')
+        .eq('access_token', accessToken)
+        .maybeSingle();
+
+      console.log('📊 Résultat recherche agent:', { 
+        agentData, 
+        agentError,
+        tokenRecherche: accessToken
+      });
+
+      if (agentError) {
+        console.error('❌ Erreur Supabase lors de la recherche:', agentError);
+        toast.error(`Erreur base de données: ${agentError.message}`);
+        return;
+      }
+      
+      if (!agentData) {
         console.warn('⚠️ Aucun agent trouvé avec ce token');
-        toast.error('Agent non trouvé ou inactif');
-        navigate('/');
+        console.warn('⚠️ Token recherché:', accessToken);
+        console.warn('⚠️ Tokens disponibles:', allAgents?.map(a => a.access_token));
+        toast.error('Agent non trouvé. Vérifiez le lien d\'accès.');
         return;
       }
 
-      console.log('✅ Agent chargé avec succès:', data);
-      setAgent(data);
-    } catch (error) {
-      console.error('❌ Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement des données de l\'agent');
-      navigate('/');
+      if (!agentData.is_active) {
+        console.warn('⚠️ Agent trouvé mais inactif');
+        toast.error('Ce compte agent est désactivé. Contactez votre vendeur.');
+        return;
+      }
+
+      console.log('✅ Agent chargé avec succès:', agentData);
+      setAgent(agentData);
+      toast.success(`Bienvenue ${agentData.name} !`);
+      
+    } catch (error: any) {
+      console.error('❌ Erreur fatale chargement agent:', error);
+      toast.error(`Erreur: ${error.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
@@ -99,13 +132,33 @@ export default function VendorAgentInterface() {
 
   if (!agent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">
-              Aucun profil agent trouvé. Veuillez contacter votre vendeur.
-            </p>
-            <Button onClick={handleSignOut} className="w-full mt-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10 p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Accès Agent Vendeur</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center space-y-2">
+              <p className="text-muted-foreground">
+                Aucun profil agent trouvé avec ce lien d'accès.
+              </p>
+              <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+                <p className="font-medium">Vérifiez que :</p>
+                <ul className="list-disc list-inside text-left space-y-1 text-muted-foreground">
+                  <li>Le lien d'accès est complet et correct</li>
+                  <li>Votre compte agent est actif</li>
+                  <li>Le lien n'a pas expiré</li>
+                </ul>
+              </div>
+              {token && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-left">
+                  <p className="font-mono break-all">
+                    <span className="font-semibold">Token détecté:</span> {token}
+                  </p>
+                </div>
+              )}
+            </div>
+            <Button onClick={handleSignOut} className="w-full" variant="outline">
               Retour à l'accueil
             </Button>
           </CardContent>
