@@ -176,21 +176,38 @@ export class TaxiMotoService {
   static async acceptRide(rideId: string, driverId: string): Promise<void> {
     await withRetry(
       async () => {
-        const { error } = await supabase.functions.invoke('taxi-accept-ride', {
+        const { data, error } = await supabase.functions.invoke('taxi-accept-ride', {
           body: { rideId, driverId }
         });
 
-        if (error) throw error;
-        return { data: null, error: null };
+        if (error) {
+          // Gestion spécifique des erreurs de verrouillage
+          if (error.message?.includes('LOCKED') || error.message?.includes('déjà en cours')) {
+            const lockError = new Error('Cette course est déjà en cours d\'attribution');
+            (lockError as any).code = 'LOCKED';
+            throw lockError;
+          }
+          if (error.message?.includes('ALREADY_ASSIGNED') || error.message?.includes('déjà attribuée')) {
+            const assignedError = new Error('Cette course a déjà été attribuée');
+            (assignedError as any).code = 'ALREADY_ASSIGNED';
+            throw assignedError;
+          }
+          throw error;
+        }
+        return { data, error: null };
       },
       { 
-        maxRetries: 2,
+        maxRetries: 1, // Réduire les tentatives pour les erreurs de verrouillage
         timeout: 20000,
         onRetry: (attempt) => {
           console.log(`[TaxiMotoService] Retry accepting ride (attempt ${attempt})`);
         }
       }
     ).catch((error) => {
+      // Ne pas traiter l'erreur si c'est une erreur de verrouillage
+      if (error.code === 'LOCKED' || error.code === 'ALREADY_ASSIGNED') {
+        throw error;
+      }
       handleApiError(error, 'Acceptation de la course');
       throw error;
     });

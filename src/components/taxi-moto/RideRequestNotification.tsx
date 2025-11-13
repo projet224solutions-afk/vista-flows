@@ -27,13 +27,15 @@ interface RideRequestNotificationProps {
   onAccept: () => void;
   onDecline: () => void;
   index: number;
+  isAccepting?: boolean;
 }
 
 export function RideRequestNotification({ 
   request, 
   onAccept, 
   onDecline,
-  index 
+  index,
+  isAccepting = false
 }: RideRequestNotificationProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -121,7 +123,8 @@ export function RideRequestNotification({
             }}
             variant="outline"
             size="lg"
-            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95"
+            disabled={isAccepting}
+            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="text-xl mr-1">❌</span> Refuser
           </Button>
@@ -131,9 +134,19 @@ export function RideRequestNotification({
               onAccept();
             }}
             size="lg"
-            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95"
+            disabled={isAccepting}
+            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="text-xl mr-1">✅</span> Accepter
+            {isAccepting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                Acceptation...
+              </>
+            ) : (
+              <>
+                <span className="text-xl mr-1">✅</span> Accepter
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

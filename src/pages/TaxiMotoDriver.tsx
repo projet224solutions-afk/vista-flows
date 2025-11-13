@@ -102,6 +102,7 @@ export default function TaxiMotoDriver() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [rideRequests, setRideRequests] = useState<RideRequest[]>([]);
     const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
+    const [acceptingRideId, setAcceptingRideId] = useState<string | null>(null);
     const [driverStats, setDriverStats] = useState({
         todayEarnings: 0,
         todayRides: 0,
@@ -692,6 +693,13 @@ export default function TaxiMotoDriver() {
     const acceptRideRequest = async (request: RideRequest) => {
         console.log('🎯 Tentative d\'acceptation de course:', request.id);
         
+        // Vérifier si une acceptation est déjà en cours
+        if (acceptingRideId) {
+            console.log('⏳ Une acceptation est déjà en cours:', acceptingRideId);
+            toast.info('Veuillez patienter, une course est en cours d\'acceptation...');
+            return;
+        }
+        
         if (!driverId) {
             console.error('❌ Pas de driverId disponible');
             toast.error('Profil conducteur non trouvé');
@@ -699,6 +707,9 @@ export default function TaxiMotoDriver() {
         }
 
         console.log('✅ DriverId trouvé:', driverId);
+        
+        // Définir l'état d'acceptation en cours
+        setAcceptingRideId(request.id);
 
         try {
             console.log('📞 Appel de TaxiMotoService.acceptRide...');
@@ -758,9 +769,20 @@ export default function TaxiMotoDriver() {
             // Démarrer la navigation
             console.log('🗺️ Démarrage de la navigation vers:', request.pickupCoords);
             startNavigation(request.pickupCoords);
-        } catch (error) {
-            console.error('❌ Erreur lors de l\'acceptation:', error);
-            toast.error('Impossible d\'accepter la course. Elle a peut-être déjà été prise.');
+        } catch (error: any) {
+            console.error('❌ Erreur acceptation course:', error);
+            
+            // Gestion spécifique de l'erreur de verrouillage
+            if (error.message?.includes('LOCKED') || error.message?.includes('déjà en cours')) {
+                toast.warning('⏳ Cette course est déjà en cours d\'attribution par un autre conducteur. Veuillez en sélectionner une autre.');
+            } else if (error.message?.includes('ALREADY_ASSIGNED') || error.message?.includes('déjà attribuée')) {
+                toast.info('ℹ️ Cette course a déjà été attribuée à un autre conducteur.');
+            } else {
+                toast.error(`Erreur: ${error.message || 'Impossible d\'accepter la course'}`);
+            }
+        } finally {
+            // Réinitialiser l'état d'acceptation
+            setAcceptingRideId(null);
         }
     };
 
@@ -1104,6 +1126,7 @@ export default function TaxiMotoDriver() {
                                 onAccept={() => acceptRideRequest(request)}
                                 onDecline={() => declineRideRequest(request.id)}
                                 index={index}
+                                isAccepting={acceptingRideId === request.id}
                             />
                         ))}
                     </div>
