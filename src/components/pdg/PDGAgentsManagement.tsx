@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AgentPermissionsDialog } from './AgentPermissionsDialog';
 
 interface AgentUser {
   id: string;
@@ -53,6 +54,8 @@ export default function PDGAgentsManagement() {
   const [agentSubAgentsMap, setAgentSubAgentsMap] = useState<Record<string, SubAgent[]>>({});
   const [loadingUsersMap, setLoadingUsersMap] = useState<Record<string, boolean>>({});
   const [loadingSubAgentsMap, setLoadingSubAgentsMap] = useState<Record<string, boolean>>({});
+  const [permissionsDialogAgent, setPermissionsDialogAgent] = useState<Agent | null>(null);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -153,6 +156,11 @@ export default function PDGAgentsManagement() {
       }
     });
     setIsDialogOpen(true);
+  };
+
+  const handleManagePermissions = (agent: Agent) => {
+    setPermissionsDialogAgent(agent);
+    setIsPermissionsDialogOpen(true);
   };
 
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
@@ -798,7 +806,16 @@ export default function PDGAgentsManagement() {
                   </div>
                 )}
                 
-                <div className="pt-3 flex gap-2 border-t">
+                <div className="pt-3 flex flex-wrap gap-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleManagePermissions(agent)}
+                    className="flex-1"
+                  >
+                    <Shield className="w-4 h-4 mr-1" />
+                    Permissions
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -853,6 +870,13 @@ export default function PDGAgentsManagement() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialogue de gestion des permissions */}
+      <AgentPermissionsDialog
+        agent={permissionsDialogAgent}
+        open={isPermissionsDialogOpen}
+        onOpenChange={setIsPermissionsDialogOpen}
+      />
     </div>
   );
 }

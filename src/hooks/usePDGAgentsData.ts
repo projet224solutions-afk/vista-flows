@@ -345,6 +345,32 @@ export const usePDGAgentsData = () => {
     }
   }, [pdgProfile?.id]);
 
+  // Écouter les changements en temps réel sur les agents
+  useEffect(() => {
+    if (!pdgProfile?.id) return;
+
+    const channel = supabase
+      .channel('agents-realtime-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agents_management',
+          filter: `pdg_id=eq.${pdgProfile.id}`
+        },
+        (payload) => {
+          console.log('Agent realtime change:', payload);
+          loadAgents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pdgProfile?.id, loadAgents]);
+
   return {
     agents,
     pdgProfile,
