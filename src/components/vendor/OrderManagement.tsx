@@ -65,7 +65,13 @@ interface Order {
     unit_price: number;
     total_price: number;
     products: {
+      id: string;
       name: string;
+      sku?: string;
+      price: number;
+      images?: string[];
+      stock_quantity?: number;
+      is_active: boolean;
     };
   }[];
   escrow?: EscrowInfo;
@@ -170,7 +176,7 @@ export default function OrderManagement() {
       setIsRefreshing(true);
       console.log('🔍 Fetching ALL orders (online + POS) for vendor:', vendorId);
 
-      // Charger TOUTES les commandes du vendeur (online ET pos) avec les infos clients
+      // Charger TOUTES les commandes du vendeur (online ET pos) avec les infos clients et produits
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -187,7 +193,15 @@ export default function OrderManagement() {
             quantity,
             unit_price,
             total_price,
-            products(name)
+            products(
+              id,
+              name,
+              sku,
+              price,
+              images,
+              stock_quantity,
+              is_active
+            )
           )
         `)
         .eq('vendor_id', vendorId)
@@ -793,12 +807,21 @@ export default function OrderManagement() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Articles</p>
-                      <div className="text-sm">
-                        {order.order_items?.map((item, index) => (
-                          <div key={item.id}>
-                            {item.products.name} x{item.quantity}
-                            {index < (order.order_items?.length || 0) - 1 ? ', ' : ''}
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Articles vendus</p>
+                      <div className="space-y-2">
+                        {order.order_items?.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{item.products?.name || 'Produit'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                SKU: {item.products?.sku || 'N/A'} | 
+                                Stock: {item.products?.stock_quantity !== undefined ? item.products.stock_quantity : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold">x{item.quantity}</p>
+                              <p className="text-xs text-muted-foreground">{item.unit_price.toLocaleString()} GNF</p>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1023,12 +1046,21 @@ export default function OrderManagement() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Articles</p>
-                      <div className="text-sm">
-                        {order.order_items?.map((item, index) => (
-                          <div key={item.id}>
-                            {item.products.name} x{item.quantity}
-                            {index < (order.order_items?.length || 0) - 1 ? ', ' : ''}
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Articles commandés</p>
+                      <div className="space-y-2">
+                        {order.order_items?.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{item.products?.name || 'Produit'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                SKU: {item.products?.sku || 'N/A'} | 
+                                Stock: {item.products?.stock_quantity !== undefined ? item.products.stock_quantity : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold">x{item.quantity}</p>
+                              <p className="text-xs text-muted-foreground">{item.unit_price.toLocaleString()} GNF</p>
+                            </div>
                           </div>
                         ))}
                       </div>
