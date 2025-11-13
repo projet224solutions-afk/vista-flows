@@ -81,13 +81,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transferPreview, setTransferPreview] = useState<any>(null);
 
   useEffect(() => {
-    if (effectiveUserId && profile) {
+    if (effectiveUserId) {
       loadWalletData();
       loadTransactions();
-    } else if (!effectiveUserId) {
+    } else {
       setLoading(false);
     }
-  }, [effectiveUserId, profile]);
+  }, [effectiveUserId]);
 
   const loadWalletData = async () => {
     if (!effectiveUserId) {
