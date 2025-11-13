@@ -37,6 +37,7 @@ import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
+import { VendorDebtManagement } from "@/components/vendor/debts/VendorDebtManagement";
 import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
@@ -384,7 +385,7 @@ export default function VendeurDashboard() {
               <Route path="payments" element={<PaymentManagement />} />
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
-              <Route path="debts" element={<DebtManagement />} />
+              <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
               <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
               <Route path="delivery" element={<VendorDeliveriesPanel />} />
               <Route path="support" element={<SupportTickets />} />
