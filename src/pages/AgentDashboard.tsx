@@ -44,8 +44,8 @@ export default function AgentDashboard() {
       if (error) throw error;
       setAgent(data);
       
-      // Les agents utilisent le wallet de leur PDG pour des transactions universelles
-      setPdgUserId(data.pdg_id);
+      // Les agents utilisent leur propre wallet pour faire des transactions
+      setPdgUserId(user?.id || null);
 
       // Charger les statistiques des utilisateurs créés
       await loadUserStats(data.id);
