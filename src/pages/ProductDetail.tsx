@@ -126,7 +126,7 @@ export default function ProductDetail() {
   const handlePaymentSuccess = () => {
     toast.success('Commande créée avec succès !');
     setShowPaymentModal(false);
-    navigate('/client/dashboard');
+    navigate('/client');
   };
 
   const handleContact = async () => {

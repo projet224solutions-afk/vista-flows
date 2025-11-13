@@ -25,7 +25,7 @@ const NotFound = () => {
       case "admin":
         return "/pdg-224solutions";
       case "client":
-        return "/client/dashboard";
+        return "/client";
       case "syndicat":
         return "/bureau/dashboard";
       case "livreur":
