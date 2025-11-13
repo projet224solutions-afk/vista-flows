@@ -83,10 +83,10 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
       setWalletId(data.id);
       setBalance(data.balance || 0);
       setCurrency(data.currency || 'GNF');
+      setLoading(false);
       console.log('✅ Wallet chargé:', { id: data.id, balance: data.balance, currency: data.currency });
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet:', error);
-    } finally {
       setLoading(false);
     }
   };
