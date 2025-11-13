@@ -55,7 +55,6 @@ import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
-import UniversalWalletDashboard from "@/components/wallet/UniversalWalletDashboard";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -297,7 +296,7 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Bascule le statut en ligne/hors ligne
+     * Bascule le statut en ligne/hors ligne avec gestion GPS améliorée
      */
     const toggleOnlineStatus = async () => {
         const next = !isOnline;
@@ -309,10 +308,14 @@ export default function TaxiMotoDriver() {
 
         // Si on veut passer en ligne, vérifier/obtenir la position GPS
         if (next) {
+            toast.loading('📍 Obtention de votre position GPS...', { id: 'gps-loading' });
+            
             try {
-                // Demander la position GPS
+                // Demander la position GPS avec timeout plus long
                 const position = await getCurrentLocation();
                 console.log('📍 Position GPS obtenue:', position);
+                
+                toast.dismiss('gps-loading');
                 
                 // Mettre le chauffeur en ligne avec la position
                 await TaxiMotoService.updateDriverStatus(
@@ -326,17 +329,41 @@ export default function TaxiMotoDriver() {
                 setIsOnline(true);
                 toast.success('🟢 Vous êtes maintenant en ligne');
                 
+                // Démarrer le suivi de position
+                startLocationTracking();
+                
                 // Charger les courses en attente
                 loadPendingRides();
                 
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Erreur GPS:', error);
-                toast.error('⚠️ Impossible d\'obtenir votre position GPS. Veuillez activer votre GPS et réessayer.');
+                toast.dismiss('gps-loading');
+                
+                // Message d'erreur détaillé avec instructions
+                const errorMessage = error?.message || 'Erreur GPS inconnue';
+                toast.error(
+                    <div className="space-y-2">
+                        <p className="font-semibold">⚠️ Erreur GPS</p>
+                        <p className="text-sm">{errorMessage}</p>
+                        <div className="text-xs opacity-80">
+                            <p>• Vérifiez que le GPS est activé</p>
+                            <p>• Autorisez l'accès à la localisation</p>
+                            <p>• Assurez-vous d'avoir une bonne connexion</p>
+                        </div>
+                    </div>,
+                    { duration: 5000 }
+                );
                 return;
             }
         } else {
             // Passer hors ligne
             try {
+                // Arrêter le suivi de position
+                if (locationWatchId) {
+                    stopWatching(locationWatchId);
+                    setLocationWatchId(null);
+                }
+                
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
                     false,
@@ -1116,7 +1143,7 @@ export default function TaxiMotoDriver() {
             {/* Navigation par onglets */}
             <div className="px-4 mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm relative">
+                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm relative">
                         <TabsTrigger value="dashboard">
                             <TrendingUp className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
@@ -1138,13 +1165,12 @@ export default function TaxiMotoDriver() {
                             <MapPin className="w-4 h-4 mr-1" />
                             <span className="hidden sm:inline">Navigation</span>
                         </TabsTrigger>
-                        <TabsTrigger value="wallet">
-                            <Wallet className="w-4 h-4 mr-1" />
-                            <span className="hidden sm:inline">Wallet</span>
-                        </TabsTrigger>
                         <TabsTrigger value="earnings">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            <span className="hidden sm:inline">Gains</span>
+                            <div className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4" />
+                                <Wallet className="w-3 h-3" />
+                            </div>
+                            <span className="hidden sm:inline">Gains & Wallet</span>
                         </TabsTrigger>
                         <TabsTrigger value="settings">
                             <Settings className="w-4 h-4 mr-1" />
@@ -1196,15 +1222,7 @@ export default function TaxiMotoDriver() {
                         )}
                     </TabsContent>
 
-                    {/* Wallet - Composant universel avec transactions */}
-                    <TabsContent value="wallet" className="mt-0">
-                        <UniversalWalletDashboard 
-                            userId={user?.id || ''} 
-                            showTransactions={true}
-                        />
-                    </TabsContent>
-
-                    {/* Gains - Composant dédié avec connexion temps réel */}
+                    {/* Gains & Wallet - Composant unifié ultra professionnel */}
                     <TabsContent value="earnings" className="mt-0">
                         <DriverEarnings driverId={driverId || ''} />
                     </TabsContent>
