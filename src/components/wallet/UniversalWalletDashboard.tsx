@@ -63,44 +63,50 @@ export default function UniversalWalletDashboard({
       if (walletError) {
         console.error('❌ Erreur chargement wallet:', walletError);
         
-        // Si le wallet n'existe pas, le créer automatiquement
+        // Si le wallet n'existe pas, l'initialiser via RPC
         if (walletError.code === 'PGRST116') {
-          console.log('💡 Création automatique du wallet pour:', userId);
+          console.log('💡 Initialisation du wallet via RPC pour:', userId);
           
-          const { data: newWallet, error: createError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: userId,
-              balance: 10000,
-              currency: 'GNF'
-            })
-            .select('*')
-            .single();
-
-          if (createError) {
-            console.error('❌ Erreur création wallet:', createError);
-            toast.error(`Impossible de créer le wallet: ${createError.message}`);
-            throw createError;
-          }
-
-          // Créer une transaction de crédit initial
-          if (newWallet) {
-            await supabase.from('wallet_transactions').insert({
-              transaction_id: `INIT-${userId.slice(0, 8)}`,
-              transaction_type: 'credit',
-              amount: 10000,
-              net_amount: 10000,
-              receiver_wallet_id: newWallet.id,
-              description: 'Crédit de bienvenue',
-              status: 'completed',
-              currency: 'GNF'
-            });
+          try {
+            const { data: initResult, error: rpcError } = await supabase
+              .rpc('initialize_user_wallet', { p_user_id: userId });
             
-            console.log('✅ Wallet créé avec succès:', newWallet);
-            setWallet(newWallet);
-            toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
+            if (rpcError) {
+              console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
+              toast.error(`Impossible d'initialiser le wallet: ${rpcError.message}`);
+              throw rpcError;
+            }
+            
+            const result = initResult as any;
+            if (!result?.success) {
+              console.error('❌ Échec initialisation wallet:', result);
+              toast.error('Échec de l\'initialisation du wallet');
+              throw new Error('Échec initialisation wallet');
+            }
+            
+            console.log('✅ Wallet initialisé via RPC:', result);
+            
+            // Recharger le wallet
+            const { data: reloadedWallet, error: reloadError } = await supabase
+              .from('wallets')
+              .select('*')
+              .eq('user_id', userId)
+              .single();
+            
+            if (reloadError) {
+              console.error('❌ Erreur rechargement wallet:', reloadError);
+              throw reloadError;
+            }
+            
+            console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
+            setWallet(reloadedWallet);
+            toast.success('Wallet initialisé avec succès !');
             setLoading(false);
             return;
+          } catch (initError: any) {
+            console.error('❌ Erreur lors de l\'initialisation:', initError);
+            toast.error(`Erreur: ${initError?.message || 'Impossible d\'initialiser le wallet'}`);
+            throw initError;
           }
         } else {
           // Autre erreur (permissions, etc.)

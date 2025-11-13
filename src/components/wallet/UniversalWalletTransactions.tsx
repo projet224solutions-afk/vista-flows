@@ -87,10 +87,49 @@ export const UniversalWalletTransactions = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Si le wallet n'existe pas, l'initialiser via RPC
+        if (error.code === 'PGRST116') {
+          console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
+          
+          try {
+            const { data: initResult, error: rpcError } = await supabase
+              .rpc('initialize_user_wallet', { p_user_id: user.id });
+            
+            if (rpcError) throw rpcError;
+            
+            const result = initResult as any;
+            if (!result?.success) {
+              throw new Error('Échec initialisation wallet');
+            }
+            
+            console.log('✅ Wallet initialisé:', result);
+            
+            // Recharger le wallet
+            const { data: reloadedWallet, error: reloadError } = await supabase
+              .from('wallets')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            
+            if (reloadError) throw reloadError;
+            
+            setWallet(reloadedWallet);
+            return;
+          } catch (initError) {
+            console.error('❌ Erreur initialisation wallet:', initError);
+            toast.error('Impossible d\'initialiser le wallet');
+            return;
+          }
+        } else {
+          throw error;
+        }
+      }
+      
       setWallet(data);
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
+      toast.error('Erreur lors du chargement du wallet');
     } finally {
       setLoading(false);
     }
