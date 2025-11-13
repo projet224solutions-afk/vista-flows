@@ -54,7 +54,7 @@ export const usePermissionGuard = (
 
         // Vérifier la permission via RPC
         const { data: permission, error: permError } = await supabase
-          .rpc('check_agent_permission', {
+          .rpc('check_agent_permission' as any, {
             p_agent_id: agent.id,
             p_permission_key: requiredPermission
           });

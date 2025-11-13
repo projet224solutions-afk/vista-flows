@@ -240,7 +240,7 @@ export const usePDGAgentsData = () => {
       const permissionsJsonb = updates.permissions ? updates.permissions : undefined;
       
       const { data, error } = await supabase
-        .rpc('update_agent', {
+        .rpc('update_agent' as any, {
           p_agent_id: agentId,
           p_name: updates.name,
           p_email: updates.email,
@@ -272,7 +272,7 @@ export const usePDGAgentsData = () => {
   const deleteAgent = useCallback(async (agentId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('delete_agent', {
+        .rpc('delete_agent' as any, {
           p_agent_id: agentId
         });
 
@@ -298,7 +298,7 @@ export const usePDGAgentsData = () => {
   const toggleAgentStatus = useCallback(async (agentId: string, isActive: boolean) => {
     try {
       const { data, error } = await supabase
-        .rpc('toggle_agent_status', {
+        .rpc('toggle_agent_status' as any, {
           p_agent_id: agentId,
           p_is_active: isActive
         });
