@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
@@ -112,7 +112,7 @@ const paymentStatusLabels: Record<string, string> = {
 };
 
 export default function OrderManagement() {
-  const { user } = useAuth();
+  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +126,7 @@ export default function OrderManagement() {
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
 
   useEffect(() => {
-    if (!user) return;
+    if (!vendorId || vendorLoading) return;
     fetchOrders();
 
     // Mise à jour en temps réel des commandes (online ET pos)
@@ -157,36 +157,18 @@ export default function OrderManagement() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [vendorId, vendorLoading]);
 
   const fetchOrders = async () => {
+    if (!vendorId || !user) {
+      console.warn('⚠️ Pas de vendorId ou user pour charger les commandes');
+      setLoading(false);
+      return;
+    }
+
     try {
       setIsRefreshing(true);
-      if (!user?.id) {
-        console.error('User ID not available');
-        setLoading(false);
-        return;
-      }
-
-      // Get vendor ID
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (vendorError) {
-        console.error('Error fetching vendor:', vendorError);
-        throw vendorError;
-      }
-
-      if (!vendor) {
-        console.log('No vendor found for user');
-        setLoading(false);
-        return;
-      }
-
-      console.log('🔍 Fetching ALL orders (online + POS) for vendor:', vendor.id);
+      console.log('🔍 Fetching ALL orders (online + POS) for vendor:', vendorId);
 
       // Charger TOUTES les commandes du vendeur (online ET pos) avec les infos clients
       const { data: ordersData, error } = await supabase
@@ -208,7 +190,7 @@ export default function OrderManagement() {
             products(name)
           )
         `)
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .in('source', ['online', 'pos'])
         .order('created_at', { ascending: false });
 
@@ -310,19 +292,8 @@ export default function OrderManagement() {
     ));
     
     try {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get vendor ID first
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!vendor) {
-        throw new Error('Vendor not found');
+      if (!vendorId || !user?.id) {
+        throw new Error('User not authenticated or vendor not found');
       }
 
       // Update order status with vendor verification
@@ -333,7 +304,7 @@ export default function OrderManagement() {
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId)
-        .eq('vendor_id', vendor.id) // Security: only update own orders
+        .eq('vendor_id', vendorId) // Security: only update own orders
         .select();
 
       if (error) {

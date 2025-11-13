@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Link, Plus, Copy, Share2, RefreshCw, 
@@ -27,6 +28,7 @@ interface Product {
 
 export default function PaymentLinksManager() {
   const { toast } = useToast();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const {
     paymentLinks,
     stats,
@@ -84,29 +86,19 @@ export default function PaymentLinksManager() {
   }, [filters.status, filters.search]);
 
   const loadVendorProducts = async () => {
+    if (!vendorId) {
+      console.warn('⚠️ Pas de vendorId pour charger les produits');
+      return;
+    }
+
     try {
       setLoadingProducts(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.warn('⚠️ Aucun utilisateur connecté pour charger les produits');
-        return;
-      }
-
-      // Récupérer le vendeur
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!vendor) return;
 
       // Récupérer les produits actifs du vendeur
       const { data, error } = await supabase
         .from('products')
         .select('id, name, price, description, images')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .eq('is_active', true)
         .order('name');
 
