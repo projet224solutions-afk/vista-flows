@@ -265,8 +265,9 @@ export default function AgentDashboardPublic() {
 
       setAgent(enrichedAgent as Agent);
       
-      // Utiliser l'ID de l'agent pour le wallet (chaque agent a son propre wallet)
-      setPdgUserId(agentData.id);
+      // Les agents utilisent agent_wallets, pas wallets (qui référence auth.users)
+      // On ne définit PAS pdgUserId pour éviter d'essayer de créer un wallet dans la mauvaise table
+      setPdgUserId(null);
       
       toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs créés`);
     } catch (error) {
@@ -806,13 +807,25 @@ export default function AgentDashboardPublic() {
               </Card>
             </TabsContent>
 
-            {/* Onglet Wallet */}
+            {/* Onglet Wallet - Utilise agent_wallets, pas wallets */}
             <TabsContent value="wallet">
-              <UniversalWalletDashboard 
-                userId={pdgUserId || agent.id} 
-                userCode={agent.agent_code}
-                showTransactions={true}
-              />
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5" />
+                      Portefeuille Agent
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AgentWalletDisplay 
+                      agentId={agent.id}
+                      agentCode={agent.agent_code}
+                      compact={false}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* Onglet Utilisateurs Créés - Accessible à tous les agents */}
