@@ -12,6 +12,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
+// Import des modules fonctionnels du vendeur
+import ProductManagement from '@/components/vendor/ProductManagement';
+import OrderManagement from '@/components/vendor/OrderManagement';
+import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
+import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
+import VendorAnalytics from '@/components/vendor/VendorAnalytics';
+import InventoryManagement from '@/components/vendor/InventoryManagement';
+import WarehouseManagement from '@/components/vendor/WarehouseManagement';
+import ClientManagement from '@/components/vendor/ClientManagement';
+import { VendorDeliveriesPanel } from '@/components/vendor/VendorDeliveriesPanel';
+import PaymentManagement from '@/components/vendor/PaymentManagement';
+import PaymentLinksManager from '@/components/vendor/PaymentLinksManager';
+import SupportTickets from '@/components/vendor/SupportTickets';
+import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+import SupplierManagement from '@/components/vendor/SupplierManagement';
+import ProspectManagement from '@/components/vendor/ProspectManagement';
+import MarketingManagement from '@/components/vendor/MarketingManagement';
+import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
+import DebtManagement from '@/components/vendor/DebtManagement';
+
 interface VendorAgent {
   id: string;
   vendor_id: string;
@@ -200,10 +220,13 @@ export default function VendorAgentInterface() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow">
+          <TabsList className="bg-white shadow flex-wrap">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             {hasPermission('view_dashboard') && (
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            )}
+            {hasPermission('access_pos') && (
+              <TabsTrigger value="pos">POS</TabsTrigger>
             )}
             {hasPermission('manage_products') && (
               <TabsTrigger value="products">Produits</TabsTrigger>
@@ -211,8 +234,38 @@ export default function VendorAgentInterface() {
             {hasPermission('manage_orders') && (
               <TabsTrigger value="orders">Commandes</TabsTrigger>
             )}
+            {hasPermission('manage_inventory') && (
+              <TabsTrigger value="inventory">Inventaire</TabsTrigger>
+            )}
+            {hasPermission('manage_warehouse') && (
+              <TabsTrigger value="warehouse">Entrepôt</TabsTrigger>
+            )}
+            {hasPermission('manage_clients') && (
+              <TabsTrigger value="clients">Clients</TabsTrigger>
+            )}
+            {hasPermission('manage_delivery') && (
+              <TabsTrigger value="delivery">Livraisons</TabsTrigger>
+            )}
             {hasPermission('access_wallet') && (
               <TabsTrigger value="wallet">Wallet</TabsTrigger>
+            )}
+            {hasPermission('manage_payments') && (
+              <TabsTrigger value="payments">Paiements</TabsTrigger>
+            )}
+            {hasPermission('manage_payment_links') && (
+              <TabsTrigger value="payment_links">Liens Paiement</TabsTrigger>
+            )}
+            {hasPermission('manage_expenses') && (
+              <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+            )}
+            {hasPermission('manage_debts') && (
+              <TabsTrigger value="debts">Dettes</TabsTrigger>
+            )}
+            {hasPermission('access_support') && (
+              <TabsTrigger value="support">Support</TabsTrigger>
+            )}
+            {hasPermission('access_communication') && (
+              <TabsTrigger value="communication">Messages</TabsTrigger>
             )}
           </TabsList>
 
@@ -446,44 +499,145 @@ export default function VendorAgentInterface() {
           </TabsContent>
 
           <TabsContent value="dashboard">
-            <Card className="border-0 shadow-elegant">
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  Module Dashboard en cours de développement
-                </p>
-              </CardContent>
-            </Card>
+            {hasPermission('view_dashboard') ? (
+              <VendorAnalytics />
+            ) : (
+              <Card className="border-0 shadow-elegant">
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    Vous n'avez pas la permission d'accéder au Dashboard
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="products">
-            <Card className="border-0 shadow-elegant">
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  Module Produits en cours de développement
-                </p>
-              </CardContent>
-            </Card>
+            {hasPermission('manage_products') ? (
+              <ProductManagement />
+            ) : (
+              <Card className="border-0 shadow-elegant">
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    Vous n'avez pas la permission de gérer les produits
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="orders">
-            <Card className="border-0 shadow-elegant">
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  Module Commandes en cours de développement
-                </p>
-              </CardContent>
-            </Card>
+            {hasPermission('manage_orders') ? (
+              <OrderManagement />
+            ) : (
+              <Card className="border-0 shadow-elegant">
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    Vous n'avez pas la permission de gérer les commandes
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="wallet">
-            <Card className="border-0 shadow-elegant">
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  Module Wallet en cours de développement
-                </p>
-              </CardContent>
-            </Card>
+            {hasPermission('access_wallet') ? (
+              <UniversalWalletTransactions />
+            ) : (
+              <Card className="border-0 shadow-elegant">
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    Vous n'avez pas la permission d'accéder au Wallet
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
+
+          {/* Modules additionnels */}
+          {hasPermission('access_pos') && (
+            <TabsContent value="pos">
+              <POSSystemWrapper />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_inventory') && (
+            <TabsContent value="inventory">
+              <InventoryManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_warehouse') && (
+            <TabsContent value="warehouse">
+              <WarehouseManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_clients') && (
+            <TabsContent value="clients">
+              <ClientManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_delivery') && (
+            <TabsContent value="delivery">
+              <VendorDeliveriesPanel />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_payments') && (
+            <TabsContent value="payments">
+              <PaymentManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_payment_links') && (
+            <TabsContent value="payment_links">
+              <PaymentLinksManager />
+            </TabsContent>
+          )}
+
+          {hasPermission('access_support') && (
+            <TabsContent value="support">
+              <SupportTickets />
+            </TabsContent>
+          )}
+
+          {hasPermission('access_communication') && (
+            <TabsContent value="communication">
+              <UniversalCommunicationHub />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_suppliers') && (
+            <TabsContent value="suppliers">
+              <SupplierManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_prospects') && (
+            <TabsContent value="prospects">
+              <ProspectManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_marketing') && (
+            <TabsContent value="marketing">
+              <MarketingManagement />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_expenses') && (
+            <TabsContent value="expenses">
+              <ExpenseManagementDashboard />
+            </TabsContent>
+          )}
+
+          {hasPermission('manage_debts') && (
+            <TabsContent value="debts">
+              <DebtManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
