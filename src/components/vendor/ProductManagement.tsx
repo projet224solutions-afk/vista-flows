@@ -91,46 +91,79 @@ export default function ProductManagement() {
   }, [vendorId, vendorLoading]);
 
   const fetchData = async () => {
-    if (!vendorId || !user) {
-      console.warn('⚠️ Pas de vendorId ou user pour charger les produits');
+    if (!vendorId) {
+      console.warn('⚠️ Pas de vendorId pour charger les produits');
       return;
     }
 
     try {
       setLoading(true);
+      console.log('🔄 Chargement produits pour vendorId:', vendorId);
 
-      // Fetch categories first (needed for product form)
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('id, name, is_active')
-        .eq('is_active', true)
-        .order('name');
+      // Vérifier si on est dans un contexte agent
+      const agentToken = localStorage.getItem('vendor_agent_access_token');
+      
+      if (agentToken) {
+        // Utiliser la fonction Edge pour les agents
+        console.log('📡 Chargement via fonction Edge (agent)');
+        const response = await fetch(
+          'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/vendor-agent-get-products',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM',
+            },
+            body: JSON.stringify({ agentToken }),
+          }
+        );
 
-      if (categoriesError) {
-        console.error('Erreur chargement catégories:', categoriesError);
-        toast({
-          title: "Avertissement",
-          description: "Impossible de charger les catégories. Vous pourrez toujours créer des produits sans catégorie.",
-          variant: "destructive"
-        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors du chargement des produits');
+        }
+
+        const data = await response.json();
+        setProducts(data.products || []);
+        setCategories(data.categories || []);
+        console.log('✅ Produits chargés (agent):', data.products?.length || 0);
       } else {
-        setCategories(categoriesData || []);
-        console.log('Catégories chargées:', categoriesData?.length || 0);
+        // Chargement direct pour les vendeurs connectés
+        console.log('📡 Chargement direct (vendeur)');
+        
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, name, is_active')
+          .eq('is_active', true)
+          .order('name');
+
+        if (categoriesError) {
+          console.error('Erreur chargement catégories:', categoriesError);
+          toast({
+            title: "Avertissement",
+            description: "Impossible de charger les catégories.",
+            variant: "destructive"
+          });
+        } else {
+          setCategories(categoriesData || []);
+          console.log('Catégories chargées:', categoriesData?.length || 0);
+        }
+
+        // Fetch products
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('vendor_id', vendorId)
+          .order('created_at', { ascending: false });
+
+        if (productsError) throw productsError;
+
+        setProducts(productsData || []);
+        console.log('✅ Produits chargés (vendeur):', productsData?.length || 0);
       }
-
-      // Fetch products
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('vendor_id', vendorId)
-        .order('created_at', { ascending: false });
-
-      if (productsError) throw productsError;
-
-      setProducts(productsData || []);
-      console.log('Produits chargés:', productsData?.length || 0);
     } catch (error: any) {
-      console.error('Erreur fetchData:', error);
+      console.error('❌ Erreur fetchData:', error);
       toast({
         title: "Erreur",
         description: error.message || "Impossible de charger les données des produits.",
