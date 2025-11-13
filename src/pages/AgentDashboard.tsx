@@ -9,9 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
-import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { AgentWalletDisplay } from '@/components/agent/AgentWalletDisplay';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
-import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function AgentDashboard() {
@@ -142,7 +141,7 @@ export default function AgentDashboard() {
               <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
               </p>
-              <WalletBalanceDisplay userId={user?.id} compact={true} className="max-w-xs" />
+              <AgentWalletDisplay agentId={agent.id} agentCode={agent.agent_code} compact={true} className="max-w-xs" />
             </div>
             <Button onClick={handleSignOut} variant="outline">
               <LogOut className="w-4 h-4 mr-2" />
@@ -289,11 +288,25 @@ export default function AgentDashboard() {
           </TabsContent>
 
           <TabsContent value="wallet">
-            <UniversalWalletDashboard 
-              userId={user?.id || ''} 
-              userCode={agent.agent_code}
-              showTransactions={true}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Wallet Agent
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <AgentWalletDisplay 
+                  agentId={agent.id} 
+                  agentCode={agent.agent_code}
+                  compact={false}
+                />
+                <div className="text-center text-sm text-muted-foreground">
+                  <p>Les transactions et l'historique du wallet agent seront bientôt disponibles.</p>
+                  <p className="mt-2">Taux de commission: {agent.commission_rate}%</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="sub-agents">
