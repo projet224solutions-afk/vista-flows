@@ -189,14 +189,14 @@ export default function VendorAgentInterface() {
                     <Shield className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold">Espace Agent - Synchronisé</h1>
+                    <h1 className="text-2xl font-bold">Espace Agent</h1>
                     <p className="text-sm text-muted-foreground">
                       {agent.name} • {agent.agent_code} • Accès aux données du vendeur
                     </p>
                   </div>
                 </div>
                 <Badge variant="outline" className="bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20">
-                  Agent Actif • Synchronisé
+                  Agent Actif
                 </Badge>
               </div>
               <Button onClick={handleSignOut} variant="outline" size="sm">
