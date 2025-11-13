@@ -240,11 +240,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="grid md:grid-cols-2 gap-6">
           {/* Images */}
           <div className="space-y-4">
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-accent">
+            <div className="relative aspect-square rounded-lg overflow-hidden bg-accent flex items-center justify-center">
               <img
                 src={images[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             {images.length > 1 && (
