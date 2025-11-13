@@ -55,7 +55,9 @@ interface Transaction {
 }
 
 export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = true }: UniversalWalletTransactionsProps = {}) => {
-  const { user } = useAuth();
+  // Utiliser le contexte Auth comme tous les autres composants de l'application
+  const { user, profile } = useAuth();
+  
   // Utiliser propUserId si fourni, sinon utiliser user?.id
   const effectiveUserId = propUserId || user?.id;
   
@@ -63,8 +65,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
@@ -81,66 +81,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transferPreview, setTransferPreview] = useState<any>(null);
 
   useEffect(() => {
-    if (effectiveUserId) {
-      verifyAndLoadUserData();
-    }
-  }, [effectiveUserId]);
-
-  /**
-   * Vérifie l'utilisateur authentifié et charge toutes ses données
-   */
-  const verifyAndLoadUserData = async () => {
-    if (!effectiveUserId) {
-      setLoading(false);
-      toast.error('INVALID_USER: Utilisateur non authentifié');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      // 1. Vérifier l'authentification Supabase
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !authUser) {
-        console.error('❌ INVALID_USER: Utilisateur non authentifié', authError);
-        toast.error('INVALID_USER: Session expirée, veuillez vous reconnecter');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Utilisateur authentifié:', authUser.id);
-
-      // 2. Vérifier que l'utilisateur existe dans profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', effectiveUserId)
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('❌ INVALID_USER: Profil utilisateur introuvable', profileError);
-        toast.error('INVALID_USER: Profil utilisateur introuvable dans le système');
-        setLoading(false);
-        return;
-      }
-
-      console.log('✅ Profil utilisateur trouvé:', profileData);
-      setUserProfile(profileData);
-      setUserRole(profileData.role);
-
-      // 3. Charger ou initialiser le wallet
-      await loadWalletData();
-      
-      // 4. Charger les transactions
-      await loadTransactions();
-      
-    } catch (error: any) {
-      console.error('❌ Erreur vérification utilisateur:', error);
-      toast.error('Erreur lors de la vérification de l\'utilisateur');
+    if (effectiveUserId && profile) {
+      loadWalletData();
+      loadTransactions();
+    } else if (!effectiveUserId) {
       setLoading(false);
     }
-  };
+  }, [effectiveUserId, profile]);
 
   const loadWalletData = async () => {
     if (!effectiveUserId) {
@@ -271,7 +218,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
    * Vérifie les permissions de l'utilisateur pour une action spécifique
    */
   const checkPermissions = (action: 'send' | 'receive' | 'withdraw' | 'deposit'): boolean => {
-    if (!userRole) {
+    if (!profile?.role) {
       toast.error('UNAUTHORIZED_ACTION: Rôle utilisateur non défini');
       return false;
     }
@@ -283,8 +230,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       deposit: ['admin', 'agent', 'vendeur', 'client', 'livreur']
     };
 
-    if (!permissions[action].includes(userRole)) {
-      toast.error(`UNAUTHORIZED_ACTION: Votre rôle (${userRole}) ne permet pas cette action`);
+    if (!permissions[action].includes(profile.role)) {
+      toast.error(`UNAUTHORIZED_ACTION: Votre rôle (${profile.role}) ne permet pas cette action`);
       return false;
     }
 
@@ -663,6 +610,23 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     );
   }
 
+  // Attendre que le profil soit chargé
+  if (!profile) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertCircle className="w-12 h-12 text-muted-foreground" />
+            <div>
+              <p className="font-semibold">Chargement du profil...</p>
+              <p className="text-sm text-muted-foreground">Veuillez patienter</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-elegant">
       <CardHeader>
@@ -689,7 +653,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       <CardContent className="space-y-6">
         {/* Solde */}
         <div className="bg-client-gradient rounded-lg p-6 text-white">
-          <p className="text-sm opacity-90 mb-1">Solde disponible</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm opacity-90">Solde disponible</p>
+            {profile && (
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                {profile.role}
+              </Badge>
+            )}
+          </div>
           <p className="text-3xl font-bold">
             {wallet ? formatPrice(wallet.balance) : 'Chargement...'}
           </p>
