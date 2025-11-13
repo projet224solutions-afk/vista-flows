@@ -91,16 +91,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
   }
 
   if (!walletId) {
-    return (
-      <Card className={`${className} border-orange-200 bg-orange-50`}>
-        <CardContent className={compact ? "py-2 px-3" : "py-3 px-4"}>
-          <div className="flex items-center gap-2">
-            <Wallet className="w-4 h-4 text-orange-600" />
-            <span className="text-xs text-orange-600 font-medium">Wallet non créé</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   if (compact) {
