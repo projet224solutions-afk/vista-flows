@@ -8122,6 +8122,7 @@ export type Database = {
         Row: {
           access_token: string
           agent_code: string
+          agent_type: Database["public"]["Enums"]["agent_type_enum"] | null
           can_create_sub_agent: boolean | null
           commission_rate: number | null
           created_at: string | null
@@ -8139,6 +8140,7 @@ export type Database = {
         Insert: {
           access_token: string
           agent_code: string
+          agent_type?: Database["public"]["Enums"]["agent_type_enum"] | null
           can_create_sub_agent?: boolean | null
           commission_rate?: number | null
           created_at?: string | null
@@ -8156,6 +8158,7 @@ export type Database = {
         Update: {
           access_token?: string
           agent_code?: string
+          agent_type?: Database["public"]["Enums"]["agent_type_enum"] | null
           can_create_sub_agent?: boolean | null
           commission_rate?: number | null
           created_at?: string | null
@@ -10832,6 +10835,13 @@ export type Database = {
       validate_standard_id: { Args: { p_id: string }; Returns: boolean }
     }
     Enums: {
+      agent_type_enum:
+        | "commercial"
+        | "logistique"
+        | "support"
+        | "administratif"
+        | "manager"
+        | "technique"
       call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"
       delivery_status:
         | "pending"
@@ -11030,6 +11040,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_type_enum: [
+        "commercial",
+        "logistique",
+        "support",
+        "administratif",
+        "manager",
+        "technique",
+      ],
       call_status_type: ["ringing", "accepted", "rejected", "ended", "missed"],
       delivery_status: [
         "pending",

@@ -15,6 +15,7 @@ export interface VendorAgent {
   permissions: string[];
   can_create_sub_agent: boolean;
   is_active: boolean;
+  agent_type?: 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
   total_users_created: number;
   total_commissions_earned: number;
   created_at: string;
@@ -85,6 +86,7 @@ export const useVendorAgentsData = () => {
     phone: string;
     permissions?: string[];
     can_create_sub_agent?: boolean;
+    agent_type?: 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
   }) => {
     if (!user) {
       toast.error('Vous devez être connecté');
@@ -100,6 +102,7 @@ export const useVendorAgentsData = () => {
         phone: agentData.phone,
         permissions: agentData.permissions || ['create_users'],
         can_create_sub_agent: agentData.can_create_sub_agent || false,
+        agent_type: agentData.agent_type || 'commercial',
         is_active: true,
       };
 

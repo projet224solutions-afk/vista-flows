@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, UserPlus, Settings, MessageSquare, Copy, ExternalLink, Edit, TrendingUp, Activity } from 'lucide-react';
 import { useVendorAgentsData, type VendorAgent } from '@/hooks/useVendorAgentsData';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +32,7 @@ export default function AgentManagement() {
     name: '',
     email: '',
     phone: '',
+    agent_type: 'commercial' as 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique',
     permissions: {
       // Vue d'ensemble
       view_dashboard: true,
@@ -85,6 +87,7 @@ export default function AgentManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        agent_type: formData.agent_type,
         permissions,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
@@ -93,6 +96,7 @@ export default function AgentManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        agent_type: formData.agent_type,
         permissions,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
@@ -102,6 +106,7 @@ export default function AgentManagement() {
       name: '',
       email: '',
       phone: '',
+      agent_type: 'commercial',
       permissions: {
         view_dashboard: true,
         view_analytics: true,
@@ -139,6 +144,7 @@ export default function AgentManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
+      agent_type: agent.agent_type || 'commercial',
       permissions: {
         view_dashboard: agent.permissions.includes('view_dashboard'),
         view_analytics: agent.permissions.includes('view_analytics'),
@@ -225,6 +231,7 @@ export default function AgentManagement() {
                     name: '',
                     email: '',
                     phone: '',
+                    agent_type: 'commercial',
                     permissions: {
                       view_dashboard: true,
                       view_analytics: true,
@@ -299,6 +306,26 @@ export default function AgentManagement() {
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="Ex: agent@224solutions.com"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="agent_type">Type d'Agent *</Label>
+                    <Select
+                      value={formData.agent_type}
+                      onValueChange={(value) => setFormData({ ...formData, agent_type: value as any })}
+                    >
+                      <SelectTrigger id="agent_type">
+                        <SelectValue placeholder="Sélectionnez le type d'agent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="commercial">Commercial</SelectItem>
+                        <SelectItem value="logistique">Logistique</SelectItem>
+                        <SelectItem value="support">Support</SelectItem>
+                        <SelectItem value="administratif">Administratif</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="technique">Technique</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-3 border-t pt-4">
@@ -689,6 +716,7 @@ export default function AgentManagement() {
                     <TableHeader>
                       <TableRow className="bg-muted/30">
                         <TableHead className="font-semibold">Agent</TableHead>
+                        <TableHead className="font-semibold">Type</TableHead>
                         <TableHead className="font-semibold">Contact</TableHead>
                         <TableHead className="font-semibold">Statut</TableHead>
                         <TableHead className="font-semibold">Lien d'accès</TableHead>
@@ -710,6 +738,11 @@ export default function AgentManagement() {
                                 </p>
                               </div>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {agent.agent_type || 'commercial'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
