@@ -171,19 +171,10 @@ export const UniversalWalletTransactions = () => {
         .single();
 
       if (walletError && walletError.code === 'PGRST116') {
-        // Wallet n'existe pas, on le crée
-        const { data: newWallet, error: createError } = await supabase
-          .from('wallets')
-          .insert({
-            user_id: user.id,
-            balance: 0,
-            currency: 'GNF'
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        walletData = newWallet;
+        // Wallet n'existe pas - ne pas créer automatiquement
+        toast.error('Wallet non initialisé. Contactez l\'administrateur.');
+        setProcessing(false);
+        return;
       } else if (walletError) {
         throw walletError;
       }

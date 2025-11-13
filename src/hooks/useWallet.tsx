@@ -71,25 +71,10 @@ export const useWallet = (userId?: string) => {
       }
 
       if (!walletData) {
-        // Créer un wallet s'il n'existe pas
-        console.log('📝 Création d\'un nouveau wallet pour:', userId);
-        const { data: newWallet, error: createError } = await supabase
-          .from('wallets')
-          .insert({
-            user_id: userId,
-            balance: 0,
-            currency: 'GNF'
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('❌ Erreur création wallet:', createError);
-          throw createError;
-        }
-        
-        console.log('✅ Wallet créé:', newWallet);
-        setWallet(newWallet);
+        // Ne pas créer automatiquement - les wallets doivent être créés via backend
+        console.log('⚠️ Wallet non trouvé pour:', userId);
+        console.log('ℹ️ Le wallet sera créé lors de la première transaction');
+        setWallet(null);
       } else {
         console.log('✅ Wallet chargé:', walletData);
         setWallet(walletData);

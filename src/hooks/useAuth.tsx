@@ -97,22 +97,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           customId = userIdCheck.data?.custom_id || 'ABC0000';
         }
 
-        // Créer wallet si manquant
+        // Créer wallet si manquant - NE PLUS CRÉER AUTOMATIQUEMENT
+        // Les wallets doivent être créés via les fonctions backend appropriées
         if (needsWallet) {
-          const { error: walletError } = await supabase
-            .from('wallets')
-            .upsert({
-              user_id: user.id,
-              balance: 0,
-              currency: 'GNF',
-              status: 'active'
-            });
-
-          if (walletError) {
-            console.error('❌ Erreur création wallet:', walletError);
-          } else {
-            console.log('✅ Wallet créé');
-          }
+          console.log('⚠️ Wallet manquant pour:', user.id);
+          console.log('ℹ️ Le wallet sera créé lors de la première transaction');
         }
 
         // Créer carte virtuelle si manquante

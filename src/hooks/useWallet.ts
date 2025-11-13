@@ -74,26 +74,13 @@ export const useWallet = () => {
         .eq('currency', 'GNF')
         .maybeSingle();
 
-      // Créer le wallet si inexistant
+      // Créer le wallet si inexistant - NE PLUS CRÉER AUTOMATIQUEMENT
       if (!walletData) {
-        console.log('🆕 Création wallet pour user', user.id);
-        const public_id = await generatePublicId('wallets', false);
-
-        const { data: newWallet, error: createError } = await supabase
-          .from('wallets')
-          .insert([{
-            user_id: user.id,
-            public_id,
-            balance: 0,
-            currency: 'GNF',
-            wallet_status: 'active'
-          }])
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        walletData = newWallet;
-        console.log('✅ Wallet créé:', public_id);
+        console.log('⚠️ Wallet non trouvé pour user:', user.id);
+        console.log('ℹ️ Le wallet sera créé lors de la première transaction via backend');
+        setWallet(null);
+        setLoading(false);
+        return;
       }
 
       // Générer public_id si manquant

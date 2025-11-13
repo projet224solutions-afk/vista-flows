@@ -17,30 +17,14 @@ export function useWalletBalance(userId: string | undefined) {
         .single();
 
       if (error) {
-        // Si le wallet n'existe pas, le créer
+        // Si le wallet n'existe pas, ne pas essayer de le créer
+        // (les wallets doivent être créés via les fonctions backend appropriées)
         if (error.code === 'PGRST116') {
-          console.log('Creating wallet for user:', userId);
-          const { data: newWallet, error: createError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: userId,
-              balance: 0,
-              currency: 'GNF'
-            })
-            .select('balance, currency')
-            .single();
-
-          if (createError) {
-            console.error('Error creating wallet:', createError);
-            throw createError;
-          }
-
-          if (newWallet) {
-            setBalance(newWallet.balance || 0);
-            setCurrency(newWallet.currency || 'GNF');
-          }
+          console.log('Wallet not found for user:', userId);
+          setBalance(0);
+          setCurrency('GNF');
         } else {
-          throw error;
+          console.error('Error loading wallet:', error);
         }
       } else if (data) {
         setBalance(data.balance || 0);
