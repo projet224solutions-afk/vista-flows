@@ -67,8 +67,17 @@ serve(async (req) => {
 
     console.log('✅ Utilisateur créé:', authUser.user?.id);
 
-    // 2. Générer un code agent unique
-    const agentCode = `AG-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+    // 2. Générer un code agent unique au format AGT0001
+    const { data: agentCode, error: idError } = await supabaseAdmin
+      .rpc('generate_sequential_id', { p_prefix: 'AGT' });
+
+    if (idError || !agentCode) {
+      console.error('❌ Erreur génération ID agent:', idError);
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      throw new Error(`Erreur génération ID agent: ${idError?.message || 'Aucun ID généré'}`);
+    }
+
+    console.log('✅ Code agent généré:', agentCode);
 
     // 3. Créer l'agent dans agents_management
     const { data: agent, error: agentError } = await supabaseAdmin
