@@ -262,8 +262,8 @@ export default function AgentManagement() {
                   Nouvel Agent
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
+                <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
                   <DialogTitle>
                     {editingAgent ? 'Modifier l\'Agent' : 'Créer un Nouvel Agent'}
                   </DialogTitle>
@@ -271,7 +271,7 @@ export default function AgentManagement() {
                     {editingAgent ? 'Modifiez les informations de l\'agent' : 'Ajoutez un membre à votre équipe avec des permissions spécifiques'}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleCreateAgent} className="space-y-6">
+                <form onSubmit={handleCreateAgent} className="space-y-6 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nom Complet *</Label>
@@ -618,7 +618,7 @@ export default function AgentManagement() {
                     </div>
                   </div>
 
-                  <DialogFooter className="mt-6">
+                  <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t mt-6">
                     <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                       Annuler
                     </Button>

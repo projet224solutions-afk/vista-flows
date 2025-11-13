@@ -179,6 +179,43 @@ All colors MUST be HSL.
     display: none;
   }
 
+  /* Custom thin scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 70%) hsl(0 0% 95%);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(0 0% 95%);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 70%);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 60%);
+  }
+
+  .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 63%);
+  }
+
+  .scrollbar-thumb-gray-500::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 55%);
+  }
+
+  .scrollbar-track-gray-100::-webkit-scrollbar-track {
+    background: hsl(0 0% 96%);
+  }
+
   /* Line clamp utilities */
   .line-clamp-2 {
     overflow: hidden;
