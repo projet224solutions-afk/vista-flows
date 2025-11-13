@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useVendorId } from '@/hooks/useVendorId';
 
 export interface Warehouse {
   id: string;
@@ -39,7 +39,7 @@ export interface StockMovement {
 }
 
 export const useWarehouseManagement = () => {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useVendorId();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseStocks, setWarehouseStocks] = useState<WarehouseStock[]>([]);
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
@@ -47,14 +47,14 @@ export const useWarehouseManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchWarehouses = async () => {
-    if (!user) return;
+    if (!vendorId) return;
 
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('warehouses')
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -80,8 +80,8 @@ export const useWarehouseManagement = () => {
     }
   };
 
-  const fetchWarehouseStocks = async (warehouseId?: string) => {
-    if (!user) return;
+  const fetchStocks = async (warehouseId?: string) => {
+    if (!vendorId) return;
 
     try {
       let query = supabase
@@ -102,13 +102,13 @@ export const useWarehouseManagement = () => {
         quantity: stock.quantity,
         updated_at: stock.updated_at
       })) || []);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const fetchStockMovements = async () => {
-    if (!user) return;
+  const fetchMovements = async () => {
+    if (!vendorId) return;
 
     try {
       const { data, error } = await supabase
@@ -128,7 +128,7 @@ export const useWarehouseManagement = () => {
         created_at: movement.created_at,
         notes: movement.notes
       })) || []);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     }
   };
@@ -139,13 +139,13 @@ export const useWarehouseManagement = () => {
     contact_person?: string;
     contact_phone?: string;
   }) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!vendorId) throw new Error('Vendor ID not found');
 
     try {
       const { data, error } = await supabase
         .from('warehouses')
         .insert([{
-          vendor_id: user.id,
+          vendor_id: vendorId,
           ...warehouseData
         }])
         .select()
@@ -154,7 +154,7 @@ export const useWarehouseManagement = () => {
       if (error) throw error;
       await fetchWarehouses(); // Refresh the list
       return data;
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       throw err;
     }
@@ -201,8 +201,8 @@ export const useWarehouseManagement = () => {
         });
 
       if (error) throw error;
-      await fetchWarehouseStocks(); // Refresh the stocks
-    } catch (err) {
+      await fetchStocks(); // Refresh the stocks
+    } catch (err: any) {
       setError(err.message);
       throw err;
     }
@@ -258,10 +258,10 @@ export const useWarehouseManagement = () => {
           });
       }
 
-      await fetchWarehouseStocks();
-      await fetchStockMovements();
+      await fetchStocks();
+      await fetchMovements();
       return data;
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       throw err;
     }
@@ -328,22 +328,20 @@ export const useWarehouseManagement = () => {
           });
       }
 
-      await Promise.all([fetchWarehouseStocks(), fetchStockMovements()]);
-    } catch (err) {
+      await Promise.all([fetchStocks(), fetchMovements()]);
+    } catch (err: any) {
       setError(err.message);
       throw err;
     }
   };
 
   useEffect(() => {
-    if (user) {
-      Promise.all([
-        fetchWarehouses(),
-        fetchWarehouseStocks(),
-        fetchStockMovements()
-      ]);
+    if (!vendorLoading && vendorId) {
+      fetchWarehouses();
+      fetchStocks();
+      fetchMovements();
     }
-  }, [user]);
+  }, [vendorId, vendorLoading]);
 
   return {
     warehouses,
