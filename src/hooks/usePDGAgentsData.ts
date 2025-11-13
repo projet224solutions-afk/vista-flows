@@ -208,30 +208,24 @@ export const usePDGAgentsData = () => {
     }
 
     try {
-      // Générer un code agent unique
-      const agentCode = `AG-${Date.now().toString(36).toUpperCase()}`;
-
-      const { data, error } = await supabase
-        .from('agents_management')
-        .insert({
-          pdg_id: pdgProfile.id,
-          agent_code: agentCode,
+      // Appeler l'Edge Function pour créer l'agent avec authentification
+      const { data, error } = await supabase.functions.invoke('create-pdg-agent', {
+        body: {
           name: agentData.name,
           email: agentData.email,
           phone: agentData.phone,
           permissions: agentData.permissions,
           commission_rate: agentData.commission_rate || 10,
           can_create_sub_agent: agentData.can_create_sub_agent || false,
-          is_active: true,
-        })
-        .select()
-        .single();
+        }
+      });
 
       if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Erreur lors de la création');
 
-      toast.success('Agent créé avec succès');
+      toast.success('Agent créé avec succès (compte + wallet créés)');
       await loadAgents(); // Recharger la liste
-      return data;
+      return data.agent;
     } catch (error: any) {
       console.error('Erreur création agent:', error);
       toast.error(error.message || 'Erreur lors de la création');
