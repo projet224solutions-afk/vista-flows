@@ -11,6 +11,7 @@ import { MapPin, Package, User, Clock, Truck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ShipmentManager } from './shipment/ShipmentManager';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
 interface VendorDelivery {
   id: string;
@@ -28,38 +29,26 @@ interface VendorDelivery {
 export function VendorDeliveriesPanel() {
   const [deliveries, setDeliveries] = useState<VendorDelivery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vendorId, setVendorId] = useState<string | null>(null);
   const [showShipmentManager, setShowShipmentManager] = useState(false);
+  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
 
   useEffect(() => {
-    loadVendorDeliveries();
-  }, []);
+    if (!vendorLoading && vendorId && user) {
+      loadVendorDeliveries();
+    }
+  }, [vendorId, user, vendorLoading]);
 
   const loadVendorDeliveries = async () => {
+    if (!vendorId || !user) return;
+    
     setLoading(true);
     try {
-      // Récupérer l'ID du vendeur
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.user.id)
-        .single();
-
-      if (!vendor) {
-        setLoading(false);
-        return;
-      }
-
-      setVendorId(vendor.id);
 
       // Charger les livraisons du vendeur (client_id = vendor user_id)
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
-        .eq('client_id', user.user.id)
+        .eq('client_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -95,7 +84,7 @@ export function VendorDeliveriesPanel() {
     }
   };
 
-  if (loading) {
+  if (loading || vendorLoading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -110,7 +99,7 @@ export function VendorDeliveriesPanel() {
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-muted-foreground">
-            Vous devez être un vendeur pour accéder à cette fonctionnalité
+            Impossible de charger les données du vendeur
           </div>
         </CardContent>
       </Card>

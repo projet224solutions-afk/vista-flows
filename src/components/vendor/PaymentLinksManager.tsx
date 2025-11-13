@@ -88,14 +88,17 @@ export default function PaymentLinksManager() {
       setLoadingProducts(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.warn('⚠️ Aucun utilisateur connecté pour charger les produits');
+        return;
+      }
 
       // Récupérer le vendeur
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!vendor) return;
 
