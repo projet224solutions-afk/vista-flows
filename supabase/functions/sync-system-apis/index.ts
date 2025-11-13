@@ -4,7 +4,7 @@
  * Scanne toutes les edge functions pour identifier les API
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface SystemApi {
