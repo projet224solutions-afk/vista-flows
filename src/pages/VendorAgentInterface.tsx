@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, TrendingUp, Package, ShoppingCart, Warehouse, 
   Truck, UserPlus, LogOut, BarChart3, FileText, 
-  MessageSquare, Settings, Shield, Wallet, CreditCard
+  MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -34,6 +34,8 @@ import ProspectManagement from '@/components/vendor/ProspectManagement';
 import MarketingManagement from '@/components/vendor/MarketingManagement';
 import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
 import DebtManagement from '@/components/vendor/DebtManagement';
+import CommissionsManagement from '@/components/vendor/CommissionsManagement';
+import AgentManagement from '@/components/vendor/AgentManagement';
 
 export default function VendorAgentInterface() {
   const { token } = useParams<{ token: string }>();
@@ -265,6 +267,10 @@ export default function VendorAgentInterface() {
             {hasPermission('access_communication') && (
               <TabsTrigger value="communication">Messages</TabsTrigger>
             )}
+            <TabsTrigger value="commissions">Commissions</TabsTrigger>
+            {hasPermission('manage_agents') && (
+              <TabsTrigger value="sub_agents">Agents Secondaires</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -395,6 +401,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('pos')}
                     >
                       <CreditCard className="h-6 w-6" />
                       <span className="text-sm">POS</span>
@@ -424,6 +431,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('inventory')}
                     >
                       <Package className="h-6 w-6" />
                       <span className="text-sm">Inventaire</span>
@@ -433,6 +441,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('warehouse')}
                     >
                       <Warehouse className="h-6 w-6" />
                       <span className="text-sm">Entrepôt</span>
@@ -442,6 +451,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('clients')}
                     >
                       <Users className="h-6 w-6" />
                       <span className="text-sm">Clients</span>
@@ -451,6 +461,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('delivery')}
                     >
                       <Truck className="h-6 w-6" />
                       <span className="text-sm">Livraisons</span>
@@ -470,6 +481,7 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('analytics')}
                     >
                       <FileText className="h-6 w-6" />
                       <span className="text-sm">Rapports</span>
@@ -479,11 +491,30 @@ export default function VendorAgentInterface() {
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('communication')}
                     >
                       <MessageSquare className="h-6 w-6" />
-                      <span className="text-sm">Messages</span>
+                      <span className="text-sm">Communication</span>
                     </Button>
                   )}
+                  {hasPermission('manage_agents') && (
+                    <Button
+                      variant="outline"
+                      className="h-24 flex flex-col gap-2"
+                      onClick={() => setActiveTab('sub_agents')}
+                    >
+                      <UserPlus className="h-6 w-6" />
+                      <span className="text-sm">Agents Secondaires</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => setActiveTab('commissions')}
+                  >
+                    <DollarSign className="h-6 w-6" />
+                    <span className="text-sm">Commissions</span>
+                  </Button>
                   {hasPermission('access_settings') && (
                     <Button
                       variant="outline"
@@ -634,6 +665,22 @@ export default function VendorAgentInterface() {
             <TabsContent value="debts">
               <AgentModuleWrapper>
                 <DebtManagement />
+              </AgentModuleWrapper>
+            </TabsContent>
+          )}
+
+          {/* Commissions Tab */}
+          <TabsContent value="commissions">
+            <AgentModuleWrapper>
+              <CommissionsManagement />
+            </AgentModuleWrapper>
+          </TabsContent>
+
+          {/* Sub Agents Tab */}
+          {hasPermission('manage_agents') && (
+            <TabsContent value="sub_agents">
+              <AgentModuleWrapper>
+                <AgentManagement />
               </AgentModuleWrapper>
             </TabsContent>
           )}
