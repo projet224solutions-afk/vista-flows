@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
 export interface VendorStats {
   vendorId: string | null;
@@ -18,13 +18,14 @@ export interface VendorStats {
 }
 
 export function useVendorStats() {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (vendorLoading) return;
+    if (!vendorId) {
       setLoading(false);
       return;
     }
@@ -34,25 +35,14 @@ export function useVendorStats() {
     // Actualiser toutes les 30 secondes
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [vendorId, vendorLoading]);
 
   const fetchStats = async () => {
+    if (!vendorId) return;
+
     try {
       setLoading(true);
       setError(null);
-
-      // Récupérer le vendor_id
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (vendorError) throw vendorError;
-      if (!vendor) {
-        setStats(null);
-        return;
-      }
 
       // Statistiques parallèles
       const [
@@ -67,14 +57,14 @@ export function useVendorStats() {
         supabase
           .from('orders')
           .select('total_amount')
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('payment_status', 'paid'),
         
         // Nombre de commandes
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id),
+          .eq('vendor_id', vendorId),
         
         // Nombre de clients
         supabase
@@ -85,21 +75,21 @@ export function useVendorStats() {
         supabase
           .from('products')
           .select('id', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('is_active', true),
         
         // Commandes en attente
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('status', 'pending'),
         
         // Produits stock faible
         supabase
           .from('products')
           .select('id, stock_quantity, low_stock_threshold')
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .eq('is_active', true)
       ]);
 
@@ -115,7 +105,7 @@ export function useVendorStats() {
       ).length || 0;
 
       setStats({
-        vendorId: vendor.id,
+        vendorId,
         revenue,
         orders_count: ordersResult.count || 0,
         customers_count: customersResult.count || 0,
