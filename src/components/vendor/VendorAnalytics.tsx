@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, BarChart3, TrendingUp, Users, ShoppingCart, DollarSign, Package, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { Button } from '@/components/ui/button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
@@ -18,7 +18,7 @@ interface AnalyticsData {
 }
 
 export default function VendorAnalytics() {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalRevenue: 0,
     totalOrders: 0,
@@ -32,26 +32,26 @@ export default function VendorAnalytics() {
   const [loading, setLoading] = useState(true);
 
   const loadAnalytics = async () => {
-    if (!user) {
-      console.log('No user found');
+    if (!vendorId || vendorLoading) {
+      console.log('📊 VendorAnalytics - En attente du vendorId...');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Loading analytics for user:', user.id);
+      console.log('📊 Loading analytics for vendor:', vendorId);
 
-      // Récupérer le vendor_id
-      const { data: vendor, error: vendorError } = await supabase
+      // Récupérer les données du vendeur
+      const { data: vendorData, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
-        .eq('user_id', user.id)
-        .single();
+        .eq('id', vendorId)
+        .maybeSingle();
 
-      console.log('Vendor data:', vendor, 'Error:', vendorError);
+      console.log('Vendor data:', vendorData, 'Error:', vendorError);
 
-      if (!vendor) {
-        console.log('No vendor found for user');
+      if (!vendorData) {
+        console.log('❌ No vendor found');
         setLoading(false);
         return;
       }
@@ -60,7 +60,7 @@ export default function VendorAnalytics() {
       const { data: paymentLinks, error: linksError } = await supabase
         .from('payment_links')
         .select('id, created_at, total, produit, client_id')
-        .eq('vendeur_id', vendor.id)
+        .eq('vendeur_id', vendorId)
         .eq('status', 'success');
 
       console.log('Payment links:', paymentLinks?.length, 'Error:', linksError);
@@ -69,7 +69,7 @@ export default function VendorAnalytics() {
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, total_amount, customer_id, status')
-        .eq('vendor_id', vendor.id);
+        .eq('vendor_id', vendorId);
 
       console.log('Orders:', orders?.length, 'Error:', ordersError);
 
@@ -77,7 +77,7 @@ export default function VendorAnalytics() {
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('*')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .eq('is_active', true);
 
       console.log('Products:', products?.length, 'Error:', productsError);
@@ -178,8 +178,10 @@ export default function VendorAnalytics() {
   };
 
   useEffect(() => {
-    loadAnalytics();
-  }, [user]);
+    if (vendorId && !vendorLoading) {
+      loadAnalytics();
+    }
+  }, [vendorId, vendorLoading]);
 
   if (loading) {
     return (

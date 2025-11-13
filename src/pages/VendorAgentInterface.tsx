@@ -11,7 +11,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { AgentProvider } from '@/contexts/AgentContext';
+import { AgentProvider, type VendorAgent } from '@/contexts/AgentContext';
 import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
 
 // Import des modules fonctionnels du vendeur
@@ -33,20 +33,6 @@ import ProspectManagement from '@/components/vendor/ProspectManagement';
 import MarketingManagement from '@/components/vendor/MarketingManagement';
 import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
 import DebtManagement from '@/components/vendor/DebtManagement';
-
-interface VendorAgent {
-  id: string;
-  vendor_id: string;
-  agent_code: string;
-  name: string;
-  email: string;
-  phone: string;
-  access_token: string;
-  permissions: string[];
-  can_create_sub_agent: boolean;
-  is_active: boolean;
-  created_at: string;
-}
 
 export default function VendorAgentInterface() {
   const { token } = useParams<{ token: string }>();

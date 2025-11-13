@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 
-interface VendorAgent {
+export interface VendorAgent {
   id: string;
   vendor_id: string;
   agent_code: string;

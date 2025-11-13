@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useCurrentVendor } from './useCurrentVendor';
 
 export interface VendorAnalytics {
   date: string;
@@ -21,21 +21,23 @@ export interface AnalyticsSummary {
 }
 
 export const useVendorAnalytics = () => {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadAnalytics = async () => {
-    if (!user) return;
+    if (!vendorId || vendorLoading) return;
 
     try {
       setLoading(true);
+
+      console.log('📊 useVendorAnalytics - Loading for vendorId:', vendorId);
 
       // Récupérer les analytics d'aujourd'hui
       const { data: todayData, error: todayError } = await supabase
         .from('vendor_analytics' as any)
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', vendorId)
         .eq('date', new Date().toISOString().split('T')[0])
         .maybeSingle();
       
@@ -48,7 +50,7 @@ export const useVendorAnalytics = () => {
       const { data: weekData } = await supabase
         .from('vendor_analytics' as any)
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', vendorId)
         .gte('date', sevenDaysAgo.toISOString().split('T')[0])
         .order('date', { ascending: false });
 
@@ -59,7 +61,7 @@ export const useVendorAnalytics = () => {
       const { data: monthData } = await supabase
         .from('vendor_analytics' as any)
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', vendorId)
         .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
         .order('date', { ascending: false });
 
@@ -67,7 +69,7 @@ export const useVendorAnalytics = () => {
       const { data: topProducts } = await supabase
         .from('payment_links' as any)
         .select('product_name, id')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', vendorId)
         .eq('status', 'completed')
         .limit(5);
 
@@ -96,8 +98,10 @@ export const useVendorAnalytics = () => {
   };
 
   useEffect(() => {
-    loadAnalytics();
-  }, [user]);
+    if (vendorId && !vendorLoading) {
+      loadAnalytics();
+    }
+  }, [vendorId, vendorLoading]);
 
   return {
     analytics,
