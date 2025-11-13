@@ -157,19 +157,51 @@ export default function PDGAgentsManagement() {
 
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
     try {
+      let confirmMessage = '';
+      let actionName = '';
+      
+      switch (action) {
+        case 'activate':
+          confirmMessage = 'Êtes-vous sûr de vouloir activer cet agent ?';
+          actionName = 'Activation';
+          break;
+        case 'suspend':
+          confirmMessage = 'Êtes-vous sûr de vouloir suspendre cet agent ?';
+          actionName = 'Suspension';
+          break;
+        case 'delete':
+          confirmMessage = 'Êtes-vous sûr de vouloir supprimer cet agent ? Cette action est irréversible.';
+          actionName = 'Suppression';
+          break;
+      }
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      toast.loading(`${actionName} en cours...`);
+
       switch (action) {
         case 'activate':
           await toggleAgentStatus(agentId, true);
+          toast.dismiss();
+          toast.success('Agent activé avec succès');
           break;
         case 'suspend':
           await toggleAgentStatus(agentId, false);
+          toast.dismiss();
+          toast.success('Agent suspendu avec succès');
           break;
         case 'delete':
           await deleteAgent(agentId);
+          toast.dismiss();
+          // Le toast de succès est déjà affiché par deleteAgent
           break;
       }
-    } catch (error) {
-      toast.error('Erreur lors de l\'action');
+    } catch (error: any) {
+      toast.dismiss();
+      console.error(`Erreur lors de l'action:`, error);
+      toast.error(error.message || 'Erreur lors de l\'action');
     }
   };
 
