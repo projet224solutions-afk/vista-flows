@@ -40,14 +40,13 @@ const subAgentSchema = z.object({
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
-import { AgentWalletDisplay } from '@/components/agent/AgentWalletDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
 import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
-import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
+import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 interface Agent {
@@ -265,9 +264,9 @@ export default function AgentDashboardPublic() {
 
       setAgent(enrichedAgent as Agent);
       
-      // Les agents utilisent agent_wallets, pas wallets (qui référence auth.users)
-      // On ne définit PAS pdgUserId pour éviter d'essayer de créer un wallet dans la mauvaise table
-      setPdgUserId(null);
+      // Les agents utilisent le wallet de leur PDG pour des transactions universelles
+      // On utilise pdg_id qui est un vrai user_id dans auth.users
+      setPdgUserId(agentData.pdg_id);
       
       toast.success(`Bienvenue ${agentData.name}! ${usersCount || 0} utilisateurs créés`);
     } catch (error) {
@@ -381,7 +380,9 @@ export default function AgentDashboardPublic() {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <AgentIdDisplay agentCode={agent.agent_code} />
-                <AgentWalletDisplay agentId={agent.id} agentCode={agent.agent_code} compact={true} className="max-w-xs" />
+                {pdgUserId && (
+                  <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -807,25 +808,20 @@ export default function AgentDashboardPublic() {
               </Card>
             </TabsContent>
 
-            {/* Onglet Wallet - Utilise agent_wallets, pas wallets */}
+            {/* Onglet Wallet - Utilise le wallet universel du PDG */}
             <TabsContent value="wallet">
-              <div className="space-y-4">
+              {pdgUserId ? (
+                <UniversalWalletTransactions userId={pdgUserId} />
+              ) : (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Wallet className="w-5 h-5" />
-                      Portefeuille Agent
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <AgentWalletDisplay 
-                      agentId={agent.id}
-                      agentCode={agent.agent_code}
-                      compact={false}
-                    />
+                  <CardContent className="py-6">
+                    <div className="text-center text-muted-foreground">
+                      <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Impossible de charger le wallet</p>
+                    </div>
                   </CardContent>
                 </Card>
-              </div>
+              )}
             </TabsContent>
 
             {/* Onglet Utilisateurs Créés - Accessible à tous les agents */}
