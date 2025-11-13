@@ -156,4 +156,7 @@ verify_jwt = true
 [functions.generate-product-description]
 verify_jwt = true
 
+[functions.vendor-agent-get-products]
+verify_jwt = false
+
 
