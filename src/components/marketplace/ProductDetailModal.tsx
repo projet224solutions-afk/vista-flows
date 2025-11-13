@@ -240,11 +240,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="grid md:grid-cols-2 gap-6">
           {/* Images */}
           <div className="space-y-4">
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-white flex items-center justify-center p-4">
+            <div className="relative h-[500px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-6 border border-border/20">
               <img
                 src={images[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                className="max-w-full max-h-full object-contain"
               />
             </div>
             {images.length > 1 && (
@@ -257,7 +257,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                       selectedImage === index ? 'border-primary' : 'border-transparent'
                     }`}
                   >
-                    <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
