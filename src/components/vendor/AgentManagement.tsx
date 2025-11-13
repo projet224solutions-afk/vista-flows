@@ -33,12 +33,35 @@ export default function AgentManagement() {
     phone: '',
     commission_rate: 10,
     permissions: {
-      create_users: true,
-      create_sub_agents: false,
+      // Vue d'ensemble
+      view_dashboard: true,
+      view_analytics: true,
+      // Ventes & Commerce
+      access_pos: true,
+      manage_products: true,
+      manage_orders: true,
+      manage_inventory: true,
+      manage_warehouse: true,
+      manage_suppliers: true,
+      // Clients & Marketing
+      manage_agents: false,
+      manage_clients: true,
+      manage_prospects: true,
+      manage_marketing: true,
+      // Finances
+      access_wallet: true,
+      manage_payments: true,
+      manage_payment_links: true,
+      manage_expenses: true,
+      manage_debts: true,
+      access_affiliate: false,
+      // Support & Outils
+      manage_delivery: true,
+      access_support: true,
+      access_communication: true,
       view_reports: true,
-      manage_commissions: false,
-      manage_users: false,
-      manage_products: false
+      // Configuration
+      access_settings: false
     }
   });
 
@@ -65,7 +88,7 @@ export default function AgentManagement() {
         phone: formData.phone,
         permissions,
         commission_rate: formData.commission_rate,
-        can_create_sub_agent: formData.permissions.create_sub_agents,
+        can_create_sub_agent: formData.permissions.manage_agents,
       });
     } else {
       await createAgent({
@@ -74,7 +97,7 @@ export default function AgentManagement() {
         phone: formData.phone,
         commission_rate: formData.commission_rate,
         permissions,
-        can_create_sub_agent: formData.permissions.create_sub_agents,
+        can_create_sub_agent: formData.permissions.manage_agents,
       });
     }
 
@@ -84,12 +107,29 @@ export default function AgentManagement() {
       phone: '',
       commission_rate: 10,
       permissions: {
-        create_users: true,
-        create_sub_agents: false,
+        view_dashboard: true,
+        view_analytics: true,
+        access_pos: true,
+        manage_products: true,
+        manage_orders: true,
+        manage_inventory: true,
+        manage_warehouse: true,
+        manage_suppliers: true,
+        manage_agents: false,
+        manage_clients: true,
+        manage_prospects: true,
+        manage_marketing: true,
+        access_wallet: true,
+        manage_payments: true,
+        manage_payment_links: true,
+        manage_expenses: true,
+        manage_debts: true,
+        access_affiliate: false,
+        manage_delivery: true,
+        access_support: true,
+        access_communication: true,
         view_reports: true,
-        manage_commissions: false,
-        manage_users: false,
-        manage_products: false
+        access_settings: false
       }
     });
     
@@ -105,12 +145,29 @@ export default function AgentManagement() {
       phone: agent.phone,
       commission_rate: agent.commission_rate,
       permissions: {
-        create_users: agent.permissions.includes('create_users'),
-        create_sub_agents: agent.can_create_sub_agent,
+        view_dashboard: agent.permissions.includes('view_dashboard'),
+        view_analytics: agent.permissions.includes('view_analytics'),
+        access_pos: agent.permissions.includes('access_pos'),
+        manage_products: agent.permissions.includes('manage_products'),
+        manage_orders: agent.permissions.includes('manage_orders'),
+        manage_inventory: agent.permissions.includes('manage_inventory'),
+        manage_warehouse: agent.permissions.includes('manage_warehouse'),
+        manage_suppliers: agent.permissions.includes('manage_suppliers'),
+        manage_agents: agent.permissions.includes('manage_agents'),
+        manage_clients: agent.permissions.includes('manage_clients'),
+        manage_prospects: agent.permissions.includes('manage_prospects'),
+        manage_marketing: agent.permissions.includes('manage_marketing'),
+        access_wallet: agent.permissions.includes('access_wallet'),
+        manage_payments: agent.permissions.includes('manage_payments'),
+        manage_payment_links: agent.permissions.includes('manage_payment_links'),
+        manage_expenses: agent.permissions.includes('manage_expenses'),
+        manage_debts: agent.permissions.includes('manage_debts'),
+        access_affiliate: agent.permissions.includes('access_affiliate'),
+        manage_delivery: agent.permissions.includes('manage_delivery'),
+        access_support: agent.permissions.includes('access_support'),
+        access_communication: agent.permissions.includes('access_communication'),
         view_reports: agent.permissions.includes('view_reports'),
-        manage_commissions: agent.permissions.includes('manage_commissions'),
-        manage_users: agent.permissions.includes('manage_users'),
-        manage_products: agent.permissions.includes('manage_products')
+        access_settings: agent.permissions.includes('access_settings')
       }
     });
     setIsCreateDialogOpen(true);
@@ -175,12 +232,29 @@ export default function AgentManagement() {
                     phone: '',
                     commission_rate: 10,
                     permissions: {
-                      create_users: true,
-                      create_sub_agents: false,
+                      view_dashboard: true,
+                      view_analytics: true,
+                      access_pos: true,
+                      manage_products: true,
+                      manage_orders: true,
+                      manage_inventory: true,
+                      manage_warehouse: true,
+                      manage_suppliers: true,
+                      manage_agents: false,
+                      manage_clients: true,
+                      manage_prospects: true,
+                      manage_marketing: true,
+                      access_wallet: true,
+                      manage_payments: true,
+                      manage_payment_links: true,
+                      manage_expenses: true,
+                      manage_debts: true,
+                      access_affiliate: false,
+                      manage_delivery: true,
+                      access_support: true,
+                      access_communication: true,
                       view_reports: true,
-                      manage_commissions: false,
-                      manage_users: false,
-                      manage_products: false
+                      access_settings: false
                     }
                   });
                 }}>
@@ -246,73 +320,300 @@ export default function AgentManagement() {
                   </div>
 
                   <div className="space-y-3 border-t pt-4">
-                    <Label>Permissions</Label>
+                    <Label className="text-base font-semibold">Permissions</Label>
+                    
+                    {/* Vue d'ensemble */}
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="create_users"
-                          checked={formData.permissions.create_users}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, create_users: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                      <Label className="text-sm font-medium text-muted-foreground">Vue d'ensemble</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_dashboard"
+                            checked={formData.permissions.view_dashboard}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, view_dashboard: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_dashboard" className="text-sm">Dashboard</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_analytics"
+                            checked={formData.permissions.view_analytics}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, view_analytics: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_analytics" className="text-sm">Analytiques</label>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="create_sub_agents"
-                          checked={formData.permissions.create_sub_agents}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, create_sub_agents: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
+                    </div>
+
+                    {/* Ventes & Commerce */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Ventes & Commerce</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_pos"
+                            checked={formData.permissions.access_pos}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_pos: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_pos" className="text-sm">Point de vente</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_products"
+                            checked={formData.permissions.manage_products}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_products: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_products" className="text-sm">Produits</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_orders"
+                            checked={formData.permissions.manage_orders}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_orders: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_orders" className="text-sm">Commandes</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_inventory"
+                            checked={formData.permissions.manage_inventory}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_inventory: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_inventory" className="text-sm">Inventaire</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_warehouse"
+                            checked={formData.permissions.manage_warehouse}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_warehouse: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_warehouse" className="text-sm">Entrepôts</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_suppliers"
+                            checked={formData.permissions.manage_suppliers}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_suppliers: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_suppliers" className="text-sm">Fournisseurs</label>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="view_reports"
-                          checked={formData.permissions.view_reports}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, view_reports: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                    </div>
+
+                    {/* Clients & Marketing */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Clients & Marketing</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_agents"
+                            checked={formData.permissions.manage_agents}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_agents: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_agents" className="text-sm">Agents</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_clients"
+                            checked={formData.permissions.manage_clients}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_clients: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_clients" className="text-sm">Clients</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_prospects"
+                            checked={formData.permissions.manage_prospects}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_prospects: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_prospects" className="text-sm">Prospects</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_marketing"
+                            checked={formData.permissions.manage_marketing}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_marketing: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_marketing" className="text-sm">Marketing</label>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="manage_commissions"
-                          checked={formData.permissions.manage_commissions}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, manage_commissions: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                    </div>
+
+                    {/* Finances */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Finances</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_wallet"
+                            checked={formData.permissions.access_wallet}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_wallet: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_wallet" className="text-sm">Wallet</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_payments"
+                            checked={formData.permissions.manage_payments}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_payments: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_payments" className="text-sm">Paiements</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_payment_links"
+                            checked={formData.permissions.manage_payment_links}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_payment_links: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_payment_links" className="text-sm">Liens de paiement</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_expenses"
+                            checked={formData.permissions.manage_expenses}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_expenses: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_expenses" className="text-sm">Dépenses</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_debts"
+                            checked={formData.permissions.manage_debts}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_debts: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_debts" className="text-sm">Dettes</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_affiliate"
+                            checked={formData.permissions.access_affiliate}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_affiliate: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_affiliate" className="text-sm">Affiliation</label>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="manage_users"
-                          checked={formData.permissions.manage_users}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, manage_users: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                    </div>
+
+                    {/* Support & Outils */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Support & Outils</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_delivery"
+                            checked={formData.permissions.manage_delivery}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, manage_delivery: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="manage_delivery" className="text-sm">Livraisons</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_support"
+                            checked={formData.permissions.access_support}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_support: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_support" className="text-sm">Support Tickets</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_communication"
+                            checked={formData.permissions.access_communication}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_communication: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_communication" className="text-sm">Communication</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_reports"
+                            checked={formData.permissions.view_reports}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, view_reports: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_reports" className="text-sm">Rapports</label>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="manage_products"
-                          checked={formData.permissions.manage_products}
-                          onCheckedChange={(checked) => setFormData({
-                            ...formData,
-                            permissions: { ...formData.permissions, manage_products: checked as boolean }
-                          })}
-                        />
-                        <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
+                    </div>
+
+                    {/* Configuration */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Configuration</Label>
+                      <div className="grid grid-cols-2 gap-2 pl-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="access_settings"
+                            checked={formData.permissions.access_settings}
+                            onCheckedChange={(checked) => setFormData({
+                              ...formData,
+                              permissions: { ...formData.permissions, access_settings: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="access_settings" className="text-sm">Paramètres</label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -341,7 +642,7 @@ export default function AgentManagement() {
           </div>
 
           {/* Statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -362,28 +663,6 @@ export default function AgentManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Utilisateurs Créés
-                </CardTitle>
-                <UserPlus className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Commissions Totales
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalCommissions.toFixed(2)} GNF</div>
               </CardContent>
             </Card>
           </div>
