@@ -169,7 +169,7 @@ export default function AgentManagement() {
   };
 
   const handleCopyLink = (accessToken: string) => {
-    const agentLink = `${window.location.origin}/agent?token=${accessToken}`;
+    const agentLink = `${window.location.origin}/vendor-agent/${accessToken}`;
     navigator.clipboard.writeText(agentLink);
     toast({
       title: "✅ Lien copié",
@@ -178,7 +178,7 @@ export default function AgentManagement() {
   };
 
   const handleOpenAgentInterface = (accessToken: string) => {
-    const agentLink = `${window.location.origin}/agent?token=${accessToken}`;
+    const agentLink = `${window.location.origin}/vendor-agent/${accessToken}`;
     window.open(agentLink, '_blank');
   };
 
