@@ -58,7 +58,7 @@ export const useAgentPermissions = (agentId: string | undefined) => {
       setLoading(true);
       
       const { data, error } = await supabase
-        .rpc('get_agent_permissions', {
+        .rpc('get_agent_permissions' as any, {
           p_agent_id: agentId
         });
 
@@ -79,7 +79,7 @@ export const useAgentPermissions = (agentId: string | undefined) => {
 
     try {
       const { data, error } = await supabase
-        .rpc('set_agent_permissions', {
+        .rpc('set_agent_permissions' as any, {
           p_agent_id: agentId,
           p_permissions: newPermissions
         });
