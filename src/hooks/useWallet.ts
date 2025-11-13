@@ -74,13 +74,35 @@ export const useWallet = () => {
         .eq('currency', 'GNF')
         .maybeSingle();
 
-      // Créer le wallet si inexistant - NE PLUS CRÉER AUTOMATIQUEMENT
+      // Créer le wallet si inexistant via Edge Function
       if (!walletData) {
         console.log('⚠️ Wallet non trouvé pour user:', user.id);
-        console.log('ℹ️ Le wallet sera créé lors de la première transaction via backend');
-        setWallet(null);
-        setLoading(false);
-        return;
+        console.log('📝 Initialisation via Edge Function...');
+        
+        try {
+          const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+          
+          if (initError) {
+            console.error('❌ Erreur initialisation wallet:', initError);
+            setWallet(null);
+            setLoading(false);
+            return;
+          }
+          
+          if (initData?.success && initData?.wallet) {
+            console.log('✅ Wallet initialisé:', initData.wallet);
+            walletData = initData.wallet;
+          } else {
+            setWallet(null);
+            setLoading(false);
+            return;
+          }
+        } catch (initError) {
+          console.error('❌ Erreur appel fonction initialisation:', initError);
+          setWallet(null);
+          setLoading(false);
+          return;
+        }
       }
 
       // Générer public_id si manquant

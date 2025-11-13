@@ -156,5 +156,7 @@ verify_jwt = true
 [functions.generate-product-description]
 verify_jwt = true
 
+[functions.initialize-wallet]
+verify_jwt = true
 
 

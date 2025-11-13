@@ -71,10 +71,28 @@ export const useWallet = (userId?: string) => {
       }
 
       if (!walletData) {
-        // Ne pas créer automatiquement - les wallets doivent être créés via backend
+        // Initialiser le wallet via Edge Function
         console.log('⚠️ Wallet non trouvé pour:', userId);
-        console.log('ℹ️ Le wallet sera créé lors de la première transaction');
-        setWallet(null);
+        console.log('📝 Initialisation via Edge Function...');
+        
+        try {
+          const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+          
+          if (initError) {
+            console.error('❌ Erreur initialisation wallet:', initError);
+            throw initError;
+          }
+          
+          if (initData?.success && initData?.wallet) {
+            console.log('✅ Wallet initialisé:', initData.wallet);
+            setWallet(initData.wallet);
+          } else {
+            setWallet(null);
+          }
+        } catch (initError) {
+          console.error('❌ Erreur appel fonction initialisation:', initError);
+          setWallet(null);
+        }
       } else {
         console.log('✅ Wallet chargé:', walletData);
         setWallet(walletData);

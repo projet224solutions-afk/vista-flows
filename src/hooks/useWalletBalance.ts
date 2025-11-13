@@ -17,12 +17,23 @@ export function useWalletBalance(userId: string | undefined) {
         .single();
 
       if (error) {
-        // Si le wallet n'existe pas, ne pas essayer de le créer
-        // (les wallets doivent être créés via les fonctions backend appropriées)
+        // Si le wallet n'existe pas, appeler la fonction pour le créer
         if (error.code === 'PGRST116') {
-          console.log('Wallet not found for user:', userId);
-          setBalance(0);
-          setCurrency('GNF');
+          console.log('⚠️ Wallet non trouvé, initialisation via Edge Function...');
+          
+          try {
+            const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+            
+            if (initError) throw initError;
+            
+            if (initData?.success && initData?.wallet) {
+              setBalance(initData.wallet.balance || 0);
+              setCurrency(initData.wallet.currency || 'GNF');
+              console.log('✅ Wallet initialisé:', initData.wallet);
+            }
+          } catch (initError) {
+            console.error('❌ Erreur initialisation wallet:', initError);
+          }
         } else {
           console.error('Error loading wallet:', error);
         }

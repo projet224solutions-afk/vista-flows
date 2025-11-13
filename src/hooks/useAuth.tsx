@@ -97,11 +97,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           customId = userIdCheck.data?.custom_id || 'ABC0000';
         }
 
-        // Créer wallet si manquant - NE PLUS CRÉER AUTOMATIQUEMENT
-        // Les wallets doivent être créés via les fonctions backend appropriées
+        // Créer wallet si manquant via Edge Function
         if (needsWallet) {
           console.log('⚠️ Wallet manquant pour:', user.id);
-          console.log('ℹ️ Le wallet sera créé lors de la première transaction');
+          console.log('📝 Initialisation via Edge Function...');
+          
+          try {
+            const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+            
+            if (initError) {
+              console.error('❌ Erreur initialisation wallet:', initError);
+            } else if (initData?.success) {
+              console.log('✅ Wallet initialisé:', initData.wallet);
+            }
+          } catch (initError) {
+            console.error('❌ Erreur appel fonction initialisation:', initError);
+          }
         }
 
         // Créer carte virtuelle si manquante
