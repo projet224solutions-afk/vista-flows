@@ -12,31 +12,19 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Vérifier si l'utilisateur est authentifié en tant qu'admin local
-  const isLocalAdmin = () => {
-    const adminAuth = sessionStorage.getItem('admin_authenticated');
-    return adminAuth === 'true' && allowedRoles.includes('admin');
-  };
+  // 🛡️ SÉCURISÉ: Plus d'auth locale - utilise uniquement Supabase
+  // L'authentification admin doit passer par la base de données user_roles
 
-  // Vérification d'authentification réactivée
+  // Vérification d'authentification sécurisée
   useEffect(() => {
-    if (!loading && !user && !isLocalAdmin()) {
+    if (!loading && !user) {
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
   }, [user, loading, navigate]);
 
-  // Si admin local authentifié, autoriser l'accès
-  if (isLocalAdmin()) {
-    return (
-      <div className="min-h-screen pb-20">
-        {children}
-      </div>
-    );
-  }
-
   // Attendre que le profil soit chargé ou que le chargement soit terminé
-  if (loading || (user && !profile && !isLocalAdmin())) {
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
