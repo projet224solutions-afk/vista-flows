@@ -7,12 +7,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   TrendingUp, TrendingDown, Users, DollarSign, Package, 
-  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw, UserCheck, Building2
+  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw, UserCheck, Building2, Wallet
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { usePDGStats } from '@/hooks/usePDGStats';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PDGDashboardHomeProps {
   onNavigate?: (tab: string) => void;
@@ -20,6 +22,7 @@ interface PDGDashboardHomeProps {
 
 export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const stats = usePDGStats();
+  const { user } = useAuth();
 
   if (stats.loading) {
     return (
@@ -180,9 +183,34 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Wallet PDG */}
+        <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-primary" />
+                  Wallet PDG
+                </CardTitle>
+                <CardDescription>Solde et gestion du wallet principal</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {user?.id ? (
+              <WalletBalanceDisplay userId={user.id} compact={false} />
+            ) : (
+              <div className="text-center text-muted-foreground py-4">
+                <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Connexion requise</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Alerts */}
-        <Card className="lg:col-span-2 border border-border/40 bg-card/50 backdrop-blur-sm">
+        <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary" />
@@ -211,7 +239,9 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             })}
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 gap-6">
         {/* Stats Détaillées */}
         <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
