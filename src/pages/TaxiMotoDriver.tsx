@@ -1166,11 +1166,8 @@ export default function TaxiMotoDriver() {
                             <span className="hidden sm:inline">Navigation</span>
                         </TabsTrigger>
                         <TabsTrigger value="earnings">
-                            <div className="flex items-center gap-1">
-                                <DollarSign className="w-4 h-4" />
-                                <Wallet className="w-3 h-3" />
-                            </div>
-                            <span className="hidden sm:inline">Gains & Wallet</span>
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">Gains</span>
                         </TabsTrigger>
                         <TabsTrigger value="settings">
                             <Settings className="w-4 h-4 mr-1" />
@@ -1222,7 +1219,7 @@ export default function TaxiMotoDriver() {
                         )}
                     </TabsContent>
 
-                    {/* Gains & Wallet - Composant unifié ultra professionnel */}
+                    {/* Gains avec toutes les fonctionnalités Wallet intégrées */}
                     <TabsContent value="earnings" className="mt-0">
                         <DriverEarnings driverId={driverId || ''} />
                     </TabsContent>
