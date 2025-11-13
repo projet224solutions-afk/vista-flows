@@ -19,48 +19,59 @@ interface VendorData {
  */
 export const useCurrentVendor = () => {
   const auth = useAuth();
+  const agentContext = useAgent(); // Ne throw plus d'erreur, retourne des valeurs par défaut
   const [vendorData, setVendorData] = useState<VendorData | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Essayer de récupérer le contexte agent (peut throw si pas dans AgentProvider)
-  let agentContext = null;
-  try {
-    agentContext = useAgent();
-  } catch (e) {
-    // Pas dans un contexte agent, c'est normal
-  }
 
   useEffect(() => {
     const loadVendorData = async () => {
       try {
         setLoading(true);
 
-        if (agentContext && agentContext.vendorId) {
+        if (agentContext.agent && agentContext.vendorId) {
           // CAS 1: On est dans un contexte AGENT
           console.log('🔄 Mode Agent - Chargement données vendeur:', agentContext.vendorId);
           
-          // Récupérer les infos du vendeur
-          const { data: vendorUser, error: vendorError } = await supabase
-            .from('profiles')
-            .select('*')
+          // Récupérer les infos du vendeur depuis la table vendors
+          const { data: vendor, error: vendorError } = await supabase
+            .from('vendors')
+            .select('user_id')
             .eq('id', agentContext.vendorId)
-            .single();
+            .maybeSingle();
 
           if (vendorError) {
-            console.error('❌ Erreur chargement profil vendeur:', vendorError);
+            console.error('❌ Erreur chargement vendor:', vendorError);
+          }
+
+          // Récupérer le profil du vendeur
+          const vendorUserId = vendor?.user_id;
+          let vendorProfile = null;
+          
+          if (vendorUserId) {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', vendorUserId)
+              .maybeSingle();
+
+            if (profileError) {
+              console.error('❌ Erreur chargement profil vendeur:', profileError);
+            } else {
+              vendorProfile = profileData;
+            }
           }
 
           setVendorData({
             vendorId: agentContext.vendorId,
             isAgent: true,
             agentPermissions: agentContext.agent?.permissions || [],
-            user: { id: agentContext.vendorId }, // Simule un user avec l'ID du vendeur
-            profile: vendorUser
+            user: { id: vendorUserId || agentContext.vendorId },
+            profile: vendorProfile
           });
           
           console.log('✅ Données vendeur chargées (mode agent):', {
             vendorId: agentContext.vendorId,
-            agentName: agentContext.agent?.name
+            hasProfile: !!vendorProfile
           });
         } else if (auth.user && auth.profile) {
           // CAS 2: On est dans un contexte VENDEUR DIRECT
@@ -92,7 +103,7 @@ export const useCurrentVendor = () => {
     };
 
     loadVendorData();
-  }, [agentContext?.vendorId, auth.user?.id, auth.profile]);
+  }, [agentContext.vendorId, agentContext.agent, auth.user?.id, auth.profile]);
 
   return {
     ...vendorData,
