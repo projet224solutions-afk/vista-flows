@@ -29,6 +29,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+interface UniversalWalletTransactionsProps {
+  userId?: string;
+  showBalance?: boolean;
+}
+
 interface WalletInfo {
   id: string;
   balance: number;
@@ -49,8 +54,11 @@ interface Transaction {
   metadata: any;
 }
 
-export const UniversalWalletTransactions = () => {
+export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   const { user } = useAuth();
+  // Utiliser propUserId si fourni, sinon utiliser user?.id
+  const effectiveUserId = propUserId || user?.id;
+  
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,20 +79,20 @@ export const UniversalWalletTransactions = () => {
   const [transferPreview, setTransferPreview] = useState<any>(null);
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveUserId) {
       loadWalletData();
       loadTransactions();
     }
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const loadWalletData = async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
 
     try {
       const { data, error } = await supabase
         .from('wallets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .single();
 
       if (error) {
@@ -94,7 +102,7 @@ export const UniversalWalletTransactions = () => {
           
           try {
             const { data: initResult, error: rpcError } = await supabase
-              .rpc('initialize_user_wallet', { p_user_id: user.id });
+              .rpc('initialize_user_wallet', { p_user_id: effectiveUserId });
             
             console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
             
@@ -112,7 +120,7 @@ export const UniversalWalletTransactions = () => {
             const { data: reloadedWallet, error: reloadError } = await supabase
               .from('wallets')
               .select('*')
-              .eq('user_id', user.id)
+              .eq('user_id', effectiveUserId)
               .single();
             
             if (reloadError) throw reloadError;
@@ -139,13 +147,13 @@ export const UniversalWalletTransactions = () => {
   };
 
   const loadTransactions = async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
 
     try {
       const { data, error } = await supabase
         .from('enhanced_transactions')
         .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(`sender_id.eq.${effectiveUserId},receiver_id.eq.${effectiveUserId}`)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -202,14 +210,14 @@ export const UniversalWalletTransactions = () => {
     }
 
     setProcessing(true);
-    console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
+    console.log('🔄 Dépôt en cours:', { amount, userId: effectiveUserId });
     
     try {
       // Créer ou récupérer le wallet de l'utilisateur
       let { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .single();
 
       if (walletError && walletError.code === 'PGRST116') {
@@ -218,7 +226,7 @@ export const UniversalWalletTransactions = () => {
         
         try {
           const { data: initResult, error: rpcError } = await supabase
-            .rpc('initialize_user_wallet', { p_user_id: user.id });
+            .rpc('initialize_user_wallet', { p_user_id: effectiveUserId });
           
           if (rpcError) throw rpcError;
           
@@ -231,7 +239,7 @@ export const UniversalWalletTransactions = () => {
           const { data: reloadedWallet, error: reloadError } = await supabase
             .from('wallets')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', effectiveUserId)
             .single();
           
           if (reloadError) throw reloadError;
@@ -270,7 +278,7 @@ export const UniversalWalletTransactions = () => {
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
-        .eq('user_id', user.id);
+        .eq('user_id', effectiveUserId);
 
       if (updateError) throw updateError;
 
@@ -311,14 +319,14 @@ export const UniversalWalletTransactions = () => {
     }
 
     setProcessing(true);
-    console.log('🔄 Retrait en cours:', { amount, userId: user.id });
+    console.log('🔄 Retrait en cours:', { amount, userId: effectiveUserId });
     
     try {
       // Récupérer le wallet de l'utilisateur
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .single();
 
       if (walletError) throw walletError;
@@ -348,7 +356,7 @@ export const UniversalWalletTransactions = () => {
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
-        .eq('user_id', user.id);
+        .eq('user_id', effectiveUserId);
 
       if (updateError) throw updateError;
 
@@ -411,13 +419,13 @@ export const UniversalWalletTransactions = () => {
 
       const recipientUuid = profileData.id;
 
-      if (recipientUuid === user.id) {
+      if (recipientUuid === effectiveUserId) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
         return;
       }
 
       console.log('🔍 Prévisualisation pour:', { 
-        sender: user.id, 
+        sender: effectiveUserId, 
         receiver: recipientUuid,
         recipient_name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
         amount 
@@ -425,7 +433,7 @@ export const UniversalWalletTransactions = () => {
 
       // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-        p_sender_id: user.id,
+        p_sender_id: effectiveUserId,
         p_receiver_id: recipientUuid,
         p_amount: amount
       });
@@ -474,7 +482,7 @@ export const UniversalWalletTransactions = () => {
     
     try {
       console.log('🔄 Exécution du transfert:', {
-        sender: user.id,
+        sender: effectiveUserId,
         receiver: transferPreview.recipient_uuid,
         amount: transferPreview.amount,
         description: transferDescription
@@ -482,7 +490,7 @@ export const UniversalWalletTransactions = () => {
 
       // Exécuter le transfert avec la fonction RPC
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
-        p_sender_id: user.id,
+        p_sender_id: effectiveUserId,
         p_receiver_id: transferPreview.recipient_uuid,
         p_amount: transferPreview.amount,
         p_currency: 'GNF',

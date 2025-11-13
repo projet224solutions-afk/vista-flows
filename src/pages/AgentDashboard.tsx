@@ -9,8 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
-import { AgentWalletDisplay } from '@/components/agent/AgentWalletDisplay';
-import AgentWalletTransactions from '@/components/agent/AgentWalletTransactions';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
@@ -19,6 +19,7 @@ export default function AgentDashboard() {
   const navigate = useNavigate();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [pdgUserId, setPdgUserId] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalUsersCreated: 0,
     usersThisMonth: 0,
@@ -42,6 +43,9 @@ export default function AgentDashboard() {
 
       if (error) throw error;
       setAgent(data);
+      
+      // Les agents utilisent le wallet de leur PDG pour des transactions universelles
+      setPdgUserId(data.pdg_id);
 
       // Charger les statistiques des utilisateurs créés
       await loadUserStats(data.id);
@@ -142,7 +146,9 @@ export default function AgentDashboard() {
               <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
               </p>
-              {/* Wallet retiré - les agents PDG utilisent leur propre système de wallet */}
+              {pdgUserId && (
+                <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
+              )}
             </div>
             <Button onClick={handleSignOut} variant="outline">
               <LogOut className="w-4 h-4 mr-2" />
@@ -288,11 +294,19 @@ export default function AgentDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="wallet">
-            <AgentWalletTransactions 
-              agentId={agent.id} 
-              agentCode={agent.agent_code}
-            />
+          <TabsContent value="wallet" className="space-y-6">
+            {pdgUserId ? (
+              <UniversalWalletTransactions userId={pdgUserId} />
+            ) : (
+              <Card>
+                <CardContent className="py-6">
+                  <div className="text-center text-muted-foreground">
+                    <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Impossible de charger le wallet</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="sub-agents">
