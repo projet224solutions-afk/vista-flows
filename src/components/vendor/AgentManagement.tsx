@@ -31,7 +31,6 @@ export default function AgentManagement() {
     name: '',
     email: '',
     phone: '',
-    commission_rate: 10,
     permissions: {
       // Vue d'ensemble
       view_dashboard: true,
@@ -87,7 +86,6 @@ export default function AgentManagement() {
         email: formData.email,
         phone: formData.phone,
         permissions,
-        commission_rate: formData.commission_rate,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
     } else {
@@ -95,7 +93,6 @@ export default function AgentManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        commission_rate: formData.commission_rate,
         permissions,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
@@ -105,7 +102,6 @@ export default function AgentManagement() {
       name: '',
       email: '',
       phone: '',
-      commission_rate: 10,
       permissions: {
         view_dashboard: true,
         view_analytics: true,
@@ -143,7 +139,6 @@ export default function AgentManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
-      commission_rate: agent.commission_rate,
       permissions: {
         view_dashboard: agent.permissions.includes('view_dashboard'),
         view_analytics: agent.permissions.includes('view_analytics'),
@@ -230,7 +225,6 @@ export default function AgentManagement() {
                     name: '',
                     email: '',
                     phone: '',
-                    commission_rate: 10,
                     permissions: {
                       view_dashboard: true,
                       view_analytics: true,
@@ -304,18 +298,6 @@ export default function AgentManagement() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="Ex: agent@224solutions.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="commission">Taux Commission (%)</Label>
-                    <Input
-                      id="commission"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.commission_rate}
-                      onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
                     />
                   </div>
 
@@ -708,7 +690,6 @@ export default function AgentManagement() {
                       <TableRow className="bg-muted/30">
                         <TableHead className="font-semibold">Agent</TableHead>
                         <TableHead className="font-semibold">Contact</TableHead>
-                        <TableHead className="font-semibold">Commission</TableHead>
                         <TableHead className="font-semibold">Statut</TableHead>
                         <TableHead className="font-semibold">Lien d'accès</TableHead>
                         <TableHead className="font-semibold text-right">Actions</TableHead>
@@ -735,11 +716,6 @@ export default function AgentManagement() {
                               <p className="text-sm">{agent.email}</p>
                               <p className="text-sm text-muted-foreground">{agent.phone}</p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-medium">
-                              {agent.commission_rate}%
-                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge 

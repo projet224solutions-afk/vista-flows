@@ -83,7 +83,6 @@ export const useVendorAgentsData = () => {
     name: string;
     email: string;
     phone: string;
-    commission_rate?: number;
     permissions?: string[];
     can_create_sub_agent?: boolean;
   }) => {
@@ -99,7 +98,6 @@ export const useVendorAgentsData = () => {
         name: agentData.name,
         email: agentData.email,
         phone: agentData.phone,
-        commission_rate: agentData.commission_rate || 10,
         permissions: agentData.permissions || ['create_users'],
         can_create_sub_agent: agentData.can_create_sub_agent || false,
         is_active: true,
