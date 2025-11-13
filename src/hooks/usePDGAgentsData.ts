@@ -242,17 +242,29 @@ export const usePDGAgentsData = () => {
   // Mettre à jour un agent
   const updateAgent = useCallback(async (agentId: string, updates: Partial<Agent>) => {
     try {
-      const { error } = await supabase
-        .from('agents_management')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', agentId);
+      // Convertir le tableau permissions en jsonb si présent
+      const permissionsJsonb = updates.permissions ? updates.permissions : undefined;
+      
+      const { data, error } = await supabase
+        .rpc('update_agent', {
+          p_agent_id: agentId,
+          p_name: updates.name,
+          p_email: updates.email,
+          p_phone: updates.phone,
+          p_permissions: permissionsJsonb ? permissionsJsonb as any : null,
+          p_commission_rate: updates.commission_rate,
+          p_can_create_sub_agent: updates.can_create_sub_agent,
+        });
 
       if (error) throw error;
 
-      toast.success('Agent mis à jour avec succès');
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la mise à jour');
+      }
+
+      toast.success(result.message || 'Agent mis à jour avec succès');
       await loadAgents(); // Recharger la liste
       return true;
     } catch (error: any) {
@@ -265,14 +277,20 @@ export const usePDGAgentsData = () => {
   // Supprimer un agent (désactivation)
   const deleteAgent = useCallback(async (agentId: string) => {
     try {
-      const { error } = await supabase
-        .from('agents_management')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', agentId);
+      const { data, error } = await supabase
+        .rpc('delete_agent', {
+          p_agent_id: agentId
+        });
 
       if (error) throw error;
 
-      toast.success('Agent désactivé avec succès');
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la suppression');
+      }
+
+      toast.success(result.message || 'Agent désactivé avec succès');
       await loadAgents(); // Recharger la liste
       return true;
     } catch (error: any) {
@@ -284,8 +302,30 @@ export const usePDGAgentsData = () => {
 
   // Activer/Désactiver un agent
   const toggleAgentStatus = useCallback(async (agentId: string, isActive: boolean) => {
-    return updateAgent(agentId, { is_active: isActive });
-  }, [updateAgent]);
+    try {
+      const { data, error } = await supabase
+        .rpc('toggle_agent_status', {
+          p_agent_id: agentId,
+          p_is_active: isActive
+        });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du changement de statut');
+      }
+
+      toast.success(result.message || 'Statut modifié avec succès');
+      await loadAgents(); // Recharger la liste
+      return true;
+    } catch (error: any) {
+      console.error('Erreur changement statut agent:', error);
+      toast.error(error.message || 'Erreur lors du changement de statut');
+      return false;
+    }
+  }, [loadAgents]);
 
   // Charger les données au montage
   useEffect(() => {
