@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { AgentWalletDisplay } from '@/components/agent/AgentWalletDisplay';
+import AgentWalletTransactions from '@/components/agent/AgentWalletTransactions';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
@@ -288,25 +289,10 @@ export default function AgentDashboard() {
           </TabsContent>
 
           <TabsContent value="wallet">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5" />
-                  Wallet Agent
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <AgentWalletDisplay 
-                  agentId={agent.id} 
-                  agentCode={agent.agent_code}
-                  compact={false}
-                />
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>Les transactions et l'historique du wallet agent seront bientôt disponibles.</p>
-                  <p className="mt-2">Taux de commission: {agent.commission_rate}%</p>
-                </div>
-              </CardContent>
-            </Card>
+            <AgentWalletTransactions 
+              agentId={agent.id} 
+              agentCode={agent.agent_code}
+            />
           </TabsContent>
 
           <TabsContent value="sub-agents">
