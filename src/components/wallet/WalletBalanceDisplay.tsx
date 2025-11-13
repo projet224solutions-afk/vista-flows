@@ -136,27 +136,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
   }
 
   if (!walletId) {
-    return (
-      <Card className={`${className} border-orange-200 bg-orange-50/50`}>
-        <CardContent className={compact ? "py-2 px-3" : "py-3 px-4"}>
-          <div className="flex items-center gap-2">
-            <Wallet className="w-4 h-4 text-orange-600" />
-            <div>
-              <span className="text-xs text-orange-600 font-medium">Wallet en cours d'initialisation</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadWallet}
-                className="h-6 text-xs ml-2"
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Réessayer
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   if (compact) {
