@@ -74,24 +74,36 @@ export const useWallet = () => {
         .eq('currency', 'GNF')
         .maybeSingle();
 
-      // Créer le wallet si inexistant via Edge Function
+      // Créer le wallet si inexistant via RPC
       if (!walletData) {
         console.log('⚠️ Wallet non trouvé pour user:', user.id);
-        console.log('📝 Initialisation via Edge Function...');
+        console.log('📝 Initialisation via RPC...');
         
         try {
-          const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+          const { data: initResult, error: rpcError } = await supabase
+            .rpc('initialize_user_wallet', { p_user_id: user.id });
           
-          if (initError) {
-            console.error('❌ Erreur initialisation wallet:', initError);
+          if (rpcError) {
+            console.error('❌ Erreur RPC:', rpcError);
             setWallet(null);
             setLoading(false);
             return;
           }
           
-          if (initData?.success && initData?.wallet) {
-            console.log('✅ Wallet initialisé:', initData.wallet);
-            walletData = initData.wallet;
+          if (initResult) {
+            const result = initResult as any;
+            if (result.success) {
+              console.log('✅ Wallet initialisé:', result);
+              // Recharger le wallet
+              const { data: newWalletData } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('currency', 'GNF')
+                .maybeSingle();
+              
+              walletData = newWalletData;
+            }
           } else {
             setWallet(null);
             setLoading(false);

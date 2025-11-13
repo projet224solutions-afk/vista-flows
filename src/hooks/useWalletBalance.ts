@@ -17,19 +17,23 @@ export function useWalletBalance(userId: string | undefined) {
         .single();
 
       if (error) {
-        // Si le wallet n'existe pas, appeler la fonction pour le créer
+        // Si le wallet n'existe pas, utiliser la fonction RPC pour l'initialiser
         if (error.code === 'PGRST116') {
-          console.log('⚠️ Wallet non trouvé, initialisation via Edge Function...');
+          console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
           
           try {
-            const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+            const { data: initResult, error: rpcError } = await supabase
+              .rpc('initialize_user_wallet', { p_user_id: userId });
             
-            if (initError) throw initError;
-            
-            if (initData?.success && initData?.wallet) {
-              setBalance(initData.wallet.balance || 0);
-              setCurrency(initData.wallet.currency || 'GNF');
-              console.log('✅ Wallet initialisé:', initData.wallet);
+            if (rpcError) {
+              console.error('❌ Erreur RPC:', rpcError);
+            } else if (initResult) {
+              const result = initResult as any;
+              if (result.success) {
+                console.log('✅ Wallet initialisé:', result);
+                setBalance(result.balance || 0);
+                setCurrency(result.currency || 'GNF');
+              }
             }
           } catch (initError) {
             console.error('❌ Erreur initialisation wallet:', initError);

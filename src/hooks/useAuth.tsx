@@ -97,18 +97,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           customId = userIdCheck.data?.custom_id || 'ABC0000';
         }
 
-        // Créer wallet si manquant via Edge Function
+        // Créer wallet si manquant via RPC
         if (needsWallet) {
           console.log('⚠️ Wallet manquant pour:', user.id);
-          console.log('📝 Initialisation via Edge Function...');
+          console.log('📝 Initialisation via RPC...');
           
           try {
-            const { data: initData, error: initError } = await supabase.functions.invoke('initialize-wallet');
+            const { data: initResult, error: rpcError } = await supabase
+              .rpc('initialize_user_wallet', { p_user_id: user.id });
             
-            if (initError) {
-              console.error('❌ Erreur initialisation wallet:', initError);
-            } else if (initData?.success) {
-              console.log('✅ Wallet initialisé:', initData.wallet);
+            if (rpcError) {
+              console.error('❌ Erreur RPC:', rpcError);
+            } else if (initResult) {
+              const result = initResult as any;
+              if (result.success) {
+                console.log('✅ Wallet initialisé:', result);
+              }
             }
           } catch (initError) {
             console.error('❌ Erreur appel fonction initialisation:', initError);

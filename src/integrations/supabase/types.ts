@@ -9972,6 +9972,7 @@ export type Database = {
         Args: { p_amount: number; p_driver_id: string }
         Returns: undefined
       }
+      initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:
         | {
             Args: {
