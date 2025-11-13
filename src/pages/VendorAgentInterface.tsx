@@ -44,25 +44,34 @@ export default function VendorAgentInterface() {
 
   const loadAgentData = async (token: string) => {
     try {
+      console.log('🔍 Chargement agent avec token:', token);
+      
       const { data, error } = await supabase
         .from('vendor_agents')
         .select('*')
         .eq('access_token', token)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      console.log('📊 Résultat requête agent:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur Supabase:', error);
+        throw error;
+      }
       
       if (!data) {
+        console.warn('⚠️ Aucun agent trouvé avec ce token');
         toast.error('Agent non trouvé ou inactif');
         navigate('/');
         return;
       }
 
+      console.log('✅ Agent chargé avec succès:', data);
       setAgent(data);
     } catch (error) {
-      console.error('Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement des données');
+      console.error('❌ Erreur chargement agent:', error);
+      toast.error('Erreur lors du chargement des données de l\'agent');
       navigate('/');
     } finally {
       setLoading(false);
