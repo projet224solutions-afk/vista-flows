@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { 
   Package, CheckCircle, Clock, Truck, XCircle, 
-  Shield, AlertCircle, Loader2, ListFilter
+  Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -64,6 +64,13 @@ export default function ClientOrdersList() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in_progress' | 'delivered'>('all');
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [ratingOrderData, setRatingOrderData] = useState<{ orderId: string; vendorId: string; vendorName: string } | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundAmount, setRefundAmount] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -225,6 +232,98 @@ export default function ClientOrdersList() {
     } finally {
       setConfirmingOrderId(null);
       setSelectedOrder(null);
+    }
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setCancelReason('');
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!selectedOrder) return;
+
+    setCancellingOrderId(selectedOrder.id);
+    setShowCancelDialog(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-order', {
+        body: {
+          order_id: selectedOrder.id,
+          reason: cancelReason
+        }
+      });
+
+      if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de l\'annulation');
+      }
+
+      toast.success('Commande annulée avec succès', {
+        description: data.refunded ? 'Votre paiement a été remboursé' : undefined
+      });
+
+      // Recharger les commandes
+      await loadOrders();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Erreur lors de l\'annulation', {
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      });
+    } finally {
+      setCancellingOrderId(null);
+      setSelectedOrder(null);
+      setCancelReason('');
+    }
+  };
+
+  const handleRequestRefund = (order: Order) => {
+    setSelectedOrder(order);
+    setRefundReason('');
+    setRefundAmount('');
+    setShowRefundDialog(true);
+  };
+
+  const confirmRequestRefund = async () => {
+    if (!selectedOrder) return;
+
+    setRefundingOrderId(selectedOrder.id);
+    setShowRefundDialog(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('request-refund', {
+        body: {
+          order_id: selectedOrder.id,
+          reason: refundReason,
+          requested_amount: refundAmount ? parseFloat(refundAmount) : undefined,
+          evidence_text: refundReason
+        }
+      });
+
+      if (error) throw error;
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de la demande de remboursement');
+      }
+
+      toast.success('Demande de remboursement envoyée', {
+        description: 'Le vendeur et l\'équipe ont été notifiés'
+      });
+
+      // Recharger les commandes
+      await loadOrders();
+    } catch (error) {
+      console.error('Error requesting refund:', error);
+      toast.error('Erreur lors de la demande', {
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      });
+    } finally {
+      setRefundingOrderId(null);
+      setSelectedOrder(null);
+      setRefundReason('');
+      setRefundAmount('');
     }
   };
 
@@ -430,26 +529,73 @@ export default function ClientOrdersList() {
                   </div>
                 )}
 
-                {/* Bouton de confirmation */}
-                {canConfirmDelivery && (
-                  <Button
-                    onClick={() => handleConfirmDelivery(order)}
-                    disabled={confirmingOrderId === order.id}
-                    className="w-full"
-                  >
-                    {confirmingOrderId === order.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Confirmation en cours...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        J'ai reçu ma commande
-                      </>
-                    )}
-                  </Button>
-                )}
+                {/* Boutons d'action */}
+                <div className="space-y-2">
+                  {/* Bouton d'annulation */}
+                  {['pending', 'confirmed', 'preparing'].includes(order.status) && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleCancelOrder(order)}
+                      disabled={cancellingOrderId === order.id}
+                      className="w-full"
+                    >
+                      {cancellingOrderId === order.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Annulation en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Ban className="w-4 h-4 mr-2" />
+                          Annuler la commande
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Bouton de demande de remboursement */}
+                  {escrow && ['pending', 'held', 'released'].includes(escrow.status) && !['cancelled'].includes(order.status) && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleRequestRefund(order)}
+                      disabled={refundingOrderId === order.id}
+                      className="w-full"
+                    >
+                      {refundingOrderId === order.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        <>
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          Demander un remboursement
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* Bouton de confirmation */}
+                  {canConfirmDelivery && (
+                    <Button
+                      onClick={() => handleConfirmDelivery(order)}
+                      disabled={confirmingOrderId === order.id}
+                      className="w-full"
+                    >
+                      {confirmingOrderId === order.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Confirmation en cours...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          J'ai reçu ma commande
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
 
                 {/* Info si déjà livrée */}
                 {order.status === 'delivered' && escrow?.status === 'released' && (
@@ -492,6 +638,93 @@ export default function ClientOrdersList() {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelivery}>
               Confirmer la réception
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog d'annulation */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Annuler la commande ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-4">
+                <p>Vous êtes sur le point d'annuler cette commande.</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Raison de l'annulation (optionnel)</label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full p-2 border rounded-md resize-none"
+                    rows={3}
+                    placeholder="Ex: J'ai changé d'avis, produit indisponible ailleurs..."
+                  />
+                </div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-2">
+                    <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-blue-800 dark:text-blue-200">
+                      Si vous avez payé, votre argent sera automatiquement remboursé via le système Escrow.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Garder la commande</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelOrder} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Confirmer l'annulation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de demande de remboursement */}
+      <AlertDialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Demander un remboursement</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-4">
+                <p>Décrivez la raison de votre demande de remboursement. Votre demande sera examinée par notre équipe.</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Raison du remboursement *</label>
+                  <textarea
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                    className="w-full p-2 border rounded-md resize-none"
+                    rows={4}
+                    placeholder="Ex: Produit défectueux, non conforme, endommagé..."
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Montant demandé (optionnel)</label>
+                  <input
+                    type="number"
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Laisser vide pour remboursement total"
+                  />
+                </div>
+                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-orange-800 dark:text-orange-200">
+                      Un litige sera ouvert. Le vendeur pourra répondre avant qu'une décision finale ne soit prise.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRequestRefund} disabled={!refundReason.trim()}>
+              Envoyer la demande
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

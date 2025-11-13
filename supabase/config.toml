@@ -159,4 +159,10 @@ verify_jwt = true
 [functions.vendor-agent-get-products]
 verify_jwt = false
 
+[functions.cancel-order]
+verify_jwt = true
+
+[functions.request-refund]
+verify_jwt = true
+
 
