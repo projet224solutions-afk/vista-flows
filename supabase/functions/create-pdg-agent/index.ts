@@ -46,7 +46,26 @@ serve(async (req) => {
       password 
     } = await req.json();
 
-    // 1. Créer l'utilisateur dans auth
+    // 1. Vérifier si l'email existe déjà
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
+
+    if (existingUser) {
+      // Vérifier si cet utilisateur est déjà un agent
+      const { data: existingAgent } = await supabaseAdmin
+        .from('agents_management')
+        .select('id, name')
+        .eq('user_id', existingUser.id)
+        .single();
+
+      if (existingAgent) {
+        throw new Error(`Cet email est déjà utilisé par l'agent: ${existingAgent.name}`);
+      }
+      
+      throw new Error(`Cet email est déjà enregistré dans le système. Veuillez utiliser un autre email.`);
+    }
+
+    // 2. Créer l'utilisateur dans auth
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: password || `Agent${Math.random().toString(36).slice(2, 10)}!`,
@@ -67,7 +86,7 @@ serve(async (req) => {
 
     console.log('✅ Utilisateur créé:', authUser.user?.id);
 
-    // 2. Générer un code agent unique au format AGT0001
+    // 3. Générer un code agent unique au format AGT0001
     const { data: agentCode, error: idError } = await supabaseAdmin
       .rpc('generate_sequential_id', { p_prefix: 'AGT' });
 
@@ -79,7 +98,7 @@ serve(async (req) => {
 
     console.log('✅ Code agent généré:', agentCode);
 
-    // 3. Créer l'agent dans agents_management
+    // 4. Créer l'agent dans agents_management
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')
       .insert({
@@ -106,7 +125,7 @@ serve(async (req) => {
 
     console.log('✅ Agent créé:', agent.id);
 
-    // 4. Vérifier que le wallet a été créé automatiquement
+    // 5. Vérifier que le wallet a été créé automatiquement
     const { data: wallet } = await supabaseAdmin
       .from('agent_wallets')
       .select('id, balance, currency')
@@ -115,7 +134,7 @@ serve(async (req) => {
 
     console.log('✅ Wallet agent:', wallet);
 
-    // 5. Créer aussi un wallet général pour l'utilisateur
+    // 6. Créer aussi un wallet général pour l'utilisateur
     const { error: walletError } = await supabaseAdmin
       .from('wallets')
       .insert({
