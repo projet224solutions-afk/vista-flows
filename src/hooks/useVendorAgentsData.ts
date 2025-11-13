@@ -197,10 +197,10 @@ export const useVendorAgentsData = () => {
     }
 
     try {
-      // Soft delete: just mark as inactive
+      // Hard delete: completely remove the agent
       const { error } = await supabase
         .from('vendor_agents')
-        .update({ is_active: false })
+        .delete()
         .eq('id', agentId)
         .eq('vendor_id', user.id);
 
@@ -210,7 +210,7 @@ export const useVendorAgentsData = () => {
         return;
       }
 
-      toast.success('Agent désactivé avec succès');
+      toast.success('Agent supprimé définitivement');
       await loadAgents();
     } catch (err) {
       console.error('Error in deleteAgent:', err);
