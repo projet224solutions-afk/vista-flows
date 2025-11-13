@@ -266,9 +266,8 @@ export default function AgentManagement() {
       return;
     }
 
-    const permissions = Object.entries(formData.permissions)
-      .filter(([_, value]) => value)
-      .map(([key]) => key);
+    // Convert permissions object to format needed for update
+    const permissionsForDB = formData.permissions;
 
     if (editingAgent) {
       await updateAgent(editingAgent.id, {
@@ -276,7 +275,7 @@ export default function AgentManagement() {
         email: formData.email,
         phone: formData.phone,
         agent_type: formData.agent_type,
-        permissions,
+        permissions: permissionsForDB,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
     } else {
@@ -285,7 +284,7 @@ export default function AgentManagement() {
         email: formData.email,
         phone: formData.phone,
         agent_type: formData.agent_type,
-        permissions,
+        permissions: permissionsForDB,
         can_create_sub_agent: formData.permissions.manage_agents,
       });
     }
@@ -334,29 +333,29 @@ export default function AgentManagement() {
       phone: agent.phone,
       agent_type: agent.agent_type || 'commercial',
       permissions: {
-        view_dashboard: agent.permissions.includes('view_dashboard'),
-        view_analytics: agent.permissions.includes('view_analytics'),
-        access_pos: agent.permissions.includes('access_pos'),
-        manage_products: agent.permissions.includes('manage_products'),
-        manage_orders: agent.permissions.includes('manage_orders'),
-        manage_inventory: agent.permissions.includes('manage_inventory'),
-        manage_warehouse: agent.permissions.includes('manage_warehouse'),
-        manage_suppliers: agent.permissions.includes('manage_suppliers'),
-        manage_agents: agent.permissions.includes('manage_agents'),
-        manage_clients: agent.permissions.includes('manage_clients'),
-        manage_prospects: agent.permissions.includes('manage_prospects'),
-        manage_marketing: agent.permissions.includes('manage_marketing'),
-        access_wallet: agent.permissions.includes('access_wallet'),
-        manage_payments: agent.permissions.includes('manage_payments'),
-        manage_payment_links: agent.permissions.includes('manage_payment_links'),
-        manage_expenses: agent.permissions.includes('manage_expenses'),
-        manage_debts: agent.permissions.includes('manage_debts'),
-        access_affiliate: agent.permissions.includes('access_affiliate'),
-        manage_delivery: agent.permissions.includes('manage_delivery'),
-        access_support: agent.permissions.includes('access_support'),
-        access_communication: agent.permissions.includes('access_communication'),
-        view_reports: agent.permissions.includes('view_reports'),
-        access_settings: agent.permissions.includes('access_settings')
+        view_dashboard: agent.permissions.view_dashboard || false,
+        view_analytics: agent.permissions.view_analytics || false,
+        access_pos: agent.permissions.access_pos || false,
+        manage_products: agent.permissions.manage_products || false,
+        manage_orders: agent.permissions.manage_orders || false,
+        manage_inventory: agent.permissions.manage_inventory || false,
+        manage_warehouse: agent.permissions.manage_warehouse || false,
+        manage_suppliers: agent.permissions.manage_suppliers || false,
+        manage_agents: agent.permissions.manage_agents || false,
+        manage_clients: agent.permissions.manage_clients || false,
+        manage_prospects: agent.permissions.manage_prospects || false,
+        manage_marketing: agent.permissions.manage_marketing || false,
+        access_wallet: agent.permissions.access_wallet || false,
+        manage_payments: agent.permissions.manage_payments || false,
+        manage_payment_links: agent.permissions.manage_payment_links || false,
+        manage_expenses: agent.permissions.manage_expenses || false,
+        manage_debts: agent.permissions.manage_debts || false,
+        access_affiliate: agent.permissions.access_affiliate || false,
+        manage_delivery: agent.permissions.manage_delivery || false,
+        access_support: agent.permissions.access_support || false,
+        access_communication: agent.permissions.access_communication || false,
+        view_reports: agent.permissions.view_reports || false,
+        access_settings: agent.permissions.access_settings || false
       }
     });
     setIsCreateDialogOpen(true);

@@ -3,10 +3,36 @@ import { useAgent } from '@/contexts/AgentContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface VendorAgentPermissions {
+  view_dashboard?: boolean;
+  view_analytics?: boolean;
+  access_pos?: boolean;
+  manage_products?: boolean;
+  manage_orders?: boolean;
+  manage_inventory?: boolean;
+  manage_warehouse?: boolean;
+  manage_suppliers?: boolean;
+  manage_agents?: boolean;
+  manage_clients?: boolean;
+  manage_prospects?: boolean;
+  manage_marketing?: boolean;
+  access_wallet?: boolean;
+  manage_payments?: boolean;
+  manage_payment_links?: boolean;
+  manage_expenses?: boolean;
+  manage_debts?: boolean;
+  access_affiliate?: boolean;
+  manage_delivery?: boolean;
+  access_support?: boolean;
+  access_communication?: boolean;
+  view_reports?: boolean;
+  access_settings?: boolean;
+}
+
 interface VendorData {
   vendorId: string;
   isAgent: boolean;
-  agentPermissions?: string[];
+  agentPermissions?: VendorAgentPermissions;
   user: any;
   profile: any;
 }
@@ -64,7 +90,7 @@ export const useCurrentVendor = () => {
           setVendorData({
             vendorId: agentContext.vendorId,
             isAgent: true,
-            agentPermissions: agentContext.agent?.permissions || [],
+            agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
             user: { id: vendorUserId || agentContext.vendorId },
             profile: vendorProfile
           });
@@ -110,7 +136,7 @@ export const useCurrentVendor = () => {
     loading,
     hasPermission: (permission: string) => {
       if (vendorData?.isAgent && vendorData.agentPermissions) {
-        return vendorData.agentPermissions.includes(permission);
+        return vendorData.agentPermissions[permission as keyof VendorAgentPermissions] || false;
       }
       return true; // Vendeur direct a toutes les permissions
     }

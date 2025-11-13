@@ -11,7 +11,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { AgentProvider, type VendorAgent } from '@/contexts/AgentContext';
+import { AgentProvider, type VendorAgent, type VendorAgentPermissions } from '@/contexts/AgentContext';
 import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -109,7 +109,14 @@ export default function VendorAgentInterface() {
       }
 
       console.log('✅ Agent chargé avec succès:', agentData);
-      setAgent(agentData);
+      
+      // Convert Json permissions to VendorAgentPermissions
+      const formattedAgent = {
+        ...agentData,
+        permissions: agentData.permissions as VendorAgentPermissions
+      };
+      
+      setAgent(formattedAgent);
       toast.success(`Bienvenue ${agentData.name} !`);
       
     } catch (error: any) {
@@ -125,7 +132,7 @@ export default function VendorAgentInterface() {
   };
 
   const hasPermission = (permission: string) => {
-    return agent?.permissions?.includes(permission) || false;
+    return agent?.permissions?.[permission as keyof VendorAgentPermissions] || false;
   };
 
   if (loading) {
@@ -271,7 +278,7 @@ export default function VendorAgentInterface() {
                   <Shield className="w-4 h-4 text-vendeur-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{agent.permissions.length}</div>
+                  <div className="text-2xl font-bold">{Object.values(agent.permissions).filter(Boolean).length}</div>
                   <p className="text-xs text-muted-foreground">
                     accès actifs
                   </p>
@@ -350,7 +357,9 @@ export default function VendorAgentInterface() {
                   <div className="md:col-span-2">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Permissions Actives</p>
                     <div className="flex flex-wrap gap-2">
-                      {agent.permissions.map((perm: string) => (
+                      {Object.entries(agent.permissions)
+                        .filter(([_, value]) => value)
+                        .map(([perm]) => (
                         <Badge 
                           key={perm}
                           variant="secondary"
