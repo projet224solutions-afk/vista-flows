@@ -86,9 +86,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   }, [effectiveUserId]);
 
   const loadWalletData = async () => {
-    if (!effectiveUserId) return;
+    if (!effectiveUserId) {
+      setLoading(false);
+      return;
+    }
 
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('wallets')
         .select('*')
@@ -106,12 +110,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             
             console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
             
-            if (rpcError) throw rpcError;
+            if (rpcError) {
+              console.error('❌ Erreur RPC:', rpcError);
+              toast.error('Impossible d\'initialiser le wallet');
+              setLoading(false);
+              return;
+            }
             
             const result = initResult as any;
             if (!result || !result.success) {
               const errorMsg = result?.error || 'Échec initialisation wallet';
-              throw new Error(errorMsg);
+              console.error('❌ Échec initialisation:', errorMsg);
+              toast.error(errorMsg);
+              setLoading(false);
+              return;
             }
             
             console.log('✅ Wallet initialisé:', result);
@@ -123,13 +135,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               .eq('user_id', effectiveUserId)
               .single();
             
-            if (reloadError) throw reloadError;
+            if (reloadError) {
+              console.error('❌ Erreur rechargement:', reloadError);
+              toast.error('Impossible de recharger le wallet');
+              setLoading(false);
+              return;
+            }
             
             setWallet(reloadedWallet);
+            setLoading(false);
             return;
           } catch (initError) {
             console.error('❌ Erreur initialisation wallet:', initError);
             toast.error('Impossible de charger le wallet');
+            setLoading(false);
             return;
           }
         } else {
@@ -138,10 +157,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       }
       
       setWallet(data);
+      setLoading(false);
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
       toast.error('Erreur lors du chargement du wallet');
-    } finally {
       setLoading(false);
     }
   };
