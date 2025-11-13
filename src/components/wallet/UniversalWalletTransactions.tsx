@@ -63,6 +63,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
@@ -80,10 +82,65 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
   useEffect(() => {
     if (effectiveUserId) {
-      loadWalletData();
-      loadTransactions();
+      verifyAndLoadUserData();
     }
   }, [effectiveUserId]);
+
+  /**
+   * Vérifie l'utilisateur authentifié et charge toutes ses données
+   */
+  const verifyAndLoadUserData = async () => {
+    if (!effectiveUserId) {
+      setLoading(false);
+      toast.error('INVALID_USER: Utilisateur non authentifié');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // 1. Vérifier l'authentification Supabase
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !authUser) {
+        console.error('❌ INVALID_USER: Utilisateur non authentifié', authError);
+        toast.error('INVALID_USER: Session expirée, veuillez vous reconnecter');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Utilisateur authentifié:', authUser.id);
+
+      // 2. Vérifier que l'utilisateur existe dans profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', effectiveUserId)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('❌ INVALID_USER: Profil utilisateur introuvable', profileError);
+        toast.error('INVALID_USER: Profil utilisateur introuvable dans le système');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Profil utilisateur trouvé:', profileData);
+      setUserProfile(profileData);
+      setUserRole(profileData.role);
+
+      // 3. Charger ou initialiser le wallet
+      await loadWalletData();
+      
+      // 4. Charger les transactions
+      await loadTransactions();
+      
+    } catch (error: any) {
+      console.error('❌ Erreur vérification utilisateur:', error);
+      toast.error('Erreur lors de la vérification de l\'utilisateur');
+      setLoading(false);
+    }
+  };
 
   const loadWalletData = async () => {
     if (!effectiveUserId) {
@@ -92,7 +149,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
 
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('wallets')
         .select('*')
@@ -111,8 +167,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
             
             if (rpcError) {
-              console.error('❌ Erreur RPC:', rpcError);
-              toast.error('Impossible d\'initialiser le wallet');
+              console.error('❌ WALLET_NOT_INITIALIZED:', rpcError);
+              toast.error('WALLET_NOT_INITIALIZED: Impossible d\'initialiser le wallet');
               setLoading(false);
               return;
             }
@@ -211,20 +267,49 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
+  /**
+   * Vérifie les permissions de l'utilisateur pour une action spécifique
+   */
+  const checkPermissions = (action: 'send' | 'receive' | 'withdraw' | 'deposit'): boolean => {
+    if (!userRole) {
+      toast.error('UNAUTHORIZED_ACTION: Rôle utilisateur non défini');
+      return false;
+    }
+
+    const permissions: Record<string, string[]> = {
+      send: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
+      receive: ['admin', 'agent', 'vendeur', 'livreur'],
+      withdraw: ['admin', 'agent', 'vendeur'],
+      deposit: ['admin', 'agent', 'vendeur', 'client', 'livreur']
+    };
+
+    if (!permissions[action].includes(userRole)) {
+      toast.error(`UNAUTHORIZED_ACTION: Votre rôle (${userRole}) ne permet pas cette action`);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleDeposit = async () => {
-    if (!user?.id || !depositAmount) {
+    if (!effectiveUserId || !depositAmount) {
       toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    // Vérifier les permissions
+    if (!checkPermissions('deposit')) {
       return;
     }
 
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error('INVALID_AMOUNT: Montant invalide');
       return;
     }
 
     if (amount < 1000) {
-      toast.error('Montant minimum 1000 GNF');
+      toast.error('INVALID_AMOUNT: Montant minimum 1000 GNF');
       return;
     }
 
@@ -316,24 +401,29 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const handleWithdraw = async () => {
-    if (!user?.id || !withdrawAmount) {
+    if (!effectiveUserId || !withdrawAmount) {
       toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    // Vérifier les permissions
+    if (!checkPermissions('withdraw')) {
       return;
     }
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error('INVALID_AMOUNT: Montant invalide');
       return;
     }
 
     if (amount < 5000) {
-      toast.error('Montant minimum 5000 GNF');
+      toast.error('INVALID_AMOUNT: Montant minimum 5000 GNF');
       return;
     }
 
-    if (amount > (wallet?.balance || 0)) {
-      toast.error('Solde insuffisant');
+    if (!wallet || wallet.balance < amount) {
+      toast.error(`INSUFFICIENT_FUNDS: Solde insuffisant (${formatPrice(wallet.balance)} disponible)`);
       return;
     }
 
