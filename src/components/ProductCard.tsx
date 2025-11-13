@@ -64,11 +64,11 @@ export default function ProductCard({
             <CarouselContent>
               {images.map((img, index) => (
                 <CarouselItem key={index}>
-                  <div className="relative h-48 bg-gradient-to-br from-secondary to-muted rounded-t-2xl overflow-hidden flex items-center justify-center">
+                  <div className="relative h-64 bg-white rounded-t-2xl overflow-hidden flex items-center justify-center p-2">
                     <img 
                       src={img} 
                       alt={`${title} - Image ${index + 1}`}
-                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                     />
                   </div>
                 </CarouselItem>
@@ -94,11 +94,11 @@ export default function ProductCard({
             </div>
           </Carousel>
         ) : (
-          <div className="relative h-48 bg-gradient-to-br from-secondary to-muted rounded-t-2xl overflow-hidden flex items-center justify-center">
+          <div className="relative h-64 bg-white rounded-t-2xl overflow-hidden flex items-center justify-center p-2">
             <img 
               src={images[0]} 
               alt={title}
-              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
             />
           </div>
         )}
