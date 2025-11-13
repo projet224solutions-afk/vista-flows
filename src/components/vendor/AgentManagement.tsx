@@ -26,6 +26,194 @@ export default function AgentManagement() {
   } = useVendorAgentsData();
   const { toast } = useToast();
 
+  // Définir les permissions par défaut selon le type d'agent
+  const getDefaultPermissionsByType = (agentType: string) => {
+    switch (agentType) {
+      case 'commercial':
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: true,
+          manage_products: true,
+          manage_orders: true,
+          manage_inventory: false,
+          manage_warehouse: false,
+          manage_suppliers: false,
+          manage_agents: false,
+          manage_clients: true,
+          manage_prospects: true,
+          manage_marketing: true,
+          access_wallet: true,
+          manage_payments: true,
+          manage_payment_links: true,
+          manage_expenses: false,
+          manage_debts: false,
+          access_affiliate: true,
+          manage_delivery: false,
+          access_support: true,
+          access_communication: true,
+          view_reports: true,
+          access_settings: false
+        };
+      case 'logistique':
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: false,
+          manage_products: false,
+          manage_orders: true,
+          manage_inventory: true,
+          manage_warehouse: true,
+          manage_suppliers: true,
+          manage_agents: false,
+          manage_clients: false,
+          manage_prospects: false,
+          manage_marketing: false,
+          access_wallet: false,
+          manage_payments: false,
+          manage_payment_links: false,
+          manage_expenses: false,
+          manage_debts: false,
+          access_affiliate: false,
+          manage_delivery: true,
+          access_support: true,
+          access_communication: true,
+          view_reports: true,
+          access_settings: false
+        };
+      case 'support':
+        return {
+          view_dashboard: true,
+          view_analytics: false,
+          access_pos: false,
+          manage_products: false,
+          manage_orders: true,
+          manage_inventory: false,
+          manage_warehouse: false,
+          manage_suppliers: false,
+          manage_agents: false,
+          manage_clients: true,
+          manage_prospects: true,
+          manage_marketing: false,
+          access_wallet: false,
+          manage_payments: false,
+          manage_payment_links: false,
+          manage_expenses: false,
+          manage_debts: false,
+          access_affiliate: false,
+          manage_delivery: false,
+          access_support: true,
+          access_communication: true,
+          view_reports: false,
+          access_settings: false
+        };
+      case 'administratif':
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: false,
+          manage_products: false,
+          manage_orders: true,
+          manage_inventory: false,
+          manage_warehouse: false,
+          manage_suppliers: false,
+          manage_agents: false,
+          manage_clients: true,
+          manage_prospects: false,
+          manage_marketing: false,
+          access_wallet: true,
+          manage_payments: true,
+          manage_payment_links: true,
+          manage_expenses: true,
+          manage_debts: true,
+          access_affiliate: false,
+          manage_delivery: false,
+          access_support: false,
+          access_communication: true,
+          view_reports: true,
+          access_settings: false
+        };
+      case 'manager':
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: true,
+          manage_products: true,
+          manage_orders: true,
+          manage_inventory: true,
+          manage_warehouse: true,
+          manage_suppliers: true,
+          manage_agents: true,
+          manage_clients: true,
+          manage_prospects: true,
+          manage_marketing: true,
+          access_wallet: true,
+          manage_payments: true,
+          manage_payment_links: true,
+          manage_expenses: true,
+          manage_debts: true,
+          access_affiliate: true,
+          manage_delivery: true,
+          access_support: true,
+          access_communication: true,
+          view_reports: true,
+          access_settings: true
+        };
+      case 'technique':
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: true,
+          manage_products: true,
+          manage_orders: false,
+          manage_inventory: true,
+          manage_warehouse: true,
+          manage_suppliers: true,
+          manage_agents: false,
+          manage_clients: false,
+          manage_prospects: false,
+          manage_marketing: false,
+          access_wallet: false,
+          manage_payments: false,
+          manage_payment_links: false,
+          manage_expenses: false,
+          manage_debts: false,
+          access_affiliate: false,
+          manage_delivery: false,
+          access_support: true,
+          access_communication: true,
+          view_reports: true,
+          access_settings: false
+        };
+      default:
+        return {
+          view_dashboard: true,
+          view_analytics: true,
+          access_pos: true,
+          manage_products: true,
+          manage_orders: true,
+          manage_inventory: true,
+          manage_warehouse: true,
+          manage_suppliers: true,
+          manage_agents: false,
+          manage_clients: true,
+          manage_prospects: true,
+          manage_marketing: true,
+          access_wallet: true,
+          manage_payments: true,
+          manage_payment_links: true,
+          manage_expenses: true,
+          manage_debts: true,
+          access_affiliate: false,
+          manage_delivery: true,
+          access_support: true,
+          access_communication: true,
+          view_reports: true,
+          access_settings: false
+        };
+    }
+  };
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<VendorAgent | null>(null);
   const [formData, setFormData] = useState({
@@ -312,24 +500,94 @@ export default function AgentManagement() {
                     <Label htmlFor="agent_type">Type d'Agent *</Label>
                     <Select
                       value={formData.agent_type}
-                      onValueChange={(value) => setFormData({ ...formData, agent_type: value as any })}
+                      onValueChange={(value) => {
+                        const newPermissions = getDefaultPermissionsByType(value);
+                        setFormData({ 
+                          ...formData, 
+                          agent_type: value as any,
+                          permissions: newPermissions
+                        });
+                        toast({
+                          title: "✅ Permissions mises à jour",
+                          description: `Les permissions par défaut pour un agent ${value} ont été appliquées. Vous pouvez les personnaliser.`
+                        });
+                      }}
                     >
                       <SelectTrigger id="agent_type">
                         <SelectValue placeholder="Sélectionnez le type d'agent" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="commercial">Commercial</SelectItem>
-                        <SelectItem value="logistique">Logistique</SelectItem>
-                        <SelectItem value="support">Support</SelectItem>
-                        <SelectItem value="administratif">Administratif</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="technique">Technique</SelectItem>
+                        <SelectItem value="commercial">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Commercial</span>
+                            <span className="text-xs text-muted-foreground">POS, Ventes, Clients, Marketing</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="logistique">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Logistique</span>
+                            <span className="text-xs text-muted-foreground">Livraisons, Entrepôts, Inventaire</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="support">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Support</span>
+                            <span className="text-xs text-muted-foreground">Communication, Clients, Commandes</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="administratif">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Administratif</span>
+                            <span className="text-xs text-muted-foreground">Finances, Paiements, Dépenses</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="manager">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Manager</span>
+                            <span className="text-xs text-muted-foreground">Accès complet à toutes les fonctionnalités</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="technique">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Technique</span>
+                            <span className="text-xs text-muted-foreground">Produits, Inventaire, Entrepôts</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      💡 Les permissions seront automatiquement définies selon le type. Vous pourrez les personnaliser ci-dessous.
+                    </p>
                   </div>
 
                   <div className="space-y-3 border-t pt-4">
-                    <Label className="text-base font-semibold">Permissions</Label>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-base font-semibold">Permissions</Label>
+                      <Badge variant="outline" className="capitalize">
+                        {formData.agent_type}
+                      </Badge>
+                    </div>
+
+                    {/* Aperçu des permissions actives */}
+                    <div className="p-3 bg-vendeur-accent/10 rounded-lg border border-vendeur-accent/20 mb-4">
+                      <p className="text-sm font-medium mb-2">🎯 Permissions actives :</p>
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(formData.permissions)
+                          .filter(([_, value]) => value)
+                          .map(([key]) => (
+                            <Badge 
+                              key={key} 
+                              variant="secondary" 
+                              className="text-xs bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20"
+                            >
+                              {key.replace(/_/g, ' ')}
+                            </Badge>
+                          ))}
+                      </div>
+                      {Object.values(formData.permissions).filter(v => v).length === 0 && (
+                        <p className="text-xs text-muted-foreground italic">Aucune permission active</p>
+                      )}
+                    </div>
                     
                     {/* Vue d'ensemble */}
                     <div className="space-y-2">
