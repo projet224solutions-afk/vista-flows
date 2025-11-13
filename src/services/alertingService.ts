@@ -228,7 +228,7 @@ class AlertingService {
       action: alert.actionable ? {
         label: 'Voir les détails',
         onClick: () => {
-          window.location.href = '/pdg/debug';
+          window.location.pathname = '/pdg/debug';
         },
       } : undefined,
     });

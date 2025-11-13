@@ -403,7 +403,9 @@ export default function ClientManagement() {
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => {
                     // Contact client functionality
                     if (client.profile?.email) {
-                      window.location.href = `mailto:${client.profile.email}`;
+                      const mailtoLink = document.createElement('a');
+                      mailtoLink.href = `mailto:${client.profile.email}`;
+                      mailtoLink.click();
                     } else {
                       toast({
                         title: "Email non disponible",

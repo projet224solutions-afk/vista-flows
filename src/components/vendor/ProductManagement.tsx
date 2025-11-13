@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ export default function ProductManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { generatePublicId } = usePublicId();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -374,7 +376,7 @@ export default function ProductManagement() {
 
         // Attendre un peu puis rediriger vers la page stock
         setTimeout(() => {
-          window.location.href = '/vendeur/warehouse';
+          navigate('/vendeur/warehouse');
         }, 1500);
       }
 

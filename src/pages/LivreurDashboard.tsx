@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ export default function LivreurDashboard() {
   const { user, profile } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
   const { isMobile, isTablet } = useResponsive();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('missions');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -342,7 +344,7 @@ export default function LivreurDashboard() {
           
           {/* Bouton de navigation */}
           <Button
-            onClick={() => window.location.href = '/delivery-request'}
+            onClick={() => navigate('/delivery-request')}
             style={{ 
               background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
               color: 'white'

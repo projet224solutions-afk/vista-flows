@@ -147,7 +147,7 @@ export function handleApiError(error: any, context?: string): void {
       action: {
         label: 'Se reconnecter',
         onClick: () => {
-          window.location.href = '/auth';
+          window.location.pathname = '/auth';
         }
       }
     });

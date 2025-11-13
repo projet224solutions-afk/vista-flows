@@ -47,7 +47,7 @@ export const useTaxiNotifications = () => {
               label: 'Voir',
               onClick: () => {
                 // Navigation vers la course
-                window.location.href = `/taxi-moto/driver`;
+                window.location.pathname = `/taxi-moto/driver`;
               }
             }
           });
