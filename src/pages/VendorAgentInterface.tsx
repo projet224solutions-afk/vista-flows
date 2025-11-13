@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import ProductManagement from '@/components/vendor/ProductManagement';
 import OrderManagement from '@/components/vendor/OrderManagement';
 import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
-import VendorAgentWallet from '@/components/vendor/VendorAgentWallet';
+import { VendorAgentWalletView } from '@/components/vendor/VendorAgentWalletView';
 import VendorAnalytics from '@/components/vendor/VendorAnalytics';
 import InventoryManagement from '@/components/vendor/InventoryManagement';
 import WarehouseManagement from '@/components/vendor/WarehouseManagement';
@@ -509,7 +509,7 @@ export default function VendorAgentInterface() {
 
           <TabsContent value="wallet">
             <AgentModuleWrapper permission="access_wallet">
-              <VendorAgentWallet 
+              <VendorAgentWalletView 
                 vendorId={agent.vendor_id}
                 agentName={agent.name}
               />

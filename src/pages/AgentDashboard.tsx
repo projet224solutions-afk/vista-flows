@@ -142,7 +142,7 @@ export default function AgentDashboard() {
               <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
               </p>
-              <AgentWalletDisplay agentId={agent.id} agentCode={agent.agent_code} compact={true} className="max-w-xs" />
+              {/* Wallet retiré - les agents PDG utilisent leur propre système de wallet */}
             </div>
             <Button onClick={handleSignOut} variant="outline">
               <LogOut className="w-4 h-4 mr-2" />

@@ -63,6 +63,16 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
 
       if (error) {
         console.error('❌ Erreur chargement wallet agent:', error);
+        
+        // Si le wallet n'existe pas, essayer de l'initialiser
+        if (error.code === 'PGRST116') {
+          console.log('⚠️ Wallet agent non trouvé, initialisation...');
+          // Le wallet sera créé automatiquement par le trigger
+          // Réessayer après un délai
+          setTimeout(() => loadWalletData(), 2000);
+          return;
+        }
+        
         throw error;
       }
 
@@ -179,15 +189,24 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
 
   if (!wallet) {
     return (
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-blue-200 bg-blue-50">
         <CardContent className="py-8">
           <div className="flex flex-col items-center justify-center gap-3">
-            <Wallet className="w-12 h-12 text-orange-600" />
+            <Wallet className="w-12 h-12 text-blue-600" />
             <div className="text-center">
-              <h3 className="font-semibold text-orange-900">Wallet non disponible</h3>
-              <p className="text-sm text-orange-700 mt-1">
-                Impossible de charger votre wallet. Contactez l'administrateur.
+              <h3 className="font-semibold text-blue-900">Initialisation du wallet...</h3>
+              <p className="text-sm text-blue-700 mt-1">
+                Votre wallet agent est en cours de création. Veuillez patienter.
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadWalletData}
+                className="mt-4"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualiser
+              </Button>
             </div>
           </div>
         </CardContent>
