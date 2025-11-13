@@ -106,7 +106,7 @@ serve(async (req) => {
     const { data: existingDispute } = await supabase
       .from("disputes")
       .select("id, status")
-      .eq("escrow_transaction_id", escrow.id)
+      .eq("escrow_id", escrow.id)
       .single();
 
     if (existingDispute && existingDispute.status !== "resolved") {
@@ -123,14 +123,14 @@ serve(async (req) => {
     const { data: dispute, error: disputeError } = await supabase
       .from("disputes")
       .insert({
-        escrow_transaction_id: escrow.id,
+        escrow_id: escrow.id,
         client_id: order.customer_id,
         vendor_id: order.vendor_id,
         order_id: order.id,
-        reason: reason,
-        requested_remedy: "full_refund",
+        dispute_type: "refund_request",
+        request_type: "full_refund",
         requested_amount: requested_amount || escrow.amount,
-        description: evidence_text || "Demande de remboursement par le client",
+        description: `${reason}${evidence_text ? '\n\nDétails: ' + evidence_text : ''}`,
         status: "open"
       })
       .select()
