@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePublicId } from "@/hooks/usePublicId";
@@ -45,7 +45,7 @@ interface Category {
 }
 
 export default function ProductManagement() {
-  const { user } = useAuth();
+  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const { generatePublicId } = usePublicId();
   const navigate = useNavigate();
@@ -86,30 +86,18 @@ export default function ProductManagement() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!vendorId || vendorLoading) return;
     fetchData();
-  }, [user]);
+  }, [vendorId, vendorLoading]);
 
   const fetchData = async () => {
+    if (!vendorId || !user) {
+      console.warn('⚠️ Pas de vendorId ou user pour charger les produits');
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // Get vendor ID
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (vendorError) throw vendorError;
-      if (!vendor) {
-        toast({
-          title: "Erreur",
-          description: "Aucun compte vendeur trouvé.",
-          variant: "destructive"
-        });
-        return;
-      }
 
       // Fetch categories first (needed for product form)
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -134,7 +122,7 @@ export default function ProductManagement() {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
 
       if (productsError) throw productsError;

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package, Plus, MapPin, Clock, TrendingUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { ShipmentForm } from './ShipmentForm';
 import { ShipmentSuccess } from './ShipmentSuccess';
 import { ShipmentTracker } from './ShipmentTracker';
@@ -29,7 +30,7 @@ interface Shipment {
 
 export function ShipmentManager() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [vendorId, setVendorId] = useState<string | null>(null);
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [successShipmentId, setSuccessShipmentId] = useState<string>('');
@@ -37,11 +38,10 @@ export function ShipmentManager() {
   const [trackingShipmentId, setTrackingShipmentId] = useState<string>('');
 
   useEffect(() => {
-    loadVendorAndShipments();
+    if (!vendorId || vendorLoading) return;
+    loadShipments();
 
     // Écoute des mises à jour en temps réel pour toutes les expéditions du vendeur
-    if (!vendorId) return;
-
     const channel = supabase
       .channel('vendor-shipments')
       .on(
@@ -55,7 +55,7 @@ export function ShipmentManager() {
         (payload) => {
           console.log('Shipment change detected:', payload);
           // Recharger automatiquement la liste
-          loadVendorAndShipments();
+          loadShipments();
         }
       )
       .subscribe();
@@ -63,39 +63,22 @@ export function ShipmentManager() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [vendorId]);
+  }, [vendorId, vendorLoading]);
 
-  const loadVendorAndShipments = async () => {
+  const loadShipments = async () => {
+    if (!vendorId) {
+      console.warn('⚠️ Pas de vendorId pour charger les expéditions');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Récupérer le vendeur - essayer d'abord avec l'utilisateur connecté
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-
-      if (!userId) {
-        console.warn('⚠️ Pas d\'utilisateur connecté pour charger les expéditions');
-        setLoading(false);
-        return;
-      }
-
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!vendor) {
-        toast.error('Profil vendeur introuvable');
-        return;
-      }
-
-      setVendorId(vendor.id);
-
       // Charger les expéditions
       const { data: shipmentsData, error } = await supabase
         .from('shipments')
         .select('*')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -113,7 +96,7 @@ export function ShipmentManager() {
     setSuccessShipmentId(shipmentId);
     setSuccessTrackingNumber(trackingNumber);
     setViewMode('success');
-    loadVendorAndShipments(); // Recharger la liste
+    loadShipments(); // Recharger la liste
   };
 
   const handleNewShipment = () => {
@@ -122,7 +105,7 @@ export function ShipmentManager() {
 
   const handleBackToList = () => {
     setViewMode('list');
-    loadVendorAndShipments();
+    loadShipments();
   };
 
   const handleViewTracking = (shipmentId: string) => {
