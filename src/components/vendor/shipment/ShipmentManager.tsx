@@ -68,15 +68,21 @@ export function ShipmentManager() {
   const loadVendorAndShipments = async () => {
     setLoading(true);
     try {
-      // Récupérer le vendeur
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      // Récupérer le vendeur - essayer d'abord avec l'utilisateur connecté
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      if (!userId) {
+        console.warn('⚠️ Pas d\'utilisateur connecté pour charger les expéditions');
+        setLoading(false);
+        return;
+      }
 
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
-        .eq('user_id', user.user.id)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (!vendor) {
         toast.error('Profil vendeur introuvable');
