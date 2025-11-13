@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Menu,
   X,
@@ -179,9 +180,11 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <ScrollArea className="flex-1 h-[calc(100vh-80px)]">
+          <main className="p-4">
+            {children}
+          </main>
+        </ScrollArea>
       </div>
 
       {/* Communication Widget */}

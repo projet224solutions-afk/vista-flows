@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMonerooPayment } from '@/hooks/useMonerooPayment';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -100,7 +96,8 @@ export function MonerooPaymentDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4 overflow-y-auto max-h-[60vh] pr-2">
+        <ScrollArea className="h-[60vh] pr-2">
+          <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="amount">Montant (GNF)</Label>
             <Input
@@ -152,7 +149,8 @@ export function MonerooPaymentDialog({
               />
             </div>
           </div>
-        </div>
+          </div>
+        </ScrollArea>
 
         <div className="flex gap-2 flex-shrink-0 pt-4 border-t">
           <Button

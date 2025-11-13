@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -223,7 +224,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh]">
+        <ScrollArea className="h-[85vh] pr-4">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
         </DialogHeader>
@@ -367,7 +369,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           vendorName={product.vendors?.business_name || 'Vendeur'}
         />
       </TabsContent>
-    </Tabs>
+        </Tabs>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

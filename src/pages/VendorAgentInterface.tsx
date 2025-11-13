@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { AgentProvider, type VendorAgent } from '@/contexts/AgentContext';
 import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Import des modules fonctionnels du vendeur
 import ProductManagement from '@/components/vendor/ProductManagement';
@@ -207,8 +208,9 @@ export default function VendorAgentInterface() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <ScrollArea className="h-[calc(100vh-200px)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-white shadow flex-wrap">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             {hasPermission('view_dashboard') && (
@@ -623,9 +625,10 @@ export default function VendorAgentInterface() {
               </AgentModuleWrapper>
             </TabsContent>
           )}
-        </Tabs>
+          </Tabs>
+          </div>
+        </ScrollArea>
       </div>
-    </div>
     </AgentProvider>
   );
 }

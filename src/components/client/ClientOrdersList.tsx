@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
@@ -361,25 +362,26 @@ export default function ClientOrdersList() {
       </Card>
 
       {/* Liste des commandes filtrées */}
-      {filteredOrders.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              {activeFilter === 'pending' && 'Aucune commande en attente actuellement'}
-              {activeFilter === 'in_progress' && 'Aucune commande en cours actuellement'}
-              {activeFilter === 'delivered' && 'Aucune commande livrée actuellement'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredOrders.map((order) => {
-          const escrow = escrows[order.id];
-          // Permettre la confirmation si la commande est en transit OU déjà livrée mais que l'escrow n'est pas encore libéré
-          const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (escrow?.status === 'pending' || escrow?.status === 'held');
+      <Card>
+        <CardContent className="p-6">
+          <ScrollArea className="h-[600px] pr-4">
+            {filteredOrders.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {activeFilter === 'pending' && 'Aucune commande en attente actuellement'}
+                  {activeFilter === 'in_progress' && 'Aucune commande en cours actuellement'}
+                  {activeFilter === 'delivered' && 'Aucune commande livrée actuellement'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredOrders.map((order) => {
+                  const escrow = escrows[order.id];
+                  // Permettre la confirmation si la commande est en transit OU déjà livrée mais que l'escrow n'est pas encore libéré
+                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (escrow?.status === 'pending' || escrow?.status === 'held');
 
-          return (
+                  return (
             <Card key={order.id} className="overflow-hidden">
               <CardHeader className="bg-muted/50">
                 <div className="flex items-center justify-between">
@@ -460,10 +462,13 @@ export default function ClientOrdersList() {
                 )}
               </CardContent>
             </Card>
-          );
-        })}
-        </div>
-      )}
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
       {/* Dialog de confirmation */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
