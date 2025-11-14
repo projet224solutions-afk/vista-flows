@@ -5,8 +5,12 @@
 
 import CryptoJS from 'crypto-js';
 
-// Clé de chiffrement principale (devrait être dans les secrets Supabase en production)
-const ENCRYPTION_KEY = import.meta.env.VITE_API_ENCRYPTION_KEY || 'default-224solutions-encryption-key-change-in-production';
+// Clé de chiffrement principale depuis les secrets Supabase
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('❌ VITE_ENCRYPTION_KEY manquante dans les secrets Supabase');
+}
 
 export interface EncryptedData {
   encrypted: string;
