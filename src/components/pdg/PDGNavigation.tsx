@@ -33,6 +33,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
       { value: 'escrow', label: 'Gestion Escrow', icon: Shield, badge: true },
+      { value: 'subscriptions', label: 'Abonnements Drivers', icon: Bike, badge: true },
     ]
   },
   {
@@ -50,7 +51,6 @@ const categories: NavCategory[] = [
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
-      { value: 'subscriptions', label: 'Abonnements Drivers', icon: Bike, badge: true },
       { value: 'orders', label: 'Commandes', icon: Package },
       { value: 'vendors', label: 'Vendeurs', icon: Store },
       { value: 'drivers', label: 'Livreurs', icon: Bike },
