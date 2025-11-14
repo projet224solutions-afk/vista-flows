@@ -8,8 +8,9 @@ import CryptoJS from 'crypto-js';
 // Clé de chiffrement principale depuis les secrets Supabase
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
 
+// Avertissement si la clé est manquante (ne pas bloquer le chargement)
 if (!ENCRYPTION_KEY) {
-  throw new Error('❌ VITE_ENCRYPTION_KEY manquante dans les secrets Supabase');
+  console.warn('⚠️ VITE_ENCRYPTION_KEY manquante - Le chiffrement API sera désactivé');
 }
 
 export interface EncryptedData {
@@ -21,6 +22,14 @@ export interface EncryptedData {
  * Chiffre une clé API avec AES-256-CBC
  */
 export function encryptApiKey(apiKey: string): EncryptedData {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Chiffrement désactivé - Clé manquante');
+    // Retourner des données "non chiffrées" mais dans le même format
+    return {
+      encrypted: apiKey,
+      iv: ''
+    };
+  }
   try {
     // Générer un IV aléatoire
     const iv = CryptoJS.lib.WordArray.random(16);
@@ -46,6 +55,11 @@ export function encryptApiKey(apiKey: string): EncryptedData {
  * Déchiffre une clé API
  */
 export function decryptApiKey(encryptedData: string, iv: string): string {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Déchiffrement désactivé - Clé manquante');
+    // Retourner les données telles quelles si non chiffrées
+    return encryptedData;
+  }
   try {
     // Convertir l'IV en WordArray
     const ivWordArray = CryptoJS.enc.Base64.parse(iv);

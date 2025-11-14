@@ -9,14 +9,19 @@ import CryptoJS from 'crypto-js';
 // Clé de cryptage depuis les secrets Supabase
 const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
 
+// Avertissement si la clé est manquante (ne pas bloquer le chargement)
 if (!ENCRYPTION_KEY) {
-  throw new Error('❌ VITE_ENCRYPTION_KEY manquante dans les secrets Supabase');
+  console.warn('⚠️ VITE_ENCRYPTION_KEY manquante - Le cryptage sera désactivé');
 }
 
 /**
  * Crypte des données avec AES-256
  */
 export function encryptData(data: any): string {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Cryptage désactivé - Clé manquante');
+    return JSON.stringify(data); // Retourner les données non cryptées
+  }
   try {
     const jsonString = JSON.stringify(data);
     const encrypted = CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY).toString();
@@ -31,6 +36,14 @@ export function encryptData(data: any): string {
  * Décrypte des données AES-256
  */
 export function decryptData<T = any>(encryptedData: string): T {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Décryptage désactivé - Clé manquante');
+    try {
+      return JSON.parse(encryptedData); // Tenter de parser comme JSON non crypté
+    } catch {
+      return encryptedData as T; // Retourner tel quel si pas JSON
+    }
+  }
   try {
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
