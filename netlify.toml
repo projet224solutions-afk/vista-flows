@@ -5,8 +5,8 @@
   # Dossier de sortie du build Vite
   publish = "dist"
   
-  # Commande de build
-  command = "npm run build"
+  # Commande de build avec vérification des variables d'environnement
+  command = "node scripts/check-env.js && npm run build"
   
   # Variables d'environnement de build
   [build.environment]
