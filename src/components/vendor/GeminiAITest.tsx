@@ -112,7 +112,7 @@ export default function GeminiAITest() {
 
           {/* Gemini IA Test */}
           <div className="border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold">Gemini IA (via Lovable AI)</h3>
+            <h3 className="font-semibold">Gemini IA (Assistant Intelligent)</h3>
             <Textarea
               placeholder="Entrez votre prompt..."
               value={prompt}
