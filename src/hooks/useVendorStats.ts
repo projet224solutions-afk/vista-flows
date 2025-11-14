@@ -3,7 +3,7 @@
  * Récupère les statistiques en temps réel du vendeur
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
@@ -23,21 +23,7 @@ export function useVendorStats() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (vendorLoading) return;
-    if (!vendorId) {
-      setLoading(false);
-      return;
-    }
-
-    fetchStats();
-
-    // Actualiser toutes les 30 secondes
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
-  }, [vendorId, vendorLoading]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!vendorId) return;
 
     try {
@@ -120,7 +106,21 @@ export function useVendorStats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [vendorId]);
+
+  useEffect(() => {
+    if (vendorLoading) return;
+    if (!vendorId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchStats();
+
+    // Actualiser toutes les 30 secondes
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, [vendorId, vendorLoading, fetchStats]);
 
   return {
     stats,

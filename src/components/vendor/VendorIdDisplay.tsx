@@ -3,7 +3,7 @@
  * Affiche le custom_id du vendeur (VEN0001) avec son nom
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
@@ -25,11 +25,7 @@ export function VendorIdDisplay({
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchVendorData();
-  }, [user]);
-
-  const fetchVendorData = async () => {
+  const fetchVendorData = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
@@ -71,7 +67,11 @@ export function VendorIdDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchVendorData();
+  }, [fetchVendorData]);
 
   if (loading) {
     return (
