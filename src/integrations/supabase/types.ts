@@ -2302,6 +2302,122 @@ export type Database = {
           },
         ]
       }
+      driver_subscription_config: {
+        Row: {
+          created_at: string | null
+          duration_days: number
+          id: string
+          is_active: boolean | null
+          price: number
+          subscription_type: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          price: number
+          subscription_type: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          subscription_type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      driver_subscription_revenues: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          payment_method: string
+          subscription_id: string
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          payment_method: string
+          subscription_id: string
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          payment_method?: string
+          subscription_id?: string
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_subscription_revenues_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "driver_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          metadata: Json | null
+          payment_method: string
+          price: number
+          start_date: string
+          status: string
+          transaction_id: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          metadata?: Json | null
+          payment_method: string
+          price: number
+          start_date?: string
+          status?: string
+          transaction_id?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string
+          price?: number
+          start_date?: string
+          status?: string
+          transaction_id?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           commission_rate: number | null
@@ -10018,6 +10134,19 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      get_active_driver_subscription: {
+        Args: { p_user_id: string }
+        Returns: {
+          days_remaining: number
+          end_date: string
+          id: string
+          payment_method: string
+          price: number
+          start_date: string
+          status: string
+          type: string
+        }[]
+      }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
       get_escrow_stats: {
@@ -10135,6 +10264,10 @@ export type Database = {
         Returns: Json
       }
       gettransactionid: { Args: never; Returns: unknown }
+      has_active_driver_subscription: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       has_active_installation: {
         Args: { bureau_uuid: string }
         Returns: boolean
@@ -10226,6 +10359,7 @@ export type Database = {
         Returns: string
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_expired_driver_subscriptions: { Args: never; Returns: number }
       mark_messages_as_read: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: undefined
@@ -11033,6 +11167,15 @@ export type Database = {
       st_wrapx: {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
+      }
+      subscribe_driver: {
+        Args: {
+          p_payment_method: string
+          p_transaction_id?: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
       }
       sync_missing_profiles: {
         Args: never

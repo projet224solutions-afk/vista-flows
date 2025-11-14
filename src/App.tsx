@@ -31,6 +31,7 @@ const DriverProfile = lazy(() => import("./pages/driver/DriverProfile"));
 const DriverSettings = lazy(() => import("./pages/driver/DriverSettings"));
 const DriverHelp = lazy(() => import("./pages/driver/DriverHelp"));
 const TaxiMotoDriver = lazy(() => import("./pages/TaxiMotoDriver"));
+const DriverSubscriptionPage = lazy(() => import("./pages/DriverSubscriptionPage"));
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
@@ -115,6 +116,7 @@ function App() {
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+              <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
