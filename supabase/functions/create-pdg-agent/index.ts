@@ -12,25 +12,38 @@ serve(async (req) => {
   }
 
   try {
-    // Créer deux clients: un pour l'auth avec ANON_KEY et un pour les opérations admin
-    const authClient = createClient(
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    // Créer le client avec le token pour l'authentification
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
     );
 
+    // Client admin pour les opérations privilégiées
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userAuthError } = await authClient.auth.getUser(token);
+    // Vérifier l'authentification
+    const { data: { user }, error: userAuthError } = await supabaseClient.auth.getUser();
 
     if (userAuthError || !user) {
       console.error('❌ Auth error:', userAuthError);
       throw new Error('Non autorisé');
     }
+
+    console.log('✅ User authenticated:', user.id);
 
     // Vérifier que l'utilisateur est PDG
     const { data: pdgProfile, error: pdgError } = await supabaseAdmin
