@@ -32,6 +32,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Créer deux clients: un pour l'auth avec ANON_KEY et un pour les données avec SERVICE_ROLE_KEY
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -47,12 +53,13 @@ Deno.serve(async (req) => {
       throw new Error('Missing authorization header');
     }
 
-    // Vérifier l'authentification
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
+    // Vérifier l'authentification avec le client ANON
+    const { data: { user }, error: authError } = await authClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
     if (authError || !user) {
+      console.error('❌ Auth error:', authError);
       throw new Error('Unauthorized');
     }
 
@@ -64,6 +71,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || profile?.role !== 'admin') {
+      console.error('❌ Profile error or not admin:', profileError, profile);
       throw new Error('Forbidden: Admin access required');
     }
 
