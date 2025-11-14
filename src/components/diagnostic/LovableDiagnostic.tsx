@@ -1,6 +1,6 @@
 /**
- * DIAGNOSTIC LOVABLE - Vérification des fonctionnalités
- * S'assure que toutes les nouvelles fonctionnalités sont visibles dans Lovable
+ * DIAGNOSTIC SYSTÈME - Vérification des fonctionnalités
+ * S'assure que toutes les nouvelles fonctionnalités sont opérationnelles
  */
 
 import { useState, useEffect } from 'react';
@@ -128,28 +128,28 @@ export default function LovableDiagnostic() {
             });
         }
 
-        // Vérifier la configuration Lovable
+        // Vérifier la configuration système
         try {
-            const response = await fetch('/src/config/lovable-features.json');
+            const response = await fetch('/src/config/system-features.json');
             if (response.ok) {
                 featureChecks.push({
-                    name: 'Configuration Lovable',
-                    component: 'lovable-features.json',
+                    name: 'Configuration Système',
+                    component: 'system-features.json',
                     status: 'success',
                     message: 'Configuration des fonctionnalités disponible'
                 });
             } else {
                 featureChecks.push({
-                    name: 'Configuration Lovable',
-                    component: 'lovable-features.json',
+                    name: 'Configuration Système',
+                    component: 'system-features.json',
                     status: 'warning',
                     message: 'Configuration non accessible via HTTP'
                 });
             }
         } catch (error) {
             featureChecks.push({
-                name: 'Configuration Lovable',
-                component: 'lovable-features.json',
+                name: 'Configuration Système',
+                component: 'system-features.json',
                 status: 'warning',
                 message: 'Configuration créée mais non testable via fetch'
             });
@@ -197,10 +197,10 @@ export default function LovableDiagnostic() {
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
                         <Eye className="w-7 h-7 text-blue-600" />
-                        Diagnostic Lovable - Fonctionnalités Bureau Syndicat
+                        Diagnostic Système - Fonctionnalités Bureau Syndicat
                     </CardTitle>
                     <p className="text-gray-600">
-                        Vérification que toutes les nouvelles fonctionnalités sont visibles et opérationnelles dans Lovable
+                        Vérification que toutes les nouvelles fonctionnalités sont visibles et opérationnelles
                     </p>
                 </CardHeader>
                 <CardContent className="space-y-6">

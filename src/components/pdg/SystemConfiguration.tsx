@@ -58,13 +58,13 @@ export default function SystemConfiguration() {
       documentation: 'https://console.firebase.google.com'
     },
     {
-      name: 'Lovable AI (Gemini)',
+      name: 'Assistant IA Gemini',
       icon: Sparkles,
       status: 'testing',
       required: true,
       description: 'IA Gemini pour assistant intelligent',
       secretName: 'LOVABLE_API_KEY',
-      documentation: 'https://docs.lovable.dev/features/ai'
+      documentation: 'https://ai.google.dev/'
     },
     {
       name: 'OpenAI API',
@@ -394,10 +394,10 @@ export default function SystemConfiguration() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">3. Lovable AI (Gemini)</h4>
+            <h4 className="font-medium">3. Assistant IA Gemini</h4>
             <p className="text-sm text-muted-foreground">
-              Le service Lovable AI est automatiquement configuré avec votre workspace. Il fournit l'accès à Google Gemini et d'autres modèles IA.
-              Nécessite des crédits dans votre workspace Lovable.
+              Le service IA Gemini est automatiquement configuré avec votre workspace. Il fournit l'accès à Google Gemini et d'autres modèles IA pour l'assistant intelligent.
+              Configuration automatique via votre clé API.
             </p>
           </div>
 
