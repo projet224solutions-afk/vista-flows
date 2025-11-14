@@ -38,6 +38,7 @@ const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
 const PDGEscrowManagement = lazy(() => import('@/components/pdg/PDGEscrowManagement'));
+const DriverSubscriptionManagement = lazy(() => import('@/components/admin/DriverSubscriptionManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -373,6 +374,12 @@ export default function PDG224Solutions() {
               {activeTab === 'syndicat' && (
                 <ErrorBoundary>
                   <PDGSyndicatManagement />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'subscriptions' && (
+                <ErrorBoundary>
+                  <DriverSubscriptionManagement />
                 </ErrorBoundary>
               )}
 
