@@ -32,13 +32,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Créer deux clients: un pour l'auth avec ANON_KEY et un pour les données avec SERVICE_ROLE_KEY
-    const authClient = createClient(
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    // Créer le client avec le token pour l'authentification
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
     );
 
-    const supabaseClient = createClient(
+    // Client admin pour les opérations privilégiées
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
@@ -48,15 +59,8 @@ Deno.serve(async (req) => {
       }
     );
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    // Vérifier l'authentification avec le client ANON
-    const { data: { user }, error: authError } = await authClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
       console.error('❌ Auth error:', authError);
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
     }
 
     // Vérifier que l'utilisateur est admin/PDG
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -75,10 +79,12 @@ Deno.serve(async (req) => {
       throw new Error('Forbidden: Admin access required');
     }
 
+    console.log('✅ User authenticated as admin:', user.id);
+
     console.log('📊 Calculating financial stats for PDG...');
 
     // 1. Récupérer toutes les transactions wallet complétées
-    const { data: walletTransactions, error: walletError } = await supabaseClient
+    const { data: walletTransactions, error: walletError } = await supabaseAdmin
       .from('wallet_transactions')
       .select('*')
       .eq('status', 'completed')
@@ -140,7 +146,7 @@ Deno.serve(async (req) => {
     console.log('💰 Revenue by service:', revenue_by_service);
 
     // 4. Paiements en attente
-    const { data: pendingTx, error: pendingError } = await supabaseClient
+    const { data: pendingTx, error: pendingError } = await supabaseAdmin
       .from('wallet_transactions')
       .select('amount')
       .eq('status', 'pending');
@@ -148,7 +154,7 @@ Deno.serve(async (req) => {
     const pending_payments = pendingTx?.reduce((sum, t) => sum + Number(t.amount || 0), 0) || 0;
 
     // 5. Wallets actifs
-    const { data: activeWallets, error: walletsError } = await supabaseClient
+    const { data: activeWallets, error: walletsError } = await supabaseAdmin
       .from('wallets')
       .select('id, balance, user_id')
       .eq('wallet_status', 'active');
@@ -156,7 +162,7 @@ Deno.serve(async (req) => {
     console.log(`👛 Found ${activeWallets?.length || 0} active wallets`);
 
     // 6. Statistiques escrow
-    const { data: escrowData, error: escrowError } = await supabaseClient
+    const { data: escrowData, error: escrowError } = await supabaseAdmin
       .from('escrow_transactions')
       .select('status, amount');
 
