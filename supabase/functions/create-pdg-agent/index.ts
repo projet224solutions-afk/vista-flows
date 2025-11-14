@@ -12,6 +12,12 @@ serve(async (req) => {
   }
 
   try {
+    // Client admin pour toutes les opérations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Récupérer et vérifier le token d'authentification
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -22,19 +28,6 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
-    // Client admin pour vérifier l'authentification et toutes les opérations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader
-          }
-        }
-      }
-    );
     
     // Vérifier l'authentification avec le token
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
