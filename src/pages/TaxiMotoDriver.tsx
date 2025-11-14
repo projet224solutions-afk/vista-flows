@@ -31,6 +31,7 @@ import {
     Wallet
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { toast } from "sonner";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
@@ -1061,6 +1062,8 @@ export default function TaxiMotoDriver() {
             {/* Header conducteur */}
             <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
                 <div className="px-4 py-4">
+                    {/* Bannière d'abonnement */}
+                    <DriverSubscriptionBanner />
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-3 mb-1 flex-wrap">

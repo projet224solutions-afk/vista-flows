@@ -15,6 +15,7 @@ import { NearbyDeliveriesPanel } from '@/components/delivery/NearbyDeliveriesPan
 import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";
@@ -278,7 +279,11 @@ export default function LivreurDashboard() {
   }
 
   return (
-    <DriverLayout currentPage="dashboard">
+    <>
+      {/* Bannière d'abonnement */}
+      <DriverSubscriptionBanner />
+      
+      <DriverLayout currentPage="dashboard">
     <div className="p-responsive bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
       {/* Listener temps réel pour nouvelles livraisons */}
       <NearbyDeliveriesListener 
@@ -855,5 +860,6 @@ export default function LivreurDashboard() {
       )}
     </div>
     </DriverLayout>
+    </>
   );
 }
