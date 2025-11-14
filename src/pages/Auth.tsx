@@ -10,6 +10,7 @@ import { User } from "@supabase/supabase-js";
 import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
+import logo224Solutions from "@/assets/224solutions-logo-final.png";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -410,7 +411,13 @@ export default function Auth() {
     <div className="min-h-screen bg-white pb-20">
       {/* Header avec 224SOLUTIONS et boutons */}
       <div className="text-center py-8 px-4">
-        <h1 className="text-4xl font-bold text-purple-600 mb-6">224SOLUTIONS</h1>
+        <div className="flex justify-center mb-6">
+          <img 
+            src={logo224Solutions} 
+            alt="224Solutions Logo" 
+            className="h-16 w-auto object-contain"
+          />
+        </div>
 
         {/* Boutons du header */}
         <div className="flex items-center justify-center gap-3 mb-8">

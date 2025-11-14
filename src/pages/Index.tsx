@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
+import logo224Solutions from "@/assets/224solutions-logo-final.png";
 import {
   Search,
   Grid3X3,
@@ -196,9 +197,11 @@ function IndexAlibaba() {
         <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 md:gap-4">
-              <h1 className={`font-bold text-purple-600 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                224SOLUTIONS
-              </h1>
+              <img 
+                src={logo224Solutions} 
+                alt="224Solutions Logo" 
+                className={`object-contain ${isMobile ? 'h-8' : 'h-12'}`}
+              />
               {!isMobile && (
                 <div className="hidden md:flex items-center gap-6">
                   <Button variant="ghost" onClick={() => navigate('/marketplace')}>
