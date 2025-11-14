@@ -12,6 +12,12 @@ serve(async (req) => {
   }
 
   try {
+    // Créer deux clients: un pour l'auth avec ANON_KEY et un pour les opérations admin
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,9 +25,10 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user }, error: userAuthError } = await authClient.auth.getUser(token);
 
-    if (!user) {
+    if (userAuthError || !user) {
+      console.error('❌ Auth error:', userAuthError);
       throw new Error('Non autorisé');
     }
 
