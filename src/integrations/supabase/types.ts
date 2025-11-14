@@ -9997,19 +9997,7 @@ export type Database = {
           score: number
         }[]
       }
-      generate_sequential_id:
-        | {
-            Args: { p_prefix: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { p_prefix: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
+      generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
