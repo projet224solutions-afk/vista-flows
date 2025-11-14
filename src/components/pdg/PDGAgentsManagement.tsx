@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield } from 'lucide-react';
 import { toast } from 'sonner';
@@ -412,13 +413,14 @@ export default function PDGAgentsManagement() {
               Nouvel Agent
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
                 {editingAgent ? 'Modifier l\'Agent' : 'Créer un Nouvel Agent'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateAgent} className="space-y-6">
+            <ScrollArea className="h-[70vh] pr-4">
+              <form onSubmit={handleCreateAgent} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nom Complet *</Label>
@@ -730,9 +732,10 @@ export default function PDGAgentsManagement() {
                       Créer l'Agent
                     </>
                   )}
-                </Button>
-              </div>
-            </form>
+              </Button>
+            </div>
+              </form>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
