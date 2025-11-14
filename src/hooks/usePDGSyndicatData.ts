@@ -106,11 +106,24 @@ export const usePDGSyndicatData = () => {
         supabase.from('members').select('*').order('created_at', { ascending: false })
       ]);
 
-      if (bureausRes.error) throw bureausRes.error;
-      if (workersRes.error) throw workersRes.error;
-      if (alertsRes.error) throw alertsRes.error;
-      if (featuresRes.error) throw featuresRes.error;
-      if (membersRes.error) throw membersRes.error;
+      // Gérer les erreurs individuellement sans bloquer tout le chargement
+      if (bureausRes.error) {
+        console.error('Erreur chargement bureaux:', bureausRes.error);
+        toast.error('Erreur de chargement des bureaux. Vérifiez vos permissions.');
+      }
+      if (workersRes.error) {
+        console.error('Erreur chargement workers:', workersRes.error);
+        toast.error('Erreur de chargement des travailleurs.');
+      }
+      if (alertsRes.error) {
+        console.error('Erreur chargement alertes:', alertsRes.error);
+      }
+      if (featuresRes.error) {
+        console.error('Erreur chargement fonctionnalités:', featuresRes.error);
+      }
+      if (membersRes.error) {
+        console.error('Erreur chargement membres:', membersRes.error);
+      }
 
       const bureausData = bureausRes.data || [];
       const workersData = workersRes.data || [];
