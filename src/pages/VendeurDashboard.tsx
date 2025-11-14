@@ -48,7 +48,7 @@ import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
 import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
-import PWAInstallButton from "@/components/pwa/PWAInstallButton";
+// import PWAInstallButton from "@/components/pwa/PWAInstallButton"; // PWA désactivée
 import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
 import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
@@ -341,9 +341,7 @@ export default function VendeurDashboard() {
 
               <div className="flex items-center gap-2">
                 <NetworkStatusIndicator />
-                <div className="hidden lg:block">
-                  <PWAInstallButton appName="224Solutions Vendeur" variant="outline" size="sm" />
-                </div>
+                {/* PWAInstallButton désactivé */}
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>

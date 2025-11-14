@@ -19,9 +19,9 @@ import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotific
 import SyndicateVehicleManagement from '@/components/syndicate/SyndicateVehicleManagement';
 import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
 import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator';
-import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration';
+// import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration'; // PWA désactivée
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
-import PWAInstallButton from '@/components/pwa/PWAInstallButton';
+// import PWAInstallButton from '@/components/pwa/PWAInstallButton'; // PWA désactivée
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
@@ -219,13 +219,7 @@ export default function BureauDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* PWA Integration */}
-      <SyndicatePWAIntegration
-        bureauId={bureau.id}
-        bureauName={`${bureau.prefecture} - ${bureau.commune}`}
-        presidentName={bureau.president_name || 'Président'}
-        isOnline={navigator.onLine}
-      />
+      {/* PWA Integration désactivée */}
 
       {/* En-tête */}
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -250,12 +244,7 @@ export default function BureauDashboard() {
         </div>
         <div className="flex gap-2 items-center flex-wrap">
           <BureauNetworkIndicator bureauId={bureau.id} />
-          <PWAInstallButton 
-            appName={`Bureau Syndicat ${bureau.commune}`} 
-            variant="default" 
-            size="default"
-            className="bg-primary hover:bg-primary/90"
-          />
+          {/* PWAInstallButton désactivé */}
           <Button variant="outline">
             <Phone className="w-4 h-4 mr-2" />
             Support Technique
