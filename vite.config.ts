@@ -16,10 +16,7 @@ export default defineConfig(({ mode }) => ({
     mode !== "development" && VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
-      strategies: 'injectManifest',
-      injectManifest: {
-        injectionPoint: undefined
-      },
+      strategies: 'generateSW',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: '224Solutions - Multi-Services (Taxi-Moto, Livraison, E-Commerce)',
