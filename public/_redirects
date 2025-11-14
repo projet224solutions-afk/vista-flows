@@ -1,0 +1,8 @@
+# Redirections Netlify pour Single Page Application
+# Toutes les routes sont gérées par React Router
+
+# API redirects vers Supabase Edge Functions (si nécessaire)
+# /api/* https://your-supabase-project.supabase.co/functions/v1/:splat 200
+
+# Fallback pour toutes les autres routes - doit être en dernier
+/* /index.html 200
