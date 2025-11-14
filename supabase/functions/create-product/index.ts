@@ -1,21 +1,43 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-interface CreateProductRequest {
-  name: string;
-  description?: string;
-  price: number;
-  sku?: string;
-  category_id?: string;
-  images?: string[];
-  stock_quantity?: number;
-  is_active?: boolean;
-}
+// Schéma de validation Zod
+const CreateProductSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(1, { message: 'Nom du produit requis' })
+    .max(200, { message: 'Nom trop long (max 200 caractères)' }),
+  description: z.string()
+    .trim()
+    .max(5000, { message: 'Description trop longue (max 5000 caractères)' })
+    .optional(),
+  price: z.number()
+    .positive({ message: 'Le prix doit être positif' })
+    .max(1000000000, { message: 'Prix trop élevé' }),
+  sku: z.string()
+    .trim()
+    .max(100, { message: 'SKU trop long (max 100 caractères)' })
+    .optional(),
+  category_id: z.string()
+    .uuid({ message: 'category_id doit être un UUID valide' })
+    .optional(),
+  images: z.array(z.string().url({ message: 'URL image invalide' }))
+    .max(10, { message: 'Maximum 10 images' })
+    .optional(),
+  stock_quantity: z.number()
+    .int({ message: 'Quantité doit être un entier' })
+    .min(0, { message: 'Quantité ne peut pas être négative' })
+    .optional(),
+  is_active: z.boolean().optional()
+});
+
+interface CreateProductRequest extends z.infer<typeof CreateProductSchema> {}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -79,13 +101,30 @@ Deno.serve(async (req) => {
       throw new Error('Vendor profile not found. Please complete your vendor setup.');
     }
 
-    // Parse product data from request
-    const productData: CreateProductRequest = await req.json();
-
-    // Validate required fields
-    if (!productData.name || !productData.price) {
-      throw new Error('Missing required fields: name and price');
+    // Parse et valider avec Zod
+    const rawBody = await req.json();
+    const validationResult = CreateProductSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation échouée:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          code: 'VALIDATION_ERROR',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
+    
+    const productData: CreateProductRequest = validationResult.data;
+    console.log('✅ Validation réussie - Creating product:', productData.name);
 
     // Insert product
     const { data: product, error: insertError } = await supabase

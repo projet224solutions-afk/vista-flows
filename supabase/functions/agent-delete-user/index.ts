@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Schéma de validation
+const DeleteUserSchema = z.object({
+  userId: z.string().uuid({ message: 'userId doit être un UUID valide' })
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -35,23 +41,27 @@ serve(async (req) => {
       );
     }
 
-    const { userId } = await req.json();
-
-    if (!userId) {
+    // Validation avec Zod
+    const rawBody = await req.json();
+    const validationResult = DeleteUserSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation échouée:', validationResult.error.errors);
       return new Response(
-        JSON.stringify({ error: 'userId requis' }),
+        JSON.stringify({ 
+          error: 'Données invalides',
+          code: 'VALIDATION_ERROR',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // ✅ Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      return new Response(
-        JSON.stringify({ error: 'userId invalide' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    
+    const { userId } = validationResult.data;
+    console.log('✅ Validation réussie - Deleting user:', userId);
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
