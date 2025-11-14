@@ -60,14 +60,27 @@ export default function PDGAgentsManagement() {
     name: '',
     email: '',
     phone: '',
+    password: '',
+    type_agent: 'principal' as 'principal' | 'sous_agent',
+    parent_agent_id: '',
     commission_rate: 10,
+    commission_agent_principal: 15,
+    commission_sous_agent: 15,
     permissions: {
       create_users: true,
       create_sub_agents: false,
       view_reports: true,
       manage_commissions: false,
       manage_users: false,
-      manage_products: false
+      manage_products: false,
+      add_vendor: false,
+      add_driver: false,
+      add_taxi: false,
+      add_client: false,
+      manage_transactions: false,
+      view_statistics: false,
+      block_accounts: false,
+      all_modules: false
     }
   });
 
@@ -100,7 +113,11 @@ export default function PDGAgentsManagement() {
           permissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
-        });
+          type_agent: formData.type_agent,
+          parent_agent_id: formData.parent_agent_id || null,
+          commission_agent_principal: formData.commission_agent_principal,
+          commission_sous_agent: formData.commission_sous_agent
+        } as any);
       } else {
         // Mode création
         await createAgent({
@@ -110,7 +127,12 @@ export default function PDGAgentsManagement() {
           permissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
-        });
+          password: formData.password,
+          type_agent: formData.type_agent,
+          parent_agent_id: formData.parent_agent_id || null,
+          commission_agent_principal: formData.commission_agent_principal,
+          commission_sous_agent: formData.commission_sous_agent
+        } as any);
       }
 
       // Réinitialiser le formulaire
@@ -118,14 +140,27 @@ export default function PDGAgentsManagement() {
         name: '',
         email: '',
         phone: '',
+        password: '',
+        type_agent: 'principal',
+        parent_agent_id: '',
         commission_rate: 10,
+        commission_agent_principal: 15,
+        commission_sous_agent: 15,
         permissions: {
           create_users: true,
           create_sub_agents: false,
           view_reports: true,
           manage_commissions: false,
           manage_users: false,
-          manage_products: false
+          manage_products: false,
+          add_vendor: false,
+          add_driver: false,
+          add_taxi: false,
+          add_client: false,
+          manage_transactions: false,
+          view_statistics: false,
+          block_accounts: false,
+          all_modules: false
         }
       });
       
@@ -145,14 +180,27 @@ export default function PDGAgentsManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone || '',
+      password: '',
+      type_agent: (agent as any).type_agent || 'principal',
+      parent_agent_id: (agent as any).parent_agent_id || '',
       commission_rate: agent.commission_rate,
+      commission_agent_principal: (agent as any).commission_agent_principal || 15,
+      commission_sous_agent: (agent as any).commission_sous_agent || 15,
       permissions: {
         create_users: agent.permissions.includes('create_users'),
         create_sub_agents: agent.can_create_sub_agent,
         view_reports: agent.permissions.includes('view_reports'),
         manage_commissions: agent.permissions.includes('manage_commissions'),
         manage_users: agent.permissions.includes('manage_users'),
-        manage_products: agent.permissions.includes('manage_products')
+        manage_products: agent.permissions.includes('manage_products'),
+        add_vendor: agent.permissions.includes('add_vendor'),
+        add_driver: agent.permissions.includes('add_driver'),
+        add_taxi: agent.permissions.includes('add_taxi'),
+        add_client: agent.permissions.includes('add_client'),
+        manage_transactions: agent.permissions.includes('manage_transactions'),
+        view_statistics: agent.permissions.includes('view_statistics'),
+        block_accounts: agent.permissions.includes('block_accounts'),
+        all_modules: agent.permissions.includes('all_modules')
       }
     });
     setIsDialogOpen(true);
@@ -336,14 +384,27 @@ export default function PDGAgentsManagement() {
                 name: '',
                 email: '',
                 phone: '',
+                password: '',
+                type_agent: 'principal',
+                parent_agent_id: '',
                 commission_rate: 10,
+                commission_agent_principal: 15,
+                commission_sous_agent: 15,
                 permissions: {
                   create_users: true,
                   create_sub_agents: false,
                   view_reports: true,
                   manage_commissions: false,
                   manage_users: false,
-                  manage_products: false
+                  manage_products: false,
+                  add_vendor: false,
+                  add_driver: false,
+                  add_taxi: false,
+                  add_client: false,
+                  manage_transactions: false,
+                  view_statistics: false,
+                  block_accounts: false,
+                  all_modules: false
                 }
               });
             }}>
@@ -393,21 +454,95 @@ export default function PDGAgentsManagement() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="commission">Taux Commission (%)</Label>
-                <Input
-                  id="commission"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.commission_rate}
-                  onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
-                />
+              {!editingAgent && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Mot de passe *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required={!editingAgent}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Mot de passe sécurisé"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type_agent">Type d'agent *</Label>
+                  <select
+                    id="type_agent"
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.type_agent}
+                    onChange={(e) => setFormData({ ...formData, type_agent: e.target.value as 'principal' | 'sous_agent' })}
+                  >
+                    <option value="principal">Agent Principal</option>
+                    <option value="sous_agent">Sous-Agent</option>
+                  </select>
+                </div>
+
+                {formData.type_agent === 'sous_agent' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_agent">Agent Principal Parent *</Label>
+                    <select
+                      id="parent_agent"
+                      className="w-full px-3 py-2 border rounded-md"
+                      value={formData.parent_agent_id}
+                      onChange={(e) => setFormData({ ...formData, parent_agent_id: e.target.value })}
+                      required={formData.type_agent === 'sous_agent'}
+                    >
+                      <option value="">Sélectionner un agent</option>
+                      {agents.filter(a => (a as any).type_agent === 'principal' && a.is_active).map(agent => (
+                        <option key={agent.id} value={agent.id}>{agent.name} - {agent.agent_code}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="commission">Commission générale (%)</Label>
+                  <Input
+                    id="commission"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.commission_rate}
+                    onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="commission_principal">Commission Principal (%)</Label>
+                  <Input
+                    id="commission_principal"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.commission_agent_principal}
+                    onChange={(e) => setFormData({ ...formData, commission_agent_principal: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="commission_sous">Commission Sous-Agent (%)</Label>
+                  <Input
+                    id="commission_sous"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.commission_sous_agent}
+                    onChange={(e) => setFormData({ ...formData, commission_sous_agent: Number(e.target.value) })}
+                  />
+                </div>
               </div>
 
               <div className="space-y-3 border-t pt-4">
                 <Label>Permissions</Label>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Permissions création */}
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="create_users"
@@ -432,6 +567,74 @@ export default function PDGAgentsManagement() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
+                      id="add_vendor"
+                      checked={formData.permissions.add_vendor}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, add_vendor: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="add_vendor" className="text-sm">Ajouter vendeur</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="add_driver"
+                      checked={formData.permissions.add_driver}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, add_driver: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="add_driver" className="text-sm">Ajouter livreur</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="add_taxi"
+                      checked={formData.permissions.add_taxi}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, add_taxi: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="add_taxi" className="text-sm">Ajouter taxi moto</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="add_client"
+                      checked={formData.permissions.add_client}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, add_client: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="add_client" className="text-sm">Ajouter client</label>
+                  </div>
+
+                  {/* Permissions gestion */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="manage_transactions"
+                      checked={formData.permissions.manage_transactions}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, manage_transactions: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="manage_transactions" className="text-sm">Gérer transactions</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="view_statistics"
+                      checked={formData.permissions.view_statistics}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, view_statistics: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="view_statistics" className="text-sm">Voir statistiques</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
                       id="view_reports"
                       checked={formData.permissions.view_reports}
                       onCheckedChange={(checked) => setFormData({
@@ -450,7 +653,7 @@ export default function PDGAgentsManagement() {
                         permissions: { ...formData.permissions, manage_commissions: checked as boolean }
                       })}
                     />
-                    <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                    <label htmlFor="manage_commissions" className="text-sm">Gérer commissions</label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -461,7 +664,7 @@ export default function PDGAgentsManagement() {
                         permissions: { ...formData.permissions, manage_users: checked as boolean }
                       })}
                     />
-                    <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                    <label htmlFor="manage_users" className="text-sm">Gérer utilisateurs</label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -472,7 +675,31 @@ export default function PDGAgentsManagement() {
                         permissions: { ...formData.permissions, manage_products: checked as boolean }
                       })}
                     />
-                    <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
+                    <label htmlFor="manage_products" className="text-sm">Gérer produits</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="block_accounts"
+                      checked={formData.permissions.block_accounts}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, block_accounts: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="block_accounts" className="text-sm">Bloquer/Débloquer comptes</label>
+                  </div>
+
+                  {/* Permission globale */}
+                  <div className="flex items-center space-x-2 col-span-2 border-t pt-2">
+                    <Checkbox 
+                      id="all_modules"
+                      checked={formData.permissions.all_modules}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permissions: { ...formData.permissions, all_modules: checked as boolean }
+                      })}
+                    />
+                    <label htmlFor="all_modules" className="text-sm font-semibold">Tous les modules 224Solutions</label>
                   </div>
                 </div>
               </div>

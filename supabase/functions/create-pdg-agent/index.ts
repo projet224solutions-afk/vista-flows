@@ -65,7 +65,11 @@ serve(async (req) => {
       permissions, 
       commission_rate, 
       can_create_sub_agent,
-      password 
+      password,
+      type_agent,
+      parent_agent_id,
+      commission_agent_principal,
+      commission_sous_agent
     } = await req.json();
 
     // 1. Vérifier si l'email existe déjà
@@ -147,9 +151,10 @@ serve(async (req) => {
       isNewUser = true;
     }
 
-    // 3. Générer un code agent unique au format AGT0001
+    // 3. Générer un code agent unique au format AGP-XXXX ou SAG-XXXX
+    const agentType = type_agent || 'principal';
     const { data: agentCode, error: idError } = await supabaseAdmin
-      .rpc('generate_sequential_id', { p_prefix: 'AGT' });
+      .rpc('generate_agent_id', { p_type_agent: agentType });
 
     if (idError || !agentCode) {
       console.error('❌ Erreur génération ID agent:', idError);
@@ -176,10 +181,15 @@ serve(async (req) => {
         user_id: userId,
         agent_code: agentCode,
         name,
+        full_name: name,
         email,
         phone,
+        type_agent: agentType,
+        parent_agent_id: parent_agent_id || null,
         permissions: permissions || [],
         commission_rate: commission_rate || 10,
+        commission_agent_principal: commission_agent_principal || 15,
+        commission_sous_agent: commission_sous_agent || 15,
         can_create_sub_agent: can_create_sub_agent || false,
         is_active: true,
       })
