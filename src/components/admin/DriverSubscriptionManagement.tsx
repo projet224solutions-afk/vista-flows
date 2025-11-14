@@ -360,3 +360,5 @@ export function DriverSubscriptionManagement() {
     </div>
   );
 }
+
+export default DriverSubscriptionManagement;
