@@ -420,7 +420,7 @@ export default function Auth() {
         </div>
 
         {/* Boutons du header */}
-        <div className="flex items-center justify-center gap-3 mb-8">
+        <div className="flex items-center justify-center gap-3 mb-8 flex-wrap">
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full"
@@ -440,6 +440,20 @@ export default function Auth() {
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full"
           >
             Services
+          </Button>
+          <Button
+            size="sm"
+            className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-full"
+            onClick={() => navigate('/agent-access')}
+          >
+            Agent PDG
+          </Button>
+          <Button
+            size="sm"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-full"
+            onClick={() => navigate('/bureau-access')}
+          >
+            Bureau Syndicat
           </Button>
         </div>
 
