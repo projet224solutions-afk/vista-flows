@@ -20,10 +20,6 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      // Explicitly define only index.html as entry point to override any cached config
-      input: {
-        main: path.resolve(__dirname, 'index.html')
-      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
@@ -37,7 +33,6 @@ export default defineConfig(({ mode }) => ({
         }
       }
     },
-    // Augmenter la limite pour éviter les warnings
     chunkSizeWarningLimit: 1000
   }
 }));
