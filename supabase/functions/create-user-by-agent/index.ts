@@ -1,47 +1,75 @@
 // 👤 Create User by Agent - Edge Function
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CreateUserRequest {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName?: string;
-  phone: string;
-  role: string;
-  country?: string;
-  city?: string;
-  agentId: string;
-  agentCode: string;
-  access_token?: string; // Token d'accès pour les agents/sous-agents
-  // Données spécifiques syndicat
-  syndicatData?: {
-    bureau_code: string;
-    prefecture: string;
-    commune: string;
-    full_location?: string;
-  };
-  // Données spécifiques vendeur
-  vendeurData?: {
-    business_name: string;
-    business_description?: string;
-    business_address?: string;
-  };
-  // Données spécifiques taxi/livreur
-  driverData?: {
-    license_number: string;
-    vehicle_type: string;
-    vehicle_brand?: string;
-    vehicle_model?: string;
-    vehicle_year?: string;
-    vehicle_plate?: string;
-  };
-}
+// Schéma de validation Zod avec règles de sécurité strictes
+const CreateUserSchema = z.object({
+  email: z.string()
+    .email({ message: 'Format email invalide' })
+    .max(255, { message: 'Email trop long (max 255 caractères)' })
+    .toLowerCase()
+    .trim(),
+  password: z.string()
+    .min(8, { message: 'Mot de passe minimum 8 caractères' })
+    .max(100, { message: 'Mot de passe trop long (max 100 caractères)' }),
+  firstName: z.string()
+    .trim()
+    .min(1, { message: 'Prénom requis' })
+    .max(100, { message: 'Prénom trop long (max 100 caractères)' })
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, { message: 'Caractères invalides dans le prénom' }),
+  lastName: z.string()
+    .trim()
+    .max(100, { message: 'Nom trop long (max 100 caractères)' })
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]*$/, { message: 'Caractères invalides dans le nom' })
+    .optional(),
+  phone: z.string()
+    .regex(/^\+?[0-9]{8,15}$/, { message: 'Format téléphone invalide (8-15 chiffres)' })
+    .trim(),
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'agent', 'sub_agent', 'syndicat'], {
+    errorMap: () => ({ message: 'Rôle invalide' })
+  }),
+  country: z.string()
+    .max(100, { message: 'Nom pays trop long' })
+    .trim()
+    .optional(),
+  city: z.string()
+    .max(100, { message: 'Nom ville trop long' })
+    .trim()
+    .optional(),
+  agentId: z.string()
+    .uuid({ message: 'Format agentId invalide (UUID requis)' }),
+  agentCode: z.string()
+    .max(50, { message: 'Code agent trop long' })
+    .trim(),
+  access_token: z.string().optional(),
+  syndicatData: z.object({
+    bureau_code: z.string().max(50).trim(),
+    prefecture: z.string().max(100).trim(),
+    commune: z.string().max(100).trim(),
+    full_location: z.string().max(500).trim().optional(),
+  }).optional(),
+  vendeurData: z.object({
+    business_name: z.string().max(200).trim(),
+    business_description: z.string().max(1000).trim().optional(),
+    business_address: z.string().max(500).trim().optional(),
+  }).optional(),
+  driverData: z.object({
+    license_number: z.string().max(50).trim(),
+    vehicle_type: z.string().max(50).trim(),
+    vehicle_brand: z.string().max(100).trim().optional(),
+    vehicle_model: z.string().max(100).trim().optional(),
+    vehicle_year: z.string().max(4).regex(/^\d{4}$/).optional(),
+    vehicle_plate: z.string().max(20).trim().optional(),
+  }).optional(),
+});
+
+interface CreateUserRequest extends z.infer<typeof CreateUserSchema> {}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -90,8 +118,28 @@ serve(async (req) => {
       }
     );
 
-    const body: CreateUserRequest = await req.json();
-    console.log('Creating user by agent, authenticated as:', user.id);
+    // Récupérer et valider le body avec Zod
+    const rawBody = await req.json();
+    
+    // Validation stricte avec Zod
+    const validationResult = CreateUserSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      console.error('❌ Validation échouée:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          code: 'VALIDATION_ERROR',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    const body: CreateUserRequest = validationResult.data;
+    console.log('✅ Validation réussie - Creating user by agent, authenticated as:', user.id);
 
     // ✅ Verify authenticated user is an active agent with user.id
     const { data: agent, error: agentError } = await supabaseClient
