@@ -40,19 +40,23 @@ serve(async (req) => {
       access_token // Token d'accès pour l'interface publique
     } = await req.json();
 
-    // Vérifier l'authentification (soit via auth, soit via access_token)
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-
+    // Vérifier l'authentification (soit via JWT, soit via access_token)
+    const authHeader = req.headers.get("Authorization");
     let authenticatedUserId: string | null = null;
 
-    if (user) {
-      authenticatedUserId = user.id;
-    } else if (access_token) {
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabaseServiceClient.auth.getUser(token);
+      
+      if (user) {
+        authenticatedUserId = user.id;
+        console.log('✅ User authenticated via JWT:', user.id);
+      }
+    }
+    
+    if (!authenticatedUserId && access_token) {
       // Vérifier le token d'accès de l'agent
-      const { data: tokenAgent, error: tokenError } = await supabaseClient
+      const { data: tokenAgent, error: tokenError } = await supabaseServiceClient
         .from("agents_management")
         .select("id, user_id, pdg_id")
         .eq("access_token", access_token)
@@ -67,7 +71,8 @@ serve(async (req) => {
         );
       }
       authenticatedUserId = tokenAgent.user_id;
-    } else {
+      console.log('✅ User authenticated via access_token');
+    } else if (!authenticatedUserId) {
       return new Response(
         JSON.stringify({ error: "Non authentifié" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -83,7 +88,7 @@ serve(async (req) => {
     }
 
     // Vérifier que l'agent parent existe
-    const { data: parentAgent, error: parentError } = await supabaseClient
+    const { data: parentAgent, error: parentError } = await supabaseServiceClient
       .from("agents_management")
       .select("*")
       .eq("id", parent_agent_id)
@@ -103,7 +108,7 @@ serve(async (req) => {
     // Vérifier si l'utilisateur est le PDG de cet agent (seulement si authenticatedUserId existe)
     let isPdgOwner = false;
     if (authenticatedUserId) {
-      const { data: pdgProfile } = await supabaseClient
+      const { data: pdgProfile } = await supabaseServiceClient
         .from("profiles")
         .select("id, role")
         .eq("id", authenticatedUserId)
