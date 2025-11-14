@@ -164,6 +164,41 @@ export type Database = {
           },
         ]
       }
+      agent_permissions: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          permission_key: string
+          permission_value: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          permission_key: string
+          permission_value?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          permission_key?: string
+          permission_value?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_permissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_wallets: {
         Row: {
           agent_id: string
@@ -1614,6 +1649,109 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debt_payments: {
+        Row: {
+          amount: number
+          comment: string | null
+          created_at: string
+          debt_id: string
+          id: string
+          paid_by: string | null
+          payment_method: string
+          recorded_by: string | null
+        }
+        Insert: {
+          amount: number
+          comment?: string | null
+          created_at?: string
+          debt_id: string
+          id?: string
+          paid_by?: string | null
+          payment_method: string
+          recorded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          comment?: string | null
+          created_at?: string
+          debt_id?: string
+          id?: string
+          paid_by?: string | null
+          payment_method?: string
+          recorded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debt_payments_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          description: string | null
+          due_date: string | null
+          id: string
+          minimum_installment: number
+          paid_amount: number
+          remaining_amount: number
+          status: string
+          total_amount: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          minimum_installment: number
+          paid_amount?: number
+          remaining_amount: number
+          status?: string
+          total_amount: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          minimum_installment?: number
+          paid_amount?: number
+          remaining_amount?: number
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -3097,6 +3235,27 @@ export type Database = {
           old_id?: string
           prefix?: string
           table_name?: string
+        }
+        Relationships: []
+      }
+      id_sequences: {
+        Row: {
+          created_at: string | null
+          last_number: number
+          prefix: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          last_number?: number
+          prefix: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          last_number?: number
+          prefix?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -8130,7 +8289,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
-          permissions: string[] | null
+          permissions: Json | null
           phone: string
           total_commissions_earned: number | null
           total_users_created: number | null
@@ -8148,7 +8307,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
-          permissions?: string[] | null
+          permissions?: Json | null
           phone: string
           total_commissions_earned?: number | null
           total_users_created?: number | null
@@ -8166,7 +8325,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
-          permissions?: string[] | null
+          permissions?: Json | null
           phone?: string
           total_commissions_earned?: number | null
           total_users_created?: number | null
@@ -9497,6 +9656,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_agent_permission: {
+        Args: { p_agent_id: string; p_permission_key: string }
+        Returns: boolean
+      }
+      check_overdue_debts: { Args: never; Returns: undefined }
       check_product_limit: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
         Args: {
@@ -9616,6 +9780,7 @@ export type Database = {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
       }
+      delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
         Args: {
@@ -9716,7 +9881,19 @@ export type Database = {
           score: number
         }[]
       }
-      generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
+      generate_sequential_id:
+        | {
+            Args: { p_prefix: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { p_prefix: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
@@ -9842,6 +10019,7 @@ export type Database = {
         }[]
       }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
+      get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
       get_escrow_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -9972,6 +10150,10 @@ export type Database = {
         Args: { p_amount: number; p_driver_id: string }
         Returns: undefined
       }
+      increment_product_stock: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: undefined
+      }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:
         | {
@@ -10017,6 +10199,7 @@ export type Database = {
         Args: { _payment_link_id: string; _vendor_user_id: string }
         Returns: boolean
       }
+      is_real_user: { Args: { p_user_id: string }; Returns: boolean }
       log_api_usage: {
         Args: { p_cost?: number; p_service_type: string }
         Returns: undefined
@@ -10173,16 +10356,26 @@ export type Database = {
               transfer_id: string
             }[]
           }
-      process_wallet_transfer_with_fees: {
-        Args: {
-          p_amount: number
-          p_currency?: string
-          p_description?: string
-          p_receiver_code: string
-          p_sender_code: string
-        }
-        Returns: Json
-      }
+      process_wallet_transfer_with_fees:
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_description?: string
+              p_receiver_code: string
+              p_sender_code: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_receiver_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
       record_pdg_revenue: {
         Args: {
           p_amount: number
@@ -10256,6 +10449,10 @@ export type Database = {
             }
             Returns: undefined
           }
+      set_agent_permissions: {
+        Args: { p_agent_id: string; p_permissions: Json }
+        Returns: Json
+      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -10837,7 +11034,31 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      sync_missing_profiles: {
+        Args: never
+        Returns: {
+          custom_id: string
+          status: string
+          user_id: string
+        }[]
+      }
+      toggle_agent_status: {
+        Args: { p_agent_id: string; p_is_active: boolean }
+        Returns: Json
+      }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_agent: {
+        Args: {
+          p_agent_id: string
+          p_can_create_sub_agent?: boolean
+          p_commission_rate?: number
+          p_email?: string
+          p_name?: string
+          p_permissions?: Json
+          p_phone?: string
+        }
+        Returns: Json
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -10849,6 +11070,10 @@ export type Database = {
         Returns: string
       }
       validate_standard_id: { Args: { p_id: string }; Returns: boolean }
+      verify_wallet_exists: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       agent_type_enum:
