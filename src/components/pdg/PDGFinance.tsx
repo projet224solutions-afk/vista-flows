@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Sparkles } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Sparkles, Shield, Bike } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -24,6 +24,8 @@ import PlatformRevenueOverview from './PlatformRevenueOverview';
 
 const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
 const SubscriptionManagement = lazy(() => import('./SubscriptionManagement'));
+const PDGEscrowManagement = lazy(() => import('./PDGEscrowManagement'));
+const DriverSubscriptionManagement = lazy(() => import('../admin/DriverSubscriptionManagement'));
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
@@ -104,7 +106,7 @@ export default function PDGFinance() {
 
   return (
     <Tabs defaultValue="overview" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 lg:w-auto">
         <TabsTrigger value="overview">
           <DollarSign className="w-4 h-4 mr-2" />
           Revenus
@@ -120,6 +122,14 @@ export default function PDGFinance() {
         <TabsTrigger value="subscriptions">
           <Sparkles className="w-4 h-4 mr-2" />
           Abonnements
+        </TabsTrigger>
+        <TabsTrigger value="escrow">
+          <Shield className="w-4 h-4 mr-2" />
+          Escrow
+        </TabsTrigger>
+        <TabsTrigger value="driver-subscriptions">
+          <Bike className="w-4 h-4 mr-2" />
+          Drivers
         </TabsTrigger>
       </TabsList>
 
@@ -144,6 +154,26 @@ export default function PDGFinance() {
           </div>
         }>
           <SubscriptionManagement />
+        </Suspense>
+      </TabsContent>
+
+      <TabsContent value="escrow" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <PDGEscrowManagement />
+        </Suspense>
+      </TabsContent>
+
+      <TabsContent value="driver-subscriptions" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <DriverSubscriptionManagement />
         </Suspense>
       </TabsContent>
 

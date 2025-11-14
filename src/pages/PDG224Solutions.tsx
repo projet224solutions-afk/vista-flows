@@ -37,8 +37,6 @@ const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
-const PDGEscrowManagement = lazy(() => import('@/components/pdg/PDGEscrowManagement'));
-const DriverSubscriptionManagement = lazy(() => import('@/components/admin/DriverSubscriptionManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -377,12 +375,6 @@ export default function PDG224Solutions() {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 'subscriptions' && (
-                <ErrorBoundary>
-                  <DriverSubscriptionManagement />
-                </ErrorBoundary>
-              )}
-
               {activeTab === 'reports' && (
                 <ErrorBoundary>
                   <PDGReportsAnalytics />
@@ -446,12 +438,6 @@ export default function PDG224Solutions() {
               {activeTab === 'transfer-fees' && (
                 <ErrorBoundary>
                   <TransferFeeSettings />
-                </ErrorBoundary>
-              )}
-
-              {activeTab === 'escrow' && (
-                <ErrorBoundary>
-                  <PDGEscrowManagement />
                 </ErrorBoundary>
               )}
             </Suspense>
