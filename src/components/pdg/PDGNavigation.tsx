@@ -160,9 +160,78 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 )}
               >
                 <div className="space-y-1">
-                  {category.items.map((item) => {
+                  {category.items.map((item, index) => {
                     const Icon = item.icon;
                     const isActive = activeTab === item.value;
+                    
+                    // Pour la catégorie Finance, afficher escrow et subscriptions côte à côte
+                    if (category.title === 'Finance' && index === 1) {
+                      const escrowItem = item;
+                      const subscriptionItem = category.items[2];
+                      const EscrowIcon = escrowItem.icon;
+                      const SubIcon = subscriptionItem?.icon;
+                      const isEscrowActive = activeTab === escrowItem.value;
+                      const isSubActive = activeTab === subscriptionItem?.value;
+                      
+                      return (
+                        <div key="finance-actions" className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              onTabChange(escrowItem.value);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
+                              isEscrowActive && "bg-primary text-primary-foreground shadow-md scale-105"
+                            )}
+                          >
+                            {isEscrowActive && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                            )}
+                            <EscrowIcon className={cn(
+                              "w-4 h-4 transition-transform group-hover:scale-110 relative z-10",
+                              isEscrowActive && "animate-pulse"
+                            )} />
+                            <span className="font-medium text-xs relative z-10">Escrow</span>
+                            {escrowItem.badge && aiActive && (
+                              <Zap className="w-3 h-3 ml-auto text-yellow-500 animate-pulse relative z-10" />
+                            )}
+                          </button>
+                          
+                          {subscriptionItem && (
+                            <button
+                              onClick={() => {
+                                onTabChange(subscriptionItem.value);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
+                                isSubActive && "bg-primary text-primary-foreground shadow-md scale-105"
+                              )}
+                            >
+                              {isSubActive && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                              )}
+                              <SubIcon className={cn(
+                                "w-4 h-4 transition-transform group-hover:scale-110 relative z-10",
+                                isSubActive && "animate-pulse"
+                              )} />
+                              <span className="font-medium text-xs relative z-10">Abonnements</span>
+                              {subscriptionItem.badge && aiActive && (
+                                <Zap className="w-3 h-3 ml-auto text-yellow-500 animate-pulse relative z-10" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    }
+                    
+                    // Skip le 3ème item de Finance car déjà affiché
+                    if (category.title === 'Finance' && index === 2) {
+                      return null;
+                    }
                     
                     return (
                       <button
