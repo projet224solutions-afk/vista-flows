@@ -1,19 +1,32 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface FraudCheckRequest {
-  transactionId?: string;
-  userId: string;
-  amount: number;
-  recipientId: string;
-  method: string;
-  metadata?: any;
-}
+// Schéma de validation Zod
+const FraudCheckSchema = z.object({
+  transactionId: z.string()
+    .uuid({ message: 'transactionId doit être un UUID valide' })
+    .optional(),
+  userId: z.string()
+    .uuid({ message: 'userId doit être un UUID valide' }),
+  amount: z.number()
+    .positive({ message: 'Le montant doit être positif' })
+    .max(1000000000, { message: 'Montant trop élevé' }),
+  recipientId: z.string()
+    .uuid({ message: 'recipientId doit être un UUID valide' }),
+  method: z.string()
+    .trim()
+    .min(1, { message: 'Méthode de paiement requise' })
+    .max(50, { message: 'Nom de méthode trop long' }),
+  metadata: z.any().optional()
+});
+
+interface FraudCheckRequest extends z.infer<typeof FraudCheckSchema> {}
 
 interface FraudScore {
   score: number; // 0-100, plus c'est élevé plus c'est suspect
@@ -34,8 +47,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const payload: FraudCheckRequest = await req.json();
-    console.log('🔍 Fraud check request:', payload);
+    // Validation avec Zod
+    const rawPayload = await req.json();
+    const validationResult = FraudCheckSchema.safeParse(rawPayload);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation échouée:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          code: 'VALIDATION_ERROR',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    const payload: FraudCheckRequest = validationResult.data;
+    console.log('✅ Validation réussie - Fraud check request:', payload.userId);
 
     let fraudScore = 0;
     const flags: string[] = [];
