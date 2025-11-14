@@ -12,35 +12,32 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    // Créer le client avec le token pour l'authentification
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader }
-        }
-      }
-    );
-
-    // Client admin pour les opérations privilégiées
+    // Client admin pour toutes les opérations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Vérifier l'authentification
-    const { data: { user }, error: userAuthError } = await supabaseClient.auth.getUser();
+    // Récupérer et vérifier le token d'authentification
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (userAuthError || !user) {
-      console.error('❌ Auth error:', userAuthError);
-      throw new Error('Non autorisé');
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Vérifier l'authentification avec le token
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('❌ Auth error:', authError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non autorisé' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('✅ User authenticated:', user.id);
@@ -53,8 +50,14 @@ serve(async (req) => {
       .single();
 
     if (pdgError || !pdgProfile) {
-      throw new Error('Vous devez être PDG pour créer des agents');
+      console.error('❌ PDG check failed:', pdgError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Vous devez être PDG pour créer des agents' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    console.log('✅ PDG verified:', pdgProfile.id);
 
     const { 
       name, 
@@ -79,14 +82,26 @@ serve(async (req) => {
         .single();
 
       if (existingAgent) {
-        throw new Error(`Cet email est déjà utilisé par l'agent: ${existingAgent.name}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Cet email est déjà utilisé par l'agent: ${existingAgent.name}` 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       
-      throw new Error(`Cet email est déjà enregistré dans le système. Veuillez utiliser un autre email.`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Cet email est déjà enregistré dans le système. Veuillez utiliser un autre email.` 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // 2. Créer l'utilisateur dans auth
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authUser, error: authError2 } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: password || `Agent${Math.random().toString(36).slice(2, 10)}!`,
       email_confirm: true,
@@ -99,9 +114,15 @@ serve(async (req) => {
       }
     });
 
-    if (authError) {
-      console.error('❌ Erreur création auth:', authError);
-      throw new Error(`Erreur création utilisateur: ${authError.message}`);
+    if (authError2) {
+      console.error('❌ Erreur création auth:', authError2);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Erreur création utilisateur: ${authError2.message}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('✅ Utilisateur créé:', authUser.user?.id);
@@ -113,7 +134,13 @@ serve(async (req) => {
     if (idError || !agentCode) {
       console.error('❌ Erreur génération ID agent:', idError);
       await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
-      throw new Error(`Erreur génération ID agent: ${idError?.message || 'Aucun ID généré'}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Erreur génération ID agent: ${idError?.message || 'Aucun ID généré'}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('✅ Code agent généré:', agentCode);
@@ -140,7 +167,13 @@ serve(async (req) => {
       console.error('❌ Erreur création agent:', agentError);
       // Supprimer l'utilisateur auth si la création de l'agent échoue
       await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
-      throw new Error(`Erreur création agent: ${agentError.message}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Erreur création agent: ${agentError.message}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('✅ Agent créé:', agent.id);
