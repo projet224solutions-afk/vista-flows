@@ -21,21 +21,15 @@ serve(async (req) => {
       );
     }
 
-    // Créer le client avec le SERVICE_ROLE_KEY et les headers de la requête
+    // Client service role pour toutes les opérations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-    
-    // Vérifier l'authentification
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser();
+
+    // Vérifier l'authentification avec le token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
       console.error('❌ Auth error:', authError);
