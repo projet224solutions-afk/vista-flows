@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon } from "lucide-react";
@@ -207,7 +206,7 @@ export default function Marketplace() {
       {/* Filters & View Controls Responsive */}
       <section className="p-responsive border-b border-border">
         <div className="flex items-center justify-between gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={(val) => setSortBy(val as typeof sortBy)}>
             <SelectTrigger className={isMobile ? "w-32 text-xs" : "w-40"}>
               <ArrowUpDown className="w-4 h-4 mr-2" />
               <SelectValue />
