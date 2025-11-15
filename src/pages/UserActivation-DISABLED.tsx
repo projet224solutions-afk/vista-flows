@@ -1,5 +1,6 @@
 /**
- * 🔗 ACTIVATION UTILISATEUR - Module simplifié
+ * 🔗 ACTIVATION UTILISATEUR - Module temporairement désactivé
+ * Nécessite les tables: agent_users, agent_audit_logs
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,12 +13,13 @@ export default function UserActivation() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5" />
-            Module Activation Utilisateur  
+            Module Activation Utilisateur Temporairement Désactivé
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Ce module sera activé après la migration des tables nécessaires.
+            Ce module nécessite la migration de la base de données pour les tables :
+            agent_users, agent_audit_logs.
           </p>
         </CardContent>
       </Card>
