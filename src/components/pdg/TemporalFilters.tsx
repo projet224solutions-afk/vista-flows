@@ -17,16 +17,10 @@ import {
   BarChart3,
   Clock,
   RefreshCw,
-  Filter,
-  Compare
+  Filter
 } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-interface TemporalFiltersProps {
-  onFiltersChange: (filters: TemporalFilters) => void;
-  initialFilters?: TemporalFilters;
-}
 
 export interface TemporalFilters {
   period: 'day' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
@@ -34,6 +28,11 @@ export interface TemporalFilters {
   endDate: Date;
   compareWith: 'previous' | 'last_year' | 'none';
   granularity: 'hour' | 'day' | 'week' | 'month';
+}
+
+export interface TemporalFiltersProps {
+  onFiltersChange: (filters: TemporalFilters) => void;
+  initialFilters?: TemporalFilters;
 }
 
 const PRESET_PERIODS = [
@@ -59,7 +58,7 @@ export const TemporalFilters: React.FC<TemporalFiltersProps> = ({
   initialFilters
 }) => {
   const [filters, setFilters] = useState<TemporalFilters>(initialFilters || {
-    period: 'last_30_days',
+    period: 'month',
     startDate: startOfDay(subDays(new Date(), 30)),
     endDate: endOfDay(new Date()),
     compareWith: 'previous',
@@ -75,12 +74,11 @@ export const TemporalFilters: React.FC<TemporalFiltersProps> = ({
     onFiltersChange(filters);
   }, [filters, onFiltersChange]);
 
-  // Appliquer une période prédéfinie
   const applyPresetPeriod = (preset: typeof PRESET_PERIODS[0]) => {
     const { start, end } = preset.getDate();
     setFilters(prev => ({
       ...prev,
-      period: preset.period,
+      period: 'custom',
       startDate: start,
       endDate: end
     }));
