@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Crown, Globe, Settings, User, Menu } from "lucide-react";
+import { Globe, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import logo224Solutions from "@/assets/224solutions-logo-final.png";
 
 export function Header() {
   const { profile, signOut } = useAuth();
@@ -13,13 +16,12 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
-                <Crown className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  224Solutions
-                </h1>
+              <img 
+                src={logo224Solutions} 
+                alt="224Solutions Logo" 
+                className="h-12 w-auto object-contain"
+              />
+              <div className="hidden sm:block">
                 <p className="text-sm text-muted-foreground">
                   Plateforme Intégrée Multi-Services
                 </p>
@@ -29,10 +31,15 @@ export function Header() {
 
           <div className="flex items-center gap-4">
             {profile && (
-              <div className="hidden md:flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Connecté en tant que</span>
-                <span className="font-medium text-foreground capitalize">{profile.role}</span>
-              </div>
+              <>
+                <div className="hidden lg:block">
+                  <WalletBalanceWidget className="min-w-[280px]" />
+                </div>
+                <div className="hidden md:flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Connecté en tant que</span>
+                  <span className="font-medium text-foreground capitalize">{profile.role}</span>
+                </div>
+              </>
             )}
 
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -42,6 +49,7 @@ export function Header() {
 
             {profile ? (
               <>
+                <QuickTransferButton variant="ghost" size="sm" showText={false} />
                 <Button
                   variant="ghost"
                   size="sm"

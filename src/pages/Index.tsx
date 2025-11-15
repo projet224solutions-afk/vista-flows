@@ -1,35 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
+import logo224Solutions from "@/assets/224solutions-logo-final.png";
 import {
   Search,
   Grid3X3,
   MessageSquare,
   Truck,
   Users,
-  ShoppingBag,
   Store,
-  MapPin,
   Star,
-  TrendingUp,
-  Zap,
-  Crown,
   Shield,
+  Zap,
   Globe,
   Clock,
-  Phone,
-  Mail
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
-import { AdminAuthButton } from "@/components/AdminAuthButton";
+import { useHomeStats } from "@/hooks/useHomeStats";
+import { useHomeProducts } from "@/hooks/useHomeProducts";
+import { useHomeCategories } from "@/hooks/useHomeCategories";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 
-// Services principaux comme dans l'image
-const mainServices = [
+// Services principaux avec données dynamiques
+const getMainServices = (stats: any) => [
   {
     id: 'categories',
     title: 'Explorer par catégories',
@@ -37,7 +40,7 @@ const mainServices = [
     icon: Grid3X3,
     color: 'bg-purple-600',
     path: '/marketplace',
-    stats: '2,500+ produits'
+    stats: `${stats.totalProducts}+ produits`
   },
   {
     id: 'devis',
@@ -55,7 +58,7 @@ const mainServices = [
     icon: Truck,
     color: 'bg-purple-600',
     path: '/services-proximite',
-    stats: '500+ services'
+    stats: `${stats.totalServices}+ services`
   },
   {
     id: 'vendeur',
@@ -64,116 +67,107 @@ const mainServices = [
     icon: Users,
     color: 'bg-purple-600',
     path: '/auth',
-    stats: '1,200+ vendeurs'
+    stats: `${stats.totalVendors}+ vendeurs`
   }
 ];
 
-// Catégories populaires
-const popularCategories = [
-  {
-    name: 'Électronique',
-    icon: '📱',
-    count: '850+ produits',
-    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Mode & Beauté',
-    icon: '👗',
-    count: '1,200+ produits',
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Maison & Jardin',
-    icon: '🏠',
-    count: '650+ produits',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Alimentation',
-    icon: '🍎',
-    count: '400+ produits',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Automobile',
-    icon: '🚗',
-    count: '300+ produits',
-    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=300&h=200&fit=crop'
-  },
-  {
-    name: 'Services',
-    icon: '🔧',
-    count: '200+ services',
+// Mapping des catégories avec leurs icônes et images (par défaut)
+const getCategoryMapping = (categoryName: string): { icon: string; image: string } => {
+  const mappings: Record<string, { icon: string; image: string }> = {
+    'Électronique': { 
+      icon: '📱', 
+      image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop'
+    },
+    'Mode & Beauté': { 
+      icon: '👗', 
+      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop'
+    },
+    'Maison & Jardin': { 
+      icon: '🏠', 
+      image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop'
+    },
+    'Alimentation': { 
+      icon: '🍎', 
+      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop'
+    },
+    'Automobile': { 
+      icon: '🚗', 
+      image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=300&h=200&fit=crop'
+    },
+    'Services': { 
+      icon: '🔧', 
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop'
+    },
+  };
+  
+  return mappings[categoryName] || { 
+    icon: '📦', 
     image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop'
-  }
-];
+  };
+};
 
-// Produits tendance
-const trendingProducts = [
-  {
-    id: 1,
-    name: 'Smartphone Samsung Galaxy A54',
-    price: '285,000 GNF',
-    originalPrice: '320,000 GNF',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop',
-    rating: 4.5,
-    reviews: 128,
-    badge: 'Bestseller'
-  },
-  {
-    id: 2,
-    name: 'Ordinateur Portable HP',
-    price: '450,000 GNF',
-    originalPrice: '500,000 GNF',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop',
-    rating: 4.8,
-    reviews: 89,
-    badge: 'Promo'
-  },
-  {
-    id: 3,
-    name: 'Robe Africaine Traditionnelle',
-    price: '45,000 GNF',
-    originalPrice: '60,000 GNF',
-    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300&h=300&fit=crop',
-    rating: 4.7,
-    reviews: 156,
-    badge: 'Nouveau'
-  },
-  {
-    id: 4,
-    name: 'Casque Audio Bluetooth',
-    price: '35,000 GNF',
-    originalPrice: '45,000 GNF',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-    rating: 4.6,
-    reviews: 203,
-    badge: 'Top vente'
-  }
-];
+// Helper pour formater le prix
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('fr-GN', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+  }).format(price) + ' GNF';
+};
 
-export default function IndexAlibaba() {
+function IndexAlibaba() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  useRoleRedirect(); // Active la redirection automatique vers l'interface de rôle
-  const { profile } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
+  
+  // Hooks avec gestion d'erreur
+  const { profile, user, loading } = useAuth();
+
+  // Redirection automatique si l'utilisateur est connecté - CRITIQUE pour persistance
+  useEffect(() => {
+    // Attendre que le chargement soit terminé
+    if (loading) {
+      console.log('🔄 Chargement de la session en cours...');
+      return;
+    }
+
+    // Si utilisateur connecté avec profil
+    if (user && profile) {
+      const roleRoutes = {
+        admin: '/pdg',
+        vendeur: '/vendeur',
+        livreur: '/livreur',
+        taxi: '/taxi-moto/driver',
+        syndicat: '/syndicat',
+        transitaire: '/transitaire',
+        client: '/client'
+      };
+      
+      const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
+      if (expectedRoute) {
+        console.log(`✅ Session active détectée - Redirection vers ${expectedRoute} (rôle: ${profile.role})`);
+        navigate(expectedRoute, { replace: true });
+      } else {
+        console.warn('⚠️ Rôle non reconnu:', profile.role);
+      }
+    } else if (user && !profile) {
+      console.log('⏳ Utilisateur connecté mais profil en cours de chargement...');
+    } else {
+      console.log('👋 Aucune session active - Affichage page publique');
+    }
+  }, [user, profile, loading, navigate]);
+  
+  // Chargement des données réelles depuis Supabase
+  const { stats, loading: statsLoading } = useHomeStats();
+  const { products, loading: productsLoading } = useHomeProducts(4);
+  const { categories, loading: categoriesLoading } = useHomeCategories();
+
+  const mainServices = getMainServices(stats);
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
-    switch (service.id) {
-      case 'vendeur':
-        navigate('/auth');
-        break;
-      case 'categories':
-        navigate('/marketplace');
-        break;
-      case 'devis':
-        navigate('/marketplace?tab=devis');
-        break;
-      case 'proximite':
-        navigate('/marketplace?tab=services');
-        break;
-      default:
-        navigate('/marketplace');
+    if (service.id === 'vendeur') {
+      navigate('/auth');
+    } else {
+      navigate(service.path);
     }
   };
 
@@ -181,136 +175,163 @@ export default function IndexAlibaba() {
     navigate(`/marketplace?category=${encodeURIComponent(category)}`);
   };
 
-  const handleProductClick = (productId: number) => {
+  const handleProductClick = (productId: string) => {
     navigate(`/marketplace/product/${productId}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header moderne */}
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Erreur de chargement</h2>
+            <p className="text-gray-600 mb-4">Une erreur est survenue lors du chargement de la page.</p>
+            <Button onClick={() => window.location.reload()}>Recharger la page</Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header moderne responsive */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-purple-600">224SOLUTIONS</h1>
-              <div className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" onClick={() => navigate('/marketplace')}>
-                  Marketplace
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/marketplace?tab=services')}>
-                  Services
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/marketplace')}>
-                  À propos
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 md:gap-4">
+              <img 
+                src={logo224Solutions} 
+                alt="224Solutions Logo" 
+                className={`object-contain ${isMobile ? 'h-8' : 'h-12'}`}
+              />
+              {!isMobile && (
+                <div className="hidden md:flex items-center gap-6">
+                  <Button variant="ghost" onClick={() => navigate('/marketplace')}>
+                    Marketplace
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate('/services')}>
+                    Services
+                  </Button>
+                  <Button variant="ghost" onClick={() => navigate('/about')}>
+                    À propos
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              )}
               {profile ? (
-                <Button onClick={() => navigate(`/${profile.role}`)}>
-                  Mon Espace
+                <Button 
+                  onClick={() => navigate(`/${profile.role}`)}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {isMobile ? 'Espace' : 'Mon Espace'}
                 </Button>
               ) : (
-                <Button onClick={() => navigate('/auth')}>
-                  Se connecter
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {isMobile ? 'Connexion' : 'Se connecter'}
                 </Button>
               )}
             </div>
           </div>
-        </div>
+        </ResponsiveContainer>
       </header>
 
-      {/* Hero Section avec recherche */}
-      <section className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Votre Marketplace <br />
-            <span className="text-yellow-300">Multi-Services</span>
-          </h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Découvrez des milliers de produits et services de qualité.
-            Achetez, vendez et connectez-vous avec notre communauté.
-          </p>
+      {/* Hero Section avec recherche - Responsive */}
+      <section className="bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white py-8 md:py-16">
+        <ResponsiveContainer>
+          <div className="text-center">
+            <h1 className="text-responsive font-bold mb-4 md:mb-6">
+              Votre Marketplace <br className="hidden sm:block" />
+              <span className="text-yellow-300">Multi-Services</span>
+            </h1>
+            <p className={`mb-6 md:mb-8 max-w-2xl mx-auto opacity-90 ${isMobile ? 'text-base' : 'text-xl'}`}>
+              Découvrez des milliers de produits et services de qualité.
+              {!isMobile && <br />}
+              Achetez, vendez et connectez-vous avec notre communauté.
+            </p>
 
-          {/* Barre de recherche */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="flex bg-white rounded-full p-2 shadow-lg">
-              <Input
-                type="text"
-                placeholder="Rechercher des produits, services, vendeurs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:ring-0"
-              />
-              <Button
-                className="bg-purple-600 hover:bg-purple-700 rounded-full px-8"
-                onClick={() => navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`)}
-              >
-                <Search className="w-5 h-5" />
-              </Button>
+            {/* Barre de recherche */}
+            <div className="max-w-2xl mx-auto mb-6 md:mb-8">
+              <div className="flex bg-white rounded-full p-1 md:p-2 shadow-lg">
+                <Input
+                  type="text"
+                  placeholder={isMobile ? "Rechercher..." : "Rechercher des produits, services, vendeurs..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:ring-0 text-sm md:text-base"
+                />
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 rounded-full px-4 md:px-8"
+                  size={isMobile ? "sm" : "default"}
+                  onClick={() => navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`)}
+                >
+                  <Search className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Stats rapides */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold">2,500+</div>
-              <div className="text-sm opacity-80">Produits</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">1,200+</div>
-              <div className="text-sm opacity-80">Vendeurs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">500+</div>
-              <div className="text-sm opacity-80">Services</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">15,000+</div>
-              <div className="text-sm opacity-80">Clients</div>
-            </div>
+            {/* Stats rapides - Responsive */}
+            <ResponsiveGrid 
+              mobileCols={2} 
+              tabletCols={4} 
+              desktopCols={4} 
+              gap="md" 
+              className="max-w-4xl mx-auto"
+            >
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalProducts}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Produits</div>
+              </div>
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalVendors}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Vendeurs</div>
+              </div>
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalServices}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Services</div>
+              </div>
+              <div className="text-center">
+                <div className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+                  {statsLoading ? '...' : `${stats.totalClients}+`}
+                </div>
+                <div className="text-xs md:text-sm opacity-80">Clients</div>
+              </div>
+            </ResponsiveGrid>
           </div>
-        </div>
+        </ResponsiveContainer>
       </section>
 
-      {/* Accès Interfaces Professionnelles */}
-      <section className="py-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">🎯 Interfaces Professionnelles</h2>
-          <p className="mb-6">Accédez à vos tableaux de bord de gestion</p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => navigate('/vendeur-open')}
-              className="bg-white text-purple-600 hover:bg-gray-100 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              <Store className="w-6 h-6 mr-2" />
-              Interface Vendeur
-            </Button>
-            <Button
-              onClick={() => navigate('/taxi-moto')}
-              className="bg-green-400 text-gray-900 hover:bg-green-300 font-bold text-lg px-8 py-4 shadow-lg"
-              size="lg"
-            >
-              🏍️ Taxi Moto
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Nos Services - Section principale comme dans l'image */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Nos services</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+      {/* Nos Services - Responsive */}
+      <section className="py-8 md:py-16 bg-white">
+        <ResponsiveContainer>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="heading-responsive font-bold text-gray-800 mb-2 md:mb-4">Nos services</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm md:text-base">
               Découvrez notre gamme complète de services pour répondre à tous vos besoins
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {mainServices.map((service) => {
+          <ResponsiveGrid 
+            mobileCols={1} 
+            tabletCols={2} 
+            desktopCols={4} 
+            gap={isMobile ? "sm" : "lg"}
+            className="max-w-6xl mx-auto"
+          >
+            {getMainServices(stats).map((service) => {
               const Icon = service.icon;
               return (
                 <Card
@@ -335,8 +356,8 @@ export default function IndexAlibaba() {
                 </Card>
               );
             })}
-          </div>
-        </div>
+          </ResponsiveGrid>
+        </ResponsiveContainer>
       </section>
 
       {/* Catégories populaires */}
@@ -354,33 +375,46 @@ export default function IndexAlibaba() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {popularCategories.map((category) => (
-              <Card
-                key={category.name}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-                onClick={() => handleCategoryClick(category.name)}
-              >
-                <div className="relative">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                  <div className="absolute top-2 left-2 text-2xl">
-                    {category.icon}
-                  </div>
-                </div>
-                <CardContent className="p-4 text-center">
-                  <h3 className="font-semibold text-gray-800 mb-1">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {category.count}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {categoriesLoading ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Chargement des catégories...</p>
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Aucune catégorie disponible</p>
+              </div>
+            ) : (
+              categories.map((category) => {
+                const mapping = getCategoryMapping(category.name);
+                return (
+                  <Card
+                    key={category.name}
+                    className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    onClick={() => handleCategoryClick(category.name)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={mapping.image}
+                        alt={category.name}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                      <div className="absolute top-2 left-2 text-2xl">
+                        {mapping.icon}
+                      </div>
+                    </div>
+                    <CardContent className="p-4 text-center">
+                      <h3 className="font-semibold text-gray-800 mb-1">
+                        {category.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {category.count}+ produits
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -403,47 +437,52 @@ export default function IndexAlibaba() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trendingProducts.map((product) => (
-              <Card
-                key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-                onClick={() => handleProductClick(product.id)}
-              >
-                <div className="relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <Badge
-                    className="absolute top-2 left-2 bg-red-500 text-white"
-                  >
-                    {product.badge}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600 ml-1">
-                        {product.rating} ({product.reviews})
+            {productsLoading ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Chargement des produits...</p>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Aucun produit disponible</p>
+              </div>
+            ) : (
+              products.map((product) => (
+                <Card
+                  key={product.id}
+                  className="cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div className="relative">
+                    <img
+                      src={product.images?.[0] || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=300&fit=crop'}
+                      alt={product.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+                      Nouveau
+                    </Badge>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm text-gray-600 ml-1">
+                          {product.rating || 4.5} ({product.reviews_count || 0})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-purple-600">
+                        {formatPrice(product.price)}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-purple-600">
-                      {product.price}
-                    </span>
-                    <span className="text-sm text-gray-400 line-through">
-                      {product.originalPrice}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -489,12 +528,11 @@ export default function IndexAlibaba() {
       </section>
 
       {/* Footer de navigation */}
+      <InstallPromptBanner />
       <QuickFooter />
-
-      {/* Bouton Admin en bas à droite */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <AdminAuthButton />
-      </div>
     </div>
+    </ErrorBoundary>
   );
 }
+
+export default IndexAlibaba;

@@ -1,31 +1,78 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import { Grid, List, ArrowUpDown } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
+import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
+import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
+import { useResponsive } from "@/hooks/useResponsive";
+import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const PAGE_LIMIT = 12;
 
+interface Category {
+  id: string;
+  name: string;
+  image_url?: string;
+  is_active: boolean;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  images?: string[];
+  vendor_id: string;
+  vendors?: {
+    business_name: string;
+  };
+}
+
 export default function Marketplace() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isMobile, isTablet } = useResponsive();
+  const { user } = useAuth();
+  const { addToCart, getCartCount } = useCart();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
 
+  // Utiliser le hook universel pour les produits
+  const { 
+    products, 
+    loading, 
+    total, 
+    hasMore, 
+    loadMore 
+  } = useUniversalProducts({
+    limit: 12,
+    category: selectedCategory,
+    searchQuery,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: filters.minRating,
+    sortBy,
+    autoLoad: true
+  });
+
+  // Charger les catégories
   useEffect(() => {
     loadCategories();
   }, []);
@@ -34,133 +81,119 @@ export default function Marketplace() {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
-        .eq('is_active', true);
-      
+        .select('id, name, image_url, is_active')
+        .eq('is_active', true)
+        .order('name');
+
       if (error) throw error;
-      setCategories(data || []);
+      
+      const allCategory = { id: 'all', name: 'Toutes', is_active: true };
+      setCategories([allCategory, ...(data || [])]);
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
-      setCategories([]);
+      setCategories([{ id: 'all', name: 'Toutes', is_active: true }]);
     }
   };
 
-  const fetchProducts = async (reset = false) => {
-    if (reset) setPage(1);
-    const currentPage = reset ? 1 : page;
+  const handleProductClick = (productId: string) => {
+    setSelectedProductId(productId);
+    setShowProductModal(true);
+  };
+
+  const handleContactVendor = async (productId: string) => {
+    // Trouver le produit dans la liste
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      toast.error('Produit introuvable');
+      return;
+    }
+
+    if (!product.vendor_user_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
 
     try {
-      if (reset) setLoading(true); else setLoadingMore(true);
+      if (!user) {
+        toast.error('Veuillez vous connecter pour contacter le vendeur');
+        navigate('/auth');
+        return;
+      }
+
+      // Créer un message initial
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
       
-      let query = supabase
-        .from('products')
-        .select('*', { count: 'exact' })
-        .eq('is_active', true);
-
-      // Filtrer par catégorie
-      if (selectedCategory !== 'all') {
-        query = query.eq('category_id', selectedCategory);
-      }
-
-      // Recherche textuelle
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-      }
-
-      // Filtrer par prix
-      if (filters.minPrice > 0) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters.maxPrice > 0) {
-        query = query.lte('price', filters.maxPrice);
-      }
-
-      // Tri
-      switch (sortBy) {
-        case 'price_asc':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'price_desc':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'newest':
-          query = query.order('created_at', { ascending: false });
-          break;
-        default:
-          query = query.order('rating', { ascending: false });
-      }
-
-      // Pagination
-      const from = (currentPage - 1) * PAGE_LIMIT;
-      const to = from + PAGE_LIMIT - 1;
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendor_user_id,
+          content: initialMessage,
+          type: 'text'
+        });
 
       if (error) throw error;
 
-      if (reset) {
-        setProducts(data || []);
-      } else {
-        setProducts(prev => [...prev, ...(data || [])]);
-      }
-      setTotal(count || 0);
-      
-      toast.success(`${data?.length || 0} produits chargés depuis Supabase`);
-    } catch (error: any) {
-      console.error('Erreur chargement produits:', error);
-      toast.error('Impossible de charger les produits');
-      if (reset) setProducts([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      toast.success('Message envoyé au vendeur!');
+      navigate(`/messages?recipientId=${product.vendor_user_id}`);
+    } catch (error) {
+      console.error('Erreur lors du contact:', error);
+      toast.error('Impossible de contacter le vendeur');
     }
   };
-
-  useEffect(() => { 
-    fetchProducts(true); 
-  }, [searchQuery, selectedCategory, filters, sortBy]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
+      {/* Header Responsive */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Marketplace</h1>
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Rechercher des produits..."
-            showFilter
-            onFilter={() => setShowFilters(!showFilters)}
-          />
-        </div>
+        <ResponsiveContainer autoPadding>
+          <div className="flex items-center justify-between">
+            <h1 className="heading-responsive font-bold text-foreground">Marketplace</h1>
+            <div className="flex items-center gap-2">
+              {user && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => navigate('/cart')}
+                >
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  {getCartCount() > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {getCartCount()}
+                    </Badge>
+                  )}
+                </Button>
+              )}
+              {isMobile && (
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="mt-4">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Rechercher des produits..."
+              showFilter
+              onFilter={() => setShowFilters(!showFilters)}
+            />
+          </div>
+        </ResponsiveContainer>
       </header>
 
-      <section className="px-4 py-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-2">
-          <Badge variant="default" className="bg-green-500">
-            ✅ Connecté à Supabase - Données Réelles
-          </Badge>
-          <Badge variant="outline">{total} produits</Badge>
-        </div>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          <Badge
-            variant={selectedCategory === 'all' ? "default" : "secondary"}
-            className={`cursor-pointer whitespace-nowrap ${
-              selectedCategory === 'all' ? "bg-vendeur-primary text-white" : "hover:bg-accent"
-            }`}
-            onClick={() => setSelectedCategory('all')}
-          >
-            Tous les produits
-          </Badge>
-          {categories.map((category: any) => (
+      {/* Categories Responsive */}
+      <section className="p-responsive border-b border-border">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+          {categories.map((category) => (
             <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "secondary"}
               className={`cursor-pointer whitespace-nowrap ${
                 selectedCategory === category.id
-                  ? "bg-vendeur-primary text-white" 
+                  ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
               }`}
               onClick={() => setSelectedCategory(category.id)}
@@ -171,43 +204,43 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filters & View Controls */}
-      <section className="px-4 py-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <ArrowUpDown className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="popular">Popularité</SelectItem>
-                <SelectItem value="price-low">Prix croissant</SelectItem>
-                <SelectItem value="price-high">Prix décroissant</SelectItem>
-                <SelectItem value="rating">Mieux notés</SelectItem>
+      {/* Filters & View Controls Responsive */}
+      <section className="p-responsive border-b border-border">
+        <div className="flex items-center justify-between gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className={isMobile ? "w-32 text-xs" : "w-40"}>
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
                 <SelectItem value="newest">Plus récents</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                <SelectItem value="popular">Popularité</SelectItem>
+                <SelectItem value="price_asc">Prix croissant</SelectItem>
+                <SelectItem value="price_desc">Prix décroissant</SelectItem>
+                <SelectItem value="rating">Mieux notés</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="h-8 w-8 p-0"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="h-8 w-8 p-0"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 w-8 p-0"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 w-8 p-0"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {showFilters && (
@@ -248,22 +281,67 @@ export default function Marketplace() {
         )}
       </section>
 
-      {/* Results */}
-      <section className="px-4 py-4">
+      {/* Results Responsive */}
+      <section className="p-responsive">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-muted-foreground">{products.length} / {total} résultats</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            {products.length} / {total} résultats
+          </p>
         </div>
 
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
-          {products.map((p: unknown) => (
-            <ProductCard key={p.id} {...p} onBuy={() => {}} onContact={() => {}} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Aucun produit trouvé</p>
+          </div>
+        ) : (
+          <ResponsiveGrid 
+            mobileCols={1} 
+            tabletCols={2} 
+            desktopCols={3} 
+            gap={isMobile ? "sm" : "md"}
+            className={viewMode === 'list' ? 'grid-cols-1' : ''}
+          >
+            {products.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                id={product.id}
+                image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                title={product.name}
+                price={product.price}
+                vendor={product.vendor_name}
+                vendorRating={product.vendor_rating}
+                vendorRatingCount={product.vendor_rating_count}
+                rating={product.rating}
+                reviewCount={product.reviews_count}
+                onBuy={() => handleProductClick(product.id)}
+                onAddToCart={() => {
+                  addToCart({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.images?.[0],
+                    vendor_id: product.vendor_id,
+                    vendor_name: product.vendor_name
+                  });
+                  toast.success('Produit ajouté au panier');
+                }}
+                onContact={() => handleContactVendor(product.id)}
+                isPremium={product.is_hot}
+              />
+            ))}
+          </ResponsiveGrid>
+        )}
 
-        {products.length < total && !loading && (
-          <div className="text-center mt-4">
-            <Button onClick={() => { setPage(prev => prev + 1); fetchProducts(); }} disabled={loadingMore}>
-              {loadingMore ? 'Chargement...' : 'Voir plus'}
+        {hasMore && !loading && (
+          <div className="text-center mt-4 md:mt-6">
+            <Button 
+              onClick={loadMore} 
+              disabled={loading}
+              size={isMobile ? "sm" : "default"}
+            >
+              {loading ? 'Chargement...' : 'Voir plus'}
             </Button>
           </div>
         )}
@@ -271,6 +349,16 @@ export default function Marketplace() {
 
       {/* Footer de navigation */}
       <QuickFooter />
+
+      {/* Modal de détails du produit */}
+      <ProductDetailModal
+        productId={selectedProductId}
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+      />
     </div>
   );
 }

@@ -1,108 +1,117 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useStandardId } from '@/hooks/useStandardId';
+import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 interface UserIdDisplayProps {
   className?: string;
   showBadge?: boolean;
-  layout?: 'horizontal' | 'vertical'; // Nouveau prop pour le layout
+  layout?: 'horizontal' | 'vertical';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const UserIdDisplay = ({ 
   className = '', 
   showBadge = true, 
-  layout = 'horizontal' 
+  layout = 'horizontal',
+  size = 'sm'
 }: UserIdDisplayProps) => {
   const { user, profile } = useAuth();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { generateStandardId, validateStandardId } = useStandardId();
+  const [standardId, setStandardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserId = async () => {
+    const fetchOrCreateStandardId = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from('user_ids')
-          .select('custom_id')
-          .eq('user_id', user.id)
-          .single();
+        // Déterminer le préfixe selon le rôle
+        let scope = 'users';
+        const userRole = profile?.role;
+        
+        if (userRole === 'vendeur') scope = 'vendors';
+        else if (userRole === 'livreur') scope = 'drivers';
+        else if (userRole === 'taxi') scope = 'drivers';
+        else if (userRole === 'admin') scope = 'pdg';
+        else if (userRole === 'syndicat') scope = 'syndicats';
+        else if (userRole === 'transitaire') scope = 'agents';
 
-        if (error) {
-          console.log('ID utilisateur non trouvé, création en cours...');
-          // Si l'ID n'existe pas, le créer automatiquement
-          await createUserId();
+        // Vérifier si l'utilisateur a déjà un ID standardisé
+        const existingId = (profile as any)?.public_id;
+        
+        if (existingId && validateStandardId(existingId)) {
+          setStandardId(existingId);
+          console.log('✅ ID standardisé trouvé:', existingId);
         } else {
-          setUserId(data.custom_id);
+          // Générer un nouvel ID standardisé
+          console.log('🔄 Génération ID standardisé...');
+          const newId = await generateStandardId(scope, false);
+          
+          if (newId) {
+            // Mettre à jour le profil avec le nouvel ID
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ public_id: newId })
+              .eq('id', user.id);
+
+            if (!updateError) {
+              setStandardId(newId);
+              console.log('✅ ID standardisé créé:', newId);
+              toast.success('ID utilisateur généré', {
+                description: `Votre identifiant: ${newId}`
+              });
+            } else {
+              console.error('Erreur mise à jour ID:', updateError);
+            }
+          }
         }
+
       } catch (error) {
-        console.error('Erreur lors de la récupération de l\'ID utilisateur:', error);
+        console.error('Erreur ID standardisé:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserId();
-  }, [user]);
-
-  const createUserId = async () => {
-    if (!user) return;
-
-    try {
-      // Générer un ID au format 3 lettres + 4 chiffres
-      let letters = '';
-      for (let i = 0; i < 3; i++) {
-        letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-      }
-
-      let numbers = '';
-      for (let i = 0; i < 4; i++) {
-        numbers += Math.floor(Math.random() * 10).toString();
-      }
-
-      const newId = letters + numbers;
-
-      const { error } = await supabase
-        .from('user_ids')
-        .upsert({
-          user_id: user.id,
-          custom_id: newId
-        });
-
-      if (error) {
-        console.error('Erreur création ID:', error);
-      } else {
-        setUserId(newId);
-        console.log('✅ ID utilisateur créé:', newId);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'ID utilisateur:', error);
-    }
-  };
+    fetchOrCreateStandardId();
+  }, [user, profile]);
 
   if (loading) {
-    return <span className={`text-gray-400 ${className}`}>...</span>;
-  }
-
-  if (!userId) {
-    return null;
+    return <span className={`text-muted-foreground ${className}`}>Chargement...</span>;
   }
 
   const displayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
     : profile?.email?.split('@')[0] || 'Utilisateur';
 
+  if (!standardId) {
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <Badge variant="outline" className="text-xs">
+          ID en cours...
+        </Badge>
+      </div>
+    );
+  }
+
   if (layout === 'vertical') {
     return (
-      <div className={`flex flex-col ${className}`}>
-        <span className="font-semibold text-gray-800">{displayName}</span>
-        <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs w-fit">
-          ID: {userId}
-        </Badge>
+      <div className={`flex flex-col gap-2 ${className}`}>
+        <span className="font-semibold text-foreground">{displayName}</span>
+        <StandardIdBadge 
+          standardId={standardId}
+          variant="default"
+          size={size}
+          copyable={true}
+          showIcon={true}
+        />
       </div>
     );
   }
@@ -110,17 +119,21 @@ export const UserIdDisplay = ({
   if (showBadge) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          {userId}
-        </Badge>
-        <span>{displayName}</span>
+        <StandardIdBadge 
+          standardId={standardId}
+          variant="secondary"
+          size={size}
+          copyable={true}
+          showIcon={true}
+        />
+        <span className="text-foreground font-medium">{displayName}</span>
       </div>
     );
   }
 
   return (
     <span className={className}>
-      {userId} - {displayName}
+      {standardId} - {displayName}
     </span>
   );
 };

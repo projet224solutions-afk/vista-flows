@@ -1,29 +1,71 @@
 // @ts-nocheck
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface WalletInfo {
+  id: string;
+  balance: number;
+  currency: string;
+}
 
 export default function WalletDashboard() {
   const { user } = useAuth();
-  const userId = user?.id;
-  const { session } = useAuth();
-  const { wallet, transactions, loading, refetch } = useWallet(userId);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [receiverId, setReceiverId] = useState("");
+  const [transferReason, setTransferReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showTransferPreview, setShowTransferPreview] = useState(false);
+  const [transferPreview, setTransferPreview] = useState<any>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadWalletData();
+    }
+  }, [user?.id]);
+
+  const loadWalletData = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setWallet(data);
+    } catch (error) {
+      console.error('Erreur chargement wallet:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const walletId = useMemo(() => wallet?.id, [wallet]);
   const balanceDisplay = useMemo(() => {
@@ -31,30 +73,8 @@ export default function WalletDashboard() {
     return `${wallet.balance.toLocaleString()} ${wallet.currency}`;
   }, [wallet]);
 
-  const ensureWallet = useCallback(async () => {
-    if (!userId) return null;
-    const { data, error } = await supabase
-      .from('wallets')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) {
-      const { data: created, error: createError } = await supabase
-        .from('wallets')
-        .insert({ user_id: userId, balance: 0, currency: 'GNF', status: 'active' })
-        .select('id')
-        .single();
-      if (createError) throw createError;
-      return created.id;
-    }
-    return data.id as string | null;
-  }, [userId]);
-
-  const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
-
   const handleDeposit = useCallback(async () => {
-    if (!userId) return;
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -64,44 +84,50 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 1000 GNF');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
-      return;
-    }
     try {
       setBusy(true);
-      await ensureWallet();
 
-      const res = await fetch(`${API_BASE}/wallet/deposit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          paymentMethod: 'mobile_money',
-          reference: `UI_${Date.now()}`
-        })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur dépôt');
-      }
+      // Créer une transaction de dépôt
+      const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'deposit',
+          amount: amount,
+          net_amount: amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Dépôt via interface vendeur',
+          receiver_wallet_id: wallet.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Mettre à jour le solde du wallet
+      const newBalance = wallet.balance + amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
 
       setDepositAmount("");
-      toast.success('Dépôt effectué');
-      await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur dépôt');
+      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
+      await loadWalletData();
+    } catch (e: any) {
+      console.error('Erreur dépôt:', e);
+      toast.error(e?.message || 'Erreur lors du dépôt');
     } finally {
       setBusy(false);
     }
-  }, [depositAmount, userId, ensureWallet, refetch, session]);
+  }, [depositAmount, user?.id, wallet]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!userId) return;
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
@@ -111,85 +137,195 @@ export default function WalletDashboard() {
       toast.error('Montant minimum 5000 GNF');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
+    if (amount > wallet.balance) {
+      toast.error('Solde insuffisant');
       return;
     }
     try {
       setBusy(true);
-      await ensureWallet();
 
-      const res = await fetch(`${API_BASE}/wallet/withdraw`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          paymentMethod: 'mobile_money',
-          paymentDetails: { provider: 'orange_money', phone: '620000000' }
-        })
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur retrait');
-      }
+      // Créer une transaction de retrait
+      const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions')
+        .insert({
+          transaction_id: referenceNumber,
+          transaction_type: 'withdraw',
+          amount: -amount,
+          net_amount: -amount,
+          fee: 0,
+          currency: 'GNF',
+          status: 'completed',
+          description: 'Retrait via interface vendeur',
+          sender_wallet_id: wallet.id
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Mettre à jour le solde du wallet
+      const newBalance = wallet.balance - amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
 
       setWithdrawAmount("");
-      toast.success('Retrait effectué');
-      await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur retrait');
+      toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
+      await loadWalletData();
+    } catch (e: any) {
+      console.error('Erreur retrait:', e);
+      toast.error(e?.message || 'Erreur lors du retrait');
     } finally {
       setBusy(false);
     }
-  }, [withdrawAmount, userId, ensureWallet, refetch, session]);
+  }, [withdrawAmount, user?.id, wallet]);
 
-  const handleTransfer = useCallback(async () => {
-    if (!userId) return;
+  const handlePreviewTransfer = useCallback(async () => {
+    if (!user?.id || !wallet) return;
     const amount = parseFloat(transferAmount);
     if (!amount || amount <= 0) {
       toast.error('Montant invalide');
       return;
     }
     if (!receiverId) {
-      toast.error('Destinataire requis');
+      toast.error('Destinataire requis (Code utilisateur)');
       return;
     }
-    const token = (session as unknown)?.access_token;
-    if (!token) {
-      toast.error('Session invalide');
-      return;
-    }
+    
     try {
       setBusy(true);
-      await ensureWallet();
-
-      const res = await fetch(`${API_BASE}/wallet/transfer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ receiverId, amount })
+      
+      const recipientCodeUpper = receiverId.toUpperCase();
+      
+      console.log('🔍 [Vendeur] Début prévisualisation transfert:', {
+        recipient: recipientCodeUpper,
+        amount
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json?.success === false) {
-        throw new Error(json?.error || json?.message || 'Erreur transfert');
+      
+      // Récupérer notre propre code pour l'API
+      let senderCode = null;
+      
+      // Chercher dans user_ids d'abord
+      const { data: senderIdData } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (senderIdData?.custom_id) {
+        senderCode = senderIdData.custom_id;
+      } else {
+        // Sinon chercher dans profiles
+        const { data: senderProfileData } = await supabase
+          .from('profiles')
+          .select('custom_id, public_id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
+      }
+      
+      if (!senderCode) {
+        toast.error('Votre code utilisateur est introuvable');
+        setBusy(false);
+        return;
+      }
+      
+      console.log('📋 [Vendeur] Code expéditeur:', senderCode);
+      console.log('📞 [Vendeur] Appel preview_wallet_transfer_by_code...');
+      
+      // Appeler la nouvelle fonction de prévisualisation par code
+      const { data, error } = await supabase.rpc('preview_wallet_transfer_by_code', {
+        p_sender_code: senderCode,
+        p_receiver_code: recipientCodeUpper,
+        p_amount: amount,
+        p_currency: 'GNF'
+      });
+
+      if (error) {
+        console.error('❌ [Vendeur] Erreur RPC:', error);
+        throw error;
+      }
+      
+      console.log('📋 [Vendeur] Résultat prévisualisation:', data);
+
+      if (!data.success) {
+        toast.error(data.error || 'Erreur lors de la prévisualisation');
+        setBusy(false);
+        return;
       }
 
-      setTransferAmount("");
-      setReceiverId("");
-      toast.success('Transfert effectué');
-      await refetch(userId);
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur transfert');
+      setTransferPreview(data);
+      setShowTransferPreview(true);
+    } catch (e: any) {
+      console.error('Erreur prévisualisation:', e);
+      toast.error(e?.message || 'Erreur lors de la prévisualisation');
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, userId, ensureWallet, refetch, session]);
+  }, [transferAmount, receiverId, user?.id, wallet]);
+
+  const handleConfirmTransfer = useCallback(async () => {
+    if (!user?.id || !transferPreview) return;
+    
+    try {
+      setBusy(true);
+      setShowTransferPreview(false);
+      
+      console.log('💸 [Vendeur] Exécution du transfert...');
+
+      // Récupérer notre code pour l'API
+      let senderCode = null;
+      const { data: senderIdData } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (senderIdData?.custom_id) {
+        senderCode = senderIdData.custom_id;
+      } else {
+        const { data: senderProfileData } = await supabase
+          .from('profiles')
+          .select('custom_id, public_id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        senderCode = senderProfileData?.custom_id || senderProfileData?.public_id;
+      }
+
+      // Exécuter le transfert avec la nouvelle fonction
+      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
+        p_sender_code: senderCode,
+        p_receiver_code: transferPreview.receiver.custom_id,
+        p_amount: transferPreview.amount,
+        p_currency: 'GNF',
+        p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} GNF`
+      });
+
+      if (error) throw error;
+
+      setTransferAmount("");
+      setReceiverId("");
+      setTransferReason("");
+      setTransferPreview(null);
+      
+      toast.success(
+        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
+        { duration: 5000 }
+      );
+      
+      await loadWalletData();
+    } catch (e: any) {
+      console.error('Erreur transfert:', e);
+      toast.error(e?.message || 'Erreur lors du transfert');
+    } finally {
+      setBusy(false);
+    }
+  }, [transferPreview, receiverId, transferReason, user?.id]);
 
   return (
     <Card className="h-full">
@@ -206,7 +342,7 @@ export default function WalletDashboard() {
             <p className="text-sm text-muted-foreground">Solde actuel</p>
             <p className="text-2xl font-bold">{balanceDisplay}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => userId && refetch(userId)} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={loadWalletData} disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
@@ -251,16 +387,27 @@ export default function WalletDashboard() {
 
           <TabsContent value="transfer" className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 space-y-2">
+              <div className="md:col-span-2 space-y-3">
                 <div>
-                  <Label>ID Destinataire</Label>
-                  <Input placeholder="UUID du destinataire" value={receiverId} onChange={(e) => setReceiverId(e.target.value)} />
+                  <Label>Code Destinataire</Label>
+                  <Input 
+                    placeholder="Ex: 0002ABC" 
+                    value={receiverId} 
+                    onChange={(e) => setReceiverId(e.target.value.toUpperCase())} 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Entrez le code d'identification (format: 0002ABC)
+                  </p>
+                </div>
+                <div>
+                  <Label>Motif du transfert</Label>
+                  <Input placeholder="Ex: Paiement marchandise, Remboursement..." value={transferReason} onChange={(e) => setTransferReason(e.target.value)} />
                 </div>
                 <div>
                   <Label>Montant à transférer</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <Input type="number" placeholder="0" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
-                    <Button onClick={handleTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
+                    <Button onClick={handlePreviewTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
                       Transférer
                     </Button>
                   </div>
@@ -273,6 +420,70 @@ export default function WalletDashboard() {
             <WalletTransactionHistory />
           </TabsContent>
         </Tabs>
+
+        {/* Dialog de confirmation avec prévisualisation */}
+        <AlertDialog open={showTransferPreview} onOpenChange={setShowTransferPreview}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-primary" />
+                Confirmer le transfert
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4 mt-4">
+                  {/* Informations du destinataire */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <h4 className="font-semibold text-blue-900 mb-2">👤 Informations du destinataire</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Nom:</strong> {transferPreview?.recipient_name}</p>
+                      <p><strong>Email:</strong> {transferPreview?.recipient_email}</p>
+                      <p><strong>Téléphone:</strong> {transferPreview?.recipient_phone}</p>
+                      <p><strong>ID:</strong> {transferPreview?.recipient_code}</p>
+                    </div>
+                  </div>
+
+                  {/* Détails du transfert */}
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-orange-600">
+                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between items-center">
+                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm font-medium">📈 Montant net reçu</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                      <br />
+                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Souhaitez-vous confirmer ce transfert ?
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Non, annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmTransfer} disabled={busy}>
+                Oui, confirmer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

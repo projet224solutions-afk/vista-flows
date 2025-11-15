@@ -1,222 +1,73 @@
-// @ts-nocheck
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ShoppingBag, Heart, MapPin, User, Star, Package, Search, Filter,
-  CreditCard, Wallet, Bell, MessageSquare, Shield, Eye, Download,
-  Plus, Minus, ShoppingCart, Truck, CheckCircle, Clock, AlertTriangle,
-  Phone, Mail, Lock, Fingerprint, Camera, QrCode, FileText, BarChart3,
-  Settings, HelpCircle, LogOut, Home, Gift, Percent, Navigation,
-  ThumbsUp, ThumbsDown, Flag, Send, Mic, Video, Image,
-  Banknote, ArrowUpDown, History, Calendar, TrendingUp, DollarSign,
-  Menu, X, ChevronRight, ChevronDown, Globe, Smartphone, Headphones,
-  Monitor, Shirt, Car, Building2, Gamepad2, BookOpen, Cpu, Zap,
-  Store, Users, Briefcase, GraduationCap, Coffee, Pizza, Dumbbell,
-  Grid3X3, Share, Bot
+  ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
+  LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
+  Plus, Truck, Bot, User
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useClientData } from "@/hooks/useClientData";
-import QuickFooter from "@/components/QuickFooter";
-import UserIdDisplay from "@/components/UserIdDisplay";
+import { useUniversalProducts } from "@/hooks/useUniversalProducts";
+import ProductCard from "@/components/ProductCard";
 import UserProfileCard from "@/components/UserProfileCard";
-import VirtualCardButton from "@/components/VirtualCardButton";
-import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
-
-// ================= INTERFACES TYPESCRIPT =================
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  discount?: number;
-  inStock: boolean;
-  seller: string;
-  brand: string;
-  isHot?: boolean;
-  isNew?: boolean;
-  isFreeShipping?: boolean;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-  color: string;
-  itemCount: number;
-}
+import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import { UserIdDisplay } from "@/components/UserIdDisplay";
+import { IdSystemIndicator } from "@/components/IdSystemIndicator";
+import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
+import ClientOrdersList from "@/components/client/ClientOrdersList";
+import { supabase } from "@/lib/supabaseClient";
+import useResponsive from "@/hooks/useResponsive";
+import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
+import { useCart } from "@/contexts/CartContext";
 
 export default function ClientDashboard() {
-  const { user, profile, signOut, ensureUserSetup } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const responsive = useResponsive();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // ================= HOOK DONNÉES RÉELLES =================
+  // Utiliser le hook universel pour les produits
+  const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
+    limit: 50,
+    sortBy: 'newest',
+    autoLoad: true,
+    searchQuery
+  });
+
   const {
-    products,
-    categories,
     orders,
     cartItems,
-    loading: dataLoading,
-    error: dataError,
+    favorites,
     addToCart,
     removeFromCart,
     clearCart,
     createOrder,
+    toggleFavorite,
+    contactVendor,
     loadAllData
   } = useClientData();
 
-  // ================= ÉTATS PRINCIPAUX =================
-  const [activeTab, setActiveTab] = useState('home');
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
-  const [userLevel, setUserLevel] = useState('Gold');
-  const [isFixingAccount, setIsFixingAccount] = useState(false);
-  const [loadingWallet, setLoadingWallet] = useState(false);
-  const [isEnsured, setIsEnsured] = useState(false);
-  const [favoritesCount, setFavoritesCount] = useState<number>(0);
-
-  // ================= FONCTION DE RÉPARATION COMPTE =================
-  const repareCompteClient = async () => {
-    if (!user?.id) return;
-
-    setIsFixingAccount(true);
-    toast.info('🔧 Réparation du compte en cours...');
-
-    try {
-      // Appeler la fonction de setup automatique
-      await ensureUserSetup();
-
-      // Recharger les données
-      const [walletData, userIdData, cardData] = await Promise.all([
-        supabase.from('wallets').select('*').eq('user_id', user.id).single(),
-        supabase.from('user_ids').select('*').eq('user_id', user.id).single(),
-        supabase.from('virtual_cards').select('*').eq('user_id', user.id).single()
-      ]);
-
-      // Mettre à jour le solde affiché
-      if (walletData.data) {
-        setWalletBalance(walletData.data.balance);
-      }
-
-      toast.success('✅ Compte réparé ! ID, Wallet et Carte virtuelle créés.');
-
-      // Rafraîchir la page pour afficher les nouvelles données
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Erreur réparation:', error);
-      toast.error('❌ Erreur lors de la réparation du compte');
-    } finally {
-      setIsFixingAccount(false);
-    }
-  };
-  const [membershipProgress, setMembershipProgress] = useState(0);
-
-  // ================= DONNÉES RÉELLES DEPUIS LE HOOK =================
-  // Utiliser les catégories et produits du hook useClientData
-  const hotProducts = products.filter(product => product.isHot).slice(0, 10);
-
-  // ================= VÉRIFICATION SETUP UTILISATEUR =================
-  useEffect(() => {
-    if (!user?.id || isEnsured) return;
-    ensureUserSetup().finally(() => setIsEnsured(true));
-  }, [user?.id, isEnsured, ensureUserSetup]);
-
-  // ================= PERSISTENCE ONGLET ACTIF =================
-  useEffect(() => {
-    const savedTab = localStorage.getItem('clientActiveTab');
-    if (savedTab) setActiveTab(savedTab);
-  }, []);
-  useEffect(() => {
-    localStorage.setItem('clientActiveTab', activeTab);
-  }, [activeTab]);
-
-  // ================= WALLET INIT & LECTURE =================
-  const ensureWallet = useCallback(async () => {
-    if (!user?.id) return;
-    setLoadingWallet(true);
-    try {
-      const { data: w, error } = await supabase.from('wallets').select('*').eq('user_id', user.id).maybeSingle();
-      if (error && error.code !== 'PGRST116') throw error;
-      if (!w) {
-        const { error: insErr } = await supabase.from('wallets').insert({ user_id: user.id, balance: 0 });
-        if (insErr) throw insErr;
-        setWalletBalance(0);
-      } else {
-        setWalletBalance(w.balance || 0);
-      }
-    } catch (e: unknown) {
-      console.error('Wallet init/read error:', e);
-      toast.error("Erreur wallet");
-    } finally {
-      setLoadingWallet(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => { ensureWallet(); }, [ensureWallet]);
-
-  // ================= FAVORIS COUNT =================
-  useEffect(() => {
-    const loadFavoritesCount = async () => {
-      if (!user?.id) { setFavoritesCount(0); return; }
-      try {
-        const { count, error } = await (supabase
-          .from('favorites') as unknown)
-          .select('id', { count: 'exact', head: true })
-          .eq('customer_id', user.id);
-        if (error) throw error;
-        setFavoritesCount(count || 0);
-      } catch (e) {
-        setFavoritesCount(0);
-      }
-    };
-    loadFavoritesCount();
-  }, [user?.id]);
-
-  // ================= DÉRIVÉS DYNAMIQUES =================
-  const activeOrdersCount = (orders || []).filter((o: unknown) => o?.status === 'active').length || 0;
-  const loyaltyPoints = ((orders || []).length * 500) || 0;
-
-  // ================= FONCTIONS UTILITAIRES =================
-  const formatPrice = useCallback((price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
-  }, []);
-
-  // Utiliser la fonction addToCart du hook useClientData
-  // const addToCart = useCallback((product: Product) => {
-  //   setCartItems(prev => {
-  //     const exists = prev.find(item => item.id === product.id);
-  //     if (exists) {
-  //       toast.info('Produit déjà dans le panier');
-  //       return prev;
-  //     }
-  //     toast.success(`${product.name} ajouté au panier`, {
-  //       description: `Prix: ${formatPrice(product.price)}`,
-  //       action: {
-  //         label: "Voir panier",
-  //         onClick: () => setActiveTab('cart')
-  //       }
-  //     });
-  //     return [...prev, product];
-  //   });
-  // }, [formatPrice]);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [communicationRefresh, setCommunicationRefresh] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const { addToCart: addToCartContext } = useCart();
 
   const handleSignOut = async () => {
     try {
@@ -228,588 +79,559 @@ export default function ClientDashboard() {
     }
   };
 
-  // Fonction pour gérer les clics sur les catégories
-  const handleCategoryClick = useCallback((categoryId: string) => {
-    setActiveTab('categories');
-    toast.info(`Catégorie ${categoryId} sélectionnée`);
-  }, []);
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
+  };
 
-  // Fonction pour gérer la navigation
-  const handleTabChange = useCallback((tab: string) => {
-    setActiveTab(tab);
-    toast.info(`Navigation vers ${tab}`);
-  }, []);
+  // Charger le customer_id
+  useEffect(() => {
+    const loadCustomerId = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) {
+        setCustomerId(data.id);
+      }
+    };
+    
+    loadCustomerId();
+  }, [user?.id]);
 
-  // Fonction pour gérer la recherche
-  const handleSearch = useCallback(async () => {
-    const q = searchQuery.trim();
-    if (!q) {
-      setSearchResults(null);
-      toast.info('Entrez un terme de recherche');
+  const handleCheckout = async () => {
+    if (!user?.id) {
+      toast.error('Veuillez vous connecter');
       return;
     }
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .ilike('name', `%${q}%`)
-        .limit(50);
-      if (error) throw error;
-      if (data && data.length > 0) setSearchResults(data as unknown);
-      else {
-        // fallback local: filtre les produits présents
-        setSearchResults(products.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
-      }
-    } catch (e) {
-      console.error('Search error:', e);
-      setSearchResults(products.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+    
+    if (cartItems.length === 0) {
+      toast.error('Votre panier est vide');
+      return;
     }
-  }, [searchQuery, products]);
+    
+    setShowPaymentModal(true);
+  };
 
-  // Fonction pour ajouter aux favoris
-  const addToFavorites = useCallback(async (productId: string) => {
-    if (!user?.id) return toast.error('Utilisateur non connecté');
-    try {
-      // validation basique
-      const prod = products.find(p => p.id === productId);
-      if (!prod) return toast.error('Produit introuvable');
-      const { error } = await supabase.from('favorites').insert({ customer_id: user.id, product_id: productId } as unknown);
-      if (error) throw error;
-      toast.success('Produit ajouté aux favoris');
-    } catch (e: unknown) {
-      // toggle si déjà présent
-      if (String(e?.message || '').includes('duplicate')) {
-        await supabase.from('favorites').delete().eq('customer_id', user!.id).eq('product_id', productId);
-        toast.info('Retiré des favoris');
-      } else {
-        console.error('Favorite error:', e);
-        toast.error('Erreur favoris');
-      }
+  const handlePaymentSuccess = () => {
+    clearCart();
+    loadAllData(user?.id);
+    setActiveTab('orders');
+    toast.success('Commande créée avec succès');
+  };
+
+  // Ouvrir le modal de détails du produit
+  const handleProductClick = (productId: string) => {
+    setSelectedProductId(productId);
+    setShowProductModal(true);
+  };
+
+  // Contacter le vendeur via modal ou direct
+  const handleContactVendor = async (product: any) => {
+    if (!product.vendor_user_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
     }
-  }, [user?.id, products]);
 
-  // Fonction pour voir les détails d'un produit
-  const viewProductDetails = useCallback((productId: string) => {
-    toast.info(`Affichage des détails du produit ${productId}`);
-  }, []);
+    try {
+      if (!user) {
+        toast.error('Veuillez vous connecter');
+        return;
+      }
+
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendor_user_id,
+          content: initialMessage,
+          type: 'text'
+        });
+
+      if (error) throw error;
+
+      toast.success('Message envoyé au vendeur!');
+      setActiveTab('communication');
+      setCommunicationRefresh(prev => prev + 1);
+    } catch (error) {
+      console.error('Erreur contact vendeur:', error);
+      toast.error('Impossible de contacter le vendeur');
+    }
+  };
+
+  const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header Style Alibaba */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">224</span>
+    <div className="min-h-screen bg-background">
+      {/* Header Premium - Responsive */}
+      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className={`container flex ${responsive.isMobile ? 'h-14' : 'h-16'} items-center justify-between ${responsive.isMobile ? 'px-3' : 'px-4'}`}>
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-lg bg-client-gradient flex items-center justify-center shadow-elegant`}>
+                <ShoppingBag className={`${responsive.isMobile ? 'w-4 h-4' : 'w-6 h-6'} text-white`} />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">224SOLUTIONS</h1>
-                <p className="text-xs text-gray-500">Style Alibaba</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 md:gap-2">
+                  <h1 className={`${responsive.isMobile ? 'text-sm' : 'text-lg'} font-bold text-foreground truncate`}>
+                    {responsive.isMobile ? '224SOL' : '224SOLUTIONS'}
+                  </h1>
+                  {!responsive.isMobile && (
+                    <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground hidden sm:block">Marketplace</p>
               </div>
             </div>
+          </div>
 
-            {/* Barre de recherche */}
-            <div className="flex-1 max-w-2xl mx-4 relative">
+          {/* Barre de recherche - Cachée sur mobile, visible sur tablette+ */}
+          {!responsive.isMobile && (
+            <div className="flex-1 max-w-md mx-4 lg:mx-8">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher des millions de produits..."
+                  placeholder="Rechercher..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-20 h-10 border-2 border-orange-200 focus:border-orange-400 rounded-full"
+                  className="pl-9 border-border focus-visible:ring-client-primary"
                 />
-                <Button
-                  size="sm"
-                  onClick={handleSearch}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-orange-500 hover:bg-orange-600 rounded-full h-8 px-4"
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
               </div>
             </div>
+          )}
 
-            {/* Actions utilisateur */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative"
-                onClick={() => handleTabChange('cart')}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {cartItems.length > 0 && (
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs bg-orange-500">
-                    {cartItems.length}
-                  </Badge>
-                )}
-              </Button>
-
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-r from-orange-400 to-red-500 text-white">
-                  {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-4 py-2">
-          <ScrollArea className="w-full">
-            <div className="flex space-x-1 min-w-max">
-              <Button
-                variant={activeTab === 'home' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleTabChange('home')}
-                className={activeTab === 'home' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Accueil
-              </Button>
-              <Button
-                variant={activeTab === 'categories' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleTabChange('categories')}
-                className={activeTab === 'categories' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <Grid3X3 className="w-4 h-4 mr-2" />
-                Catégories
-              </Button>
-              <Button
-                variant={activeTab === 'cart' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleTabChange('cart')}
-                className={activeTab === 'cart' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Panier ({cartItems.length})
-              </Button>
-              <Button
-                variant={activeTab === 'communication' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleTabChange('communication')}
-                className={activeTab === 'communication' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Communication
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleTabChange('copilote')}
-                className={activeTab === 'copilote' ? 'bg-purple-500 hover:bg-purple-600' : ''}
-              >
-                <Bot className="w-4 h-4 mr-2" />
-                Copilote IA
-              </Button>
-            </div>
-          </ScrollArea>
-        </div>
-      </div>
-
-      {/* Contenu principal */}
-      <main className="px-4 py-6 max-w-7xl mx-auto">
-        {activeTab === 'home' && (
-          <div className="space-y-6">
-            {/* Carte de bienvenue */}
-            <Card className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white overflow-hidden">
-              <CardContent className="p-6 relative">
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-1">
-                        Salut <UserIdDisplay className="inline" showBadge={false} /> ! 👋
-                      </h2>
-                      <UserIdDisplay layout="vertical" className="mb-2" />
-                      <p className="opacity-90">Interface style Alibaba activée !</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-yellow-400 text-yellow-900 font-bold">
-                          ⭐ {userLevel} Member
-                        </Badge>
-                      </div>
-                      <p className="text-sm opacity-80">Solde Wallet</p>
-                      <p className="text-2xl font-bold">{formatPrice(walletBalance)}</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="bg-red-500/80 hover:bg-red-600/80 text-white"
-                          onClick={repareCompteClient}
-                          disabled={isFixingAccount}
-                        >
-                          {isFixingAccount ? 'Réparation...' : 'Réparer Compte'}
-                        </Button>
-                        <VirtualCardButton
-                          size="sm"
-                          variant="outline"
-                          className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 mr-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Progression vers Platinum</span>
-                        <span className="text-sm font-bold">{membershipProgress}%</span>
-                      </div>
-                      <Progress value={membershipProgress} className="h-2 bg-white/20">
-                        <div className="h-full bg-yellow-300 transition-all duration-500" style={{ width: `${membershipProgress}%` }}></div>
-                      </Progress>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Profil utilisateur avec ID et wallet */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <UserProfileCard />
-              </div>
-              <div className="lg:col-span-2">
-                <WalletTransactionHistory />
-              </div>
-            </div>
-
-            {/* Actions rapides */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-purple-600" />
-                  Actions Rapides
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <VirtualCardButton className="w-full" />
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">
-                      ✅ <strong>Transfert Multi-Devises</strong><br />
-                      💡 Intégré dans votre wallet<br />
-                      🎯 Sélectionnez votre devise
-                    </p>
-                  </div>
-                </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600">
-                    ✅ <strong>Wallet créé automatiquement</strong><br />
-                    💡 Votre ID apparaît sous votre nom<br />
-                    🎯 Système 100% opérationnel
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Statistiques rapides */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => toast.info('Affichage des commandes actives')}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Package className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600">{activeOrdersCount}</p>
-                  <p className="text-sm text-gray-600">Commandes actives</p>
-                </CardContent>
-              </Card>
-
-              <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleTabChange('cart')}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-orange-600">{cartItems.length}</p>
-                  <p className="text-sm text-gray-600">Dans le panier</p>
-                </CardContent>
-              </Card>
-
-              <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => toast.info('Affichage des favoris')}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-red-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-red-600">{favoritesCount}</p>
-                  <p className="text-sm text-gray-600">Favoris</p>
-                </CardContent>
-              </Card>
-
-              <Card
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => toast.info('Affichage des points fidélité')}
-              >
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">{new Intl.NumberFormat('fr-FR').format(loyaltyPoints)}</p>
-                  <p className="text-sm text-gray-600">Points fidélité</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Catégories populaires */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-orange-500" />
-                  Catégories Populaires
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {categories.map(category => {
-                    // Utiliser une icône par défaut si pas d'icône spécifiée
-                    const IconComponent = category.icon || Smartphone;
-                    return (
-                      <div
-                        key={category.id}
-                        className="flex flex-col items-center p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                        onClick={() => handleCategoryClick(category.id)}
-                      >
-                        <div className={`w-12 h-12 ${category.color} rounded-full flex items-center justify-center mb-2`}>
-                          <IconComponent className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xs font-medium text-center">{category.name}</span>
-                        <span className="text-xs text-gray-500">{category.itemCount.toLocaleString()}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Produits tendance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-red-500" />
-                  🔥 Tendances & Meilleures ventes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {hotProducts.map(product => (
-                    <Card key={product.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md">
-                      <CardContent className="p-0">
-                        <div className="relative">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-48 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
-                          />
-
-                          {product.isHot && (
-                            <Badge className="absolute top-2 left-2 bg-red-500 text-xs">🔥 HOT</Badge>
-                          )}
-                          {product.isNew && (
-                            <Badge className="absolute top-2 right-2 bg-green-500 text-xs">🆕 NEW</Badge>
-                          )}
-                        </div>
-
-                        <div className="p-4">
-                          <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] mb-2">{product.name}</h3>
-                          <p className="text-xs text-gray-600 mb-2">{product.seller}</p>
-
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3 h-3 ${i < Math.floor(product.rating)
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                    }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-gray-500">({product.reviews.toLocaleString()})</span>
-                          </div>
-
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <span className="text-lg font-bold text-red-600">
-                                {formatPrice(product.price)}
-                              </span>
-                              {product.originalPrice && (
-                                <span className="text-sm line-through text-gray-400 ml-2">
-                                  {formatPrice(product.originalPrice)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              className="flex-1 bg-orange-500 hover:bg-orange-600"
-                              size="sm"
-                              onClick={() => addToCart(product)}
-                            >
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              Ajouter
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addToFavorites(product.id)}
-                              className="px-3"
-                            >
-                              <Heart className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => viewProductDetails(product.id)}
-                              className="px-3"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'categories' && (
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-2">🏪 Toutes les Catégories</h2>
-                <p className="opacity-90">Explorez notre vaste sélection de produits et services</p>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {categories.map(category => {
-                // Utiliser une icône par défaut si pas d'icône spécifiée
-                const IconComponent = category.icon || Smartphone;
-                return (
-                  <Card key={category.id} className="group hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <CardContent className="p-6 text-center">
-                      <div className={`w-20 h-20 ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                        <IconComponent className="w-10 h-10 text-white" />
-                      </div>
-                      <h3 className="text-lg font-bold mb-2">{category.name}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{category.itemCount.toLocaleString()} produits</p>
-                      <Button className="w-full bg-gray-900 hover:bg-gray-800">
-                        Explorer
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'cart' && (
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-r from-green-600 to-blue-600 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">🛒 Mon Panier</h2>
-                    <p className="opacity-90">{cartItems.length} article(s) sélectionné(s)</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {cartItems.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="w-32 h-32 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="w-16 h-16 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Votre panier est vide</h3>
-                  <p className="text-gray-600 mb-6">Découvrez nos produits populaires et ajoutez-les à votre panier</p>
-                  <Button
-                    className="bg-orange-500 hover:bg-orange-600"
-                    onClick={() => handleTabChange('home')}
-                  >
-                    <Home className="w-4 h-4 mr-2" />
-                    Continuer mes achats
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {cartItems.map(item => (
-                  <Card key={item.id}>
-                    <CardContent className="p-4">
-                      <div className="flex gap-4">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-24 h-24 object-cover rounded-lg"
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{item.name}</h3>
-                          <p className="text-sm text-gray-600 mb-2">{item.seller}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-red-600">
-                              {formatPrice(item.price)}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeFromCart(item.id)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+          {/* Actions - Responsive */}
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            {!responsive.isMobile && (
+              <div className="hidden lg:block">
+                <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
               </div>
             )}
-          </div>
-        )}
+            <QuickTransferButton 
+              variant="ghost" 
+              size={responsive.isMobile ? 'icon' : 'icon'} 
+              showText={false} 
+            />
+            <Button
+              variant="ghost"
+              size={responsive.isMobile ? 'icon' : 'icon'}
+              className="relative"
+              onClick={() => setActiveTab('cart')}
+            >
+              <ShoppingCart className={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
+              {cartItems.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-client-primary text-xs">
+                  {cartItems.length}
+                </Badge>
+              )}
+            </Button>
 
-        {activeTab === 'communication' && (
-          <div className="space-y-6">
-            <SimpleCommunicationInterface />
-          </div>
-        )}
+            {!responsive.isMobile && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <User className="w-5 h-5" />
+                </Button>
 
-        {activeTab === 'copilote' && (
-          <div className="space-y-6">
-            <CopiloteChat height="600px" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </>
+            )}
+            
+            {/* Menu mobile */}
+            {responsive.isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Barre de recherche mobile */}
+        {responsive.isMobile && (
+          <div className="px-3 pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher des produits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 text-sm"
+              />
+            </div>
           </div>
         )}
+      </header>
+
+      {/* Main Content */}
+      <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Navigation par onglets - Responsive */}
+          <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-6 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+              <TabsTrigger 
+                value="overview" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Vue d'ensemble</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Vue</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="products" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Grid3X3 className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                Produits
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cart" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <ShoppingCart className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                Panier
+              </TabsTrigger>
+              <TabsTrigger 
+                value="orders" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Package className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Commandes</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Cmd</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="communication" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <MessageSquare className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Messages</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>Msg</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="copilot" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Assistant IA</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>IA</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Vue d'ensemble */}
+          <TabsContent value="overview" className="space-y-4 md:space-y-6 animate-fade-in">
+            <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
+              {/* Profil utilisateur */}
+              <div className="lg:col-span-2">
+                <UserProfileCard showWalletDetails={false} />
+              </div>
+
+              {/* Système d'ID */}
+              <div>
+                <IdSystemIndicator />
+              </div>
+            </ResponsiveGrid>
+
+            <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
+              {/* Wallet et transactions */}
+              <div className="lg:col-span-2">
+                <UniversalWalletTransactions />
+              </div>
+              {/* Statistiques rapides */}
+              <Card className="shadow-elegant">
+                <CardHeader>
+                  <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center`}>
+                        <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
+                      </div>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{orders.length}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center`}>
+                        <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
+                      </div>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{activeOrders.length}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center`}>
+                        <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
+                      </div>
+                       <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">Favoris</p>
+                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{favorites.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </ResponsiveGrid>
+
+            {/* Produits recommandés */}
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Produits populaires</CardTitle>
+                    <CardDescription>Découvrez nos meilleures ventes</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab('products')}>
+                    Voir tout
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="w-full">
+                  <div className="flex gap-4 pb-4">
+                    {universalProducts.slice(0, 6).map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                        title={product.name}
+                        price={product.price}
+                        vendor={product.vendor_name}
+                        rating={product.rating}
+                        reviewCount={product.reviews_count}
+                        onBuy={() => handleProductClick(product.id)}
+                        onAddToCart={() => {
+                          addToCartContext({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.images?.[0],
+                            vendor_id: product.vendor_id,
+                            vendor_name: product.vendor_name
+                          });
+                          toast.success('Produit ajouté au panier');
+                        }}
+                        onContact={() => handleContactVendor(product)}
+                        isPremium={product.is_hot}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Produits */}
+          <TabsContent value="products" className="space-y-6 animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Catalogue de produits</CardTitle>
+                <CardDescription>Parcourez notre sélection complète</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {productsLoading ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {[...Array(8)].map((_, i) => (
+                      <Card key={i} className="animate-pulse">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="aspect-square bg-muted rounded-lg" />
+                          <div className="h-4 bg-muted rounded" />
+                          <div className="h-4 bg-muted rounded w-2/3" />
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {universalProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                        title={product.name}
+                        price={product.price}
+                        vendor={product.vendor_name}
+                        rating={product.rating}
+                        reviewCount={product.reviews_count}
+                        onBuy={() => handleProductClick(product.id)}
+                        onAddToCart={() => {
+                          addToCartContext({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.images?.[0],
+                            vendor_id: product.vendor_id,
+                            vendor_name: product.vendor_name
+                          });
+                          toast.success('Produit ajouté au panier');
+                        }}
+                        onContact={() => handleContactVendor(product)}
+                        isPremium={product.is_hot}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Panier */}
+          <TabsContent value="cart" className="space-y-6 animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Mon panier</CardTitle>
+                <CardDescription>
+                  {cartItems.length} article{cartItems.length > 1 ? 's' : ''} dans votre panier
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cartItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Votre panier est vide</h3>
+                    <p className="text-muted-foreground mb-6">Ajoutez des produits pour commencer vos achats</p>
+                    <Button onClick={() => setActiveTab('products')} className="bg-client-primary hover:bg-client-primary/90">
+                      Parcourir les produits
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {cartItems.map((item) => (
+                      <Card key={item.id}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">Prix unitaire: {formatPrice(item.price)}</p>
+                            <p className="text-lg font-bold text-client-primary mt-1">
+                              {formatPrice(item.price)}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive"
+                            onClick={() => removeFromCart(item.id)}
+                          >
+                            <LogOut className="w-4 h-4" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Card className="bg-client-accent">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-lg font-semibold">Total</span>
+                          <span className="text-2xl font-bold text-client-primary">
+                            {formatPrice(cartItems.reduce((sum, item) => sum + item.price, 0))}
+                          </span>
+                        </div>
+                        <Button 
+                          className="w-full bg-client-primary hover:bg-client-primary/90" 
+                          size="lg"
+                          onClick={handleCheckout}
+                        >
+                          <CreditCard className="w-5 h-5 mr-2" />
+                          Procéder au paiement
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Commandes */}
+          <TabsContent value="orders" className="space-y-6 animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Mes commandes</CardTitle>
+                <CardDescription>Suivez l'état de vos commandes et confirmez les livraisons</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientOrdersList />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Communication */}
+          <TabsContent value="communication" className="animate-fade-in">
+            <UniversalCommunicationHub 
+              selectedConversationId={selectedConversationId}
+              refreshTrigger={communicationRefresh}
+            />
+          </TabsContent>
+
+          {/* Copilote */}
+          <TabsContent value="copilot" className="animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Assistant IA</CardTitle>
+                <CardDescription>Votre copilote intelligent pour vos achats</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CopiloteChat />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
+      {/* Modal de paiement */}
+      {user?.id && customerId && (
+        <ProductPaymentModal
+          open={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          cartItems={cartItems}
+          totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
+          onPaymentSuccess={handlePaymentSuccess}
+          userId={user.id}
+          customerId={customerId}
+        />
+      )}
+      
+      {/* Modal de détails du produit */}
+      <ProductDetailModal
+        productId={selectedProductId}
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+      />
 
-      {/* Footer de navigation */}
-      <QuickFooter />
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

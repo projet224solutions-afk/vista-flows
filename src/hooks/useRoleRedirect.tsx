@@ -22,9 +22,10 @@ export const useRoleRedirect = () => {
       const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
       
       // Rediriger automatiquement vers l'interface correspondant au rôle
-      if (currentPath === '/' && expectedRoute) {
+      // Redirection depuis la page d'accueil OU depuis la page d'authentification
+      if ((currentPath === '/' || currentPath === '/auth') && expectedRoute) {
         console.log(`🔄 Redirection automatique vers ${expectedRoute} pour le rôle ${profile.role}`);
-        navigate(expectedRoute);
+        navigate(expectedRoute, { replace: true });
       }
     }
   }, [user, profile, loading, navigate]);

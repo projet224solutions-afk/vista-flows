@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePublicId } from '@/hooks/usePublicId';
 
 interface UserDisplayInfo {
     customId: string | null;
+    publicId: string | null; // Nouvel ID unique LLLDDDD
     displayName: string;
     fullDisplayName: string; // Format: "ABC1234 - Jean Dupont"
 }
 
 export const useUserDisplayName = () => {
     const { user, profile } = useAuth();
+    const { generatePublicId } = usePublicId();
     const [userDisplay, setUserDisplay] = useState<UserDisplayInfo>({
         customId: null,
+        publicId: null,
         displayName: 'Utilisateur',
         fullDisplayName: 'Utilisateur'
     });
@@ -25,7 +29,7 @@ export const useUserDisplayName = () => {
             }
 
             try {
-                // Récupérer l'ID personnalisé
+                // Récupérer l'ID personnalisé et le public_id
                 const { data: userIdData, error: userIdError } = await supabase
                     .from('user_ids')
                     .select('custom_id')
@@ -35,6 +39,29 @@ export const useUserDisplayName = () => {
                 let customId = null;
                 if (!userIdError && userIdData) {
                     customId = userIdData.custom_id;
+                }
+
+                // Récupérer le public_id depuis le profil
+                let publicId = (profile as any)?.public_id || null;
+
+                // Si pas de public_id, en générer un
+                if (!publicId) {
+                    console.log('🔄 Génération public_id pour utilisateur');
+                    publicId = await generatePublicId('users', false);
+                    
+                    if (publicId && user.id) {
+                        // Mettre à jour le profil avec le nouveau public_id
+                        const { error: updateError } = await supabase
+                            .from('profiles')
+                            .update({ public_id: publicId })
+                            .eq('id', user.id);
+
+                        if (updateError) {
+                            console.error('Erreur mise à jour public_id:', updateError);
+                        } else {
+                            console.log('✅ Public_id créé:', publicId);
+                        }
+                    }
                 }
 
                 // Construire le nom d'affichage
@@ -49,13 +76,15 @@ export const useUserDisplayName = () => {
                     displayName = user.email.split('@')[0];
                 }
 
-                // Format complet avec ID devant
-                const fullDisplayName = customId
-                    ? `${customId} - ${displayName}`
+                // Format complet avec public_id (prioritaire) ou customId
+                const idToDisplay = publicId || customId;
+                const fullDisplayName = idToDisplay
+                    ? `${idToDisplay} - ${displayName}`
                     : displayName;
 
                 setUserDisplay({
                     customId,
+                    publicId,
                     displayName,
                     fullDisplayName
                 });
@@ -125,6 +154,7 @@ export const useUserDisplayName = () => {
         ensureUserId,
         // Helpers pour l'affichage
         customId: userDisplay.customId,
+        publicId: userDisplay.publicId, // Nouvel ID LLLDDDD
         displayName: userDisplay.displayName,
         fullDisplayName: userDisplay.fullDisplayName
     };

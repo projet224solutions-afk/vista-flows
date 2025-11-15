@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/hooks/use-toast";
+import { useInventoryService } from "@/hooks/useInventoryService";
+import InventoryAlerts from "./InventoryAlerts";
+import InventoryHistory from "./InventoryHistory";
+import WarehouseStockManagement from "./WarehouseStockManagement";
 
 interface InventoryItem {
   id: string;
@@ -37,20 +42,34 @@ interface Warehouse {
 export default function InventoryManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const {
+    inventory,
+    alerts,
+    history,
+    stats,
+    loading,
+    updateStock,
+    markAlertAsRead,
+    resolveAlert,
+    refresh
+  } = useInventoryService();
+  
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string }>>([]);
 
   useEffect(() => {
     if (!user) return;
-    fetchData();
-  }, [user]);
+    
+    console.log('🔄 Chargement initial InventoryManagement');
+    fetchWarehouses();
+    fetchProducts();
+    refresh(); // Forcer le rechargement de l'inventaire
+  }, [user, refresh]);
 
-  const fetchData = async () => {
+  const fetchWarehouses = async () => {
     try {
-      // Get vendor ID
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
@@ -59,39 +78,41 @@ export default function InventoryManagement() {
 
       if (!vendor) return;
 
-      // Fetch inventory with product details
-      const { data: inventoryData, error: inventoryError } = await supabase
-        .from('inventory')
-        .select(`
-          *,
-          product:products(
-            name,
-            price,
-            sku
-          )
-        `)
-        .eq('products.vendor_id', vendor.id);
-
-      if (inventoryError) throw inventoryError;
-
-      // Fetch warehouses
-      const { data: warehousesData, error: warehousesError } = await supabase
+      const { data: warehousesData, error } = await supabase
         .from('warehouses')
         .select('*')
         .eq('vendor_id', vendor.id);
 
-      if (warehousesError) throw warehousesError;
-
-      setInventory(inventoryData || []);
+      if (error) throw error;
       setWarehouses(warehousesData || []);
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données d'inventaire.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error fetching warehouses:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!vendor) return;
+
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select('id, name, sku')
+        .eq('vendor_id', vendor.id)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      console.log('📦 Produits chargés dans InventoryManagement:', productsData?.length);
+      setProducts(productsData || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({ title: 'Erreur', description: 'Impossible de charger les produits', variant: 'destructive' });
     }
   };
 
@@ -110,61 +131,225 @@ export default function InventoryManagement() {
 
   const lowStockItems = inventory.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = inventory.filter(item => item.quantity === 0);
-  const totalProducts = inventory.length;
-  const totalValue = inventory.reduce((acc, item) => acc + (item.quantity * item.product.price), 0);
+  const totalProducts = inventory.length; // Nombre réel de produits dans l'inventaire
+  const totalValue = stats?.total_value || inventory.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
+  const totalCost = stats?.total_cost || 0;
+  const potentialProfit = stats?.potential_profit || 0;
 
-  const updateStock = async (itemId: string, newQuantity: number) => {
-    try {
-      const { error } = await supabase
-        .from('inventory')
-        .update({ quantity: newQuantity })
-        .eq('id', itemId);
+  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
-      if (error) throw error;
+  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
-      setInventory(prev => prev.map(item => 
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
-
-      toast({
-        title: "Stock mis à jour",
-        description: "La quantité a été mise à jour avec succès."
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le stock.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const [addOpen, setAddOpen] = useState(false);
   const [addQty, setAddQty] = useState('');
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [warehouseOpen, setWarehouseOpen] = useState(false);
+  const [newWarehouse, setNewWarehouse] = useState({ 
+    country: '', 
+    city: '', 
+    name: '', 
+    address: '',
+    manager_name: '',
+    manager_phone: '',
+    manager_email: ''
+  });
+  const [editingWarehouse, setEditingWarehouse] = useState<any>(null);
+  const [deletingWarehouse, setDeletingWarehouse] = useState<any>(null);
+  const [restockOpen, setRestockOpen] = useState(false);
+  const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
+  const [restockQty, setRestockQty] = useState('');
 
   if (loading) return <div className="p-4">Chargement de l'inventaire...</div>;
 
   const addStock = async () => {
-    if (!selectedItem) return;
+    if (!selectedProductId) {
+      toast({ title: 'Sélectionnez un produit', variant: 'destructive' });
+      return;
+    }
     const qty = parseInt(addQty || '0', 10);
     if (qty <= 0) {
       toast({ title: 'Quantité invalide', variant: 'destructive' });
       return;
     }
     try {
-      const newQty = selectedItem.quantity + qty;
-      const { error } = await supabase
-        .from('inventory')
-        .update({ quantity: newQty })
-        .eq('id', selectedItem.id);
-      if (error) throw error;
-      setInventory(prev => prev.map(i => i.id === selectedItem.id ? { ...i, quantity: newQty } : i));
+      const inventoryItem = inventory.find(item => item.product_id === selectedProductId);
+      if (inventoryItem) {
+        // Mettre à jour le stock existant
+        const newQty = inventoryItem.quantity + qty;
+        await updateStock(inventoryItem.id, newQty);
+      } else {
+        // Créer une nouvelle entrée d'inventaire
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user?.id)
+          .single();
+
+        if (vendor) {
+          const { error } = await supabase
+            .from('inventory')
+            .insert([{
+              product_id: selectedProductId,
+              quantity: qty,
+              minimum_stock: 10,
+              reserved_quantity: 0
+            }]);
+
+          if (error) throw error;
+          await refresh();
+        }
+      }
       setAddOpen(false);
       setAddQty('');
-      toast({ title: 'Stock ajouté' });
-    } catch (e: unknown) {
+      setSelectedProductId('');
+      toast({ title: '✅ Stock ajouté avec succès' });
+    } catch (e: any) {
       toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const addWarehouse = async () => {
+    // Validation des champs requis
+    if (!newWarehouse.country.trim()) {
+      toast({ title: 'Erreur', description: 'Le pays est requis', variant: 'destructive' });
+      return;
+    }
+    if (!newWarehouse.city.trim()) {
+      toast({ title: 'Erreur', description: 'La ville est requise', variant: 'destructive' });
+      return;
+    }
+    if (!newWarehouse.name.trim()) {
+      toast({ title: 'Erreur', description: 'Le nom de l\'entrepôt est requis', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!vendor) return;
+
+      const { error } = await supabase
+        .from('warehouses')
+        .insert([{
+          vendor_id: vendor.id,
+          country: newWarehouse.country.trim(),
+          city: newWarehouse.city.trim(),
+          name: newWarehouse.name.trim(),
+          address: newWarehouse.address.trim(),
+          manager_name: newWarehouse.manager_name.trim() || null,
+          manager_phone: newWarehouse.manager_phone.trim() || null,
+          manager_email: newWarehouse.manager_email.trim() || null,
+          is_active: true
+        }]);
+
+      if (error) throw error;
+
+      toast({ title: '✅ Entrepôt créé avec succès' });
+      setWarehouseOpen(false);
+      setNewWarehouse({ country: '', city: '', name: '', address: '', manager_name: '', manager_phone: '', manager_email: '' });
+      await fetchWarehouses();
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const toggleWarehouseStatus = async (warehouseId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .update({ is_active: !currentStatus })
+        .eq('id', warehouseId);
+
+      if (error) throw error;
+
+      toast({ title: '✅ Statut mis à jour' });
+      await fetchWarehouses();
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleRestock = async () => {
+    if (!restockItem) return;
+    
+    const qty = parseInt(restockQty || '0', 10);
+    if (qty <= 0) {
+      toast({ title: 'Quantité invalide', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const newQty = restockItem.quantity + qty;
+      await updateStock(restockItem.id, newQty);
+      setRestockOpen(false);
+      setRestockItem(null);
+      setRestockQty('');
+      toast({ title: '✅ Stock réapprovisionné avec succès' });
+    } catch (e: any) {
+      toast({ title: 'Erreur réapprovisionnement', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateWarehouse = async () => {
+    if (!editingWarehouse) return;
+
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .update({
+          name: editingWarehouse.name,
+          address: editingWarehouse.address,
+          country: editingWarehouse.country,
+          city: editingWarehouse.city,
+          manager_name: editingWarehouse.manager_name || null,
+          manager_phone: editingWarehouse.manager_phone || null,
+          manager_email: editingWarehouse.manager_email || null
+        })
+        .eq('id', editingWarehouse.id);
+
+      if (error) throw error;
+      
+      setEditingWarehouse(null);
+      await fetchWarehouses();
+      toast({ title: '✅ Entrepôt modifié avec succès' });
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
+    } catch (e: any) {
+      toast({ title: 'Erreur modification', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteWarehouse = async () => {
+    if (!deletingWarehouse) return;
+
+    try {
+      const { error } = await supabase
+        .from('warehouses')
+        .delete()
+        .eq('id', deletingWarehouse.id);
+
+      if (error) throw error;
+      
+      setDeletingWarehouse(null);
+      await fetchWarehouses();
+      toast({ title: '✅ Entrepôt supprimé avec succès' });
+      
+      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      window.dispatchEvent(new CustomEvent('warehouseUpdated'));
+    } catch (e: any) {
+      toast({ title: 'Erreur suppression', description: e?.message, variant: 'destructive' });
     }
   };
 
@@ -172,13 +357,13 @@ export default function InventoryManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Gestion des Stocks</h2>
-          <p className="text-muted-foreground">Gérez votre inventaire et optimisez vos approvisionnements</p>
+          <h2 className="text-2xl font-bold">📦 Gestion Intelligente des Stocks</h2>
+          <p className="text-muted-foreground">Inventaire connecté et synchronisé en temps réel</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={!selectedItem}>
+              <Button variant="outline">
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter stock
               </Button>
@@ -187,11 +372,35 @@ export default function InventoryManagement() {
               <DialogHeader>
                 <DialogTitle>Ajouter du stock</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
-                <div className="text-sm text-muted-foreground">
-                  Produit: <span className="font-medium">{selectedItem?.product.name}</span>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Produit</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md bg-background"
+                  >
+                    <option value="">Sélectionner un produit</option>
+                    {products.map((product) => {
+                      const inventoryItem = inventory.find(item => item.product_id === product.id);
+                      return (
+                        <option key={product.id} value={product.id}>
+                          {product.name} {product.sku ? `(${product.sku})` : ''} - Stock: {inventoryItem?.quantity || 0}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
-                <Input type="number" placeholder="Quantité" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                  <Input 
+                    type="number" 
+                    placeholder="Quantité" 
+                    value={addQty} 
+                    onChange={(e) => setAddQty(e.target.value)}
+                    min="1"
+                  />
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
                   <Button onClick={addStock}>Ajouter</Button>
@@ -199,15 +408,202 @@ export default function InventoryManagement() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
-            <Warehouse className="w-4 h-4 mr-2" />
-            Entrepôts
-          </Button>
+          <Dialog open={warehouseOpen} onOpenChange={setWarehouseOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Warehouse className="w-4 h-4 mr-2" />
+                Entrepôts
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Gestion des entrepôts</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <h3 className="font-medium">Ajouter un entrepôt</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Input
+                      placeholder="Pays *"
+                      value={newWarehouse.country}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, country: e.target.value })}
+                      maxLength={100}
+                      required
+                    />
+                    <Input
+                      placeholder="Ville *"
+                      value={newWarehouse.city}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, city: e.target.value })}
+                      maxLength={100}
+                      required
+                    />
+                    <Input
+                      placeholder="Nom de l'entrepôt *"
+                      value={newWarehouse.name}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
+                      maxLength={100}
+                      required
+                    />
+                    <Input
+                      placeholder="Adresse"
+                      value={newWarehouse.address}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, address: e.target.value })}
+                      maxLength={255}
+                    />
+                    <Input
+                      placeholder="Nom du responsable"
+                      value={newWarehouse.manager_name}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_name: e.target.value })}
+                      maxLength={100}
+                    />
+                    <Input
+                      placeholder="Téléphone du responsable"
+                      value={newWarehouse.manager_phone}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_phone: e.target.value })}
+                      maxLength={20}
+                    />
+                    <Input
+                      placeholder="Email du responsable"
+                      type="email"
+                      value={newWarehouse.manager_email}
+                      onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_email: e.target.value })}
+                      maxLength={100}
+                    />
+                  </div>
+                  <Button onClick={addWarehouse} className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Créer l'entrepôt
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="font-medium mb-3">Entrepôts existants ({warehouses.length})</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                     {warehouses.map((warehouse) => (
+                      <div key={warehouse.id} className="space-y-2 p-3 border rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{warehouse.name}</h4>
+                              <Badge variant={warehouse.is_active ? "default" : "secondary"}>
+                                {warehouse.is_active ? "Actif" : "Inactif"}
+                              </Badge>
+                            </div>
+                            {(warehouse as any).city && (warehouse as any).country && (
+                              <p className="text-sm text-muted-foreground">
+                                {(warehouse as any).city}, {(warehouse as any).country}
+                              </p>
+                            )}
+                            {warehouse.address && (
+                              <p className="text-sm text-muted-foreground">{warehouse.address}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingWarehouse(warehouse)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeletingWarehouse(warehouse)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleWarehouseStatus(warehouse.id, warehouse.is_active)}
+                            >
+                              {warehouse.is_active ? 'Désactiver' : 'Activer'}
+                            </Button>
+                          </div>
+                        </div>
+                        {((warehouse as any).manager_name || (warehouse as any).manager_phone || (warehouse as any).manager_email) && (
+                          <div className="border-t pt-2 mt-2">
+                            <p className="text-sm font-medium mb-1">Responsable:</p>
+                            {(warehouse as any).manager_name && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_name}</p>
+                            )}
+                            {(warehouse as any).manager_phone && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_phone}</p>
+                            )}
+                            {(warehouse as any).manager_email && (
+                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_email}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {warehouses.length === 0 && (
+                      <p className="text-center text-muted-foreground py-4">
+                        Aucun entrepôt configuré
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Dialog Réapprovisionnement */}
+      <Dialog open={restockOpen} onOpenChange={setRestockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Réapprovisionner le stock</DialogTitle>
+          </DialogHeader>
+          {restockItem && (
+            <div className="space-y-4">
+              <div className="p-4 bg-accent/50 rounded-lg">
+                <h4 className="font-medium mb-2">{restockItem.product.name}</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Stock actuel</p>
+                    <p className="font-medium">{restockItem.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Seuil minimum</p>
+                    <p className="font-medium">{restockItem.minimum_stock}</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                <Input 
+                  type="number" 
+                  placeholder="Quantité" 
+                  value={restockQty} 
+                  onChange={(e) => setRestockQty(e.target.value)}
+                  min="1"
+                />
+                {restockQty && parseInt(restockQty) > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Nouveau stock: {restockItem.quantity + parseInt(restockQty)} unités
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => {
+                  setRestockOpen(false);
+                  setRestockItem(null);
+                  setRestockQty('');
+                }}>
+                  Annuler
+                </Button>
+                <Button onClick={handleRestock}>Confirmer</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Statistiques améliorées */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
@@ -235,7 +631,7 @@ export default function InventoryManagement() {
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-red-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Rupture de stock</p>
+                <p className="text-sm text-muted-foreground">Rupture</p>
                 <p className="text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
               </div>
             </div>
@@ -244,71 +640,78 @@ export default function InventoryManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-green-600 rounded-full" />
+              <DollarSign className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Valeur inventaire</p>
-                <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-sm text-muted-foreground">Valeur stock</p>
+                <p className="text-xl font-bold">{totalValue.toLocaleString()} GNF</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-purple-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Profit potentiel</p>
+                <p className="text-xl font-bold">{potentialProfit.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alertes urgentes */}
-      {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <AlertTriangle className="w-5 h-5" />
-              Alertes stock
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {outOfStockItems.length > 0 && (
-                <p className="text-red-600 font-medium">
-                  ⚠️ {outOfStockItems.length} produit(s) en rupture de stock
-                </p>
-              )}
-              {lowStockItems.length > 0 && (
-                <p className="text-orange-600 font-medium">
-                  📉 {lowStockItems.length} produit(s) avec un stock faible
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs pour organiser le contenu */}
+      <Tabs defaultValue="inventory" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="inventory">
+            <Package className="w-4 h-4 mr-2" />
+            Inventaire
+          </TabsTrigger>
+          <TabsTrigger value="warehouse">
+            <Warehouse className="w-4 h-4 mr-2" />
+            Entrepôts
+          </TabsTrigger>
+          <TabsTrigger value="alerts">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Alertes ({alerts.length})
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="w-4 h-4 mr-2" />
+            Historique
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filtres */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un produit..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">Tous les produits</option>
-              <option value="low">Stock faible</option>
-              <option value="out">Rupture de stock</option>
-            </select>
-            <Filter className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="inventory" className="space-y-4">
+          {/* Filtres */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex gap-4 items-center">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher un produit..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <select
+                  value={stockFilter}
+                  onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
+                  className="px-3 py-2 border rounded-md"
+                >
+                  <option value="all">Tous les produits</option>
+                  <option value="low">Stock faible</option>
+                  <option value="out">Rupture de stock</option>
+                </select>
+                <Filter className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Liste d'inventaire */}
-      <Card>
+          {/* Liste d'inventaire */}
+          <Card>
         <CardHeader>
           <CardTitle>Inventaire détaillé</CardTitle>
         </CardHeader>
@@ -321,7 +724,7 @@ export default function InventoryManagement() {
                 : 100;
               
               return (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg" onClick={() => setSelectedItem(item)}>
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-medium">{item.product.name}</h4>
@@ -390,7 +793,13 @@ export default function InventoryManagement() {
                       <Edit className="w-4 h-4" />
                     </Button>
                     {item.quantity <= item.minimum_stock && (
-                      <Button size="sm">
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          setRestockItem(item);
+                          setRestockOpen(true);
+                        }}
+                      >
                         Réapprovisionner
                       </Button>
                     )}
@@ -412,9 +821,9 @@ export default function InventoryManagement() {
             </div>
           )}
         </CardContent>
-      </Card>
+          </Card>
 
-      {/* Entrepôts */}
+          {/* Entrepôts */}
       {warehouses.length > 0 && (
         <Card>
           <CardHeader>
@@ -440,8 +849,113 @@ export default function InventoryManagement() {
               ))}
             </div>
           </CardContent>
-        </Card>
-      )}
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="warehouse">
+          <WarehouseStockManagement />
+        </TabsContent>
+
+        <TabsContent value="alerts">
+          <InventoryAlerts 
+            alerts={alerts}
+            onMarkAsRead={markAlertAsRead}
+            onResolve={resolveAlert}
+          />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <InventoryHistory history={history} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit Warehouse Dialog */}
+      <Dialog open={!!editingWarehouse} onOpenChange={() => setEditingWarehouse(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier l'entrepôt</DialogTitle>
+          </DialogHeader>
+          {editingWarehouse && (
+            <div className="space-y-4">
+              <Input
+                placeholder="Pays *"
+                value={(editingWarehouse as any).country || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, country: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Ville *"
+                value={(editingWarehouse as any).city || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, city: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Nom de l'entrepôt *"
+                value={editingWarehouse.name || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, name: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Adresse"
+                value={editingWarehouse.address || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, address: e.target.value })}
+                maxLength={255}
+              />
+              <Input
+                placeholder="Nom du responsable"
+                value={(editingWarehouse as any).manager_name || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_name: e.target.value })}
+                maxLength={100}
+              />
+              <Input
+                placeholder="Téléphone du responsable"
+                value={(editingWarehouse as any).manager_phone || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_phone: e.target.value })}
+                maxLength={20}
+              />
+              <Input
+                placeholder="Email du responsable"
+                type="email"
+                value={(editingWarehouse as any).manager_email || ""}
+                onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_email: e.target.value })}
+                maxLength={100}
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setEditingWarehouse(null)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleUpdateWarehouse}>
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Warehouse Dialog */}
+      <Dialog open={!!deletingWarehouse} onOpenChange={() => setDeletingWarehouse(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer l'entrepôt</DialogTitle>
+          </DialogHeader>
+          {deletingWarehouse && (
+            <div className="space-y-4">
+              <p>Êtes-vous sûr de vouloir supprimer l'entrepôt <strong>{deletingWarehouse.name}</strong> ?</p>
+              <p className="text-sm text-muted-foreground">Cette action est irréversible.</p>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setDeletingWarehouse(null)}>
+                  Annuler
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteWarehouse}>
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

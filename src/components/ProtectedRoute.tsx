@@ -12,7 +12,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Vérification d'authentification réactivée
+  // 🛡️ SÉCURISÉ: Plus d'auth locale - utilise uniquement Supabase
+  // L'authentification admin doit passer par la base de données user_roles
+
+  // Vérification d'authentification sécurisée
   useEffect(() => {
     if (!loading && !user) {
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
@@ -20,7 +23,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Attendre que le profil soit chargé ou que le chargement soit terminé
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">

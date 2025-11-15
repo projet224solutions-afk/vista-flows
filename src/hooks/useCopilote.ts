@@ -21,6 +21,7 @@ interface UseCopiloteReturn {
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;
   executeBusinessAction: (action: BusinessAction) => Promise<unknown>;
+  analyzeSystem: () => Promise<void>;
   
   // Utilitaires
   getWalletBalance: () => Promise<{ balance: number; currency: string }>;
@@ -183,6 +184,44 @@ export function useCopilote(): UseCopiloteReturn {
     }
   }, []);
 
+  const analyzeSystem = useCallback(async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    setIsTyping(true);
+
+    try {
+      const response = await copiloteService.analyzeSystem();
+      
+      const assistantMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: response.reply,
+        timestamp: response.timestamp
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setUserContext(response.user_context);
+      
+      toast.success('Analyse système terminée');
+    } catch (error) {
+      console.error('Erreur lors de l\'analyse système:', error);
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Désolé, je n\'ai pas pu effectuer l\'analyse système. Veuillez réessayer.',
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+      toast.error('Erreur lors de l\'analyse système');
+    } finally {
+      setIsLoading(false);
+      setIsTyping(false);
+    }
+  }, [isLoading]);
+
   return {
     // État
     messages,
@@ -196,6 +235,7 @@ export function useCopilote(): UseCopiloteReturn {
     clearHistory,
     loadHistory,
     executeBusinessAction,
+    analyzeSystem,
     
     // Utilitaires
     getWalletBalance,

@@ -22,6 +22,8 @@ interface Product {
   inStock: boolean;
   seller: string;
   brand: string;
+  vendorId?: string;
+  vendorUserId?: string;
   isHot?: boolean;
   isNew?: boolean;
   isFreeShipping?: boolean;
@@ -49,6 +51,7 @@ export function useClientData() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,16 +65,19 @@ export function useClientData() {
           id,
           name,
           price,
-          image_url,
+          images,
+          category_id,
+          vendor_id,
+          stock_quantity,
+          created_at,
+          is_active,
+          is_hot,
+          free_shipping,
           rating,
           reviews_count,
-          category,
-          discount,
-          in_stock,
-          created_at,
-          vendors!inner(business_name, brand)
+          vendors!inner(business_name, user_id)
         `)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -84,18 +90,18 @@ export function useClientData() {
         id: product.id,
         name: product.name,
         price: product.price,
-        originalPrice: product.discount ? product.price / (1 - product.discount / 100) : undefined,
-        image: product.image_url || 'https://via.placeholder.com/400x300?text=Produit',
-        rating: product.rating || 4.5,
+        image: (Array.isArray(product.images) && product.images.length > 0) ? product.images[0] : '/placeholder.svg',
+        rating: product.rating || 0,
         reviews: product.reviews_count || 0,
-        category: product.category || 'general',
-        discount: product.discount,
-        inStock: product.in_stock,
-        seller: (product.vendors as unknown)?.business_name || (product.vendors as unknown)?.brand || 'Vendeur',
-        brand: (product.vendors as unknown)?.brand || (product.vendors as unknown)?.business_name || 'Marque',
-        isHot: Math.random() > 0.7,
+        category: product.category_id || 'general',
+        inStock: (product.stock_quantity || 0) > 0,
+        seller: (product.vendors as any)?.business_name || 'Vendeur',
+        brand: (product.vendors as any)?.business_name || 'Marque',
+        vendorId: product.vendor_id,
+        vendorUserId: (product.vendors as any)?.user_id,
+        isHot: product.is_hot || false,
         isNew: new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        isFreeShipping: Math.random() > 0.5
+        isFreeShipping: product.free_shipping || false
       })) || [];
 
       setProducts(formattedProducts);
@@ -113,13 +119,7 @@ export function useClientData() {
     try {
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
-        .select(`
-          id,
-          name,
-          icon,
-          color,
-          products_count
-        `)
+        .select('id, name, description, image_url')
         .eq('is_active', true)
         .order('name');
 
@@ -128,15 +128,27 @@ export function useClientData() {
         throw categoriesError;
       }
 
-      const formattedCategories: Category[] = categoriesData?.map(category => ({
-        id: category.id,
-        name: category.name,
-        icon: null, // TODO: Implémenter vraies icônes
-        color: category.color || 'bg-blue-500',
-        itemCount: category.products_count || 0
-      })) || [];
+      // Compter les produits par catégorie
+      const categoriesWithCount = await Promise.all(
+        (categoriesData || []).map(async (category) => {
+           const { count } = await supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .eq('category_id', category.id)
+            .eq('is_active', true);
 
-      setCategories(formattedCategories);
+          return {
+            id: category.id,
+            name: category.name,
+            icon: null,
+            color: 'bg-blue-500',
+            itemCount: count || 0
+          };
+        })
+      );
+
+      setCategories(categoriesWithCount);
+
     } catch (error) {
       console.error('❌ Erreur chargement catégories:', error);
       setError('Erreur lors du chargement des catégories');
@@ -146,6 +158,19 @@ export function useClientData() {
   // Charger les commandes de l'utilisateur
   const loadOrders = useCallback(async (userId: string) => {
     try {
+      // Récupérer d'abord le customer_id à partir du user_id
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!customerData) {
+        console.log('❌ Aucun profil client trouvé');
+        return;
+      }
+
+      // Charger uniquement les commandes en ligne (source='online')
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -153,12 +178,12 @@ export function useClientData() {
           total_amount,
           status,
           created_at,
-          order_items!inner(
-            products!inner(name),
-            vendors!inner(business_name)
-          )
+          vendor_id,
+          order_number,
+          source
         `)
-        .eq('user_id', userId)
+        .eq('customer_id', customerData.id)
+        .eq('source', 'online')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -167,20 +192,37 @@ export function useClientData() {
         throw ordersError;
       }
 
-      const formattedOrders: Order[] = ordersData?.map(order => {
-        const firstItem = order.order_items?.[0];
-        const productData = firstItem?.products as unknown;
-        const vendorData = firstItem?.vendors as unknown;
+      // Récupérer les détails des commandes avec les items
+      const formattedOrders: Order[] = await Promise.all(
+        (ordersData || []).map(async (order) => {
+          // Récupérer les items de la commande
+          const { data: items } = await supabase
+            .from('order_items')
+            .select(`
+              product_id,
+              products(name)
+            `)
+            .eq('order_id', order.id)
+            .limit(1)
+            .single();
 
-        return {
-          id: order.id,
-          productName: productData?.name || 'Produit',
-          status: order.status,
-          total: order.total_amount,
-          date: new Date(order.created_at).toISOString().split('T')[0],
-          seller: vendorData?.business_name || 'Vendeur'
-        };
-      }) || [];
+          // Récupérer le vendeur
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('business_name')
+            .eq('id', order.vendor_id)
+            .single();
+
+          return {
+            id: order.id,
+            productName: (items?.products as any)?.name || 'Commande',
+            status: order.status,
+            total: order.total_amount,
+            date: new Date(order.created_at).toLocaleDateString('fr-FR'),
+            seller: vendor?.business_name || 'Vendeur'
+          };
+        })
+      );
 
       setOrders(formattedOrders);
     } catch (error) {
@@ -213,6 +255,32 @@ export function useClientData() {
     toast.success('Panier vidé');
   }, []);
 
+  // Gérer les favoris
+  const toggleFavorite = useCallback((productId: string) => {
+    setFavorites(prev => {
+      const isFavorite = prev.includes(productId);
+      if (isFavorite) {
+        toast.success('Retiré des favoris');
+        return prev.filter(id => id !== productId);
+      } else {
+        toast.success('Ajouté aux favoris');
+        return [...prev, productId];
+      }
+    });
+  }, []);
+
+  // Rechercher des produits
+  const searchProducts = useCallback(async (query: string) => {
+    if (!query.trim()) return products;
+    
+    const lowerQuery = query.toLowerCase();
+    return products.filter(product => 
+      product.name.toLowerCase().includes(lowerQuery) ||
+      product.brand.toLowerCase().includes(lowerQuery) ||
+      product.category.toLowerCase().includes(lowerQuery)
+    );
+  }, [products]);
+
   // Créer une commande
   const createOrder = useCallback(async (userId: string) => {
     if (cartItems.length === 0) {
@@ -221,35 +289,59 @@ export function useClientData() {
     }
 
     try {
-      const totalAmount = cartItems.reduce((sum, item) => sum + item.price, 0);
+      // Grouper les articles par vendeur
+      const itemsByVendor = cartItems.reduce((acc, item) => {
+        const vendorKey = item.vendorId || 'unknown';
+        if (!acc[vendorKey]) {
+          acc[vendorKey] = [];
+        }
+        acc[vendorKey].push(item);
+        return acc;
+      }, {} as Record<string, Product[]>);
 
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: userId,
-          total_amount: totalAmount,
-          status: 'pending',
-          order_items: cartItems.map(item => ({
+      // Créer une commande pour chaque vendeur avec la nouvelle fonction
+      for (const [vendorId, items] of Object.entries(itemsByVendor)) {
+        if (vendorId === 'unknown') {
+          console.error('❌ Produit sans vendeur:', items);
+          continue;
+        }
+
+        const vendorTotal = items.reduce((sum, item) => sum + item.price, 0);
+
+        // Utiliser la fonction PostgreSQL create_online_order
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: userId,
+          p_vendor_id: vendorId,
+          p_items: items.map(item => ({
             product_id: item.id,
             quantity: 1,
             price: item.price
-          }))
-        })
-        .select()
-        .single();
+          })),
+          p_total_amount: vendorTotal,
+          p_payment_method: 'cash',
+          p_shipping_address: {
+            address: 'Adresse par défaut',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
 
-      if (orderError) {
-        throw orderError;
+        if (orderError || !orderResult || orderResult.length === 0) {
+          console.error('❌ Erreur création commande:', orderError);
+          toast.error('Erreur lors de la création de la commande');
+          continue;
+        }
+
+        console.log('✅ Commande créée:', orderResult[0].order_number);
       }
 
       // Vider le panier après commande
       clearCart();
-
+      
       // Recharger les commandes
       await loadOrders(userId);
-
+      
       toast.success('Commande créée avec succès');
-      return orderData;
     } catch (error) {
       console.error('❌ Erreur création commande:', error);
       toast.error('Erreur lors de la création de la commande');
@@ -282,17 +374,62 @@ export function useClientData() {
     loadAllData();
   }, [loadAllData]);
 
+  // Contacter un vendeur via edge function
+  const contactVendor = useCallback(async (vendorUserId: string, vendorName: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Veuillez vous connecter pour contacter le vendeur');
+        return null;
+      }
+
+      // Utiliser l'edge function Supabase
+      const { data, error } = await supabase.functions.invoke('create-conversation', {
+        body: {
+          participants: [session.user.id, vendorUserId],
+          type: 'private',
+          name: `Discussion avec ${vendorName}`
+        }
+      });
+
+      if (error) {
+        console.error('❌ Erreur création conversation:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de la création de la conversation');
+      }
+
+      if (data.existing) {
+        toast.success('Conversation trouvée');
+      } else {
+        toast.success('Conversation créée avec succès');
+      }
+      
+      return data.conversation.id;
+    } catch (error) {
+      console.error('❌ Erreur création conversation:', error);
+      toast.error('Erreur lors de la création de la conversation');
+      return null;
+    }
+  }, []);
+
   return {
     products,
     categories,
     orders,
     cartItems,
+    favorites,
     loading,
     error,
     addToCart,
     removeFromCart,
     clearCart,
     createOrder,
+    toggleFavorite,
+    searchProducts,
+    contactVendor,
     loadAllData,
     refetch: loadAllData
   };

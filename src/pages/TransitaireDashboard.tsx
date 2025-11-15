@@ -5,7 +5,10 @@ import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "l
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -57,16 +60,22 @@ export default function TransitaireDashboard() {
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
               <p className="text-muted-foreground">
                 Transport international - {profile?.first_name || user?.email}
               </p>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
-              Se déconnecter
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="hidden lg:block">
+                <WalletBalanceWidget className="min-w-[260px]" />
+              </div>
+              <QuickTransferButton variant="outline" size="sm" />
+              <Button variant="outline" onClick={handleSignOut}>
+                Se déconnecter
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -224,10 +233,13 @@ export default function TransitaireDashboard() {
 
         <TabsContent value="communication" className="space-y-6">
           <div className="px-4 py-6">
-            <SimpleCommunicationInterface />
+            <RealCommunicationInterface />
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

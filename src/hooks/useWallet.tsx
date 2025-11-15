@@ -50,39 +50,73 @@ export const useWallet = (userId?: string) => {
 
   // Charger le wallet de l'utilisateur
   const loadWallet = useCallback(async (userId: string) => {
+    if (!userId) {
+      console.log('⚠️ Pas de userId fourni');
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
+      
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (walletError) {
-        if (walletError.code === 'PGRST116') {
-          // Créer un wallet s'il n'existe pas
-          const { data: newWallet, error: createError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: userId,
-              balance: 0,
-              currency: 'GNF'
-            })
-            .select()
-            .single();
+        console.error('❌ Erreur requête wallet:', walletError);
+        throw walletError;
+      }
 
-          if (createError) throw createError;
-          setWallet(newWallet);
-        } else {
-          throw walletError;
+      if (!walletData) {
+        // Initialiser le wallet via RPC
+        console.log('⚠️ Wallet non trouvé pour:', userId);
+        console.log('📝 Initialisation via RPC...');
+        
+        try {
+          const { data: initResult, error: rpcError } = await supabase
+            .rpc('initialize_user_wallet', { p_user_id: userId });
+          
+          if (rpcError) {
+            console.error('❌ Erreur RPC:', rpcError);
+            throw rpcError;
+          }
+          
+          if (initResult) {
+            const result = initResult as any;
+            if (result.success) {
+              console.log('✅ Wallet initialisé:', result);
+              // Recharger le wallet
+              const { data: newWalletData } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', userId)
+                .maybeSingle();
+              
+              setWallet(newWalletData);
+            } else {
+              setWallet(null);
+            }
+          } else {
+            setWallet(null);
+          }
+        } catch (initError) {
+          console.error('❌ Erreur appel fonction initialisation:', initError);
+          setWallet(null);
         }
       } else {
+        console.log('✅ Wallet chargé:', walletData);
         setWallet(walletData);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur chargement wallet:', error);
-      setError('Erreur lors du chargement du portefeuille');
-      toast.error('Erreur lors du chargement du portefeuille');
+      // Ne pas afficher de toast si c'est juste qu'il n'y a pas de userId
+      if (userId) {
+        setError('Erreur lors du chargement du portefeuille');
+        toast.error('Erreur lors du chargement du portefeuille');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,24 +143,13 @@ export const useWallet = (userId?: string) => {
     }
   }, []);
 
-  // Charger les transactions
+  // Charger les transactions depuis enhanced_transactions
   const loadTransactions = useCallback(async (userId: string) => {
     try {
-      // Récupérer l'id du wallet de l'utilisateur
-      const { data: walletRow, error: walletErr } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
-      if (walletErr || !walletRow?.id) {
-        throw walletErr || new Error('Wallet introuvable');
-      }
-
       const { data: transactionsData, error: transactionsError } = await supabase
-        .from('wallet_transactions')
+        .from('enhanced_transactions')
         .select('*')
-        .or(`sender_wallet_id.eq.${walletRow.id},receiver_wallet_id.eq.${walletRow.id}`)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -135,7 +158,7 @@ export const useWallet = (userId?: string) => {
         throw transactionsError;
       }
 
-      // Le schéma wallet_transactions diffère de l'interface locale; on caste pour affichage
+      console.log('✅ Transactions chargées:', transactionsData);
       setTransactions((transactionsData as unknown) as Transaction[]);
     } catch (error) {
       console.error('❌ Erreur chargement transactions:', error);
@@ -150,22 +173,13 @@ export const useWallet = (userId?: string) => {
 
     const setupRealtime = async () => {
       try {
-        // Récupérer l'id de wallet pour filtrer les événements
-        const { data: walletRow } = await supabase
-          .from('wallets')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
-
-        const walletId = walletRow?.id;
-
         channel = supabase
           .channel(`wallet_${userId}`)
           .on('postgres_changes', {
             event: '*',
             schema: 'public',
-            table: 'wallet_transactions',
-            filter: walletId ? `or(sender_wallet_id.eq.${walletId},receiver_wallet_id.eq.${walletId})` : undefined
+            table: 'enhanced_transactions',
+            filter: `or(sender_id.eq.${userId},receiver_id.eq.${userId})`
           }, () => {
             // Recharger les transactions
             loadTransactions(userId);
@@ -200,7 +214,9 @@ export const useWallet = (userId?: string) => {
   // Créer une carte virtuelle
   const createVirtualCard = useCallback(async (userId: string) => {
     try {
-      const cardNumber = Math.random().toString().slice(2, 18);
+      // Générer un numéro de carte au format "4*** **** **** 1234" (19 caractères max)
+      const last4Digits = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+      const cardNumber = `4*** **** **** ${last4Digits}`;
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 3);
       
@@ -209,8 +225,11 @@ export const useWallet = (userId?: string) => {
         .insert({
           user_id: userId,
           card_number: cardNumber,
-          expiry_date: expiryDate.toISOString().split('T')[0],
+          holder_name: 'Utilisateur 224',
+          expiry_date: expiryDate.toISOString(),
           cvv: String(Math.floor(Math.random() * 900) + 100),
+          daily_limit: 500000,
+          monthly_limit: 2000000,
           status: 'active'
         })
         .select()

@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useCommunicationData } from '@/hooks/useCommunicationData';
 import { useAgora } from '@/hooks/useAgora';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import AgoraVideoCall from './AgoraVideoCall';
 import AgoraAudioCall from './AgoraAudioCall';
@@ -80,15 +81,46 @@ export default function RealCommunicationInterface() {
 
     // Initialiser Agora au montage
     useEffect(() => {
-        if (user?.id && !isInitialized) {
-            const agoraConfig = {
-                appId: import.meta.env.VITE_AGORA_APP_ID || '',
-                appCertificate: import.meta.env.VITE_AGORA_APP_CERTIFICATE || ''
-            };
+        const initAgora = async () => {
+            try {
+                console.log('Initialisation Agora via Edge Function...');
+                
+                const { data, error } = await supabase.functions.invoke('agora-token', {
+                    body: { 
+                        channel: 'init',
+                        uid: user?.id || 'temp',
+                        role: 'publisher'
+                    }
+                });
 
-            initializeAgora(agoraConfig);
+                if (error) {
+                    console.error('Erreur récupération config Agora:', error);
+                    throw error;
+                }
+
+                console.log('Config Agora récupérée:', { appId: data.appId });
+
+                if (data.appId && !isInitialized) {
+                    await initializeAgora({
+                        appId: data.appId,
+                        appCertificate: '', // Non nécessaire côté client
+                        tempToken: data.token
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur initialisation Agora:', error);
+                toast({
+                    title: "Erreur Agora",
+                    description: "Impossible d'initialiser la communication. Vérifiez la configuration.",
+                    variant: "destructive"
+                });
+            }
+        };
+
+        if (!isInitialized && user?.id) {
+            initAgora();
         }
-    }, [user?.id, isInitialized, initializeAgora]);
+    }, [user?.id, isInitialized, initializeAgora, toast]);
 
     // Charger les vraies données
     useEffect(() => {

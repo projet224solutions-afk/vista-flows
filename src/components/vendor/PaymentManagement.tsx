@@ -2,56 +2,79 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { toast } from 'sonner';
-import { initiateEscrow, releaseEscrow, refundEscrow } from '@/services/EscrowClient';
-import { usePaymentSchedules, useCustomerCredits } from "@/hooks/useVendorData";
+import { usePaymentLinks } from "@/hooks/usePaymentLinks";
 import { CreditCard, AlertTriangle, CheckCircle, Clock, Filter, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import EscrowManagementDialog from "./EscrowManagementDialog";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
+  success: 'bg-green-100 text-green-800',
   overdue: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-800'
+  expired: 'bg-gray-100 text-gray-800',
+  cancelled: 'bg-gray-100 text-gray-800',
+  failed: 'bg-red-100 text-red-800'
 };
 
 const statusLabels = {
   pending: 'En attente',
-  paid: 'Payé',
+  success: 'Payé',
   overdue: 'En retard',
-  cancelled: 'Annulé'
+  expired: 'Expiré',
+  cancelled: 'Annulé',
+  failed: 'Échoué'
 };
 
 export default function PaymentManagement() {
-  const { schedules, loading: schedulesLoading, error: schedulesError } = usePaymentSchedules();
-  const { credits, loading: creditsLoading, error: creditsError } = useCustomerCredits();
+  const { paymentLinks, loading, stats } = usePaymentLinks();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
 
-  const filteredSchedules = schedules.filter(schedule => {
-    const matchesStatus = filterStatus === 'all' || schedule.status === filterStatus;
+  // Calculer les statuts dynamiques basés sur le temps
+  const linksWithStatus = useMemo(() => {
+    return paymentLinks.map(link => {
+      if (link.status === 'pending') {
+        const createdAt = new Date(link.created_at);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+        
+        // Si plus de 24h, considérer comme en retard
+        if (hoursDiff > 24) {
+          return { ...link, displayStatus: 'overdue' as const };
+        }
+      }
+      return { ...link, displayStatus: link.status };
+    });
+  }, [paymentLinks]);
+
+  const filteredLinks = linksWithStatus.filter(link => {
+    const matchesStatus = filterStatus === 'all' || link.displayStatus === filterStatus;
     const matchesSearch = !searchTerm || 
-      schedule.order?.order_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      link.produit?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.payment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.client?.name?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  const overduepayments = schedules.filter(s => s.status === 'overdue');
-  const pendingPayments = schedules.filter(s => s.status === 'pending');
-  const totalOverdueAmount = overduepayments.reduce((acc, p) => acc + p.amount, 0);
-  const totalPendingAmount = pendingPayments.reduce((acc, p) => acc + p.amount, 0);
-  const totalCreditUsed = credits.reduce((acc, c) => acc + c.current_balance, 0);
-  const totalCreditLimit = credits.reduce((acc, c) => acc + c.credit_limit, 0);
+  const overdueCount = linksWithStatus.filter(l => l.displayStatus === 'overdue').length;
+  const pendingCount = linksWithStatus.filter(l => l.displayStatus === 'pending').length;
+  const successCount = linksWithStatus.filter(l => l.displayStatus === 'success').length;
+  const totalRevenue = linksWithStatus
+    .filter(l => l.displayStatus === 'success')
+    .reduce((sum, l) => sum + l.total, 0); // Utiliser total (montant après réduction)
 
-  if (schedulesLoading || creditsLoading) {
+  const overdueAmount = linksWithStatus
+    .filter(l => l.displayStatus === 'overdue')
+    .reduce((sum, l) => sum + l.total, 0);
+  const pendingAmount = linksWithStatus
+    .filter(l => l.displayStatus === 'pending')
+    .reduce((sum, l) => sum + l.total, 0);
+
+  if (loading) {
     return <div className="p-4">Chargement des données de paiement...</div>;
-  }
-
-  if (schedulesError || creditsError) {
-    return (
-      <div className="p-4 text-red-600">
-        Erreur: {schedulesError || creditsError}
-      </div>
-    );
   }
 
   return (
@@ -59,14 +82,14 @@ export default function PaymentManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Gestion des Paiements</h2>
-          <p className="text-muted-foreground">Suivez les paiements, crédits clients et échéances</p>
+          <p className="text-muted-foreground">Suivez vos liens de paiement et leur statut</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Exporter
           </Button>
-          <Button onClick={() => toast.info('Utilisez les actions escrow sur les commandes')}>Escrow</Button>
+          <Button onClick={() => setEscrowDialogOpen(true)}>Escrow</Button>
         </div>
       </div>
 
@@ -78,8 +101,8 @@ export default function PaymentManagement() {
               <AlertTriangle className="w-5 h-5 text-red-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Paiements en retard</p>
-                <p className="text-2xl font-bold">{overduepayments.length}</p>
-                <p className="text-sm text-red-600">{totalOverdueAmount.toLocaleString()} GNF</p>
+                <p className="text-2xl font-bold">{overdueCount}</p>
+                <p className="text-sm text-red-600">{overdueAmount.toFixed(0)} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -90,20 +113,8 @@ export default function PaymentManagement() {
               <Clock className="w-5 h-5 text-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">En attente</p>
-                <p className="text-2xl font-bold">{pendingPayments.length}</p>
-                <p className="text-sm text-orange-600">{totalPendingAmount.toLocaleString()} GNF</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Crédit utilisé</p>
-                <p className="text-2xl font-bold">{totalCreditUsed.toLocaleString()}</p>
-                <p className="text-sm text-blue-600">sur {totalCreditLimit.toLocaleString()} GNF</p>
+                <p className="text-2xl font-bold">{pendingCount}</p>
+                <p className="text-sm text-orange-600">{pendingAmount.toFixed(0)} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -113,9 +124,21 @@ export default function PaymentManagement() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Clients avec crédit</p>
-                <p className="text-2xl font-bold">{credits.length}</p>
-                <p className="text-sm text-green-600">Actifs</p>
+                <p className="text-sm text-muted-foreground">Paiements réussis</p>
+                <p className="text-2xl font-bold">{successCount}</p>
+                <p className="text-sm text-green-600">Total payé</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Revenu total</p>
+                <p className="text-2xl font-bold">{totalRevenue.toFixed(0)}</p>
+                <p className="text-sm text-blue-600">GNF</p>
               </div>
             </div>
           </CardContent>
@@ -127,7 +150,7 @@ export default function PaymentManagement() {
         <CardContent className="p-4">
           <div className="flex gap-4 items-center">
             <Input
-              placeholder="Rechercher par numéro de commande..."
+              placeholder="Rechercher un paiement..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -140,7 +163,8 @@ export default function PaymentManagement() {
               <option value="all">Tous les statuts</option>
               <option value="pending">En attente</option>
               <option value="overdue">En retard</option>
-              <option value="paid">Payés</option>
+              <option value="success">Payés</option>
+              <option value="expired">Expirés</option>
               <option value="cancelled">Annulés</option>
             </select>
             <Filter className="w-4 h-4 text-muted-foreground" />
@@ -148,134 +172,75 @@ export default function PaymentManagement() {
         </CardContent>
       </Card>
 
-      {/* Échéances de paiement */}
+      {/* Liste des paiements */}
       <Card>
         <CardHeader>
-          <CardTitle>Échéances de paiement</CardTitle>
+          <CardTitle>Liens de paiement</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredSchedules.map((schedule) => (
-              <div key={schedule.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium">
-                      {schedule.order?.order_number || 'N/A'}
-                    </h4>
-                    <Badge className={statusColors[schedule.status]}>
-                      {statusLabels[schedule.status]}
-                    </Badge>
+            {filteredLinks.map((link) => (
+              <Card key={link.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium">
+                        {link.produit}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ID: {link.payment_id}
+                      </p>
+                      {link.client && (
+                        <p className="text-xs text-muted-foreground">
+                          Client: {link.client.name} ({link.client.email})
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Badge className={statusColors[link.displayStatus]}>
+                          {statusLabels[link.displayStatus]}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Créé {formatDistanceToNow(new Date(link.created_at), { 
+                            addSuffix: true,
+                            locale: fr 
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <p className="text-lg font-bold">{link.total.toFixed(0)} GNF</p>
+                      {link.remise && link.remise > 0 && (
+                        <p className="text-xs text-muted-foreground line-through">
+                          {link.montant.toFixed(0)} GNF
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {link.remise && link.remise > 0 
+                          ? `Remise: ${link.type_remise === 'percentage' ? `${link.remise}%` : `${link.remise.toFixed(0)} GNF`}`
+                          : 'Montant total'
+                        }
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Échéance: {new Date(schedule.due_date).toLocaleDateString('fr-FR')}
-                  </p>
-                  {schedule.payment_method && (
-                    <p className="text-xs text-muted-foreground">
-                      Méthode: {schedule.payment_method}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-lg">{schedule.amount.toLocaleString()} GNF</p>
-                  {schedule.status === 'overdue' && (
-                    <p className="text-sm text-red-600">
-                      Retard: {Math.floor((Date.now() - new Date(schedule.due_date).getTime()) / (1000 * 60 * 60 * 24))} jours
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2 ml-4">
-                  {schedule.status === 'pending' && (
-                    <>
-                      <Button size="sm" variant="outline">
-                        Marquer payé
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        Relancer
-                      </Button>
-                    </>
-                  )}
-                  {schedule.status === 'overdue' && (
-                    <Button size="sm" variant="destructive">
-                      Relance urgente
-                    </Button>
-                  )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
-          </div>
 
-          {filteredSchedules.length === 0 && (
-            <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun paiement trouvé</h3>
-              <p className="text-muted-foreground">
-                {filterStatus !== 'all' ? 'Aucun paiement ne correspond aux filtres sélectionnés.' : 'Aucune échéance de paiement programmée.'}
-              </p>
-            </div>
-          )}
+            {filteredLinks.length === 0 && (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  Aucun paiement trouvé
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Gestion des crédits clients */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Crédits clients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {credits.map((credit) => (
-              <div key={credit.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium">Client ID: {credit.customer?.user_id || 'N/A'}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Conditions: {credit.payment_terms} jours
-                  </p>
-                  {credit.is_blocked && (
-                    <Badge variant="destructive" className="mt-1">Bloqué</Badge>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">
-                    {credit.current_balance.toLocaleString()} / {credit.credit_limit.toLocaleString()} GNF
-                  </p>
-                  <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
-                    <div 
-                      className={`h-2 rounded-full ${
-                        (credit.current_balance / credit.credit_limit) > 0.8 ? 'bg-red-500' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${Math.min((credit.current_balance / credit.credit_limit) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <Button size="sm" variant="outline">
-                    Modifier limite
-                  </Button>
-                  {credit.is_blocked ? (
-                    <Button size="sm" variant="outline">
-                      Débloquer
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="destructive">
-                      Bloquer
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {credits.length === 0 && (
-            <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun crédit client</h3>
-              <p className="text-muted-foreground">
-                Aucun client n'a de crédit configuré pour le moment.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <EscrowManagementDialog 
+        open={escrowDialogOpen} 
+        onOpenChange={setEscrowDialogOpen} 
+      />
     </div>
   );
 }

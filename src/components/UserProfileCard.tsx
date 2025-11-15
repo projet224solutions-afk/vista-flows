@@ -3,6 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -14,7 +28,11 @@ import {
   EyeOff, 
   Copy,
   User,
-  IdCard
+  IdCard,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Send,
+  AlertCircle
 } from 'lucide-react';
 
 interface UserInfo {
@@ -45,8 +63,20 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     virtualCard: null
   });
   const [loading, setLoading] = useState(true);
-  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(true);
   const [creatingCard, setCreatingCard] = useState(false);
+  
+  // États pour les opérations wallet
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [recipientId, setRecipientId] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [showTransferPreview, setShowTransferPreview] = useState(false);
+  const [transferPreview, setTransferPreview] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -116,9 +146,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .insert({
           user_id: user.id,
           card_number: cardNumber,
-          cardholder_name: cardHolderName,
+          holder_name: cardHolderName,
           expiry_date: expiryDate.toISOString(),
           cvv: cvv,
+          daily_limit: 500000,
+          monthly_limit: 2000000,
           status: 'active'
         })
         .select()
@@ -152,6 +184,215 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     return cardNumber.replace(/(.{4})(.{8})(.{4})/, '$1 **** **** $3');
   };
 
+  // Fonction pour effectuer un dépôt
+  const handleDeposit = async () => {
+    if (!user?.id || !depositAmount) {
+      toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    setProcessing(true);
+    console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'deposit',
+          amount: amount,
+          description: 'Dépôt sur le wallet'
+        }
+      });
+
+      console.log('✅ Réponse dépôt:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur dépôt:', error);
+        throw error;
+      }
+
+      toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
+      setDepositAmount('');
+      setDepositOpen(false);
+      
+      // Recharger les données
+      await loadUserInfo();
+      
+      // Mettre à jour le wallet balance localement
+      if (userInfo.wallet) {
+        setUserInfo(prev => ({
+          ...prev,
+          wallet: prev.wallet ? {
+            ...prev.wallet,
+            balance: prev.wallet.balance + amount
+          } : null
+        }));
+      }
+    } catch (error) {
+      console.error('❌ Erreur dépôt:', error);
+      toast.error(error.message || 'Erreur lors du dépôt');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour effectuer un retrait
+  const handleWithdraw = async () => {
+    if (!user?.id || !withdrawAmount) {
+      toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    if (amount > (userInfo.wallet?.balance || 0)) {
+      toast.error('Solde insuffisant');
+      return;
+    }
+
+    setProcessing(true);
+    console.log('🔄 Retrait en cours:', { amount, userId: user.id });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-operations', {
+        body: {
+          operation: 'withdraw',
+          amount: amount,
+          description: 'Retrait du wallet'
+        }
+      });
+
+      console.log('✅ Réponse retrait:', { data, error });
+
+      if (error) {
+        console.error('❌ Erreur retrait:', error);
+        throw error;
+      }
+
+      toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
+      setWithdrawAmount('');
+      setWithdrawOpen(false);
+      
+      // Recharger les données
+      await loadUserInfo();
+      
+      // Mettre à jour le wallet balance localement
+      if (userInfo.wallet) {
+        setUserInfo(prev => ({
+          ...prev,
+          wallet: prev.wallet ? {
+            ...prev.wallet,
+            balance: prev.wallet.balance - amount
+          } : null
+        }));
+      }
+    } catch (error) {
+      console.error('❌ Erreur retrait:', error);
+      toast.error(error.message || 'Erreur lors du retrait');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour prévisualiser un transfert
+  const handlePreviewTransfer = async () => {
+    if (!user?.id || !transferAmount || !recipientId) {
+      toast.error('Veuillez remplir tous les champs');
+      return;
+    }
+
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Montant invalide');
+      return;
+    }
+
+    if (amount > (userInfo.wallet?.balance || 0)) {
+      toast.error('Solde insuffisant');
+      return;
+    }
+
+    setProcessing(true);
+    
+    try {
+      // Appeler la fonction de prévisualisation
+      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
+        p_sender_id: user.id,
+        p_receiver_id: recipientId,
+        p_amount: amount
+      });
+
+      if (error) throw error;
+
+      const previewData = data as any;
+
+      if (!previewData.success) {
+        toast.error(previewData.error);
+        return;
+      }
+
+      setTransferPreview(previewData);
+      setShowTransferPreview(true);
+      setTransferOpen(false);
+    } catch (error: any) {
+      console.error('❌ Erreur prévisualisation:', error);
+      toast.error(error.message || 'Erreur lors de la prévisualisation');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour confirmer et effectuer un transfert
+  const handleConfirmTransfer = async () => {
+    if (!user?.id || !transferPreview) return;
+    
+    setProcessing(true);
+    setShowTransferPreview(false);
+    
+    try {
+      // Exécuter le transfert avec la fonction RPC
+      const { data, error } = await supabase.rpc('process_wallet_transaction', {
+        p_sender_id: user.id,
+        p_receiver_id: recipientId,
+        p_amount: transferPreview.amount,
+        p_currency: 'GNF',
+        p_description: 'Transfert entre wallets'
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
+        { duration: 5000 }
+      );
+      
+      setTransferAmount('');
+      setRecipientId('');
+      setTransferPreview(null);
+      
+      // Recharger les données
+      await loadUserInfo();
+    } catch (error: any) {
+      console.error('❌ Erreur transfert:', error);
+      toast.error(error.message || 'Erreur lors du transfert');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' GNF';
+  };
+
   if (loading) {
     return (
       <Card className={className}>
@@ -181,12 +422,6 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
           </Avatar>
           <div className="flex-1">
             <CardTitle className="text-xl text-gray-800">{displayName}</CardTitle>
-            <div className="flex items-center gap-2 mt-1">
-              <IdCard className="w-4 h-4 text-blue-600" />
-              <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                ID: {userInfo.customId || 'En cours...'}
-              </Badge>
-            </div>
             <p className="text-sm text-gray-600 mt-1">{profile?.role || 'client'}</p>
           </div>
         </div>
@@ -205,19 +440,202 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 {userInfo.wallet ? 'Actif' : 'Création...'}
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-green-600 mb-3">
               {userInfo.wallet ? 
                 `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` : 
                 'Initialisation...'
               }
             </p>
             {!userInfo.wallet && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 mb-3">
                 Wallet en cours de création automatique...
               </p>
             )}
+            
+            {/* Boutons d'opérations */}
+            {userInfo.wallet && (
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {/* Bouton Dépôt */}
+                <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <ArrowDownToLine className="w-4 h-4 mb-1 text-green-600" />
+                      <span className="text-xs">Dépôt</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un dépôt</DialogTitle>
+                      <DialogDescription>
+                        Ajoutez des fonds à votre wallet
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="deposit-amount">Montant (GNF)</Label>
+                        <Input
+                          id="deposit-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleDeposit} 
+                        disabled={processing || !depositAmount}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {processing ? 'Traitement...' : 'Confirmer le dépôt'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Bouton Retrait */}
+                <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <ArrowUpFromLine className="w-4 h-4 mb-1 text-orange-600" />
+                      <span className="text-xs">Retrait</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un retrait</DialogTitle>
+                      <DialogDescription>
+                        Retirez des fonds de votre wallet
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="withdraw-amount">Montant (GNF)</Label>
+                        <Input
+                          id="withdraw-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handleWithdraw} 
+                        disabled={processing || !withdrawAmount}
+                        className="w-full bg-orange-600 hover:bg-orange-700"
+                      >
+                        {processing ? 'Traitement...' : 'Confirmer le retrait'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Bouton Transfert */}
+                <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
+                      <Send className="w-4 h-4 mb-1 text-blue-600" />
+                      <span className="text-xs">Transfert</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Effectuer un transfert</DialogTitle>
+                      <DialogDescription>
+                        Transférez des fonds à un autre utilisateur
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="recipient-id">ID du destinataire</Label>
+                        <Input
+                          id="recipient-id"
+                          placeholder="UUID du destinataire"
+                          value={recipientId}
+                          onChange={(e) => setRecipientId(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="transfer-amount">Montant (GNF)</Label>
+                        <Input
+                          id="transfer-amount"
+                          type="number"
+                          placeholder="10000"
+                          value={transferAmount}
+                          onChange={(e) => setTransferAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handlePreviewTransfer} 
+                        disabled={processing || !transferAmount || !recipientId}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        {processing ? 'Traitement...' : 'Voir les frais et confirmer'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Dialog de confirmation avec prévisualisation des frais */}
+        <AlertDialog open={showTransferPreview} onOpenChange={setShowTransferPreview}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-primary" />
+                Confirmer le transfert
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-4 mt-4">
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-orange-600">
+                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between items-center">
+                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                    </div>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                      <br />
+                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Souhaitez-vous confirmer ce transfert ?
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={processing}>Non, annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmTransfer} disabled={processing}>
+                Oui, confirmer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Carte Virtuelle */}
         <div className="bg-white/60 rounded-lg p-4 border border-blue-200">
@@ -239,24 +657,40 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
               <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm opacity-90">224SOLUTIONS</span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-white hover:bg-white/20 p-1"
-                      onClick={() => setShowCardNumber(!showCardNumber)}
-                    >
-                      {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-white hover:bg-white/20 p-1"
-                      onClick={copyCardNumber}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <TooltipProvider>
+                    <div className="flex gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 p-2 h-8 w-8"
+                            onClick={() => setShowCardNumber(!showCardNumber)}
+                          >
+                            {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{showCardNumber ? 'Masquer' : 'Afficher'} le numéro</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-white/20 p-2 h-8 w-8"
+                            onClick={copyCardNumber}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copier le numéro</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
                 </div>
                 <p className="text-lg font-mono tracking-wider">
                   {showCardNumber 

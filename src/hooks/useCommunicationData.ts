@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface Conversation {
@@ -51,45 +51,71 @@ export function useCommunicationData() {
   const loadConversations = useCallback(async (userId: string) => {
     try {
       setLoading(true);
-      const { data: conversationsData, error: conversationsError } = await supabase
-        .from('conversations')
+      
+      // Récupérer toutes les conversations de l'utilisateur
+      const { data: participantsData, error: participantsError } = await supabase
+        .from('conversation_participants')
         .select(`
-          id,
-          name,
-          last_message,
-          updated_at,
-          unread_count,
-          participants!inner(
-            profiles!inner(
-              first_name,
-              last_name,
-              avatar_url,
-              status
-            )
+          conversation_id,
+          conversations!inner(
+            id,
+            name,
+            last_message,
+            updated_at,
+            unread_count
           )
         `)
-        .eq('participants.user_id', userId)
-        .order('updated_at', { ascending: false });
+        .eq('user_id', userId);
 
-      if (conversationsError) {
-        console.error('❌ Erreur chargement conversations:', conversationsError);
-        throw conversationsError;
+      if (participantsError) {
+        console.error('❌ Erreur chargement conversations:', participantsError);
+        throw participantsError;
       }
 
-      const formattedConversations: Conversation[] = conversationsData?.map(conv => ({
-        id: conv.id,
-        name: conv.name || 'Conversation',
-        lastMessage: conv.last_message || 'Aucun message',
-        timestamp: new Date(conv.updated_at).toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        unreadCount: conv.unread_count || 0,
-        status: (conv.participants?.[0] as unknown)?.profiles?.status || 'offline',
-        avatar: (conv.participants?.[0] as unknown)?.profiles?.avatar_url
-      })) || [];
+      if (!participantsData || participantsData.length === 0) {
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
 
-      setConversations(formattedConversations);
+      // Pour chaque conversation, récupérer les infos du contact
+      const conversationsWithContacts = await Promise.all(
+        participantsData.map(async (participant) => {
+          const conv = (participant as any).conversations;
+          
+          // Récupérer l'autre participant (le contact)
+          const { data: otherParticipant } = await supabase
+            .from('conversation_participants')
+            .select(`
+              user_id,
+              profiles!inner(
+                first_name,
+                last_name,
+                avatar_url
+              )
+            `)
+            .eq('conversation_id', conv.id)
+            .neq('user_id', userId)
+            .single();
+
+          const profile = otherParticipant ? (otherParticipant as any).profiles : null;
+          
+          return {
+            id: conv.id,
+            name: conv.name || (profile ? `${profile.first_name} ${profile.last_name}` : 'Conversation'),
+            lastMessage: conv.last_message || 'Aucun message',
+            timestamp: new Date(conv.updated_at).toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            unreadCount: conv.unread_count || 0,
+            status: 'offline',
+            avatar: profile?.avatar_url
+          };
+        })
+      );
+
+      setConversations(conversationsWithContacts);
     } catch (error) {
       console.error('❌ Erreur chargement conversations:', error);
       setError('Erreur lors du chargement des conversations');
@@ -102,6 +128,8 @@ export function useCommunicationData() {
   // Charger les messages d'une conversation
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select(`
@@ -111,7 +139,7 @@ export function useCommunicationData() {
           status,
           created_at,
           sender_id,
-          profiles!inner(
+          sender:profiles!messages_sender_id_fkey(
             first_name,
             last_name
           )
@@ -125,16 +153,16 @@ export function useCommunicationData() {
       }
 
       const formattedMessages: Message[] = messagesData?.map(msg => {
-        const profile = (msg.profiles as unknown);
+        const sender = msg.sender as any;
         return {
           id: msg.id,
-          sender: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Utilisateur',
+          sender: sender ? `${sender.first_name || ''} ${sender.last_name || ''}`.trim() : 'Utilisateur',
           content: msg.content,
           timestamp: new Date(msg.created_at).toLocaleTimeString('fr-FR', {
             hour: '2-digit',
             minute: '2-digit'
           }),
-          isOwn: false, // TODO: Vérifier si c'est l'utilisateur actuel
+          isOwn: msg.sender_id === currentUser?.id,
           type: msg.type || 'text',
           status: msg.status || 'sent'
         };
@@ -144,6 +172,7 @@ export function useCommunicationData() {
     } catch (error) {
       console.error('❌ Erreur chargement messages:', error);
       setError('Erreur lors du chargement des messages');
+      toast.error('Impossible de charger les messages');
     }
   }, []);
 
@@ -151,34 +180,38 @@ export function useCommunicationData() {
   const loadContacts = useCallback(async (userId: string) => {
     try {
       const { data: contactsData, error: contactsError } = await supabase
-        .from('profiles')
+        .from('user_contacts')
         .select(`
-          id,
-          first_name,
-          last_name,
-          email,
-          phone,
-          status,
-          avatar_url,
-          updated_at
+          contact_id,
+          profiles!user_contacts_contact_id_fkey(
+            id,
+            first_name,
+            last_name,
+            email,
+            phone,
+            avatar_url,
+            updated_at
+          )
         `)
-        .neq('id', userId)
-        .order('first_name');
+        .eq('user_id', userId);
 
       if (contactsError) {
         console.error('❌ Erreur chargement contacts:', contactsError);
         throw contactsError;
       }
 
-      const formattedContacts: Contact[] = contactsData?.map(contact => ({
-        id: contact.id,
-        name: `${contact.first_name} ${contact.last_name}`,
-        email: contact.email,
-        phone: contact.phone,
-        status: contact.status || 'offline',
-        avatar: contact.avatar_url,
-        lastSeen: new Date(contact.updated_at).toLocaleString('fr-FR')
-      })) || [];
+      const formattedContacts: Contact[] = contactsData?.map(contact => {
+        const profile = (contact as any).profiles;
+        return {
+          id: profile.id,
+          name: `${profile.first_name} ${profile.last_name}`,
+          email: profile.email,
+          phone: profile.phone,
+          status: 'offline',
+          avatar: profile.avatar_url,
+          lastSeen: new Date(profile.updated_at).toLocaleString('fr-FR')
+        };
+      }) || [];
 
       setContacts(formattedContacts);
     } catch (error) {
@@ -190,11 +223,24 @@ export function useCommunicationData() {
   // Envoyer un message
   const sendMessage = useCallback(async (conversationId: string, content: string, senderId: string) => {
     try {
+      // Récupérer l'ID du destinataire (l'autre participant de la conversation)
+      const { data: otherParticipant, error: participantError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', senderId)
+        .single();
+
+      if (participantError || !otherParticipant) {
+        throw new Error('Impossible de trouver le destinataire');
+      }
+
       const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           sender_id: senderId,
+          recipient_id: otherParticipant.user_id,
           content: content,
           type: 'text',
           status: 'sent'
@@ -220,17 +266,39 @@ export function useCommunicationData() {
   // Créer une nouvelle conversation
   const createConversation = useCallback(async (participantIds: string[], name?: string) => {
     try {
+      // Récupérer l'utilisateur actuel
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Non authentifié');
+
+      // Créer la conversation avec creator_id
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
         .insert({
           name: name || 'Nouvelle conversation',
-          participants: participantIds.map(id => ({ user_id: id }))
+          type: participantIds.length > 1 ? 'group' : 'private',
+          creator_id: currentUser.id
         })
         .select()
         .single();
 
       if (conversationError) {
         throw conversationError;
+      }
+
+      // Ajouter tous les participants (utilisateur actuel + autres)
+      const allParticipantIds = [currentUser.id, ...participantIds];
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .insert(
+          allParticipantIds.map((id, index) => ({
+            conversation_id: conversationData.id,
+            user_id: id,
+            role: index === 0 ? 'admin' : 'member'
+          }))
+        );
+
+      if (participantsError) {
+        throw participantsError;
       }
 
       toast.success('Conversation créée');
@@ -340,11 +408,10 @@ export function useCommunicationData() {
       if (!currentUser) throw new Error('Non authentifié');
 
       const { error } = await supabase
-        .from('contacts')
+        .from('user_contacts')
         .insert({
           user_id: currentUser.id,
-          contact_id: contactId,
-          created_at: new Date().toISOString()
+          contact_id: contactId
         });
 
       if (error) throw error;

@@ -182,15 +182,19 @@ export const useOfflineSync = () => {
             }
 
             // Synchroniser les fichiers
-            const storedFiles = await offlineDB.db.getAll('offline_files');
-            for (const fileData of storedFiles) {
-                const result = await syncFile(fileData);
-                if (result.success) {
-                    syncedCount++;
-                } else {
-                    failedCount++;
-                    errors.push(`Fichier ${fileData.name}: ${result.error}`);
+            try {
+                const storedFiles = await offlineDB.db.getAll('offline_files');
+                for (const fileData of storedFiles) {
+                    const result = await syncFile(fileData);
+                    if (result.success) {
+                        syncedCount++;
+                    } else {
+                        failedCount++;
+                        errors.push(`Fichier ${fileData.name}: ${result.error}`);
+                    }
                 }
+            } catch (error) {
+                console.error('Erreur sync fichiers:', error);
             }
 
             // Mettre à jour les statistiques

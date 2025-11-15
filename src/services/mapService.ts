@@ -1,5 +1,5 @@
 // Service de gestion des cartes (Maps) pour 224Solutions
-// Version simplifiée avec calculs de base
+// Utilise Mapbox pour les calculs de routes réelles
 
 export interface Location {
   latitude: number;
@@ -62,24 +62,152 @@ class MapService {
     });
   }
 
-  // Calculer un itinéraire simple (simulation)
+  // Calculer un itinéraire via Google Directions API
   async calculateRoute(start: Location, end: Location): Promise<Route> {
-    const distance = this.calculateDistance(start, end);
-    const duration = distance * 3; // Estimation: 3 minutes par km
-    
-    return {
-      distance,
-      duration,
-      coordinates: [start, end]
-    };
+    try {
+      console.log('[MapService] Calculating route from', start, 'to', end);
+      
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-route`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          origin: { lat: start.latitude, lng: start.longitude },
+          destination: { lat: end.latitude, lng: end.longitude },
+          mode: 'driving'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[MapService] Route data received:', data);
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      return {
+        distance: data.distance, // déjà en km
+        duration: data.duration, // déjà en minutes
+        coordinates: [start, end]
+      };
+    } catch (error) {
+      console.error('Erreur Google Directions API, utilisation du fallback:', error);
+      // Fallback: calcul simple
+      const distance = this.calculateDistance(start, end);
+      return {
+        distance,
+        duration: distance * 3,
+        coordinates: [start, end]
+      };
+    }
   }
 
-  // Géocode une adresse (stub pour compatibilité)
+  // Géocode une adresse via Google Geocoding API
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
-    return [{
-      address: address,
-      coordinates: { latitude: 0, longitude: 0 }
-    }];
+    try {
+      console.log('[MapService] Geocoding address:', address);
+      
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          address,
+          type: 'geocode'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[MapService] Geocoding results:', data);
+
+      // Gérer le cas où aucun résultat n'est trouvé
+      if (data.status === 'ZERO_RESULTS') {
+        console.warn('[MapService] No geocoding results:', data.message);
+        return [];
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.results && data.results.length > 0) {
+        return data.results.map((result: any) => ({
+          address: result.formatted_address,
+          coordinates: {
+            latitude: result.geometry.location.lat,
+            longitude: result.geometry.location.lng
+          }
+        }));
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Erreur géocodage Google:', error);
+      return [{
+        address: address,
+        coordinates: { latitude: 0, longitude: 0 }
+      }];
+    }
+  }
+
+  // Reverse geocoding: coordonnées → adresse
+  async reverseGeocode(latitude: number, longitude: number): Promise<string> {
+    try {
+      const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          lat: latitude,
+          lng: longitude,
+          type: 'reverse'
+        })
+      });
+
+      const data = await response.json();
+
+      // Gérer le cas où aucun résultat n'est trouvé
+      if (data.status === 'ZERO_RESULTS') {
+        console.warn('[MapService] No reverse geocoding results:', data.message);
+        return 'Adresse inconnue';
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.results && data.results.length > 0) {
+        return data.results[0].formatted_address;
+      }
+
+      return 'Adresse inconnue';
+    } catch (error) {
+      console.error('Erreur reverse geocoding Google:', error);
+      return 'Adresse inconnue';
+    }
   }
 
   // Obtenir un itinéraire (alias de calculateRoute)

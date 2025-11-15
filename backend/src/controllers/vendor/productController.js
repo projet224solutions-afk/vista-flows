@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { generateUniqueId } = require('../../services/idService');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY);
 
@@ -26,14 +27,27 @@ async function createProduct(req, res) {
     const { name, price, sku } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name requis' });
 
+    // 🆕 Générer un public_id unique
+    console.log('🔄 Génération public_id pour produit...');
+    const public_id = await generateUniqueId('products', req.user?.id);
+
     const { data, error } = await supabase
       .from('products')
-      .insert([{ vendor_id: vendorId, name, price: Number(price) || 0, sku }])
+      .insert([{ 
+        vendor_id: vendorId, 
+        name, 
+        price: Number(price) || 0, 
+        sku,
+        public_id 
+      }])
       .select('*')
       .single();
     if (error) throw error;
+    
+    console.log('✅ Produit créé avec public_id:', public_id);
     res.json(data);
   } catch (err) {
+    console.error('Erreur création produit:', err);
     res.status(500).json({ error: 'Erreur création produit' });
   }
 }

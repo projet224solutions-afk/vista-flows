@@ -82,23 +82,25 @@ export default function ClientManagement() {
         .from('customers')
         .select(`
           *,
-          profile:profiles(first_name, last_name, email, phone),
-          orders:orders!customers(
+          profile:profiles!customers_user_id_fkey(first_name, last_name, email, phone),
+          orders!orders_customer_id_fkey(
             id,
             total_amount,
             status,
-            created_at
+            created_at,
+            vendor_id
           )
-        `)
-        .eq('orders.vendor_id', vendor.id);
+        `);
 
       if (error) throw error;
 
-      // Process and calculate stats
-      const processedClients = (clientsData || []).map(client => ({
-        ...client,
-        orders: client.orders || []
-      }));
+      // Filtrer pour ne garder que les clients qui ont des commandes avec ce vendeur
+      const processedClients = (clientsData || [])
+        .map(client => ({
+          ...client,
+          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendor.id)
+        }))
+        .filter(client => client.orders.length > 0);
 
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -401,7 +403,9 @@ export default function ClientManagement() {
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => {
                     // Contact client functionality
                     if (client.profile?.email) {
-                      window.location.href = `mailto:${client.profile.email}`;
+                      const mailtoLink = document.createElement('a');
+                      mailtoLink.href = `mailto:${client.profile.email}`;
+                      mailtoLink.click();
                     } else {
                       toast({
                         title: "Email non disponible",

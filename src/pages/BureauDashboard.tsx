@@ -1,603 +1,646 @@
-/**
- * 🏛️ DASHBOARD BUREAU SYNDICAL - Interface Complète
- * Gestion complète du bureau syndical avec données réelles Supabase
- */
-
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/useAuth";
-import { useRoleRedirect } from "@/hooks/useRoleRedirect";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import {
-  Users,
-  CreditCard,
-  TrendingUp,
-  Shield,
-  DollarSign,
-  UserPlus,
-  Calendar,
-  Settings,
-  Award,
-  FileText,
-  MessageSquare,
-  LogOut,
-  Activity
-} from "lucide-react";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
-
-interface BureauData {
-  id: string;
-  bureau_code: string;
-  prefecture: string;
-  commune: string;
-  president_name: string | null;
-  president_phone: string | null;
-  president_email: string | null;
-  total_members: number;
-  total_vehicles: number;
-  total_cotisations: number;
-  status: string;
-  created_at: string;
-}
-
-interface Member {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  license_number: string;
-  vehicle_type: string;
-  vehicle_serial: string;
-  status: string;
-  cotisation_status: string;
-  join_date: string;
-  last_cotisation_date: string;
-  total_cotisations: number;
-  bureau_id: string;
-  created_at: string;
-}
-
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  description: string | null;
-  status: string;
-  date: string;
-  member_id: string | null;
-}
-
-interface WalletData {
-  balance: number;
-  currency: string;
-  wallet_status: string;
-}
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
+import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
+import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
+import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
+import SyndicateVehicleManagement from '@/components/syndicate/SyndicateVehicleManagement';
+import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
+import BureauNetworkIndicator from '@/components/syndicat/BureauNetworkIndicator';
+// import SyndicatePWAIntegration from '@/components/syndicate/SyndicatePWAIntegration'; // PWA désactivée
+import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+// import PWAInstallButton from '@/components/pwa/PWAInstallButton'; // PWA désactivée
+import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
+import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
+import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
+import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function BureauDashboard() {
-  const { user, profile, signOut } = useAuth();
-  useRoleRedirect();
-
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const [bureau, setBureau] = useState<any>(null);
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [motos, setMotos] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [bureauData, setBureauData] = useState<BureauData | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [wallet, setWallet] = useState<WalletData | null>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  // Form states
-  const [newMember, setNewMember] = useState({
-    name: '',
+  const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
+  const [isSubmittingWorker, setIsSubmittingWorker] = useState(false);
+  const [workerForm, setWorkerForm] = useState({
+    nom: '',
     email: '',
-    phone: '',
-    license_number: '',
-    vehicle_type: 'moto',
-    vehicle_serial: ''
-  });
-
-  const [newTransaction, setNewTransaction] = useState({
-    type: 'cotisation',
-    amount: 0,
-    description: '',
-    member_id: ''
+    telephone: '',
+    access_level: 'standard' as string,
+    permissions: {
+      view_members: true,
+      add_members: true,
+      edit_members: true,
+      view_vehicles: true,
+      add_vehicles: true,
+      view_reports: false
+    }
   });
 
   useEffect(() => {
-    if (user) {
+    if (token) {
       loadBureauData();
-      loadMembers();
-      loadTransactions();
-      loadWallet();
     }
-  }, [user]);
+  }, [token]);
 
   const loadBureauData = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+
+      // Charger les données du bureau
+      const { data: bureauData, error: bureauError } = await supabase
         .from('bureaus')
         .select('*')
-        .limit(1)
+        .eq('access_token', token)
         .single();
 
-      if (error) throw error;
-      setBureauData(data);
+      if (bureauError) throw bureauError;
+      if (!bureauData) {
+        toast.error('Bureau non trouvé');
+        navigate('/');
+        return;
+      }
+
+      setBureau(bureauData);
+
+      // Charger les travailleurs, membres, motos et alertes
+      const [workersRes, membersRes, motosRes, alertsRes] = await Promise.all([
+        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id),
+        supabase.from('members').select('*').eq('bureau_id', bureauData.id),
+        supabase.from('registered_motos').select('*').eq('bureau_id', bureauData.id),
+        supabase.from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false })
+      ]);
+
+      setWorkers(workersRes.data || []);
+      setMembers(membersRes.data || []);
+      setMotos(motosRes.data || []);
+      setAlerts(alertsRes.data || []);
     } catch (error) {
       console.error('Erreur chargement bureau:', error);
-      toast.error('Erreur lors du chargement des données du bureau');
-    }
-  };
-
-  const loadMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (error) {
-      console.error('Erreur chargement membres:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadTransactions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bureau_transactions')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('Erreur chargement transactions:', error);
-    }
-  };
-
-  const loadWallet = async () => {
-    try {
-      if (!bureauData?.id) return;
-
-      const { data, error } = await supabase
-        .from('bureau_wallets')
-        .select('balance, currency, wallet_status')
-        .eq('bureau_id', bureauData.id)
-        .single();
-
-      if (error) throw error;
-      setWallet(data);
-    } catch (error) {
-      console.error('Erreur chargement wallet:', error);
-    }
-  };
-
-  const handleAddMember = async () => {
-    if (!newMember.name || !newMember.phone) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+  const handleAddWorker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation des données
+    if (!workerForm.nom.trim()) {
+      toast.error('Le nom complet est requis');
       return;
     }
-
+    
+    if (!workerForm.email.trim()) {
+      toast.error('L\'email est requis');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workerForm.email)) {
+      toast.error('Format d\'email invalide');
+      return;
+    }
+    
     try {
+      setIsSubmittingWorker(true);
+      const access_token = crypto.randomUUID();
+      const interface_url = `${window.location.origin}/worker/${access_token}`;
+
+      console.log('📝 Création travailleur:', { nom: workerForm.nom, email: workerForm.email });
+
       const { data, error } = await supabase
-        .from('members')
-        .insert({
-          ...newMember,
-          bureau_id: bureauData?.id,
-          status: 'active',
-          cotisation_status: 'pending',
-          join_date: new Date().toISOString(),
-          total_cotisations: 0
-        })
+        .from('syndicate_workers')
+        .insert([{
+          bureau_id: bureau.id,
+          nom: workerForm.nom.trim(),
+          email: workerForm.email.trim().toLowerCase(),
+          telephone: workerForm.telephone?.trim() || null,
+          access_level: workerForm.access_level,
+          permissions: workerForm.permissions,
+          access_token: access_token,
+          interface_url: interface_url,
+          is_active: true
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur insertion:', error);
+        throw error;
+      }
 
-      setMembers([data, ...members]);
-      setNewMember({
-        name: '',
+      console.log('✅ Membre du bureau créé:', data);
+
+      // Envoyer l'email (ne pas bloquer si ça échoue)
+      try {
+        await supabase.functions.invoke('send-bureau-access-email', {
+          body: {
+            type: 'worker',
+            email: workerForm.email,
+            name: workerForm.nom,
+            access_token: access_token,
+            interface_url: interface_url,
+            bureau_code: bureau.bureau_code,
+            permissions: workerForm.permissions
+          }
+        });
+        toast.success('✅ Membre du bureau ajouté et email envoyé');
+      } catch (emailError) {
+        console.error('⚠️ Erreur email:', emailError);
+        toast.success('✅ Membre du bureau ajouté (email non envoyé)');
+      }
+
+      // Réinitialiser le formulaire
+      setWorkerForm({
+        nom: '',
         email: '',
-        phone: '',
-        license_number: '',
-        vehicle_type: 'moto',
-        vehicle_serial: ''
+        telephone: '',
+        access_level: 'standard',
+        permissions: {
+          view_members: true,
+          add_members: true,
+          edit_members: true,
+          view_vehicles: true,
+          add_vehicles: true,
+          view_reports: false
+        }
       });
-      toast.success('Membre ajouté avec succès');
-    } catch (error) {
-      console.error('Erreur ajout membre:', error);
-      toast.error('Erreur lors de l\'ajout du membre');
+      
+      setIsWorkerDialogOpen(false);
+      await loadBureauData();
+    } catch (error: any) {
+      console.error('❌ Erreur ajout membre du bureau:', error);
+      toast.error(error.message || 'Erreur lors de l\'ajout du membre du bureau');
+    } finally {
+      setIsSubmittingWorker(false);
     }
   };
-
-  const handleAddTransaction = async () => {
-    if (!newTransaction.amount || newTransaction.amount <= 0) {
-      toast.error('Montant invalide');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('bureau_transactions')
-        .insert({
-          ...newTransaction,
-          bureau_id: bureauData?.id,
-          date: new Date().toISOString(),
-          status: 'completed'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setTransactions([data, ...transactions]);
-      setNewTransaction({
-        type: 'cotisation',
-        amount: 0,
-        description: '',
-        member_id: ''
-      });
-      toast.success('Transaction enregistrée');
-      loadWallet(); // Refresh wallet balance
-    } catch (error) {
-      console.error('Erreur ajout transaction:', error);
-      toast.error('Erreur lors de l\'enregistrement');
-    }
-  };
-
-  const stats = [
-    {
-      label: 'Membres Actifs',
-      value: members.filter(m => m.status === 'active').length,
-      icon: Users,
-      color: 'text-blue-600'
-    },
-    {
-      label: 'Véhicules',
-      value: bureauData?.total_vehicles || members.filter(m => m.vehicle_serial).length,
-      icon: Shield,
-      color: 'text-green-600'
-    },
-    {
-      label: 'Cotisations Mensuelles',
-      value: `${transactions.filter(t => t.type === 'cotisation').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} GNF`,
-      icon: DollarSign,
-      color: 'text-purple-600'
-    },
-    {
-      label: 'Solde Bureau',
-      value: `${(wallet?.balance || 0).toLocaleString()} ${wallet?.currency || 'GNF'}`,
-      icon: CreditCard,
-      color: 'text-orange-600'
-    }
-  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Activity className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-          <p>Chargement des données du bureau...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!bureau) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Bureau non trouvé</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Le lien d'accès est invalide ou a expiré.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white">
-        <div className="container mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Bureau Syndical</h1>
-            <p className="text-white/80 text-lg">
-              {bureauData?.prefecture} - {bureauData?.commune}
-            </p>
-            <p className="text-sm text-white/60">Code: {bureauData?.bureau_code}</p>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* PWA Integration désactivée */}
+
+      {/* En-tête */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex-1 min-w-[300px]">
+          <h1 className="text-3xl font-bold">Interface Bureau Syndicat</h1>
+          <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
+          <div className="flex items-center gap-3 mt-2">
+            <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
           </div>
-          <Button variant="outline" onClick={signOut} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-            <LogOut className="w-4 h-4 mr-2" />
-            Déconnexion
+          <div className="mt-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <BureauIdDisplay bureauCode={bureau.bureau_code} />
+              {bureau.president_email && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                  <span className="text-xs text-muted-foreground">Contact:</span>
+                  <span className="text-xs font-medium">{bureau.president_email}</span>
+                </div>
+              )}
+            </div>
+            <BureauWalletDisplay bureauId={bureau.id} bureauCode={bureau.bureau_code} compact={true} className="max-w-md" />
+          </div>
+        </div>
+        <div className="flex gap-2 items-center flex-wrap">
+          <BureauNetworkIndicator bureauId={bureau.id} />
+          {/* PWAInstallButton désactivé */}
+          <Button variant="outline">
+            <Phone className="w-4 h-4 mr-2" />
+            Support Technique
+          </Button>
+          <Button variant="outline">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Messages
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="container mx-auto px-6 -mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              Membres du Bureau
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{workers.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Membres actifs</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              Adhérents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{members.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Total membres</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bike className="w-4 h-4 text-muted-foreground" />
+              Véhicules
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-primary">{motos.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Enregistrés</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+              Alertes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-destructive">{alerts.filter(a => !a.is_read).length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Non lues</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="motos" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6 h-auto">
+          <TabsTrigger value="motos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Bike className="w-4 h-4 mr-2" />
+            Véhicules
+          </TabsTrigger>
+          <TabsTrigger value="wallet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Wallet className="w-4 h-4 mr-2" />
+            Wallet
+          </TabsTrigger>
+          <TabsTrigger value="workers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            Bureau
+          </TabsTrigger>
+          <TabsTrigger value="sync" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Sync
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Alertes {alerts.filter(a => !a.is_read).length > 0 && (
+              <Badge variant="destructive" className="ml-2">{alerts.filter(a => !a.is_read).length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="communication" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Communication
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="workers" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Gestion des Membres du Bureau</CardTitle>
+              <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un Membre
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Ajouter un membre du bureau</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddWorker} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nom">Nom complet *</Label>
+                      <Input
+                        id="nom"
+                        required
+                        value={workerForm.nom}
+                        onChange={(e) => setWorkerForm({ ...workerForm, nom: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          required
+                          value={workerForm.email}
+                          onChange={(e) => setWorkerForm({ ...workerForm, email: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="telephone">Téléphone</Label>
+                        <Input
+                          id="telephone"
+                          type="tel"
+                          value={workerForm.telephone}
+                          onChange={(e) => setWorkerForm({ ...workerForm, telephone: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="access_level">Niveau d'accès</Label>
+                      <Select value={workerForm.access_level} onValueChange={(val) => setWorkerForm({ ...workerForm, access_level: val })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="limited">Limité</SelectItem>
+                          <SelectItem value="standard">Standard</SelectItem>
+                          <SelectItem value="advanced">Avancé</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-3 border-t pt-4">
+                      <Label>Permissions</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_members"
+                            checked={workerForm.permissions.view_members}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, view_members: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_members" className="text-sm">Voir les membres</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="add_members"
+                            checked={workerForm.permissions.add_members}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, add_members: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="add_members" className="text-sm">Ajouter des membres</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="edit_members"
+                            checked={workerForm.permissions.edit_members}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, edit_members: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="edit_members" className="text-sm">Modifier les membres</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_vehicles"
+                            checked={workerForm.permissions.view_vehicles}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, view_vehicles: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_vehicles" className="text-sm">Voir les véhicules</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="add_vehicles"
+                            checked={workerForm.permissions.add_vehicles}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, add_vehicles: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="add_vehicles" className="text-sm">Ajouter des véhicules</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_reports"
+                            checked={workerForm.permissions.view_reports}
+                            onCheckedChange={(checked) => setWorkerForm({
+                              ...workerForm,
+                              permissions: { ...workerForm.permissions, view_reports: checked as boolean }
+                            })}
+                          />
+                          <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsWorkerDialogOpen(false)}
+                        disabled={isSubmittingWorker}
+                      >
+                        Annuler
+                      </Button>
+                      <Button type="submit" disabled={isSubmittingWorker}>
+                        {isSubmittingWorker ? (
+                          <>
+                            <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Ajout en cours...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ajouter
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {workers.map((worker) => (
+                  <div key={worker.id} className="flex items-center justify-between p-4 rounded-lg border">
                     <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                      <h3 className="font-medium">{worker.nom}</h3>
+                      <p className="text-sm text-muted-foreground">{worker.email}</p>
+                      <p className="text-xs text-muted-foreground">Accès: {worker.access_level}</p>
                     </div>
-                    <Icon className={`w-10 h-10 ${stat.color}`} />
+                    {worker.is_active ? (
+                      <Badge className="bg-green-500">Actif</Badge>
+                    ) : (
+                      <Badge>Inactif</Badge>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="dashboard">
-              <Activity className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="members">
-              <Users className="w-4 h-4 mr-2" />
-              Membres
-            </TabsTrigger>
-            <TabsTrigger value="transactions">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Finances
-            </TabsTrigger>
-            <TabsTrigger value="communication">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Communication
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Users className="w-5 h-5 mr-2" />
-                    Membres Récents
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {members.slice(0, 5).map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div>
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">{member.phone}</p>
-                        </div>
-                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-                          {member.status}
-                        </Badge>
-                      </div>
-                    ))}
+                ))}
+                {workers.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucun membre du bureau ajouté
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Transactions Récentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {transactions.slice(0, 5).map((transaction) => (
-                      <div key={transaction.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div>
-                          <p className="font-medium">{transaction.type}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(transaction.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <p className="font-bold text-green-600">
-                          +{transaction.amount.toLocaleString()} GNF
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+        <TabsContent value="motos" className="space-y-6">
+          {bureau && (
+            <>
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                <div className="xl:col-span-3">
+                  <SyndicateVehicleManagement bureauId={bureau.id} />
+                </div>
+                <div className="space-y-4">
+                  <MotoSecurityNotifications bureauId={bureau.id} />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                <Card className="xl:col-span-3">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bike className="w-5 h-5" />
+                      Ancienne Interface (Backup)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MotoManagementDashboard 
+                      bureauId={bureau.id} 
+                      bureauName={`${bureau.prefecture || ''} - ${bureau.commune || ''}`}
+                    />
+                  </CardContent>
+                </Card>
+                <div className="space-y-4">
+                  <MotoSecurityAlerts bureauId={bureau.id} />
+                </div>
+              </div>
+            </>
+          )}
+        </TabsContent>
 
-          {/* Members Tab */}
-          <TabsContent value="members" className="space-y-6">
+        <TabsContent value="wallet" className="space-y-4">
+          {bureau && (
+            <BureauWalletManagement 
+              bureauId={bureau.id}
+              bureauCode={bureau.bureau_code}
+              showTransactions={true}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="sync" className="space-y-6">
+          {bureau && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  Ajouter un Membre
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" />
+                  Synchronisation Hors-ligne
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nom Complet *</Label>
-                    <Input
-                      value={newMember.name}
-                      onChange={(e) => setNewMember({...newMember, name: e.target.value})}
-                      placeholder="Nom complet"
-                    />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={newMember.email}
-                      onChange={(e) => setNewMember({...newMember, email: e.target.value})}
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div>
-                    <Label>Téléphone *</Label>
-                    <Input
-                      value={newMember.phone}
-                      onChange={(e) => setNewMember({...newMember, phone: e.target.value})}
-                      placeholder="+224 XXX XXX XXX"
-                    />
-                  </div>
-                  <div>
-                    <Label>N° Permis</Label>
-                    <Input
-                      value={newMember.license_number}
-                      onChange={(e) => setNewMember({...newMember, license_number: e.target.value})}
-                      placeholder="A12345"
-                    />
-                  </div>
-                  <div>
-                    <Label>Type Véhicule</Label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={newMember.vehicle_type}
-                      onChange={(e) => setNewMember({...newMember, vehicle_type: e.target.value})}
-                    >
-                      <option value="moto">Moto</option>
-                      <option value="tricycle">Tricycle</option>
-                      <option value="voiture">Voiture</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label>Série Véhicule</Label>
-                    <Input
-                      value={newMember.vehicle_serial}
-                      onChange={(e) => setNewMember({...newMember, vehicle_serial: e.target.value})}
-                      placeholder="CN-1234-AB"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Button onClick={handleAddMember} className="w-full">
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Ajouter le Membre
-                    </Button>
-                  </div>
-                </div>
+                <BureauOfflineSyncPanel bureauId={bureau.id} />
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Liste des Membres ({members.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.phone}</p>
-                        {member.license_number && (
-                          <p className="text-xs text-muted-foreground">Permis: {member.license_number}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {member.vehicle_serial && (
-                          <Badge variant="outline">{member.vehicle_serial}</Badge>
-                        )}
-                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-                          {member.status}
-                        </Badge>
-                      </div>
+        <TabsContent value="alerts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Alertes et Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {alerts.map((alert) => (
+                  <div 
+                    key={alert.id} 
+                    className={`flex items-start gap-4 p-4 rounded-lg border ${
+                      alert.is_critical ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'
+                    }`}
+                  >
+                    <AlertCircle className={`w-5 h-5 ${alert.is_critical ? 'text-red-500' : 'text-yellow-500'} flex-shrink-0 mt-0.5`} />
+                    <div className="flex-1">
+                      <h3 className={`font-medium ${alert.is_critical ? 'text-red-900' : 'text-yellow-900'}`}>
+                        {alert.title}
+                      </h3>
+                      <p className={`text-sm mt-1 ${alert.is_critical ? 'text-red-700' : 'text-yellow-700'}`}>
+                        {alert.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {new Date(alert.created_at).toLocaleDateString('fr-FR')}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    <Badge className={alert.is_critical ? 'bg-red-500' : 'bg-yellow-500'}>
+                      {alert.severity}
+                    </Badge>
+                  </div>
+                ))}
+                {alerts.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Aucune alerte
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Transactions Tab */}
-          <TabsContent value="transactions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Nouvelle Transaction
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Type</Label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={newTransaction.type}
-                      onChange={(e) => setNewTransaction({...newTransaction, type: e.target.value})}
-                    >
-                      <option value="cotisation">Cotisation</option>
-                      <option value="amende">Amende</option>
-                      <option value="inscription">Inscription</option>
-                      <option value="autre">Autre</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label>Montant (GNF) *</Label>
-                    <Input
-                      type="number"
-                      value={newTransaction.amount}
-                      onChange={(e) => setNewTransaction({...newTransaction, amount: parseFloat(e.target.value)})}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label>Description</Label>
-                    <Input
-                      value={newTransaction.description}
-                      onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
-                      placeholder="Description de la transaction"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Button onClick={handleAddTransaction} className="w-full">
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Enregistrer la Transaction
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Historique des Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium capitalize">{transaction.type}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(transaction.date).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-green-600">
-                          +{transaction.amount.toLocaleString()} GNF
-                        </p>
-                        <Badge variant="outline" className="mt-1">{transaction.status}</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Communication Tab */}
-          <TabsContent value="communication">
-            <SimpleCommunicationInterface />
-          </TabsContent>
-        </Tabs>
-      </div>
+        <TabsContent value="communication" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Hub de Communication
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UniversalCommunicationHub />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
 }

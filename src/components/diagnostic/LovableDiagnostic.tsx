@@ -1,6 +1,6 @@
 /**
- * DIAGNOSTIC LOVABLE - Vérification des fonctionnalités
- * S'assure que toutes les nouvelles fonctionnalités sont visibles dans Lovable
+ * DIAGNOSTIC SYSTÈME - Vérification des fonctionnalités
+ * S'assure que toutes les nouvelles fonctionnalités sont opérationnelles
  */
 
 import { useState, useEffect } from 'react';
@@ -30,27 +30,59 @@ export default function LovableDiagnostic() {
 
         const featureChecks: FeatureCheck[] = [];
 
-        // Note: Certaines fonctionnalités nécessitent des migrations de base de données
-        featureChecks.push({
-            name: 'Bureau Syndicat Ultra-Pro',
-            component: 'SyndicatDashboardUltraPro',
-            status: 'warning',
-            message: 'Module désactivé - Nécessite migrations DB'
-        });
+        // Vérifier SyndicatDashboardUltraPro
+        try {
+            const SyndicatDashboardUltraPro = await import('@/pages/SyndicatDashboardUltraPro');
+            featureChecks.push({
+                name: 'Bureau Syndicat Ultra-Pro',
+                component: 'SyndicatDashboardUltraPro',
+                status: 'success',
+                message: 'Interface bureau syndicat chargée avec succès'
+            });
+        } catch (error) {
+            featureChecks.push({
+                name: 'Bureau Syndicat Ultra-Pro',
+                component: 'SyndicatDashboardUltraPro',
+                status: 'error',
+                message: `Erreur de chargement: ${error}`
+            });
+        }
 
-        featureChecks.push({
-            name: 'Formulaire Taxi-Motard',
-            component: 'AddTaxiMotardForm',
-            status: 'warning',
-            message: 'Module désactivé - Nécessite migrations DB'
-        });
+        // Vérifier AddTaxiMotardForm
+        try {
+            const AddTaxiMotardForm = await import('@/components/syndicate/AddTaxiMotardForm');
+            featureChecks.push({
+                name: 'Formulaire Taxi-Motard',
+                component: 'AddTaxiMotardForm',
+                status: 'success',
+                message: 'Formulaire d\'ajout taxi-motard disponible'
+            });
+        } catch (error) {
+            featureChecks.push({
+                name: 'Formulaire Taxi-Motard',
+                component: 'AddTaxiMotardForm',
+                status: 'error',
+                message: `Erreur de chargement: ${error}`
+            });
+        }
 
-        featureChecks.push({
-            name: 'Wallet Bureau Syndicat',
-            component: 'SyndicateWalletDashboard',
-            status: 'warning',
-            message: 'Module désactivé - Nécessite migrations DB'
-        });
+        // Vérifier SyndicateWalletDashboard
+        try {
+            const SyndicateWalletDashboard = await import('@/components/syndicate/SyndicateWalletDashboard');
+            featureChecks.push({
+                name: 'Wallet Bureau Syndicat',
+                component: 'SyndicateWalletDashboard',
+                status: 'success',
+                message: 'Portefeuille bureau syndicat opérationnel'
+            });
+        } catch (error) {
+            featureChecks.push({
+                name: 'Wallet Bureau Syndicat',
+                component: 'SyndicateWalletDashboard',
+                status: 'error',
+                message: `Erreur de chargement: ${error}`
+            });
+        }
 
         // Vérifier AutoDownloadDetector
         try {
@@ -96,28 +128,28 @@ export default function LovableDiagnostic() {
             });
         }
 
-        // Vérifier la configuration Lovable
+        // Vérifier la configuration système
         try {
-            const response = await fetch('/src/config/lovable-features.json');
+            const response = await fetch('/src/config/system-features.json');
             if (response.ok) {
                 featureChecks.push({
-                    name: 'Configuration Lovable',
-                    component: 'lovable-features.json',
+                    name: 'Configuration Système',
+                    component: 'system-features.json',
                     status: 'success',
                     message: 'Configuration des fonctionnalités disponible'
                 });
             } else {
                 featureChecks.push({
-                    name: 'Configuration Lovable',
-                    component: 'lovable-features.json',
+                    name: 'Configuration Système',
+                    component: 'system-features.json',
                     status: 'warning',
                     message: 'Configuration non accessible via HTTP'
                 });
             }
         } catch (error) {
             featureChecks.push({
-                name: 'Configuration Lovable',
-                component: 'lovable-features.json',
+                name: 'Configuration Système',
+                component: 'system-features.json',
                 status: 'warning',
                 message: 'Configuration créée mais non testable via fetch'
             });
@@ -165,10 +197,10 @@ export default function LovableDiagnostic() {
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
                         <Eye className="w-7 h-7 text-blue-600" />
-                        Diagnostic Lovable - Fonctionnalités Bureau Syndicat
+                        Diagnostic Système - Fonctionnalités Bureau Syndicat
                     </CardTitle>
                     <p className="text-gray-600">
-                        Vérification que toutes les nouvelles fonctionnalités sont visibles et opérationnelles dans Lovable
+                        Vérification que toutes les nouvelles fonctionnalités sont visibles et opérationnelles
                     </p>
                 </CardHeader>
                 <CardContent className="space-y-6">

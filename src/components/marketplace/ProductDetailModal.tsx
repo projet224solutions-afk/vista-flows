@@ -1,0 +1,378 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import ProductReviewsSection from "./ProductReviewsSection";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  images?: string[];
+  vendor_id: string;
+  category_id?: string;
+  is_active: boolean;
+  vendors?: {
+    business_name: string;
+    user_id: string;
+  };
+}
+
+interface ProductDetailModalProps {
+  productId: string | null;
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function ProductDetailModal({ productId, open, onClose }: ProductDetailModalProps) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    if (productId && open) {
+      loadProduct();
+    }
+  }, [productId, open]);
+
+  const loadProduct = async () => {
+    if (!productId) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          price,
+          description,
+          images,
+          vendor_id,
+          category_id,
+          is_active,
+          vendors (
+            business_name,
+            user_id
+          )
+        `)
+        .eq('id', productId)
+        .single();
+
+      if (error) throw error;
+      setProduct(data);
+      setSelectedImage(0);
+    } catch (error) {
+      console.error('Erreur chargement produit:', error);
+      toast.error('Impossible de charger le produit');
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuy = async () => {
+    if (!product) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Veuillez vous connecter pour acheter');
+        navigate('/auth');
+        return;
+      }
+
+      // Créer un lien de paiement
+      const totalAmount = product.price * quantity;
+      
+      toast.success('Redirection vers le paiement...');
+      navigate(`/payment`, { 
+        state: { 
+          productId: product.id,
+          productName: product.name,
+          amount: totalAmount,
+          quantity,
+          vendorId: product.vendor_id
+        } 
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'achat:', error);
+      toast.error('Erreur lors de la création du paiement');
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0],
+        vendor_id: product.vendor_id,
+        vendor_name: product.vendors?.business_name
+      });
+    }
+    
+    toast.success(`${quantity} produit(s) ajouté(s) au panier`);
+    onClose();
+  };
+
+  const handleContact = async () => {
+    if (!product?.vendors?.user_id) {
+      toast.error('Informations du vendeur non disponibles');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Veuillez vous connecter pour contacter le vendeur');
+        navigate('/auth');
+        return;
+      }
+
+      // Vérifier que l'utilisateur a un profil
+      const { data: senderProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError || !senderProfile) {
+        console.error('Profil sender non trouvé:', profileError);
+        toast.error('Votre profil n\'est pas configuré. Veuillez compléter votre inscription.');
+        return;
+      }
+
+      // Vérifier que le vendeur a un profil
+      const { data: recipientProfile, error: recipientError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', product.vendors.user_id)
+        .maybeSingle();
+
+      if (recipientError || !recipientProfile) {
+        console.error('Profil vendeur non trouvé:', recipientError);
+        toast.error('Le profil du vendeur est introuvable');
+        return;
+      }
+
+      // Créer un message initial
+      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: product.vendors.user_id,
+          content: initialMessage,
+          type: 'text'
+        });
+
+      if (messageError) {
+        console.error('Erreur création message:', messageError);
+        throw messageError;
+      }
+
+      toast.success('Message envoyé au vendeur!');
+      
+      // Rediriger vers la page de messagerie
+      setTimeout(() => {
+        onClose();
+        navigate(`/messages?recipientId=${product.vendors.user_id}`);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erreur lors du contact:', error);
+      toast.error('Impossible de contacter le vendeur. Veuillez réessayer.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!product) return null;
+
+  const images = product.images && product.images.length > 0 
+    ? product.images 
+    : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh]">
+        <ScrollArea className="h-[85vh] pr-4">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="details">Détails du produit</TabsTrigger>
+            <TabsTrigger value="reviews">Avis clients</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <div className="grid md:grid-cols-2 gap-6">
+          {/* Images */}
+          <div className="space-y-4">
+            <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
+              <img
+                src={images[selectedImage]}
+                alt={product.name}
+                className="max-w-full max-h-full w-auto h-auto object-contain"
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+            </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                      selectedImage === index ? 'border-primary' : 'border-transparent'
+                    }`}
+                  >
+                    <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Détails */}
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-3xl font-bold text-primary">
+                  {product.price.toLocaleString()} GNF
+                </span>
+                <Badge variant="secondary">En stock</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Vendu par <span className="font-medium text-foreground">{product.vendors?.business_name || 'Vendeur'}</span>
+              </p>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="font-semibold mb-2">Description</h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {product.description || 'Aucune description disponible'}
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Quantité */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Quantité</label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  -
+                </Button>
+                <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuantity(quantity + 1)}
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Total */}
+            <div className="bg-accent p-4 rounded-lg">
+              <div className="flex items-center justify-between text-lg font-semibold">
+                <span className="text-accent-foreground">Total</span>
+                <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2">
+              <Button 
+                className="w-full" 
+                onClick={handleBuy}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Acheter maintenant
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleAddToCart}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter au panier ({quantity})
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleContact}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contacter le vendeur
+              </Button>
+            </div>
+
+            {/* Garanties */}
+            <div className="space-y-2 pt-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Shield className="w-4 h-4" />
+                <span>Paiement sécurisé</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Truck className="w-4 h-4" />
+                <span>Livraison rapide disponible</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="reviews">
+        <ProductReviewsSection 
+          vendorId={product.vendor_id}
+          vendorName={product.vendors?.business_name || 'Vendeur'}
+        />
+      </TabsContent>
+        </Tabs>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}

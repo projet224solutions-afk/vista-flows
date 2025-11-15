@@ -32,7 +32,9 @@ export function useCurrentLocation() {
     const getCurrentLocation = useCallback((): Promise<LocationData> => {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
-                reject(new Error('Géolocalisation non supportée'));
+                const error = new Error('Géolocalisation non supportée par votre navigateur');
+                setState(prev => ({ ...prev, error: error.message }));
+                reject(error);
                 return;
             }
 
@@ -57,7 +59,22 @@ export function useCurrentLocation() {
                     resolve(locationData);
                 },
                 (error) => {
-                    const errorMessage = getGeolocationErrorMessage(error.code);
+                    let errorMessage = 'Impossible d\'obtenir votre position GPS';
+                    
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Permission GPS refusée. Autorisez l\'accès dans les paramètres du navigateur.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Position GPS indisponible. Activez votre GPS et vérifiez votre connexion.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Délai GPS dépassé. Vérifiez que votre GPS est activé et réessayez.';
+                            break;
+                        default:
+                            errorMessage = `Erreur GPS: ${error.message}`;
+                    }
+                    
                     setState(prev => ({
                         ...prev,
                         loading: false,
@@ -67,8 +84,8 @@ export function useCurrentLocation() {
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 300000 // 5 minutes
+                    timeout: 15000, // Augmenté à 15 secondes
+                    maximumAge: 0 // Toujours obtenir une nouvelle position
                 }
             );
         });
@@ -76,7 +93,8 @@ export function useCurrentLocation() {
 
     const watchLocation = useCallback(() => {
         if (!navigator.geolocation) {
-            setState(prev => ({ ...prev, error: 'Géolocalisation non supportée' }));
+            const error = 'Géolocalisation non supportée par votre navigateur';
+            setState(prev => ({ ...prev, error }));
             return null;
         }
 
@@ -99,7 +117,20 @@ export function useCurrentLocation() {
                 }));
             },
             (error) => {
-                const errorMessage = getGeolocationErrorMessage(error.code);
+                let errorMessage = 'Erreur de suivi GPS';
+                
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Permission GPS refusée';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Position GPS indisponible';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Délai GPS dépassé';
+                        break;
+                }
+                
                 setState(prev => ({
                     ...prev,
                     loading: false,
@@ -108,8 +139,8 @@ export function useCurrentLocation() {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000
+                timeout: 15000,
+                maximumAge: 5000 // 5 secondes pour le tracking continu
             }
         );
 

@@ -103,9 +103,9 @@ export default function TaxiMotoPayment({
             type: 'wallet_224',
             name: 'Portefeuille 224Solutions',
             icon: Wallet,
-            description: `Solde: ${walletBalance.toLocaleString()} GNF`,
+            description: `Solde: ${(walletBalance || 0).toLocaleString()} GNF`,
             processingFee: 0,
-            isAvailable: walletBalance >= paymentDetails.amount,
+            isAvailable: walletBalance >= (paymentDetails?.amount || 0),
             estimatedTime: 'Instantané'
         },
         {
@@ -126,7 +126,8 @@ export default function TaxiMotoPayment({
     const calculateTotal = (methodId: string) => {
         const method = paymentMethods.find(m => m.id === methodId);
         const processingFee = method?.processingFee || 0;
-        return paymentDetails.amount + processingFee;
+        const amount = paymentDetails?.amount || 0;
+        return amount + processingFee;
     };
 
     /**
@@ -244,18 +245,18 @@ export default function TaxiMotoPayment({
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
-                            <span>Course #{paymentDetails.rideId}</span>
-                            <span>{paymentDetails.breakdown.baseAmount.toLocaleString()} GNF</span>
+                            <span>Course #{paymentDetails?.rideId || 'N/A'}</span>
+                            <span>{(paymentDetails?.breakdown?.baseAmount || 0).toLocaleString()} GNF</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>TVA (18%)</span>
-                            <span>{paymentDetails.breakdown.taxes.toLocaleString()} GNF</span>
+                            <span>{(paymentDetails?.breakdown?.taxes || 0).toLocaleString()} GNF</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
                             <span className="text-green-600">
-                                {paymentDetails.amount.toLocaleString()} {paymentDetails.currency}
+                                {(paymentDetails?.amount || 0).toLocaleString()} {paymentDetails?.currency || 'GNF'}
                             </span>
                         </div>
                     </CardContent>
@@ -300,11 +301,11 @@ export default function TaxiMotoPayment({
 
                                         <div className="text-right">
                                             <div className="font-bold">
-                                                {total.toLocaleString()} GNF
+                                                {(total || 0).toLocaleString()} GNF
                                             </div>
                                             {method.processingFee > 0 && (
                                                 <div className="text-xs text-orange-600">
-                                                    +{method.processingFee.toLocaleString()} frais
+                                                    +{(method.processingFee || 0).toLocaleString()} frais
                                                 </div>
                                             )}
                                         </div>
@@ -432,10 +433,10 @@ export default function TaxiMotoPayment({
                             <div className="text-center py-4">
                                 <Wallet className="w-16 h-16 mx-auto mb-4 text-green-600" />
                                 <p className="text-lg font-semibold">
-                                    Solde disponible: {walletBalance.toLocaleString()} GNF
+                                    Solde disponible: {(walletBalance || 0).toLocaleString()} GNF
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Montant à débiter: {calculateTotal(selectedMethod).toLocaleString()} GNF
+                                    Montant à débiter: {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
                                 </p>
                             </div>
                         )}
@@ -446,7 +447,7 @@ export default function TaxiMotoPayment({
                                 <Banknote className="w-16 h-16 mx-auto mb-4 text-green-600" />
                                 <p className="text-lg font-semibold">Paiement en espèces</p>
                                 <p className="text-sm text-gray-600">
-                                    Vous paierez {calculateTotal(selectedMethod).toLocaleString()} GNF au conducteur
+                                    Vous paierez {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF au conducteur
                                 </p>
                                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                                     <p className="text-xs text-yellow-800">
@@ -472,7 +473,7 @@ export default function TaxiMotoPayment({
                         <div className="flex justify-between items-center">
                             <span className="font-semibold">Total à payer</span>
                             <span className="text-xl font-bold text-green-600">
-                                {calculateTotal(selectedMethod).toLocaleString()} GNF
+                                {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
                             </span>
                         </div>
                     </CardContent>
@@ -529,7 +530,7 @@ export default function TaxiMotoPayment({
                         Paiement réussi !
                     </h3>
                     <p className="text-gray-600 mb-4">
-                        Votre paiement de {calculateTotal(selectedMethod).toLocaleString()} GNF a été traité avec succès.
+                        Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a été traité avec succès.
                     </p>
                     <div className="bg-green-50 p-4 rounded-lg mb-4">
                         <p className="text-sm text-green-800">

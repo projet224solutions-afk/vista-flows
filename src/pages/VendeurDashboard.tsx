@@ -31,15 +31,32 @@ import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
 import VendorAnalytics from "@/components/vendor/VendorAnalytics";
 import InventoryManagement from "@/components/vendor/InventoryManagement";
 import MarketingManagement from "@/components/vendor/MarketingManagement";
-import WalletDashboard from "@/components/vendor/WalletDashboard";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
 import SupportTickets from "@/components/vendor/SupportTickets";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
 import DebtManagement from "@/components/vendor/DebtManagement";
-import SimpleCommunicationInterface from "@/components/communication/SimpleCommunicationInterface";
+import { VendorDebtManagement } from "@/components/vendor/debts/VendorDebtManagement";
+import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
+import SupplierManagement from "@/components/vendor/SupplierManagement";
+import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
+import GeminiAITest from "@/components/vendor/GeminiAITest";
+import GoogleCloudVerification from "@/components/vendor/GoogleCloudVerification";
+import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
+import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
+import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
+// import PWAInstallButton from "@/components/pwa/PWAInstallButton"; // PWA désactivée
+import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
+import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
+import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
+import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
+import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
+import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
+import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -117,8 +134,9 @@ export default function VendeurDashboard() {
 
       const { data, error } = await supabase
         .from('orders')
-        .select(`order_number,total_amount,status,created_at,customer:customers(user_id)`)
+        .select(`order_number,total_amount,status,created_at,customer:customers!inner(user_id)`)
         .eq('vendor_id', vendor.id)
+        .neq('customer.user_id', user.id) // Exclude POS sales
         .order('created_at', { ascending: false })
         .limit(5);
       if (error) return;
@@ -174,33 +192,16 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
-      {/* Stats principales (réelles) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {mainStats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <h3 className="text-2xl font-bold mt-2">{stat.value}</h3>
-                  {stat.change && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">{stat.change}</span>
-                    </div>
-                  )}
-                </div>
-                <div className={`p-3 rounded-xl ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Analytics Dashboard intégré */}
+      <VendorAnalyticsDashboard />
 
       {/* Activité récente */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Wallet universel */}
+        <div>
+          <UniversalWalletTransactions />
+        </div>
+        
         <Card>
           <CardHeader>
             <CardTitle>Commandes récentes</CardTitle>
@@ -232,31 +233,14 @@ export default function VendeurDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Alertes & Notifications</CardTitle>
-            <CardDescription>Actions requises</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <Bell className="w-5 h-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-yellow-900">Stock faible</p>
-                  <p className="text-sm text-yellow-700">{stats?.low_stock_count ?? 0} produits nécessitent un réapprovisionnement</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-blue-900">Nouvelles commandes</p>
-                  <p className="text-sm text-blue-700">{stats?.orders_pending ?? 0} nouvelles commandes à traiter</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Notifications intégrées */}
+        <div>
+          <VendorNotificationsPanel />
+        </div>
       </div>
+
+      {/* Panneau de sécurité */}
+      <VendorSecurityPanel />
 
       {/* Actions rapides */}
       <Card>
@@ -318,7 +302,7 @@ export default function VendeurDashboard() {
             <p className="text-sm text-muted-foreground">Email: {user?.email}</p>
             <p className="text-sm text-muted-foreground">Nom: {profile?.first_name} {profile?.last_name}</p>
             {userInfo && (
-              <p className="text-sm text-muted-foreground">ID: {userInfo.custom_id}</p>
+              <p className="text-sm text-muted-foreground">ID: {userInfo.public_id}</p>
             )}
           </div>
         </div>
@@ -345,19 +329,23 @@ export default function VendeurDashboard() {
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
                     224SOLUTIONS
                   </h1>
-                  <p className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    {profile?.first_name || user?.email?.split('@')[0]}
-                    {userInfo && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">
-                        {userInfo.custom_id}
-                      </span>
-                    )}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                      {profile?.first_name || user?.email?.split('@')[0]}
+                    </p>
+                    <VendorIdDisplay showName={false} />
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
+                <NetworkStatusIndicator />
+                {/* PWAInstallButton désactivé */}
+                <div className="hidden lg:block">
+                  <WalletBalanceWidget className="max-w-[280px]" />
+                </div>
+                <QuickTransferButton variant="ghost" size="icon" showText={false} />
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
                 </Button>
@@ -371,10 +359,14 @@ export default function VendeurDashboard() {
             </div>
           </header>
 
+          {/* Subscription expiry banner */}
+          <SubscriptionExpiryBanner />
+
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route index element={<DashboardHome />} />
+              <Route path="/" element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
               <Route path="analytics" element={<VendorAnalytics />} />
               <Route path="pos" element={<POSSystemWrapper />} />
@@ -382,25 +374,33 @@ export default function VendeurDashboard() {
               <Route path="orders" element={<OrderManagement />} />
               <Route path="inventory" element={<InventoryManagement />} />
               <Route path="warehouse" element={<WarehouseManagement />} />
+              <Route path="suppliers" element={<SupplierManagement />} />
               <Route path="clients" element={<ClientManagement />} />
               <Route path="agents" element={<AgentManagement />} />
               <Route path="prospects" element={<ProspectManagement />} />
               <Route path="marketing" element={<MarketingManagement />} />
-              <Route path="wallet" element={<WalletDashboard />} />
+              <Route path="wallet" element={<UniversalWalletTransactions />} />
               <Route path="payments" element={<PaymentManagement />} />
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
-              <Route path="debts" element={<DebtManagement />} />
-              <Route path="affiliate" element={<AffiliateManagement shopId={undefined} />} />
-              <Route path="delivery" element={<Card><CardContent className="p-6">Module Livraisons - En développement</CardContent></Card>} />
+              <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
+              <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
+              <Route path="delivery" element={<VendorDeliveriesPanel />} />
               <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<SimpleCommunicationInterface />} />
+              <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
+              <Route path="test-ai" element={<GeminiAITest />} />
+              <Route path="test-google-cloud" element={<GoogleCloudVerification />} />
+              <Route path="offline-sync" element={<OfflineSyncPanel />} />
+              <Route path="subscription" element={<SubscriptionRenewalPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </main>
         </div>
       </div>
+      
+      {/* Widget de communication flottant */}
+      <CommunicationWidget position="bottom-right" showNotifications={true} />
     </SidebarProvider>
   );
 }

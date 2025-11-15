@@ -33,11 +33,11 @@ import {
   ShoppingBag,
   Check,
   Euro,
-  Eye
+  Eye,
+  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
-import { useProducts } from '@/hooks/useSupabaseQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -45,8 +45,9 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  image?: string;
+  images?: string[];
   category: string;
+  categoryId?: string | null;
   stock: number;
   barcode?: string;
 }
@@ -88,19 +89,87 @@ export function POSSystem() {
     }
   }, [user?.id]);
   
-  // Charger tous les produits actifs du marketplace (sans filtrer par vendor)
-  const { data: productsData, loading: productsLoading, refetch: refetchProducts } = useProducts();
+  // Charger les produits du vendor depuis la base de données
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   
-  // Transformer les données des produits pour le format POS
-  const products = (productsData || []).map((p: any) => ({
-    id: p?.id,
-    name: p?.name ?? 'Produit',
-    price: Number(p?.price || 0),
-    category: p?.category_id || 'Divers',
-    stock: Number(p?.stock_quantity || 0),
-    barcode: p?.barcode || p?.ean || p?.sku || undefined,
-    images: p?.images || []
-  }));
+  // Charger les catégories depuis la base de données
+  const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  const loadCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const { data: categoriesData, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      setCategories(categoriesData || []);
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+      toast.error('Erreur lors du chargement des catégories');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+  
+  const loadVendorProducts = async () => {
+    if (!vendorId) return;
+    
+    try {
+      setProductsLoading(true);
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          price,
+          stock_quantity,
+          barcode,
+          sku,
+          images,
+          category_id,
+          categories(id, name)
+        `)
+        .eq('vendor_id', vendorId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedProducts = (productsData || []).map((p: any) => ({
+        id: p.id,
+        name: p.name ?? 'Produit',
+        price: Number(p.price || 0),
+        category: p.categories?.name || 'Divers',
+        categoryId: p.categories?.id || null,
+        stock: Number(p.stock_quantity || 0),
+        barcode: p.barcode || p.sku || undefined,
+        images: p.images || []
+      }));
+
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+      toast.error('Erreur lors du chargement des produits');
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (vendorId) {
+      loadVendorProducts();
+    }
+  }, [vendorId]);
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -117,13 +186,11 @@ export function POSSystem() {
   // États pour personnalisation
   const [companyName] = useState('Vista Commerce Pro');
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
   
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.barcode?.includes(searchTerm);
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -201,6 +268,8 @@ export function POSSystem() {
   const handleNumericInput = (input: string) => {
     if (input === 'clear') {
       setNumericInput('');
+      setReceivedAmount(0);
+      toast.info('Montant effacé');
       return;
     }
     
@@ -231,37 +300,133 @@ export function POSSystem() {
       return;
     }
 
+    if (!vendorId) {
+      toast.error('Vendeur non identifié');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('Utilisateur non connecté');
+      return;
+    }
+
     try {
-      // Appel backend (service role) pour gérer RLS et transaction
-      const payload = {
-        vendorId,
-        totalAmount: total,
-        items: cart.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }))
-      };
-      const API_BASE = (import.meta as unknown).env?.VITE_API_BASE_URL || 'http://localhost:3001';
-      const token = (session as unknown as { access_token?: string })?.access_token;
-      const resp = await fetch(`${API_BASE}/api/orders/pos-checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(payload)
-      });
-      const json = await resp.json().catch(() => ({}));
-      if (!resp.ok || json?.success === false) throw new Error(json?.message || 'Erreur checkout');
+      // 1. Vérifier/créer un enregistrement customer pour l'utilisateur
+      let customerId: string;
+      
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Créer un nouveau customer pour les ventes POS
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: user.id
+          })
+          .select('id')
+          .single();
+
+        if (customerError) throw customerError;
+        customerId = newCustomer.id;
+      }
+
+      // 2. Créer la commande
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          vendor_id: vendorId,
+          customer_id: customerId,
+          total_amount: total,
+          subtotal: subtotal,
+          tax_amount: tax,
+          discount_amount: (totalBeforeDiscount * (discount || 0)) / 100,
+          payment_status: 'paid',
+          status: 'confirmed',
+          payment_method: paymentMethod,
+          shipping_address: { address: 'Point de vente' },
+          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`,
+          source: 'pos'  // Identifier cette commande comme une vente POS
+        })
+        .select('id, order_number')
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 3. Créer les items de commande
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.total
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // 4. Mettre à jour le stock pour chaque produit
+      for (const item of cart) {
+        // Vérifier d'abord dans inventory
+        const { data: inventoryItem } = await supabase
+          .from('inventory')
+          .select('id, quantity')
+          .eq('product_id', item.id)
+          .maybeSingle();
+
+        if (inventoryItem) {
+          // Mettre à jour inventory
+          const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
+          await supabase
+            .from('inventory')
+            .update({ quantity: newQuantity })
+            .eq('id', inventoryItem.id);
+        }
+
+        // Mettre à jour aussi products.stock_quantity
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id)
+          .maybeSingle();
+
+        if (product) {
+          const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+          await supabase
+            .from('products')
+            .update({ 
+              stock_quantity: newStock,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', item.id);
+        }
+      }
 
       toast.success('Paiement effectué avec succès!', {
-        description: `Commande de ${total.toFixed(0)} GNF validée`
+        description: `Commande ${order.order_number || '#' + order.id.substring(0, 8)} de ${total.toFixed(0)} ${settings?.currency || 'GNF'} validée`
       });
 
       clearCart();
       setShowOrderSummary(false);
       setReceivedAmount(0);
+      setDiscount(0);
+      setNumericInput('');
+      
       // Recharger la liste des produits pour refléter le stock
-      try { await refetchProducts?.(); } catch {}
-    } catch (e: unknown) {
-      toast.error(e?.message || 'Erreur lors de l\'enregistrement de la vente');
+      await loadVendorProducts();
+    } catch (error: any) {
+      console.error('Erreur paiement:', error);
+      toast.error('Erreur lors du paiement', {
+        description: error.message || 'Une erreur est survenue'
+      });
     }
   };
 
@@ -481,17 +646,31 @@ export function POSSystem() {
               
               {/* Filtres par catégorie */}
               <div className="flex gap-2 mt-4 flex-wrap">
-                {categories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="shadow-sm transition-all duration-200 hover:shadow-md"
-                  >
-                    {category === 'all' ? 'Tous les produits' : category}
-                  </Button>
-                ))}
+                {categoriesLoading ? (
+                  <div className="text-sm text-muted-foreground">Chargement des catégories...</div>
+                ) : (
+                  <>
+                    <Button
+                      variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory('all')}
+                      className="shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      Tous les produits
+                    </Button>
+                    {categories.map(category => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategory === category.id ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category.id)}
+                        className="shadow-sm transition-all duration-200 hover:shadow-md"
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -520,32 +699,81 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
                     {filteredProducts.map(product => (
                       <Card 
                         key={product.id} 
-                        className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border-2 border-border/30 hover:border-primary/40 bg-gradient-to-br from-card via-card/95 to-card/90"
+                        className="group relative cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 border-border/50 hover:border-primary/40 bg-card/95 backdrop-blur-sm hover:-translate-y-1"
                         onClick={() => addToCart(product)}
                       >
-                        <CardContent className="p-4 text-center space-y-3">
-                          <div className="w-full h-32 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-lg flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300">
-                            <Smartphone className="h-14 w-14 text-muted-foreground/60 group-hover:text-primary/60 transition-colors" />
+                        <CardContent className="p-0">
+                          {/* Image produit moderne */}
+                          <div className="relative w-full h-40 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden border-b-2 border-border/30">
+                            {/* Badge stock flottant */}
+                            <div className="absolute top-2 right-2 z-10">
+                              <Badge 
+                                variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
+                                className="shadow-lg font-bold text-xs px-2.5 py-0.5"
+                              >
+                                {product.stock}
+                              </Badge>
+                            </div>
+
+                            {/* Image du produit ou icône */}
+                            {product.images && product.images.length > 0 ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors duration-500" />
+                                  <Package className="relative h-16 w-16 text-muted-foreground/40 group-hover:text-primary/60 transition-colors duration-300" />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Overlay gradient au survol */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                           
-                          <div>
-                            <h3 className="font-bold text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+                          {/* Contenu compact et professionnel */}
+                          <div className="p-4 space-y-3">
+                            {/* Catégorie compacte */}
+                            <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wide">
+                              {product.category}
+                            </Badge>
+
+                            {/* Nom du produit */}
+                            <h3 className="font-bold text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors duration-200">
                               {product.name}
                             </h3>
-                            <p className="text-2xl font-bold text-primary mb-3">{product.price.toLocaleString()} GNF</p>
                             
-                            <Badge 
-                              variant={product.stock > 10 ? 'default' : 'destructive'} 
-                              className="mb-3 w-full justify-center"
-                            >
-                              Stock: {product.stock}
-                            </Badge>
+                            {/* Prix prominent */}
+                            <div className="flex items-baseline gap-1.5 justify-between">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-black text-primary">
+                                  {product.price.toLocaleString()}
+                                </span>
+                                <span className="text-xs font-bold text-muted-foreground">
+                                  GNF
+                                </span>
+                              </div>
+                              
+                              {/* Quantité dans le panier */}
+                              {cart.find(item => item.id === product.id) && (
+                                <Badge variant="secondary" className="font-mono font-bold">
+                                  ×{cart.find(item => item.id === product.id)?.quantity}
+                                </Badge>
+                              )}
+                            </div>
                             
-                            <div className="flex justify-between items-center">
+                            <Separator className="my-2" />
+
+                            {/* Actions compactes */}
+                            <div className="grid grid-cols-5 gap-1.5">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -553,15 +781,25 @@ export function POSSystem() {
                                   e.stopPropagation();
                                   updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
                                 }}
-                                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                disabled={!cart.find(item => item.id === product.id)}
+                                className="h-9 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
                               
-                              <span className="font-mono font-bold text-lg px-2">
-                                {cart.find(item => item.id === product.id)?.quantity || 0}
-                              </span>
-                              
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(product);
+                                }}
+                                className="col-span-3 h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg font-semibold"
+                              >
+                                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                                Ajouter
+                              </Button>
+
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -569,7 +807,7 @@ export function POSSystem() {
                                   e.stopPropagation();
                                   addToCart(product);
                                 }}
-                                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                                className="h-9 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -749,24 +987,65 @@ export function POSSystem() {
                     </div>
                   </div>
 
-                  {/* Saisie montant reçu pour espèces */}
+                  {/* Saisie montant reçu pour espèces avec pavé numérique */}
                   {paymentMethod === 'cash' && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Montant reçu</label>
-                      <Input
-                        type="number"
-                        value={receivedAmount}
-                        onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="mb-2"
-                      />
-                      {receivedAmount > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                          Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                            {change.toLocaleString()} GNF
-                          </span>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Montant reçu</label>
+                        <Input
+                          type="text"
+                          value={numericInput || receivedAmount || ''}
+                          readOnly
+                          placeholder="0"
+                          className="mb-2 text-right text-xl font-mono font-bold"
+                        />
+                        {receivedAmount > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {change.toLocaleString()} GNF
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pavé numérique (Calculatrice) */}
+                      <div className="bg-muted/20 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                          <Calculator className="h-3 w-3" />
+                          Pavé numérique
                         </div>
-                      )}
+                        <div className="grid grid-cols-3 gap-2">
+                          {['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '.'].map((num) => (
+                            <Button
+                              key={num}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleNumericInput(num)}
+                              className="h-10 text-base font-bold hover:bg-primary/10"
+                            >
+                              {num}
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNumericInput('clear')}
+                            className="h-10 text-destructive hover:bg-destructive/10"
+                          >
+                            Effacer
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleNumericInput('enter')}
+                            className="h-10 bg-primary"
+                          >
+                            Valider
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -777,7 +1056,7 @@ export function POSSystem() {
                     disabled={paymentMethod === 'cash' && receivedAmount < total}
                   >
                     <CheckSquare className="h-5 w-5 mr-2" />
-                    Valider la commande
+                    Valider la commande - {total.toLocaleString()} GNF
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -8,7 +9,7 @@ interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'admin' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'ceo' | 'sub_agent';
+  role: 'admin' | 'ceo' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client';
   avatar_url?: string;
   phone?: string;
   is_active: boolean;
@@ -19,6 +20,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  profileLoading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   ensureUserSetup: () => Promise<void>;
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // Fonction pour s'assurer que l'utilisateur a son setup complet
   const ensureUserSetup = useCallback(async () => {
@@ -57,25 +60,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (needsVirtualCard) missing.push('Carte virtuelle');
 
         console.log('⚠️ Éléments manquants:', missing);
-        toast.info(`Configuration automatique en cours: ${missing.join(', ')}`);
+        // Ne plus afficher de toast info pour éviter les notifications répétées
 
         let customId = '';
 
-        // Créer ID utilisateur si manquant (3 lettres + 4 chiffres)
+        // Créer ID utilisateur si manquant avec le format basé sur le rôle
         if (needsUserId) {
-          // Générer 3 lettres aléatoires (A-Z)
-          let letters = '';
-          for (let i = 0; i < 3; i++) {
-            letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-          }
+          // Utiliser la fonction RPC pour générer un ID avec le bon préfixe
+          const userRole = profile?.role || 'client';
+          
+          const { data: generatedId, error: generateError } = await supabase
+            .rpc('generate_custom_id_with_role', { p_role: userRole });
 
-          // Générer 4 chiffres aléatoires (0-9)
-          let numbers = '';
-          for (let i = 0; i < 4; i++) {
-            numbers += Math.floor(Math.random() * 10).toString();
+          if (generateError) {
+            console.error('❌ Erreur génération ID:', generateError);
+            // Fallback sur ancien système
+            customId = 'TMP' + Math.random().toString(36).substring(2, 6).toUpperCase();
+          } else {
+            customId = generatedId;
           }
-
-          customId = letters + numbers;
 
           const { error: idError } = await supabase
             .from('user_ids')
@@ -94,44 +97,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           customId = userIdCheck.data?.custom_id || 'ABC0000';
         }
 
-        // Créer wallet si manquant
+        // Créer wallet si manquant via RPC
         if (needsWallet) {
-          const { error: walletError } = await supabase
-            .from('wallets')
-            .upsert({
-              user_id: user.id,
-              balance: 10000, // Bonus de bienvenue
-              currency: 'GNF',
-              status: 'active'
-            });
-
-          if (walletError) {
-            console.error('❌ Erreur création wallet:', walletError);
-          } else {
-            console.log('✅ Wallet créé avec bonus de 10,000 GNF');
+          console.log('⚠️ Wallet manquant pour:', user.id);
+          console.log('📝 Initialisation via RPC...');
+          
+          try {
+            const { data: initResult, error: rpcError } = await supabase
+              .rpc('initialize_user_wallet', { p_user_id: user.id });
+            
+            if (rpcError) {
+              console.error('❌ Erreur RPC:', rpcError);
+            } else if (initResult) {
+              const result = initResult as any;
+              if (result.success) {
+                console.log('✅ Wallet initialisé:', result);
+              }
+            }
+          } catch (initError) {
+            console.error('❌ Erreur appel fonction initialisation:', initError);
           }
         }
 
         // Créer carte virtuelle si manquante
         if (needsVirtualCard) {
-          const cardNumber = '4*** **** **** ' + Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+          // Générer un numéro de carte au format "4*** **** **** 1234" (19 caractères max)
+          const last4Digits = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+          const cardNumber = `4*** **** **** ${last4Digits}`;
+          
+          // Nom du titulaire
+          const holderName = `${profile?.first_name || ''} ${profile?.last_name || customId}`.trim();
+          
+          // Générer date d'expiration au format MM/YY (5 caractères)
+          const futureDate = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000);
+          const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
+          const year = futureDate.getFullYear().toString().slice(-2);
+          const expiryDate = `${month}/${year}`;
+          
           const { error: cardError } = await supabase
             .from('virtual_cards')
             .upsert({
               user_id: user.id,
               card_number: cardNumber,
-              expiry_date: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 3 ans
-              cvv: Math.floor(Math.random() * 900 + 100).toString()
+              holder_name: holderName,
+              expiry_date: expiryDate,
+              cvv: Math.floor(Math.random() * 900 + 100).toString(),
+              daily_limit: 500000,
+              monthly_limit: 2000000
             });
 
           if (cardError) {
             console.error('❌ Erreur création carte virtuelle:', cardError);
+            // Ne pas afficher de toast d'erreur pour éviter les notifications répétées
           } else {
             console.log('✅ Carte virtuelle créée:', cardNumber);
           }
         }
 
-        toast.success('✅ Configuration client complétée ! Wallet, ID et carte virtuelle créés.');
+        // Afficher le toast de succès seulement une fois, silencieusement en logs
+        if (missing.length > 0) {
+          console.log('✅ Configuration client complétée !');
+        }
       } else {
         console.log('✅ Setup utilisateur complet');
       }
@@ -144,9 +170,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
+      setProfileLoading(false);
       return;
     }
 
+    setProfileLoading(true);
+    console.log('🔄 Chargement profil pour:', user.email);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -155,23 +184,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('❌ Erreur chargement profil:', error);
+        setProfileLoading(false);
         return;
       }
 
+      console.log('✅ Profil chargé:', data.role, data.email);
       setProfile(data);
     } catch (error) {
-      console.error('Error in refreshProfile:', error);
+      console.error('❌ Erreur dans refreshProfile:', error);
+    } finally {
+      setProfileLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session - CRITIQUE pour restaurer la session au rechargement
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      console.log('🔍 Vérification session existante...');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Erreur lors de la récupération de la session:', error);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
+        if (session) {
+          console.log('✅ Session restaurée:', session.user.email);
+          setSession(session);
+          setUser(session.user);
+        } else {
+          console.log('ℹ️ Aucune session active - utilisateur non connecté');
+          setSession(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('❌ Erreur inattendue lors de la récupération de la session:', error);
+        setSession(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getInitialSession();
@@ -179,8 +236,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log('🔔 Auth state change:', event, session?.user?.email || 'no user');
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('👋 Utilisateur déconnecté');
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('🔄 Token rafraîchi');
+          setSession(session);
+          setUser(session?.user ?? null);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+        
         setLoading(false);
       }
     );
@@ -208,6 +279,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     profile,
     loading,
+    profileLoading,
     signOut,
     refreshProfile,
     ensureUserSetup

@@ -21,6 +21,8 @@ interface PaymentDetails {
   produit: string;
   description?: string;
   montant: number;
+  remise?: number;
+  type_remise?: 'percentage' | 'fixed';
   frais: number;
   total: number;
   devise: string;
@@ -288,6 +290,15 @@ export default function PaymentPage() {
                   <span>Montant :</span>
                   <span>{formatCurrency(paymentDetails.montant, paymentDetails.devise)}</span>
                 </div>
+                {(paymentDetails as any).remise > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Remise :</span>
+                    <span>
+                      -{(paymentDetails as any).remise}
+                      {(paymentDetails as any).type_remise === 'percentage' ? '%' : ` ${paymentDetails.devise}`}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Frais de transaction (1%) :</span>
                   <span>{formatCurrency(paymentDetails.frais, paymentDetails.devise)}</span>

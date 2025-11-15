@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
-import { PDGAuthButton } from "@/components/PDGAuthButton";
 import {
     Search,
     Grid3X3,
@@ -451,11 +450,6 @@ export default function IndexAlibaba() {
 
             {/* Footer de navigation */}
             <QuickFooter />
-
-            {/* Bouton PDG */}
-            <div className="fixed bottom-24 right-4 z-50">
-                <PDGAuthButton />
-            </div>
         </div>
     );
 }

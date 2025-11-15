@@ -24,6 +24,7 @@ import {
     MoreVertical
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RideHistory {
     id: string;
@@ -71,80 +72,47 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     const loadRideHistory = async () => {
         setLoading(true);
         try {
-            // Simuler le chargement depuis Supabase
-            const mockRides: RideHistory[] = [
-                {
-                    id: 'RIDE-2025-00123',
-                    date: '2025-09-30T14:30:00Z',
-                    pickupAddress: 'Plateau, Conakry',
-                    destinationAddress: 'Almadies, Conakry',
-                    distance: 12.5,
-                    duration: 25,
-                    price: 3500,
-                    status: 'completed',
-                    driver: {
-                        name: 'Mamadou Diallo',
-                        rating: 4.8,
-                        vehicleType: 'moto_rapide'
-                    },
-                    rating: 5,
-                    paymentMethod: 'wallet_224'
-                },
-                {
-                    id: 'RIDE-2025-00122',
-                    date: '2025-09-29T09:15:00Z',
-                    pickupAddress: 'Médina, Conakry',
-                    destinationAddress: 'Yoff, Conakry',
-                    distance: 8.2,
-                    duration: 18,
-                    price: 2800,
-                    status: 'completed',
-                    driver: {
-                        name: 'Fatou Sall',
-                        rating: 4.9,
-                        vehicleType: 'moto_premium'
-                    },
-                    rating: 4,
-                    paymentMethod: 'mobile_money'
-                },
-                {
-                    id: 'RIDE-2025-00121',
-                    date: '2025-09-28T16:45:00Z',
-                    pickupAddress: 'Parcelles Assainies, Conakry',
-                    destinationAddress: 'Point E, Conakry',
-                    distance: 15.3,
-                    duration: 32,
-                    price: 4200,
-                    status: 'cancelled',
-                    driver: {
-                        name: 'Ibrahima Ndiaye',
-                        rating: 4.7,
-                        vehicleType: 'moto_economique'
-                    },
-                    paymentMethod: 'card'
-                },
-                {
-                    id: 'RIDE-2025-00120',
-                    date: '2025-09-27T11:20:00Z',
-                    pickupAddress: 'Liberté 6, Conakry',
-                    destinationAddress: 'Sacré-Cœur, Conakry',
-                    distance: 6.8,
-                    duration: 15,
-                    price: 2200,
-                    status: 'completed',
-                    driver: {
-                        name: 'Aminata Ba',
-                        rating: 4.6,
-                        vehicleType: 'moto_rapide'
-                    },
-                    rating: 5,
-                    paymentMethod: 'cash'
-                }
-            ];
+            if (!userId) return;
 
-            setRides(mockRides);
+            console.log('[TaxiMotoHistory] Loading ride history for user:', userId);
+
+            const { data: trips, error } = await supabase
+                .from('taxi_trips')
+                .select('*')
+                .eq('customer_id', userId)
+                .in('status', ['completed', 'cancelled'])
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) {
+                console.error('[TaxiMotoHistory] Error loading history:', error);
+                throw error;
+            }
+
+            console.log('[TaxiMotoHistory] Loaded trips:', trips?.length || 0);
+
+            const formattedRides: RideHistory[] = (trips || []).map(trip => ({
+                id: trip.id,
+                date: trip.requested_at || trip.created_at,
+                pickupAddress: trip.pickup_address || 'Adresse non disponible',
+                destinationAddress: trip.dropoff_address || 'Adresse non disponible',
+                distance: trip.distance_km || 0,
+                duration: trip.duration_min || 0,
+                price: trip.price_total || 0,
+                status: trip.status as 'completed' | 'cancelled',
+                driver: {
+                    name: 'Conducteur',
+                    rating: 4.5,
+                    vehicleType: 'Moto-Taxi'
+                },
+                rating: trip.customer_rating || undefined,
+                paymentMethod: trip.payment_method || 'wallet_224'
+            }));
+
+            console.log('[TaxiMotoHistory] Formatted rides:', formattedRides.length);
+            setRides(formattedRides);
         } catch (error) {
-            console.error('Erreur chargement historique:', error);
+            console.error('[TaxiMotoHistory] Error loading history:', error);
             toast.error('Impossible de charger l\'historique');
         } finally {
             setLoading(false);

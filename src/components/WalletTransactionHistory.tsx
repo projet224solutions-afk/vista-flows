@@ -20,6 +20,8 @@ interface Transaction {
   amount: number;
   sender_id: string;
   receiver_id: string;
+  sender_custom_id?: string;
+  receiver_custom_id?: string;
   method: string;
   created_at: string;
   status: string;
@@ -77,8 +79,33 @@ export const WalletTransactionHistory = ({
 
         if (transactionsError) {
           console.error('Erreur récupération transactions:', transactionsError);
-        } else {
-          setTransactions(transactionsData || []);
+        } else if (transactionsData) {
+          // Enrichir les transactions avec les custom_id
+          const enrichedTransactions = await Promise.all(
+            transactionsData.map(async (tx) => {
+              // Récupérer le custom_id de l'expéditeur
+              const { data: senderData } = await supabase
+                .from('user_ids')
+                .select('custom_id')
+                .eq('user_id', tx.sender_id)
+                .maybeSingle();
+
+              // Récupérer le custom_id du destinataire
+              const { data: receiverData } = await supabase
+                .from('user_ids')
+                .select('custom_id')
+                .eq('user_id', tx.receiver_id)
+                .maybeSingle();
+
+              return {
+                ...tx,
+                sender_custom_id: senderData?.custom_id || tx.sender_id,
+                receiver_custom_id: receiverData?.custom_id || tx.receiver_id
+              };
+            })
+          );
+          
+          setTransactions(enrichedTransactions);
         }
       }
 
@@ -195,7 +222,12 @@ export const WalletTransactionHistory = ({
                   {getTransactionIcon(transaction, transaction.status)}
                   <div>
                     <p className="font-medium text-gray-800">
-                      {transaction.method} - {transaction.receiver_id === user?.id ? 'Reçu' : 'Envoyé'}
+                      {transaction.method} - {transaction.receiver_id === user?.id ? 'Reçu de' : 'Envoyé à'}{' '}
+                      <span className="font-mono text-primary">
+                        {transaction.receiver_id === user?.id 
+                          ? transaction.sender_custom_id 
+                          : transaction.receiver_custom_id}
+                      </span>
                     </p>
                     <p className="text-xs text-gray-500">
                       {formatDate(transaction.created_at)}

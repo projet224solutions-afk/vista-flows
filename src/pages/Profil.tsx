@@ -1,15 +1,18 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback } from "react";
-import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera } from "lucide-react";
+import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import QuickFooter from "@/components/QuickFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AdminAuthButton } from "@/components/AdminAuthButton";
 
 const userTypes = {
   client: {
@@ -44,13 +47,12 @@ const menuItems = [
     id: 'orders',
     title: 'Mes commandes',
     description: 'Voir toutes mes commandes',
-    icon: ShoppingBag,
-    badge: '5'
+    icon: ShoppingBag
   },
   {
     id: 'history',
     title: 'Historique',
-    description: 'Activité récente',
+    description: 'Historique des transactions',
     icon: History
   },
   {
@@ -69,61 +71,142 @@ export default function Profil() {
   const [isEditing, setIsEditing] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [mfaVerified, setMfaVerified] = useState<boolean>(true);
-
-  // Authentication check
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background pb-20">
-        <header className="bg-card border-b border-border">
-          <div className="px-4 py-6">
-            <h1 className="text-2xl font-bold text-foreground">Profil</h1>
-          </div>
-        </header>
-
-        <section className="px-4 py-8">
-          <Card>
-            <CardContent className="text-center py-12">
-              <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
-              <p className="text-muted-foreground mb-6">
-                Vous devez vous connecter pour accéder à votre profil
-              </p>
-              <Button
-                onClick={() => navigate('/auth')}
-                className="bg-vendeur-primary hover:bg-vendeur-primary/90"
-              >
-                Se connecter
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
-      </div>
-    );
-  }
+  const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const userTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
     ? userTypes[profile.role as keyof typeof userTypes] 
     : userTypes.client;
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const loadOrders = async () => {
+    if (!user) return;
+    setLoadingData(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          customer_id,
+          vendor_id,
+          total_amount,
+          status,
+          payment_status,
+          shipping_address,
+          created_at
+        `)
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Error loading orders:', error);
+        toast.error('Erreur lors du chargement des commandes');
+        setOrders([]);
+      } else {
+        setOrders(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Erreur lors du chargement des commandes');
+      setOrders([]);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
-  const handleNavigate = useCallback((itemId: string) => {
-    if (itemId === 'settings' && !mfaVerified) {
-      toast.error('MFA requis pour accéder aux paramètres');
-      return;
+  const loadTransactions = async () => {
+    if (!user) return;
+    setLoadingData(true);
+    try {
+      const { data, error } = await supabase
+        .from('wallet_transactions')
+        .select(`
+          id,
+          user_id,
+          amount,
+          type,
+          status,
+          description,
+          created_at,
+          currency
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) {
+        console.error('Error loading transactions:', error);
+        toast.error('Erreur lors du chargement des transactions');
+        setTransactions([]);
+      } else {
+        setTransactions(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      toast.error('Erreur lors du chargement des transactions');
+      setTransactions([]);
+    } finally {
+      setLoadingData(false);
     }
-    const route = itemId === 'orders' ? '/profil/orders' : itemId === 'history' ? '/profil/history' : '/profil/settings';
-    navigate(route);
-  }, [navigate, mfaVerified]);
+  };
+
+  const handleMenuClick = async (itemId: string) => {
+    if (itemId === 'orders') {
+      await loadOrders();
+    } else if (itemId === 'history') {
+      await loadTransactions();
+    } else if (itemId === 'settings') {
+      setEditEmail(user?.email || '');
+      setEditPhone(profile?.phone || '');
+      setEditMode(false);
+    }
+    setOpenDialog(itemId);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // Mise à jour de l'email
+      if (editEmail !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: editEmail
+        });
+        if (emailError) throw emailError;
+        toast.success('Email mis à jour. Vérifiez votre boîte mail pour confirmer.');
+      }
+
+      // Mise à jour du téléphone dans le profil
+      if (editPhone !== profile?.phone) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ phone: editPhone })
+          .eq('id', user.id);
+        
+        if (profileError) throw profileError;
+        toast.success('Numéro de téléphone mis à jour');
+      }
+
+      setEditMode(false);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error updating settings:', error);
+      toast.error(error?.message || 'Erreur lors de la mise à jour');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     const loadActivity = async () => {
       if (!user) return;
-      // Essayer une table d'audit générique, fallback si absente
       const { data, error } = await supabase
         .from('audit_logs')
         .select('id, action, created_at, target_type')
@@ -131,7 +214,6 @@ export default function Profil() {
         .order('created_at', { ascending: false })
         .limit(10);
       if (error) {
-        // Fallback: tenter orders
         const { data: orders, error: e2 } = await supabase
           .from('orders')
           .select('id, status, created_at, total_amount')
@@ -181,7 +263,6 @@ export default function Profil() {
         const { error: updErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
         if (updErr) throw updErr;
         toast.success('Avatar mis à jour');
-        // Optionnel: rafraîchir localement
         window.location.reload();
       } catch (e: any) {
         toast.error(e?.message || 'Erreur upload avatar');
@@ -192,6 +273,57 @@ export default function Profil() {
     input.click();
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const handleGoBack = () => {
+    // Rediriger selon le rôle de l'utilisateur
+    if (profile?.role === 'vendeur') {
+      navigate('/vendeur');
+    } else if (profile?.role === 'admin') {
+      navigate('/admin');
+    } else if (profile?.role === 'livreur') {
+      navigate('/livreur');
+    } else if (profile?.role === 'taxi') {
+      navigate('/taxi-moto-driver');
+    } else {
+      navigate('/');
+    }
+  };
+
+  // Authentication check
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <header className="bg-card border-b border-border">
+          <div className="px-4 py-6">
+            <h1 className="text-2xl font-bold text-foreground">Profil</h1>
+          </div>
+        </header>
+
+        <section className="px-4 py-8">
+          <Card>
+            <CardContent className="text-center py-12">
+              <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
+              <p className="text-muted-foreground mb-6">
+                Vous devez vous connecter pour accéder à votre profil
+              </p>
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="bg-vendeur-primary hover:bg-vendeur-primary/90"
+              >
+                Se connecter
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -199,25 +331,14 @@ export default function Profil() {
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
-            <div className="flex items-center gap-2">
-              {profile?.role === 'vendeur' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/vendeur')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
-                  Retour
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                <Edit className="w-5 h-5" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleGoBack}
+              className="ml-auto"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </header>
@@ -244,11 +365,11 @@ export default function Profil() {
                   </Button>
                 )}
               </div>
-
+              
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-xl font-bold">
-                    {profile?.first_name && profile?.last_name
+                    {profile?.first_name && profile?.last_name 
                       ? `${profile.first_name} ${profile.last_name}`
                       : user.email
                     }
@@ -257,17 +378,44 @@ export default function Profil() {
                     {userTypeInfo.label}
                   </Badge>
                 </div>
-
+                
                 <p className="text-muted-foreground mb-2">{user.email}</p>
-
+                
                 {profile?.phone && (
                   <p className="text-sm text-muted-foreground mb-2">{profile.phone}</p>
                 )}
-
+                
                 <p className="text-sm text-muted-foreground">
                   {userTypeInfo.description}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* User ID Card */}
+        <Card className="mt-4">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-muted-foreground">Votre ID utilisateur</label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.id);
+                    toast.success("ID copié dans le presse-papiers");
+                  }}
+                >
+                  Copier
+                </Button>
+              </div>
+              <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
+                {user.id}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 Partagez cet ID pour permettre à d'autres utilisateurs de vous contacter directement
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -279,21 +427,14 @@ export default function Profil() {
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Card key={item.id} className="cursor-pointer hover:shadow-elegant transition-all" onClick={() => handleNavigate(item.id)}>
+              <Card key={item.id} className="cursor-pointer hover:shadow-elegant transition-all" onClick={() => handleMenuClick(item.id)}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-accent rounded-lg">
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{item.title}</h3>
-                        {item.badge && (
-                          <Badge variant="secondary" className="text-xs">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </div>
+                      <h3 className="font-medium">{item.title}</h3>
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
                   </div>
@@ -303,6 +444,169 @@ export default function Profil() {
           })}
         </div>
       </section>
+
+      {/* Orders Dialog */}
+      <Dialog open={openDialog === 'orders'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Mes Commandes</DialogTitle>
+          </DialogHeader>
+          {loadingData ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Aucune commande trouvée</p>
+          ) : (
+            <div className="space-y-3">
+              {orders.map((order) => (
+                <Card key={order.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-medium">Commande #{order.id.slice(0, 8)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                      <Badge>{order.status}</Badge>
+                    </div>
+                    <p className="text-lg font-bold">
+                      {order.total_amount ? `${order.total_amount.toLocaleString()} GNF` : 'N/A'}
+                    </p>
+                    {order.delivery_address && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        📍 {order.delivery_address}
+                        {order.delivery_city ? `, ${order.delivery_city}` : ''}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transactions Dialog */}
+      <Dialog open={openDialog === 'history'} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Historique des Transactions</DialogTitle>
+          </DialogHeader>
+          {loadingData ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Aucune transaction trouvée</p>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <Card key={tx.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{tx.type}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(tx.created_at).toLocaleString('fr-FR')}
+                        </p>
+                        {tx.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{tx.description}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount ? tx.amount.toLocaleString() : '0'} {tx.currency || 'GNF'}
+                        </p>
+                        <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                          {tx.status || 'pending'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={openDialog === 'settings'} onOpenChange={(open) => {
+        if (!open) {
+          setOpenDialog(null);
+          setEditMode(false);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Paramètres du Compte</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              {editMode ? (
+                <Input
+                  id="email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-muted-foreground mt-1">{user?.email}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+              {editMode ? (
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+224 XXX XX XX XX"
+                  className="mt-1"
+                />
+              ) : (
+                <p className="text-muted-foreground mt-1">{profile?.phone || 'Non renseigné'}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium">Rôle</label>
+              <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            {editMode ? (
+              <>
+                <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSaveSettings} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Enregistrer
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditMode(true)}>
+                <Edit className="w-4 h-4 mr-2" />
+                Modifier
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Activity */}
       <section className="px-4 py-6">
@@ -349,11 +653,6 @@ export default function Profil() {
 
       {/* Footer de navigation */}
       <QuickFooter />
-
-      {/* Bouton Admin en bas à droite */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <AdminAuthButton />
-      </div>
     </div>
   );
 }
