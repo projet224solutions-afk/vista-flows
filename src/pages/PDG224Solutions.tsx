@@ -17,6 +17,7 @@ const PDGConfig = lazy(() => import('@/components/pdg/PDGConfig'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
 const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMaintenance'));
 const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
+const PDGEscrow = lazy(() => import('@/components/pdg/PDGEscrow'));
 const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalytics'));
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
@@ -246,6 +247,15 @@ export default function PDG224Solutions() {
                 <span className="font-medium">Produits</span>
               </TabsTrigger>
               <TabsTrigger
+                value="escrow"
+                disabled={!mfaVerified}
+                className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
+                aria-label="Onglet Escrow"
+              >
+                <Lock className="w-4 h-4" />
+                <span className="font-medium">Escrow</span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="maintenance"
                 disabled={!mfaVerified}
                 className="gap-2 px-6 py-3 rounded-xl data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-border/40 transition-all"
@@ -343,6 +353,12 @@ export default function PDG224Solutions() {
               <TabsContent value="products" className="animate-fade-in transition-all duration-300">
                 <ErrorBoundary>
                   <PDGProductsManagement />
+                </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="escrow" className="animate-fade-in transition-all duration-300">
+                <ErrorBoundary>
+                  <PDGEscrow />
                 </ErrorBoundary>
               </TabsContent>
 
