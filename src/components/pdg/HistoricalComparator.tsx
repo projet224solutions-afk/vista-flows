@@ -21,7 +21,7 @@ import {
   Calculator,
   Target
 } from 'lucide-react';
-import { TemporalFilters, TemporalFiltersProps } from './TemporalFilters';
+import { TemporalFilters } from './TemporalFilters';
 
 interface HistoricalData {
   period: string;

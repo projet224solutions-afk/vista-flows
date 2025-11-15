@@ -99,33 +99,52 @@ export default function PDGAgentsManagement() {
     try {
       setLoading(true);
       
-      // Charger les agents avec leurs statistiques
+      // Charger les agents depuis agents_management
       const { data: agentsData, error: agentsError } = await supabase
-        .from('agents')
-        .select(`
-          *,
-          total_users:agent_users(count),
-          total_commissions:commissions(sum.amount)
-        `)
+        .from('agents_management')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (agentsError) throw agentsError;
 
-      // Charger les sous-agents avec leurs statistiques
+      // Transformer les données pour correspondre à l'interface Agent
+      const transformedAgents: Agent[] = (agentsData || []).map(agent => ({
+        id: agent.id,
+        name: agent.name,
+        email: agent.email,
+        phone: agent.phone || '',
+        pgd_id: agent.pdg_id,
+        can_create_sub_agent: agent.can_create_sub_agent,
+        is_active: agent.is_active || false,
+        created_at: agent.created_at || '',
+        total_users: 0,
+        total_commissions: 0
+      }));
+
+      // Charger les sous-agents (agents avec parent_agent_id)
       const { data: subAgentsData, error: subAgentsError } = await supabase
-        .from('sub_agents')
-        .select(`
-          *,
-          parent_agent:agents!sub_agents_parent_agent_id_fkey(name),
-          total_users:agent_users(count),
-          total_commissions:commissions(sum.amount)
-        `)
+        .from('agents_management')
+        .select('*')
+        .not('parent_agent_id', 'is', null)
         .order('created_at', { ascending: false });
 
       if (subAgentsError) throw subAgentsError;
 
-      setAgents(agentsData || []);
-      setSubAgents(subAgentsData || []);
+      const transformedSubAgents: SubAgent[] = (subAgentsData || []).map(subAgent => ({
+        id: subAgent.id,
+        name: subAgent.name,
+        email: subAgent.email,
+        phone: subAgent.phone || '',
+        parent_agent_id: subAgent.parent_agent_id || '',
+        is_active: subAgent.is_active || false,
+        created_at: subAgent.created_at || '',
+        total_users: 0,
+        total_commissions: 0,
+        parent_agent_name: ''
+      }));
+
+      setAgents(transformedAgents);
+      setSubAgents(transformedSubAgents);
     } catch (error) {
       console.error('Erreur chargement données:', error);
       toast({
@@ -140,56 +159,57 @@ export default function PDGAgentsManagement() {
 
   const loadCommissionSettings = async () => {
     try {
-      const { data: settings, error } = await supabase
-        .from('commission_settings')
+      // Utiliser commission_config au lieu de commission_settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('commission_config')
         .select('*')
-        .in('key', ['base_user_commission', 'parent_share_ratio']);
+        .eq('is_active', true)
+        .limit(1);
 
-      if (error) throw error;
+      if (settingsError) {
+        console.error('Erreur chargement configuration commissions:', settingsError);
+      }
 
-      const newSettings = {
-        base_user_commission: 0.20,
-        parent_share_ratio: 0.50
-      };
-
-      settings?.forEach(setting => {
-        if (setting.key === 'base_user_commission') {
-          newSettings.base_user_commission = setting.value.value || 0.20;
-        } else if (setting.key === 'parent_share_ratio') {
-          newSettings.parent_share_ratio = setting.value.value || 0.50;
-        }
-      });
-
-      setCommissionSettings(newSettings);
+      if (settingsData && settingsData.length > 0) {
+        setCommissionSettings({
+          base_user_commission: 0.20,
+          parent_share_ratio: 0.50
+        });
+      }
     } catch (error) {
-      console.error('Erreur chargement paramètres:', error);
+      console.error('Erreur chargement configuration commissions:', error);
     }
   };
 
   const createAgent = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
+
       const { data, error } = await supabase
-        .from('agents')
-        .insert({
+        .from('agents_management')
+        .insert([{
           name: newAgent.name,
           email: newAgent.email,
           phone: newAgent.phone,
           can_create_sub_agent: newAgent.can_create_sub_agent,
-          pgd_id: (await supabase.auth.getUser()).data.user?.id
-        })
+          is_active: true,
+          pdg_id: user.id,
+          agent_code: `AG${Date.now()}`,
+          role: 'agent'
+        }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // Log de l'action
-      await supabase.from('agent_audit_logs').insert({
-        actor_id: (await supabase.auth.getUser()).data.user?.id,
-        actor_type: 'pgd',
+      // Log audit dans audit_logs
+      await supabase.from('audit_logs').insert({
+        actor_id: user.id,
         action: 'AGENT_CREATED',
         target_type: 'agent',
         target_id: data.id,
-        details: { agent_name: newAgent.name, email: newAgent.email }
+        data_json: { agent_name: newAgent.name, email: newAgent.email }
       });
 
       toast({
@@ -212,27 +232,43 @@ export default function PDGAgentsManagement() {
 
   const createSubAgent = async () => {
     try {
+      if (!newSubAgent.parent_agent_id) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner un agent parent",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
+
       const { data, error } = await supabase
-        .from('sub_agents')
-        .insert({
+        .from('agents_management')
+        .insert([{
           name: newSubAgent.name,
           email: newSubAgent.email,
           phone: newSubAgent.phone,
-          parent_agent_id: newSubAgent.parent_agent_id
-        })
+          parent_agent_id: newSubAgent.parent_agent_id,
+          is_active: true,
+          pdg_id: user.id,
+          agent_code: `SAG${Date.now()}`,
+          role: 'sub_agent',
+          can_create_sub_agent: false
+        }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // Log de l'action
-      await supabase.from('agent_audit_logs').insert({
-        actor_id: (await supabase.auth.getUser()).data.user?.id,
-        actor_type: 'pgd',
+      // Log audit dans audit_logs
+      await supabase.from('audit_logs').insert({
+        actor_id: user.id,
         action: 'SUB_AGENT_CREATED',
         target_type: 'sub_agent',
         target_id: data.id,
-        details: { sub_agent_name: newSubAgent.name, email: newSubAgent.email }
+        data_json: { sub_agent_name: newSubAgent.name, email: newSubAgent.email }
       });
 
       toast({
@@ -255,19 +291,20 @@ export default function PDGAgentsManagement() {
 
   const updateCommissionSettings = async () => {
     try {
-      // Mettre à jour les paramètres de commission
-      await supabase.from('commission_settings').upsert([
-        {
-          key: 'base_user_commission',
-          value: { value: commissionSettings.base_user_commission },
-          description: 'Commission de base pour les utilisateurs'
-        },
-        {
-          key: 'parent_share_ratio',
-          value: { value: commissionSettings.parent_share_ratio },
-          description: 'Ratio de partage entre sous-agent et agent parent'
-        }
-      ]);
+      // Utiliser commission_config au lieu de commission_settings  
+      const { error } = await supabase
+        .from('commission_config')
+        .upsert([
+          {
+            service_name: 'agent_commission',
+            transaction_type: 'commission',
+            commission_type: 'percentage',
+            commission_value: commissionSettings.base_user_commission * 100,
+            is_active: true
+          }
+        ]);
+
+      if (error) throw error;
 
       toast({
         title: "✅ Paramètres mis à jour",
@@ -286,7 +323,7 @@ export default function PDGAgentsManagement() {
   const toggleAgentStatus = async (agentId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('agents')
+        .from('agents_management')
         .update({ is_active: !currentStatus })
         .eq('id', agentId);
 

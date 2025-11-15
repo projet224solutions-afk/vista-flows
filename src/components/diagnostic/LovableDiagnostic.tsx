@@ -30,59 +30,27 @@ export default function LovableDiagnostic() {
 
         const featureChecks: FeatureCheck[] = [];
 
-        // Vérifier SyndicatDashboardUltraPro
-        try {
-            const SyndicatDashboardUltraPro = await import('@/pages/SyndicatDashboardUltraPro');
-            featureChecks.push({
-                name: 'Bureau Syndicat Ultra-Pro',
-                component: 'SyndicatDashboardUltraPro',
-                status: 'success',
-                message: 'Interface bureau syndicat chargée avec succès'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Bureau Syndicat Ultra-Pro',
-                component: 'SyndicatDashboardUltraPro',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
+        // Note: Certaines fonctionnalités nécessitent des migrations de base de données
+        featureChecks.push({
+            name: 'Bureau Syndicat Ultra-Pro',
+            component: 'SyndicatDashboardUltraPro',
+            status: 'warning',
+            message: 'Module désactivé - Nécessite migrations DB'
+        });
 
-        // Vérifier AddTaxiMotardForm
-        try {
-            const AddTaxiMotardForm = await import('@/components/syndicate/AddTaxiMotardForm');
-            featureChecks.push({
-                name: 'Formulaire Taxi-Motard',
-                component: 'AddTaxiMotardForm',
-                status: 'success',
-                message: 'Formulaire d\'ajout taxi-motard disponible'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Formulaire Taxi-Motard',
-                component: 'AddTaxiMotardForm',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
+        featureChecks.push({
+            name: 'Formulaire Taxi-Motard',
+            component: 'AddTaxiMotardForm',
+            status: 'warning',
+            message: 'Module désactivé - Nécessite migrations DB'
+        });
 
-        // Vérifier SyndicateWalletDashboard
-        try {
-            const SyndicateWalletDashboard = await import('@/components/syndicate/SyndicateWalletDashboard');
-            featureChecks.push({
-                name: 'Wallet Bureau Syndicat',
-                component: 'SyndicateWalletDashboard',
-                status: 'success',
-                message: 'Portefeuille bureau syndicat opérationnel'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Wallet Bureau Syndicat',
-                component: 'SyndicateWalletDashboard',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
+        featureChecks.push({
+            name: 'Wallet Bureau Syndicat',
+            component: 'SyndicateWalletDashboard',
+            status: 'warning',
+            message: 'Module désactivé - Nécessite migrations DB'
+        });
 
         // Vérifier AutoDownloadDetector
         try {

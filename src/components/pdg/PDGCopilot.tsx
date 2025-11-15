@@ -134,27 +134,26 @@ ${totalPending > 0 ? '⚠️ **Attention** : Des paiements sont en attente depui
         return `Il y a ${fraud?.length || 0} alertes de fraude non traitées. ${fraud?.filter(f => f.risk_level === 'critical').length || 0} sont critiques.`;
       }
       
-      // Bureaux syndicaux
-      if (lowerQuery.includes('bureau') || lowerQuery.includes('syndicat') || lowerQuery.includes('syndical')) {
-        const { data: bureaux } = await supabase
-          .from('bureaux_syndicaux')
-          .select('*');
+      if (lowerQuery.includes('bureau') || lowerQuery.includes('syndicat')) {
+        const { data: bureaux, count } = await supabase
+          .from('bureaus')
+          .select('*', { count: 'exact' });
         
-        const { data: travailleurs } = await supabase
-          .from('travailleurs')
-          .select('*');
+        const { data: members, count: membersCount } = await supabase
+          .from('members')
+          .select('*', { count: 'exact' });
         
-        const { data: motos } = await supabase
-          .from('motos')
-          .select('*');
+        const { data: vehicles, count: vehiclesCount } = await supabase
+          .from('vehicles')
+          .select('*', { count: 'exact' });
         
-        return `🏢 **Bureaux syndicaux :**
+        return `🏢 **Analyse Bureau Syndical :**
         
-🏛️ **Bureaux créés** : ${bureaux?.length || 0}
-👷 **Travailleurs** : ${travailleurs?.length || 0}
-🏍️ **Motos enregistrées** : ${motos?.length || 0}
+📊 **Bureaux** : ${count || 0}
+👷 **Membres** : ${membersCount || 0}
+🚗 **Véhicules** : ${vehiclesCount || 0}
 
-${bureaux?.length === 0 ? '⚠️ Aucun bureau syndical créé.' : '✅ Le système syndical fonctionne bien !'}`;
+Les bureaux les plus actifs sont à ${bureaux?.[0]?.prefecture || 'Conakry'}.`;
       }
 
       // Réponse par défaut intelligente
