@@ -464,7 +464,7 @@ export function useSupportTickets() {
           ...ticket,
           customer_id: ticket.requester_id,
           customer: { user_id: ticket.requester_id },
-          product: { name: ticket.product?.name || 'N/A' }
+          product: { name: ticket.product?.name ?? 'N/A' }
         })));
       } catch (err) {
         setError(err.message);
