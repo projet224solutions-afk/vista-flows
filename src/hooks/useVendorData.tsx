@@ -460,12 +460,19 @@ export function useSupportTickets() {
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
-        setTickets((data || []).map(ticket => ({
-          ...ticket,
-          customer_id: ticket.requester_id,
-          customer: { user_id: ticket.requester_id },
-          product: { name: ticket.product?.name ?? 'N/A' }
-        })));
+        const ticketsList = (data || []).map(ticket => {
+          const productName = typeof ticket.product === 'object' && ticket.product && 'name' in ticket.product 
+            ? (ticket.product as any).name 
+            : 'N/A';
+          
+          return {
+            ...ticket,
+            customer_id: ticket.requester_id,
+            customer: { user_id: ticket.requester_id },
+            product: { name: productName }
+          };
+        });
+        setTickets(ticketsList);
       } catch (err) {
         setError(err.message);
       } finally {
