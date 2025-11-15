@@ -61,6 +61,7 @@ const App = () => (
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/taxi" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/tracking" element={<Tracking />} />
