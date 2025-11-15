@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, Shield } from "lucide-react";
+import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,13 +58,6 @@ const menuItems = [
     title: 'Paramètres',
     description: 'Gérer mon compte',
     icon: Settings
-  },
-  {
-    id: 'pdg',
-    title: 'Interface PDG',
-    description: 'Contrôle total de la plateforme',
-    icon: Shield,
-    adminOnly: true
   }
 ];
 
@@ -121,10 +114,6 @@ export default function Profil() {
   const handleNavigate = useCallback((itemId: string) => {
     if (itemId === 'settings' && !mfaVerified) {
       toast.error('MFA requis pour accéder aux paramètres');
-      return;
-    }
-    if (itemId === 'pdg') {
-      navigate('/pdg');
       return;
     }
     const route = itemId === 'orders' ? '/profil/orders' : itemId === 'history' ? '/profil/history' : '/profil/settings';
@@ -287,9 +276,7 @@ export default function Profil() {
       {/* Menu Items */}
       <section className="px-4 py-2">
         <div className="space-y-2">
-          {menuItems
-            .filter(item => !item.adminOnly || profile?.role === 'admin')
-            .map((item) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <Card key={item.id} className="cursor-pointer hover:shadow-elegant transition-all" onClick={() => handleNavigate(item.id)}>
