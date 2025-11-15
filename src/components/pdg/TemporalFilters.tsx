@@ -107,7 +107,7 @@ export const TemporalFilters: React.FC<TemporalFiltersProps> = ({
   // Réinitialiser les filtres
   const resetFilters = () => {
     const defaultFilters: TemporalFilters = {
-      period: 'last_30_days',
+      period: 'month',
       startDate: startOfDay(subDays(new Date(), 30)),
       endDate: endOfDay(new Date()),
       compareWith: 'previous',
@@ -205,7 +205,7 @@ export const TemporalFilters: React.FC<TemporalFiltersProps> = ({
             <Popover open={isCompareOpen} onOpenChange={setIsCompareOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
-                  <Compare className="w-4 h-4" />
+                  <TrendingUp className="w-4 h-4" />
                   {filters.compareWith === 'none' ? 'Aucune comparaison' : 
                    filters.compareWith === 'previous' ? 'Période précédente' : 
                    'Même période année dernière'}

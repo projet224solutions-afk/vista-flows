@@ -44,7 +44,7 @@ interface DriverStats {
     onlineTime: string;
 }
 
-interface RideRequest extends Ride {
+interface RideRequest extends Omit<Ride, 'distance'> {
     distance?: number;
     estimatedEarnings?: number;
 }
