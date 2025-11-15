@@ -159,10 +159,21 @@ export default function IndexAlibaba() {
   const { profile } = useAuth();
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
-    if (service.id === 'vendeur') {
-      navigate('/auth');
-    } else {
-      navigate(service.path);
+    switch (service.id) {
+      case 'vendeur':
+        navigate('/auth');
+        break;
+      case 'categories':
+        navigate('/marketplace');
+        break;
+      case 'devis':
+        navigate('/marketplace?tab=devis');
+        break;
+      case 'proximite':
+        navigate('/marketplace?tab=services');
+        break;
+      default:
+        navigate('/marketplace');
     }
   };
 
@@ -186,10 +197,10 @@ export default function IndexAlibaba() {
                 <Button variant="ghost" onClick={() => navigate('/marketplace')}>
                   Marketplace
                 </Button>
-                <Button variant="ghost" onClick={() => navigate('/services')}>
+                <Button variant="ghost" onClick={() => navigate('/marketplace?tab=services')}>
                   Services
                 </Button>
-                <Button variant="ghost" onClick={() => navigate('/about')}>
+                <Button variant="ghost" onClick={() => navigate('/marketplace')}>
                   À propos
                 </Button>
               </div>
