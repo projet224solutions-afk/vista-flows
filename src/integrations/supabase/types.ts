@@ -75,47 +75,6 @@ export type Database = {
           },
         ]
       }
-      agent_commissions_log: {
-        Row: {
-          agent_id: string
-          amount: number
-          created_at: string | null
-          description: string | null
-          id: string
-          related_user_id: string | null
-          source_type: string
-          transaction_id: string | null
-        }
-        Insert: {
-          agent_id: string
-          amount: number
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          related_user_id?: string | null
-          source_type: string
-          transaction_id?: string | null
-        }
-        Update: {
-          agent_id?: string
-          amount?: number
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          related_user_id?: string | null
-          source_type?: string
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agent_commissions_log_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents_management"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       agent_created_users: {
         Row: {
           agent_id: string
@@ -318,22 +277,17 @@ export type Database = {
           access_token: string | null
           agent_code: string
           can_create_sub_agent: boolean
-          commission_agent_principal: number | null
           commission_rate: number | null
-          commission_sous_agent: number | null
           created_at: string | null
           email: string
-          full_name: string | null
           id: string
           is_active: boolean | null
           name: string
           parent_agent_id: string | null
-          password_hash: string | null
           pdg_id: string
           permissions: Json | null
           phone: string | null
           role: string | null
-          type_agent: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -341,22 +295,17 @@ export type Database = {
           access_token?: string | null
           agent_code: string
           can_create_sub_agent?: boolean
-          commission_agent_principal?: number | null
           commission_rate?: number | null
-          commission_sous_agent?: number | null
           created_at?: string | null
           email: string
-          full_name?: string | null
           id?: string
           is_active?: boolean | null
           name: string
           parent_agent_id?: string | null
-          password_hash?: string | null
           pdg_id: string
           permissions?: Json | null
           phone?: string | null
           role?: string | null
-          type_agent?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -364,22 +313,17 @@ export type Database = {
           access_token?: string | null
           agent_code?: string
           can_create_sub_agent?: boolean
-          commission_agent_principal?: number | null
           commission_rate?: number | null
-          commission_sous_agent?: number | null
           created_at?: string | null
           email?: string
-          full_name?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
           parent_agent_id?: string | null
-          password_hash?: string | null
           pdg_id?: string
           permissions?: Json | null
           phone?: string | null
           role?: string | null
-          type_agent?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -5190,7 +5134,6 @@ export type Database = {
           custom_id: string | null
           email: string
           first_name: string | null
-          full_name: string | null
           id: string
           is_active: boolean | null
           last_name: string | null
@@ -5208,7 +5151,6 @@ export type Database = {
           custom_id?: string | null
           email: string
           first_name?: string | null
-          full_name?: string | null
           id: string
           is_active?: boolean | null
           last_name?: string | null
@@ -5226,7 +5168,6 @@ export type Database = {
           custom_id?: string | null
           email?: string
           first_name?: string | null
-          full_name?: string | null
           id?: string
           is_active?: boolean | null
           last_name?: string | null
@@ -9750,16 +9691,6 @@ export type Database = {
         }
         Returns: string
       }
-      calculate_agent_commission: {
-        Args: {
-          p_agent_id: string
-          p_amount: number
-          p_related_user_id?: string
-          p_source_type: string
-          p_transaction_id?: string
-        }
-        Returns: Json
-      }
       calculate_commission: {
         Args: {
           p_amount: number
@@ -10043,7 +9974,6 @@ export type Database = {
         }[]
       }
       generate_agent_access_token: { Args: never; Returns: string }
-      generate_agent_id: { Args: { p_type_agent: string }; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
       generate_custom_id_original: { Args: never; Returns: string }
@@ -10067,7 +9997,19 @@ export type Database = {
           score: number
         }[]
       }
-      generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
+      generate_sequential_id:
+        | {
+            Args: { p_prefix: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { p_prefix: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.generate_sequential_id(p_prefix => text), public.generate_sequential_id(p_prefix => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
@@ -10369,9 +10311,7 @@ export type Database = {
             }
             Returns: string
           }
-      is_admin:
-        | { Args: never; Returns: boolean }
-        | { Args: { _user_id: string }; Returns: boolean }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean

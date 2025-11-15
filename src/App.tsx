@@ -44,7 +44,6 @@ const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
-const BureauAccess = lazy(() => import("./pages/BureauAccess"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
 const ContactUserById = lazy(() => import("./components/communication/ContactUserById"));
@@ -53,7 +52,6 @@ const Devis = lazy(() => import("./pages/Devis"));
 // Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
-const AgentAccess = lazy(() => import("./pages/AgentAccess"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
 // const InstallPWA = lazy(() => import("./pages/InstallPWA")); // PWA désactivée
@@ -288,20 +286,12 @@ function App() {
                 }
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
-              
-              {/* Accès Bureau Syndicat */}
-              <Route path="/bureau-access" element={<BureauAccess />} />
               <Route path="/bureau/:token" element={<BureauDashboard />} />
               <Route path="/worker/:token" element={<WorkerDashboard />} />
-              
-              {/* Accès Agent PDG */}
-              <Route path="/agent-access" element={<AgentAccess />} />
               <Route path="/agent/activate/:token" element={<AgentActivation />} />
-              <Route path="/agent-public/:token" element={<AgentDashboardPublic />} />
               <Route path="/agent/:token" element={<AgentDashboardPublic />} />
               <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
-              
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"
