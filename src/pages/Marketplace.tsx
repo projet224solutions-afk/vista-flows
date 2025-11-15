@@ -7,13 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import QuickFooter from "@/components/QuickFooter";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
 const PAGE_LIMIT = 12;
 
 export default function Marketplace() {
-  const [products, setProducts] = useState<unknown[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState<unknown[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -25,33 +27,89 @@ export default function Marketplace() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/categories`)
-      .then(res => res.json())
-      .then(data => setCategories(data.categories || []))
-      .catch(() => setCategories([]));
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+      setCategories([]);
+    }
+  };
 
   const fetchProducts = async (reset = false) => {
     if (reset) setPage(1);
     const currentPage = reset ? 1 : page;
-    const params = new URLSearchParams({
-      search: searchQuery,
-      category: selectedCategory !== 'all' ? selectedCategory : '',
-      minPrice: String(filters.minPrice || 0),
-      maxPrice: String(filters.maxPrice || 0),
-      minRating: String(filters.minRating || 0),
-      sort: sortBy,
-      page: String(currentPage),
-      limit: String(PAGE_LIMIT)
-    });
 
     try {
       if (reset) setLoading(true); else setLoadingMore(true);
-      const res = await fetch(`${API_BASE}/api/products?${params.toString()}`);
-      const data = await res.json();
-      if (reset) setProducts(data.products || []); else setProducts(prev => [...prev, ...(data.products || [])]);
-      setTotal(data.total || 0);
-    } catch {
+      
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact' })
+        .eq('is_active', true);
+
+      // Filtrer par catégorie
+      if (selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
+      }
+
+      // Recherche textuelle
+      if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      }
+
+      // Filtrer par prix
+      if (filters.minPrice > 0) {
+        query = query.gte('price', filters.minPrice);
+      }
+      if (filters.maxPrice > 0) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      // Tri
+      switch (sortBy) {
+        case 'price_asc':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price_desc':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        default:
+          query = query.order('rating', { ascending: false });
+      }
+
+      // Pagination
+      const from = (currentPage - 1) * PAGE_LIMIT;
+      const to = from + PAGE_LIMIT - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      if (reset) {
+        setProducts(data || []);
+      } else {
+        setProducts(prev => [...prev, ...(data || [])]);
+      }
+      setTotal(count || 0);
+      
+      toast.success(`${data?.length || 0} produits chargés depuis Supabase`);
+    } catch (error: any) {
+      console.error('Erreur chargement produits:', error);
+      toast.error('Impossible de charger les produits');
       if (reset) setProducts([]);
     } finally {
       setLoading(false);
@@ -59,7 +117,9 @@ export default function Marketplace() {
     }
   };
 
-  useEffect(() => { fetchProducts(true); }, [searchQuery, selectedCategory, filters, sortBy]);
+  useEffect(() => { 
+    fetchProducts(true); 
+  }, [searchQuery, selectedCategory, filters, sortBy]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -77,21 +137,35 @@ export default function Marketplace() {
         </div>
       </header>
 
-      {/* Categories */}
       <section className="px-4 py-4 border-b border-border">
+        <div className="flex items-center gap-2 mb-2">
+          <Badge variant="default" className="bg-green-500">
+            ✅ Connecté à Supabase - Données Réelles
+          </Badge>
+          <Badge variant="outline">{total} produits</Badge>
+        </div>
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {categories.map((category: unknown) => (
+          <Badge
+            variant={selectedCategory === 'all' ? "default" : "secondary"}
+            className={`cursor-pointer whitespace-nowrap ${
+              selectedCategory === 'all' ? "bg-vendeur-primary text-white" : "hover:bg-accent"
+            }`}
+            onClick={() => setSelectedCategory('all')}
+          >
+            Tous les produits
+          </Badge>
+          {categories.map((category: any) => (
             <Badge
               key={category.id}
-              variant={selectedCategory === (category.id || category.label) ? "default" : "secondary"}
+              variant={selectedCategory === category.id ? "default" : "secondary"}
               className={`cursor-pointer whitespace-nowrap ${
-                selectedCategory === (category.id || category.label)
+                selectedCategory === category.id
                   ? "bg-vendeur-primary text-white" 
                   : "hover:bg-accent"
               }`}
-              onClick={() => setSelectedCategory(category.id || category.label)}
+              onClick={() => setSelectedCategory(category.id)}
             >
-              {(category.name || category.label)} {(category.count ? `(${category.count})` : '')}
+              {category.name}
             </Badge>
           ))}
         </div>
