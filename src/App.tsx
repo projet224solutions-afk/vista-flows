@@ -9,7 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import QuickFooter from "@/components/QuickFooter";
 
 // Lazy loading des pages pour optimiser le bundle
-const AutoRedirect = lazy(() => import("./pages/AutoRedirect"));
+const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -53,7 +53,7 @@ const App = () => (
           <Sonner />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<AutoRedirect />} />
+              <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
