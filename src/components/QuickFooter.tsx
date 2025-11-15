@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MapPin, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, User, Bike } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,14 @@ export default function QuickFooter() {
   const location = useLocation();
   const { profile } = useAuth();
 
-  // Navigation principale - Taxi-Moto retiré
+  // Déterminer le chemin Taxi-Moto selon le rôle
+  const getTaxiMotoPath = () => {
+    if (!profile) return '/taxi-moto';
+    if (profile.role === 'taxi') return '/taxi-moto/driver';
+    return '/taxi-moto';
+  };
+
+  // Navigation principale avec Taxi-Moto dynamique
   const navigationItems = [
     {
       id: 'home',
@@ -23,6 +30,15 @@ export default function QuickFooter() {
       icon: ShoppingBag,
       path: '/marketplace',
       description: 'Interface marketplace et toutes ses fonctionnalités'
+    },
+    {
+      id: 'taxi-moto',
+      label: 'Taxi-Moto',
+      icon: Bike,
+      path: getTaxiMotoPath(),
+      description: profile?.role === 'taxi'
+        ? 'Interface chauffeur Taxi-Moto' 
+        : 'Commander un Taxi-Moto'
     },
     {
       id: 'tracking',
