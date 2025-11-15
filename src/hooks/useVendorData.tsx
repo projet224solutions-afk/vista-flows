@@ -462,7 +462,9 @@ export function useSupportTickets() {
         if (fetchError) throw fetchError;
         setTickets((data || []).map(ticket => ({
           ...ticket,
-          customer_id: ticket.requester_id
+          customer_id: ticket.requester_id,
+          customer: { user_id: ticket.requester_id },
+          product: { name: ticket.product?.name || 'N/A' }
         })));
       } catch (err) {
         setError(err.message);
