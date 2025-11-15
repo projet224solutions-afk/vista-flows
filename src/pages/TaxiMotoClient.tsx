@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
+import { useTaxiMotoClient } from "@/hooks/useTaxiMotoClient";
 import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
@@ -58,83 +59,69 @@ interface CurrentRide {
 export default function TaxiMotoClient() {
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
+  
+  // Hook données réelles Supabase
+  const {
+    nearbyDrivers,
+    activeTrips,
+    tripHistory,
+    loading,
+    createTrip,
+    cancelTrip
+  } = useTaxiMotoClient();
 
   const [activeTab, setActiveTab] = useState('booking');
-  const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
   useEffect(() => {
     // Obtenir la position
     getCurrentLocation();
-    
-    // Charger les conducteurs à proximité
-    loadNearbyDrivers();
   }, []);
 
-  /**
-   * Charge les conducteurs disponibles à proximité
-   */
-  const loadNearbyDrivers = () => {
-    // Simuler des conducteurs à proximité
-    const mockDrivers: Driver[] = [
-      {
-        id: 'driver-1',
-        name: 'Mamadou Diallo',
-        rating: 4.8,
-        distance: 0.5,
-        vehicleType: 'moto_rapide',
-        eta: '2 min',
-        rides: 450
-      },
-      {
-        id: 'driver-2',
-        name: 'Fatou Sall',
-        rating: 4.9,
-        distance: 0.8,
-        vehicleType: 'moto_premium',
-        eta: '3 min',
-        rides: 620
-      },
-      {
-        id: 'driver-3',
-        name: 'Ibrahima Ndiaye',
-        rating: 4.7,
-        distance: 1.2,
-        vehicleType: 'moto_economique',
-        eta: '5 min',
-        rides: 380
-      }
-    ];
-
-    setNearbyDrivers(mockDrivers);
-  };
+  // Synchroniser la course active avec les données Supabase
+  useEffect(() => {
+    if (activeTrips.length > 0) {
+      const activeTrip = activeTrips[0];
+      setCurrentRide({
+        id: activeTrip.id,
+        status: activeTrip.status as any,
+        pickupAddress: activeTrip.pickup_address,
+        destinationAddress: activeTrip.destination_address,
+        estimatedPrice: activeTrip.estimated_price,
+        driver: activeTrip.driver ? {
+          id: activeTrip.driver.id,
+          name: `${activeTrip.driver.profiles?.first_name || ''} ${activeTrip.driver.profiles?.last_name || ''}`.trim(),
+          rating: activeTrip.driver.rating || 4.5,
+          phone: activeTrip.driver.profiles?.phone || '',
+          vehicleType: activeTrip.driver.vehicle_type,
+          vehicleNumber: activeTrip.driver.vehicle_number
+        } : undefined,
+        createdAt: activeTrip.created_at
+      });
+    } else {
+      setCurrentRide(null);
+    }
+  }, [activeTrips]);
 
   /**
-   * Gère la création d'une nouvelle course
+   * Gère la création d'une nouvelle course (connecté à Supabase)
    */
-  const handleRideCreated = (rideData: unknown) => {
-    // Créer un objet de course avec conducteur assigné
-    const assignedDriver = nearbyDrivers[0]; // Simuler l'assignation du conducteur le plus proche
-    
-    const newRide: CurrentRide = {
-      ...rideData,
-      status: 'accepted',
-      driver: {
-        id: assignedDriver.id,
-        name: assignedDriver.name,
-        rating: assignedDriver.rating,
-        phone: '+224 622 00 00 00',
-        vehicleType: assignedDriver.vehicleType,
-        vehicleNumber: 'CKY-1234-TM'
-      },
-      estimatedArrival: assignedDriver.eta
-    };
+  const handleRideCreated = async (rideData: any) => {
+    const trip = await createTrip({
+      pickup_location: rideData.pickupLocation,
+      destination_location: rideData.destinationLocation,
+      pickup_address: rideData.pickupAddress,
+      destination_address: rideData.destinationAddress,
+      estimated_price: rideData.estimatedPrice,
+      estimated_distance: rideData.estimatedDistance
+    });
 
-    setCurrentRide(newRide);
-    setActiveTab('tracking');
-    toast.success(`Course acceptée par ${assignedDriver.name}`);
+    if (trip) {
+      setActiveTab('tracking');
+      toast.success('Course créée avec succès ! En attente d\'un conducteur...');
+    }
 
-    // Simuler la progression de la course
+    // Les mises à jour en temps réel se feront via le hook
     setTimeout(() => {
       if (newRide) {
         setCurrentRide(prev => prev ? { ...prev, status: 'driver_arriving' } : null);
