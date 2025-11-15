@@ -8,7 +8,7 @@ interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'admin' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client';
+  role: 'admin' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'ceo' | 'sub_agent';
   avatar_url?: string;
   phone?: string;
   is_active: boolean;

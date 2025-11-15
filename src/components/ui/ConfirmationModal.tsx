@@ -166,7 +166,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   <Checkbox
                     id="confirm-checkbox"
                     checked={confirmCheckbox}
-                    onCheckedChange={setConfirmCheckbox}
+                    onCheckedChange={(checked) => setConfirmCheckbox(checked === true)}
                   />
                   <Label htmlFor="confirm-checkbox" className="text-sm">
                     Je comprends les conséquences de cette action et je confirme vouloir continuer

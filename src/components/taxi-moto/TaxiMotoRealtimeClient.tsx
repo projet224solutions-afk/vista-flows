@@ -360,7 +360,7 @@ export default function TaxiMotoRealtimeClient() {
                                     {nearbyDrivers.length} conducteurs disponibles
                                 </p>
                                 <p className="text-xs text-gray-600">
-                                    Le plus proche à {nearbyDrivers[0]?.distance?.toFixed(1) || 0}km
+                                    Le plus proche disponible
                                 </p>
                             </div>
                             <div className="flex -space-x-2">

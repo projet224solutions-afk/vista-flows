@@ -460,7 +460,10 @@ export function useSupportTickets() {
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
-        setTickets(data || []);
+        setTickets((data || []).map(ticket => ({
+          ...ticket,
+          customer_id: ticket.requester_id
+        })));
       } catch (err) {
         setError(err.message);
       } finally {
