@@ -39,6 +39,16 @@ const userTypes = {
     label: "Transitaire",
     description: "Transitaire international",
     color: "bg-transitaire-primary"
+  },
+  admin: {
+    label: "PDG",
+    description: "Président Directeur Général",
+    color: "bg-primary"
+  },
+  pdg: {
+    label: "PDG",
+    description: "Président Directeur Général",
+    color: "bg-primary"
   }
 };
 
