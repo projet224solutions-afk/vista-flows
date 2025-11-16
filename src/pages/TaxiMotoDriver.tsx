@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
+import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { toast } from "sonner";
@@ -1120,6 +1121,7 @@ export default function TaxiMotoDriver() {
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <DriverSubscriptionButton />
                             <div className="hidden lg:block">
                                 <WalletBalanceWidget className="max-w-[260px]" showTransferButton={false} />
                             </div>
