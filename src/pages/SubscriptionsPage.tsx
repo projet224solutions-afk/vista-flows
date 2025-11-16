@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Wallet } from 'lucide-react';
+import { CreditCard, Wallet, ArrowLeft } from 'lucide-react';
 
 export default function SubscriptionsPage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -128,6 +128,14 @@ export default function SubscriptionsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 px-4">
       <div className="container mx-auto max-w-7xl">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour
+        </Button>
         <SubscriptionPlans onSelectPlan={handleSelectPlan} />
       </div>
 
