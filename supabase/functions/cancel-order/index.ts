@@ -98,10 +98,9 @@ serve(async (req) => {
       
       // Call refund_escrow_funds RPC
       const { error: refundError } = await supabase.rpc("refund_escrow_funds", {
-        p_escrow_id: escrow.id,
-        p_refund_amount: null,
         p_admin_id: null,
-        p_notes: `Annulation de commande par le client. Raison: ${reason || "Non spécifiée"}`
+        p_escrow_id: escrow.id,
+        p_reason: `Annulation de commande par le client. Raison: ${reason || "Non spécifiée"}`
       });
 
       if (refundError) {
