@@ -210,6 +210,13 @@ export default function TaxiMotoDriver() {
                     console.log('📲 Nouvelle course disponible:', payload);
                     const ride = payload.new as any;
                     
+                    // Vérifier si le conducteur a déjà refusé cette course
+                    const declinedDrivers = ride.declined_drivers || [];
+                    if (declinedDrivers.includes(driverId)) {
+                        console.log('Course déjà refusée, ignorée');
+                        return;
+                    }
+                    
                     // Vérifier si le chauffeur est à proximité
                     if (location) {
                         const distance = calculateDistance(
@@ -555,8 +562,15 @@ export default function TaxiMotoDriver() {
             if (error) throw error;
             if (!rides || rides.length === 0) return;
 
+            // Filtrer les courses déjà refusées par ce conducteur
+            const availableRides = rides.filter(ride => {
+                // Vérifier si le conducteur a déjà refusé cette course
+                const declinedDrivers = ride.declined_drivers || [];
+                return !declinedDrivers.includes(driverId);
+            });
+
             // Filtrer par distance et ajouter à la liste
-            const nearbyRides = rides.filter(ride => {
+            const nearbyRides = availableRides.filter(ride => {
                 if (!ride.pickup_lat || !ride.pickup_lng) return false;
                 const distance = calculateDistance(
                     location.latitude,
