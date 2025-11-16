@@ -457,7 +457,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       console.log('🔍 Recherche du destinataire:', recipientId);
       
-      // Récupérer l'UUID du destinataire depuis son custom_id ou public_id
+      // 1. D'abord chercher dans profiles (custom_id ou public_id)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, email, first_name, last_name, custom_id, public_id')
@@ -470,15 +470,46 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         return;
       }
 
-      console.log('📋 Profil trouvé:', profileData);
+      let recipientUuid: string | null = null;
+      let recipientName: string | null = null;
 
-      if (!profileData) {
-        console.error('❌ Aucun profil trouvé avec ID:', recipientId);
-        toast.error(`Destinataire introuvable avec l'ID: ${recipientId}`);
-        return;
+      // Si trouvé dans profiles
+      if (profileData) {
+        console.log('📋 Profil trouvé:', profileData);
+        recipientUuid = profileData.id;
+        recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 
+                       profileData.custom_id || 
+                       profileData.public_id || 
+                       'Utilisateur';
+      } else {
+        // 2. Sinon, chercher dans agents_management (agent_code)
+        console.log('🔍 Recherche dans agents_management...');
+        const { data: agentData, error: agentError } = await supabase
+          .from('agents_management')
+          .select('user_id, name, agent_code')
+          .eq('agent_code', recipientId.toUpperCase())
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (agentError) {
+          console.error('❌ Erreur recherche agent:', agentError);
+          toast.error('Erreur lors de la recherche de l\'agent');
+          return;
+        }
+
+        if (agentData && agentData.user_id) {
+          console.log('📋 Agent trouvé:', agentData);
+          recipientUuid = agentData.user_id;
+          recipientName = agentData.name || agentData.agent_code;
+        }
       }
 
-      const recipientUuid = profileData.id;
+      // Si aucun destinataire trouvé
+      if (!recipientUuid) {
+        console.error('❌ Aucun destinataire trouvé avec ID:', recipientId);
+        toast.error(`Destinataire introuvable: ${recipientId}`);
+        return;
+      }
 
       if (recipientUuid === effectiveUserId) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
@@ -488,7 +519,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       console.log('🔍 Prévisualisation pour:', { 
         sender: effectiveUserId, 
         receiver: recipientUuid,
-        recipient_name: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+        recipient_name: recipientName,
         amount 
       });
 
@@ -514,11 +545,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         toast.error(previewData.error || 'Erreur inconnue');
         return;
       }
-
-      const recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 
-                           profileData.custom_id || 
-                           profileData.public_id || 
-                           'Utilisateur inconnu';
 
       setTransferPreview({ 
         ...previewData, 
