@@ -96,23 +96,72 @@ serve(async (req) => {
     if (escrow && ["pending", "held"].includes(escrow.status)) {
       console.log(`💰 Refunding escrow: ${escrow.id}`);
       
-      // Call refund_escrow_funds RPC
-      const { error: refundError } = await supabase.rpc("refund_escrow_funds", {
-        p_admin_id: null,
-        p_escrow_id: escrow.id,
-        p_reason: `Annulation de commande par le client. Raison: ${reason || "Non spécifiée"}`
-      });
+      // Get current wallet
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", escrow.payer_id)
+        .eq("currency", escrow.currency)
+        .single();
 
-      if (refundError) {
-        console.error("❌ Refund error:", refundError);
+      // Refund to payer wallet
+      const newBalance = (wallet?.balance || 0) + escrow.amount;
+      
+      const { error: walletError } = await supabase
+        .from("wallets")
+        .upsert({ 
+          user_id: escrow.payer_id,
+          balance: newBalance,
+          currency: escrow.currency,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,currency'
+        });
+
+      if (walletError) {
+        console.error("❌ Wallet refund error:", walletError);
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: "Erreur lors du remboursement escrow" 
+            error: "Erreur lors du remboursement vers le portefeuille" 
           }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // Update escrow status
+      const { error: escrowError } = await supabase
+        .from("escrow_transactions")
+        .update({
+          status: "refunded",
+          refunded_at: new Date().toISOString(),
+          notes: `Annulation de commande par le client. Raison: ${reason || "Non spécifiée"}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", escrow.id);
+
+      if (escrowError) {
+        console.error("❌ Escrow update error:", escrowError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: "Erreur lors de la mise à jour de l'escrow" 
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Log the refund action
+      await supabase
+        .from("escrow_logs")
+        .insert({
+          escrow_id: escrow.id,
+          action: "refund",
+          actor_id: user.id,
+          actor_role: "client",
+          notes: `Annulation de commande par le client. Raison: ${reason || "Non spécifiée"}`,
+          amount: escrow.amount
+        });
 
       console.log("✅ Escrow refunded successfully");
     }
