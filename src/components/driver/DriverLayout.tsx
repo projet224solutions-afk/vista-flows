@@ -30,6 +30,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 
 interface DriverLayoutProps {
   children: ReactNode;
@@ -104,6 +105,9 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
           </Button>
+
+          {/* Bouton d'abonnement */}
+          <DriverSubscriptionButton />
 
           {/* Profile Avatar */}
           <div className="flex items-center gap-2">

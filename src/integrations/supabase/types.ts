@@ -2362,32 +2362,41 @@ export type Database = {
         Row: {
           created_at: string | null
           duration_days: number
+          duration_type: string | null
           id: string
           is_active: boolean | null
           price: number
           subscription_type: string
           updated_at: string | null
           updated_by: string | null
+          yearly_discount_percentage: number | null
+          yearly_price: number | null
         }
         Insert: {
           created_at?: string | null
           duration_days?: number
+          duration_type?: string | null
           id?: string
           is_active?: boolean | null
           price: number
           subscription_type: string
           updated_at?: string | null
           updated_by?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price?: number | null
         }
         Update: {
           created_at?: string | null
           duration_days?: number
+          duration_type?: string | null
           id?: string
           is_active?: boolean | null
           price?: number
           subscription_type?: string
           updated_at?: string | null
           updated_by?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price?: number | null
         }
         Relationships: []
       }
@@ -2431,6 +2440,7 @@ export type Database = {
       }
       driver_subscriptions: {
         Row: {
+          billing_cycle: string | null
           created_at: string | null
           end_date: string
           id: string
@@ -2445,6 +2455,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_cycle?: string | null
           created_at?: string | null
           end_date: string
           id?: string
@@ -2459,6 +2470,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_cycle?: string | null
           created_at?: string | null
           end_date?: string
           id?: string
@@ -4658,6 +4670,8 @@ export type Database = {
           name: string
           priority_support: boolean | null
           updated_at: string | null
+          yearly_discount_percentage: number | null
+          yearly_price_gnf: number | null
         }
         Insert: {
           analytics_access?: boolean | null
@@ -4676,6 +4690,8 @@ export type Database = {
           name: string
           priority_support?: boolean | null
           updated_at?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price_gnf?: number | null
         }
         Update: {
           analytics_access?: boolean | null
@@ -4694,6 +4710,8 @@ export type Database = {
           name?: string
           priority_support?: boolean | null
           updated_at?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price_gnf?: number | null
         }
         Relationships: []
       }
@@ -11228,15 +11246,26 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
-      subscribe_driver: {
-        Args: {
-          p_payment_method: string
-          p_transaction_id?: string
-          p_type: string
-          p_user_id: string
-        }
-        Returns: string
-      }
+      subscribe_driver:
+        | {
+            Args: {
+              p_payment_method: string
+              p_transaction_id?: string
+              p_type: string
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_billing_cycle?: string
+              p_payment_method: string
+              p_transaction_id: string
+              p_type: string
+              p_user_id: string
+            }
+            Returns: string
+          }
       sync_missing_profiles: {
         Args: never
         Returns: {

@@ -22,11 +22,16 @@ export function DriverSubscriptionCard() {
   } = useDriverSubscription();
 
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'mobile_money' | 'card'>('wallet');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [processing, setProcessing] = useState(false);
+
+  const monthlyPrice = config?.price || 0;
+  const yearlyPrice = config?.yearly_price || monthlyPrice * 12 * 0.95;
+  const discount = config?.yearly_discount_percentage || 5;
 
   const handleSubscribe = async () => {
     setProcessing(true);
-    await subscribe(paymentMethod);
+    await subscribe(paymentMethod, billingCycle);
     setProcessing(false);
   };
 
@@ -63,19 +68,61 @@ export function DriverSubscriptionCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Prix de l'abonnement */}
-        <div className="bg-muted p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Tarif mensuel</p>
-              <p className="text-3xl font-bold text-primary">{priceFormatted} GNF</p>
-            </div>
-            <Calendar className="h-12 w-12 text-primary opacity-20" />
+        {/* Choix du cycle de facturation */}
+        {(!hasAccess || isExpired) && (
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Durée de l'abonnement</Label>
+            <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as 'monthly' | 'yearly')}>
+              <div className={`flex items-center space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer ${billingCycle === 'monthly' ? 'border-primary bg-primary/5' : ''}`}>
+                <RadioGroupItem value="monthly" id="monthly" />
+                <Label htmlFor="monthly" className="flex-1 cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Mensuel</p>
+                      <p className="text-sm text-muted-foreground">30 jours</p>
+                    </div>
+                    <p className="text-lg font-bold text-primary">{monthlyPrice.toLocaleString('fr-FR')} GNF</p>
+                  </div>
+                </Label>
+              </div>
+              
+              <div className={`flex items-center space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer ${billingCycle === 'yearly' ? 'border-primary bg-primary/5' : ''}`}>
+                <RadioGroupItem value="yearly" id="yearly" />
+                <Label htmlFor="yearly" className="flex-1 cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Annuel</p>
+                      <p className="text-sm text-muted-foreground">365 jours</p>
+                      <Badge variant="secondary" className="mt-1 bg-green-100 text-green-800">
+                        Économisez {discount}%
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground line-through">{(monthlyPrice * 12).toLocaleString('fr-FR')} GNF</p>
+                      <p className="text-lg font-bold text-primary">{yearlyPrice.toLocaleString('fr-FR')} GNF</p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Valable 30 jours à compter de l'activation
-          </p>
-        </div>
+        )}
+
+        {/* Prix de l'abonnement actif */}
+        {hasAccess && !isExpired && (
+          <div className="bg-muted p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Abonnement actuel</p>
+                <p className="text-3xl font-bold text-primary">{priceFormatted} GNF</p>
+              </div>
+              <Calendar className="h-12 w-12 text-primary opacity-20" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {subscription?.billing_cycle === 'yearly' ? 'Valable 365 jours' : 'Valable 30 jours'} à compter de l'activation
+            </p>
+          </div>
+        )}
 
         {/* Statut de l'abonnement */}
         {subscription && hasAccess && expiryDate && (
