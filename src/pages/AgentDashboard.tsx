@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
+import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
@@ -250,8 +251,8 @@ export default function AgentDashboard() {
                     <p className="text-base">{agent.phone || 'Non renseigné'}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Code Agent</p>
-                    <p className="text-base font-mono">{agent.agent_code}</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Code Agent</p>
+                    <AgentIdDisplay agentCode={agent.agent_code} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Permissions</p>

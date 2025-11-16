@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface AgentIdDisplayProps {
   agentCode: string;
@@ -20,6 +21,7 @@ export function AgentIdDisplay({
   const handleCopy = () => {
     navigator.clipboard.writeText(agentCode);
     setCopied(true);
+    toast.success(`ID Agent copié: ${agentCode}`);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -44,16 +46,20 @@ export function AgentIdDisplay({
   }
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg ${className}`}>
+    <div 
+      className={`inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors ${className}`}
+      onClick={handleCopy}
+      title="Cliquer pour copier l'ID"
+    >
       <span className="text-xs font-medium text-primary">ID Agent:</span>
-      <span 
-        className="text-xs font-mono font-bold text-primary cursor-pointer hover:underline" 
-        onClick={handleCopy}
-        title="Cliquer pour copier"
-      >
+      <span className="text-xs font-mono font-bold text-primary">
         {agentCode}
       </span>
-      {copied && <Check className="w-3 h-3 text-green-600" />}
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-green-600" />
+      ) : (
+        <Copy className="w-3.5 h-3.5 text-primary/60" />
+      )}
     </div>
   );
 }
