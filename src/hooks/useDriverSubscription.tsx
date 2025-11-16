@@ -41,7 +41,10 @@ export function useDriverSubscription() {
     }
   };
 
-  const subscribe = async (paymentMethod: 'wallet' | 'mobile_money' | 'card' = 'wallet') => {
+  const subscribe = async (
+    paymentMethod: 'wallet' | 'mobile_money' | 'card' = 'wallet',
+    billingCycle: 'monthly' | 'yearly' = 'monthly'
+  ) => {
     if (!user || !profile) {
       toast.error('Vous devez être connecté');
       return { success: false };
@@ -56,7 +59,8 @@ export function useDriverSubscription() {
       if (paymentMethod === 'wallet') {
         const result = await DriverSubscriptionService.subscribeWithWallet(
           user.id,
-          profile.role as 'taxi' | 'livreur'
+          profile.role as 'taxi' | 'livreur',
+          billingCycle
         );
 
         if (result.success) {

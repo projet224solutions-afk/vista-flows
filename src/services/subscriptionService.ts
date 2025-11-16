@@ -5,6 +5,8 @@ export interface Plan {
   name: string;
   display_name: string;
   monthly_price_gnf: number;
+  yearly_price_gnf?: number;
+  yearly_discount_percentage?: number;
   max_products: number | null;
   max_images_per_product: number | null;
   analytics_access: boolean;

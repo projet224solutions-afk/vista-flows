@@ -19,6 +19,7 @@ export default function SubscriptionsPage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -51,10 +52,15 @@ export default function SubscriptionsPage() {
         .eq('user_id', user.id)
         .single();
 
-      if (!walletData || walletData.balance < selectedPlan.monthly_price_gnf) {
+      // Calculer le prix selon le cycle de facturation
+      const price = billingCycle === 'yearly'
+        ? (selectedPlan.yearly_price_gnf || selectedPlan.monthly_price_gnf * 12 * 0.95)
+        : selectedPlan.monthly_price_gnf;
+
+      if (!walletData || walletData.balance < price) {
         toast({
           title: 'Solde insuffisant',
-          description: `Votre wallet doit avoir au moins ${SubscriptionService.formatAmount(selectedPlan.monthly_price_gnf)}`,
+          description: `Votre wallet doit avoir au moins ${SubscriptionService.formatAmount(price)}`,
           variant: 'destructive',
         });
         return;
@@ -66,9 +72,9 @@ export default function SubscriptionsPage() {
         .insert({
           transaction_id: crypto.randomUUID(),
           transaction_type: 'subscription_payment',
-          amount: selectedPlan.monthly_price_gnf,
-          net_amount: selectedPlan.monthly_price_gnf,
-          description: `Abonnement ${selectedPlan.display_name}`,
+          amount: price,
+          net_amount: price,
+          description: `Abonnement ${selectedPlan.display_name} - ${billingCycle === 'yearly' ? 'Annuel' : 'Mensuel'}`,
           status: 'completed',
         })
         .select()
@@ -80,7 +86,7 @@ export default function SubscriptionsPage() {
       const { error: walletError } = await supabase
         .from('wallets')
         .update({ 
-          balance: walletData.balance - selectedPlan.monthly_price_gnf,
+          balance: walletData.balance - price,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
@@ -91,9 +97,10 @@ export default function SubscriptionsPage() {
       const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
         userId: user.id,
         planId: selectedPlan.id,
-        pricePaid: selectedPlan.monthly_price_gnf,
+        pricePaid: price,
         paymentMethod: 'wallet',
         paymentTransactionId: transactionData?.id,
+        billingCycle: billingCycle
       });
 
       if (subscriptionId) {

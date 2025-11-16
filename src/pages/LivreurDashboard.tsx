@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
+import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";

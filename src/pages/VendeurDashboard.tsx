@@ -57,6 +57,7 @@ import { VendorNotificationsPanel } from "@/components/vendor/VendorNotification
 import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
+import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -346,6 +347,10 @@ export default function VendeurDashboard() {
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} />
+                
+                {/* Subscription Button */}
+                <VendorSubscriptionButton />
+                
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
                 </Button>

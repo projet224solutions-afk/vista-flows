@@ -11,6 +11,7 @@ export interface DriverSubscription {
   payment_method: 'wallet' | 'mobile_money' | 'card';
   transaction_id?: string;
   days_remaining?: number;
+  billing_cycle?: 'monthly' | 'yearly';
   metadata?: any;
 }
 
@@ -20,6 +21,8 @@ export interface DriverSubscriptionConfig {
   price: number;
   duration_days: number;
   is_active: boolean;
+  yearly_price?: number;
+  yearly_discount_percentage?: number;
 }
 
 export interface SubscriptionRevenue {
@@ -93,7 +96,8 @@ export class DriverSubscriptionService {
   // S'abonner ou renouveler (via Wallet)
   static async subscribeWithWallet(
     userId: string,
-    userType: 'taxi' | 'livreur'
+    userType: 'taxi' | 'livreur',
+    billingCycle: 'monthly' | 'yearly' = 'monthly'
   ): Promise<{ success: boolean; subscriptionId?: string; error?: string }> {
     try {
       // Vérifier le solde du wallet
@@ -113,7 +117,12 @@ export class DriverSubscriptionService {
         return { success: false, error: 'Configuration non disponible' };
       }
 
-      if (walletData.balance < config.price) {
+      // Calculer le prix selon le cycle de facturation
+      const price = billingCycle === 'yearly' 
+        ? (config.yearly_price || config.price * 12 * 0.95)
+        : config.price;
+
+      if (walletData.balance < price) {
         return { success: false, error: 'Solde insuffisant' };
       }
 
@@ -124,7 +133,7 @@ export class DriverSubscriptionService {
       const { error: debitError } = await supabase
         .from('wallets')
         .update({ 
-          balance: walletData.balance - config.price,
+          balance: walletData.balance - price,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId);
@@ -134,10 +143,11 @@ export class DriverSubscriptionService {
       }
 
       // Enregistrer la transaction dans enhanced_transactions
+      const duration = billingCycle === 'yearly' ? '365 jours' : '30 jours';
       await supabase.from('enhanced_transactions').insert({
         sender_id: userId,
         receiver_id: userId, // Système
-        amount: config.price,
+        amount: price,
         currency: 'GNF',
         method: 'wallet',
         status: 'completed',
@@ -145,7 +155,8 @@ export class DriverSubscriptionService {
           type: 'subscription',
           subscription_type: userType, 
           transaction_id: transactionId,
-          description: `Abonnement ${userType === 'taxi' ? 'Taxi Moto' : 'Livreur'} - 30 jours`
+          billing_cycle: billingCycle,
+          description: `Abonnement ${userType === 'taxi' ? 'Taxi Moto' : 'Livreur'} - ${duration}`
         }
       });
 
@@ -155,7 +166,8 @@ export class DriverSubscriptionService {
           p_user_id: userId,
           p_type: userType,
           p_payment_method: 'wallet',
-          p_transaction_id: transactionId
+          p_transaction_id: transactionId,
+          p_billing_cycle: billingCycle
         });
 
       if (subError) {
