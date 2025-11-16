@@ -218,6 +218,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
    * Vérifie les permissions de l'utilisateur pour une action spécifique
    */
   const checkPermissions = (action: 'send' | 'receive' | 'withdraw' | 'deposit'): boolean => {
+    // Si un userId est fourni en prop, on considère que les permissions ont été vérifiées en amont
+    if (propUserId) {
+      return true;
+    }
+    
     if (!profile?.role) {
       toast.error('UNAUTHORIZED_ACTION: Rôle utilisateur non défini');
       return false;
@@ -585,17 +590,17 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const getTransactionType = (tx: Transaction) => {
-    if (tx.sender_id === user?.id && tx.receiver_id === user?.id) {
+    if (tx.sender_id === effectiveUserId && tx.receiver_id === effectiveUserId) {
       return tx.method === 'deposit' ? 'Dépôt' : 'Retrait';
     }
-    return tx.sender_id === user?.id ? 'Envoi' : 'Réception';
+    return tx.sender_id === effectiveUserId ? 'Envoi' : 'Réception';
   };
 
   const getTransactionColor = (tx: Transaction) => {
-    if (tx.sender_id === user?.id && tx.receiver_id === user?.id) {
+    if (tx.sender_id === effectiveUserId && tx.receiver_id === effectiveUserId) {
       return tx.method === 'deposit' ? 'text-green-600' : 'text-orange-600';
     }
-    return tx.sender_id === user?.id ? 'text-red-600' : 'text-green-600';
+    return tx.sender_id === effectiveUserId ? 'text-red-600' : 'text-green-600';
   };
 
   if (loading) {
@@ -610,8 +615,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     );
   }
 
-  // Attendre que le profil soit chargé
-  if (!profile) {
+  // Attendre que le profil soit chargé (uniquement si aucun userId n'est fourni en prop)
+  if (!profile && !propUserId) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -887,9 +892,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   <div className="flex-1">
                     <p className="font-medium text-sm">
                       {getTransactionType(tx)}{' '}
-                      {(tx.sender_id !== user?.id || tx.receiver_id !== user?.id) && (
+                      {(tx.sender_id !== effectiveUserId || tx.receiver_id !== effectiveUserId) && (
                         <span className="font-mono text-primary text-xs">
-                          ({tx.sender_id === user?.id ? tx.receiver_custom_id : tx.sender_custom_id})
+                          ({tx.sender_id === effectiveUserId ? tx.receiver_custom_id : tx.sender_custom_id})
                         </span>
                       )}
                     </p>
@@ -910,10 +915,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </div>
                   <div className="text-right">
                     <p className={`font-bold ${getTransactionColor(tx)}`}>
-                      {tx.sender_id === user?.id && tx.receiver_id !== user?.id ? '-' : '+'}
+                      {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
                       {formatPrice(tx.amount)}
                     </p>
-                    {tx.sender_id === user?.id && tx.metadata?.fee_amount && (
+                    {tx.sender_id === effectiveUserId && tx.metadata?.fee_amount && (
                       <p className="text-xs text-orange-600">
                         +{formatPrice(tx.metadata.fee_amount)} frais
                       </p>
