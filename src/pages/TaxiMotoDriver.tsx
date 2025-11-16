@@ -310,14 +310,17 @@ export default function TaxiMotoDriver() {
 
         // Si on veut passer en ligne, vérifier/obtenir la position GPS
         if (next) {
-            toast.loading('📍 Vérification de votre position GPS...', { id: 'gps-loading' });
+            toast.loading('📍 Recherche GPS en cours... (25 secondes max)', { id: 'gps-loading' });
             
             try {
-                // Utiliser la position existante si elle est récente (< 30 secondes) sinon en obtenir une nouvelle
+                // Utiliser la position existante si elle est récente (< 60 secondes) sinon en obtenir une nouvelle
                 let position = location;
                 
-                if (!position || (Date.now() - position.timestamp > 30000)) {
+                if (!position || (Date.now() - position.timestamp > 60000)) {
+                    console.log('📍 Obtention nouvelle position GPS...');
                     position = await getCurrentLocation();
+                } else {
+                    console.log('📍 Utilisation position GPS existante');
                 }
                 
                 console.log('📍 Position GPS utilisée:', position);
