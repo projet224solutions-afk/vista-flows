@@ -463,11 +463,11 @@ export default function TaxiMotoDriver() {
 
                 const { data: ratings } = await supabase
                     .from('taxi_ratings')
-                    .select('rating')
+                    .select('stars')
                     .eq('customer_id', ride.customer_id);
                 
                 if (ratings && ratings.length > 0) {
-                    customerRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+                    customerRating = ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length;
                 }
             } catch (e) {
                 console.error('Error loading customer info:', e);
@@ -658,11 +658,11 @@ export default function TaxiMotoDriver() {
             // Charger la note du client depuis taxi_ratings
             const { data: ratings } = await supabase
                 .from('taxi_ratings')
-                .select('rating')
+                .select('stars')
                 .eq('customer_id', ride.customer_id);
             
             if (ratings && ratings.length > 0) {
-                customerRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+                customerRating = ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length;
             }
         } catch (error) {
             console.error('Error loading customer:', error);
