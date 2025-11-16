@@ -84,8 +84,8 @@ export function useCurrentLocation() {
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 15000, // Augmenté à 15 secondes
-                    maximumAge: 0 // Toujours obtenir une nouvelle position
+                    timeout: 25000, // Augmenté à 25 secondes pour plus de fiabilité
+                    maximumAge: 5000 // Accepter position jusqu'à 5 secondes
                 }
             );
         });
@@ -139,7 +139,7 @@ export function useCurrentLocation() {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 15000,
+                timeout: 25000, // Augmenté à 25 secondes
                 maximumAge: 5000 // 5 secondes pour le tracking continu
             }
         );
