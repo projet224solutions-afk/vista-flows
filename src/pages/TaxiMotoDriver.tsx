@@ -33,6 +33,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
 import useCurrentLocation from "@/hooks/useGeolocation";
+import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { toast } from "sonner";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { GeolocationService } from "@/services/taxi/GeolocationService";
@@ -98,6 +99,7 @@ export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
+    const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -183,18 +185,18 @@ export default function TaxiMotoDriver() {
 
     // Gérer le statut en ligne et le tracking
     useEffect(() => {
-        if (isOnline && driverId) {
+        if (isOnline && driverId && hasAccess) {
             startLocationTracking();
             loadPendingRides(); // Charger les courses en attente
         } else if (locationWatchId !== null) {
             stopWatching(locationWatchId);
             setLocationWatchId(null);
         }
-    }, [isOnline, driverId]);
+    }, [isOnline, driverId, hasAccess]);
 
     // S'abonner aux demandes de courses temps réel
     useEffect(() => {
-        if (!driverId || !isOnline) return;
+        if (!driverId || !isOnline || !hasAccess) return;
 
         const channel = supabase
             .channel('driver-ride-requests')
@@ -312,6 +314,14 @@ export default function TaxiMotoDriver() {
         
         if (!driverId) {
             toast.error('Profil conducteur non trouvé');
+            return;
+        }
+
+        // Vérifier l'abonnement avant de passer en ligne
+        if (next && !hasAccess) {
+            toast.error('⚠️ Abonnement requis', {
+                description: 'Vous devez avoir un abonnement actif pour recevoir des courses'
+            });
             return;
         }
 
@@ -549,7 +559,7 @@ export default function TaxiMotoDriver() {
      * Charge les courses en attente depuis la DB
      */
     const loadPendingRides = async () => {
-        if (!driverId || !location) return;
+        if (!driverId || !location || !hasAccess) return;
 
         try {
             // Charger toutes les courses "requested" à proximité (5km)
@@ -1233,6 +1243,7 @@ export default function TaxiMotoDriver() {
                             onNavigate={setActiveTab}
                             onContactCustomer={contactCustomer}
                             onToggleOnline={toggleOnlineStatus}
+                            hasSubscription={hasAccess}
                         />
                     </TabsContent>
 

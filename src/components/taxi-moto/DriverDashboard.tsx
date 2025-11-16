@@ -51,6 +51,7 @@ interface DriverDashboardProps {
   onNavigate: (tab: string) => void;
   onContactCustomer: (phone: string) => void;
   onToggleOnline: () => void;
+  hasSubscription?: boolean;
 }
 
 export function DriverDashboard({
@@ -60,7 +61,8 @@ export function DriverDashboard({
   activeRide,
   onNavigate,
   onContactCustomer,
-  onToggleOnline
+  onToggleOnline,
+  hasSubscription = true
 }: DriverDashboardProps) {
   const [stats, setStats] = useState<DriverStats>({
     todayEarnings: 0,
@@ -243,11 +245,15 @@ export function DriverDashboard({
           <Button
             onClick={onToggleOnline}
             size="sm"
+            disabled={!isOnline && !hasSubscription}
             className={`font-bold text-xs ${
               isOnline 
                 ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : !hasSubscription
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
             }`}
+            title={!hasSubscription && !isOnline ? 'Abonnement requis pour passer en ligne' : ''}
           >
             <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
             {isOnline ? 'En ligne' : 'Hors ligne'}
