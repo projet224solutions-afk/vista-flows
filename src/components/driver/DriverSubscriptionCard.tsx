@@ -64,7 +64,7 @@ export function DriverSubscriptionCard() {
           )}
         </CardTitle>
         <CardDescription>
-          Abonnement mensuel pour accéder aux services de 224Solutions
+          Abonnement mensuel ou annuel pour accéder aux services de 224Solutions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
