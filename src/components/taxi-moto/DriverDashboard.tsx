@@ -11,6 +11,7 @@ import { Star, MapPin, Wifi, Battery, Phone, Navigation, Car, CreditCard, Hash }
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
+import { DriverSubscriptionInfo } from "@/components/driver/DriverSubscriptionInfo";
 
 interface DriverStats {
   todayEarnings: number;
@@ -356,6 +357,9 @@ export function DriverDashboard({
           </CardContent>
         </Card>
       </div>
+
+      {/* Informations d'abonnement */}
+      <DriverSubscriptionInfo />
 
       {/* Course active */}
       {activeRide && (
