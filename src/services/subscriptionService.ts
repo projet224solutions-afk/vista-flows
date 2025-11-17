@@ -294,22 +294,41 @@ export class SubscriptionService {
     try {
       const { data: subscriptions, error } = await supabase
         .from('subscriptions')
-        .select('status, price_paid_gnf, plan_id, plans!inner(name)');
+        .select('user_id, status, price_paid_gnf, plan_id, plans!inner(name), created_at')
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('❌ Erreur stats abonnements:', error);
         return null;
       }
 
+      // Garder seulement le dernier abonnement par utilisateur
+      const uniqueSubscriptions = subscriptions.reduce((acc: any[], sub) => {
+        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
+        
+        if (existingIndex === -1) {
+          acc.push(sub);
+        } else {
+          const existingDate = new Date(acc[existingIndex].created_at);
+          const currentDate = new Date(sub.created_at);
+          
+          if (currentDate > existingDate) {
+            acc[existingIndex] = sub;
+          }
+        }
+        
+        return acc;
+      }, []);
+
       const stats = {
-        total_subscriptions: subscriptions.length,
-        active_subscriptions: subscriptions.filter((s) => s.status === 'active').length,
-        total_revenue: subscriptions.reduce((sum, s) => sum + s.price_paid_gnf, 0),
+        total_subscriptions: uniqueSubscriptions.length,
+        active_subscriptions: uniqueSubscriptions.filter((s) => s.status === 'active').length,
+        total_revenue: uniqueSubscriptions.reduce((sum, s) => sum + s.price_paid_gnf, 0),
         revenue_by_plan: {} as { [key: string]: number },
       };
 
       // Calculer revenus par plan
-      subscriptions.forEach((sub: any) => {
+      uniqueSubscriptions.forEach((sub: any) => {
         const planName = sub.plans?.name || 'unknown';
         if (!stats.revenue_by_plan[planName]) {
           stats.revenue_by_plan[planName] = 0;
