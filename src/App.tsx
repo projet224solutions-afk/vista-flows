@@ -26,6 +26,7 @@ const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
 const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
+const FeaturesDemo = lazy(() => import("./pages/FeaturesDemo"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const DriverProfile = lazy(() => import("./pages/driver/DriverProfile"));
 const DriverSettings = lazy(() => import("./pages/driver/DriverSettings"));
@@ -209,6 +210,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
                     <SubscriptionsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/features-demo"
+                element={
+                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                    <FeaturesDemo />
                   </ProtectedRoute>
                 }
               />
