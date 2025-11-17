@@ -47,6 +47,9 @@ export default function SubscriptionManagement() {
     planId: '',
     days: ''
   });
+  const [isSubscriptionsListOpen, setIsSubscriptionsListOpen] = useState(false);
+  const [allSubscriptions, setAllSubscriptions] = useState<any[]>([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,6 +110,33 @@ export default function SubscriptionManagement() {
     return () => {
       supabase.removeChannel(channel);
     };
+  };
+
+  const loadAllSubscriptions = async () => {
+    try {
+      setLoadingSubscriptions(true);
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select(`
+          *,
+          plans!inner(display_name, name),
+          profiles!inner(email, first_name, last_name, role)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAllSubscriptions(data || []);
+      setIsSubscriptionsListOpen(true);
+    } catch (error) {
+      console.error('Error loading subscriptions:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les abonnements',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSubscriptions(false);
+    }
   };
 
   const handleOpenDialog = (plan: Plan) => {
@@ -353,7 +383,7 @@ export default function SubscriptionManagement() {
       {/* Statistiques */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={loadAllSubscriptions}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Abonnements</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -688,6 +718,80 @@ export default function SubscriptionManagement() {
               {submitting ? 'Attribution...' : 'Offrir l\'Abonnement'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Liste des Abonnements */}
+      <Dialog open={isSubscriptionsListOpen} onOpenChange={setIsSubscriptionsListOpen}>
+        <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Liste des Abonnements</DialogTitle>
+            <DialogDescription>
+              {allSubscriptions.length} abonnement(s) au total
+            </DialogDescription>
+          </DialogHeader>
+          
+          {loadingSubscriptions ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3">Chargement...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rôle</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Cycle</TableHead>
+                    <TableHead>Début</TableHead>
+                    <TableHead>Fin</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allSubscriptions.map((sub) => (
+                    <TableRow key={sub.id}>
+                      <TableCell className="font-medium">
+                        {sub.profiles?.first_name} {sub.profiles?.last_name}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {sub.profiles?.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{sub.profiles?.role}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{sub.plans?.display_name}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
+                          {sub.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {sub.billing_cycle === 'lifetime' ? (
+                          <Badge variant="default" className="bg-green-500">
+                            🎁 Offert
+                          </Badge>
+                        ) : (
+                          <span className="text-sm">{sub.billing_cycle}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {sub.started_at ? format(new Date(sub.started_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
