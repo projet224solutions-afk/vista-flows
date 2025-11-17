@@ -255,6 +255,34 @@ export class SubscriptionService {
   }
 
   /**
+   * Annuler un abonnement
+   */
+  static async cancelSubscription(subscriptionId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update({ 
+          status: 'cancelled',
+          auto_renew: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscriptionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Erreur annulation abonnement:', error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('❌ Exception annulation abonnement:', error);
+      return false;
+    }
+  }
+
+  /**
    * Obtenir les statistiques d'abonnements
    */
   static async getSubscriptionStats(): Promise<{

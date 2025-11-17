@@ -58,6 +58,7 @@ import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
+import { VendorSubscriptionInfo } from "@/components/vendor/VendorSubscriptionInfo";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -195,6 +196,9 @@ export default function VendeurDashboard() {
     <div className="space-y-6">
       {/* Analytics Dashboard intégré */}
       <VendorAnalyticsDashboard />
+
+      {/* Section Abonnement */}
+      <VendorSubscriptionInfo />
 
       {/* Activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
