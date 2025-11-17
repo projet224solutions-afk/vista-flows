@@ -59,6 +59,7 @@ import CommunicationWidget from "@/components/communication/CommunicationWidget"
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
+import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -373,35 +374,122 @@ export default function VendeurDashboard() {
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
+              {/* Routes accessibles au plan gratuit */}
               <Route index element={<DashboardHome />} />
               <Route path="/" element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
-              <Route path="analytics" element={<VendorAnalytics />} />
-              <Route path="pos" element={<POSSystemWrapper />} />
               <Route path="products" element={<ProductManagement />} />
               <Route path="orders" element={<OrderManagement />} />
-              <Route path="inventory" element={<InventoryManagement />} />
-              <Route path="warehouse" element={<WarehouseManagement />} />
-              <Route path="suppliers" element={<SupplierManagement />} />
-              <Route path="clients" element={<ClientManagement />} />
-              <Route path="agents" element={<AgentManagement />} />
-              <Route path="prospects" element={<ProspectManagement />} />
-              <Route path="marketing" element={<MarketingManagement />} />
               <Route path="wallet" element={<UniversalWalletTransactions />} />
-              <Route path="payments" element={<PaymentManagement />} />
-              <Route path="payment-links" element={<PaymentLinksManager />} />
-              <Route path="expenses" element={<ExpenseManagementDashboard />} />
-              <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
-              <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
-              <Route path="delivery" element={<VendorDeliveriesPanel />} />
-              <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<UniversalCommunicationHub />} />
-              <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
-              <Route path="test-ai" element={<GeminiAITest />} />
-              <Route path="test-google-cloud" element={<GoogleCloudVerification />} />
-              <Route path="offline-sync" element={<OfflineSyncPanel />} />
               <Route path="subscription" element={<SubscriptionRenewalPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              
+              {/* Routes premium protégées */}
+              <Route path="analytics" element={
+                <ProtectedRoute feature="analytics_basic">
+                  <VendorAnalytics />
+                </ProtectedRoute>
+              } />
+              <Route path="pos" element={
+                <ProtectedRoute feature="pos_system">
+                  <POSSystemWrapper />
+                </ProtectedRoute>
+              } />
+              <Route path="inventory" element={
+                <ProtectedRoute feature="inventory_management">
+                  <InventoryManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="warehouse" element={
+                <ProtectedRoute feature="multi_warehouse">
+                  <WarehouseManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="suppliers" element={
+                <ProtectedRoute feature="supplier_management">
+                  <SupplierManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="clients" element={
+                <ProtectedRoute feature="crm_basic">
+                  <ClientManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="agents" element={
+                <ProtectedRoute feature="sales_agents">
+                  <AgentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="prospects" element={
+                <ProtectedRoute feature="prospect_management">
+                  <ProspectManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="marketing" element={
+                <ProtectedRoute feature="marketing_promotions">
+                  <MarketingManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="payments" element={
+                <ProtectedRoute feature="orders_detailed">
+                  <PaymentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="payment-links" element={
+                <ProtectedRoute feature="payment_links">
+                  <PaymentLinksManager />
+                </ProtectedRoute>
+              } />
+              <Route path="expenses" element={
+                <ProtectedRoute feature="expense_management">
+                  <ExpenseManagementDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="debts" element={
+                <ProtectedRoute feature="debt_management">
+                  <VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />
+                </ProtectedRoute>
+              } />
+              <Route path="affiliate" element={
+                <ProtectedRoute feature="affiliate_program">
+                  <AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />
+                </ProtectedRoute>
+              } />
+              <Route path="delivery" element={
+                <ProtectedRoute feature="delivery_tracking">
+                  <VendorDeliveriesPanel />
+                </ProtectedRoute>
+              } />
+              <Route path="support" element={
+                <ProtectedRoute feature="support_tickets">
+                  <SupportTickets />
+                </ProtectedRoute>
+              } />
+              <Route path="communication" element={
+                <ProtectedRoute feature="communication_hub">
+                  <UniversalCommunicationHub />
+                </ProtectedRoute>
+              } />
+              <Route path="reports" element={
+                <ProtectedRoute feature="custom_reports">
+                  <Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>
+                </ProtectedRoute>
+              } />
+              <Route path="test-ai" element={
+                <ProtectedRoute feature="gemini_ai">
+                  <GeminiAITest />
+                </ProtectedRoute>
+              } />
+              <Route path="test-google-cloud" element={
+                <ProtectedRoute feature="api_access">
+                  <GoogleCloudVerification />
+                </ProtectedRoute>
+              } />
+              <Route path="offline-sync" element={
+                <ProtectedRoute feature="offline_mode">
+                  <OfflineSyncPanel />
+                </ProtectedRoute>
+              } />
             </Routes>
           </main>
         </div>
