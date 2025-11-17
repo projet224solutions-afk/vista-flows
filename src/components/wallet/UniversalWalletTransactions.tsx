@@ -65,6 +65,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [isAgent, setIsAgent] = useState(false);
+  const [agentInfo, setAgentInfo] = useState<{ id: string; agent_code: string; name: string } | null>(null);
+  const [userCustomId, setUserCustomId] = useState<string | null>(null);
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
@@ -82,12 +85,48 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
   useEffect(() => {
     if (effectiveUserId) {
-      loadWalletData();
-      loadTransactions();
+      checkIfAgent();
     } else {
       setLoading(false);
     }
   }, [effectiveUserId]);
+
+  const checkIfAgent = async () => {
+    if (!effectiveUserId) return;
+
+    try {
+      // Vérifier si l'utilisateur est un agent
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents_management')
+        .select('id, agent_code, name')
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
+
+      if (agentData) {
+        setIsAgent(true);
+        setAgentInfo({ id: agentData.id, agent_code: agentData.agent_code, name: agentData.name });
+      } else {
+        // Si ce n'est pas un agent, charger le custom_id depuis user_ids
+        const { data: userIdData } = await supabase
+          .from('user_ids')
+          .select('custom_id')
+          .eq('user_id', effectiveUserId)
+          .maybeSingle();
+
+        if (userIdData?.custom_id) {
+          setUserCustomId(userIdData.custom_id);
+        }
+      }
+
+      // Charger les données après avoir vérifié le rôle
+      await loadWalletData();
+      await loadTransactions();
+    } catch (error) {
+      console.error('Erreur vérification agent:', error);
+      await loadWalletData();
+      await loadTransactions();
+    }
+  };
 
   const loadWalletData = async () => {
     if (!effectiveUserId) {
@@ -96,70 +135,109 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
 
     try {
-      const { data, error } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', effectiveUserId)
-        .single();
+      // Si c'est un agent, charger depuis agent_wallets
+      if (isAgent && agentInfo) {
+        const { data: agentWalletData, error: agentWalletError } = await supabase
+          .from('agent_wallets')
+          .select('id, balance, currency')
+          .eq('agent_id', agentInfo.id)
+          .maybeSingle();
 
-      if (error) {
-        // Si le wallet n'existe pas, l'initialiser via RPC
-        if (error.code === 'PGRST116') {
-          console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
-          
-          try {
-            const { data: initResult, error: rpcError } = await supabase
-              .rpc('initialize_user_wallet', { p_user_id: effectiveUserId });
-            
-            console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
-            
-            if (rpcError) {
-              console.error('❌ WALLET_NOT_INITIALIZED:', rpcError);
-              toast.error('WALLET_NOT_INITIALIZED: Impossible d\'initialiser le wallet');
-              setLoading(false);
-              return;
+        if (agentWalletError && agentWalletError.code !== 'PGRST116') {
+          throw agentWalletError;
+        }
+
+        if (agentWalletData) {
+          setWallet(agentWalletData);
+        } else {
+          // Initialiser le wallet agent si nécessaire
+          const { data: agentData } = await supabase
+            .from('agents_management')
+            .select('id')
+            .eq('user_id', effectiveUserId)
+            .single();
+
+          if (agentData) {
+            const { error: insertError } = await supabase
+              .from('agent_wallets')
+              .insert({
+                agent_id: agentData.id,
+                balance: 0,
+                currency: 'GNF',
+                wallet_status: 'active'
+              });
+
+            if (!insertError) {
+              const { data: newWallet } = await supabase
+                .from('agent_wallets')
+                .select('id, balance, currency')
+                .eq('agent_id', agentData.id)
+                .single();
+
+              if (newWallet) {
+                setWallet(newWallet);
+              }
             }
+          }
+        }
+      } else {
+        // Utilisateur normal - charger depuis wallets
+        const { data, error } = await supabase
+          .from('wallets')
+          .select('*')
+          .eq('user_id', effectiveUserId)
+          .single();
+
+        if (error) {
+          // Si le wallet n'existe pas, l'initialiser via RPC
+          if (error.code === 'PGRST116') {
+            console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
             
-            const result = initResult as any;
-            if (!result || !result.success) {
-              const errorMsg = result?.error || 'Échec initialisation wallet';
-              console.error('❌ Échec initialisation:', errorMsg);
-              toast.error(errorMsg);
-              setLoading(false);
-              return;
+            try {
+              const { data: initResult, error: rpcError } = await supabase
+                .rpc('initialize_user_wallet', { p_user_id: effectiveUserId });
+              
+              if (rpcError) {
+                console.error('❌ WALLET_NOT_INITIALIZED:', rpcError);
+                toast.error('Impossible d\'initialiser le wallet');
+                setLoading(false);
+                return;
+              }
+              
+              const result = initResult as any;
+              if (!result?.success) {
+                toast.error('Échec initialisation wallet');
+                setLoading(false);
+                return;
+              }
+              
+              // Recharger le wallet
+              const { data: reloadedWallet, error: reloadError } = await supabase
+                .from('wallets')
+                .select('*')
+                .eq('user_id', effectiveUserId)
+                .single();
+              
+              if (reloadError) {
+                console.error('❌ Erreur rechargement:', reloadError);
+                toast.error('Impossible de recharger le wallet');
+                setLoading(false);
+                return;
+              }
+              
+              setWallet(reloadedWallet);
+            } catch (initError) {
+              console.error('❌ Erreur initialisation wallet:', initError);
+              toast.error('Impossible de charger le wallet');
             }
-            
-            console.log('✅ Wallet initialisé:', result);
-            
-            // Recharger le wallet depuis la base de données
-            const { data: reloadedWallet, error: reloadError } = await supabase
-              .from('wallets')
-              .select('*')
-              .eq('user_id', effectiveUserId)
-              .single();
-            
-            if (reloadError) {
-              console.error('❌ Erreur rechargement:', reloadError);
-              toast.error('Impossible de recharger le wallet');
-              setLoading(false);
-              return;
-            }
-            
-            setWallet(reloadedWallet);
-            setLoading(false);
-            return;
-          } catch (initError) {
-            console.error('❌ Erreur initialisation wallet:', initError);
-            toast.error('Impossible de charger le wallet');
-            setLoading(false);
-            return;
+          } else {
+            throw error;
           }
         } else {
-          throw error;
+          setWallet(data);
         }
       }
       
-      setWallet(data);
       setLoading(false);
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
@@ -686,11 +764,19 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         <div className="bg-client-gradient rounded-lg p-6 text-white">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm opacity-90">Solde disponible</p>
-            {profile && (
+            {isAgent && agentInfo ? (
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                {agentInfo.agent_code}
+              </Badge>
+            ) : userCustomId ? (
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                {userCustomId}
+              </Badge>
+            ) : profile?.role ? (
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                 {profile.role}
               </Badge>
-            )}
+            ) : null}
           </div>
           <p className="text-3xl font-bold">
             {wallet ? formatPrice(wallet.balance) : 'Chargement...'}
