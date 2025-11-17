@@ -57,8 +57,7 @@ import { VendorNotificationsPanel } from "@/components/vendor/VendorNotification
 import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
-import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
-import { VendorSubscriptionInfo } from "@/components/vendor/VendorSubscriptionInfo";
+import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -198,7 +197,7 @@ export default function VendeurDashboard() {
       <VendorAnalyticsDashboard />
 
       {/* Section Abonnement */}
-      <VendorSubscriptionInfo />
+      <VendorSubscriptionSimple />
 
       {/* Activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -352,8 +351,8 @@ export default function VendeurDashboard() {
                 </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} />
                 
-                {/* Subscription Button */}
-                <VendorSubscriptionButton />
+                {/* Subscription Button - Temporairement désactivé */}
+                {/* <VendorSubscriptionButton /> */}
                 
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
