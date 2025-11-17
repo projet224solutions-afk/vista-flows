@@ -516,6 +516,119 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          allowed_domains: Json | null
+          allowed_ips: Json | null
+          api_key: string
+          api_secret: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_name: string
+          last_used_at: string | null
+          permissions: Json | null
+          plan_tier: string
+          rate_limit_per_day: number
+          rate_limit_per_minute: number
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          allowed_domains?: Json | null
+          allowed_ips?: Json | null
+          api_key: string
+          api_secret?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          last_used_at?: string | null
+          permissions?: Json | null
+          plan_tier: string
+          rate_limit_per_day?: number
+          rate_limit_per_minute?: number
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          allowed_domains?: Json | null
+          allowed_ips?: Json | null
+          api_key?: string
+          api_secret?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          permissions?: Json | null
+          plan_tier?: string
+          rate_limit_per_day?: number
+          rate_limit_per_minute?: number
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_usage: {
+        Row: {
+          api_key_id: string | null
+          created_at: string | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          method: string
+          request_size_bytes: number | null
+          response_size_bytes: number | null
+          response_time_ms: number | null
+          status_code: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_usage_logs: {
         Row: {
           api_connection_id: string | null
@@ -1614,6 +1727,54 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           symbol?: string
+        }
+        Relationships: []
+      }
+      custom_report_templates: {
+        Row: {
+          chart_config: Json | null
+          columns: Json
+          created_at: string | null
+          data_sources: Json
+          description: string | null
+          filters: Json | null
+          id: string
+          is_public: boolean | null
+          name: string
+          report_type: string
+          schedule: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chart_config?: Json | null
+          columns: Json
+          created_at?: string | null
+          data_sources?: Json
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          report_type: string
+          schedule?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chart_config?: Json | null
+          columns?: Json
+          created_at?: string | null
+          data_sources?: Json
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          report_type?: string
+          schedule?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -3319,6 +3480,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      generated_reports: {
+        Row: {
+          expires_at: string | null
+          file_url: string | null
+          format: string | null
+          generated_at: string | null
+          id: string
+          report_data: Json
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          file_url?: string | null
+          format?: string | null
+          generated_at?: string | null
+          id?: string
+          report_data: Json
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          file_url?: string | null
+          format?: string | null
+          generated_at?: string | null
+          id?: string
+          report_data?: Json
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "custom_report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       global_ids: {
         Row: {
@@ -10062,6 +10264,7 @@ export type Database = {
       }
       generate_agent_access_token: { Args: never; Returns: string }
       generate_agent_id: { Args: { p_type_agent: string }; Returns: string }
+      generate_api_key: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
       generate_custom_id_original: { Args: never; Returns: string }
