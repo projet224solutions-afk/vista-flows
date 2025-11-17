@@ -72,9 +72,19 @@ export function useFinanceData(autoLoad: boolean = false) {
       setError(null);
       console.log('🔄 [useFinanceData] Fetching financial data...');
 
-      // Appeler l'edge function pour obtenir les statistiques
+      // Vérifier que l'utilisateur est authentifié
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('User not authenticated');
+      }
+
+      // Appeler l'edge function pour obtenir les statistiques avec le token
       const { data: statsData, error: statsError } = await supabase.functions.invoke('financial-stats', {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (statsError) {
