@@ -118,14 +118,36 @@ export default function SubscriptionManagement() {
       const { data, error } = await supabase
         .from('subscriptions')
         .select(`
-          *,
-          plans!inner(display_name, name),
-          profiles!inner(email, first_name, last_name, role)
+          id,
+          user_id,
+          plan_id,
+          status,
+          billing_cycle,
+          started_at,
+          current_period_end,
+          created_at,
+          plans (display_name, name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAllSubscriptions(data || []);
+
+      // Récupérer les profils utilisateurs séparément
+      const userIds = [...new Set(data?.map(sub => sub.user_id) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name, role')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Fusionner les données
+      const enrichedData = data?.map(sub => ({
+        ...sub,
+        profiles: profiles?.find(p => p.id === sub.user_id)
+      }));
+
+      setAllSubscriptions(enrichedData || []);
       setIsSubscriptionsListOpen(true);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
