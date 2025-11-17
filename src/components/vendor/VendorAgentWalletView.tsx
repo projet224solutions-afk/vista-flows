@@ -75,7 +75,7 @@ export function VendorAgentWalletView({ vendorId, agentName }: VendorAgentWallet
       </Alert>
 
       {/* Interface wallet complète du vendeur */}
-      <UniversalWalletTransactions />
+      <UniversalWalletTransactions userId={vendorUserId || undefined} />
     </div>
   );
 }
