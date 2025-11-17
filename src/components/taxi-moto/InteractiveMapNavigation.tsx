@@ -305,7 +305,7 @@ export function InteractiveMapNavigation({
         <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Navigation className="w-5 h-5 text-blue-600 animate-pulse" />
+              <Navigation className="w-5 h-5 text-blue-600" />
               <span className="text-lg">Navigation GPS</span>
             </div>
             <div className="flex items-center gap-2">
