@@ -24,6 +24,23 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useVendorBadges } from "@/hooks/useVendorBadges";
+import { useSubscriptionFeatures, SubscriptionFeature } from "@/hooks/useSubscriptionFeatures";
+
+// Mapping des routes vers les features requises
+const ROUTE_FEATURES: Record<string, SubscriptionFeature> = {
+  'analytics': 'analytics_basic',
+  'pos': 'pos_system',
+  'inventory': 'inventory_management',
+  'warehouse': 'multi_warehouse',
+  'suppliers': 'supplier_management',
+  'prospects': 'prospect_management',
+  'marketing': 'marketing_promotions',
+  'payment-links': 'payment_links',
+  'debts': 'debt_management',
+  'affiliates': 'affiliate_program',
+  'expenses': 'expense_management',
+  'support': 'support_tickets',
+};
 
 export function VendorSidebar() {
   const { state } = useSidebar();
@@ -31,6 +48,7 @@ export function VendorSidebar() {
   const currentPath = location.pathname.split('/').pop() || 'dashboard';
   const collapsed = state === "collapsed";
   const { badges, loading } = useVendorBadges();
+  const { canAccessFeature } = useSubscriptionFeatures();
 
   const isActive = (path: string) => currentPath === path;
 
@@ -225,26 +243,42 @@ export function VendorSidebar() {
               <SidebarMenu>
                 {section.items.map((item) => {
                   const badgeValue = getBadgeValue(item.path);
+                  const requiredFeature = ROUTE_FEATURES[item.path];
+                  const hasAccess = !requiredFeature || canAccessFeature(requiredFeature);
                   
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton asChild>
                         <NavLink 
-                          to={`/vendeur/${item.path}`}
-                          className={getNavClass(isActive(item.path))}
+                          to={hasAccess ? `/vendeur/${item.path}` : '#'}
+                          onClick={(e) => {
+                            if (!hasAccess) {
+                              e.preventDefault();
+                            }
+                          }}
+                          className={`${getNavClass(isActive(item.path))} ${
+                            !hasAccess ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                         >
                           <item.icon className={collapsed ? "w-5 h-5" : "w-4 h-4 mr-3"} />
                           {!collapsed && (
                             <div className="flex items-center justify-between flex-1">
                               <span className="text-sm font-medium">{item.title}</span>
-                              {badgeValue && (
-                                <Badge 
-                                  variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                  className="text-xs px-2 py-0"
-                                >
-                                  {badgeValue}
-                                </Badge>
-                              )}
+                              <div className="flex items-center gap-1">
+                                {!hasAccess && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0">
+                                    🔒
+                                  </Badge>
+                                )}
+                                {badgeValue && (
+                                  <Badge 
+                                    variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                                    className="text-xs px-2 py-0"
+                                  >
+                                    {badgeValue}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           )}
                         </NavLink>
