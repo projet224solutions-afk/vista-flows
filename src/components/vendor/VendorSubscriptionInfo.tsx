@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useVendorSubscription } from "@/hooks/useVendorSubscription.tsx";
+import { useVendorSubscription } from "@/hooks/useVendorSubscription";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
@@ -112,7 +112,7 @@ export function VendorSubscriptionInfo() {
 
   return (
     <>
-      <Card>
+      <Card data-subscription-section>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
