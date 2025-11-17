@@ -130,7 +130,7 @@ export default function SubscriptionsPage() {
       <div className="container mx-auto max-w-7xl">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/vendeur')}
           className="mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
