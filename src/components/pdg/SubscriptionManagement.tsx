@@ -147,7 +147,27 @@ export default function SubscriptionManagement() {
         profiles: profiles?.find(p => p.id === sub.user_id)
       }));
 
-      setAllSubscriptions(enrichedData || []);
+      // Filtrer pour garder seulement le dernier abonnement par utilisateur
+      const uniqueSubscriptions = enrichedData?.reduce((acc, sub) => {
+        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
+        
+        if (existingIndex === -1) {
+          // Pas encore d'abonnement pour cet utilisateur
+          acc.push(sub);
+        } else {
+          // Comparer les dates pour garder le plus récent
+          const existingDate = new Date(acc[existingIndex].created_at);
+          const currentDate = new Date(sub.created_at);
+          
+          if (currentDate > existingDate) {
+            acc[existingIndex] = sub;
+          }
+        }
+        
+        return acc;
+      }, [] as any[]);
+
+      setAllSubscriptions(uniqueSubscriptions || []);
       setIsSubscriptionsListOpen(true);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
