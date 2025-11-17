@@ -27,6 +27,12 @@ interface Vendor {
     custom_id: string;
   };
   agent_info?: string; // Nom de l'agent créateur
+  subscription?: {
+    plan_name: string;
+    status: string;
+    current_period_end: string;
+    billing_cycle: string;
+  };
 }
 
 export default function PDGVendors() {
@@ -51,7 +57,7 @@ export default function PDGVendors() {
 
       if (error) throw error;
 
-      // Enrichir avec les infos agents
+      // Enrichir avec les infos agents et abonnements
       const enrichedVendors = await Promise.all((data || []).map(async (vendor) => {
         // Récupérer l'info de l'agent créateur
         const { data: agentLink } = await supabase
@@ -60,9 +66,30 @@ export default function PDGVendors() {
           .eq('user_id', vendor.user_id)
           .single();
 
+        // Récupérer l'abonnement actif
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select(`
+            status,
+            current_period_end,
+            billing_cycle,
+            plans!inner(display_name)
+          `)
+          .eq('user_id', vendor.user_id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
         return {
           ...vendor,
-          agent_info: agentLink?.agents_management?.name || null
+          agent_info: agentLink?.agents_management?.name || null,
+          subscription: subscription ? {
+            plan_name: subscription.plans?.display_name || 'N/A',
+            status: subscription.status,
+            current_period_end: subscription.current_period_end,
+            billing_cycle: subscription.billing_cycle
+          } : null
         };
       }));
 
@@ -202,6 +229,28 @@ export default function PDGVendors() {
                           <p>🆔 Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
                           {vendor.agent_info && (
                             <p>👥 Créé par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
+                          )}
+                          {vendor.subscription ? (
+                            <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20">
+                              <p className="font-medium text-primary">📦 Abonnement: {vendor.subscription.plan_name}</p>
+                              <p className="text-xs">
+                                {vendor.subscription.billing_cycle === 'lifetime' ? (
+                                  <>🎁 Offert à vie - Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: 'numeric'
+                                  })}</>
+                                ) : (
+                                  <>⏰ Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: 'numeric'
+                                  })}</>
+                                )}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs text-destructive">⚠️ Aucun abonnement actif</p>
                           )}
                           <p className="text-xs">📅 Créé le: {new Date(vendor.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit',
