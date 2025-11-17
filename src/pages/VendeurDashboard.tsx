@@ -58,6 +58,7 @@ import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
+import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -351,8 +352,7 @@ export default function VendeurDashboard() {
                 </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} />
                 
-                {/* Subscription Button - Temporairement désactivé */}
-                {/* <VendorSubscriptionButton /> */}
+                <VendorSubscriptionButton />
                 
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
