@@ -59,7 +59,6 @@ import CommunicationWidget from "@/components/communication/CommunicationWidget"
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 import { VendorSubscriptionInfo } from "@/components/vendor/VendorSubscriptionInfo";
-import { FeatureAccessWrapper } from "@/components/vendor/FeatureAccessWrapper";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -378,25 +377,25 @@ export default function VendeurDashboard() {
               <Route index element={<DashboardHome />} />
               <Route path="/" element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
-              <Route path="analytics" element={<FeatureAccessWrapper feature="analytics_basic"><VendorAnalytics /></FeatureAccessWrapper>} />
-              <Route path="pos" element={<FeatureAccessWrapper feature="pos_system"><POSSystemWrapper /></FeatureAccessWrapper>} />
+              <Route path="analytics" element={<VendorAnalytics />} />
+              <Route path="pos" element={<POSSystemWrapper />} />
               <Route path="products" element={<ProductManagement />} />
               <Route path="orders" element={<OrderManagement />} />
-              <Route path="inventory" element={<FeatureAccessWrapper feature="inventory_management"><InventoryManagement /></FeatureAccessWrapper>} />
-              <Route path="warehouse" element={<FeatureAccessWrapper feature="multi_warehouse"><WarehouseManagement /></FeatureAccessWrapper>} />
-              <Route path="suppliers" element={<FeatureAccessWrapper feature="supplier_management"><SupplierManagement /></FeatureAccessWrapper>} />
+              <Route path="inventory" element={<InventoryManagement />} />
+              <Route path="warehouse" element={<WarehouseManagement />} />
+              <Route path="suppliers" element={<SupplierManagement />} />
               <Route path="clients" element={<ClientManagement />} />
               <Route path="agents" element={<AgentManagement />} />
-              <Route path="prospects" element={<FeatureAccessWrapper feature="prospect_management"><ProspectManagement /></FeatureAccessWrapper>} />
-              <Route path="marketing" element={<FeatureAccessWrapper feature="marketing_promotions"><MarketingManagement /></FeatureAccessWrapper>} />
+              <Route path="prospects" element={<ProspectManagement />} />
+              <Route path="marketing" element={<MarketingManagement />} />
               <Route path="wallet" element={<UniversalWalletTransactions />} />
               <Route path="payments" element={<PaymentManagement />} />
-              <Route path="payment-links" element={<FeatureAccessWrapper feature="payment_links"><PaymentLinksManager /></FeatureAccessWrapper>} />
-              <Route path="expenses" element={<FeatureAccessWrapper feature="expense_management"><ExpenseManagementDashboard /></FeatureAccessWrapper>} />
-              <Route path="debts" element={<FeatureAccessWrapper feature="debt_management"><VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} /></FeatureAccessWrapper>} />
-              <Route path="affiliate" element={<FeatureAccessWrapper feature="affiliate_program"><AffiliateManagement shopId={(stats as any)?.vendorId || undefined} /></FeatureAccessWrapper>} />
+              <Route path="payment-links" element={<PaymentLinksManager />} />
+              <Route path="expenses" element={<ExpenseManagementDashboard />} />
+              <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
+              <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
               <Route path="delivery" element={<VendorDeliveriesPanel />} />
-              <Route path="support" element={<FeatureAccessWrapper feature="support_tickets"><SupportTickets /></FeatureAccessWrapper>} />
+              <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
               <Route path="test-ai" element={<GeminiAITest />} />
