@@ -4,19 +4,24 @@ import { SubscriptionService, ActiveSubscription, Plan } from '@/services/subscr
 import { toast } from 'sonner';
 
 export function useVendorSubscription() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      loadSubscriptionData();
-    } else {
+    if (user && profile) {
+      // Ne charger que si l'utilisateur est vendeur
+      if (profile.role === 'vendeur') {
+        loadSubscriptionData();
+      } else {
+        setLoading(false);
+      }
+    } else if (!user) {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, profile]);
 
   const loadSubscriptionData = async () => {
     if (!user) return;
@@ -33,7 +38,7 @@ export function useVendorSubscription() {
       setHasAccess(!!subData && subData.status === 'active');
     } catch (error) {
       console.error('Erreur chargement abonnement:', error);
-      toast.error('Erreur de chargement des données d\'abonnement');
+      // Ne plus afficher de toast pour éviter les notifications intempestives
     } finally {
       setLoading(false);
     }
