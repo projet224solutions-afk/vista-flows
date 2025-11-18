@@ -113,7 +113,7 @@ const formatPrice = (price: number) => {
   }).format(price) + ' GNF';
 };
 
-function IndexAlibaba() {
+function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
@@ -532,4 +532,4 @@ function IndexAlibaba() {
   );
 }
 
-export default IndexAlibaba;
+export default Index;
