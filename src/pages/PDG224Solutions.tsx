@@ -37,6 +37,7 @@ const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
 const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
+const QuotesInvoicesPDG = lazy(() => import('@/components/pdg/QuotesInvoicesPDG'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -428,6 +429,12 @@ export default function PDG224Solutions() {
               {activeTab === 'drivers' && (
                 <ErrorBoundary>
                   <PDGDrivers />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'quotes-invoices' && (
+                <ErrorBoundary>
+                  <QuotesInvoicesPDG />
                 </ErrorBoundary>
               )}
 
