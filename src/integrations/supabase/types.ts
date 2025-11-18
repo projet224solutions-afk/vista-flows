@@ -1448,6 +1448,47 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission_config: {
         Row: {
           commission_type: string
@@ -4019,6 +4060,103 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          client_address: string | null
+          client_email: string | null
+          client_id: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          discount: number
+          due_date: string | null
+          id: string
+          items: Json
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          pdf_url: string | null
+          quote_id: string | null
+          ref: string
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          client_address?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          items: Json
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          quote_id?: string | null
+          ref: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          client_address?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          quote_id?: string | null
+          ref?: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           clicked_count: number | null
@@ -5772,6 +5910,87 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          client_address: string | null
+          client_email: string | null
+          client_id: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          discount: number
+          id: string
+          items: Json
+          notes: string | null
+          pdf_url: string | null
+          ref: string
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string | null
+          valid_until: string
+          vendor_id: string
+        }
+        Insert: {
+          client_address?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          discount?: number
+          id?: string
+          items: Json
+          notes?: string | null
+          pdf_url?: string | null
+          ref: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string | null
+          valid_until: string
+          vendor_id: string
+        }
+        Update: {
+          client_address?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          discount?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          pdf_url?: string | null
+          ref?: string
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string | null
+          valid_until?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
