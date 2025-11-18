@@ -141,33 +141,52 @@ serve(async (req) => {
     const body: CreateUserRequest = validationResult.data;
     console.log('✅ Validation réussie - Creating user by agent, authenticated as:', user.id);
 
-    // ✅ Verify authenticated user is an active agent with user.id
-    const { data: agent, error: agentError } = await supabaseClient
-      .from('agents_management')
-      .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+    // ✅ Check if user is PDG first
+    const { data: pdg } = await supabaseClient
+      .from('pdg_management')
+      .select('id, permissions, is_active')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .single();
 
-    if (agentError || !agent) {
-      console.error('Agent non trouvé:', agentError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Agent non trouvé ou inactif',
-          code: 'AGENT_NOT_FOUND'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
-    }
+    let agent = null;
+    let isPDG = false;
 
-    // Vérifier que l'agent a la permission de créer des utilisateurs
-    if (!agent.permissions || !agent.permissions.includes('create_users')) {
-      throw new Error('Agent non autorisé à créer des utilisateurs');
-    }
+    if (pdg) {
+      console.log('✅ PDG détecté:', pdg.id);
+      isPDG = true;
+      // PDG has all permissions
+    } else {
+      // If not PDG, check if they're an agent
+      const { data: agentData, error: agentError } = await supabaseClient
+        .from('agents_management')
+        .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
 
-    // Si on crée un agent/sous-agent, vérifier la permission spécifique
-    if ((body.role === 'agent' || body.role === 'sub_agent') && !agent.can_create_sub_agent) {
-      throw new Error('Agent non autorisé à créer des sous-agents');
+      if (agentError || !agentData) {
+        console.error('Ni PDG ni Agent trouvé:', agentError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Utilisateur non autorisé - ni PDG ni Agent',
+            code: 'UNAUTHORIZED_USER'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
+
+      agent = agentData;
+
+      // Vérifier que l'agent a la permission de créer des utilisateurs
+      if (!agent.permissions || !agent.permissions.includes('create_users')) {
+        throw new Error('Agent non autorisé à créer des utilisateurs');
+      }
+
+      // Si on crée un agent/sous-agent, vérifier la permission spécifique
+      if ((body.role === 'agent' || body.role === 'sub_agent') && !agent.can_create_sub_agent) {
+        throw new Error('Agent non autorisé à créer des sous-agents');
+      }
     }
 
     // Créer l'utilisateur dans auth.users
@@ -340,10 +359,17 @@ serve(async (req) => {
       // Générer un code agent unique
       const agentCode = `AG-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
       
+      // Déterminer le pdg_id: si c'est un PDG qui crée, utiliser pdg.id, sinon agent.pdg_id
+      const pdgId = isPDG ? pdg!.id : (agent ? agent.pdg_id : null);
+      
+      if (!pdgId) {
+        throw new Error('Impossible de déterminer le PDG parent');
+      }
+      
       const { error: agentManagementError } = await supabaseClient
         .from('agents_management')
         .insert({
-          pdg_id: agent.pdg_id,
+          pdg_id: pdgId,
           user_id: authUser.user.id,
           agent_code: agentCode,
           name: `${body.firstName} ${body.lastName || ''}`.trim(),
