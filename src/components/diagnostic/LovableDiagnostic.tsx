@@ -48,42 +48,6 @@ export default function LovableDiagnostic() {
             });
         }
 
-        // Vérifier AddTaxiMotardForm
-        try {
-            const AddTaxiMotardForm = await import('@/components/syndicate/AddTaxiMotardForm');
-            featureChecks.push({
-                name: 'Formulaire Taxi-Motard',
-                component: 'AddTaxiMotardForm',
-                status: 'success',
-                message: 'Formulaire d\'ajout taxi-motard disponible'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Formulaire Taxi-Motard',
-                component: 'AddTaxiMotardForm',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
-
-        // Vérifier SyndicateWalletDashboard
-        try {
-            const SyndicateWalletDashboard = await import('@/components/syndicate/SyndicateWalletDashboard');
-            featureChecks.push({
-                name: 'Wallet Bureau Syndicat',
-                component: 'SyndicateWalletDashboard',
-                status: 'success',
-                message: 'Portefeuille bureau syndicat opérationnel'
-            });
-        } catch (error) {
-            featureChecks.push({
-                name: 'Wallet Bureau Syndicat',
-                component: 'SyndicateWalletDashboard',
-                status: 'error',
-                message: `Erreur de chargement: ${error}`
-            });
-        }
-
         // Vérifier AutoDownloadDetector
         try {
             const AutoDownloadDetector = await import('@/components/download/AutoDownloadDetector');

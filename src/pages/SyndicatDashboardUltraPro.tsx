@@ -49,7 +49,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import AddTaxiMotardForm from '@/components/syndicate/AddTaxiMotardForm';
 import UniversalWalletDashboard from '@/components/wallet/UniversalWalletDashboard';
 import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
@@ -92,7 +91,6 @@ export default function SyndicatDashboardUltraPro() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [loading, setLoading] = useState(false);
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
-    const [showGestionDialog, setShowGestionDialog] = useState(false);
 
     // Données du bureau
     const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh } = useSyndicatUltraProData();
@@ -371,13 +369,14 @@ export default function SyndicatDashboardUltraPro() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
-                                    <AddTaxiMotardForm
-                                        onSuccess={(result) => {
-                                            console.log('Taxi-motard créé:', result);
-                                            toast.success('Taxi-motard ajouté avec succès !');
-                                            loadSyndicateData();
-                                        }}
-                                    />
+                                    <Button
+                                        onClick={() => toast.info('Formulaire d\'ajout de taxi-motard')}
+                                        variant="outline"
+                                        className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
+                                    >
+                                        <UserPlus className="w-4 h-4 mr-2" />
+                                        Ajouter un Taxi-Motard
+                                    </Button>
 
                                     <Button
                                         onClick={() => setActiveTab('members')}
@@ -398,7 +397,7 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => setShowGestionDialog(true)}
+                                        onClick={() => toast.info('Paramètres du bureau')}
                                         variant="outline"
                                         className="w-full rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
                                     >
@@ -484,13 +483,14 @@ export default function SyndicatDashboardUltraPro() {
                                         <Bike className="w-5 h-5" />
                                         Taxi-Motards ({taxiMotards.length})
                                     </CardTitle>
-                                    <AddTaxiMotardForm
-                                        onSuccess={(result) => {
-                                            console.log('Taxi-motard créé:', result);
-                                            toast.success('Taxi-motard ajouté avec succès !');
-                                            loadSyndicateData();
-                                        }}
-                                    />
+                                    <Button
+                                        onClick={() => toast.info('Formulaire d\'ajout de taxi-motard')}
+                                        size="sm"
+                                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                                    >
+                                        <UserPlus className="w-4 h-4 mr-2" />
+                                        Ajouter
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-6">
@@ -718,68 +718,6 @@ export default function SyndicatDashboardUltraPro() {
                         </DialogTitle>
                     </DialogHeader>
                     <AutoDownloadDetector />
-                </DialogContent>
-            </Dialog>
-
-            {/* Dialog de gestion */}
-            <Dialog open={showGestionDialog} onOpenChange={setShowGestionDialog}>
-                <DialogContent className="max-w-2xl rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            Gestion Avancée du Bureau
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-6 p-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button
-                                onClick={() => {
-                                    toast.success('Paramètres sauvegardés !');
-                                    setShowGestionDialog(false);
-                                }}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
-                            >
-                                <Settings className="w-4 h-4 mr-2" />
-                                Sauvegarder Config
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    toast.success('Données exportées !');
-                                    setShowGestionDialog(false);
-                                }}
-                                variant="outline"
-                                className="rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Exporter Données
-                            </Button>
-                        </div>
-
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200">
-                            <h3 className="font-bold text-purple-800 mb-3">Fonctionnalités Disponibles</h3>
-                            <ul className="space-y-2 text-sm text-purple-700">
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    Gestion complète des membres et taxi-motards
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    Wallet intégré avec historique des transactions
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    Génération automatique de badges numériques
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    Permissions par rôle (président, secrétaire, membre)
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
-                                    Applications téléchargeables (Android, iOS, Windows, macOS)
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
                 </DialogContent>
             </Dialog>
             
