@@ -42,8 +42,6 @@ import UniversalCommunicationHub from "@/components/communication/UniversalCommu
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
-import GeminiAITest from "@/components/vendor/GeminiAITest";
-import GoogleCloudVerification from "@/components/vendor/GoogleCloudVerification";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
@@ -473,16 +471,6 @@ export default function VendeurDashboard() {
               <Route path="reports" element={
                 <ProtectedRoute feature="custom_reports">
                   <Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>
-                </ProtectedRoute>
-              } />
-              <Route path="test-ai" element={
-                <ProtectedRoute feature="gemini_ai">
-                  <GeminiAITest />
-                </ProtectedRoute>
-              } />
-              <Route path="test-google-cloud" element={
-                <ProtectedRoute feature="api_access">
-                  <GoogleCloudVerification />
                 </ProtectedRoute>
               } />
               <Route path="offline-sync" element={
