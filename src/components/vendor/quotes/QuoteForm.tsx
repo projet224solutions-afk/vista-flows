@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, FileText } from 'lucide-react';
+import { Plus, Trash2, FilePlus, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useVendorId } from '@/hooks/useVendorId';
@@ -305,10 +305,11 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
           <Button 
             onClick={handleGenerate} 
             disabled={loading}
-            className="flex-1"
+            className="flex-1 bg-[#0A84FF] hover:bg-[#0A84FF]/90"
+            size="lg"
           >
-            <FileText className="w-4 h-4 mr-2" />
-            {loading ? 'Génération...' : 'Générer le Devis (PDF)'}
+            <FilePlus className="w-5 h-5 mr-2" />
+            {loading ? 'Création en cours...' : 'Créer un devis'}
           </Button>
         </div>
       </CardContent>
