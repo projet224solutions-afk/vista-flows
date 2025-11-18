@@ -29,7 +29,7 @@ const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalyt
 const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagement'));
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
-const PDGCommunicationTest = lazy(() => import('@/components/pdg/PDGCommunicationTest'));
+const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 const GoogleCloudMonitoring = lazy(() => import('@/components/pdg/GoogleCloudMonitoring'));
 const SystemConfiguration = lazy(() => import('@/components/pdg/SystemConfiguration'));
 const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSettings'));
@@ -395,7 +395,9 @@ export default function PDG224Solutions() {
 
               {activeTab === 'communication' && (
                 <ErrorBoundary>
-                  <PDGCommunicationTest />
+                  <Suspense fallback={<div className="flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                    <UniversalCommunicationHub />
+                  </Suspense>
                 </ErrorBoundary>
               )}
 
