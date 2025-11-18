@@ -144,6 +144,11 @@ export function VendorSidebar() {
           path: "wallet"
         },
         { 
+          title: "Devis & Factures", 
+          icon: FileText, 
+          path: "quotes-invoices"
+        },
+        { 
           title: "Paiements", 
           icon: CreditCard, 
           path: "payments"
