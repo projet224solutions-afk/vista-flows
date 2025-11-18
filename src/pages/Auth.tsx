@@ -445,57 +445,6 @@ export default function Auth() {
         </h2>
       </div>
 
-      {/* Information supplémentaire */}
-      <div className="max-w-4xl mx-auto px-6 mt-8">
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
-          <h3 className="text-xl font-bold text-center mb-4">
-            {showSignup ? "Sélectionnez votre type de compte" : "Types de comptes supportés"}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-            <button
-              onClick={() => handleRoleClick('client')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'client' ? 'ring-2 ring-blue-600' : ''
-                }`}
-            >
-              <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
-              <span className="font-medium">Client</span>
-            </button>
-            <button
-              onClick={() => handleRoleClick('vendeur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
-                }`}
-            >
-              <Store className="h-6 w-6 text-green-600 mb-2" />
-              <span className="font-medium">Marchand</span>
-              <span className="text-xs text-muted-foreground">15 services pro</span>
-            </button>
-            <button
-              onClick={() => handleRoleClick('livreur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'livreur' ? 'ring-2 ring-orange-600' : ''
-                }`}
-            >
-              <Truck className="h-6 w-6 text-orange-600 mb-2" />
-              <span className="font-medium">Livreur</span>
-            </button>
-            <button
-              onClick={() => handleRoleClick('taxi')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
-                }`}
-            >
-              <Bike className="h-6 w-6 text-yellow-600 mb-2" />
-              <span className="font-medium">Taxi Moto</span>
-            </button>
-            <button
-              onClick={() => handleRoleClick('transitaire')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'transitaire' ? 'ring-2 ring-indigo-600' : ''
-                }`}
-            >
-              <Ship className="h-6 w-6 text-indigo-600 mb-2" />
-              <span className="font-medium">Transitaire</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Sélection du type de service professionnel pour les marchands */}
       {showServiceSelection && (
