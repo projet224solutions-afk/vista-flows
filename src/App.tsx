@@ -25,8 +25,6 @@ const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
 const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
-const DiagnosticFonctionnalites = lazy(() => import("./pages/DiagnosticFonctionnalites"));
-const FeaturesDemo = lazy(() => import("./pages/FeaturesDemo"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
 const DriverProfile = lazy(() => import("./pages/driver/DriverProfile"));
 const DriverSettings = lazy(() => import("./pages/driver/DriverSettings"));
@@ -39,7 +37,6 @@ const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUl
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
-const PdgDebugPanel = lazy(() => import("./pages/PdgDebugPanel"));
 const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
 const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis"));
@@ -59,7 +56,6 @@ const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
 const InstallMobileApp = lazy(() => import("./pages/InstallMobileApp"));
 const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
-const TestWalletTransfer = lazy(() => import("./pages/TestWalletTransfer"));
 const MigrateIds = lazy(() => import("./pages/Admin/MigrateIds"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage"));
@@ -194,10 +190,6 @@ function App() {
                 element={<Payment />}
               />
               <Route
-                path="/test-wallet-transfer"
-                element={<TestWalletTransfer />}
-              />
-              <Route
                 path="/wallet"
                 element={
                   <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}>
@@ -210,14 +202,6 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
                     <SubscriptionsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/features-demo"
-                element={
-                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                    <FeaturesDemo />
                   </ProtectedRoute>
                 }
               />
@@ -263,14 +247,6 @@ function App() {
                 }
               />
               <Route
-                path="/pdg/debug"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <PdgDebugPanel />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/pdg/command-center"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
@@ -305,11 +281,6 @@ function App() {
               <Route
                 path="/vendeur-simple"
                 element={<VendeurDashboard />}
-              />
-
-              <Route
-                path="/diagnostic-fonctionnalites"
-                element={<DiagnosticFonctionnalites />}
               />
 
               {/* Professional Services Routes */}
