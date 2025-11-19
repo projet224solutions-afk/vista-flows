@@ -56,6 +56,29 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
     );
   };
 
+  const downloadPDF = async (pdfUrl: string, ref: string) => {
+    try {
+      // Récupérer le fichier via fetch pour contourner les bloqueurs
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      
+      // Créer un lien de téléchargement temporaire
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ref}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Téléchargement démarré');
+    } catch (error) {
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
+    }
+  };
+
   const generatePDF = async () => {
     try {
       toast.info('Génération du PDF en cours...');
@@ -84,7 +107,8 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
       toast.success('PDF généré avec succès !');
       
       if (data?.pdf_url) {
-        window.open(data.pdf_url, '_blank');
+        // Télécharger automatiquement le PDF généré
+        await downloadPDF(data.pdf_url, quote.ref);
       }
     } catch (error: any) {
       console.error('Erreur génération PDF:', error);
@@ -225,10 +249,10 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
             {quote.pdf_url && (
               <Button
                 variant="outline"
-                onClick={() => window.open(quote.pdf_url!, '_blank')}
+                onClick={() => downloadPDF(quote.pdf_url!, quote.ref)}
               >
-                <FileText className="w-4 h-4 mr-2" />
-                Voir PDF existant
+                <Download className="w-4 h-4 mr-2" />
+                Télécharger PDF
               </Button>
             )}
 
