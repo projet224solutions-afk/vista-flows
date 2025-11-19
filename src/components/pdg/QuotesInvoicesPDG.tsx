@@ -100,8 +100,27 @@ export default function QuotesInvoicesPDG() {
     loadInvoices();
   }, []);
 
-  const handleViewPdf = (pdfUrl: string) => {
-    window.open(pdfUrl, '_blank');
+  const downloadPDF = async (pdfUrl: string, ref: string) => {
+    try {
+      // Récupérer le fichier via fetch pour contourner les bloqueurs
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      
+      // Créer un lien de téléchargement temporaire
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ref}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Téléchargement démarré');
+    } catch (error) {
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
+    }
   };
 
   const getQuoteStatusBadge = (status: string) => {
@@ -217,10 +236,10 @@ export default function QuotesInvoicesPDG() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewPdf(quote.pdf_url!)}
+                            onClick={() => downloadPDF(quote.pdf_url!, quote.ref)}
                           >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Voir le devis
+                            <Download className="w-4 h-4 mr-2" />
+                            Télécharger PDF
                           </Button>
                         )}
                       </div>
@@ -302,10 +321,10 @@ export default function QuotesInvoicesPDG() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewPdf(invoice.pdf_url!)}
+                            onClick={() => downloadPDF(invoice.pdf_url!, invoice.ref)}
                           >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Voir la facture
+                            <Download className="w-4 h-4 mr-2" />
+                            Télécharger PDF
                           </Button>
                         )}
                       </div>
