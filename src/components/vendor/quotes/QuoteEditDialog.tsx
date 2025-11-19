@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -85,9 +86,9 @@ export default function QuoteEditDialog({
 
   const updateItemTotal = (index: number, qty: number, price: number) => {
     const newItems = [...items];
-    newItems[index].quantity = qty;
-    newItems[index].unit_price = price;
-    newItems[index].total = qty * price;
+    newItems[index].quantity = qty || 1;
+    newItems[index].unit_price = price || 0;
+    newItems[index].total = (qty || 1) * (price || 0);
     setItems(newItems);
   };
 
@@ -157,6 +158,9 @@ export default function QuoteEditDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier le devis {quote?.ref}</DialogTitle>
+          <DialogDescription>
+            Modifiez les informations du devis et enregistrez les changements.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -251,7 +255,7 @@ export default function QuoteEditDialog({
                       </div>
                       <div>
                         <Label>Total</Label>
-                        <Input value={item.total.toLocaleString()} disabled />
+                        <Input value={(item.total || 0).toLocaleString()} disabled />
                       </div>
                     </div>
                   </div>
