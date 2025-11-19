@@ -134,11 +134,15 @@ serve(async (req) => {
         yPos = 20;
       }
       
-      const itemName = item.name.length > 50 ? item.name.substring(0, 47) + '...' : item.name;
+      const itemName = (item.name || '').length > 50 ? (item.name || '').substring(0, 47) + '...' : (item.name || 'Article');
+      const quantity = item.quantity || item.qty || 1;
+      const unitPrice = item.unit_price || item.price || 0;
+      const itemTotal = item.total || (quantity * unitPrice);
+      
       doc.text(itemName, 22, yPos + 5);
-      doc.text(item.quantity.toString(), 112, yPos + 5, { align: 'center' });
-      doc.text(`${item.unit_price.toLocaleString('fr-FR')} GNF`, 140, yPos + 5, { align: 'right' });
-      doc.text(`${item.total.toLocaleString('fr-FR')} GNF`, 188, yPos + 5, { align: 'right' });
+      doc.text(quantity.toString(), 112, yPos + 5, { align: 'center' });
+      doc.text(`${unitPrice.toLocaleString('fr-FR')} GNF`, 140, yPos + 5, { align: 'right' });
+      doc.text(`${itemTotal.toLocaleString('fr-FR')} GNF`, 188, yPos + 5, { align: 'right' });
       
       doc.setDrawColor(221, 221, 221);
       doc.setLineWidth(0.1);
