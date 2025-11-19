@@ -6,11 +6,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, CheckCircle, XCircle, Clock, RefreshCw, Eye, Trash2 } from 'lucide-react';
+import { FileText, Download, CheckCircle, XCircle, Clock, RefreshCw, Eye, Trash2, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useVendorId } from '@/hooks/useVendorId';
 import QuoteDetails from './QuoteDetails';
+import QuoteEditDialog from './QuoteEditDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
   const [loading, setLoading] = useState(true);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quoteToDelete, setQuoteToDelete] = useState<string | null>(null);
 
@@ -237,6 +239,20 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
                       Voir détails
                     </Button>
 
+                    {quote.status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQuote(quote);
+                          setShowEditDialog(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Modifier
+                      </Button>
+                    )}
+
                     {quote.pdf_url && (
                       <Button
                         variant="outline"
@@ -296,6 +312,16 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
         }}
         onConvert={() => selectedQuote && convertToInvoice(selectedQuote.id)}
         vendorId={vendorId || ''}
+      />
+
+      <QuoteEditDialog
+        quote={selectedQuote}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={() => {
+          loadQuotes();
+          setSelectedQuote(null);
+        }}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
