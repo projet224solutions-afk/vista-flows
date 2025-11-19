@@ -139,10 +139,18 @@ serve(async (req) => {
       const unitPrice = item.unit_price || item.price || 0;
       const itemTotal = item.total || (quantity * unitPrice);
       
+      // Formatage amélioré des nombres avec séparateurs de milliers
+      const formatGNF = (num: number) => {
+        return new Intl.NumberFormat('fr-FR', { 
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0 
+        }).format(num) + ' GNF';
+      };
+      
       doc.text(itemName, 22, yPos + 5);
       doc.text(quantity.toString(), 112, yPos + 5, { align: 'center' });
-      doc.text(`${unitPrice.toLocaleString('fr-FR')} GNF`, 140, yPos + 5, { align: 'right' });
-      doc.text(`${itemTotal.toLocaleString('fr-FR')} GNF`, 188, yPos + 5, { align: 'right' });
+      doc.text(formatGNF(unitPrice), 140, yPos + 5, { align: 'right' });
+      doc.text(formatGNF(itemTotal), 188, yPos + 5, { align: 'right' });
       
       doc.setDrawColor(221, 221, 221);
       doc.setLineWidth(0.1);
@@ -152,23 +160,30 @@ serve(async (req) => {
 
     yPos += 10;
 
-    // Totaux
+    // Totaux avec formatage amélioré
+    const formatGNF = (num: number) => {
+      return new Intl.NumberFormat('fr-FR', { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0 
+      }).format(num) + ' GNF';
+    };
+
     const totalsX = 135;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text('Sous-total :', totalsX, yPos);
-    doc.text(`${quote.subtotal.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+    doc.text(formatGNF(quote.subtotal), 188, yPos, { align: 'right' });
     yPos += 6;
 
     if (quote.discount > 0) {
       doc.text('Remise :', totalsX, yPos);
-      doc.text(`-${quote.discount.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+      doc.text(`-${formatGNF(quote.discount)}`, 188, yPos, { align: 'right' });
       yPos += 6;
     }
 
     if (quote.tax > 0) {
       doc.text('TVA :', totalsX, yPos);
-      doc.text(`${quote.tax.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+      doc.text(formatGNF(quote.tax), 188, yPos, { align: 'right' });
       yPos += 6;
     }
 
@@ -182,7 +197,7 @@ serve(async (req) => {
     doc.setFontSize(14);
     doc.setTextColor(primaryColor);
     doc.text('TOTAL :', totalsX, yPos);
-    doc.text(`${quote.total.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+    doc.text(formatGNF(quote.total), 188, yPos, { align: 'right' });
     yPos += 15;
 
     // Notes

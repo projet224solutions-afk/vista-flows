@@ -59,6 +59,7 @@ import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscription
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
+import VendorSettings from "@/pages/vendor/Settings";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -480,6 +481,7 @@ export default function VendeurDashboard() {
                   <OfflineSyncPanel />
                 </ProtectedRoute>
               } />
+              <Route path="settings" element={<VendorSettings />} />
             </Routes>
           </main>
         </div>
