@@ -138,7 +138,7 @@ serve(async (req) => {
         yPos = 20;
       }
       
-      const itemName = (item.name || '').length > 50 ? (item.name || '').substring(0, 47) + '...' : (item.name || 'Article');
+      const itemName = item.name || 'Article';
       const quantity = item.quantity || item.qty || 1;
       const unitPrice = item.unit_price || item.price || 0;
       const itemTotal = item.total || (quantity * unitPrice);
@@ -148,18 +148,28 @@ serve(async (req) => {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' GNF';
       };
       
+      // Découper le texte long en plusieurs lignes si nécessaire
+      const maxWidth = 90; // Largeur max pour le nom du produit
+      const splitText = doc.splitTextToSize(itemName, maxWidth);
+      const lineHeight = 5;
+      const itemHeight = Math.max(10, splitText.length * lineHeight + 2);
+      
       // Alternance de couleur de fond pour meilleure lisibilité
       if (index % 2 === 0) {
         doc.setFillColor(249, 250, 251);
-        doc.rect(20, yPos, 170, 10, 'F');
+        doc.rect(20, yPos, 170, itemHeight, 'F');
       }
       
-      doc.text(itemName, 22, yPos + 6.5);
-      doc.text(quantity.toString(), 125, yPos + 6.5, { align: 'center' });
-      doc.text(formatGNF(unitPrice), 155, yPos + 6.5, { align: 'right' });
-      doc.text(formatGNF(itemTotal), 188, yPos + 6.5, { align: 'right' });
+      // Afficher le texte multi-lignes
+      doc.text(splitText, 22, yPos + 6.5);
       
-      yPos += 10;
+      // Afficher quantité, prix unitaire et total alignés verticalement au centre
+      const centerY = yPos + (itemHeight / 2) + 1;
+      doc.text(quantity.toString(), 125, centerY, { align: 'center' });
+      doc.text(formatGNF(unitPrice), 155, centerY, { align: 'right' });
+      doc.text(formatGNF(itemTotal), 188, centerY, { align: 'right' });
+      
+      yPos += itemHeight;
     });
 
     yPos += 10;
