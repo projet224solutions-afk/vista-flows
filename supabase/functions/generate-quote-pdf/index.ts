@@ -149,10 +149,10 @@ serve(async (req) => {
       };
       
       // Découper le texte long en plusieurs lignes si nécessaire
-      const maxWidth = 90; // Largeur max pour le nom du produit
+      const maxWidth = 100; // Largeur max pour le nom du produit (augmentée)
       const splitText = doc.splitTextToSize(itemName, maxWidth);
-      const lineHeight = 5;
-      const itemHeight = Math.max(10, splitText.length * lineHeight + 2);
+      const lineHeight = 6;
+      const itemHeight = Math.max(12, splitText.length * lineHeight + 4);
       
       // Alternance de couleur de fond pour meilleure lisibilité
       if (index % 2 === 0) {
@@ -208,9 +208,10 @@ serve(async (req) => {
     doc.setFillColor(37, 99, 235);
     doc.rect(totalsX - 5, yPos - 5, 63, 12, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setTextColor(255, 255, 255);
     doc.text('TOTAL :', totalsX, yPos + 3);
+    doc.setFontSize(14);
     doc.text(formatGNF(quote.total), 186, yPos + 3, { align: 'right' });
     yPos += 18;
 
