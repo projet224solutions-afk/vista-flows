@@ -93,23 +93,23 @@ serve(async (req) => {
           </div>
         </div>
 
-        <h1>DEVIS N° ${ref}</h1>
+        <h1>DEVIS N&#176; ${ref}</h1>
         <p><strong>Date:</strong> ${currentDate}</p>
-        <p><strong>Validité:</strong> ${valid_until}</p>
+        <p><strong>Validit&#233;:</strong> ${valid_until}</p>
 
         <div class="info-section">
           <p class="info-label">Client</p>
           <p>${client_name}</p>
-          ${client_email ? `<p>📧 ${client_email}</p>` : ''}
-          ${client_phone ? `<p>📱 ${client_phone}</p>` : ''}
-          ${client_address ? `<p>📍 ${client_address}</p>` : ''}
+          ${client_email ? `<p>&#128231; ${client_email}</p>` : ''}
+          ${client_phone ? `<p>&#128241; ${client_phone}</p>` : ''}
+          ${client_address ? `<p>&#128205; ${client_address}</p>` : ''}
         </div>
 
         <table>
           <thead>
             <tr>
               <th>Produit / Service</th>
-              <th style="text-align: center; width: 80px;">Qté</th>
+              <th style="text-align: center; width: 80px;">Qt&#233;</th>
               <th style="text-align: right; width: 120px;">Prix unitaire</th>
               <th style="text-align: right; width: 120px;">Total</th>
             </tr>
@@ -150,13 +150,13 @@ serve(async (req) => {
         ` : ''}
 
         <div class="footer">
-          <p><strong>Conditions de paiement:</strong> Paiement accepté via Mobile Money, Carte bancaire.</p>
-          <p><strong>Validité du devis:</strong> Ce devis est valable jusqu'au ${valid_until}.</p>
+          <p><strong>Conditions de paiement:</strong> Paiement accept&#233; via Mobile Money, Carte bancaire.</p>
+          <p><strong>Validit&#233; du devis:</strong> Ce devis est valable jusqu&#39;au ${valid_until}.</p>
           <p style="margin-top: 24px;"><strong>Signature client:</strong> _______________________________</p>
         </div>
 
         <div style="text-align: center; margin-top: 48px; color: #666; font-size: 10px;">
-          <p>Devis généré par 224Solutions • www.224solutions.com</p>
+          <p>Devis g&#233;n&#233;r&#233; par 224Solutions &#8226; www.224solutions.com</p>
         </div>
       </body>
       </html>
