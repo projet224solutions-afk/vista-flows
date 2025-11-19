@@ -162,13 +162,17 @@ serve(async (req) => {
       </html>
     `;
 
-    // Stocker le HTML dans Storage Supabase
+    // Stocker le HTML dans Storage Supabase avec encodage UTF-8 correct
     const fileName = `quotes/${vendor_id}/${ref}-${Date.now()}.html`;
+    
+    // Encoder le HTML en UTF-8
+    const encoder = new TextEncoder();
+    const htmlBytes = encoder.encode(htmlContent);
     
     const { error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(fileName, new Blob([htmlContent], { type: 'text/html' }), {
-        contentType: 'text/html',
+      .upload(fileName, new Blob([htmlBytes], { type: 'text/html; charset=utf-8' }), {
+        contentType: 'text/html; charset=utf-8',
         upsert: true
       });
 
