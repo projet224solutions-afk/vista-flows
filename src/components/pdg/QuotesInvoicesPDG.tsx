@@ -100,36 +100,8 @@ export default function QuotesInvoicesPDG() {
     loadInvoices();
   }, []);
 
-  const handleDownloadPdf = async (pdfUrl: string, fileName: string) => {
-    try {
-      // Extraire le chemin du fichier depuis l'URL
-      const url = new URL(pdfUrl);
-      const pathParts = url.pathname.split('/');
-      const filePath = pathParts.slice(pathParts.indexOf('documents') + 1).join('/');
-
-      // Télécharger le fichier depuis Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(filePath);
-
-      if (error) throw error;
-
-      // Créer un lien de téléchargement
-      const blob = new Blob([data], { type: 'text/html' });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
-      toast.success('PDF téléchargé avec succès');
-    } catch (error: any) {
-      console.error('Erreur téléchargement PDF:', error);
-      toast.error('Erreur lors du téléchargement du PDF');
-    }
+  const handleViewPdf = (pdfUrl: string) => {
+    window.open(pdfUrl, '_blank');
   };
 
   const getQuoteStatusBadge = (status: string) => {
@@ -245,10 +217,10 @@ export default function QuotesInvoicesPDG() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownloadPdf(quote.pdf_url!, `devis-${quote.ref}.html`)}
+                            onClick={() => handleViewPdf(quote.pdf_url!)}
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            Télécharger PDF
+                            <FileText className="w-4 h-4 mr-2" />
+                            Voir le devis
                           </Button>
                         )}
                       </div>
@@ -330,10 +302,10 @@ export default function QuotesInvoicesPDG() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownloadPdf(invoice.pdf_url!, `facture-${invoice.ref}.html`)}
+                            onClick={() => handleViewPdf(invoice.pdf_url!)}
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            Télécharger PDF
+                            <FileText className="w-4 h-4 mr-2" />
+                            Voir la facture
                           </Button>
                         )}
                       </div>
