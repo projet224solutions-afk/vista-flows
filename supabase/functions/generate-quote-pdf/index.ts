@@ -71,12 +71,14 @@ serve(async (req) => {
     doc.line(20, yPos, 190, yPos);
     yPos += 15;
 
-    // Titre DEVIS
-    doc.setFontSize(24);
+    // Titre DEVIS avec fond coloré
+    doc.setFillColor(37, 99, 235);
+    doc.rect(20, yPos - 5, 170, 15, 'F');
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(primaryColor);
-    doc.text(`DEVIS N° ${ref}`, 20, yPos);
-    yPos += 12;
+    doc.setTextColor(255, 255, 255);
+    doc.text(`DEVIS N° ${ref}`, 25, yPos + 5);
+    yPos += 18;
 
     // Date et validité
     doc.setFontSize(10);
@@ -113,22 +115,24 @@ serve(async (req) => {
     }
     yPos += 15;
 
-    // Tableau des articles
+    // En-tête du tableau des articles
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setFillColor(243, 244, 246);
-    doc.rect(20, yPos, 170, 8, 'F');
+    doc.setFontSize(10);
+    doc.setFillColor(37, 99, 235);
+    doc.rect(20, yPos, 170, 10, 'F');
+    doc.setTextColor(255, 255, 255);
     
-    doc.text('Produit / Service', 22, yPos + 5);
-    doc.text('Qté', 112, yPos + 5, { align: 'center' });
-    doc.text('Prix unitaire', 140, yPos + 5, { align: 'right' });
-    doc.text('Total', 188, yPos + 5, { align: 'right' });
-    yPos += 8;
+    doc.text('Produit / Service', 22, yPos + 6.5);
+    doc.text('Qté', 125, yPos + 6.5, { align: 'center' });
+    doc.text('Prix unitaire', 155, yPos + 6.5, { align: 'right' });
+    doc.text('Total', 188, yPos + 6.5, { align: 'right' });
+    yPos += 10;
 
     // Lignes des articles
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    quote.items.forEach((item: any) => {
+    doc.setFontSize(10);
+    doc.setTextColor(textColor);
+    quote.items.forEach((item: any, index: number) => {
       if (yPos > 270) {
         doc.addPage();
         yPos = 20;
@@ -139,33 +143,30 @@ serve(async (req) => {
       const unitPrice = item.unit_price || item.price || 0;
       const itemTotal = item.total || (quantity * unitPrice);
       
-      // Formatage amélioré des nombres avec séparateurs de milliers
+      // Formatage des nombres avec espaces insécables
       const formatGNF = (num: number) => {
-        return new Intl.NumberFormat('fr-FR', { 
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0 
-        }).format(num) + ' GNF';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0') + '\u00A0GNF';
       };
       
-      doc.text(itemName, 22, yPos + 5);
-      doc.text(quantity.toString(), 112, yPos + 5, { align: 'center' });
-      doc.text(formatGNF(unitPrice), 140, yPos + 5, { align: 'right' });
-      doc.text(formatGNF(itemTotal), 188, yPos + 5, { align: 'right' });
+      // Alternance de couleur de fond pour meilleure lisibilité
+      if (index % 2 === 0) {
+        doc.setFillColor(249, 250, 251);
+        doc.rect(20, yPos, 170, 10, 'F');
+      }
       
-      doc.setDrawColor(221, 221, 221);
-      doc.setLineWidth(0.1);
-      doc.line(20, yPos + 8, 190, yPos + 8);
-      yPos += 8;
+      doc.text(itemName, 22, yPos + 6.5);
+      doc.text(quantity.toString(), 125, yPos + 6.5, { align: 'center' });
+      doc.text(formatGNF(unitPrice), 155, yPos + 6.5, { align: 'right' });
+      doc.text(formatGNF(itemTotal), 188, yPos + 6.5, { align: 'right' });
+      
+      yPos += 10;
     });
 
     yPos += 10;
 
-    // Totaux avec formatage amélioré
+    // Totaux avec formatage des nombres
     const formatGNF = (num: number) => {
-      return new Intl.NumberFormat('fr-FR', { 
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0 
-      }).format(num) + ' GNF';
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0') + '\u00A0GNF';
     };
 
     const totalsX = 135;
@@ -187,18 +188,21 @@ serve(async (req) => {
       yPos += 6;
     }
 
-    yPos += 3;
+    yPos += 5;
     doc.setDrawColor(37, 99, 235);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(1);
     doc.line(totalsX, yPos, 190, yPos);
-    yPos += 7;
+    yPos += 8;
 
+    // Total avec fond coloré
+    doc.setFillColor(37, 99, 235);
+    doc.rect(totalsX - 5, yPos - 5, 63, 12, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.setTextColor(primaryColor);
-    doc.text('TOTAL :', totalsX, yPos);
-    doc.text(formatGNF(quote.total), 188, yPos, { align: 'right' });
-    yPos += 15;
+    doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL :', totalsX, yPos + 3);
+    doc.text(formatGNF(quote.total), 186, yPos + 3, { align: 'right' });
+    yPos += 18;
 
     // Notes
     if (quote.notes) {
