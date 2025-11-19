@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { jsPDF } from 'https://esm.sh/jspdf@2.5.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,25 +20,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const body = await req.json();
-    const {
-      quote_id,
-      ref,
-      vendor_id,
-      client_name,
-      client_email,
-      client_phone,
-      client_address,
-      items,
-      subtotal,
-      discount,
-      tax,
-      total,
-      valid_until,
-      notes
-    } = body;
-
+    const { quote_id, ref, vendor_id } = await req.json();
     console.log('📝 Données reçues:', { quote_id, ref, vendor_id });
+
+    // Récupérer le devis complet
+    const { data: quote, error: quoteError } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', quote_id)
+      .single();
+
+    if (quoteError || !quote) {
+      throw new Error('Devis introuvable');
+    }
 
     // Récupérer les infos vendeur
     const { data: vendor } = await supabase
@@ -47,236 +41,189 @@ serve(async (req) => {
       .eq('id', vendor_id)
       .single();
 
-    // Générer HTML du PDF avec encodage UTF-8 correct
-    const currentDate = new Date().toLocaleDateString('fr-FR');
+    // Créer le PDF avec jsPDF
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const primaryColor = '#2563eb';
+    const textColor = '#374151';
+    const grayColor = '#666666';
+    let yPos = 20;
+
+    // En-tête
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(textColor);
+    doc.text(vendor?.business_name || 'Vendeur', 20, yPos);
     
-    // Helper function pour encoder en UTF-8
-    const encodeUTF8 = (str: string) => str
-      .replace(/°/g, '&deg;')
-      .replace(/é/g, '&eacute;')
-      .replace(/è/g, '&egrave;')
-      .replace(/ê/g, '&ecirc;')
-      .replace(/à/g, '&agrave;')
-      .replace(/ù/g, '&ugrave;')
-      .replace(/ô/g, '&ocirc;')
-      .replace(/î/g, '&icirc;')
-      .replace(/ç/g, '&ccedil;')
-      .replace(/'/g, '&#39;');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(grayColor);
+    doc.text('Powered by 224Solutions', 150, yPos);
+    yPos += 15;
+
+    // Ligne de séparation
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(1);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 15;
+
+    // Titre DEVIS
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(primaryColor);
+    doc.text(`DEVIS N° ${ref}`, 20, yPos);
+    yPos += 12;
+
+    // Date et validité
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(textColor);
+    doc.text(`Date : ${new Date(quote.created_at).toLocaleDateString('fr-FR')}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Valide jusqu'au : ${new Date(quote.valid_until).toLocaleDateString('fr-FR')}`, 20, yPos);
+    yPos += 15;
+
+    // Section client
+    doc.setFillColor(249, 250, 251);
+    doc.rect(20, yPos, 170, 35, 'F');
+    yPos += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Informations client', 25, yPos);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(quote.client_name, 25, yPos);
+    yPos += 5;
+    if (quote.client_email) {
+      doc.text(quote.client_email, 25, yPos);
+      yPos += 5;
+    }
+    if (quote.client_phone) {
+      doc.text(quote.client_phone, 25, yPos);
+      yPos += 5;
+    }
+    if (quote.client_address) {
+      doc.text(quote.client_address, 25, yPos);
+      yPos += 5;
+    }
+    yPos += 15;
+
+    // Tableau des articles
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setFillColor(243, 244, 246);
+    doc.rect(20, yPos, 170, 8, 'F');
     
-    // Construction des lignes items avec encodage
-    const itemsHtml = items.map((item: any) => `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${encodeUTF8(item.name)}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.qty}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${item.price.toLocaleString('fr-FR')} GNF</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${(item.qty * item.price).toLocaleString('fr-FR')} GNF</td>
-      </tr>
-    `).join('');
+    doc.text('Produit / Service', 22, yPos + 5);
+    doc.text('Qté', 112, yPos + 5, { align: 'center' });
+    doc.text('Prix unitaire', 140, yPos + 5, { align: 'right' });
+    doc.text('Total', 188, yPos + 5, { align: 'right' });
+    yPos += 8;
 
-    // Afficher le logo du vendeur s'il existe
-    const vendorLogoHtml = vendor?.logo_url 
-      ? `<img src="${vendor.logo_url}" alt="Logo vendeur" class="logo" crossorigin="anonymous">`
-      : `<div style="width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc; font-size: 12px; color: #999;">Logo vendeur</div>`;
+    // Lignes des articles
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    quote.items.forEach((item: any) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      const itemName = item.name.length > 50 ? item.name.substring(0, 47) + '...' : item.name;
+      doc.text(itemName, 22, yPos + 5);
+      doc.text(item.quantity.toString(), 112, yPos + 5, { align: 'center' });
+      doc.text(`${item.unit_price.toLocaleString('fr-FR')} GNF`, 140, yPos + 5, { align: 'right' });
+      doc.text(`${item.total.toLocaleString('fr-FR')} GNF`, 188, yPos + 5, { align: 'right' });
+      
+      doc.setDrawColor(221, 221, 221);
+      doc.setLineWidth(0.1);
+      doc.line(20, yPos + 8, 190, yPos + 8);
+      yPos += 8;
+    });
 
-    const htmlContent = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devis ${ref}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Arial', 'Helvetica', sans-serif; 
-      margin: 32px; 
-      color: #333;
-      line-height: 1.6;
-    }
-    .header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 32px;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #2563eb;
-    }
-    .logo { 
-      max-width: 150px; 
-      max-height: 100px;
-      object-fit: contain;
-    }
-    h1 { 
-      color: #2563eb; 
-      margin: 20px 0 8px 0;
-      font-size: 28px;
-    }
-    h2 {
-      color: #374151;
-      font-size: 18px;
-      margin: 10px 0;
-    }
-    .info-section { 
-      margin: 24px 0;
-      padding: 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-    }
-    .info-label { 
-      font-weight: bold; 
-      color: #374151;
-      font-size: 14px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin: 24px 0;
-      background: white;
-    }
-    th { 
-      background: #2563eb; 
-      color: white;
-      padding: 12px; 
-      border: 1px solid #1e40af; 
-      text-align: left;
-      font-weight: bold;
-    }
-    td { 
-      padding: 10px; 
-      border: 1px solid #e5e7eb;
-    }
-    tr:nth-child(even) {
-      background: #f9fafb;
-    }
-    .totals { 
-      margin-top: 24px; 
-      text-align: right;
-    }
-    .totals-row { 
-      display: flex; 
-      justify-content: flex-end; 
-      margin: 8px 0;
-      font-size: 16px;
-    }
-    .totals-label { 
-      margin-right: 24px; 
-      min-width: 120px;
-      font-weight: 500;
-    }
-    .total-amount { 
-      font-size: 24px; 
-      font-weight: bold; 
-      color: #2563eb;
-    }
-    .footer { 
-      margin-top: 48px; 
-      padding-top: 24px; 
-      border-top: 2px solid #e5e7eb; 
-      font-size: 12px; 
-      color: #6b7280;
-    }
-    .footer p {
-      margin: 8px 0;
-    }
-    @media print {
-      body { margin: 0; }
-      .header { page-break-after: avoid; }
-      table { page-break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      ${vendorLogoHtml}
-      <h2>${encodeUTF8(vendor?.business_name || 'Vendeur')}</h2>
-    </div>
-    <div>
-      <img src="https://via.placeholder.com/120x60?text=224Solutions" alt="224Solutions" class="logo">
-    </div>
-  </div>
+    yPos += 10;
 
-  <h1>DEVIS N&deg; ${ref}</h1>
-  <p><strong>Date:</strong> ${currentDate}</p>
-  <p><strong>Validit&eacute;:</strong> ${valid_until}</p>
+    // Totaux
+    const totalsX = 135;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Sous-total :', totalsX, yPos);
+    doc.text(`${quote.subtotal.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+    yPos += 6;
 
-  <div class="info-section">
-    <p class="info-label">Client</p>
-    <p><strong>${encodeUTF8(client_name)}</strong></p>
-    ${client_email ? `<p>&#128231; ${encodeUTF8(client_email)}</p>` : ''}
-    ${client_phone ? `<p>&#128241; ${encodeUTF8(client_phone)}</p>` : ''}
-    ${client_address ? `<p>&#128205; ${encodeUTF8(client_address)}</p>` : ''}
-  </div>
+    if (quote.discount > 0) {
+      doc.text('Remise :', totalsX, yPos);
+      doc.text(`-${quote.discount.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+      yPos += 6;
+    }
 
-  <table>
-    <thead>
-      <tr>
-        <th>Produit / Service</th>
-        <th style="text-align: center; width: 80px;">Qt&eacute;</th>
-        <th style="text-align: right; width: 120px;">Prix unitaire</th>
-        <th style="text-align: right; width: 120px;">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${itemsHtml}
-    </tbody>
-  </table>
+    if (quote.tax > 0) {
+      doc.text('TVA :', totalsX, yPos);
+      doc.text(`${quote.tax.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+      yPos += 6;
+    }
 
-  <div class="totals">
-    <div class="totals-row">
-      <span class="totals-label">Sous-total:</span>
-      <span>${subtotal.toLocaleString('fr-FR')} GNF</span>
-    </div>
-    ${discount > 0 ? `
-      <div class="totals-row">
-        <span class="totals-label">Remise:</span>
-        <span>-${discount.toLocaleString('fr-FR')} GNF</span>
-      </div>
-    ` : ''}
-    ${tax > 0 ? `
-      <div class="totals-row">
-        <span class="totals-label">Taxe:</span>
-        <span>+${tax.toLocaleString('fr-FR')} GNF</span>
-      </div>
-    ` : ''}
-    <div class="totals-row" style="border-top: 2px solid #2563eb; padding-top: 12px; margin-top: 12px;">
-      <span class="totals-label">TOTAL:</span>
-      <span class="total-amount">${total.toLocaleString('fr-FR')} GNF</span>
-    </div>
-  </div>
+    yPos += 3;
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(0.8);
+    doc.line(totalsX, yPos, 190, yPos);
+    yPos += 7;
 
-  ${notes ? `
-    <div class="info-section">
-      <p class="info-label">Notes / Conditions</p>
-      <p>${encodeUTF8(notes)}</p>
-    </div>
-  ` : ''}
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(primaryColor);
+    doc.text('TOTAL :', totalsX, yPos);
+    doc.text(`${quote.total.toLocaleString('fr-FR')} GNF`, 188, yPos, { align: 'right' });
+    yPos += 15;
 
-  <div class="footer">
-    <p><strong>Conditions de paiement:</strong> Paiement accept&eacute; via Mobile Money, Carte bancaire.</p>
-    <p><strong>Validit&eacute; du devis:</strong> Ce devis est valable jusqu&#39;au ${valid_until}.</p>
-    <p style="margin-top: 24px;"><strong>Signature client:</strong> _______________________________</p>
-  </div>
+    // Notes
+    if (quote.notes) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(textColor);
+      doc.text('Notes :', 20, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const splitNotes = doc.splitTextToSize(quote.notes, 170);
+      doc.text(splitNotes, 20, yPos);
+      yPos += splitNotes.length * 5 + 10;
+    }
 
-  <div style="text-align: center; margin-top: 48px; color: #999; font-size: 10px;">
-    <p>Devis g&eacute;n&eacute;r&eacute; par 224Solutions &bull; www.224solutions.com</p>
-  </div>
-</body>
-</html>`;
+    // Pied de page
+    yPos = Math.max(yPos, 250);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(grayColor);
+    doc.text('Conditions de paiement : Paiement accepté via Mobile Money, Carte bancaire.', 20, yPos);
+    yPos += 5;
+    doc.text(`Validité du devis : Ce devis est valable jusqu'au ${new Date(quote.valid_until).toLocaleDateString('fr-FR')}.`, 20, yPos);
+    yPos += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Signature client : _______________________________', 20, yPos);
 
-    // Stocker le HTML dans Storage Supabase avec encodage UTF-8 correct
-    const fileName = `quotes/${vendor_id}/${ref}-${Date.now()}.html`;
-    
-    // Encoder le HTML en UTF-8
-    const encoder = new TextEncoder();
-    const htmlBytes = encoder.encode(htmlContent);
-    
+    // Footer
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(grayColor);
+    doc.text('Devis généré par 224Solutions • www.224solutions.com', 105, 287, { align: 'center' });
+
+    // Convertir en ArrayBuffer
+    const pdfBytes = doc.output('arraybuffer');
+
+    // Upload vers Supabase Storage
+    const fileName = `${ref}-${Date.now()}.pdf`;
+    const filePath = `quotes/${vendor_id}/${fileName}`;
+
     const { error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(fileName, new Blob([htmlBytes], { type: 'text/html; charset=utf-8' }), {
-        contentType: 'text/html; charset=utf-8',
+      .upload(filePath, pdfBytes, {
+        contentType: 'application/pdf',
         upsert: true
       });
 
@@ -286,37 +233,41 @@ serve(async (req) => {
     }
 
     // Obtenir l'URL publique
-    const { data: { publicUrl } } = supabase.storage
+    const { data: publicUrlData } = supabase.storage
       .from('documents')
-      .getPublicUrl(fileName);
+      .getPublicUrl(filePath);
+
+    const pdfUrl = publicUrlData.publicUrl;
 
     // Mettre à jour le devis avec l'URL du PDF
     await supabase
       .from('quotes')
-      .update({ pdf_url: publicUrl })
+      .update({ pdf_url: pdfUrl })
       .eq('id', quote_id);
 
-    console.log('✅ PDF généré avec succès:', publicUrl);
+    console.log('✅ PDF généré avec succès:', pdfUrl);
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        pdf_url: publicUrl 
-      }),
+      JSON.stringify({ success: true, pdf_url: pdfUrl }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
 
   } catch (error) {
     console.error('❌ Erreur:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
   }
