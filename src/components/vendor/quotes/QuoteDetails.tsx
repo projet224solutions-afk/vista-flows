@@ -83,22 +83,31 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
     try {
       toast.info('Génération du PDF en cours...');
 
+      // Récupérer les données les plus récentes du devis
+      const { data: freshQuote, error: fetchError } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('id', quote.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { data, error } = await supabase.functions.invoke('generate-quote-pdf', {
         body: {
-          quote_id: quote.id,
-          ref: quote.ref,
-          vendor_id: quote.vendor_id,
-          client_name: quote.client_name,
-          client_email: quote.client_email,
-          client_phone: quote.client_phone,
-          client_address: quote.client_address,
-          items: quote.items,
-          subtotal: quote.subtotal,
-          discount: quote.discount,
-          tax: quote.tax,
-          total: quote.total,
-          valid_until: quote.valid_until,
-          notes: quote.notes
+          quote_id: freshQuote.id,
+          ref: freshQuote.ref,
+          vendor_id: freshQuote.vendor_id,
+          client_name: freshQuote.client_name,
+          client_email: freshQuote.client_email,
+          client_phone: freshQuote.client_phone,
+          client_address: freshQuote.client_address,
+          items: freshQuote.items,
+          subtotal: freshQuote.subtotal,
+          discount: freshQuote.discount,
+          tax: freshQuote.tax,
+          total: freshQuote.total,
+          valid_until: freshQuote.valid_until,
+          notes: freshQuote.notes
         }
       });
 
@@ -108,7 +117,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
       
       if (data?.pdf_url) {
         // Télécharger automatiquement le PDF généré
-        await downloadPDF(data.pdf_url, quote.ref);
+        await downloadPDF(data.pdf_url, freshQuote.ref);
       }
     } catch (error: any) {
       console.error('Erreur génération PDF:', error);

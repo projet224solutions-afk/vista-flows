@@ -66,6 +66,14 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
       if (error) throw error;
       setQuotes((data as any[]) || []);
+      
+      // Si un devis est sélectionné, le mettre à jour avec les nouvelles données
+      if (selectedQuote && data) {
+        const updatedQuote = data.find((q: any) => q.id === selectedQuote.id);
+        if (updatedQuote) {
+          setSelectedQuote(updatedQuote as Quote);
+        }
+      }
     } catch (error: any) {
       console.error('Erreur chargement devis:', error);
       toast.error('Erreur lors du chargement des devis');
