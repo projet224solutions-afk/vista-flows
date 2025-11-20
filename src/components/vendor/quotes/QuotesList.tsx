@@ -349,9 +349,23 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
         quote={selectedQuote}
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        onSuccess={() => {
-          loadQuotes();
-          setSelectedQuote(null);
+        onSuccess={async () => {
+          setShowEditDialog(false);
+          // Recharger les devis
+          await loadQuotes();
+          
+          // Si le dialog de détails était ouvert, recharger le devis sélectionné avec les données fraîches
+          if (showDetails && selectedQuote) {
+            const { data: updatedQuote } = await supabase
+              .from('quotes')
+              .select('*')
+              .eq('id', selectedQuote.id)
+              .single();
+            
+            if (updatedQuote) {
+              setSelectedQuote(updatedQuote as Quote);
+            }
+          }
         }}
       />
 

@@ -135,6 +135,7 @@ export default function QuoteEditDialog({
           total,
           valid_until: validUntil,
           notes: notes || null,
+          pdf_url: null, // Réinitialiser le PDF pour forcer une régénération
         })
         .eq('id', quote.id);
 
