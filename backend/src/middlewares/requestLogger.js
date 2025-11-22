@@ -11,20 +11,26 @@ export function requestLogger(req, res, next) {
   // Log après la réponse
   res.on('finish', () => {
     const duration = Date.now() - start;
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('user-agent') || 'unknown';
+    
     const logData = {
       method: req.method,
       path: req.path,
       status: res.statusCode,
       duration: `${duration}ms`,
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
+      ip,
+      userAgent,
       user: req.user?.id || 'anonymous'
     };
 
+    // Log détaillé avec IP et User-Agent
+    const logMessage = `${req.method} ${req.path} - ${res.statusCode} - ${duration}ms - ${ip} - ${userAgent}`;
+
     if (res.statusCode >= 400) {
-      logger.warn('Request failed', logData);
+      logger.warn(logMessage, logData);
     } else {
-      logger.info('Request completed', logData);
+      logger.info(logMessage, logData);
     }
   });
 

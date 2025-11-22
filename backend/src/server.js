@@ -10,6 +10,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
+import xss from 'xss-clean';
 import dotenv from 'dotenv';
 import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -31,13 +33,14 @@ const PORT = process.env.PORT || 3001;
 
 // ==================== MIDDLEWARES SÉCURITÉ ====================
 
-// Helmet - Sécurité headers HTTP
+// Helmet - Sécurité headers HTTP (optimisé pour React/Vite)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "*"],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -51,7 +54,10 @@ app.use(helmet({
 // CORS - Configuration stricte
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'];
+    const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:5173',
+      'https://localhost:5173'
+    ];
     
     // Autoriser les requêtes sans origin (mobile apps, Postman)
     if (!origin) return callback(null, true);
@@ -68,6 +74,12 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key']
 };
 app.use(cors(corsOptions));
+
+// Compression gzip pour réduire la taille des réponses
+app.use(compression());
+
+// Protection contre les attaques XSS et injections
+app.use(xss());
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
