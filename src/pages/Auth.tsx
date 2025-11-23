@@ -284,6 +284,12 @@ export default function Auth() {
     }
   };
 
+  const handleSkipServiceSelection = () => {
+    setShowServiceSelection(false);
+    setSelectedServiceType(null); // Pas de service professionnel sélectionné
+    setShowSignup(true);
+  };
+
   const handleServiceTypeSelect = (serviceTypeId: string) => {
     setSelectedServiceType(serviceTypeId);
     setShowServiceSelection(false);
@@ -514,6 +520,14 @@ export default function Auth() {
                   <ArrowLeft className="w-4 h-4" />
                   Retour
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSkipServiceSelection}
+                  className="gap-2 bg-primary/10 hover:bg-primary/20 border-primary"
+                >
+                  <Store className="w-4 h-4" />
+                  Vendeur E-commerce Classique
+                </Button>
               </div>
               
               <div className="text-center mb-8">
@@ -521,27 +535,28 @@ export default function Auth() {
                   Choisissez votre Type de Service Professionnel
                 </h3>
                 <p className="text-muted-foreground">
-                  Sélectionnez le service que vous souhaitez créer parmi nos 15 catégories professionnelles
+                  Sélectionnez le service que vous souhaitez créer parmi nos 15 catégories professionnelles<br/>
+                  <span className="text-sm text-primary font-medium">Ou cliquez sur "Vendeur E-commerce Classique" pour vendre uniquement des produits</span>
                 </p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {[
-                  { id: '1', name: 'Restaurant', icon: '🍽️', color: 'orange' },
-                  { id: '2', name: 'Boutique E-commerce', icon: '🛍️', color: 'blue' },
-                  { id: '3', name: 'Livraison', icon: '📦', color: 'green' },
-                  { id: '4', name: 'Taxi-Moto', icon: '🏍️', color: 'yellow' },
-                  { id: '5', name: 'Beauté & Bien-être', icon: '💇', color: 'pink' },
-                  { id: '6', name: 'Réparation', icon: '🔧', color: 'gray' },
-                  { id: '7', name: 'Location Immobilière', icon: '🏠', color: 'purple' },
-                  { id: '8', name: 'Éducation', icon: '🎓', color: 'indigo' },
-                  { id: '9', name: 'Santé', icon: '🏥', color: 'red' },
-                  { id: '10', name: 'Voyage', icon: '✈️', color: 'cyan' },
-                  { id: '11', name: 'Freelance', icon: '💼', color: 'teal' },
-                  { id: '12', name: 'Agriculture', icon: '🌾', color: 'lime' },
-                  { id: '13', name: 'Construction', icon: '🏗️', color: 'amber' },
-                  { id: '14', name: 'Média', icon: '📸', color: 'rose' },
-                  { id: '15', name: 'Informatique', icon: '💻', color: 'violet' },
+                  { id: 'restaurant', name: 'Restauration', icon: '🍽️', color: 'orange' },
+                  { id: 'ecommerce', name: 'Boutique Digitale', icon: '🛍️', color: 'blue' },
+                  { id: 'livraison', name: 'Livraison / Coursier', icon: '📦', color: 'green' },
+                  { id: 'beaute', name: 'Beauté & Bien-être', icon: '💇', color: 'pink' },
+                  { id: 'reparation', name: 'Service de Réparation', icon: '🔧', color: 'gray' },
+                  { id: 'location', name: 'Location Immobilière', icon: '🏠', color: 'purple' },
+                  { id: 'education', name: 'Éducation / Formation', icon: '🎓', color: 'indigo' },
+                  { id: 'sante', name: 'Santé & Bien-être', icon: '🏥', color: 'red' },
+                  { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️', color: 'cyan' },
+                  { id: 'freelance', name: 'Services Administratifs', icon: '💼', color: 'teal' },
+                  { id: 'agriculture', name: 'Service Agricole', icon: '🌾', color: 'lime' },
+                  { id: 'construction', name: 'Construction & BTP', icon: '🏗️', color: 'amber' },
+                  { id: 'media', name: 'Média & Création', icon: '📸', color: 'rose' },
+                  { id: 'informatique', name: 'Technique & Informatique', icon: '💻', color: 'violet' },
+                  { id: 'menage', name: 'Ménage & Entretien', icon: '🧹', color: 'emerald' },
                 ].map((service) => (
                   <button
                     key={service.id}
@@ -602,10 +617,15 @@ export default function Auth() {
             {showSignup && (
               <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="text-purple-800 text-sm">
-                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? 'Marchand Professionnel' : selectedRole}` : ''}.
+                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? (selectedServiceType ? 'Marchand Professionnel' : 'Vendeur E-commerce') : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className="block mt-1 font-semibold">
-                      Service sélectionné : Type {selectedServiceType}
+                      Service professionnel sélectionné
+                    </span>
+                  )}
+                  {selectedRole === 'vendeur' && !selectedServiceType && (
+                    <span className="block mt-1 font-semibold text-green-700">
+                      ✓ Mode Vendeur E-commerce classique (vente de produits uniquement)
                     </span>
                   )}
                 </p>
