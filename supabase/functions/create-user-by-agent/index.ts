@@ -141,33 +141,83 @@ serve(async (req) => {
     const body: CreateUserRequest = validationResult.data;
     console.log('✅ Validation réussie - Creating user by agent, authenticated as:', user.id);
 
-    // ✅ Verify authenticated user is an active agent with user.id
-    const { data: agent, error: agentError } = await supabaseClient
-      .from('agents_management')
-      .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+    // ✅ Verify authenticated user is either a PDG or an active agent
+    // Étape 1: Vérifier si c'est un PDG
+    const { data: pdg, error: pdgError } = await supabaseClient
+      .from('pdg_management')
+      .select('id, permissions')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (agentError || !agent) {
-      console.error('Agent non trouvé:', agentError);
+    let agent: any = null;
+    let isPdg = false;
+    let effectivePdgId: string;
+    let effectivePermissions: string[];
+    let canCreateSubAgent = false;
+
+    if (pdg) {
+      // L'utilisateur est un PDG
+      isPdg = true;
+      effectivePdgId = pdg.id;
+      effectivePermissions = pdg.permissions || [];
+      canCreateSubAgent = true; // PDG peut toujours créer des agents
+      console.log('✅ Utilisateur PDG trouvé:', pdg.id);
+    } else {
+      // Étape 2: Vérifier si c'est un agent
+      const { data: agentData, error: agentError } = await supabaseClient
+        .from('agents_management')
+        .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (agentError || !agentData) {
+        console.error('Ni PDG ni Agent trouvé:', { pdgError, agentError });
+        return new Response(
+          JSON.stringify({ 
+            error: 'Utilisateur non autorisé (ni PDG ni Agent actif)',
+            code: 'UNAUTHORIZED'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
+
+      agent = agentData;
+      effectivePdgId = agent.pdg_id;
+      effectivePermissions = agent.permissions || [];
+      canCreateSubAgent = agent.can_create_sub_agent;
+      console.log('✅ Agent trouvé:', agent.id);
+    }
+
+    // Vérifier que l'utilisateur a la permission de créer des utilisateurs
+    const hasCreateUsersPermission = 
+      effectivePermissions.includes('create_users') || 
+      effectivePermissions.includes('all') ||
+      effectivePermissions.includes('all_modules');
+
+    if (!hasCreateUsersPermission) {
+      console.error('❌ Permission manquante: create_users', effectivePermissions);
       return new Response(
         JSON.stringify({ 
-          error: 'Agent non trouvé ou inactif',
-          code: 'AGENT_NOT_FOUND'
+          error: 'Permission insuffisante pour créer des utilisateurs',
+          code: 'INSUFFICIENT_PERMISSIONS',
+          permissions: effectivePermissions
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
 
-    // Vérifier que l'agent a la permission de créer des utilisateurs
-    if (!agent.permissions || !agent.permissions.includes('create_users')) {
-      throw new Error('Agent non autorisé à créer des utilisateurs');
-    }
-
     // Si on crée un agent/sous-agent, vérifier la permission spécifique
-    if ((body.role === 'agent' || body.role === 'sub_agent') && !agent.can_create_sub_agent) {
-      throw new Error('Agent non autorisé à créer des sous-agents');
+    if ((body.role === 'agent' || body.role === 'sub_agent') && !canCreateSubAgent) {
+      console.error('❌ Permission manquante: créer des sous-agents');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Permission insuffisante pour créer des agents',
+          code: 'CANNOT_CREATE_AGENTS'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
     }
 
     // Créer l'utilisateur dans auth.users
@@ -343,7 +393,7 @@ serve(async (req) => {
       const { error: agentManagementError } = await supabaseClient
         .from('agents_management')
         .insert({
-          pdg_id: agent.pdg_id,
+          pdg_id: effectivePdgId,
           user_id: authUser.user.id,
           agent_code: agentCode,
           name: `${body.firstName} ${body.lastName || ''}`.trim(),

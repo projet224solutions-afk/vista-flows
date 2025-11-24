@@ -23,6 +23,7 @@ export function useVendorId() {
       console.log('✅ Vendor ID depuis AgentContext:', agentContext.vendorId);
       setVendorId(agentContext.vendorId);
       setLoading(false);
+      setError(null);
       return;
     }
 
@@ -35,6 +36,7 @@ export function useVendorId() {
 
       try {
         setLoading(true);
+        setError(null);
         console.log('🔍 Récupération vendor_id pour user:', user.id);
         
         const { data, error } = await supabase
@@ -43,13 +45,23 @@ export function useVendorId() {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Erreur SQL récupération vendor:', error);
+          throw error;
+        }
         
-        console.log('✅ Vendor ID trouvé:', data?.id);
-        setVendorId(data?.id || null);
+        if (!data) {
+          console.warn('⚠️ Aucune entrée vendor trouvée pour user:', user.id);
+          setError('Erreur: Vendeur non identifié. Veuillez contacter le support.');
+          setVendorId(null);
+        } else {
+          console.log('✅ Vendor ID trouvé:', data.id);
+          setVendorId(data.id);
+        }
       } catch (err: any) {
-        console.error('❌ Erreur récupération vendor_id:', err);
-        setError(err.message);
+        console.error('❌ Exception récupération vendor_id:', err);
+        setError('Erreur: Vendeur non identifié. ' + err.message);
+        setVendorId(null);
       } finally {
         setLoading(false);
       }
