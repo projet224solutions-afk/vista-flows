@@ -10873,6 +10873,15 @@ export type Database = {
           table_name: string
         }[]
       }
+      migrate_random_ids_to_sequential: {
+        Args: never
+        Returns: {
+          new_id: string
+          old_id: string
+          profile_user_id: string
+          status: string
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { use_typmod?: boolean }; Returns: string }
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
