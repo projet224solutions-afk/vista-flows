@@ -10882,6 +10882,15 @@ export type Database = {
           status: string
         }[]
       }
+      migrate_vendors_without_entry: {
+        Args: never
+        Returns: {
+          custom_id: string
+          status: string
+          user_id: string
+          vendor_id: string
+        }[]
+      }
       populate_geometry_columns:
         | { Args: { use_typmod?: boolean }; Returns: string }
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
