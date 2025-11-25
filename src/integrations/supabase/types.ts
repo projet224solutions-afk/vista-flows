@@ -1628,6 +1628,72 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          amount: number | null
+          client_email: string | null
+          client_id: string | null
+          client_info: string | null
+          client_name: string
+          client_phone: string | null
+          client_signature_url: string | null
+          contract_content: string
+          contract_type: string
+          created_at: string | null
+          custom_fields: Json | null
+          id: string
+          pdf_url: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string | null
+          vendor_id: string
+          vendor_logo_url: string | null
+          vendor_signature_url: string | null
+        }
+        Insert: {
+          amount?: number | null
+          client_email?: string | null
+          client_id?: string | null
+          client_info?: string | null
+          client_name: string
+          client_phone?: string | null
+          client_signature_url?: string | null
+          contract_content: string
+          contract_type: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          id?: string
+          pdf_url?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id: string
+          vendor_logo_url?: string | null
+          vendor_signature_url?: string | null
+        }
+        Update: {
+          amount?: number | null
+          client_email?: string | null
+          client_id?: string | null
+          client_info?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_signature_url?: string | null
+          contract_content?: string
+          contract_type?: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          id?: string
+          pdf_url?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string
+          vendor_logo_url?: string | null
+          vendor_signature_url?: string | null
+        }
+        Relationships: []
+      }
       conversation_participants: {
         Row: {
           conversation_id: string

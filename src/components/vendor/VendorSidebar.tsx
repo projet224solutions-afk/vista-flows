@@ -169,6 +169,11 @@ export function VendorSidebar() {
           path: "debts"
         },
         {
+          title: "Contrats",
+          icon: FileText,
+          path: "contracts"
+        },
+        {
           title: "Affiliation",
           icon: Link,
           path: "affiliate"

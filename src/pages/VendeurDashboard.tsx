@@ -59,6 +59,7 @@ import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscription
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
+import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
 
 export default function VendeurDashboard() {
@@ -382,6 +383,7 @@ export default function VendeurDashboard() {
               <Route path="orders" element={<OrderManagement />} />
               <Route path="wallet" element={<UniversalWalletTransactions />} />
               <Route path="quotes-invoices" element={<VendorQuotesInvoices />} />
+              <Route path="contracts" element={<VendorContracts />} />
               <Route path="subscription" element={<SubscriptionRenewalPage />} />
               <Route path="settings" element={<SettingsPage />} />
               
