@@ -64,6 +64,8 @@ const DeliveryClient = lazy(() => import("./pages/DeliveryClient"));
 const BugBounty = lazy(() => import("./pages/BugBounty"));
 const Cart = lazy(() => import("./pages/Cart"));
 const VendorAgentInterface = lazy(() => import("./pages/VendorAgentInterface"));
+const VendorContracts = lazy(() => import("./pages/VendorContracts"));
+const ClientContracts = lazy(() => import("./pages/ClientContracts"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -276,6 +278,7 @@ function App() {
               <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
+              <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
               <Route
                 path="/vendeur-simple"
                 element={<VendeurDashboard />}
