@@ -136,7 +136,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
       // Créer la facture
       const invoiceRef = quote.ref.replace('DEV-', 'FACT-');
-      const { error } = await supabase
+      const { data: newInvoice, error } = await supabase
         .from('invoices')
         .insert({
           ref: invoiceRef,
@@ -152,9 +152,27 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
           total: quote.total,
           status: 'pending',
           due_date: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0]
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Générer le PDF de la facture
+      if (newInvoice) {
+        const { error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
+          body: {
+            invoice_id: newInvoice.id,
+            ref: invoiceRef,
+            vendor_id: vendorId
+          }
+        });
+
+        if (pdfError) {
+          console.error('Erreur génération PDF facture:', pdfError);
+          toast.error('Facture créée mais PDF non généré');
+        }
+      }
 
       // Mettre à jour le statut du devis
       await supabase
@@ -162,7 +180,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
         .update({ status: 'accepted' })
         .eq('id', quoteId);
 
-      toast.success('Devis converti en facture !');
+      toast.success('Devis converti en facture avec PDF !');
       setShowDetails(false);
       loadQuotes();
     } catch (error: any) {

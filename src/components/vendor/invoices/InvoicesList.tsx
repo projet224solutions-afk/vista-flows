@@ -152,14 +152,41 @@ export default function InvoicesList() {
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
-                  {invoice.pdf_url && (
+                  {invoice.pdf_url ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(invoice.pdf_url!, '_blank')}
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(invoice.pdf_url!);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `${invoice.ref}.pdf`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                          toast.success('Téléchargement démarré');
+                        } catch (error) {
+                          console.error('Erreur téléchargement:', error);
+                          toast.error('Erreur lors du téléchargement');
+                        }
+                      }}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Télécharger PDF
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      className="opacity-50"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      PDF non disponible
                     </Button>
                   )}
                   {invoice.status === 'pending' && (
