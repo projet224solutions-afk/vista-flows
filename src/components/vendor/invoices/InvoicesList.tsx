@@ -152,43 +152,54 @@ export default function InvoicesList() {
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
-                  {invoice.pdf_url ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (!invoice.pdf_url) {
+                        // Générer le PDF si non disponible
                         try {
-                          const response = await fetch(invoice.pdf_url!);
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `${invoice.ref}.pdf`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                          toast.success('Téléchargement démarré');
-                        } catch (error) {
-                          console.error('Erreur téléchargement:', error);
-                          toast.error('Erreur lors du téléchargement');
+                          const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+                            body: {
+                              invoice_id: invoice.id,
+                              ref: invoice.ref,
+                              vendor_id: vendorId
+                            }
+                          });
+
+                          if (error) throw error;
+                          
+                          toast.success('PDF généré avec succès');
+                          loadInvoices();
+                        } catch (error: any) {
+                          console.error('Erreur génération PDF:', error);
+                          toast.error('Erreur lors de la génération du PDF');
                         }
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Télécharger PDF
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled
-                      className="opacity-50"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      PDF non disponible
-                    </Button>
-                  )}
+                        return;
+                      }
+
+                      // Télécharger le PDF
+                      try {
+                        const response = await fetch(invoice.pdf_url);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `${invoice.ref}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        toast.success('Téléchargement démarré');
+                      } catch (error) {
+                        console.error('Erreur téléchargement:', error);
+                        toast.error('Erreur lors du téléchargement');
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {invoice.pdf_url ? 'Télécharger PDF' : 'Générer PDF'}
+                  </Button>
                   {invoice.status === 'pending' && (
                     <Button
                       variant="default"
