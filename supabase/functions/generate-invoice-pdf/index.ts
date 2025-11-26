@@ -139,9 +139,9 @@ serve(async (req) => {
       const unitPrice = item.unit_price || item.price || 0;
       const itemTotal = item.total || (quantity * unitPrice);
       
-      // Formatage des nombres avec espaces
+      // Formatage des nombres avec espaces insécables
       const formatGNF = (num: number) => {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' GNF';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f') + '\u202fGNF';
       };
       
       // Découper le texte long en plusieurs lignes si nécessaire
@@ -170,9 +170,9 @@ serve(async (req) => {
 
     yPos += 10;
 
-    // Totaux avec formatage des nombres
+    // Totaux avec formatage des nombres - utiliser espaces insécables
     const formatGNF = (num: number) => {
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' GNF';
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f') + '\u202fGNF';
     };
 
     const totalsX = 135;
