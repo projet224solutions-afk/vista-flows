@@ -29,8 +29,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/src ./src
 
-# Installer UNIQUEMENT les dépendances de production
-RUN npm ci --only=production && \
+# Installer toutes les dépendances (dev + production)
+RUN npm ci && \
     npm cache clean --force
 
 # Créer les dossiers nécessaires avec les bonnes permissions
