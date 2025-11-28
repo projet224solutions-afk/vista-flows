@@ -171,4 +171,13 @@ verify_jwt = true
 [functions.delete-pdg-agent]
 verify_jwt = true
 
+[functions.create-contract]
+verify_jwt = true
+
+[functions.generate-contract-with-ai]
+verify_jwt = true
+
+[functions.generate-contract-pdf]
+verify_jwt = true
+
 
