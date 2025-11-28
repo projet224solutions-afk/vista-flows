@@ -23,6 +23,7 @@ interface ContractsListProps {
 }
 
 const CONTRACT_LABELS: Record<string, string> = {
+  vente_ai: '🤖 Contrat de vente (IA)',
   vente_achat: 'Vente/Achat',
   livraison: 'Livraison',
   prestation: 'Prestation',
@@ -33,6 +34,7 @@ const CONTRACT_LABELS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   created: 'Créé',
+  finalized: 'Finalisé',
   sent: 'Envoyé',
   signed: 'Signé',
   archived: 'Archivé',

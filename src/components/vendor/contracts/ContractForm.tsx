@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, FileText } from 'lucide-react';
 
 const CONTRACT_TYPES = [
+  { value: 'vente_ai', label: '🤖 Contrat de vente (Généré par IA)', fields: [], isAI: true },
   { value: 'vente_achat', label: 'Contrat vente / achat', fields: ['description', 'amount', 'conditions'] },
   { value: 'livraison', label: 'Contrat livraison', fields: ['address', 'description', 'amount', 'delivery_date'] },
   { value: 'prestation', label: 'Contrat prestation', fields: ['description', 'duration', 'amount', 'price_details', 'payment_terms'] },
