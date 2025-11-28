@@ -180,4 +180,7 @@ verify_jwt = true
 [functions.generate-contract-pdf]
 verify_jwt = true
 
+[functions.ai-contract-assistant]
+verify_jwt = true
+
 

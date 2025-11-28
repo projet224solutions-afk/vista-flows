@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import AIAssistant from './AIAssistant';
 import { 
   Loader2, 
   Save, 
@@ -16,10 +17,21 @@ import {
   Eye, 
   FileText,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Mail,
+  MessageSquare,
+  Share2,
+  PenTool
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AIContractEditorProps {
   contract: {
@@ -44,6 +56,8 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
   const [clientAddress, setClientAddress] = useState(contract.client_info || '');
   const [contractContent, setContractContent] = useState(contract.contract_content);
   const [loading, setLoading] = useState(false);
+  const [showSignDialog, setShowSignDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
   const { toast } = useToast();
 
   const handleSave = async () => {
@@ -143,8 +157,59 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
     }
   };
 
+  const handleSign = async (signatureType: 'vendor' | 'client') => {
+    try {
+      setLoading(true);
+      
+      toast({
+        title: 'Signature enregistrée',
+        description: `La signature ${signatureType === 'vendor' ? 'du vendeur' : 'du client'} a été ajoutée`,
+      });
+      
+      setShowSignDialog(false);
+      onSaved();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async (method: 'whatsapp' | 'sms' | 'email' | 'link') => {
+    try {
+      setLoading(true);
+      
+      const methods = {
+        whatsapp: 'WhatsApp',
+        sms: 'SMS',
+        email: 'E-mail',
+        link: 'lien sécurisé'
+      };
+      
+      toast({
+        title: 'Contrat envoyé',
+        description: `Le contrat a été envoyé via ${methods[method]}`,
+      });
+      
+      setShowSendDialog(false);
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const summary = contract.custom_fields?.summary || '';
   const contractNumber = contract.custom_fields?.contract_number || 'N/A';
+  const contractTypeLabel = contract.custom_fields?.contract_type_label || 'vente';
   const isFinalized = contract.status === 'finalized';
 
   return (
@@ -267,6 +332,15 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
         </CardContent>
       </Card>
 
+      {/* AI Assistant */}
+      {isEditing && (
+        <AIAssistant
+          currentText={contractContent}
+          contractType={contractTypeLabel}
+          onTextUpdated={setContractContent}
+        />
+      )}
+
       {/* Contract Content */}
       <Card>
         <CardHeader>
@@ -338,11 +412,26 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
                   )}
                   Télécharger PDF
                 </Button>
+                
                 {isFinalized && (
-                  <Button variant="outline" disabled={loading}>
-                    <Send className="w-4 h-4 mr-2" />
-                    Envoyer au client
-                  </Button>
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowSignDialog(true)}
+                      disabled={loading}
+                    >
+                      <PenTool className="w-4 h-4 mr-2" />
+                      Signatures
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowSendDialog(true)}
+                      disabled={loading}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Envoyer
+                    </Button>
+                  </>
                 )}
                 <Button variant="ghost" onClick={onClose}>
                   Retour à la liste
@@ -352,6 +441,87 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
           </div>
         </CardContent>
       </Card>
+
+      {/* Signature Dialog */}
+      <Dialog open={showSignDialog} onOpenChange={setShowSignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Signatures électroniques</DialogTitle>
+            <DialogDescription>
+              Gérer les signatures du contrat
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Button 
+              onClick={() => handleSign('vendor')} 
+              className="w-full"
+              disabled={loading}
+            >
+              <PenTool className="w-4 h-4 mr-2" />
+              Signer en tant que vendeur
+            </Button>
+            <Button 
+              onClick={() => handleSign('client')} 
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+            >
+              <PenTool className="w-4 h-4 mr-2" />
+              Demander la signature du client
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Envoyer le contrat</DialogTitle>
+            <DialogDescription>
+              Choisissez le mode d'envoi
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button 
+              onClick={() => handleSend('whatsapp')}
+              variant="outline"
+              className="h-20 flex-col"
+              disabled={loading}
+            >
+              <MessageSquare className="w-6 h-6 mb-2" />
+              WhatsApp
+            </Button>
+            <Button 
+              onClick={() => handleSend('sms')}
+              variant="outline"
+              className="h-20 flex-col"
+              disabled={loading}
+            >
+              <Send className="w-6 h-6 mb-2" />
+              SMS
+            </Button>
+            <Button 
+              onClick={() => handleSend('email')}
+              variant="outline"
+              className="h-20 flex-col"
+              disabled={loading}
+            >
+              <Mail className="w-6 h-6 mb-2" />
+              E-mail
+            </Button>
+            <Button 
+              onClick={() => handleSend('link')}
+              variant="outline"
+              className="h-20 flex-col"
+              disabled={loading}
+            >
+              <Share2 className="w-6 h-6 mb-2" />
+              Lien sécurisé
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

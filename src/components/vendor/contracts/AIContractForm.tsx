@@ -1,58 +1,159 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { Loader2, Sparkles, History, Phone } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface AIContractFormProps {
   onSuccess: (contractId: string) => void;
 }
 
+const CONTRACT_TYPES = [
+  { value: 'vente', label: 'Contrat de vente', description: 'Produit, prix, livraison, garantie' },
+  { value: 'livraison', label: 'Contrat de livraison', description: 'Délais, transport, assurance' },
+  { value: 'prestation', label: 'Contrat de prestation', description: 'Service, durée, obligations' },
+  { value: 'agent', label: 'Contrat agent', description: 'Mission, commissions, reporting' },
+  { value: 'partenariat', label: 'Entreprise partenaire', description: 'Collaboration, objectifs, paiement' },
+];
+
+interface RecentClient {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+}
+
 export default function AIContractForm({ onSuccess }: AIContractFormProps) {
+  const [contractType, setContractType] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [recentClients, setRecentClients] = useState<RecentClient[]>([]);
+  const [searchingClient, setSearchingClient] = useState(false);
   const { toast } = useToast();
 
-  const onSubmit = async (formData: any) => {
+  useEffect(() => {
+    loadRecentClients();
+  }, []);
+
+  const loadRecentClients = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, phone, address')
+        .eq('vendor_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentClients(data || []);
+    } catch (error) {
+      console.error('Error loading recent clients:', error);
+    }
+  };
+
+  const handlePhoneChange = async (phone: string) => {
+    setClientPhone(phone);
+    
+    if (phone.length >= 8) {
+      setSearchingClient(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('clients')
+          .select('name, address')
+          .eq('vendor_id', user.id)
+          .eq('phone', phone)
+          .single();
+
+        if (data && !error) {
+          setClientName(data.name || '');
+          setClientAddress(data.address || '');
+          toast({
+            title: 'Client trouvé',
+            description: 'Les informations ont été automatiquement remplies',
+          });
+        }
+      } catch (error) {
+        // Client not found, no problem
+      } finally {
+        setSearchingClient(false);
+      }
+    }
+  };
+
+  const handleSelectRecentClient = (client: RecentClient) => {
+    setClientName(client.name);
+    setClientPhone(client.phone || '');
+    setClientAddress(client.address || '');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!contractType) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un type de contrat',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!clientName || !clientPhone || !clientAddress) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const { client_name, client_phone, client_address } = formData;
-
-      toast({
-        title: 'Génération en cours...',
-        description: 'L\'IA est en train de générer votre contrat professionnel',
-      });
-
       const { data, error } = await supabase.functions.invoke('generate-contract-with-ai', {
         body: {
-          client_name,
-          client_phone,
-          client_address,
+          contract_type: contractType,
+          client_name: clientName,
+          client_phone: clientPhone,
+          client_address: clientAddress,
         },
       });
 
       if (error) throw error;
 
-      if (!data.success) {
-        throw new Error(data.error || 'Échec de la génération');
+      if (data?.success && data?.contract?.id) {
+        toast({
+          title: 'Contrat généré avec succès',
+          description: 'Le contrat a été créé et peut maintenant être modifié',
+        });
+        
+        // Reset form
+        setContractType('');
+        setClientName('');
+        setClientPhone('');
+        setClientAddress('');
+        
+        onSuccess(data.contract.id);
+      } else {
+        throw new Error('Erreur lors de la génération du contrat');
       }
-
-      toast({
-        title: 'Contrat généré avec succès',
-        description: 'Vous pouvez maintenant le modifier avant de le finaliser',
-      });
-
-      onSuccess(data.contract.id);
     } catch (error: any) {
-      console.error('Error generating contract:', error);
       toast({
         title: 'Erreur',
-        description: error.message || 'Impossible de générer le contrat',
+        description: error.message,
         variant: 'destructive',
       });
     } finally {
@@ -61,121 +162,116 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
   };
 
   return (
-    <Card className="border-primary/20">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          Génération automatique de contrat par IA
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
-          Entrez uniquement 3 informations et laissez l'IA générer un contrat de vente complet et professionnel
-        </p>
+          <CardTitle>Générer un contrat avec l'IA</CardTitle>
+        </div>
+        <CardDescription>
+          Sélectionnez le type de contrat et entrez les informations du client
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Client Information - Only 3 fields */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-sm font-medium text-muted-foreground">
-                Informations du client (3 champs requis)
-              </span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client_name" className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  1
-                </span>
-                Nom du client *
-              </Label>
-              <Input
-                id="client_name"
-                {...register('client_name', { required: 'Le nom du client est requis' })}
-                placeholder="Nom complet du client"
-                className={errors.client_name ? 'border-destructive' : ''}
-              />
-              {errors.client_name && (
-                <p className="text-sm text-destructive">{errors.client_name.message as string}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client_phone" className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  2
-                </span>
-                Numéro de téléphone du client *
-              </Label>
-              <Input
-                id="client_phone"
-                {...register('client_phone', { required: 'Le téléphone du client est requis' })}
-                placeholder="+224 XXX XX XX XX"
-                className={errors.client_phone ? 'border-destructive' : ''}
-              />
-              {errors.client_phone && (
-                <p className="text-sm text-destructive">{errors.client_phone.message as string}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client_address" className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  3
-                </span>
-                Adresse du client *
-              </Label>
-              <Input
-                id="client_address"
-                {...register('client_address', { required: 'L\'adresse du client est requise' })}
-                placeholder="Adresse complète"
-                className={errors.client_address ? 'border-destructive' : ''}
-              />
-              {errors.client_address && (
-                <p className="text-sm text-destructive">{errors.client_address.message as string}</p>
-              )}
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Type de contrat */}
+          <div className="space-y-2">
+            <Label htmlFor="contractType">Type de contrat *</Label>
+            <Select value={contractType} onValueChange={setContractType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez le type de contrat" />
+              </SelectTrigger>
+              <SelectContent>
+                {CONTRACT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">{type.label}</span>
+                      <span className="text-xs text-muted-foreground">{type.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Info Box */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-            <div className="flex gap-3">
-              <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="space-y-1 text-sm">
-                <p className="font-medium text-foreground">L'IA va générer automatiquement :</p>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>✓ Le numéro unique du contrat</li>
-                  <li>✓ La date de création</li>
-                  <li>✓ Le texte complet du contrat avec clauses légales</li>
-                  <li>✓ Les informations de votre entreprise</li>
-                  <li>✓ Les clauses standards (garantie, conformité, litige)</li>
-                  <li>✓ Un résumé automatique</li>
-                </ul>
-                <p className="font-medium text-primary mt-3">
-                  Vous pourrez modifier le contrat avant de le finaliser !
-                </p>
+          {/* Clients récents */}
+          {recentClients.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <Label>Clients récents</Label>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentClients.map((client) => (
+                  <Badge
+                    key={client.id}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10"
+                    onClick={() => handleSelectRecentClient(client)}
+                  >
+                    {client.name}
+                  </Badge>
+                ))}
               </div>
             </div>
+          )}
+
+          {/* Téléphone avec auto-remplissage */}
+          <div className="space-y-2">
+            <Label htmlFor="clientPhone">Numéro de téléphone *</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="clientPhone"
+                value={clientPhone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+224 XXX XX XX XX"
+                className="pl-10"
+                required
+              />
+              {searchingClient && (
+                <Loader2 className="absolute right-3 top-3 w-4 h-4 animate-spin text-primary" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si ce numéro existe déjà, les informations seront remplies automatiquement
+            </p>
           </div>
 
-          {/* Submit Button */}
-          <Button 
-            type="submit" 
-            disabled={loading} 
-            className="w-full h-12 text-base"
-            size="lg"
-          >
+          {/* Nom du client */}
+          <div className="space-y-2">
+            <Label htmlFor="clientName">Nom du client *</Label>
+            <Input
+              id="clientName"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="Ex: Jean Dupont"
+              required
+            />
+          </div>
+
+          {/* Adresse */}
+          <div className="space-y-2">
+            <Label htmlFor="clientAddress">Adresse du client *</Label>
+            <Input
+              id="clientAddress"
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              placeholder="Ex: Quartier Madina, Conakry"
+              required
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading || !contractType}>
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Génération en cours par l'IA...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Génération en cours...
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5 mr-2" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 Générer le contrat avec l'IA
-                <ArrowRight className="w-5 h-5 ml-2" />
               </>
             )}
           </Button>
