@@ -31,3 +31,8 @@ service-account-*.json
 *.njsproj
 *.sln
 *.sw?
+backend/.env.txt
+backendpackage.json.txt
+nano dockerfile.txt
+rc
+upabase
