@@ -30,10 +30,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { client_name, client_phone, client_address } = await req.json();
+    const { contract_type, client_name, client_phone, client_address } = await req.json();
 
-    if (!client_name || !client_phone || !client_address) {
-      throw new Error('Client name, phone and address are required');
+    if (!contract_type || !client_name || !client_phone || !client_address) {
+      throw new Error('Contract type, client name, phone and address are required');
     }
 
     // Get vendor info
@@ -64,6 +64,97 @@ serve(async (req) => {
 
     console.log('Calling Lovable AI to generate contract...');
 
+    // Définir le système prompt selon le type de contrat
+    const getSystemPrompt = (type: string) => {
+      const basePrompt = `Tu es un assistant juridique professionnel spécialisé dans la rédaction de contrats en Guinée. Tu dois générer un contrat complet, professionnel et conforme aux lois guinéennes.`;
+      
+      const contractSpecs: Record<string, string> = {
+        vente: `${basePrompt}
+
+TYPE: Contrat de vente
+
+Le contrat doit inclure:
+1. En-tête avec numéro et date
+2. Les parties (vendeur et acheteur)
+3. Objet de la vente (produit/service)
+4. Prix et modalités de paiement
+5. Conditions de livraison
+6. Garantie et conformité
+7. Conditions de retour/annulation
+8. Règlement des litiges
+9. Droit applicable (loi guinéenne)
+10. Signatures`,
+
+        livraison: `${basePrompt}
+
+TYPE: Contrat de livraison
+
+Le contrat doit inclure:
+1. En-tête avec numéro et date
+2. Les parties (expéditeur et transporteur)
+3. Nature de la marchandise
+4. Délais de livraison
+5. Responsabilité du transport
+6. Assurance et couverture
+7. Conditions de suivi
+8. Procédure en cas de retard/perte
+9. Tarification
+10. Signatures`,
+
+        prestation: `${basePrompt}
+
+TYPE: Contrat de prestation de services
+
+Le contrat doit inclure:
+1. En-tête avec numéro et date
+2. Les parties (prestataire et client)
+3. Nature du service
+4. Durée et échéances
+5. Obligations du prestataire
+6. Obligations du client
+7. Tarification et modalités de paiement
+8. Conditions de résiliation
+9. Confidentialité
+10. Signatures`,
+
+        agent: `${basePrompt}
+
+TYPE: Contrat d'agent
+
+Le contrat doit inclure:
+1. En-tête avec numéro et date
+2. Les parties (mandant et agent)
+3. Mission et territoire
+4. Commissions et rémunération
+5. Obligations de reporting
+6. Exclusivité (si applicable)
+7. Durée du mandat
+8. Confidentialité
+9. Conditions de résiliation
+10. Signatures`,
+
+        partenariat: `${basePrompt}
+
+TYPE: Contrat de partenariat d'entreprise
+
+Le contrat doit inclure:
+1. En-tête avec numéro et date
+2. Les parties (entreprises partenaires)
+3. Objet de la collaboration
+4. Objectifs et résultats attendus
+5. Responsabilités de chaque partie
+6. Contribution financière/matérielle
+7. Durée du partenariat
+8. Partage des bénéfices/risques
+9. Confidentialité et propriété intellectuelle
+10. Signatures`
+      };
+
+      return contractSpecs[type] || contractSpecs.vente;
+    };
+
+    const systemPrompt = getSystemPrompt(contract_type);
+
     // Call Lovable AI to generate contract
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -76,33 +167,19 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Tu es un assistant juridique professionnel spécialisé dans la rédaction de contrats de vente en Guinée. 
-Tu dois générer un contrat de vente complet, professionnel et conforme aux lois guinéennes.
-
-Le contrat doit inclure:
-1. Un en-tête avec le numéro et la date du contrat
-2. Les parties (vendeur et acheteur)
-3. L'objet du contrat
-4. Les conditions générales de vente
-5. Les clauses standards (garantie, conformité, litige)
-6. Les modalités de paiement et livraison
-7. Les conditions de résiliation
-8. La loi applicable (droit guinéen)
-9. Les signatures
-
-Le contrat doit être structuré, professionnel et juridiquement solide. Utilise un langage formel et clair.`
+            content: systemPrompt
           },
           {
             role: 'user',
-            content: `Génère un contrat de vente complet avec les informations suivantes:
+            content: `Génère un contrat complet avec les informations suivantes:
 
-VENDEUR:
+VENDEUR/PRESTATAIRE:
 - Nom/Entreprise: ${companyName}
 - Nom du représentant: ${vendorName}
 - Email: ${vendorEmail}
 - Téléphone: ${vendorPhone}
 
-ACHETEUR:
+CLIENT/PARTENAIRE:
 - Nom: ${client_name}
 - Téléphone: ${client_phone}
 - Adresse: ${client_address}
@@ -112,7 +189,7 @@ INFORMATIONS CONTRAT:
 - Date de création: ${creationDate}
 - Lieu: Conakry, Guinée
 
-Génère un contrat de vente complet, professionnel et prêt à être signé.`
+Génère un contrat complet, professionnel et prêt à être signé selon le type spécifié.`
           }
         ],
         temperature: 0.7,
@@ -177,7 +254,7 @@ Génère un contrat de vente complet, professionnel et prêt à être signé.`
       .from('contracts')
       .insert({
         vendor_id: user.id,
-        contract_type: 'vente_ai',
+        contract_type: `${contract_type}_ai`,
         client_name,
         client_phone,
         client_info: client_address,
@@ -187,6 +264,7 @@ Génère un contrat de vente complet, professionnel et prêt à être signé.`
           creation_date: creationDate,
           summary: contractSummary,
           generated_by_ai: true,
+          contract_type_label: contract_type,
         },
         status: 'created',
         vendor_logo_url: vendor?.logo_url || null,

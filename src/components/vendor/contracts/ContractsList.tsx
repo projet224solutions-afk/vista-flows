@@ -24,6 +24,10 @@ interface ContractsListProps {
 
 const CONTRACT_LABELS: Record<string, string> = {
   vente_ai: '🤖 Contrat de vente (IA)',
+  livraison_ai: '🤖 Contrat de livraison (IA)',
+  prestation_ai: '🤖 Contrat de prestation (IA)',
+  agent_ai: '🤖 Contrat agent (IA)',
+  partenariat_ai: '🤖 Entreprise partenaire (IA)',
   vente_achat: 'Vente/Achat',
   livraison: 'Livraison',
   prestation: 'Prestation',
