@@ -186,47 +186,43 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           }
         }
       } else {
-        // Utilisateur normal - appeler le backend pour créer/charger le wallet
-        try {
-          const response = await fetch('/api/wallet/initialize', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-            },
-            body: JSON.stringify({ user_id: effectiveUserId })
-          });
+        // Utilisateur normal - charger depuis wallets
+        const { data: walletData, error: walletError } = await supabase
+          .from('wallets')
+          .select('id, balance, currency')
+          .eq('user_id', effectiveUserId)
+          .maybeSingle();
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ Erreur backend wallet:', errorData);
-            toast.error('Impossible de créer/charger le wallet');
+        if (walletError && walletError.code !== 'PGRST116') {
+          throw walletError;
+        }
+
+        if (walletData) {
+          setWallet(walletData);
+        } else {
+          // Initialiser le wallet si nécessaire
+          const { data: newWallet, error: insertError } = await supabase
+            .from('wallets')
+            .insert({
+              user_id: effectiveUserId,
+              balance: 0,
+              currency: 'GNF',
+              wallet_status: 'active'
+            })
+            .select('id, balance, currency')
+            .single();
+
+          if (insertError) {
+            console.error('❌ Erreur création wallet:', insertError);
+            toast.error('Impossible de créer le wallet');
             setLoading(false);
             return;
           }
 
-          const { wallet, created } = await response.json();
-
-          if (wallet) {
-            setWallet({
-              id: wallet.id,
-              balance: wallet.balance,
-              currency: wallet.currency
-            });
-            if (created) {
-              console.log('✅ Nouveau wallet créé via backend');
-            }
-          } else {
-            console.error('❌ Wallet créé mais non retourné');
-            toast.error('Erreur lors de la création du wallet');
-            setLoading(false);
-            return;
+          if (newWallet) {
+            setWallet(newWallet);
+            console.log('✅ Wallet créé avec succès');
           }
-        } catch (initError) {
-          console.error('❌ Erreur création wallet:', initError);
-          toast.error('Impossible de charger le wallet');
-          setLoading(false);
-          return;
         }
       }
       
