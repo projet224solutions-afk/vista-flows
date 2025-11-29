@@ -25,17 +25,51 @@ export function useDriverSubscription() {
   const loadSubscriptionData = async () => {
     try {
       setLoading(true);
-      const [subData, configData] = await Promise.all([
-        DriverSubscriptionService.getActiveSubscription(user!.id),
-        DriverSubscriptionService.getConfig()
-      ]);
+      
+      // Charger config d'abord
+      const configData = await DriverSubscriptionService.getConfig();
+      setConfig(configData);
+
+      // Charger subscription avec retry en cas d'erreur
+      let subData: DriverSubscription | null = null;
+      let retries = 3;
+      let lastError: any = null;
+
+      while (retries > 0 && !subData) {
+        try {
+          subData = await DriverSubscriptionService.getActiveSubscription(user!.id);
+          break;
+        } catch (err) {
+          lastError = err;
+          retries--;
+          if (retries > 0) {
+            // Attendre avant de réessayer
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
 
       setSubscription(subData);
-      setConfig(configData);
       setHasAccess(!!subData && subData.status === 'active');
-    } catch (error) {
+
+      if (!subData && lastError) {
+        console.error('Impossible de charger l\'abonnement après 3 tentatives:', lastError);
+        // Ne pas afficher toast si simplement aucun abonnement
+        if (lastError?.message && !lastError.message.includes('No rows')) {
+          toast.error('Impossible de charger l\'abonnement. Réessayez plus tard.');
+        }
+      }
+    } catch (error: any) {
       console.error('Erreur chargement abonnement:', error);
-      toast.error('Erreur de chargement des données d\'abonnement');
+      // Afficher message détaillé en dev
+      if (import.meta.env.DEV) {
+        console.error('Détails erreur:', {
+          message: error?.message,
+          code: error?.code,
+          details: error?.details
+        });
+      }
+      toast.error('Impossible de charger l\'abonnement');
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic 224Solutions</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 { margin: 0 0 10px 0; }
+        .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .success { background: #10b981; }
+        .error { background: #ef4444; }
+        .warning { background: #f59e0b; }
+        pre { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .test-item { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔍 Diagnostic 224Solutions</h1>
+        <p>Système de diagnostic complet pour identifier les problèmes</p>
+    </div>
+
+    <div class="card">
+        <h2>📦 Tests de Base</h2>
+        <div id="basic-tests"></div>
+    </div>
+
+    <div class="card">
+        <h2>🎨 Test React</h2>
+        <div id="react-test"></div>
+        <button onclick="testReactRender()">Tester React</button>
+    </div>
+
+    <div class="card">
+        <h2>🔗 Test Supabase</h2>
+        <div id="supabase-test"></div>
+        <button onclick="testSupabase()">Tester Supabase</button>
+    </div>
+
+    <div class="card">
+        <h2>📊 Variables d'Environnement</h2>
+        <pre id="env-vars"></pre>
+    </div>
+
+    <div class="card">
+        <h2>🚀 Actions</h2>
+        <button onclick="location.href='/'">Aller à la page principale</button>
+        <button onclick="location.reload()">Recharger cette page</button>
+        <button onclick="clearCacheAndReload()">Vider cache & recharger</button>
+    </div>
+
+    <script type="module">
+        // Tests de base
+        const basicTests = document.getElementById('basic-tests');
+        const tests = [
+            { name: 'JavaScript', test: () => true },
+            { name: 'ES6 Support', test: () => { try { eval('const x = () => {}'); return true; } catch { return false; } }},
+            { name: 'Fetch API', test: () => typeof fetch !== 'undefined' },
+            { name: 'LocalStorage', test: () => typeof localStorage !== 'undefined' },
+            { name: 'SessionStorage', test: () => typeof sessionStorage !== 'undefined' },
+            { name: 'Console', test: () => typeof console !== 'undefined' }
+        ];
+
+        tests.forEach(({ name, test }) => {
+            const result = test();
+            const status = result ? 'success' : 'error';
+            const icon = result ? '✅' : '❌';
+            basicTests.innerHTML += `<div class="test-item">${icon} <strong>${name}:</strong> <span class="status ${status}">${result ? 'OK' : 'ERREUR'}</span></div>`;
+        });
+
+        // Variables d'environnement
+        const envVars = {
+            'VITE_SUPABASE_URL': import.meta.env.VITE_SUPABASE_URL,
+            'VITE_SUPABASE_ANON_KEY': import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Défini' : '✗ Manquant',
+            'VITE_SUPABASE_PUBLISHABLE_KEY': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? '✓ Défini' : '✗ Manquant',
+            'MODE': import.meta.env.MODE,
+            'DEV': import.meta.env.DEV,
+            'PROD': import.meta.env.PROD
+        };
+        document.getElementById('env-vars').textContent = JSON.stringify(envVars, null, 2);
+
+        // Test React
+        window.testReactRender = async () => {
+            const container = document.getElementById('react-test');
+            container.innerHTML = '<p>⏳ Chargement de React...</p>';
+            
+            try {
+                const React = await import('react');
+                const ReactDOM = await import('react-dom/client');
+                
+                container.innerHTML = '<p>✅ React chargé avec succès!</p>';
+                container.innerHTML += `<p>Version React: ${React.version}</p>`;
+                
+                // Tenter de créer un composant simple
+                const testDiv = document.createElement('div');
+                testDiv.id = 'react-mount';
+                container.appendChild(testDiv);
+                
+                const root = ReactDOM.createRoot(testDiv);
+                root.render(React.createElement('div', { style: { padding: '10px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: '8px', marginTop: '10px' } }, '🎉 Composant React rendu avec succès!'));
+                
+            } catch (error) {
+                container.innerHTML = `<p class="status error">❌ Erreur React</p><pre>${error.message}\n\n${error.stack}</pre>`;
+            }
+        };
+
+        // Test Supabase
+        window.testSupabase = async () => {
+            const container = document.getElementById('supabase-test');
+            container.innerHTML = '<p>⏳ Test de connexion Supabase...</p>';
+            
+            try {
+                const { createClient } = await import('@supabase/supabase-js');
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                
+                if (!supabaseUrl || !supabaseKey) {
+                    throw new Error('Variables Supabase manquantes');
+                }
+                
+                const supabase = createClient(supabaseUrl, supabaseKey);
+                
+                // Test simple
+                const { data, error } = await supabase.from('profiles').select('count').limit(0).single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    throw error;
+                }
+                
+                container.innerHTML = '<p class="status success">✅ Connexion Supabase OK</p>';
+                container.innerHTML += `<pre>URL: ${supabaseUrl}\nStatus: Connecté</pre>`;
+                
+            } catch (error) {
+                container.innerHTML = `<p class="status error">❌ Erreur Supabase</p><pre>${error.message}\n\n${error.stack || ''}</pre>`;
+            }
+        };
+
+        // Clear cache
+        window.clearCacheAndReload = () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            location.reload(true);
+        };
+
+        // Auto-run tests
+        setTimeout(() => {
+            testReactRender();
+            testSupabase();
+        }, 500);
+    </script>
+</body>
+</html>

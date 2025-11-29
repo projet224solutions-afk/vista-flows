@@ -38,18 +38,45 @@ export interface SubscriptionRevenue {
 export class DriverSubscriptionService {
   // Obtenir la configuration de l'abonnement
   static async getConfig(): Promise<DriverSubscriptionConfig | null> {
-    const { data, error } = await supabase
-      .from('driver_subscription_config')
-      .select('*')
-      .eq('subscription_type', 'both')
-      .eq('is_active', true)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('driver_subscription_config')
+        .select('*')
+        .eq('subscription_type', 'both')
+        .eq('is_active', true)
+        .single();
 
-    if (error) {
-      console.error('Erreur récupération config:', error);
-      return null;
+      if (error) {
+        // Si pas de config trouvée, utiliser valeurs par défaut
+        if (error.code === 'PGRST116') {
+          console.warn('Aucune config trouvée, utilisation valeurs par défaut');
+          return {
+            id: 'default',
+            subscription_type: 'both',
+            price: 50000,
+            duration_days: 30,
+            is_active: true,
+            yearly_price: 570000,
+            yearly_discount_percentage: 5
+          };
+        }
+        console.error('Erreur récupération config:', error);
+        return null;
+      }
+      return data as DriverSubscriptionConfig;
+    } catch (error) {
+      console.error('Exception récupération config:', error);
+      // Retourner config par défaut en cas d'erreur
+      return {
+        id: 'default',
+        subscription_type: 'both',
+        price: 50000,
+        duration_days: 30,
+        is_active: true,
+        yearly_price: 570000,
+        yearly_discount_percentage: 5
+      };
     }
-    return data as DriverSubscriptionConfig;
   }
 
   // Mettre à jour le prix (Admin seulement)
@@ -68,29 +95,113 @@ export class DriverSubscriptionService {
 
   // Vérifier si l'utilisateur a un abonnement actif
   static async hasActiveSubscription(userId: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .rpc('has_active_driver_subscription', { p_user_id: userId });
+    try {
+      const { data, error } = await supabase
+        .rpc('has_active_driver_subscription', { p_user_id: userId });
 
-    if (error) {
-      console.error('Erreur vérification abonnement:', error);
+      if (error) {
+        // Si la fonction n'existe pas, vérifier manuellement
+        if (error.code === 'PGRST202' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+          console.warn('RPC function not found, checking manually');
+          return await this.hasActiveSubscriptionManual(userId);
+        }
+        console.error('Erreur vérification abonnement:', error);
+        return false;
+      }
+      return data || false;
+    } catch (error) {
+      console.error('Exception vérification abonnement:', error);
       return false;
     }
-    return data || false;
+  }
+
+  // Vérification manuelle (fallback)
+  private static async hasActiveSubscriptionManual(userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('driver_subscriptions')
+        .select('id, status, end_date')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .gte('end_date', new Date().toISOString())
+        .limit(1);
+
+      if (error) {
+        console.error('Erreur vérification manuelle:', error);
+        return false;
+      }
+      return !!(data && data.length > 0);
+    } catch (error) {
+      console.error('Exception vérification manuelle:', error);
+      return false;
+    }
   }
 
   // Obtenir l'abonnement actif de l'utilisateur
   static async getActiveSubscription(userId: string): Promise<DriverSubscription | null> {
-    const { data, error } = await supabase
-      .rpc('get_active_driver_subscription', { p_user_id: userId });
+    try {
+      const { data, error } = await supabase
+        .rpc('get_active_driver_subscription', { p_user_id: userId });
 
-    if (error) {
-      console.error('Erreur récupération abonnement:', error);
+      if (error) {
+        // Si la fonction n'existe pas, récupérer manuellement
+        if (error.code === 'PGRST202' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+          console.warn('RPC function not found, fetching manually');
+          return await this.getActiveSubscriptionManual(userId);
+        }
+        console.error('Erreur récupération abonnement:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return { ...data[0], user_id: userId } as DriverSubscription;
+      }
+      return null;
+    } catch (error) {
+      console.error('Exception récupération abonnement:', error);
+      throw error;
+    }
+  }
+
+  // Récupération manuelle (fallback)
+  private static async getActiveSubscriptionManual(userId: string): Promise<DriverSubscription | null> {
+    try {
+      const { data, error } = await supabase
+        .from('driver_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .gte('end_date', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        // Si pas d'abonnement, ce n'est pas une erreur
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        console.error('Erreur récupération manuelle:', error);
+        return null;
+      }
+
+      // Calculer days_remaining
+      if (data) {
+        const endDate = new Date(data.end_date);
+        const now = new Date();
+        const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          ...data,
+          days_remaining: daysRemaining > 0 ? daysRemaining : 0
+        } as DriverSubscription;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Exception récupération manuelle:', error);
       return null;
     }
-    if (data && data.length > 0) {
-      return { ...data[0], user_id: userId } as DriverSubscription;
-    }
-    return null;
   }
 
   // S'abonner ou renouveler (via Wallet)
