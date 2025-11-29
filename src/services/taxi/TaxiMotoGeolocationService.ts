@@ -15,8 +15,8 @@ export interface RouteInfo {
 }
 
 export class TaxiMotoGeolocationService {
-  private static SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-  private static SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+  private static SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+  private static SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
   /**
    * Calculer la distance entre deux points (formule Haversine)

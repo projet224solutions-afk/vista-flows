@@ -82,7 +82,6 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.initialize_user_wallet TO authenticated;
-GRANT EXECUTE ON FUNCTION public.initialize_user_wallet TO anon;
 
 -- 3. Modifier auto_create_user_wallet pour ne créer que pour auth.users
 DROP FUNCTION IF EXISTS public.auto_create_user_wallet() CASCADE;

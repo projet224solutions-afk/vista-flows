@@ -17,7 +17,7 @@ Les clés Supabase étaient exposées en dur dans le code source (`src/integrati
 ```env
 # 🔐 Supabase Configuration (SÉCURISÉ)
 VITE_SUPABASE_URL=https://uakkxaibujzxdiqzpnpr.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM
+VITE_SUPABASE_ANON_KEY=__VITE_SUPABASE_ANON_KEY__
 
 # 🌩️ Google Cloud Platform
 GOOGLE_APPLICATION_CREDENTIALS=./.gcp/service-account-key.json

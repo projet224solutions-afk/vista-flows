@@ -32,14 +32,14 @@ Deno.serve(async (req) => {
         throw new Error('Missing required fields: amount_gnf or user_id');
       }
 
-      // Record subscription payment via RPC
+      // Record subscription payment via RPC (param names must match the DB function)
       const { data: subId, error: subError } = await supabase.rpc('record_subscription_payment', {
         p_user_id: user_id,
         p_plan_id: plan_id || null,
-        p_subscription_id: subscription_id || null,
-        p_amount_paid: amount_gnf,
+        p_price_paid: amount_gnf,
         p_payment_method: payment_method || 'wallet',
-        p_transaction_id: transaction_id || null
+        p_payment_transaction_id: transaction_id || null,
+        p_billing_cycle: 'monthly'
       });
 
       if (subError) {
@@ -47,14 +47,15 @@ Deno.serve(async (req) => {
         throw subError;
       }
 
-      // Record PDG revenue
-      const { error: revenueError } = await supabase.rpc('handle_pdg_revenue', {
+      // Record PDG revenue (use the DB function `record_pdg_revenue`)
+      const { error: revenueError } = await supabase.rpc('record_pdg_revenue', {
         p_source_type: 'frais_abonnement',
         p_amount: amount_gnf,
         p_percentage: null,
         p_transaction_id: transaction_id || null,
         p_user_id: user_id,
-        p_service_id: null
+        p_service_id: null,
+        p_metadata: subId ? { subscription_id: subId } : null
       });
 
       if (revenueError) {

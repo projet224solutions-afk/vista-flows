@@ -8,9 +8,9 @@ import { createClient } from '@supabase/supabase-js';
 console.log('🔧 PEUPLEMENT DE LA BASE DE DONNÉES AVEC FONCTIONS ET DONNÉES');
 console.log('============================================================\n');
 
-// Configuration Supabase
-const supabaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+// Configuration Supabase (lire depuis les variables d'environnement pour éviter les secrets hardcodés)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

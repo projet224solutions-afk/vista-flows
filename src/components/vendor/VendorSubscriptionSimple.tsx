@@ -37,7 +37,7 @@ export function VendorSubscriptionSimple() {
         `https://uakkxaibujzxdiqzpnpr.supabase.co/rest/v1/rpc/get_active_vendor_subscription?p_user_id=${user.id}`,
         {
           headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
             'Content-Type': 'application/json'
           }
@@ -77,7 +77,6 @@ export function VendorSubscriptionSimple() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            📅 Mon Abonnement
           </CardTitle>
         </CardHeader>
         <CardContent>

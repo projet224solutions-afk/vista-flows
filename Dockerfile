@@ -1,3 +1,19 @@
+FROM node:18-slim
+
+WORKDIR /app
+
+# Installer uniquement les dépendances de production
+COPY package.json package-lock.json* ./
+RUN npm install --production --silent || npm install --production --no-audit --silent
+
+# Copier le script de migration
+COPY apply-wallet-fix.js ./
+COPY supabase ./supabase
+COPY scripts ./scripts
+
+ENV NODE_ENV=production
+
+CMD ["node", "apply-wallet-fix.js"]
 # ==================== STAGE 1: Build ====================
 FROM node:18-alpine AS builder
 

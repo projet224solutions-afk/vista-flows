@@ -137,12 +137,15 @@ Deno.serve(async (req) => {
         .eq('vendor_id', vendor.id);
     }
 
-    // Record revenue
-    await supabase.rpc('handle_pdg_revenue', {
-      p_amount_gnf: amount_gnf,
-      p_revenue_type: 'subscription_renewal',
-      p_description: `Renouvellement abonnement ${subscription.plans.name}`,
-      p_source_user_id: user.id
+    // Record PDG revenue via RPC `record_pdg_revenue`
+    await supabase.rpc('record_pdg_revenue', {
+      p_source_type: 'frais_abonnement',
+      p_amount: amount_gnf,
+      p_percentage: null,
+      p_transaction_id: payment_reference || null,
+      p_user_id: user.id,
+      p_service_id: null,
+      p_metadata: { subscription_id }
     });
 
     // Send success notification

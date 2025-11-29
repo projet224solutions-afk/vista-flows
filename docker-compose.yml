@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  wallet-fix:
+    build: .
+    image: vista-flows-wallet-fix:latest
+    environment:
+      - SUPABASE_URL
+      - SUPABASE_SERVICE_ROLE_KEY
+    env_file:
+      - .env
+    restart: 'no'
+    # run once and exit -- use `docker-compose up --build` to execute

@@ -27,6 +27,11 @@ DECLARE
   v_wallet_id uuid;
   v_result jsonb;
 BEGIN
+  -- Sécurité: autoriser seulement le rôle `service_role` ou l'utilisateur ciblé
+  IF auth.role() IS NOT NULL AND auth.role() <> 'service_role' AND auth.uid() IS NOT NULL AND auth.uid() <> p_user_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED', 'message', 'Not allowed to initialize wallet for another user');
+  END IF;
+
   -- Vérifier si le wallet existe déjà
   SELECT id INTO v_wallet_id
   FROM public.wallets
@@ -74,7 +79,6 @@ $$;
 
 -- 3. Donner les permissions d'exécution
 GRANT EXECUTE ON FUNCTION public.initialize_user_wallet TO authenticated;
-GRANT EXECUTE ON FUNCTION public.initialize_user_wallet TO anon;
 
 -- 4. Créer un trigger pour auto-créer les wallets lors de l'inscription
 CREATE OR REPLACE FUNCTION public.auto_create_user_wallet()
