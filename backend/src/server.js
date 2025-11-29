@@ -24,6 +24,7 @@ import jobsRoutes from './routes/jobs.routes.js';
 import mediaRoutes from './routes/media.routes.js';
 import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
+import walletRoutes from './routes/wallet.routes.js';
 
 // Configuration
 dotenv.config();
@@ -98,6 +99,9 @@ app.use('/health', healthRoutes);
 
 // Auth routes (public)
 app.use('/auth', authRoutes);
+
+// Wallet routes (protégé par JWT)
+app.use('/api/wallet', walletRoutes);
 
 // Internal API (protégé par clé interne)
 app.use('/internal', internalRoutes);
