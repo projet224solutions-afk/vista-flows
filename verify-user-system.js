@@ -3,14 +3,23 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-const SUPABASE_URL = "https://uakkxaibujzxdiqzpnpr.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM";
+// Charger les variables d'environnement depuis un fichier `.env` local si présent
+dotenv.config();
+
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '__SUPABASE_URL__';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '__SUPABASE_KEY__';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Utilitaire de log: n'affiche les messages qu'en dehors de la production
+const log = (...args) => {
+    if (process.env.NODE_ENV !== 'production') console.log(...args);
+};
+
 async function verifyTables() {
-    console.log('🔍 Vérification des tables...');
+    log('🔍 Vérification des tables...');
 
     // Vérifier la table profiles
     try {
@@ -19,14 +28,14 @@ async function verifyTables() {
             .select('id, email, first_name, last_name, role')
             .limit(5);
 
-        console.log(`✅ Table profiles: ${profiles?.length || 0} utilisateurs trouvés`);
+        log(`✅ Table profiles: ${profiles?.length || 0} utilisateurs trouvés`);
         if (profiles && profiles.length > 0) {
             profiles.forEach((profile, i) => {
-                console.log(`   ${i + 1}. ${profile.email} (${profile.role})`);
+                log(`   ${i + 1}. ${profile.email} (${profile.role})`);
             });
         }
     } catch (error) {
-        console.log('❌ Erreur table profiles:', error.message);
+        console.error('❌ Erreur table profiles:', error.message);
     }
 
     // Vérifier la table user_ids
@@ -36,15 +45,15 @@ async function verifyTables() {
             .select('user_id, custom_id')
             .limit(10);
 
-        console.log(`✅ Table user_ids: ${userIds?.length || 0} IDs trouvés`);
+        log(`✅ Table user_ids: ${userIds?.length || 0} IDs trouvés`);
         if (userIds && userIds.length > 0) {
             userIds.forEach((uid, i) => {
                 const isValidFormat = /^[A-Z]{3}[0-9]{4}$/.test(uid.custom_id);
-                console.log(`   ${i + 1}. ${uid.custom_id} ${isValidFormat ? '✅' : '❌'} (${uid.user_id.substring(0, 8)}...)`);
+                log(`   ${i + 1}. ${uid.custom_id} ${isValidFormat ? '✅' : '❌'} (${uid.user_id.substring(0, 8)}...)`);
             });
         }
     } catch (error) {
-        console.log('❌ Erreur table user_ids:', error.message);
+        console.error('❌ Erreur table user_ids:', error.message);
     }
 
     // Vérifier la table wallets
@@ -54,19 +63,19 @@ async function verifyTables() {
             .select('user_id, balance, currency, status')
             .limit(5);
 
-        console.log(`✅ Table wallets: ${wallets?.length || 0} wallets trouvés`);
+        log(`✅ Table wallets: ${wallets?.length || 0} wallets trouvés`);
         if (wallets && wallets.length > 0) {
             wallets.forEach((wallet, i) => {
-                console.log(`   ${i + 1}. ${wallet.balance} ${wallet.currency} (${wallet.status}) - ${wallet.user_id.substring(0, 8)}...`);
+                log(`   ${i + 1}. ${wallet.balance} ${wallet.currency} (${wallet.status}) - ${wallet.user_id.substring(0, 8)}...`);
             });
         }
     } catch (error) {
-        console.log('❌ Erreur table wallets:', error.message);
+        console.error('❌ Erreur table wallets:', error.message);
     }
 }
 
 async function testIdGeneration() {
-    console.log('\n🧪 Test génération d\'IDs...');
+    log('\n🧪 Test génération d\'IDs...');
 
     for (let i = 0; i < 5; i++) {
         let letters = '';
@@ -81,18 +90,18 @@ async function testIdGeneration() {
 
         const id = letters + numbers;
         const isValid = /^[A-Z]{3}[0-9]{4}$/.test(id);
-        console.log(`   ${i + 1}. ${id} ${isValid ? '✅' : '❌'}`);
+        log(`   ${i + 1}. ${id} ${isValid ? '✅' : '❌'}`);
     }
 }
 
 async function main() {
-    console.log('🚀 VÉRIFICATION SYSTÈME D\'ID UTILISATEUR');
-    console.log('========================================');
+    log('🚀 VÉRIFICATION SYSTÈME D\'ID UTILISATEUR');
+    log('========================================');
 
     await verifyTables();
     await testIdGeneration();
 
-    console.log('\n✅ Vérification terminée !');
+    log('\n✅ Vérification terminée !');
 }
 
 main().catch(console.error);

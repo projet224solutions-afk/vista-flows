@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
+    "start": "node backend/src/server.js",
     "dev": "vite",
-    "dev:backend": "node backend/server.js",
+    "dev:backend": "node backend/src/server.js",
     "dev:all": "concurrently -n FRONT,API -c blue,green \"npm:dev\" \"npm:dev:backend\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",

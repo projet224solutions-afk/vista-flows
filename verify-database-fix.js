@@ -4,25 +4,34 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-console.log('✅ VÉRIFICATION DE LA CORRECTION DE BASE DE DONNÉES');
-console.log('==================================================\n');
+// Charger les variables d'environnement locales
+dotenv.config();
 
-// Configuration Supabase
-const supabaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+// Utilitaire de log: n'affiche les messages qu'en dehors de la production
+const log = (...args) => {
+    if (process.env.NODE_ENV !== 'production') console.log(...args);
+};
+
+log('✅ VÉRIFICATION DE LA CORRECTION DE BASE DE DONNÉES');
+log('==================================================\n');
+
+// Configuration Supabase (depuis les variables d'environnement)
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '__SUPABASE_URL__';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function verifyDatabaseFix() {
-    console.log('🔍 VÉRIFICATION EN COURS...\n');
+    log('🔍 VÉRIFICATION EN COURS...\n');
 
     let issuesResolved = 0;
     const totalIssues = 198;
 
     // 1. Vérifier les tables principales
-    console.log('📊 1. VÉRIFICATION DES TABLES PRINCIPALES');
-    console.log('=========================================');
+    log('📊 1. VÉRIFICATION DES TABLES PRINCIPALES');
+    log('=========================================');
 
     const coreTables = [
         'profiles', 'wallets', 'virtual_cards', 'user_ids',
@@ -39,22 +48,22 @@ async function verifyDatabaseFix() {
                 .limit(1);
 
             if (!error) {
-                console.log(`✅ ${table} - OPÉRATIONNELLE`);
+                log(`✅ ${table} - OPÉRATIONNELLE`);
                 coreTablesOK++;
                 issuesResolved += 5;
             } else {
-                console.log(`❌ ${table} - PROBLÈME: ${error.message}`);
+                console.error(`❌ ${table} - PROBLÈME: ${error.message}`);
             }
         } catch (err) {
-            console.log(`❌ ${table} - INACCESSIBLE`);
+            console.error(`❌ ${table} - INACCESSIBLE`);
         }
     }
 
-    console.log(`📊 Tables principales: ${coreTablesOK}/${coreTables.length}\n`);
+    log(`📊 Tables principales: ${coreTablesOK}/${coreTables.length}\n`);
 
     // 2. Vérifier les nouvelles tables de gestion des dépenses
-    console.log('💰 2. VÉRIFICATION DES TABLES DE GESTION DES DÉPENSES');
-    console.log('=====================================================');
+    log('💰 2. VÉRIFICATION DES TABLES DE GESTION DES DÉPENSES');
+    log('=====================================================');
 
     const expenseTables = [
         'notifications',
@@ -76,22 +85,22 @@ async function verifyDatabaseFix() {
                 .limit(1);
 
             if (!error) {
-                console.log(`✅ ${table} - CRÉÉE ET OPÉRATIONNELLE`);
+                log(`✅ ${table} - CRÉÉE ET OPÉRATIONNELLE`);
                 expenseTablesOK++;
                 issuesResolved += 28; // Chaque table résout 28 issues
             } else {
-                console.log(`❌ ${table} - MANQUANTE: ${error.message}`);
+                console.error(`❌ ${table} - MANQUANTE: ${error.message}`);
             }
         } catch (err) {
-            console.log(`❌ ${table} - ERREUR: ${err.message}`);
+            console.error(`❌ ${table} - ERREUR: ${err.message}`);
         }
     }
 
-    console.log(`📊 Tables dépenses: ${expenseTablesOK}/${expenseTables.length}\n`);
+    log(`📊 Tables dépenses: ${expenseTablesOK}/${expenseTables.length}\n`);
 
     // 3. Vérifier les catégories par défaut
-    console.log('🏷️ 3. VÉRIFICATION DES CATÉGORIES PAR DÉFAUT');
-    console.log('============================================');
+    log('🏷️ 3. VÉRIFICATION DES CATÉGORIES PAR DÉFAUT');
+    log('============================================');
 
     try {
         const { data: categories, error } = await supabase
@@ -100,23 +109,23 @@ async function verifyDatabaseFix() {
             .eq('is_default', true);
 
         if (!error && categories) {
-            console.log(`✅ ${categories.length} catégories par défaut trouvées`);
+            log(`✅ ${categories.length} catégories par défaut trouvées`);
             categories.forEach(cat => {
-                console.log(`   • ${cat.name} (${cat.color})`);
+                log(`   • ${cat.name} (${cat.color})`);
             });
             issuesResolved += categories.length * 2;
         } else {
-            console.log('❌ Aucune catégorie par défaut trouvée');
+            log('❌ Aucune catégorie par défaut trouvée');
         }
     } catch (err) {
-        console.log(`❌ Erreur catégories: ${err.message}`);
+        console.error(`❌ Erreur catégories: ${err.message}`);
     }
 
     console.log('');
 
     // 4. Vérifier les fonctions SQL
-    console.log('🔧 4. VÉRIFICATION DES FONCTIONS SQL');
-    console.log('===================================');
+    log('🔧 4. VÉRIFICATION DES FONCTIONS SQL');
+    log('===================================');
 
     const functions = [
         'create_default_expense_categories',
@@ -131,7 +140,7 @@ async function verifyDatabaseFix() {
             // Tenter d'appeler la fonction avec des paramètres de test
             if (func === 'create_default_expense_categories') {
                 // Cette fonction nécessite un UUID valide, on skip le test
-                console.log(`ℹ️ ${func} - PRÉSUMÉE OPÉRATIONNELLE`);
+                log(`ℹ️ ${func} - PRÉSUMÉE OPÉRATIONNELLE`);
                 functionsOK++;
                 issuesResolved += 5;
             } else {
@@ -140,15 +149,15 @@ async function verifyDatabaseFix() {
                 issuesResolved += 5;
             }
         } catch (err) {
-            console.log(`❌ ${func} - ERREUR: ${err.message}`);
+                console.error(`❌ ${func} - ERREUR: ${err.message}`);
         }
     }
 
-    console.log(`📊 Fonctions SQL: ${functionsOK}/${functions.length}\n`);
+    log(`📊 Fonctions SQL: ${functionsOK}/${functions.length}\n`);
 
     // 5. Test de performance
-    console.log('⚡ 5. TEST DE PERFORMANCE');
-    console.log('========================');
+    log('⚡ 5. TEST DE PERFORMANCE');
+    log('========================');
 
     const startTime = Date.now();
 
@@ -161,75 +170,75 @@ async function verifyDatabaseFix() {
         const queryTime = Date.now() - startTime;
 
         if (!error && queryTime < 2000) {
-            console.log(`✅ Performance OK: ${queryTime}ms`);
+            log(`✅ Performance OK: ${queryTime}ms`);
             issuesResolved += 10;
         } else {
-            console.log(`⚠️ Performance lente: ${queryTime}ms`);
+            log(`⚠️ Performance lente: ${queryTime}ms`);
             issuesResolved += 5;
         }
     } catch (err) {
-        console.log(`❌ Erreur performance: ${err.message}`);
+        console.error(`❌ Erreur performance: ${err.message}`);
     }
 
-    console.log('');
+    log('');
 
     // 6. Résumé final
-    console.log('📋 RÉSUMÉ DE LA VÉRIFICATION');
-    console.log('============================');
+    log('📋 RÉSUMÉ DE LA VÉRIFICATION');
+    log('============================');
 
     const successRate = (issuesResolved / totalIssues) * 100;
 
-    console.log(`✅ Issues résolues: ${issuesResolved}/${totalIssues}`);
-    console.log(`📊 Taux de réussite: ${successRate.toFixed(1)}%`);
-    console.log(`🗄️ Tables principales: ${coreTablesOK}/9`);
-    console.log(`💰 Tables dépenses: ${expenseTablesOK}/7`);
-    console.log(`🔧 Fonctions SQL: ${functionsOK}/3\n`);
+    log(`✅ Issues résolues: ${issuesResolved}/${totalIssues}`);
+    log(`📊 Taux de réussite: ${successRate.toFixed(1)}%`);
+    log(`🗄️ Tables principales: ${coreTablesOK}/9`);
+    log(`💰 Tables dépenses: ${expenseTablesOK}/7`);
+    log(`🔧 Fonctions SQL: ${functionsOK}/3\n`);
 
     // 7. Diagnostic et recommandations
     if (successRate >= 90) {
-        console.log('🎉 SUCCÈS COMPLET !');
-        console.log('==================');
-        console.log('✅ Votre base de données est parfaitement opérationnelle');
-        console.log('✅ Le système de gestion des dépenses fonctionne');
-        console.log('✅ Toutes les fonctionnalités sont disponibles');
+        log('🎉 SUCCÈS COMPLET !');
+        log('==================');
+        log('✅ Votre base de données est parfaitement opérationnelle');
+        log('✅ Le système de gestion des dépenses fonctionne');
+        log('✅ Toutes les fonctionnalités sont disponibles');
 
-        console.log('\n🚀 PROCHAINES ÉTAPES:');
-        console.log('1. 🔄 Redémarrez votre serveur: npm run dev');
-        console.log('2. 🌐 Testez l\'interface: http://localhost:5173/vendeur');
-        console.log('3. 📱 Cliquez sur l\'onglet "Dépenses" (rouge)');
-        console.log('4. 🎉 Créez votre première dépense !');
+        log('\n🚀 PROCHAINES ÉTAPES:');
+        log('1. 🔄 Redémarrez votre serveur: npm run dev');
+        log('2. 🌐 Testez l\'interface: http://localhost:5173/vendeur');
+        log('3. 📱 Cliquez sur l\'onglet "Dépenses" (rouge)');
+        log('4. 🎉 Créez votre première dépense !');
 
     } else if (successRate >= 70) {
-        console.log('⚠️ SUCCÈS PARTIEL');
-        console.log('==================');
-        console.log('✅ La plupart des fonctionnalités sont opérationnelles');
-        console.log('⚠️ Quelques tables ou fonctions peuvent manquer');
+        log('⚠️ SUCCÈS PARTIEL');
+        log('==================');
+        log('✅ La plupart des fonctionnalités sont opérationnelles');
+        log('⚠️ Quelques tables ou fonctions peuvent manquer');
 
-        console.log('\n💡 RECOMMANDATIONS:');
-        console.log('1. 📋 Suivez le guide: GUIDE_CORRECTION_DATABASE.md');
-        console.log('2. 🗄️ Exécutez le script SQL dans Supabase Dashboard');
-        console.log('3. 🔄 Relancez cette vérification');
+        log('\n💡 RECOMMANDATIONS:');
+        log('1. 📋 Suivez le guide: GUIDE_CORRECTION_DATABASE.md');
+        log('2. 🗄️ Exécutez le script SQL dans Supabase Dashboard');
+        log('3. 🔄 Relancez cette vérification');
 
     } else {
-        console.log('❌ CORRECTION INCOMPLÈTE');
-        console.log('========================');
-        console.log('❌ De nombreuses issues persistent');
-        console.log('❌ Le système ne fonctionnera pas correctement');
+        log('❌ CORRECTION INCOMPLÈTE');
+        log('========================');
+        log('❌ De nombreuses issues persistent');
+        log('❌ Le système ne fonctionnera pas correctement');
 
-        console.log('\n🆘 ACTIONS REQUISES:');
-        console.log('1. 📋 Lisez attentivement: GUIDE_CORRECTION_DATABASE.md');
-        console.log('2. 🌐 Connectez-vous à Supabase Dashboard');
-        console.log('3. 📄 Exécutez le script fix-database-issues.sql');
-        console.log('4. 🔄 Relancez cette vérification');
+        log('\n🆘 ACTIONS REQUISES:');
+        log('1. 📋 Lisez attentivement: GUIDE_CORRECTION_DATABASE.md');
+        log('2. 🌐 Connectez-vous à Supabase Dashboard');
+        log('3. 📄 Exécutez le script fix-database-issues.sql');
+        log('4. 🔄 Relancez cette vérification');
     }
 
     // 8. Informations techniques
-    console.log('\n🔧 INFORMATIONS TECHNIQUES');
-    console.log('==========================');
-    console.log(`📡 URL Supabase: ${supabaseUrl}`);
-    console.log(`🔑 Clé API: ${supabaseKey.substring(0, 20)}...`);
-    console.log(`⏰ Temps de vérification: ${Date.now() - startTime}ms`);
-    console.log(`📅 Date: ${new Date().toLocaleString('fr-FR')}`);
+    log('\n🔧 INFORMATIONS TECHNIQUES');
+    log('==========================');
+    log(`📡 URL Supabase: ${supabaseUrl}`);
+    log(`🔑 Clé API: ${supabaseKey ? 'CONFIGURÉE' : 'NON CONFIGURÉE'}`);
+    log(`⏰ Temps de vérification: ${Date.now() - startTime}ms`);
+    log(`📅 Date: ${new Date().toLocaleString('fr-FR')}`);
 }
 
 // Lancer la vérification

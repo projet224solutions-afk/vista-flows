@@ -14,6 +14,8 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     'react-refresh/only-export-components': 'warn',
     'no-empty': 'warn',
+    // Interdire les console.log en développement: conserver warn/error
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
   ignorePatterns: ['dist/**', 'electron-dist/**', 'node_modules/**'],
 };
