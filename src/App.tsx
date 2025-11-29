@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -88,8 +89,10 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
+              {/* Accueil par défaut */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
@@ -114,7 +117,8 @@ function App() {
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
-              <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
+              {/* Abonnement conducteur: disponible uniquement via interface vendeur */}
+              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
               
@@ -311,6 +315,7 @@ function App() {
             <CommunicationWidget position="bottom-right" showNotifications={true} />
             <QuickFooter />
           </Suspense>
+          </ErrorBoundary>
         </TooltipProvider>
       </CartProvider>
     </AuthProvider>
