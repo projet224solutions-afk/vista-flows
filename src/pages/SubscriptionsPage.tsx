@@ -66,40 +66,12 @@ export default function SubscriptionsPage() {
         return;
       }
 
-      // Créer une transaction de débit wallet
-      const { data: transactionData, error: transactionError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: crypto.randomUUID(),
-          transaction_type: 'subscription_payment',
-          amount: price,
-          net_amount: price,
-          description: `Abonnement ${selectedPlan.display_name} - ${billingCycle === 'yearly' ? 'Annuel' : 'Mensuel'}`,
-          status: 'completed',
-        })
-        .select()
-        .single();
-
-      if (transactionError) throw transactionError;
-
-      // Mettre à jour le solde du wallet
-      const { error: walletError } = await supabase
-        .from('wallets')
-        .update({ 
-          balance: walletData.balance - price,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
-
-      if (walletError) throw walletError;
-
-      // Enregistrer l'abonnement
+      // Enregistrer l'abonnement via la fonction RPC sécurisée
       const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
         userId: user.id,
         planId: selectedPlan.id,
         pricePaid: price,
         paymentMethod: 'wallet',
-        paymentTransactionId: transactionData?.id,
         billingCycle: billingCycle
       });
 
