@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * 🚀 DataManager Unifié - 224Solutions
  * Couche d'abstraction pour optimiser Backend ↔ Frontend ↔ Database
@@ -20,7 +19,7 @@ export interface DataQuery {
 export interface DataMutation {
   table: string;
   operation: 'insert' | 'update' | 'delete';
-  data?: unknown;
+  data?: Record<string, unknown>;
   filters?: Record<string, unknown>;
 }
 
@@ -61,7 +60,7 @@ export class DataManager {
       console.log(`🔍 Fetching data for ${queryConfig.table}`);
       
       // Construire la requête
-      let query = supabase
+      let query: any = supabase
         .from(queryConfig.table as unknown)
         .select(queryConfig.select || '*');
 
@@ -69,13 +68,33 @@ export class DataManager {
       if (queryConfig.filters) {
         Object.entries(queryConfig.filters).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            query = query.in(key, value as unknown);
-          } else if (typeof value === 'object' && value.operator) {
+            query = query.in(key, value);
+          } else if (value && typeof value === 'object' && 'operator' in value && 'value' in value) {
             // Filtres avancés : { operator: 'gte', value: 100 }
-            const operator = value.operator as unknown;
-            query = (query as unknown)[operator](key, value.value);
+            const filterObj = value as { operator: string; value: unknown };
+            const operator = filterObj.operator;
+            const filterValue = filterObj.value;
+            switch (operator) {
+              case 'gte':
+                query = query.gte(key, filterValue);
+                break;
+              case 'lte':
+                query = query.lte(key, filterValue);
+                break;
+              case 'gt':
+                query = query.gt(key, filterValue);
+                break;
+              case 'lt':
+                query = query.lt(key, filterValue);
+                break;
+              case 'neq':
+                query = query.neq(key, filterValue);
+                break;
+              default:
+                query = query.eq(key, filterValue);
+            }
           } else {
-            query = query.eq(key, value as unknown);
+            query = query.eq(key, value);
           }
         });
       }
@@ -121,7 +140,7 @@ export class DataManager {
     try {
       console.log(`✏️ Mutating ${mutationConfig.table} - ${mutationConfig.operation}`);
 
-      let query = supabase.from(mutationConfig.table as unknown);
+      let query: any = supabase.from(mutationConfig.table as unknown);
       let result;
 
       switch (mutationConfig.operation) {
@@ -184,12 +203,12 @@ export class DataManager {
           schema: 'public',
           table: queryConfig.table,
         },
-        (payload) => {
+        (payload: Record<string, unknown>) => {
           console.log(`🔄 Realtime update for ${queryConfig.table}:`, payload);
-          
+
           // Invalider le cache
           this.invalidateCache(queryConfig.table);
-          
+
           // Notifier les listeners
           this.notifyListeners(queryConfig.table, payload);
         }
@@ -242,7 +261,7 @@ export class DataManager {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
   private setCache<T>(key: string, data: T, ttl: number) {
@@ -266,7 +285,7 @@ export class DataManager {
   /**
    * 🔧 Utilitaires
    */
-  private applyFilters(query: Record<string, unknown>, filters: Record<string, unknown>) {
+  private applyFilters(query: any, filters: Record<string, unknown>) {
     Object.entries(filters).forEach(([key, value]) => {
       query = query.eq(key, value);
     });

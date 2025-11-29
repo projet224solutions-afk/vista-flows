@@ -42,8 +42,13 @@ const QuotesInvoicesPDG = lazy(() => import('@/components/pdg/QuotesInvoicesPDG'
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [mfaVerified, setMfaVerified] = useState(false);
+  const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
+    // Persistance courte dans la session du navigateur
+    return sessionStorage.getItem('mfa_verified_admin') === 'true';
+  });
   const [verifyingMfa, setVerifyingMfa] = useState(false);
+  const [showMfaDialog, setShowMfaDialog] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -86,7 +91,12 @@ export default function PDG224Solutions() {
       return;
     }
 
-    // Log de l'accès PDG une fois le profil chargé
+    // Exiger MFA avant toute action PDG
+    if (profile && profile.role === 'admin' && !mfaVerified) {
+      setShowMfaDialog(true);
+    }
+
+    // Log de l'accès PDG une fois le profil chargé (après MFA si possible)
     if (profile && profile.role === 'admin') {
       const logAccess = async () => {
         try {
@@ -104,39 +114,50 @@ export default function PDG224Solutions() {
     }
   }, [user, profile, profileLoading, navigate]);
 
+  const handleSendMfaCode = useCallback(async () => {
+    if (!user?.email) {
+      toast.error('Email introuvable pour MFA');
+      return;
+    }
+    try {
+      // Envoi code OTP par email
+      const { error } = await supabase.auth.signInWithOtp({
+        email: user.email,
+        options: { shouldCreateUser: false }
+      });
+      if (error) throw error;
+      toast.success('Code MFA envoyé à votre email');
+    } catch (e: any) {
+      console.error('Erreur envoi code MFA:', e);
+      toast.error(e.message || 'Échec envoi code MFA');
+    }
+  }, [user]);
+
   const handleVerifyMfa = useCallback(async () => {
-    if (!user) return;
+    if (!user?.email) return;
+    if (!mfaCode || mfaCode.length < 4) {
+      toast.error('Entrez le code MFA reçu par email');
+      return;
+    }
     setVerifyingMfa(true);
     try {
-      // Vérification MFA avec timeout et gestion d'erreur améliorée
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout MFA')), 10000)
-      );
-
-      const mfaPromise = supabase.auth.verifyOtp({
-        token: '123456', // À remplacer par un vrai token MFA
+      const { data, error } = await supabase.auth.verifyOtp({
         type: 'email',
-        email: user?.email || ''
+        email: user.email,
+        token: mfaCode
       });
-
-      const { data, error } = await Promise.race([mfaPromise, timeoutPromise]) as any;
-
-      if (error) {
-        // Pour la démo, on simule une vérification réussie
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setMfaVerified(true);
-        toast.success('MFA vérifié avec succès');
-      } else {
-        setMfaVerified(true);
-        toast.success('MFA vérifié avec succès');
-      }
-    } catch (e) {
-      console.error('Erreur MFA:', e);
-      toast.error('Échec de vérification MFA');
+      if (error) throw error;
+      setMfaVerified(true);
+      sessionStorage.setItem('mfa_verified_admin', 'true');
+      setShowMfaDialog(false);
+      toast.success('MFA vérifié, accès PDG autorisé');
+    } catch (e: any) {
+      console.error('Erreur vérification MFA:', e);
+      toast.error(e.message || 'Code MFA invalide');
     } finally {
       setVerifyingMfa(false);
     }
-  }, [user]);
+  }, [user, mfaCode]);
 
   const handleUpdateEmail = useCallback(async () => {
     if (!newEmail || !newEmail.includes('@')) {
@@ -185,6 +206,37 @@ export default function PDG224Solutions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      {/* Dialog MFA obligatoire pour PDG */}
+      {profile?.role === 'admin' && !mfaVerified && (
+        <Dialog open={showMfaDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Vérification MFA requise</DialogTitle>
+              <DialogDescription>
+                Un code de sécurité est nécessaire pour accéder à l'interface PDG.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Button variant="secondary" onClick={handleSendMfaCode} disabled={verifyingMfa}>
+                Envoyer le code par email
+              </Button>
+              <Input
+                placeholder="Entrez le code reçu"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+              />
+              <Button onClick={handleVerifyMfa} disabled={verifyingMfa}>
+                Vérifier
+              </Button>
+            </div>
+            <DialogFooter>
+              <p className="text-xs text-muted-foreground">
+                Astuce: Le code expire après quelques minutes.
+              </p>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       {/* Animated Background Pattern */}
       <div className="fixed inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />

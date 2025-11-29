@@ -66,9 +66,9 @@ class CopiloteService {
       if (error) throw error;
 
       const messages: Message[] = [];
-      (data || []).forEach(conv => {
-        messages.push({ id: `${conv.id}-in`, role: 'user', content: conv.message_in, timestamp: conv.created_at });
-        messages.push({ id: `${conv.id}-out`, role: 'assistant', content: conv.message_out, timestamp: conv.created_at });
+      (data || []).forEach((conv: Record<string, unknown>) => {
+        messages.push({ id: `${conv.id as string}-in`, role: 'user', content: conv.message_in as string, timestamp: conv.created_at as string });
+        messages.push({ id: `${conv.id as string}-out`, role: 'assistant', content: conv.message_out as string, timestamp: conv.created_at as string });
       });
 
       return messages.reverse();
@@ -95,7 +95,7 @@ class CopiloteService {
     }
   }
 
-  async getStatus(): Promise<unknown> {
+  async getStatus(): Promise<{ status: string; version: string; uptime?: number }> {
     try {
       const { data, error } = await supabase.functions.invoke('pdg-ai-assistant', {
         body: { action: 'status' }
@@ -142,7 +142,7 @@ class CopiloteService {
     }
   }
 
-  async getTransactionHistory(limit: number = 10): Promise<unknown[]> {
+  async getTransactionHistory(limit: number = 10): Promise<Record<string, unknown>[]> {
     try {
       const { data: transactions, error } = await supabase
         .from('enhanced_transactions')
@@ -212,8 +212,8 @@ class CopiloteService {
       const profiles = profilesData.data || [];
       const wallets = walletsData.data || [];
 
-      const completedTransactions = transactions.filter(t => t.status === 'completed');
-      const totalRevenue = completedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+      const completedTransactions = transactions.filter((t: Record<string, unknown>) => t.status === 'completed');
+      const totalRevenue = completedTransactions.reduce((sum: number, t: Record<string, unknown>) => sum + (t.amount as number || 0), 0);
 
       const analysisMessage = `
 📊 ANALYSE SYSTÈME 224SOLUTIONS
@@ -230,7 +230,7 @@ class CopiloteService {
     }
   }
 
-  async getAIStats(): Promise<unknown> {
+  async getAIStats(): Promise<{ total_conversations: number; service_status: string }> {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Non authentifié');

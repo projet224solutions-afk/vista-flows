@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnostic 224Solutions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .status {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .ok { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnostic 224Solutions</h1>
+    
+    <div class="status">
+        <h2>1. Test des Scripts</h2>
+        <div id="script-test"></div>
+    </div>
+
+    <div class="status">
+        <h2>2. Test React</h2>
+        <div id="react-test"></div>
+    </div>
+
+    <div class="status">
+        <h2>3. Variables d'Environnement</h2>
+        <div id="env-test"></div>
+    </div>
+
+    <div class="status">
+        <h2>4. Test Supabase</h2>
+        <div id="supabase-test"></div>
+    </div>
+
+    <div class="status">
+        <h2>5. Erreurs Console</h2>
+        <div id="console-errors"></div>
+    </div>
+
+    <script type="module">
+        const results = {
+            script: '✅ JavaScript fonctionne',
+            react: '❌ En attente...',
+            env: '❌ En attente...',
+            supabase: '❌ En attente...',
+            errors: []
+        };
+
+        // Capturer les erreurs
+        window.addEventListener('error', (e) => {
+            results.errors.push(`${e.message} at ${e.filename}:${e.lineno}`);
+            updateDisplay();
+        });
+
+        // Test 1: Script OK
+        document.getElementById('script-test').innerHTML = '<span class="ok">' + results.script + '</span>';
+
+        // Test 2: React
+        (async () => {
+            try {
+                const React = await import('react');
+                const ReactDOM = await import('react-dom/client');
+                results.react = `✅ React ${React.version} chargé`;
+            } catch (error) {
+                results.react = `❌ Erreur React: ${error.message}`;
+            }
+            updateDisplay();
+        })();
+
+        // Test 3: Variables d'environnement
+        (async () => {
+            try {
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                
+                if (supabaseUrl && supabaseKey && !supabaseKey.includes('your-anon-key')) {
+                    results.env = `✅ Variables configurées<br><small>URL: ${supabaseUrl}</small>`;
+                } else {
+                    results.env = '❌ Variables manquantes ou placeholders';
+                }
+            } catch (error) {
+                results.env = `❌ Erreur: ${error.message}`;
+            }
+            updateDisplay();
+        })();
+
+        // Test 4: Supabase
+        (async () => {
+            try {
+                const { createClient } = await import('@supabase/supabase-js');
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                
+                if (supabaseUrl && supabaseKey) {
+                    const supabase = createClient(supabaseUrl, supabaseKey);
+                    const { error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+                    
+                    if (!error) {
+                        results.supabase = '✅ Connexion Supabase OK';
+                    } else {
+                        results.supabase = `⚠️ Supabase accessible mais: ${error.message}`;
+                    }
+                } else {
+                    results.supabase = '❌ Variables Supabase manquantes';
+                }
+            } catch (error) {
+                results.supabase = `❌ Erreur: ${error.message}`;
+            }
+            updateDisplay();
+        })();
+
+        function updateDisplay() {
+            document.getElementById('react-test').innerHTML = results.react;
+            document.getElementById('env-test').innerHTML = results.env;
+            document.getElementById('supabase-test').innerHTML = results.supabase;
+            
+            if (results.errors.length > 0) {
+                document.getElementById('console-errors').innerHTML = 
+                    '<pre class="error">' + results.errors.join('\n') + '</pre>';
+            } else {
+                document.getElementById('console-errors').innerHTML = 
+                    '<span class="ok">Aucune erreur détectée</span>';
+            }
+        }
+
+        // Test initial du App.tsx
+        setTimeout(async () => {
+            try {
+                console.log('Test chargement App.tsx...');
+                const App = await import('./src/App.tsx');
+                console.log('✅ App.tsx chargé:', App);
+            } catch (error) {
+                console.error('❌ Erreur chargement App.tsx:', error);
+                results.errors.push(`App.tsx: ${error.message}`);
+                updateDisplay();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

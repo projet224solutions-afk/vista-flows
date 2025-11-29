@@ -321,7 +321,7 @@ export default function Profil() {
               <p className="text-muted-foreground mb-6">
                 Vous devez vous connecter pour accéder à votre profil
               </p>
-              <Button 
+              <Button
                 onClick={() => navigate('/auth')}
                 className="bg-vendeur-primary hover:bg-vendeur-primary/90"
               >

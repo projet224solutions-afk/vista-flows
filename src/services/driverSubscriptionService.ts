@@ -36,6 +36,31 @@ export interface SubscriptionRevenue {
 }
 
 export class DriverSubscriptionService {
+  // Initialiser un wallet si absent
+  static async ensureWallet(userId: string): Promise<{ exists: boolean; balance: number }> {
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', userId)
+        .single();
+
+      if (!error && data) return { exists: true, balance: data.balance || 0 };
+
+      // Si non trouvé, créer un wallet à 0
+      const { error: insertError } = await supabase
+        .from('wallets')
+        .insert({ user_id: userId, balance: 0, currency: 'GNF', updated_at: new Date().toISOString() });
+      if (insertError) {
+        console.error('Erreur création wallet:', insertError);
+        return { exists: false, balance: 0 };
+      }
+      return { exists: true, balance: 0 };
+    } catch (e) {
+      console.error('Exception ensureWallet:', e);
+      return { exists: false, balance: 0 };
+    }
+  }
   // Obtenir la configuration de l'abonnement
   static async getConfig(): Promise<DriverSubscriptionConfig | null> {
     try {
@@ -192,8 +217,18 @@ export class DriverSubscriptionService {
         const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         
         return {
-          ...data,
-          days_remaining: daysRemaining > 0 ? daysRemaining : 0
+          id: data.id,
+          user_id: data.user_id,
+          type: data.type,
+          price: data.price,
+          status: data.status,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          payment_method: data.payment_method,
+          transaction_id: data.transaction_id,
+          days_remaining: daysRemaining,
+          billing_cycle: data.billing_cycle,
+          metadata: data.metadata
         } as DriverSubscription;
       }
 
@@ -203,7 +238,6 @@ export class DriverSubscriptionService {
       return null;
     }
   }
-
   // S'abonner ou renouveler (via Wallet)
   static async subscribeWithWallet(
     userId: string,
@@ -217,9 +251,14 @@ export class DriverSubscriptionService {
         .select('balance')
         .eq('user_id', userId)
         .single();
-
-      if (walletError || !walletData) {
-        return { success: false, error: 'Wallet non trouvé' };
+      if (walletError) {
+        // Tenter de créer/initialiser un wallet
+        const ensured = await this.ensureWallet(userId);
+        if (!ensured.exists) {
+          return { success: false, error: 'Wallet introuvable' };
+        }
+        // Utiliser balance 0 après création
+        (walletData as any) = { balance: ensured.balance };
       }
 
       // Récupérer le prix
@@ -229,8 +268,8 @@ export class DriverSubscriptionService {
       }
 
       // Calculer le prix selon le cycle de facturation
-      const price = billingCycle === 'yearly' 
-        ? (config.yearly_price || config.price * 12 * 0.95)
+      const price = billingCycle === 'yearly'
+        ? (config.yearly_price ?? config.price * 12)
         : config.price;
 
       if (walletData.balance < price) {

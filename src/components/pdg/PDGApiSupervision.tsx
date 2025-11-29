@@ -1,13 +1,83 @@
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+const ENDPOINTS = [
+  { name: 'API Auth', url: '/api/auth/health' },
+  { name: 'API Produits', url: '/api/products/health' },
+  { name: 'API Commandes', url: '/api/orders/health' },
+  { name: 'API Paiements', url: '/api/payments/health' },
+  { name: 'API Notifications', url: '/api/notifications/health' },
+];
 
 export default function PDGApiSupervision() {
+  const [status, setStatus] = useState<'ok'|'degraded'|'down'>('ok');
+  const [latency, setLatency] = useState<number|null>(null);
+  const [availability, setAvailability] = useState<number|null>(null);
+  const [incidents, setIncidents] = useState<number|null>(null);
+  const [endpoints, setEndpoints] = useState<any[]>([]);
+  const [criticalEvents, setCriticalEvents] = useState<any[]>([]);
+  const [openIncidents, setOpenIncidents] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Mesure la latence et le statut de chaque endpoint
+    Promise.all(ENDPOINTS.map(async (ep) => {
+      const start = performance.now();
+      try {
+        const res = await fetch(ep.url, { method: 'GET' });
+        const elapsed = Math.round(performance.now() - start);
+        return {
+          name: ep.name,
+          status: res.ok ? 'operational' : 'down',
+          latency: `${elapsed}ms`,
+        };
+      } catch {
+        return {
+          name: ep.name,
+          status: 'down',
+          latency: 'N/A',
+        };
+      }
+    })).then((results) => {
+      setEndpoints(results);
+      // Statut global
+      if (results.some(r => r.status === 'down')) setStatus('degraded');
+      else setStatus('ok');
+      // Latence moyenne
+      const validLatencies = results.map(r => parseInt(r.latency)).filter(n => !isNaN(n));
+      setLatency(validLatencies.length ? Math.round(validLatencies.reduce((a,b)=>a+b,0)/validLatencies.length) : null);
+      // Disponibilité (simple: % endpoints up)
+      setAvailability(Math.round(100 * results.filter(r=>r.status==='operational').length / results.length));
+    });
+
+    // Incidents critiques (24h)
+    supabase
+      .from('recent_critical_events')
+      .select('*')
+      .then(({ data }) => setCriticalEvents(data || []));
+
+    // Incidents ouverts
+    supabase
+      .from('open_incidents_summary')
+      .select('*')
+      .then(({ data }) => setOpenIncidents(data || []));
+
+    // Nombre d'incidents 24h
+    supabase
+      .from('security_incidents')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open')
+      .then(({ count }) => setIncidents(count || 0));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Supervision API</h2>
-        <p className="text-muted-foreground">Surveillez les performances et la disponibilité des API</p>
+        <p className="text-muted-foreground">Surveillez les performances et la disponibilité des API (données réelles)</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -18,8 +88,14 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-2xl font-bold">Opérationnel</span>
+              {status === 'ok' && <CheckCircle className="h-5 w-5 text-green-500" />} 
+              {status === 'degraded' && <AlertTriangle className="h-5 w-5 text-orange-500" />} 
+              {status === 'down' && <XCircle className="h-5 w-5 text-red-500" />} 
+              <span className="text-2xl font-bold">
+                {status === 'ok' && 'Opérationnel'}
+                {status === 'degraded' && 'Dégradé'}
+                {status === 'down' && 'Hors service'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -30,8 +106,8 @@ export default function PDGApiSupervision() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124ms</div>
-            <p className="text-xs text-muted-foreground">Moyenne sur 24h</p>
+            <div className="text-2xl font-bold">{latency !== null ? `${latency}ms` : '...'}</div>
+            <p className="text-xs text-muted-foreground">Moyenne sur 5 endpoints</p>
           </CardContent>
         </Card>
 
@@ -41,18 +117,18 @@ export default function PDGApiSupervision() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">99.98%</div>
-            <p className="text-xs text-muted-foreground">Dernier mois</p>
+            <div className="text-2xl font-bold">{availability !== null ? `${availability}%` : '...'}</div>
+            <p className="text-xs text-muted-foreground">% endpoints UP</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidents</CardTitle>
+            <CardTitle className="text-sm font-medium">Incidents ouverts</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{incidents !== null ? incidents : '...'}</div>
             <p className="text-xs text-muted-foreground">Dernières 24h</p>
           </CardContent>
         </Card>
@@ -65,24 +141,60 @@ export default function PDGApiSupervision() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { name: 'API Auth', status: 'operational', latency: '45ms' },
-              { name: 'API Produits', status: 'operational', latency: '87ms' },
-              { name: 'API Commandes', status: 'operational', latency: '102ms' },
-              { name: 'API Paiements', status: 'operational', latency: '156ms' },
-              { name: 'API Notifications', status: 'operational', latency: '78ms' },
-            ].map((endpoint) => (
+            {endpoints.map((endpoint) => (
               <div key={endpoint.name} className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  {endpoint.status === 'operational' ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-500" />
+                  )}
                   <div>
                     <p className="font-medium">{endpoint.name}</p>
                     <p className="text-sm text-muted-foreground">Latence: {endpoint.latency}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                  Opérationnel
+                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
+                  {endpoint.status === 'operational' ? 'Opérationnel' : 'Hors service'}
                 </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Incidents critiques (24h)</CardTitle>
+          <CardDescription>Logs d'audit critiques détectés</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {criticalEvents.length === 0 && <div className="text-muted-foreground">Aucun événement critique détecté.</div>}
+            {criticalEvents.map((evt, i) => (
+              <div key={i} className="p-2 border rounded flex flex-col gap-1">
+                <span className="font-semibold">{evt.event_type}</span>
+                <span className="text-xs text-muted-foreground">{evt.created_at}</span>
+                <span className="text-xs">{evt.details}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Incidents ouverts</CardTitle>
+          <CardDescription>Résumé par sévérité</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {openIncidents.length === 0 && <div className="text-muted-foreground">Aucun incident ouvert.</div>}
+            {openIncidents.map((inc, i) => (
+              <div key={i} className="flex items-center gap-4 p-2 border rounded">
+                <span className="font-semibold">{inc.severity}</span>
+                <span className="text-xs">{inc.open_count} ouverts</span>
+                <span className="text-xs text-muted-foreground">Dernier: {inc.latest_incident}</span>
               </div>
             ))}
           </div>
