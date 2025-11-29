@@ -32,31 +32,28 @@ export function VendorSubscriptionSimple() {
     
     try {
       setLoading(true);
-      // Requête brute sans types stricts
-      const response = await fetch(
-        `https://uakkxaibujzxdiqzpnpr.supabase.co/rest/v1/rpc/get_active_vendor_subscription?p_user_id=${user.id}`,
-        {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Utiliser le client Supabase pour appeler la RPC de façon fiable
+      const { data, error } = await supabase.rpc('get_active_vendor_subscription', { p_user_id: user.id });
 
-      const data = await response.json();
+      if (error) {
+        console.error('Erreur RPC get_active_vendor_subscription:', error);
+        toast.error('Impossible de charger l\'abonnement');
+        return;
+      }
 
-      if (data && data.length > 0) {
-        const sub = data[0];
+      // La RPC peut retourner un objet JSON ou un tableau
+      const result = Array.isArray(data) ? data[0] : data;
+      if (result) {
         setSubscription({
-          subscription_id: sub.subscription_id,
-          plan_display_name: sub.plan_display_name,
-          status: sub.status,
-          current_period_end: sub.current_period_end
+          subscription_id: result.subscription_id ?? null,
+          plan_display_name: result.plan_display_name ?? result.plan_name ?? 'Inconnu',
+          status: result.status ?? 'free',
+          current_period_end: result.current_period_end ?? null
         });
       }
     } catch (error) {
       console.error('Erreur chargement abonnement:', error);
+      toast.error('Erreur lors du chargement de l\'abonnement');
     } finally {
       setLoading(false);
     }
