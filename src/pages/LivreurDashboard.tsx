@@ -34,6 +34,14 @@ import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { DriverLayout } from "@/components/driver/DriverLayout";
 import DeliveryChat from "@/components/delivery/DeliveryChat";
+// NOUVEAUX IMPORTS POUR LES AMÉLIORATIONS
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { DriverKYCStatus } from "@/components/taxi-moto/DriverKYCStatus";
+import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
+import { useDeliveryActions } from "@/hooks/useDeliveryActions";
+import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
+import { useDriverSubscription } from "@/hooks/useDriverSubscription";
+import DeliveryPaymentModal from "@/components/delivery/DeliveryPaymentModal";
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -43,6 +51,13 @@ export default function LivreurDashboard() {
   const [activeTab, setActiveTab] = useState('missions');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Gestion des erreurs centralisée
+  const { error, captureError, clearError } = useLivreurErrorBoundary();
+
+  // Vérification subscription et KYC
+  const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
   const { driver, stats, goOnline, goOffline, pause, updateLocation, uploadProof } = useDriver();
@@ -56,10 +71,6 @@ export default function LivreurDashboard() {
     loading: deliveryLoading,
     error: deliveryError,
     findNearbyDeliveries,
-    acceptDelivery: acceptDeliveryFn,
-    startDelivery: startDeliveryFn,
-    completeDelivery: completeDeliveryFn,
-    cancelDelivery,
     loadTracking,
     subscribeToTracking,
     trackPosition: trackDeliveryPosition,
@@ -67,6 +78,41 @@ export default function LivreurDashboard() {
     loadDeliveryHistory,
     loadCurrentDelivery
   } = useDelivery();
+
+  // Hook pour les actions de livraison (logique métier extraite)
+  const {
+    acceptDelivery,
+    startDelivery,
+    completeDeliveryWithProof,
+    cancelDelivery,
+    reportProblem,
+  } = useDeliveryActions({
+    driverId: user?.id || null,
+    onDeliveryAccepted: () => {
+      setActiveTab('active');
+      if (location) {
+        findNearbyDeliveries(location.latitude, location.longitude, 10);
+      }
+    },
+    onDeliveryCompleted: () => {
+      setShowProofUpload(false);
+      setActiveTab('history');
+    },
+    onDeliveryCancelled: () => {
+      setActiveTab('missions');
+    },
+  });
+
+  // Realtime delivery subscription avec guards
+  useRealtimeDelivery({
+    deliveryId: currentDelivery?.id || null,
+    isOnline: driver?.is_online || false,
+    hasAccess,
+    onDeliveryUpdate: (delivery) => {
+      console.log('[LivreurDashboard] Delivery updated via realtime:', delivery);
+      loadCurrentDelivery();
+    },
+  });
 
   // Hook pour les courses taxi-moto
   const {
@@ -82,15 +128,14 @@ export default function LivreurDashboard() {
   } = useTaxiRides();
 
   const loading = deliveryLoading || rideLoading;
-  const error = deliveryError;
 
-  // Charger la position GPS au montage
+  // Charger la position GPS au montage avec capture d'erreur
   useEffect(() => {
     getCurrentLocation().catch(err => {
       console.error('[LivreurDashboard] GPS error:', err);
-      // L'erreur est gérée par le hook et affichée dans l'interface
+      captureError('gps', 'Impossible d\'accéder à votre position GPS', err);
     });
-  }, [getCurrentLocation]);
+  }, [getCurrentLocation, captureError]);
 
   // Mettre à jour la position du driver toutes les 30 secondes si en ligne
   useEffect(() => {
@@ -173,16 +218,9 @@ export default function LivreurDashboard() {
    */
   const handleAcceptDelivery = async (deliveryId: string) => {
     try {
-      await acceptDeliveryFn(deliveryId);
-      toast.success('Livraison acceptée! Direction le point de collecte.');
-      setActiveTab('active');
-      // Recharger les livraisons disponibles
-      if (location) {
-        await findNearbyDeliveries(location.latitude, location.longitude, 10);
-      }
+      await acceptDelivery(deliveryId);
     } catch (error) {
-      console.error('Error accepting delivery:', error);
-      toast.error('Impossible d\'accepter cette livraison');
+      captureError('network', 'Impossible d\'accepter la livraison', error);
     }
   };
 
@@ -192,9 +230,9 @@ export default function LivreurDashboard() {
   const handleStartDelivery = async () => {
     if (!currentDelivery) return;
     try {
-      await startDeliveryFn(currentDelivery.id);
+      await startDelivery(currentDelivery.id);
     } catch (error) {
-      console.error('Error starting delivery:', error);
+      captureError('network', 'Impossible de démarrer la livraison', error);
     }
   };
 
@@ -204,26 +242,9 @@ export default function LivreurDashboard() {
   const handleCompleteWithProof = async (photoUrl: string, signature: string) => {
     if (!currentDelivery) return;
     try {
-      // Enregistrer photo et signature dans la BD
-      const { error: updateError } = await supabase
-        .from('deliveries')
-        .update({
-          proof_photo_url: photoUrl,
-          client_signature: signature
-        })
-        .eq('id', currentDelivery.id);
-
-      if (updateError) throw updateError;
-
-      // Terminer la livraison
-      await completeDeliveryFn(currentDelivery.id);
-      
-      setShowProofUpload(false);
-      setActiveTab('history');
-      toast.success('🎉 Livraison terminée avec succès!');
+      await completeDeliveryWithProof(currentDelivery.id, photoUrl, signature);
     } catch (error) {
-      console.error('Error completing delivery:', error);
-      toast.error('Erreur lors de la finalisation');
+      captureError('network', 'Erreur lors de la finalisation', error);
     }
   };
 
@@ -234,37 +255,25 @@ export default function LivreurDashboard() {
     if (!currentDelivery) return;
     try {
       await cancelDelivery(currentDelivery.id, reason);
-      setActiveTab('missions');
     } catch (error) {
-      console.error('Error cancelling delivery:', error);
+      captureError('network', 'Impossible d\'annuler la livraison', error);
     }
   };
 
   /**
    * Signaler un problème
    */
-  const reportProblem = () => {
-    toast.warning("Problème signalé au support !");
+  const handleReportProblem = () => {
+    if (!currentDelivery) return;
+    reportProblem(currentDelivery.id, 'Problème signalé par le livreur');
   };
 
   /**
    * Traiter le paiement (livraison ou course)
    */
-  const handleProcessPayment = async (paymentMethod: string) => {
-    try {
-      if (currentDelivery) {
-        const result = await processDeliveryPayment(currentDelivery.id, paymentMethod);
-        if (result.success) {
-          setActiveTab('history');
-        }
-      } else if (currentRide) {
-        const result = await processRidePayment(currentRide.id, paymentMethod);
-        if (result.success) {
-          setActiveTab('history');
-        }
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error);
+  const handleProcessPayment = () => {
+    if (currentDelivery || currentRide) {
+      setShowPaymentModal(true);
     }
   };
 
@@ -296,16 +305,33 @@ export default function LivreurDashboard() {
         }}
       />
 
-      <ResponsiveContainer maxWidth="full">
-        {/* Statut du livreur Online/Offline */}
-        {driver && (
-          <DriverStatusToggle
-            status={driver.status}
-            isOnline={driver.is_online}
-            onGoOnline={goOnline}
-            onGoOffline={goOffline}
-            onPause={pause}
+      {/* Error Banner - Affichage des erreurs persistantes */}
+      {error && (
+        <div className="mb-4">
+          <ErrorBanner
+            type={error.type as any}
+            message={error.message}
+            onDismiss={clearError}
           />
+        </div>
+      )}
+
+      <ResponsiveContainer maxWidth="full">
+        {/* Statut du livreur Online/Offline avec KYC Badge */}
+        {driver && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <DriverStatusToggle
+                status={driver.status}
+                isOnline={driver.is_online}
+                onGoOnline={goOnline}
+                onGoOffline={goOffline}
+                onPause={pause}
+              />
+              {/* Badge KYC Status */}
+              <DriverKYCStatus kycStatus={profile?.kyc_status || 'unverified'} />
+            </div>
+          </div>
         )}
 
         {/* Statistiques de gains */}
@@ -596,9 +622,22 @@ export default function LivreurDashboard() {
                           Terminer
                         </Button>
                       </div>
+
+                      {/* Bouton de paiement - 5 méthodes disponibles */}
+                      {currentDelivery.status === 'delivered' && currentDelivery.payment_status !== 'paid' && (
+                        <Button 
+                          onClick={handleProcessPayment} 
+                          className="w-full text-white"
+                          size="lg"
+                          style={{ background: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))' }}
+                        >
+                          <Wallet className="w-5 h-5 mr-2" /> 
+                          💳 Traiter le paiement
+                        </Button>
+                      )}
                       
                       <Button 
-                        onClick={reportProblem} 
+                        onClick={handleReportProblem} 
                         variant="outline"
                         disabled={loading}
                         className="w-full border-red-500 text-red-600 hover:bg-red-50"
@@ -857,6 +896,23 @@ export default function LivreurDashboard() {
           deliveryId={currentDelivery.id}
           onProofUploaded={handleCompleteWithProof}
           onCancel={() => setShowProofUpload(false)}
+        />
+      )}
+
+      {/* Modal de paiement avec 5 méthodes */}
+      {showPaymentModal && currentDelivery && user && (
+        <DeliveryPaymentModal
+          open={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          deliveryId={currentDelivery.id}
+          amount={currentDelivery.delivery_fee}
+          customerId={currentDelivery.client_id || ''}
+          driverId={user.id}
+          onPaymentSuccess={() => {
+            setShowPaymentModal(false);
+            setActiveTab('history');
+            loadDeliveryHistory();
+          }}
         />
       )}
     </div>
