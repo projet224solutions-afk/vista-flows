@@ -39,6 +39,7 @@ export const WalletTransactionHistory = ({
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
 
@@ -52,6 +53,7 @@ export const WalletTransactionHistory = ({
     if (!user) return;
 
     setLoading(true);
+    setError(null);
     try {
       // Récupérer le wallet de l'utilisateur
       const { data: walletData, error: walletError } = await supabase
@@ -62,6 +64,7 @@ export const WalletTransactionHistory = ({
 
       if (walletError) {
         console.error('Erreur récupération wallet:', walletError);
+        setError('Impossible de charger votre portefeuille');
         return;
       }
 
@@ -79,6 +82,7 @@ export const WalletTransactionHistory = ({
 
         if (transactionsError) {
           console.error('Erreur récupération transactions:', transactionsError);
+          setError(`Impossible de charger l'historique: ${transactionsError.message}`);
         } else if (transactionsData) {
           // Enrichir les transactions avec les custom_id
           const enrichedTransactions = await Promise.all(
@@ -109,8 +113,9 @@ export const WalletTransactionHistory = ({
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement transactions:', error);
+      setError(error?.message || 'Une erreur inattendue s\'est produite');
     } finally {
       setLoading(false);
     }
@@ -203,7 +208,24 @@ export const WalletTransactionHistory = ({
       </CardHeader>
 
       <CardContent>
-        {transactions.length === 0 ? (
+        {error ? (
+          <div className="text-center py-8">
+            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+            <p className="text-red-600 font-semibold mb-2">Erreur de chargement</p>
+            <p className="text-sm text-gray-600 mb-4">
+              {error}
+            </p>
+            <Button 
+              onClick={loadTransactions} 
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Réessayer
+            </Button>
+          </div>
+        ) : transactions.length === 0 ? (
           <div className="text-center py-8">
             <ArrowUpDown className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-2">Aucune transaction</p>

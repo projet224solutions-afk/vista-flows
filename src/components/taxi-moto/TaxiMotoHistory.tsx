@@ -52,6 +52,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     const [rides, setRides] = useState<RideHistory[]>([]);
     const [filteredRides, setFilteredRides] = useState<RideHistory[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'cancelled'>('all');
     const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month' | 'year'>('all');
@@ -71,12 +72,16 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
      */
     const loadRideHistory = async () => {
         setLoading(true);
+        setError(null);
         try {
-            if (!userId) return;
+            if (!userId) {
+                setError('Identifiant utilisateur manquant');
+                return;
+            }
 
             console.log('[TaxiMotoHistory] Loading ride history for user:', userId);
 
-            const { data: trips, error } = await supabase
+            const { data: trips, error: tripsError } = await supabase
                 .from('taxi_trips')
                 .select('*')
                 .eq('customer_id', userId)
@@ -84,9 +89,11 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 .order('created_at', { ascending: false })
                 .limit(50);
 
-            if (error) {
-                console.error('[TaxiMotoHistory] Error loading history:', error);
-                throw error;
+            if (tripsError) {
+                console.error('[TaxiMotoHistory] Error loading history:', tripsError);
+                setError(`Erreur de chargement: ${tripsError.message}`);
+                toast.error(`Impossible de charger l'historique: ${tripsError.message}`);
+                return;
             }
 
             console.log('[TaxiMotoHistory] Loaded trips:', trips?.length || 0);
@@ -111,9 +118,11 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
 
             console.log('[TaxiMotoHistory] Formatted rides:', formattedRides.length);
             setRides(formattedRides);
-        } catch (error) {
+        } catch (error: any) {
             console.error('[TaxiMotoHistory] Error loading history:', error);
-            toast.error('Impossible de charger l\'historique');
+            const errorMsg = error?.message || 'Une erreur inattendue s\'est produite';
+            setError(errorMsg);
+            toast.error(`Impossible de charger l'historique: ${errorMsg}`);
         } finally {
             setLoading(false);
         }
@@ -250,6 +259,23 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Chargement de l'historique...</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (error) {
+        return (
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-8 text-center">
+                    <div className="bg-red-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <Clock className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <Button onClick={loadRideHistory} variant="outline" size="sm">
+                        Réessayer
+                    </Button>
                 </CardContent>
             </Card>
         );
