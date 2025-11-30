@@ -61,6 +61,10 @@ import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
 import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
+// NOUVEAUX IMPORTS POUR GESTION D'ERREURS
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
+import { VendorKYCStatus } from "@/components/vendor/VendorKYCStatus";
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -70,6 +74,9 @@ export default function VendeurDashboard() {
   useRoleRedirect();
   const { userInfo } = useUserInfo();
   const { stats, loading: statsLoading } = useVendorStats();
+  
+  // Gestion des erreurs centralisée
+  const { error, captureError, clearError } = useVendorErrorBoundary();
   const [recentOrders, setRecentOrders] = useState<{
     order_number: string;
     customer_label: string;
@@ -349,6 +356,10 @@ export default function VendeurDashboard() {
               <div className="flex items-center gap-2">
                 <NetworkStatusIndicator />
                 {/* PWAInstallButton désactivé */}
+                
+                {/* Badge KYC Status */}
+                <VendorKYCStatus kycStatus={profile?.kyc_status || 'unverified'} />
+                
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
@@ -371,6 +382,17 @@ export default function VendeurDashboard() {
 
           {/* Subscription expiry banner */}
           <SubscriptionExpiryBanner />
+
+          {/* Error Banner - Affichage des erreurs persistantes */}
+          {error && (
+            <div className="px-6 pt-2">
+              <ErrorBanner
+                type={error.type as any}
+                message={error.message}
+                onDismiss={clearError}
+              />
+            </div>
+          )}
 
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
