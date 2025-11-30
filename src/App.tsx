@@ -23,6 +23,8 @@ const ClientTrackingPage = lazy(() => import("./pages/ClientTrackingPage"));
 const Profil = lazy(() => import("./pages/Profil"));
 const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
 const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
+const AgentLogin = lazy(() => import("./pages/AgentLogin"));
+const BureauLogin = lazy(() => import("./pages/BureauLogin"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
@@ -291,12 +293,19 @@ function App() {
                 }
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
+              
+              {/* Agent & Bureau Login with MFA */}
+              <Route path="/agent/login" element={<AgentLogin />} />
+              <Route path="/bureau/login" element={<BureauLogin />} />
+              
+              {/* Agent & Bureau Dashboards */}
               <Route path="/bureau/:token" element={<BureauDashboard />} />
               <Route path="/worker/:token" element={<WorkerDashboard />} />
               <Route path="/agent/activate/:token" element={<AgentActivation />} />
               <Route path="/agent/:token" element={<AgentDashboardPublic />} />
               <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
+              <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
               <Route
