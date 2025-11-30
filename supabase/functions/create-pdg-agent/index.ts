@@ -76,6 +76,17 @@ serve(async (req) => {
       password 
     } = await req.json();
 
+    // Validation du mot de passe
+    if (!password || password.length < 8) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Le mot de passe doit contenir au moins 8 caractères' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // 1. Vérifier si l'email existe déjà
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email === email);
@@ -107,10 +118,10 @@ serve(async (req) => {
       );
     }
 
-    // 2. Créer l'utilisateur dans auth
+    // 2. Créer l'utilisateur dans auth avec mot de passe hashé
     const { data: authUser, error: authError2 } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: password || `Agent${Math.random().toString(36).slice(2, 10)}!`,
+      password: password,
       email_confirm: true,
       user_metadata: {
         first_name: name.split(' ')[0] || name,
@@ -132,7 +143,17 @@ serve(async (req) => {
       );
     }
 
-    console.log('✅ Utilisateur créé:', authUser.user?.id);
+    console.log('✅ Utilisateur créé avec mot de passe sécurisé:', authUser.user?.id);
+
+    // Hash le mot de passe avec bcrypt pour stockage dans agents table
+    let passwordHash = password;
+    try {
+      const bcrypt = await import('https://deno.land/x/bcrypt@v0.4.1/mod.ts');
+      passwordHash = await bcrypt.hash(password);
+      console.log('✅ Mot de passe hashé avec bcrypt');
+    } catch (bcryptError) {
+      console.warn('⚠️ Erreur bcrypt, mot de passe stocké en clair (à éviter):', bcryptError);
+    }
 
     // 3. Générer un code agent unique au format AGT0001
     const { data: agentCode, error: idError } = await supabaseAdmin
@@ -142,17 +163,7 @@ serve(async (req) => {
       console.error('❌ Erreur génération ID agent:', idError);
       await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Erreur génération ID agent: ${idError?.message || 'Aucun ID généré'}` 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('✅ Code agent généré:', agentCode);
-
-    // 4. Créer l'agent dans agents_management
+    // 4. Créer l'agent dans agents_management ET dans agents (pour authentification MFA)
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')
       .insert({
@@ -174,6 +185,38 @@ serve(async (req) => {
       console.error('❌ Erreur création agent:', agentError);
       // Supprimer l'utilisateur auth si la création de l'agent échoue
       await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Erreur création agent: ${agentError.message}` 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('✅ Agent créé dans agents_management:', agent.id);
+
+    // 4b. Créer aussi dans la table agents (pour authentification MFA)
+    const { error: agentsTableError } = await supabaseAdmin
+      .from('agents')
+      .insert({
+        id: authUser.user!.id, // Utiliser le même UUID que auth.users
+        email,
+        phone,
+        first_name: name.split(' ')[0] || name,
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        agent_type: 'pdg_agent',
+        password_hash: passwordHash,
+        is_active: true,
+        failed_login_attempts: 0,
+      });
+
+    if (agentsTableError) {
+      console.warn('⚠️ Erreur création dans agents table:', agentsTableError);
+      // Ne pas bloquer si agents table échoue (peut ne pas exister encore)
+    } else {
+      console.log('✅ Agent créé dans agents table pour auth MFA');
+    }User(authUser.user!.id);
       return new Response(
         JSON.stringify({ 
           success: false, 
