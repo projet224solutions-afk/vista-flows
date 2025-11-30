@@ -12,8 +12,7 @@ import QuickFooter from "@/components/QuickFooter";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 // Lazy loading des pages pour optimiser le bundle
-const Index = lazy(() => import("./pages/SimpleIndex")); // Version simplifiée temporaire
-const OriginalIndex = lazy(() => import("./pages/Index")); // Version originale conservée
+const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
