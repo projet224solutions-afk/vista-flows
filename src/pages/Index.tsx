@@ -116,13 +116,40 @@ const formatPrice = (price: number) => {
 function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { isMobile, isTablet } = useResponsive();
+  
+  // Log immédiat pour voir si le composant se monte
+  console.log('🚀 Index.tsx - Composant monté');
+  
+  let isMobile = false;
+  let isTablet = false;
+  
+  try {
+    const responsive = useResponsive();
+    isMobile = responsive.isMobile;
+    isTablet = responsive.isTablet;
+    console.log('📱 useResponsive OK:', { isMobile, isTablet });
+  } catch (error) {
+    console.error('❌ Erreur useResponsive:', error);
+  }
   
   // Hooks avec gestion d'erreur
-  const { profile, user, loading } = useAuth();
+  let profile = null;
+  let user = null;
+  let loading = true;
+  
+  try {
+    const auth = useAuth();
+    profile = auth.profile;
+    user = auth.user;
+    loading = auth.loading;
+    console.log('🔐 useAuth OK:', { user: !!user, profile: !!profile, loading });
+  } catch (error) {
+    console.error('❌ Erreur useAuth:', error);
+    loading = false;
+  }
 
   // Log pour debugging
-  console.log('📊 Index.tsx - Rendu en cours', { user: !!user, profile: !!profile, loading });
+  console.log('📊 Index.tsx - État:', { user: !!user, profile: !!profile, loading });
 
   // Redirection automatique si l'utilisateur est connecté - CRITIQUE pour persistance
   useEffect(() => {
@@ -158,10 +185,40 @@ function Index() {
     }
   }, [user, profile, loading, navigate]);
   
-  // Chargement des données réelles depuis Supabase
-  const { stats, loading: statsLoading } = useHomeStats();
-  const { products, loading: productsLoading } = useHomeProducts(4);
-  const { categories, loading: categoriesLoading } = useHomeCategories();
+  // Chargement des données réelles depuis Supabase avec try-catch
+  let stats = { totalProducts: 150, totalVendors: 50, totalServices: 25, totalClients: 1000 };
+  let statsLoading = false;
+  let products: any[] = [];
+  let productsLoading = false;
+  let categories: any[] = [];
+  let categoriesLoading = false;
+  
+  try {
+    const homeStats = useHomeStats();
+    stats = homeStats.stats;
+    statsLoading = homeStats.loading;
+    console.log('📈 useHomeStats OK:', stats);
+  } catch (error) {
+    console.error('❌ Erreur useHomeStats:', error);
+  }
+  
+  try {
+    const homeProducts = useHomeProducts(4);
+    products = homeProducts.products;
+    productsLoading = homeProducts.loading;
+    console.log('🛍️ useHomeProducts OK:', products.length);
+  } catch (error) {
+    console.error('❌ Erreur useHomeProducts:', error);
+  }
+  
+  try {
+    const homeCategories = useHomeCategories();
+    categories = homeCategories.categories;
+    categoriesLoading = homeCategories.loading;
+    console.log('📂 useHomeCategories OK:', categories.length);
+  } catch (error) {
+    console.error('❌ Erreur useHomeCategories:', error);
+  }
 
   console.log('📈 Données chargées:', { stats, statsLoading, productsLoading, categoriesLoading });
 
