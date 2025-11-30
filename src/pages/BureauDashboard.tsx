@@ -36,10 +36,8 @@ export default function BureauDashboard() {
   const { token } = useParams();
   const navigate = useNavigate();
   const { error, captureError, clearError } = useBureauErrorBoundary();
-  const { addWorker } = useBureauActions({
-    bureauId: bureau?.id,
-    onWorkerCreated: loadBureauData
-  });
+  
+  // États déclarés AVANT leur utilisation
   const [bureau, setBureau] = useState<any>(null);
   const [workers, setWorkers] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -63,12 +61,7 @@ export default function BureauDashboard() {
     }
   });
 
-  useEffect(() => {
-    if (token) {
-      loadBureauData();
-    }
-  }, [token]);
-
+  // Hook useBureauActions APRÈS la déclaration de bureau et loadBureauData
   const loadBureauData = async () => {
     try {
       setLoading(true);
@@ -109,6 +102,18 @@ export default function BureauDashboard() {
       setLoading(false);
     }
   };
+
+  // Hook useBureauActions maintenant que loadBureauData est défini
+  const { addWorker } = useBureauActions({
+    bureauId: bureau?.id,
+    onWorkerCreated: loadBureauData
+  });
+
+  useEffect(() => {
+    if (token) {
+      loadBureauData();
+    }
+  }, [token]);
 
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
