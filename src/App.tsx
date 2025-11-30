@@ -67,7 +67,6 @@ const Cart = lazy(() => import("./pages/Cart"));
 const VendorAgentInterface = lazy(() => import("./pages/VendorAgentInterface"));
 const VendorContracts = lazy(() => import("./pages/VendorContracts"));
 const ClientContracts = lazy(() => import("./pages/ClientContracts"));
-const DiagnosticPage = lazy(() => import("./pages/DiagnosticPage"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -95,7 +94,6 @@ function App() {
               <Routes>
               {/* Accueil par défaut */}
               <Route path="/" element={<Index />} />
-              <Route path="/diagnostic" element={<DiagnosticPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
