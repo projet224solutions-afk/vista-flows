@@ -10,8 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
+import { usePDGErrorBoundary } from '@/hooks/usePDGErrorBoundary';
 import PDGNavigation from '@/components/pdg/PDGNavigation';
 import { PDGDashboardHome } from '@/components/pdg/PDGDashboardHome';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
@@ -56,6 +58,7 @@ export default function PDG224Solutions() {
   const [newEmail, setNewEmail] = useState('');
   const [updatingEmail, setUpdatingEmail] = useState(false);
   const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
+  const { error, captureError, clearError } = usePDGErrorBoundary();
 
   // Hook IA Assistant
   const { aiActive, insights } = usePDGAIAssistant();
@@ -367,6 +370,17 @@ export default function PDG224Solutions() {
             )}
           </div>
         </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="max-w-[1600px] mx-auto px-6 pt-4">
+            <ErrorBanner
+              type={error.type}
+              message={error.message}
+              onDismiss={clearError}
+            />
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="max-w-[1600px] mx-auto px-6 py-8">

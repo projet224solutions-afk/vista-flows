@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2, UserCircle, Download, RefreshCw } from 'lucide-react';
 import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
+import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
 import GenerateBureauInstallLink from '@/components/admin/GenerateBureauInstallLink';
 import DualSyncDashboard from '@/components/admin/DualSyncDashboard';
@@ -21,17 +22,26 @@ export default function PDGSyndicatManagement() {
     members,
     loading,
     stats,
-    validateBureau,
-    createBureau,
-    updateBureau,
-    deleteBureau,
     copyBureauLink,
     resendBureauLink,
     updateWorker,
     deleteWorker,
     updateMember,
     deleteMember,
+    refetch,
   } = usePDGSyndicatData();
+
+  const {
+    createBureau: createBureauAction,
+    updateBureau: updateBureauAction,
+    deleteBureau: deleteBureauAction,
+    validateBureau: validateBureauAction,
+  } = usePDGActions({
+    onBureauCreated: refetch,
+    onBureauUpdated: refetch,
+    onBureauDeleted: refetch,
+    onBureauValidated: refetch,
+  });
 
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,15 +64,15 @@ export default function PDGSyndicatManagement() {
   });
 
   const handleValidate = async (bureauId: string) => {
-    await validateBureau(bureauId);
+    await validateBureauAction(bureauId);
   };
 
   const handleCreateBureau = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const result = await createBureau(formData);
+    const result = await createBureauAction(formData);
     
-    if (result) {
+    if (result.success) {
       setIsDialogOpen(false);
       setFormData({
         bureau_code: '',
@@ -88,7 +98,7 @@ export default function PDGSyndicatManagement() {
   const handleSaveEdit = async () => {
     if (!editingBureau) return;
 
-    const success = await updateBureau(editingBureau.id, {
+    const result = await updateBureauAction(editingBureau.id, {
       bureau_code: editingBureau.bureau_code,
       commune: editingBureau.commune,
       prefecture: editingBureau.prefecture,
@@ -99,7 +109,7 @@ export default function PDGSyndicatManagement() {
       status: editingBureau.status
     });
 
-    if (success) {
+    if (result.success) {
       setIsEditDialogOpen(false);
       setEditingBureau(null);
     }
@@ -107,7 +117,7 @@ export default function PDGSyndicatManagement() {
 
   const handleDeleteBureau = async (bureauId: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ? Cette action supprimera également tous les travailleurs, membres et véhicules associés.")) return;
-    await deleteBureau(bureauId);
+    await deleteBureauAction(bureauId);
   };
 
   const handleResendLink = async (bureau: Bureau) => {

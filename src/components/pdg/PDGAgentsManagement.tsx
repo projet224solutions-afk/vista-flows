@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
+import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AgentPermissionsDialog } from './AgentPermissionsDialog';
@@ -43,7 +44,18 @@ interface SubAgent {
 }
 
 export default function PDGAgentsManagement() {
-  const { agents, pdgProfile, loading, stats, createAgent, updateAgent, deleteAgent, toggleAgentStatus } = usePDGAgentsData();
+  const { agents, pdgProfile, loading, stats, refetch } = usePDGAgentsData();
+  const { 
+    createAgent: createAgentAction, 
+    updateAgent: updateAgentAction, 
+    deleteAgent: deleteAgentAction, 
+    toggleAgentStatus 
+  } = usePDGActions({
+    onAgentCreated: refetch,
+    onAgentUpdated: refetch,
+    onAgentDeleted: refetch,
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,7 +105,7 @@ export default function PDGAgentsManagement() {
 
       if (editingAgent) {
         // Mode édition
-        await updateAgent(editingAgent.id, {
+        await updateAgentAction(editingAgent.id, {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -103,14 +115,14 @@ export default function PDGAgentsManagement() {
         });
       } else {
         // Mode création
-        await createAgent({
+        await createAgentAction({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           permissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
-        });
+        }, pdgProfile.id);
       }
 
       // Réinitialiser le formulaire
@@ -133,7 +145,6 @@ export default function PDGAgentsManagement() {
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Erreur gestion agent:', error);
-      toast.error('Erreur lors de la gestion de l\'agent');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,29 +198,19 @@ export default function PDGAgentsManagement() {
         return;
       }
 
-      toast.loading(`${actionName} en cours...`);
-
       switch (action) {
         case 'activate':
           await toggleAgentStatus(agentId, true);
-          toast.dismiss();
-          toast.success('Agent activé avec succès');
           break;
         case 'suspend':
           await toggleAgentStatus(agentId, false);
-          toast.dismiss();
-          toast.success('Agent suspendu avec succès');
           break;
         case 'delete':
-          await deleteAgent(agentId);
-          toast.dismiss();
-          // Le toast de succès est déjà affiché par deleteAgent
+          await deleteAgentAction(agentId);
           break;
       }
     } catch (error: any) {
-      toast.dismiss();
       console.error(`Erreur lors de l'action:`, error);
-      toast.error(error.message || 'Erreur lors de l\'action');
     }
   };
 
