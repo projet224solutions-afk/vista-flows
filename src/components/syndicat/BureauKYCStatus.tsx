@@ -18,10 +18,8 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
   const navigate = useNavigate();
 
   const handleVerifyClick = () => {
-    if (bureauId) {
-      // Navigate vers la page de vérification KYC du bureau
-      navigate(`/bureau/${bureauId}/settings?tab=kyc`);
-    }
+    // Ne rien faire pour l'instant, la vérification KYC se fait dans l'onglet Settings du dashboard
+    // Le badge est informatif uniquement
   };
 
   if (status === 'verified') {

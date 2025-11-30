@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet } from 'lucide-react';
+import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
@@ -35,6 +35,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 export default function BureauDashboard() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { error, captureError, clearError } = useBureauErrorBoundary();
   
   // États déclarés AVANT leur utilisation
@@ -44,6 +45,7 @@ export default function BureauDashboard() {
   const [motos, setMotos] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('motos');
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
   const [isSubmittingWorker, setIsSubmittingWorker] = useState(false);
   const [workerForm, setWorkerForm] = useState({
@@ -114,6 +116,14 @@ export default function BureauDashboard() {
       loadBureauData();
     }
   }, [token]);
+
+  // Gérer l'onglet depuis l'URL (ex: ?tab=kyc)
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'kyc') {
+      setActiveTab('settings');
+    }
+  }, [searchParams]);
 
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,8 +290,8 @@ export default function BureauDashboard() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="motos" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 h-auto">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-7 h-auto">
           <TabsTrigger value="motos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Bike className="w-4 h-4 mr-2" />
             Véhicules
@@ -307,6 +317,10 @@ export default function BureauDashboard() {
           <TabsTrigger value="communication" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <MessageSquare className="w-4 h-4 mr-2" />
             Communication
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Settings className="w-4 h-4 mr-2" />
+            Paramètres
           </TabsTrigger>
         </TabsList>
 
@@ -605,6 +619,112 @@ export default function BureauDashboard() {
             </CardHeader>
             <CardContent>
               <UniversalCommunicationHub />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Paramètres du Bureau
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Informations du Bureau */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Informations du Bureau</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Code Bureau</Label>
+                    <p className="font-medium">{bureau?.bureau_code}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Statut</Label>
+                    <p className="font-medium">{bureau?.status}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Préfecture</Label>
+                    <p className="font-medium">{bureau?.prefecture}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Commune</Label>
+                    <p className="font-medium">{bureau?.commune}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Président</Label>
+                    <p className="font-medium">{bureau?.president_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Email</Label>
+                    <p className="font-medium">{bureau?.president_email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statut KYC */}
+              <div className="space-y-4 pt-6 border-t">
+                <h3 className="font-semibold text-lg">Vérification KYC</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Statut de vérification</Label>
+                    <BureauKYCStatus status={bureau?.kyc_status || 'unverified'} />
+                  </div>
+                  
+                  {bureau?.kyc_status === 'unverified' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ Votre bureau n'est pas encore vérifié. Contactez l'administration pour compléter votre vérification KYC.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {bureau?.kyc_status === 'pending' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        ℹ️ Votre demande de vérification est en cours de traitement. Vous serez notifié une fois la vérification terminée.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {bureau?.kyc_status === 'verified' && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-sm text-green-800">
+                        ✅ Votre bureau est vérifié et dispose de tous les privilèges.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Token d'accès */}
+              <div className="space-y-4 pt-6 border-t">
+                <h3 className="font-semibold text-lg">Accès & Sécurité</h3>
+                <div className="space-y-3">
+                  <Label className="text-sm text-muted-foreground">Token d'accès permanent</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={bureau?.access_token || ''} 
+                      readOnly 
+                      className="font-mono text-xs"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(bureau?.access_token || '');
+                        toast.success('Token copié !');
+                      }}
+                    >
+                      Copier
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Utilisez ce token pour accéder à votre bureau depuis n'importe quel appareil
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
