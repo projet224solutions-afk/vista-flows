@@ -27,11 +27,16 @@ export const useHomeProducts = (limit: number = 4) => {
           .order('created_at', { ascending: false })
           .limit(limit);
 
-        if (error) throw error;
+        if (error) {
+          console.warn('Erreur produits:', error.message);
+          setProducts([]);
+          return;
+        }
 
         setProducts(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
+        setProducts([]);
       } finally {
         setLoading(false);
       }

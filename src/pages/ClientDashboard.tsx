@@ -27,7 +27,7 @@ import { IdSystemIndicator } from "@/components/IdSystemIndicator";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import ClientOrdersList from "@/components/client/ClientOrdersList";
 import { supabase } from "@/lib/supabaseClient";
-import useResponsive from "@/hooks/useResponsive";
+import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";

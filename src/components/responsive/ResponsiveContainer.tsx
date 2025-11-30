@@ -6,7 +6,7 @@
 
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import useResponsive from '@/hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface ResponsiveContainerProps {
   children: ReactNode;

@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
-import useResponsive from "@/hooks/useResponsive";
+import { useResponsive } from "@/hooks/useResponsive";
 import UniversalWalletDashboard from "@/components/wallet/UniversalWalletDashboard";
 
 interface Driver {

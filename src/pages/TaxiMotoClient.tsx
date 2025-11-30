@@ -30,7 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRideNotifications } from "@/hooks/useRideNotifications";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
-import useResponsive from "@/hooks/useResponsive";
+import { useResponsive } from "@/hooks/useResponsive";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 interface Driver {

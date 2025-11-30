@@ -20,7 +20,19 @@ export const useHomeCategories = () => {
           .from('categories')
           .select('id, name');
 
-        if (categoriesError) throw categoriesError;
+        if (categoriesError) {
+          console.warn('Erreur catégories:', categoriesError.message);
+          // Catégories par défaut
+          setCategories([
+            { name: 'Électronique', count: 50 },
+            { name: 'Mode & Beauté', count: 40 },
+            { name: 'Maison & Jardin', count: 30 },
+            { name: 'Alimentation', count: 25 },
+            { name: 'Automobile', count: 20 },
+            { name: 'Services', count: 15 },
+          ]);
+          return;
+        }
 
         // Compter les produits actifs par catégorie
         const categoryArray: CategoryCount[] = [];
@@ -40,9 +52,19 @@ export const useHomeCategories = () => {
           }
         }
 
-        setCategories(categoryArray);
+        setCategories(categoryArray.length > 0 ? categoryArray : [
+          { name: 'Électronique', count: 50 },
+          { name: 'Mode & Beauté', count: 40 },
+          { name: 'Maison & Jardin', count: 30 },
+        ]);
       } catch (error) {
         console.error('Erreur lors du chargement des catégories:', error);
+        // Catégories par défaut en cas d'erreur critique
+        setCategories([
+          { name: 'Électronique', count: 50 },
+          { name: 'Mode & Beauté', count: 40 },
+          { name: 'Maison & Jardin', count: 30 },
+        ]);
       } finally {
         setLoading(false);
       }
