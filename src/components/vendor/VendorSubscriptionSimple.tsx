@@ -205,7 +205,7 @@ export function VendorSubscriptionSimple() {
               className="flex-1"
               onClick={() => setShowPlanSelector(true)}
             >
-              🟩 Choisir un plan
+              🟩 Choisir un plan d'abonnement
             </Button>
           </div>
         </CardContent>
