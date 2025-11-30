@@ -387,9 +387,9 @@ export default function VendeurDashboard() {
           {error && (
             <div className="px-6 pt-2">
               <ErrorBanner
-                type={error.type as any}
                 message={error.message}
-                onDismiss={clearError}
+                actionLabel="Fermer"
+                onAction={clearError}
               />
             </div>
           )}
