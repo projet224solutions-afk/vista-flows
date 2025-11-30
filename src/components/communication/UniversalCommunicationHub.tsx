@@ -21,6 +21,8 @@ import {
   Search,
   Bell,
   Users,
+  Hash,
+  UserPlus,
 } from 'lucide-react';
 import {
   universalCommunicationService,
@@ -32,6 +34,8 @@ import AgoraVideoCall from './AgoraVideoCall';
 import AgoraAudioCall from './AgoraAudioCall';
 import ImprovedMessageInput from './ImprovedMessageInput';
 import MessageItem from './MessageItem';
+import ContactUserById from './ContactUserById';
+import type { UserProfile } from '@/types/communication.types';
 
 interface UniversalCommunicationHubProps {
   className?: string;
@@ -48,6 +52,7 @@ export default function UniversalCommunicationHub({
   const { toast } = useToast();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [showSearchById, setShowSearchById] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -426,6 +431,47 @@ export default function UniversalCommunicationHub({
 
   const unreadCount = notifications.length;
 
+  // Gérer la sélection d'un utilisateur depuis la recherche par ID
+  const handleUserSelectedById = async (selectedUser: UserProfile) => {
+    try {
+      // Créer ou ouvrir conversation directe
+      const directConvId = `direct_${selectedUser.id}`;
+      
+      // Vérifier si conversation existe déjà
+      const existingConv = conversations.find(c => c.id === directConvId);
+      
+      if (existingConv) {
+        setSelectedConversation(existingConv);
+        loadMessages(existingConv.id);
+      } else {
+        // Créer une nouvelle conversation directe
+        const newConv: Conversation = {
+          id: directConvId,
+          type: 'private',
+          creator_id: user?.id || '',
+          unread_count: 0,
+          participants: [
+            { user_id: user?.id || '', conversation_id: directConvId },
+            { user_id: selectedUser.id, conversation_id: directConvId, user: selectedUser }
+          ],
+          created_at: new Date().toISOString()
+        };
+        
+        setConversations(prev => [newConv, ...prev]);
+        setSelectedConversation(newConv);
+      }
+      
+      setShowSearchById(false);
+      
+      toast({
+        title: 'Conversation ouverte',
+        description: `Avec ${selectedUser.first_name} ${selectedUser.last_name}`
+      });
+    } catch (error) {
+      console.error('Erreur ouverture conversation:', error);
+    }
+  };
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -435,6 +481,15 @@ export default function UniversalCommunicationHub({
             <span>Communication</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSearchById(true)}
+              title="Rechercher par ID"
+            >
+              <Hash className="h-4 w-4 mr-2" />
+              Ajouter par ID
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -785,6 +840,26 @@ export default function UniversalCommunicationHub({
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Dialog Recherche par ID */}
+        <Dialog open={showSearchById} onOpenChange={setShowSearchById}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Hash className="w-5 h-5 text-orange-500" />
+                Rechercher par ID
+              </DialogTitle>
+              <DialogDescription>
+                Trouvez et contactez un utilisateur par son ID standardisé
+              </DialogDescription>
+            </DialogHeader>
+            
+            <ContactUserById 
+              onUserSelected={handleUserSelectedById}
+              showNavigation={false}
+            />
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

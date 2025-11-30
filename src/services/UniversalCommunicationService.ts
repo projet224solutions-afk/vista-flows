@@ -4,67 +4,34 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import type {
+  Message,
+  Conversation,
+  Call,
+  CommunicationNotification,
+  ConversationParticipant,
+  UserProfile,
+  MessageMetadata,
+  ConversationMetadata,
+  CallMetadata,
+  NotificationMetadata,
+  PaginationParams,
+  PaginatedResponse,
+  SearchParams,
+  SearchResult,
+  UploadOptions,
+  UploadProgress,
+} from '@/types/communication.types';
 
-export interface Message {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  recipient_id: string;
-  content: string;
-  type: string;
-  file_url?: string;
-  file_name?: string;
-  file_size?: number;
-  status: string;
-  metadata?: any;
-  created_at: string;
-  read_at?: string;
-  sender?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-}
-
-export interface Conversation {
-  id: string;
-  name?: string;
-  type: string;
-  creator_id: string;
-  last_message_at?: string;
-  last_message_preview?: string;
-  unread_count: number;
-  participants: any;
-  created_at: string;
-}
-
-export interface Call {
-  id: string;
-  caller_id: string;
-  receiver_id: string;
-  call_type: string;
-  status: string;
-  started_at: string;
-  ended_at?: string;
-  duration?: number;
-  quality_rating?: number;
-  metadata?: any;
-}
-
-export interface CommunicationNotification {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  body: string;
-  conversation_id?: string;
-  message_id?: string;
-  call_id?: string;
-  is_read: boolean;
-  created_at: string;
-  metadata?: any;
-}
+// Export des types pour compatibilité backward
+export type {
+  Message,
+  Conversation,
+  Call,
+  CommunicationNotification,
+  ConversationParticipant,
+  UserProfile,
+};
 
 class UniversalCommunicationService {
   /**
