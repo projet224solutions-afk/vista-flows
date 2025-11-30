@@ -39,6 +39,7 @@ export function PaymentMethodsManager() {
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newMethodType, setNewMethodType] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -55,14 +56,20 @@ export function PaymentMethodsManager() {
     if (!user) return;
     
     setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('user_payment_methods')
         .select('*')
         .eq('user_id', user.id)
         .order('is_default', { ascending: false });
 
-      if (error) throw error;
+      if (queryError) {
+        console.error('Erreur chargement moyens de paiement:', queryError);
+        setError(`Erreur: ${queryError.message}`);
+        toast.error(`Impossible de charger les moyens de paiement: ${queryError.message}`);
+        return;
+      }
 
       const formatted: PaymentMethod[] = (data || []).map(method => ({
         id: method.id,
@@ -74,12 +81,46 @@ export function PaymentMethodsManager() {
         is_active: method.is_active !== false
       }));
 
+      // Si aucun moyen de paiement, créer le wallet par défaut
+      if (formatted.length === 0) {
+        console.log('Aucun moyen de paiement trouvé, création du wallet par défaut...');
+        await createDefaultWallet();
+        // Recharger après création
+        return loadPaymentMethods();
+      }
+
       setPaymentMethods(formatted);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement moyens de paiement:', error);
-      toast.error('Impossible de charger les moyens de paiement');
+      const errorMsg = error?.message || 'Une erreur inattendue s\'est produite';
+      setError(errorMsg);
+      toast.error(`Impossible de charger les moyens de paiement: ${errorMsg}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createDefaultWallet = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_payment_methods')
+        .insert({
+          user_id: user.id,
+          method_type: 'wallet',
+          is_default: true,
+          is_active: true,
+          label: 'Portefeuille 224Solutions'
+        });
+
+      if (error) {
+        console.error('Erreur création wallet par défaut:', error);
+      } else {
+        console.log('✅ Wallet par défaut créé avec succès');
+      }
+    } catch (error) {
+      console.error('Erreur création wallet:', error);
     }
   };
 
@@ -246,6 +287,32 @@ export function PaymentMethodsManager() {
       <div className="text-center py-8">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
         <p className="text-muted-foreground mt-4">Chargement...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="bg-red-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <CreditCard className="h-8 w-8 text-red-500" />
+        </div>
+        <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          {error}
+        </p>
+        <div className="space-y-2">
+          <Button 
+            onClick={loadPaymentMethods} 
+            variant="outline"
+            size="sm"
+          >
+            Réessayer
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            La table 'user_payment_methods' doit être créée dans Supabase
+          </p>
+        </div>
       </div>
     );
   }
