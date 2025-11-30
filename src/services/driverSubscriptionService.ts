@@ -246,11 +246,12 @@ export class DriverSubscriptionService {
   ): Promise<{ success: boolean; subscriptionId?: string; error?: string }> {
     try {
       // Vérifier le solde du wallet
-      const { data: walletData, error: walletError } = await supabase
+      let { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('balance')
         .eq('user_id', userId)
         .single();
+      
       if (walletError) {
         // Tenter de créer/initialiser un wallet
         const ensured = await this.ensureWallet(userId);
@@ -258,9 +259,9 @@ export class DriverSubscriptionService {
           return { success: false, error: 'Wallet introuvable' };
         }
         // Utiliser balance 0 après création
-        (walletData as any) = { balance: ensured.balance };
+        walletData = { balance: ensured.balance };
       }
-
+      
       // Récupérer le prix
       const config = await this.getConfig();
       if (!config) {
