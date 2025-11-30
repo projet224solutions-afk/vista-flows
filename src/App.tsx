@@ -116,7 +116,8 @@ function App() {
               <Route path="/taxi" element={<TaxiMotoRouter />} />
               <Route path="/taxi-moto" element={<TaxiMotoClient />} />
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
-              <Route path="/taxi-moto-driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+              {/* Redirection 301 depuis l'alias vers la route normalisée */}
+              <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
               {/* Abonnement conducteur: disponible uniquement via interface vendeur */}
               <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />

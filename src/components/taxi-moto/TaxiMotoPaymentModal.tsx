@@ -1,6 +1,6 @@
 /**
  * MODAL PAIEMENT TAXI-MOTO
- * Support: Card (Stripe), Orange Money, Wallet 224Solutions, Cash
+ * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), PayPal, Cash
  */
 
 import { useState, useEffect } from 'react';
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { CreditCard, Smartphone, Wallet, Banknote, Loader2, Shield } from "lucide-react";
 import { PaymentsService, type PaymentMethod } from "@/services/taxi/paymentsService";
 import { toast } from "sonner";
@@ -43,6 +44,9 @@ export default function TaxiMotoPaymentModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [paypalEmail, setPaypalEmail] = useState('');
+  const [cardToken, setCardToken] = useState('');
 
   useEffect(() => {
     if (open && customerId) {
@@ -83,11 +87,18 @@ export default function TaxiMotoPaymentModal({
       color: 'text-blue-600'
     },
     {
-      id: 'orange_money' as PaymentMethod,
-      name: 'Orange Money',
-      description: 'Paiement mobile',
+      id: 'mobile_money' as PaymentMethod,
+      name: 'Mobile Money',
+      description: 'Orange Money, MTN Money, Moov Money',
       icon: Smartphone,
       color: 'text-orange-600'
+    },
+    {
+      id: 'paypal' as PaymentMethod,
+      name: 'PayPal',
+      description: 'Paiement via PayPal',
+      icon: CreditCard,
+      color: 'text-blue-500'
     },
     {
       id: 'cash' as PaymentMethod,
@@ -121,6 +132,31 @@ export default function TaxiMotoPaymentModal({
         }
       }
 
+      // Validation des champs requis
+      if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
+        toast.error('Numéro de téléphone requis', {
+          description: 'Veuillez entrer votre numéro Mobile Money'
+        });
+        setProcessing(false);
+        return;
+      }
+
+      if (paymentMethod === 'paypal' && (!paypalEmail || !paypalEmail.includes('@'))) {
+        toast.error('Email PayPal requis', {
+          description: 'Veuillez entrer un email PayPal valide'
+        });
+        setProcessing(false);
+        return;
+      }
+
+      if (paymentMethod === 'card' && (!cardToken || cardToken.length < 15)) {
+        toast.error('Carte bancaire requise', {
+          description: 'Veuillez entrer un numéro de carte valide'
+        });
+        setProcessing(false);
+        return;
+      }
+
       // Créer l'escrow pour sécuriser le paiement
       const escrowResult = await UniversalEscrowService.createEscrow({
         buyer_id: customerId,
@@ -131,10 +167,15 @@ export default function TaxiMotoPaymentModal({
         transaction_type: 'taxi',
         payment_provider: paymentMethod === 'wallet' ? 'wallet' : 
                          paymentMethod === 'card' ? 'stripe' :
+                         paymentMethod === 'mobile_money' ? 'mobile_money' :
+                         paymentMethod === 'paypal' ? 'paypal' :
                          paymentMethod === 'cash' ? 'cash' : 'wallet',
         metadata: {
           ride_id: rideId,
-          description: 'Paiement course taxi-moto'
+          description: 'Paiement course taxi-moto',
+          phone_number: phoneNumber,
+          paypal_email: paypalEmail,
+          card_token: cardToken
         },
         escrow_options: {
           auto_release_days: 1, // Libération auto après 1 jour pour taxi
@@ -163,6 +204,13 @@ export default function TaxiMotoPaymentModal({
       } else if (paymentMethod === 'card') {
         toast.info('Redirection vers le paiement sécurisé...');
         // TODO: Intégrer Stripe
+      } else if (paymentMethod === 'mobile_money') {
+        toast.success('Paiement Mobile Money initié !', {
+          description: `Confirmez sur votre téléphone ${phoneNumber}`
+        });
+      } else if (paymentMethod === 'paypal') {
+        toast.info('Redirection vers PayPal...');
+        // TODO: Intégrer PayPal SDK
       }
 
       onPaymentSuccess();
@@ -228,6 +276,56 @@ export default function TaxiMotoPaymentModal({
               );
             })}
           </RadioGroup>
+
+          {/* Champs spécifiques selon la méthode */}
+          {paymentMethod === 'mobile_money' && (
+            <div className="space-y-2 mt-3">
+              <Label htmlFor="phone">Numéro de téléphone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Ex: 620 00 00 00"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Orange Money, MTN Money ou Moov Money
+              </p>
+            </div>
+          )}
+
+          {paymentMethod === 'paypal' && (
+            <div className="space-y-2 mt-3">
+              <Label htmlFor="paypal-email">Email PayPal</Label>
+              <Input
+                id="paypal-email"
+                type="email"
+                placeholder="votre@email.com"
+                value={paypalEmail}
+                onChange={(e) => setPaypalEmail(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {paymentMethod === 'card' && (
+            <div className="space-y-2 mt-3">
+              <Label htmlFor="card">Numéro de carte</Label>
+              <Input
+                id="card"
+                type="text"
+                placeholder="•••• •••• •••• ••••"
+                value={cardToken}
+                onChange={(e) => setCardToken(e.target.value)}
+                className="w-full"
+                maxLength={19}
+              />
+              <p className="text-xs text-muted-foreground">
+                Visa ou Mastercard
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -242,7 +340,12 @@ export default function TaxiMotoPaymentModal({
           <Button
             onClick={handlePayment}
             className="flex-1"
-            disabled={processing || (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount)}
+            disabled={processing || 
+              (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount) ||
+              (paymentMethod === 'mobile_money' && phoneNumber.length < 8) ||
+              (paymentMethod === 'paypal' && !paypalEmail.includes('@')) ||
+              (paymentMethod === 'card' && cardToken.length < 15)
+            }
           >
             {processing ? (
               <>
@@ -251,6 +354,8 @@ export default function TaxiMotoPaymentModal({
               </>
             ) : (
               paymentMethod === 'wallet' || paymentMethod === 'card' ? 'Payer en sécurité' : 
+              paymentMethod === 'mobile_money' ? 'Payer par Mobile Money' :
+              paymentMethod === 'paypal' ? 'Payer avec PayPal' :
               paymentMethod === 'cash' ? 'Confirmer la course' : 'Payer maintenant'
             )}
           </Button>

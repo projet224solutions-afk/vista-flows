@@ -23,6 +23,8 @@ import useCurrentLocation from "@/hooks/useGeolocation";
 import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRideNotifications } from "@/hooks/useRideNotifications";
@@ -65,6 +67,7 @@ export default function TaxiMotoClient() {
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
   const responsive = useResponsive();
+  const { error, capture, clear } = useTaxiErrorBoundary();
 
   const [activeTab, setActiveTab] = useState('booking');
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
@@ -85,11 +88,11 @@ export default function TaxiMotoClient() {
 
   useEffect(() => {
     getCurrentLocation().catch(err => {
+      capture('gps', 'Veuillez activer votre GPS pour trouver des conducteurs', err);
       console.error('[TaxiMotoClient] GPS error:', err);
-      // L'erreur est affichée par le composant GPSPermissionHelper
     });
     loadNearbyDrivers();
-  }, []);
+  }, [capture]);
 
   // Écouter les mises à jour de course
   useEffect(() => {
@@ -187,6 +190,20 @@ export default function TaxiMotoClient() {
       {/* Header Responsive */}
       <header className="bg-card/90 backdrop-blur-sm border-b sticky top-0 z-40 shadow-sm">
         <div className={responsive.isMobile ? 'px-3 py-3' : 'px-6 py-4'}>
+          {/* Bannière d'erreur unifiée */}
+          {error && (
+            <ErrorBanner
+              title={
+                error.type === 'gps' ? 'GPS inactif' :
+                error.type === 'payment' ? 'Problème de paiement' :
+                error.type === 'network' ? 'Erreur réseau' :
+                'Erreur'
+              }
+              message={error.message}
+              actionLabel="Masquer"
+              onAction={clear}
+            />
+          )}
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <div className={`flex items-center ${responsive.isMobile ? 'gap-2' : 'gap-3'} mb-1`}>

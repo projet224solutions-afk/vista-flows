@@ -37,7 +37,7 @@ import useCurrentLocation from "@/hooks/useGeolocation";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { toast } from "sonner";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
-import { GeolocationService } from "@/services/taxi/GeolocationService";
+import GeolocationService from "@/services/geolocation/GeolocationService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
@@ -58,6 +58,9 @@ import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
+import { DriverKYCStatus } from "@/components/taxi-moto/DriverKYCStatus";
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -98,6 +101,7 @@ interface ActiveRide {
 
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
+    const { error, capture, clear } = useTaxiErrorBoundary();
     const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
     const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
@@ -129,12 +133,11 @@ export default function TaxiMotoDriver() {
     // Initialisation : Charger le profil et demander la position GPS
     useEffect(() => {
         loadDriverProfile();
-        // Demander la position GPS immédiatement
         getCurrentLocation().catch(err => {
-            console.error('Erreur GPS:', err);
-            toast.error('⚠️ Veuillez activer votre GPS pour utiliser l\'application');
+            capture('gps', 'Veuillez activer votre GPS pour utiliser l\'application', err);
+            toast.error('⚠️ GPS inactif: activez la localisation');
         });
-    }, [getCurrentLocation]);
+    }, [getCurrentLocation, capture]);
 
     useEffect(() => {
         if (driverId) {
@@ -318,6 +321,13 @@ export default function TaxiMotoDriver() {
             return;
         }
 
+        // KYC gating: empêcher l'activation si KYC invalide
+        if (next && profile?.kyc_status !== 'verified') {
+            capture('permission', 'KYC requis pour être en ligne');
+            toast.error('KYC requis avant de passer en ligne');
+            return;
+        }
+
         // Vérifier l'abonnement avant de passer en ligne
         if (next && !hasAccess) {
             toast.error('⚠️ Abonnement requis', {
@@ -364,7 +374,7 @@ export default function TaxiMotoDriver() {
                 loadPendingRides();
                 
             } catch (error: any) {
-                console.error('Erreur GPS:', error);
+                capture('gps', 'Erreur GPS lors de la mise en ligne', error);
                 toast.dismiss('gps-loading');
                 
                 // Message d'erreur détaillé avec instructions
@@ -406,7 +416,7 @@ export default function TaxiMotoDriver() {
                 // Vider les demandes de courses
                 setRideRequests([]);
             } catch (error) {
-                console.error('Error updating status:', error);
+                capture('network', 'Erreur lors du changement de statut', error);
                 toast.error('Erreur lors du changement de statut');
             }
         }
@@ -1095,8 +1105,23 @@ export default function TaxiMotoDriver() {
             {/* Header conducteur */}
             <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
                 <div className="px-4 py-4">
-                    {/* Bannière d'abonnement */}
-                    <DriverSubscriptionBanner />
+                                        {/* Bannière d'abonnement */}
+                                        <DriverSubscriptionBanner />
+                                        {/* Bannière d'erreur unifiée */}
+                                        {error && (
+                                            <ErrorBanner
+                                                title={
+                                                    error.type === 'gps' ? 'GPS inactif' :
+                                                    error.type === 'permission' ? 'Permission requise' :
+                                                    error.type === 'payment' ? 'Problème de paiement' :
+                                                    error.type === 'env' ? 'Configuration manquante' :
+                                                    'Erreur'
+                                                }
+                                                message={error.message}
+                                                actionLabel="Masquer"
+                                                onAction={clear}
+                                            />
+                                        )}
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-3 mb-1 flex-wrap">
@@ -1111,6 +1136,7 @@ export default function TaxiMotoDriver() {
                                 <span className="text-sm text-gray-600">
                                     {isOnline ? 'En ligne' : 'Hors ligne'}
                                 </span>
+                                <DriverKYCStatus isKycValid={profile?.kyc_status === 'verified'} />
                                 {location && (
                                     <>
                                         <span className="text-gray-400">•</span>

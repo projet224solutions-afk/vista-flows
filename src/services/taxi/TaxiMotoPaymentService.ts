@@ -6,7 +6,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PaymentMethod {
-  type: 'wallet' | 'mobile_money' | 'card';
+  type: 'wallet' | 'mobile_money' | 'card' | 'cash' | 'paypal';
   details?: any;
 }
 
@@ -18,7 +18,7 @@ export interface PaymentResult {
 
 export class TaxiMotoPaymentService {
   /**
-   * Payer une course avec le Wallet
+   * Payer une course avec le Wallet (idempotent via rideId)
    */
   static async payWithWallet(
     rideId: string,
@@ -26,6 +26,21 @@ export class TaxiMotoPaymentService {
     customerId: string
   ): Promise<PaymentResult> {
     try {
+      // Vérifier si déjà payé (idempotence)
+      const { data: existingRide } = await supabase
+        .from('taxi_trips')
+        .select('payment_status, payment_method')
+        .eq('id', rideId)
+        .single();
+
+      if (existingRide?.payment_status === 'paid') {
+        console.log('[Payment] Ride already paid, returning success (idempotent)');
+        return {
+          success: true,
+          transaction_id: rideId // Use rideId as idempotency key
+        };
+      }
+
       // Vérifier le solde du wallet
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
@@ -47,18 +62,27 @@ export class TaxiMotoPaymentService {
         };
       }
 
-      // Effectuer le paiement via l'edge function wallet-operations
+      // Effectuer le paiement via l'edge function wallet-operations (avec clé idempotente)
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
           operation: 'taxi_payment',
           amount,
-          ride_id: rideId,
+          ride_id: rideId, // Idempotency key
+          idempotency_key: rideId,
           description: `Paiement course Taxi Moto #${rideId.slice(0, 8)}`
         }
       });
 
       if (error) {
         console.error('[Payment] Wallet payment error:', error);
+        // Log audit trail
+        await supabase.from('wallet_logs').insert({
+          user_id: customerId,
+          operation: 'taxi_payment_failed',
+          amount,
+          context: { ride_id: rideId, error: error.message }
+        }).catch(() => {});
+        
         return {
           success: false,
           error: error.message || 'Erreur de paiement'
@@ -75,9 +99,17 @@ export class TaxiMotoPaymentService {
         })
         .eq('id', rideId);
 
+      // Log audit success
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_success',
+        amount,
+        context: { ride_id: rideId, transaction_id: data?.transaction_id }
+      }).catch(() => {});
+
       return {
         success: true,
-        transaction_id: data?.transaction_id
+        transaction_id: data?.transaction_id || rideId
       };
     } catch (err: any) {
       console.error('[Payment] Error:', err);
@@ -89,26 +121,57 @@ export class TaxiMotoPaymentService {
   }
 
   /**
-   * Payer une course avec Mobile Money
+   * Payer une course avec Mobile Money (idempotent)
    */
   static async payWithMobileMoney(
     rideId: string,
     amount: number,
+    customerId: string,
     phoneNumber: string
   ): Promise<PaymentResult> {
     try {
-      // TODO: Intégrer avec le fournisseur Mobile Money (Orange Money, MTN, etc.)
-      // Pour l'instant, simulation
+      // Vérifier si déjà payé (idempotence)
+      const { data: existingRide } = await supabase
+        .from('taxi_trips')
+        .select('payment_status, payment_method')
+        .eq('id', rideId)
+        .single();
+
+      if (existingRide?.payment_status === 'paid') {
+        console.log('[Payment] Ride already paid (Mobile Money), returning success');
+        return {
+          success: true,
+          transaction_id: rideId
+        };
+      }
+
+      // TODO: Intégrer avec Orange Money, MTN Money, Moov Money
+      // Simulation pour l'instant avec validation du numéro
+      if (!phoneNumber || phoneNumber.length < 8) {
+        return {
+          success: false,
+          error: 'Numéro de téléphone invalide'
+        };
+      }
       
       // Mettre à jour le statut
       await supabase
         .from('taxi_trips')
         .update({
-          payment_status: 'pending',
+          payment_status: 'paid',
           payment_method: 'mobile_money',
-          payment_reference: phoneNumber
+          payment_reference: phoneNumber,
+          paid_at: new Date().toISOString()
         })
         .eq('id', rideId);
+
+      // Log audit
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_mobile_money',
+        amount,
+        context: { ride_id: rideId, phone: phoneNumber }
+      }).catch(() => {});
 
       return {
         success: true,
@@ -116,6 +179,13 @@ export class TaxiMotoPaymentService {
       };
     } catch (err: any) {
       console.error('[Payment] Mobile Money error:', err);
+      // Log échec
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_mobile_money_failed',
+        amount,
+        context: { ride_id: rideId, error: err.message }
+      }).catch(() => {});
       return {
         success: false,
         error: err.message || 'Erreur Mobile Money'
@@ -124,10 +194,28 @@ export class TaxiMotoPaymentService {
   }
 
   /**
-   * Payer une course en espèces
+   * Payer une course en espèces (cash) - idempotent
    */
-  static async payWithCash(rideId: string): Promise<PaymentResult> {
+  static async payWithCash(
+    rideId: string,
+    customerId: string
+  ): Promise<PaymentResult> {
     try {
+      // Vérifier si déjà payé
+      const { data: existingRide } = await supabase
+        .from('taxi_trips')
+        .select('payment_status, payment_method')
+        .eq('id', rideId)
+        .single();
+
+      if (existingRide?.payment_status === 'paid') {
+        console.log('[Payment] Ride already paid (Cash), returning success');
+        return {
+          success: true,
+          transaction_id: rideId
+        };
+      }
+
       await supabase
         .from('taxi_trips')
         .update({
@@ -137,15 +225,173 @@ export class TaxiMotoPaymentService {
         })
         .eq('id', rideId);
 
+      // Log audit
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_cash',
+        amount: 0, // Montant sera dans taxi_trips
+        context: { ride_id: rideId }
+      }).catch(() => {});
+
       return {
         success: true,
         transaction_id: `CASH-${Date.now()}`
       };
     } catch (err: any) {
       console.error('[Payment] Cash payment error:', err);
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_cash_failed',
+        amount: 0,
+        context: { ride_id: rideId, error: err.message }
+      }).catch(() => {});
       return {
         success: false,
         error: err.message
+      };
+    }
+  }
+
+  /**
+   * Payer une course avec carte bancaire (idempotent)
+   */
+  static async payWithCard(
+    rideId: string,
+    amount: number,
+    customerId: string,
+    cardToken: string
+  ): Promise<PaymentResult> {
+    try {
+      // Vérifier si déjà payé
+      const { data: existingRide } = await supabase
+        .from('taxi_trips')
+        .select('payment_status, payment_method')
+        .eq('id', rideId)
+        .single();
+
+      if (existingRide?.payment_status === 'paid') {
+        console.log('[Payment] Ride already paid (Card), returning success');
+        return {
+          success: true,
+          transaction_id: rideId
+        };
+      }
+
+      // TODO: Intégrer Stripe, Flutterwave, ou autre passerelle
+      // Validation basique du token pour l'instant
+      if (!cardToken || cardToken.length < 10) {
+        return {
+          success: false,
+          error: 'Token de carte invalide'
+        };
+      }
+
+      // Simuler le paiement carte (à remplacer par vraie intégration)
+      await supabase
+        .from('taxi_trips')
+        .update({
+          payment_status: 'paid',
+          payment_method: 'card',
+          payment_reference: cardToken.slice(-4), // Garder 4 derniers chiffres
+          paid_at: new Date().toISOString()
+        })
+        .eq('id', rideId);
+
+      // Log audit
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_card',
+        amount,
+        context: { ride_id: rideId, card_last4: cardToken.slice(-4) }
+      }).catch(() => {});
+
+      return {
+        success: true,
+        transaction_id: `CARD-${Date.now()}`
+      };
+    } catch (err: any) {
+      console.error('[Payment] Card payment error:', err);
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_card_failed',
+        amount,
+        context: { ride_id: rideId, error: err.message }
+      }).catch(() => {});
+      return {
+        success: false,
+        error: err.message || 'Erreur de paiement par carte'
+      };
+    }
+  }
+
+  /**
+   * Payer une course avec PayPal (idempotent)
+   */
+  static async payWithPayPal(
+    rideId: string,
+    amount: number,
+    customerId: string,
+    paypalEmail: string
+  ): Promise<PaymentResult> {
+    try {
+      // Vérifier si déjà payé
+      const { data: existingRide } = await supabase
+        .from('taxi_trips')
+        .select('payment_status, payment_method')
+        .eq('id', rideId)
+        .single();
+
+      if (existingRide?.payment_status === 'paid') {
+        console.log('[Payment] Ride already paid (PayPal), returning success');
+        return {
+          success: true,
+          transaction_id: rideId
+        };
+      }
+
+      // TODO: Intégrer PayPal SDK
+      // Validation email pour l'instant
+      if (!paypalEmail || !paypalEmail.includes('@')) {
+        return {
+          success: false,
+          error: 'Email PayPal invalide'
+        };
+      }
+
+      // Simuler paiement PayPal (à remplacer par vraie API PayPal)
+      await supabase
+        .from('taxi_trips')
+        .update({
+          payment_status: 'paid',
+          payment_method: 'paypal',
+          payment_reference: paypalEmail,
+          paid_at: new Date().toISOString()
+        })
+        .eq('id', rideId);
+
+      // Log audit
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_paypal',
+        amount,
+        context: { ride_id: rideId, paypal_email: paypalEmail }
+      }).catch(() => {});
+
+      return {
+        success: true,
+        transaction_id: `PAYPAL-${Date.now()}`
+      };
+    } catch (err: any) {
+      console.error('[Payment] PayPal payment error:', err);
+      await supabase.from('wallet_logs').insert({
+        user_id: customerId,
+        operation: 'taxi_payment_paypal_failed',
+        amount,
+        context: { ride_id: rideId, error: err.message }
+      }).catch(() => {});
+      return {
+        success: false,
+        error: err.message || 'Erreur de paiement PayPal'
       };
     }
   }
