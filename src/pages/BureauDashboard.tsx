@@ -12,6 +12,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { useBureauErrorBoundary } from '@/hooks/useBureauErrorBoundary';
+import { BureauKYCStatus } from '@/components/syndicat/BureauKYCStatus';
+import { useBureauActions } from '@/hooks/useBureauActions';
 import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
 import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
@@ -31,6 +35,11 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 export default function BureauDashboard() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const { error, captureError, clearError } = useBureauErrorBoundary();
+  const { addWorker } = useBureauActions({
+    bureauId: bureau?.id,
+    onWorkerCreated: loadBureauData
+  });
   const [bureau, setBureau] = useState<any>(null);
   const [workers, setWorkers] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -92,8 +101,9 @@ export default function BureauDashboard() {
       setMembers(membersRes.data || []);
       setMotos(motosRes.data || []);
       setAlerts(alertsRes.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement bureau:', error);
+      captureError('member_error', error.message || 'Erreur lors du chargement des données', error);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
@@ -103,69 +113,15 @@ export default function BureauDashboard() {
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation des données
-    if (!workerForm.nom.trim()) {
-      toast.error('Le nom complet est requis');
-      return;
-    }
-    
-    if (!workerForm.email.trim()) {
-      toast.error('L\'email est requis');
-      return;
-    }
-    
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workerForm.email)) {
-      toast.error('Format d\'email invalide');
-      return;
-    }
-    
     try {
       setIsSubmittingWorker(true);
-      const access_token = crypto.randomUUID();
-      const interface_url = `${window.location.origin}/worker/${access_token}`;
 
-      console.log('📝 Création travailleur:', { nom: workerForm.nom, email: workerForm.email });
+      const result = await addWorker(workerForm, bureau.id);
 
-      const { data, error } = await supabase
-        .from('syndicate_workers')
-        .insert([{
-          bureau_id: bureau.id,
-          nom: workerForm.nom.trim(),
-          email: workerForm.email.trim().toLowerCase(),
-          telephone: workerForm.telephone?.trim() || null,
-          access_level: workerForm.access_level,
-          permissions: workerForm.permissions,
-          access_token: access_token,
-          interface_url: interface_url,
-          is_active: true
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Erreur insertion:', error);
-        throw error;
-      }
-
-      console.log('✅ Membre du bureau créé:', data);
-
-      // Envoyer l'email (ne pas bloquer si ça échoue)
-      try {
-        await supabase.functions.invoke('send-bureau-access-email', {
-          body: {
-            type: 'worker',
-            email: workerForm.email,
-            name: workerForm.nom,
-            access_token: access_token,
-            interface_url: interface_url,
-            bureau_code: bureau.bureau_code,
-            permissions: workerForm.permissions
-          }
-        });
-        toast.success('✅ Membre du bureau ajouté et email envoyé');
-      } catch (emailError) {
-        console.error('⚠️ Erreur email:', emailError);
-        toast.success('✅ Membre du bureau ajouté (email non envoyé)');
+      if (!result.success) {
+        captureError('worker_error', result.error || 'Erreur lors de l\'ajout du membre');
+        toast.error(result.error);
+        return;
       }
 
       // Réinitialiser le formulaire
@@ -185,9 +141,9 @@ export default function BureauDashboard() {
       });
       
       setIsWorkerDialogOpen(false);
-      await loadBureauData();
     } catch (error: any) {
       console.error('❌ Erreur ajout membre du bureau:', error);
+      captureError('worker_error', error.message || 'Erreur lors de l\'ajout du membre du bureau', error);
       toast.error(error.message || 'Erreur lors de l\'ajout du membre du bureau');
     } finally {
       setIsSubmittingWorker(false);
@@ -228,6 +184,7 @@ export default function BureauDashboard() {
           <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
           <div className="flex items-center gap-3 mt-2">
             <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
+            <BureauKYCStatus status={bureau.verification_status || 'unverified'} bureauId={bureau.id} />
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -255,6 +212,15 @@ export default function BureauDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <ErrorBanner
+          error={error.message}
+          type={error.type}
+          onDismiss={clearError}
+        />
+      )}
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

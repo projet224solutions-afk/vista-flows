@@ -60,20 +60,82 @@ export function useSyndicatUltraProData() {
       setLoading(true);
       setError(null);
       
-      // Temporairement désactivé - tables non disponibles dans les types Supabase
-      const mData: unknown[] = [];
-      const dData: unknown[] = [];
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Utilisateur non authentifié');
+        return;
+      }
 
-      setMembers(mData as unknown);
-      setDrivers(dData as unknown);
+      // Récupérer le bureau de l'utilisateur
+      const { data: userBureau } = await supabase
+        .from('bureaus')
+        .select('id')
+        .eq('president_email', user.email)
+        .single();
 
-      const totalMembers = mData.length;
-      const activeMembers = mData.filter((m: unknown) => m.status === 'active').length;
-      const totalDrivers = dData.length;
-      const activeDrivers = dData.filter((t: unknown) => t.status === 'active').length;
-      const totalBalance = 0;
-      const monthlyRevenue = 0;
-      const activeAlerts = 0;
+      if (!userBureau) {
+        setError('Bureau non trouvé');
+        return;
+      }
+
+      const bureauId = userBureau.id;
+
+      // Requêtes optimisées avec COUNT et agrégations SQL
+      const [membersRes, driversRes, walletRes, alertsRes] = await Promise.all([
+        // Membres avec stats
+        supabase
+          .from('members')
+          .select('*', { count: 'exact' })
+          .eq('bureau_id', bureauId),
+        
+        // Chauffeurs avec stats
+        supabase
+          .from('taxi_drivers')
+          .select('*', { count: 'exact' })
+          .eq('bureau_id', bureauId),
+        
+        // Wallet du bureau
+        supabase
+          .from('wallets')
+          .select('balance')
+          .eq('bureau_id', bureauId)
+          .single(),
+        
+        // Alertes actives
+        supabase
+          .from('syndicate_alerts')
+          .select('*', { count: 'exact' })
+          .eq('bureau_id', bureauId)
+          .eq('is_read', false)
+      ]);
+
+      const membersData = membersRes.data || [];
+      const driversData = driversRes.data || [];
+
+      setMembers(membersData as any);
+      setDrivers(driversData as any);
+
+      // Calculs optimisés
+      const totalMembers = membersRes.count || 0;
+      const activeMembers = membersData.filter((m: any) => m.status === 'active').length;
+      const totalDrivers = driversRes.count || 0;
+      const activeDrivers = driversData.filter((d: any) => d.status === 'active').length;
+      const totalBalance = walletRes.data?.balance || 0;
+      const activeAlerts = alertsRes.count || 0;
+
+      // Calculer le revenu du mois (à partir des transactions)
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data: transactions } = await supabase
+        .from('bureau_transactions')
+        .select('amount')
+        .eq('bureau_id', bureauId)
+        .eq('type', 'revenue')
+        .gte('created_at', startOfMonth.toISOString());
+
+      const monthlyRevenue = transactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
 
       setStats({
         total_members: totalMembers,
@@ -82,10 +144,11 @@ export function useSyndicatUltraProData() {
         active_taxi_motards: activeDrivers,
         total_balance: totalBalance,
         monthly_revenue: monthlyRevenue,
-        pending_validations: 0,
+        pending_validations: membersData.filter((m: any) => m.status === 'pending').length,
         active_alerts: activeAlerts,
       });
-    } catch (e: unknown) {
+    } catch (e: any) {
+      console.error('Erreur refresh bureau stats:', e);
       setError(e?.message || String(e));
     } finally {
       setLoading(false);
