@@ -41,6 +41,7 @@ const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
 const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
+const SimpleDiagnostic = lazy(() => import("./pages/SimpleDiagnostic"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
@@ -96,6 +97,7 @@ function App() {
               <Routes>
               {/* Accueil par défaut */}
               <Route path="/" element={<Index />} />
+              <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
