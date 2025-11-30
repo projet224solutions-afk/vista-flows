@@ -55,14 +55,17 @@ export default function PDGApiSupervision() {
 
     // Incidents critiques (24h)
     supabase
-      .from('recent_critical_events')
+      .from('security_incidents')
       .select('*')
+      .eq('severity', 'critical')
+      .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString())
       .then(({ data }) => setCriticalEvents(data || []));
 
     // Incidents ouverts
     supabase
-      .from('open_incidents_summary')
+      .from('security_incidents')
       .select('*')
+      .eq('status', 'open')
       .then(({ data }) => setOpenIncidents(data || []));
 
     // Nombre d'incidents 24h

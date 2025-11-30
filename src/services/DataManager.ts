@@ -61,7 +61,7 @@ export class DataManager {
       
       // Construire la requête
       let query: any = supabase
-        .from(queryConfig.table as unknown)
+        .from(queryConfig.table as any)
         .select(queryConfig.select || '*');
 
       // Appliquer les filtres
@@ -140,7 +140,7 @@ export class DataManager {
     try {
       console.log(`✏️ Mutating ${mutationConfig.table} - ${mutationConfig.operation}`);
 
-      let query: any = supabase.from(mutationConfig.table as unknown);
+      let query: any = supabase.from(mutationConfig.table as any);
       let result;
 
       switch (mutationConfig.operation) {
