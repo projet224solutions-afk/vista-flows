@@ -87,12 +87,9 @@ export default function TaxiMotoClient() {
   });
 
   useEffect(() => {
-    getCurrentLocation().catch(err => {
-      capture('gps', 'Veuillez activer votre GPS pour trouver des conducteurs', err);
-      console.error('[TaxiMotoClient] GPS error:', err);
-    });
+    // GPS sera demandé lors de la recherche de conducteurs
     loadNearbyDrivers();
-  }, [capture]);
+  }, []);
 
   // Écouter les mises à jour de course
   useEffect(() => {

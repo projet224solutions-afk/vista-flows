@@ -130,14 +130,11 @@ export default function TaxiMotoDriver() {
     const [timeToDestination, setTimeToDestination] = useState(0);
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
-    // Initialisation : Charger le profil et demander la position GPS
+    // Initialisation : Charger le profil
     useEffect(() => {
         loadDriverProfile();
-        getCurrentLocation().catch(err => {
-            capture('gps', 'Veuillez activer votre GPS pour utiliser l\'application', err);
-            toast.error('⚠️ GPS inactif: activez la localisation');
-        });
-    }, [getCurrentLocation, capture]);
+        // GPS sera demandé uniquement quand le chauffeur se met en ligne
+    }, []);
 
     useEffect(() => {
         if (driverId) {
