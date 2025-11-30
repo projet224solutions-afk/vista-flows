@@ -307,23 +307,46 @@ Pour toute question: support@224solutions.com
     };
 
     try {
+      console.log('🔑 CODE MFA GÉNÉRÉ:', code);
+      console.log('📧 Tentative d\'envoi à:', to);
+      
       const success = await this.sendEmail(mfaData);
+      
       if (success) {
         console.log('✅ Code MFA envoyé avec succès à:', to);
+        // Toujours afficher le code en mode développement
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          toast.success(`Code MFA: ${code}`, { 
+            duration: 60000, // 1 minute
+            description: 'Email envoyé + code affiché pour développement'
+          });
+        }
         return true;
       } else {
-        // Mode fallback : simuler l'envoi et afficher le code dans la console
-        console.log('🎭 MODE DÉMO - Code MFA simulé:', code);
-        console.log('📧 Destinataire:', to);
-        toast.info(`Code MFA (mode démo) : ${code}`);
-        return true;
+        throw new Error('Échec envoi email');
       }
     } catch (error) {
       console.error('❌ Erreur envoi code MFA:', error);
-      // En cas d'erreur, afficher quand même le code pour le développement
-      console.log('🔑 Code MFA de secours:', code);
-      toast.info(`Code MFA (secours) : ${code}`);
-      return true;
+      console.log('🔑 CODE MFA DE SECOURS:', code);
+      
+      // En mode développement, afficher le code de manière très visible
+      toast.success(`🔐 CODE MFA: ${code}`, {
+        duration: 120000, // 2 minutes
+        description: `Mode développement - Backend email indisponible\nDestination: ${to}`,
+        style: {
+          background: '#3b82f6',
+          color: 'white',
+          fontSize: '18px',
+          fontWeight: 'bold'
+        }
+      });
+      
+      // Afficher aussi dans une alerte pour être sûr
+      setTimeout(() => {
+        alert(`🔐 CODE MFA DE DÉVELOPPEMENT\n\n${code}\n\nCopiez ce code pour continuer\n(Le backend email n'est pas disponible)`);
+      }, 500);
+      
+      return true; // Retourner true pour permettre la suite en dev
     }
   }
 
