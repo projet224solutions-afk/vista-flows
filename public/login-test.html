@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple - 224Solutions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-text {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .key-info {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-text">224</div>
+        </div>
+        
+        <h1>🔐 Test Connexion</h1>
+        <div class="subtitle">224Solutions - Diagnostic Supabase</div>
+        
+        <div id="status" class="status info">
+            ⏳ Initialisation...
+        </div>
+
+        <div style="margin-top: 20px;">
+            <input 
+                type="email" 
+                id="email" 
+                placeholder="📧 Email"
+                autocomplete="email"
+            >
+            <input 
+                type="password" 
+                id="password" 
+                placeholder="🔒 Mot de passe"
+                autocomplete="current-password"
+            >
+            
+            <button class="btn-primary" onclick="testLogin()" id="loginBtn">
+                🚀 Se connecter
+            </button>
+            
+            <button class="btn-secondary" onclick="testConnection()">
+                🔍 Tester la connexion
+            </button>
+        </div>
+
+        <div id="result"></div>
+        
+        <details style="margin-top: 20px;">
+            <summary style="cursor: pointer; color: #667eea; font-weight: 600;">
+                📊 Détails techniques
+            </summary>
+            <pre id="details">Aucune donnée</pre>
+        </details>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+
+        console.log('🔧 Initialisation Supabase...');
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        const detailsDiv = document.getElementById('details');
+
+        // Test initial
+        async function init() {
+            try {
+                statusDiv.className = 'status loading';
+                statusDiv.innerHTML = '⏳ Vérification de la connexion...';
+
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) throw error;
+
+                if (data.session) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        ✅ <strong>Déjà connecté!</strong><br>
+                        📧 ${data.session.user.email}
+                    `;
+                    detailsDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    statusDiv.className = 'status info';
+                    statusDiv.innerHTML = '✅ Prêt - Entrez vos identifiants';
+                }
+
+                detailsDiv.textContent = JSON.stringify({
+                    url: SUPABASE_URL,
+                    keyLength: SUPABASE_KEY.length,
+                    session: data.session ? 'active' : 'none'
+                }, null, 2);
+
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ <strong>Erreur:</strong> ${error.message}`;
+                detailsDiv.textContent = JSON.stringify(error, null, 2);
+            }
+        }
+
+        // Test de connexion
+        window.testLogin = async function() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                resultDiv.innerHTML = '<div class="status error">⚠️ Email et mot de passe requis</div>';
+                return;
+            }
+
+            try {
+                loginBtn.disabled = true;
+                loginBtn.textContent = '⏳ Connexion...';
+                resultDiv.innerHTML = '<div class="status loading">🔄 Authentification en cours...</div>';
+
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ <strong>Connexion réussie!</strong><br>
+                        📧 ${data.user.email}<br>
+                        🆔 ${data.user.id.substring(0, 8)}...
+                    </div>
+                `;
+
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `✅ Connecté en tant que ${data.user.email}`;
+
+                detailsDiv.textContent = JSON.stringify({
+                    user: {
+                        id: data.user.id,
+                        email: data.user.email,
+                        role: data.user.role
+                    },
+                    session: {
+                        access_token: data.session.access_token.substring(0, 20) + '...',
+                        expires_at: new Date(data.session.expires_at * 1000).toLocaleString()
+                    }
+                }, null, 2);
+
+                // Rediriger après 2 secondes
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ <strong>Échec de connexion</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                detailsDiv.textContent = JSON.stringify({
+                    error: error.message,
+                    code: error.status,
+                    name: error.name
+                }, null, 2);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 Se connecter';
+            }
+        };
+
+        // Test de connexion simple
+        window.testConnection = async function() {
+            try {
+                resultDiv.innerHTML = '<div class="status loading">🔄 Test en cours...</div>';
+
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('count');
+
+                if (error) throw error;
+
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ <strong>Connexion OK!</strong><br>
+                        La base de données est accessible.
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ ${error.message}
+                    </div>
+                `;
+            }
+        };
+
+        // Enter pour soumettre
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') testLogin();
+        });
+
+        init();
+    </script>
+</body>
+</html>

@@ -62,7 +62,7 @@ export class DriverSubscriptionService {
     }
   }
   // Obtenir la configuration de l'abonnement
-  static async getConfig(): Promise<DriverSubscriptionConfig | null> {
+  static async getConfig(): Promise<DriverSubscriptionConfig> {
     try {
       const { data, error } = await supabase
         .from('driver_subscription_config')
@@ -75,33 +75,29 @@ export class DriverSubscriptionService {
         // Si pas de config trouvée, utiliser valeurs par défaut
         if (error.code === 'PGRST116') {
           console.warn('Aucune config trouvée, utilisation valeurs par défaut');
-          return {
-            id: 'default',
-            subscription_type: 'both',
-            price: 50000,
-            duration_days: 30,
-            is_active: true,
-            yearly_price: 570000,
-            yearly_discount_percentage: 5
-          };
+          return this.getDefaultConfig();
         }
         console.error('Erreur récupération config:', error);
-        return null;
+        return this.getDefaultConfig();
       }
       return data as DriverSubscriptionConfig;
     } catch (error) {
       console.error('Exception récupération config:', error);
-      // Retourner config par défaut en cas d'erreur
-      return {
-        id: 'default',
-        subscription_type: 'both',
-        price: 50000,
-        duration_days: 30,
-        is_active: true,
-        yearly_price: 570000,
-        yearly_discount_percentage: 5
-      };
+      return this.getDefaultConfig();
     }
+  }
+
+  // Configuration par défaut
+  private static getDefaultConfig(): DriverSubscriptionConfig {
+    return {
+      id: 'default',
+      subscription_type: 'both',
+      price: 50000,
+      duration_days: 30,
+      is_active: true,
+      yearly_price: 570000,
+      yearly_discount_percentage: 5
+    };
   }
 
   // Mettre à jour le prix (Admin seulement)
@@ -174,17 +170,25 @@ export class DriverSubscriptionService {
           console.warn('RPC function not found, fetching manually');
           return await this.getActiveSubscriptionManual(userId);
         }
+        // Si pas de résultat, retourner null au lieu de throw
+        if (error.code === 'PGRST116') {
+          return null;
+        }
         console.error('Erreur récupération abonnement:', error);
-        throw error;
+        return null; // Au lieu de throw
       }
       
       if (data && data.length > 0) {
         return { ...data[0], user_id: userId } as DriverSubscription;
       }
       return null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception récupération abonnement:', error);
-      throw error;
+      // Pas d'abonnement n'est pas une erreur
+      if (error?.code === 'PGRST116' || error?.message?.includes('No rows')) {
+        return null;
+      }
+      return null; // Au lieu de throw pour éviter de casser l'UI
     }
   }
 

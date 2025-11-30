@@ -13,39 +13,48 @@ export function useDriverSubscription() {
   const isDriver = profile?.role === 'taxi' || profile?.role === 'livreur';
 
   const loadSubscriptionData = async () => {
-    if (!user || !isDriver) return;
+    if (!user || !isDriver) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
+      
+      // Charger la config
       const configData = await DriverSubscriptionService.getConfig();
       setConfig(configData);
 
-      // Retry pour la subscription
-      let subData: DriverSubscription | null = null;
-      let retries = 3;
-      let lastError: any = null;
-      while (retries > 0 && !subData) {
-        try {
-          subData = await DriverSubscriptionService.getActiveSubscription(user.id);
-        } catch (err) {
-          lastError = err;
-          retries--;
-          if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+      // Charger la subscription avec gestion d'erreur améliorée
+      try {
+        const subData = await DriverSubscriptionService.getActiveSubscription(user.id);
+        setSubscription(subData);
+        setHasAccess(!!subData && subData.status === 'active');
+      } catch (subError: any) {
+        // Si pas d'abonnement trouvé, c'est normal
+        if (subError?.message?.includes('No rows') || subError?.code === 'PGRST116') {
+          setSubscription(null);
+          setHasAccess(false);
+        } else {
+          // Erreur réelle
+          console.error('Erreur chargement abonnement:', subError);
+          setSubscription(null);
+          setHasAccess(false);
+          
+          // Ne montrer le toast que si ce n'est pas une erreur "not found"
+          if (!subError?.message?.includes('not found')) {
+            toast.error('Impossible de charger l\'abonnement', {
+              description: 'Veuillez réessayer dans quelques instants'
+            });
+          }
         }
-        if (subData) break;
-      }
-
-      setSubscription(subData);
-      setHasAccess(!!subData && subData.status === 'active');
-      if (!subData && lastError && lastError?.message && !lastError.message.includes('No rows')) {
-        toast.error('Impossible de charger l\'abonnement. Réessayez plus tard.');
       }
     } catch (e: any) {
-      console.error('Erreur chargement abonnement:', e);
-      if (import.meta.env.DEV) {
-        console.error('Détails erreur:', { message: e?.message, code: e?.code });
-      } else {
-        toast.error('Erreur lors du chargement de l\'abonnement');
-      }
+      console.error('Erreur chargement config abonnement:', e);
+      // Définir des valeurs par défaut
+      setSubscription(null);
+      setHasAccess(false);
+      setConfig(null);
     } finally {
       setLoading(false);
     }
