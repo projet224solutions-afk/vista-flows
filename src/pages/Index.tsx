@@ -121,6 +121,9 @@ function Index() {
   // Hooks avec gestion d'erreur
   const { profile, user, loading } = useAuth();
 
+  // Log pour debugging
+  console.log('📊 Index.tsx - Rendu en cours', { user: !!user, profile: !!profile, loading });
+
   // Redirection automatique si l'utilisateur est connecté - CRITIQUE pour persistance
   useEffect(() => {
     // Attendre que le chargement soit terminé
@@ -160,6 +163,8 @@ function Index() {
   const { products, loading: productsLoading } = useHomeProducts(4);
   const { categories, loading: categoriesLoading } = useHomeCategories();
 
+  console.log('📈 Données chargées:', { stats, statsLoading, productsLoading, categoriesLoading });
+
   const mainServices = getMainServices(stats);
 
   const handleServiceClick = (service: typeof mainServices[0]) => {
@@ -177,6 +182,18 @@ function Index() {
   const handleProductClick = (productId: string) => {
     navigate(`/marketplace/product/${productId}`);
   };
+
+  // Afficher un loader pendant le chargement initial
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Chargement de 224Solutions...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary
