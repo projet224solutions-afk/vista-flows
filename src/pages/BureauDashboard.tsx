@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useBureauErrorBoundary } from '@/hooks/useBureauErrorBoundary';
-import { BureauKYCStatus } from '@/components/syndicat/BureauKYCStatus';
 import { useBureauActions } from '@/hooks/useBureauActions';
 import MotoRegistrationForm from '@/components/syndicat/MotoRegistrationForm';
 import MotoManagementDashboard from '@/components/syndicat/MotoManagementDashboard';
@@ -199,7 +198,6 @@ export default function BureauDashboard() {
           <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
           <div className="flex items-center gap-3 mt-2">
             <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
-            <BureauKYCStatus status={bureau.verification_status || 'unverified'} bureauId={bureau.id} />
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -660,41 +658,6 @@ export default function BureauDashboard() {
                     <Label className="text-sm text-muted-foreground">Email</Label>
                     <p className="font-medium">{bureau?.president_email}</p>
                   </div>
-                </div>
-              </div>
-
-              {/* Statut KYC */}
-              <div className="space-y-4 pt-6 border-t">
-                <h3 className="font-semibold text-lg">Vérification KYC</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm text-muted-foreground">Statut de vérification</Label>
-                    <BureauKYCStatus status={bureau?.kyc_status || 'unverified'} />
-                  </div>
-                  
-                  {bureau?.kyc_status === 'unverified' && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <p className="text-sm text-yellow-800">
-                        ⚠️ Votre bureau n'est pas encore vérifié. Contactez l'administration pour compléter votre vérification KYC.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {bureau?.kyc_status === 'pending' && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        ℹ️ Votre demande de vérification est en cours de traitement. Vous serez notifié une fois la vérification terminée.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {bureau?.kyc_status === 'verified' && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-green-800">
-                        ✅ Votre bureau est vérifié et dispose de tous les privilèges.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 

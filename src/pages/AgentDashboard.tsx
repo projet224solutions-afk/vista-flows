@@ -16,7 +16,6 @@ import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagemen
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
-import { AgentKYCStatus } from '@/components/agent/AgentKYCStatus';
 import { AgentWalletDiagnostic } from '@/components/agent/AgentWalletDiagnostic';
 import { useAgentStats } from '@/hooks/useAgentStats';
 
@@ -104,7 +103,6 @@ export default function AgentDashboard() {
                 Bienvenue, {agent.name}
               </p>
               <div className="flex items-center gap-3">
-                <AgentKYCStatus kyc_status={agent.kyc_status} />
                 {pdgUserId && (
                   <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
                 )}
