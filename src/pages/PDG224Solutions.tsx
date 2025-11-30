@@ -3,6 +3,7 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { emailService } from '@/services/emailService';
 import { Shield, LogOut, Lock, Brain, Bell, Mail, UserCog, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +55,8 @@ export default function PDG224Solutions() {
   const [verifyingMfa, setVerifyingMfa] = useState(false);
   const [showMfaDialog, setShowMfaDialog] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
+  const [generatedMfaCode, setGeneratedMfaCode] = useState<string | null>(null);
+  const [mfaCodeExpiry, setMfaCodeExpiry] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -126,13 +129,22 @@ export default function PDG224Solutions() {
       return;
     }
     try {
-      // Envoi code OTP par email
-      const { error } = await supabase.auth.signInWithOtp({
-        email: user.email,
-        options: { shouldCreateUser: false }
-      });
-      if (error) throw error;
-      toast.success('Code MFA envoyé à votre email');
+      // Générer un code à 6 chiffres
+      const code = emailService.generateMfaCode();
+      setGeneratedMfaCode(code);
+      
+      // Définir l'expiration à 10 minutes
+      const expiryTime = Date.now() + 10 * 60 * 1000;
+      setMfaCodeExpiry(expiryTime);
+      
+      // Envoyer le code par email
+      const success = await emailService.sendMfaCode(user.email, code);
+      
+      if (success) {
+        toast.success('Code MFA à 6 chiffres envoyé à votre email');
+      } else {
+        toast.error('Erreur lors de l\'envoi du code');
+      }
     } catch (e: any) {
       console.error('Erreur envoi code MFA:', e);
       toast.error(e.message || 'Échec envoi code MFA');
@@ -141,29 +153,42 @@ export default function PDG224Solutions() {
 
   const handleVerifyMfa = useCallback(async () => {
     if (!user?.email) return;
-    if (!mfaCode || mfaCode.length < 4) {
-      toast.error('Entrez le code MFA reçu par email');
+    if (!mfaCode || mfaCode.length !== 6) {
+      toast.error('Entrez le code à 6 chiffres reçu par email');
       return;
     }
+    
     setVerifyingMfa(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        type: 'email',
-        email: user.email,
-        token: mfaCode
-      });
-      if (error) throw error;
+      // Vérifier si le code a expiré
+      if (!mfaCodeExpiry || Date.now() > mfaCodeExpiry) {
+        toast.error('Code expiré. Demandez un nouveau code.');
+        setGeneratedMfaCode(null);
+        setMfaCodeExpiry(null);
+        setMfaCode('');
+        return;
+      }
+      
+      // Vérifier si le code correspond
+      if (mfaCode !== generatedMfaCode) {
+        toast.error('Code MFA invalide');
+        return;
+      }
+      
+      // Code valide
       setMfaVerified(true);
       sessionStorage.setItem('mfa_verified_admin', 'true');
       setShowMfaDialog(false);
-      toast.success('MFA vérifié, accès PDG autorisé');
+      setGeneratedMfaCode(null);
+      setMfaCodeExpiry(null);
+      toast.success('✅ MFA vérifié, accès PDG autorisé');
     } catch (e: any) {
       console.error('Erreur vérification MFA:', e);
-      toast.error(e.message || 'Code MFA invalide');
+      toast.error(e.message || 'Erreur lors de la vérification');
     } finally {
       setVerifyingMfa(false);
     }
-  }, [user, mfaCode]);
+  }, [user, mfaCode, generatedMfaCode, mfaCodeExpiry]);
 
   const handleUpdateEmail = useCallback(async () => {
     if (!newEmail || !newEmail.includes('@')) {
@@ -223,27 +248,45 @@ export default function PDG224Solutions() {
         <Dialog open={showMfaDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Vérification MFA requise</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Vérification MFA requise
+              </DialogTitle>
               <DialogDescription>
-                Un code de sécurité est nécessaire pour accéder à l'interface PDG.
+                Un code de sécurité à 6 chiffres est nécessaire pour accéder à l'interface PDG.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <Button variant="secondary" onClick={handleSendMfaCode} disabled={verifyingMfa}>
-                Envoyer le code par email
+              <Button 
+                variant="secondary" 
+                onClick={handleSendMfaCode} 
+                disabled={verifyingMfa}
+                className="w-full"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Envoyer le code à 6 chiffres par email
               </Button>
-              <Input
-                placeholder="Entrez le code reçu"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
-              />
-              <Button onClick={handleVerifyMfa} disabled={verifyingMfa}>
-                Vérifier
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Code de vérification</label>
+                <Input
+                  placeholder="000000"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-2xl font-mono tracking-widest"
+                />
+              </div>
+              <Button 
+                onClick={handleVerifyMfa} 
+                disabled={verifyingMfa || mfaCode.length !== 6}
+                className="w-full"
+              >
+                {verifyingMfa ? 'Vérification...' : 'Vérifier le code'}
               </Button>
             </div>
             <DialogFooter>
               <p className="text-xs text-muted-foreground">
-                Astuce: Le code expire après quelques minutes.
+                🔐 Le code expire après 10 minutes. Ne le partagez avec personne.
               </p>
             </DialogFooter>
           </DialogContent>
