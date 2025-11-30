@@ -41,6 +41,7 @@ const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
 const QuotesInvoicesPDG = lazy(() => import('@/components/pdg/QuotesInvoicesPDG'));
 const AgentWalletAudit = lazy(() => import('@/components/pdg/AgentWalletAudit'));
+const CopilotAuditTrail = lazy(() => import('@/components/pdg/CopilotAuditTrail'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -526,6 +527,12 @@ export default function PDG224Solutions() {
               {activeTab === 'agent-wallet-audit' && (
                 <ErrorBoundary>
                   <AgentWalletAudit />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'copilot-audit' && (
+                <ErrorBoundary>
+                  <CopilotAuditTrail />
                 </ErrorBoundary>
               )}
 

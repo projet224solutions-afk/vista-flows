@@ -75,6 +75,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true },
       { value: 'copilot', label: 'Copilote IA', icon: MessageSquare },
+      { value: 'copilot-audit', label: 'Audit Copilote', icon: Shield },
       { value: 'reports', label: 'Rapports', icon: BarChart3 },
     ]
   }
