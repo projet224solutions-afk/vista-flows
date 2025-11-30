@@ -32,6 +32,10 @@ import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/Respons
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { useCart } from "@/contexts/CartContext";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useClientErrorBoundary } from "@/hooks/useClientErrorBoundary";
+import { ClientKYCStatus } from "@/components/client/ClientKYCStatus";
+import { useClientStats } from "@/hooks/useClientStats";
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -39,6 +43,12 @@ export default function ClientDashboard() {
   const responsive = useResponsive();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Gestion des erreurs centralisée
+  const { error, captureError, clearError } = useClientErrorBoundary();
+  
+  // Stats optimisées avec SQL
+  const { stats: clientStats, loading: statsLoading } = useClientStats();
 
   // Utiliser le hook universel pour les produits
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
@@ -182,7 +192,10 @@ export default function ClientDashboard() {
                     {responsive.isMobile ? '224SOL' : '224SOLUTIONS'}
                   </h1>
                   {!responsive.isMobile && (
-                    <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                    <>
+                      <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
+                      <ClientKYCStatus kyc_status={profile?.kyc_status as any} showIcon={true} />
+                    </>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">Marketplace</p>
@@ -354,48 +367,74 @@ export default function ClientDashboard() {
               <div className="lg:col-span-2">
                 <UniversalWalletTransactions />
               </div>
-              {/* Statistiques rapides */}
+              {/* Statistiques rapides - SQL optimisées */}
               <Card className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
                   <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 md:space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center`}>
-                        <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
+                  {statsLoading ? (
+                    <div className="text-center py-4 text-muted-foreground">Chargement...</div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center`}>
+                            <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
+                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
+                              {clientStats?.total_orders || 0}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
-                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{orders.length}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center`}>
-                        <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
+                      <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center`}>
+                            <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
+                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
+                              {clientStats?.active_orders || 0}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
-                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{activeOrders.length}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center`}>
-                        <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
+                      <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center`}>
+                            <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-muted-foreground">Favoris</p>
+                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
+                              {clientStats?.favorites_count || 0}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                       <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">Favoris</p>
-                        <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{favorites.length}</p>
+
+                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center`}>
+                            <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
+                          </div>
+                          <div>
+                            <p className="text-xs md:text-sm text-muted-foreground">Total dépensé</p>
+                            <p className={`${responsive.isMobile ? 'text-base' : 'text-lg'} font-bold text-foreground`}>
+                              {formatPrice(clientStats?.total_spent || 0)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </ResponsiveGrid>
