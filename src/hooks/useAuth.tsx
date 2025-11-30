@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface Profile {
+export interface Profile {
   id: string;
   email: string;
   first_name?: string;
@@ -13,6 +13,7 @@ interface Profile {
   avatar_url?: string;
   phone?: string;
   is_active: boolean;
+  kyc_status?: string;
 }
 
 interface AuthContextType {

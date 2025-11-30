@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 import { useTaxiErrorBoundary } from './useTaxiErrorBoundary';
-import type { Profile } from '@/types/auth';
+import type { Profile } from '@/hooks/useAuth';
 
 interface UseDriverOnlineStatusProps {
   driverId: string | null;
@@ -92,18 +92,9 @@ export function useDriverOnlineStatus({
         toast.dismiss('gps-loading');
         
         const errorMessage = error?.message || 'Erreur GPS inconnue';
-        toast.error(
-          <div className="space-y-2">
-            <p className="font-semibold">⚠️ Erreur GPS</p>
-            <p className="text-sm">{errorMessage}</p>
-            <div className="text-xs opacity-80">
-              <p>• Vérifiez que le GPS est activé</p>
-              <p>• Autorisez l'accès à la localisation</p>
-              <p>• Assurez-vous d'avoir une bonne connexion</p>
-            </div>
-          </div>,
-          { duration: 5000 }
-        );
+        toast.error(`⚠️ Erreur GPS: ${errorMessage}\n\n• Vérifiez que le GPS est activé\n• Autorisez l'accès à la localisation\n• Assurez-vous d'avoir une bonne connexion`, {
+          duration: 5000
+        });
         return;
       }
     } else {
