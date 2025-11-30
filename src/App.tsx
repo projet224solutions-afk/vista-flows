@@ -12,7 +12,8 @@ import QuickFooter from "@/components/QuickFooter";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
 // Lazy loading des pages pour optimiser le bundle
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazy(() => import("./pages/SimpleIndex")); // Version simplifiée temporaire
+const OriginalIndex = lazy(() => import("./pages/Index")); // Version originale conservée
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -67,6 +68,7 @@ const Cart = lazy(() => import("./pages/Cart"));
 const VendorAgentInterface = lazy(() => import("./pages/VendorAgentInterface"));
 const VendorContracts = lazy(() => import("./pages/VendorContracts"));
 const ClientContracts = lazy(() => import("./pages/ClientContracts"));
+const DiagnosticPage = lazy(() => import("./pages/DiagnosticPage"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -94,6 +96,7 @@ function App() {
               <Routes>
               {/* Accueil par défaut */}
               <Route path="/" element={<Index />} />
+              <Route path="/diagnostic" element={<DiagnosticPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
