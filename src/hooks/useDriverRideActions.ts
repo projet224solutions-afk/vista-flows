@@ -132,9 +132,8 @@ export function useDriverRideActions({
 
     try {
       await TaxiMotoService.updateRideStatus(activeRide.id, 'cancelled', {
-        cancelled_by: 'driver',
-        cancellation_reason: reason
-      });
+        cancel_reason: reason
+      } as any);
 
       setActiveRide(null);
       setNavigationActive(false);
