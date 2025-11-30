@@ -38,10 +38,12 @@ const PDGVendors = lazy(() => import('@/components/pdg/PDGVendors'));
 const PDGDrivers = lazy(() => import('@/components/pdg/PDGDrivers'));
 const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyDashboard'));
 const QuotesInvoicesPDG = lazy(() => import('@/components/pdg/QuotesInvoicesPDG'));
+const AgentWalletAudit = lazy(() => import('@/components/pdg/AgentWalletAudit'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const envOk = Boolean(import.meta.env.VITE_SUPABASE_URL && (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY));
   const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
     // Persistance courte dans la session du navigateur
     return sessionStorage.getItem('mfa_verified_admin') === 'true';
@@ -206,6 +208,12 @@ export default function PDG224Solutions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      {/* Bandeau diagnostic pour éviter page blanche en cas d'env manquant */}
+      {!envOk && (
+        <div className="p-3 bg-yellow-100 border border-yellow-300 text-yellow-800">
+          Clés Supabase manquantes: définissez `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` (ou `VITE_SUPABASE_ANON_KEY`).
+        </div>
+      )}
       {/* Dialog MFA obligatoire pour PDG */}
       {profile?.role === 'admin' && !mfaVerified && (
         <Dialog open={showMfaDialog}>
@@ -310,6 +318,11 @@ export default function PDG224Solutions() {
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   Système Actif
                 </Badge>
+                {!envOk && (
+                  <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 hover:bg-yellow-500/20">
+                    Variables Env Manquantes
+                  </Badge>
+                )}
                 {aiActive && (
                   <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1.5">
                     <Brain className="w-3.5 h-3.5" />
@@ -493,6 +506,12 @@ export default function PDG224Solutions() {
               {activeTab === 'bug-bounty' && (
                 <ErrorBoundary>
                   <BugBountyDashboard />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'agent-wallet-audit' && (
+                <ErrorBoundary>
+                  <AgentWalletAudit />
                 </ErrorBoundary>
               )}
 

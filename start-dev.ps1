@@ -50,12 +50,12 @@ function Start-Backend {
     if (Test-Path "backend/src/server.js") {
         Write-Host "🔧 Démarrage du Backend (Node.js)..." -ForegroundColor Magenta
         Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
-            `$host.UI.RawUI.WindowTitle = '224Solutions - Backend Server'
-            Set-Location '$PWD\backend'
-            Write-Host '`n╔═══════════════════════════════════╗' -ForegroundColor Magenta
-            Write-Host '║   BACKEND SERVER - PORT 3000      ║' -ForegroundColor Magenta
-            Write-Host '╚═══════════════════════════════════╝`n' -ForegroundColor Magenta
-            node src/server.js
+`$host.UI.RawUI.WindowTitle = '224Solutions - Backend Server'
+Set-Location '$PWD\backend'
+Write-Host '`n╔═══════════════════════════════════╗' -ForegroundColor Magenta
+Write-Host '║   BACKEND SERVER - PORT 3000      ║' -ForegroundColor Magenta
+Write-Host '╚═══════════════════════════════════╝`n' -ForegroundColor Magenta
+node src/server.js
 "@
         Write-Host "✅ Backend lancé dans un terminal séparé" -ForegroundColor Green
         Start-Sleep -Seconds 3
@@ -68,7 +68,7 @@ function Start-Backend {
 function Start-Frontend {
     Write-Host "`n🎨 Démarrage du Frontend (Vite + React)..." -ForegroundColor Blue
     Start-Process powershell -ArgumentList "-NoExit", "-Command", @"
-        `$host.UI.RawUI.WindowTitle = '224Solutions - Frontend Server'
+        $host.UI.RawUI.WindowTitle = '224Solutions - Frontend Server'
         Set-Location '$PWD'
         Write-Host '`n╔═══════════════════════════════════╗' -ForegroundColor Blue
         Write-Host '║   FRONTEND SERVER - PORT 8080     ║' -ForegroundColor Blue

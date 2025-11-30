@@ -156,6 +156,45 @@ serve(async (req) => {
     }
 
     // Vérifier le wallet de l'utilisateur
+    // Récupérer le profil pour contrôle du rôle (agent/admin)
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('id, role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const userRole = profile?.role || 'user';
+
+    // Fonction utilitaire: mise à jour miroir du wallet agent si existe
+    const syncAgentWallet = async (newBalance: number, context: string) => {
+      try {
+        const { data: agentWallet } = await supabaseClient
+          .from('agent_wallets')
+          .select('id')
+          .eq('agent_id', user.id)
+          .maybeSingle();
+        if (agentWallet) {
+          await supabaseClient
+            .from('agent_wallets')
+            .update({ balance: newBalance, updated_at: new Date().toISOString() })
+            .eq('id', agentWallet.id);
+          await logWalletOperation(supabaseClient, {
+            user_id: user.id,
+            wallet_id: agentWallet.id,
+            operation: 'sync_agent_wallet',
+            context,
+            new_balance: newBalance,
+            role: userRole,
+            created_at: new Date().toISOString(),
+            metadata: { source: 'wallet-operations', syncContext: context }
+          });
+        }
+      } catch (_e) {
+        console.warn('⚠️ Sync agent_wallet échouée (non bloquant)');
+      }
+    };
+
+    // Récupérer le wallet principal
     const { data: wallet, error: walletError } = await supabaseClient
       .from('wallets')
       .select('*')
@@ -231,6 +270,10 @@ serve(async (req) => {
         }
 
         console.log('✅ Deposit successful:', { newBalance: newBalanceDeposit });
+        // Sync agent wallet si rôle agent
+        if (userRole === 'agent') {
+          await syncAgentWallet(newBalanceDeposit, 'deposit');
+        }
         result = { success: true, new_balance: newBalanceDeposit, operation: 'deposit' };
         break;
 
@@ -272,6 +315,9 @@ serve(async (req) => {
         }
 
         console.log('✅ Withdraw successful:', { newBalance: newBalanceWithdraw });
+        if (userRole === 'agent') {
+          await syncAgentWallet(newBalanceWithdraw, 'withdraw');
+        }
         result = { success: true, new_balance: newBalanceWithdraw, operation: 'withdraw' };
         break;
 
@@ -438,6 +484,44 @@ serve(async (req) => {
           newBalanceRecipient 
         });
         
+        // Sync agent wallet pour expéditeur si agent
+        if (userRole === 'agent') {
+          await syncAgentWallet(newBalanceSender, 'transfer_sender');
+        }
+        // Sync agent wallet pour destinataire si c'est un agent
+        try {
+          const { data: recipientProfile } = await supabaseClient
+            .from('profiles')
+            .select('id, role')
+            .eq('id', recipientUserId)
+            .maybeSingle();
+            if (recipientProfile?.role === 'agent') {
+            const { data: recipAgentWallet } = await supabaseClient
+              .from('agent_wallets')
+              .select('id')
+              .eq('agent_id', recipientUserId)
+              .maybeSingle();
+            if (recipAgentWallet) {
+              await supabaseClient
+                .from('agent_wallets')
+                .update({ balance: newBalanceRecipient, updated_at: new Date().toISOString() })
+                .eq('id', recipAgentWallet.id);
+                await logWalletOperation(supabaseClient, {
+                  user_id: recipientUserId,
+                  wallet_id: recipAgentWallet.id,
+                  operation: 'sync_agent_wallet',
+                  context: 'transfer_recipient',
+                  new_balance: newBalanceRecipient,
+                  role: recipientProfile.role,
+                  created_at: new Date().toISOString(),
+                  metadata: { source: 'wallet-operations', syncContext: 'transfer_recipient', sender: user.id }
+                });
+            }
+          }
+        } catch (_e) {
+          console.warn('⚠️ Sync agent_wallet destinataire échouée (non bloquant)');
+        }
+
         result = { 
           success: true, 
           new_balance: newBalanceSender, 

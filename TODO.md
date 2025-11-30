@@ -18,6 +18,7 @@
 ### Phase 2 : Types `any` dans les Types et Interfaces
 - [x] Remplacer `any` par des types spécifiques
 - [x] Fichiers : src/types/*.ts, interfaces vides
+- [x] Corrigé src/types/global-fixes.d.ts (remplacé any par unknown et types spécifiques)
 
 ### Phase 3 : Services et Hooks
 - Corriger `any` dans les services (CopiloteService.ts, DataManager.ts, etc.)

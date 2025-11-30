@@ -1,56 +1,70 @@
-FROM node:18-slim
+# ==================== FRONTEND BUILD STAGE ====================
+FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Installer uniquement les dépendances de production
-COPY package.json package-lock.json* ./
-RUN npm install --production --silent || npm install --production --no-audit --silent
-
-# Copier le script de migration
-COPY apply-wallet-fix.js ./
-COPY supabase ./supabase
-COPY scripts ./scripts
-
-ENV NODE_ENV=production
-
-CMD ["node", "apply-wallet-fix.js"]
-# ==================== STAGE 1: Build ====================
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copier uniquement les fichiers de dépendances
+# Copy package files
 COPY package*.json ./
 
-# Installer toutes les dépendances
+# Install dependencies
 RUN npm install
 
-# Copier le code source
+# Copy source code
 COPY . .
 
-# ==================== STAGE 2: Production ====================
-# Stage 2
-FROM node:18-alpine
+# Build the frontend
+RUN npm run build
+
+# ==================== BACKEND BUILD STAGE ====================
+FROM node:18-alpine AS backend-builder
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=3001
+# Copy package files
+COPY package*.json ./
 
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# ==================== PRODUCTION STAGE ====================
+FROM node:18-alpine
+
+# Install nginx for serving frontend
+RUN apk add --no-cache nginx
+
+# Create app user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copier tout le build du stage 1
-COPY --from=builder /app /app
+# Setup nginx
+COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
+COPY --chown=nginx:nginx nginx-default.conf /etc/nginx/conf.d/default.conf
 
-RUN npm install --omit=dev && npm cache clean --force
+# Copy frontend build
+COPY --from=frontend-builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
-RUN mkdir -p logs uploads && \
-    chown -R nodejs:nodejs /app
+# Copy backend
+COPY --from=backend-builder --chown=nodejs:nodejs /app /app
 
+# Create necessary directories
+RUN mkdir -p /app/logs /app/uploads && \
+    chown -R nodejs:nodejs /app/logs /app/uploads
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Switch to nodejs user for backend
 USER nodejs
-EXPOSE 3001
 
-CMD ["node", "src/server.js"]
-# Copier le fichier .env
-COPY .env ./
+EXPOSE 80 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node --version || exit 1
+
+# Start both services
+CMD ["sh", "-c", "nginx && node /app/src/server.js"]

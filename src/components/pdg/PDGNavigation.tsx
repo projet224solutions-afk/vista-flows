@@ -54,6 +54,7 @@ const categories: NavCategory[] = [
       { value: 'drivers', label: 'Livreurs', icon: Bike },
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText },
       { value: 'communication', label: 'Communication', icon: MessageSquare },
+      { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield },
     ]
   },
   {

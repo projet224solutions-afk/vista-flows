@@ -53,27 +53,60 @@ export default function PDGApiSupervision() {
       setAvailability(Math.round(100 * results.filter(r=>r.status==='operational').length / results.length));
     });
 
-    // Incidents critiques (24h)
+    // Incidents critiques (24h) avec filtrage + gestion erreurs robuste
     supabase
       .from('security_incidents')
       .select('*')
       .eq('severity', 'critical')
       .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString())
-      .then(({ data }) => setCriticalEvents(data || []));
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Lecture incidents critiques refusée:', error);
+          setCriticalEvents([]);
+        } else {
+          setCriticalEvents(data || []);
+        }
+      })
+      .catch((e) => {
+        console.warn('Erreur incidents critiques:', e);
+        setCriticalEvents([]);
+      });
 
-    // Incidents ouverts
+    // Incidents ouverts avec gestion erreurs
     supabase
       .from('security_incidents')
       .select('*')
       .eq('status', 'open')
-      .then(({ data }) => setOpenIncidents(data || []));
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Lecture incidents ouverts refusée:', error);
+          setOpenIncidents([]);
+        } else {
+          setOpenIncidents(data || []);
+        }
+      })
+      .catch((e) => {
+        console.warn('Erreur incidents ouverts:', e);
+        setOpenIncidents([]);
+      });
 
     // Nombre d'incidents 24h
     supabase
       .from('security_incidents')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'open')
-      .then(({ count }) => setIncidents(count || 0));
+      .then(({ count, error }) => {
+        if (error) {
+          console.warn('Lecture security_incidents refusée:', error);
+          setIncidents(0);
+        } else {
+          setIncidents(count || 0);
+        }
+      })
+      .catch((e) => {
+        console.warn('Erreur security_incidents:', e);
+        setIncidents(0);
+      });
   }, []);
 
   return (
