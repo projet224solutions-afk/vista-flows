@@ -5,6 +5,10 @@ import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "l
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
+import { TransitaireKYCStatus } from "@/components/transitaire/TransitaireKYCStatus";
+import { useTransitaireStats } from "@/hooks/useTransitaireStats";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
@@ -14,18 +18,50 @@ export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
-  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
+  const { error, captureError, clearError } = useTransitaireErrorBoundary();
+  const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
+  // Formater le prix en FCFA
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('fr-GN', {
+      style: 'currency',
+      currency: 'GNF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount).replace('GNF', 'FCFA');
+  };
+
+  // Stats dynamiques basées sur les données réelles
   const stats = [
-    { label: "Expéditions actives", value: "45", icon: Package, color: "text-blue-500" },
-    { label: "En transit", value: "23", icon: Plane, color: "text-green-500" },
-    { label: "Revenus ce mois", value: "8.2M FCFA", icon: TrendingUp, color: "text-purple-500" },
-    { label: "Délai moyen", value: "12j", icon: Clock, color: "text-orange-500" }
+    { 
+      label: "Expéditions actives", 
+      value: statsLoading ? "..." : transitaireStats.active_shipments.toString(), 
+      icon: Package, 
+      color: "text-blue-500" 
+    },
+    { 
+      label: "En transit", 
+      value: statsLoading ? "..." : transitaireStats.in_transit.toString(), 
+      icon: Plane, 
+      color: "text-green-500" 
+    },
+    { 
+      label: "Revenus ce mois", 
+      value: statsLoading ? "..." : formatPrice(transitaireStats.monthly_revenue), 
+      icon: TrendingUp, 
+      color: "text-purple-500" 
+    },
+    { 
+      label: "Délai moyen", 
+      value: statsLoading ? "..." : `${transitaireStats.average_delivery_days}j`, 
+      icon: Clock, 
+      color: "text-orange-500" 
+    }
   ];
 
   const activeShipments = [
@@ -62,7 +98,10 @@ export default function TransitaireDashboard() {
         <div className="px-4 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
+                <TransitaireKYCStatus status={profile?.kyc_status} />
+              </div>
               <p className="text-muted-foreground">
                 Transport international - {profile?.first_name || user?.email}
               </p>
@@ -79,6 +118,17 @@ export default function TransitaireDashboard() {
           </div>
         </div>
       </header>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="px-4 py-2">
+          <ErrorBanner
+            message={error.message}
+            type={error.type}
+            onDismiss={clearError}
+          />
+        </div>
+      )}
 
       {/* Navigation par onglets */}
       <Tabs defaultValue="dashboard" className="w-full">
