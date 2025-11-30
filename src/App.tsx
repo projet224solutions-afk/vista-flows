@@ -68,6 +68,7 @@ const VendorAgentInterface = lazy(() => import("./pages/VendorAgentInterface"));
 const VendorContracts = lazy(() => import("./pages/VendorContracts"));
 const ClientContracts = lazy(() => import("./pages/ClientContracts"));
 const TestPage = lazy(() => import("./pages/TestPage"));
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -112,6 +113,7 @@ function App() {
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
+              <Route path="/services-proximite/:id" element={<ServiceDetail />} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/delivery" element={<DeliveryClient />} />

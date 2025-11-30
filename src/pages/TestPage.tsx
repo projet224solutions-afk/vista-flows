@@ -47,14 +47,34 @@ export default function TestPage() {
           gap: '10px'
         }}>
           <Button 
-            onClick={() => navigate('/')}
+            onClick={() => {
+              console.log('🏠 Clic bouton Accueil - Navigation vers /');
+              console.log('🔍 Route actuelle:', window.location.pathname);
+              navigate('/');
+            }}
             style={{ width: '100%' }}
           >
             🏠 Retour à l'accueil
           </Button>
           
           <Button 
-            onClick={() => navigate('/auth')}
+            onClick={() => {
+              console.log('🛍️ Clic bouton Marketplace - Navigation vers /marketplace');
+              console.log('🔍 Route actuelle:', window.location.pathname);
+              navigate('/marketplace');
+            }}
+            variant="outline"
+            style={{ width: '100%' }}
+          >
+            🛍️ Marketplace
+          </Button>
+          
+          <Button 
+            onClick={() => {
+              console.log('🔐 Clic bouton Connexion - Navigation vers /auth');
+              console.log('🔍 Route actuelle:', window.location.pathname);
+              navigate('/auth');
+            }}
             variant="outline"
             style={{ width: '100%' }}
           >
@@ -83,6 +103,40 @@ export default function TestPage() {
             <li>✅ Composants UI fonctionnent</li>
             <li>✅ Navigation fonctionne</li>
           </ul>
+        </div>
+
+        <div style={{
+          marginTop: '20px',
+          padding: '20px',
+          backgroundColor: '#fff7ed',
+          borderRadius: '8px',
+          border: '2px solid #fed7aa'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#ea580c',
+            marginBottom: '10px'
+          }}>
+            📍 Routes à tester:
+          </h3>
+          <ul style={{ listStyle: 'none', padding: 0, fontSize: '14px' }}>
+            <li style={{ marginBottom: '8px' }}>
+              <strong>/ (Accueil)</strong> → Index.tsx
+            </li>
+            <li style={{ marginBottom: '8px' }}>
+              <strong>/marketplace</strong> → Marketplace.tsx
+            </li>
+            <li style={{ marginBottom: '8px' }}>
+              <strong>/auth</strong> → Auth.tsx
+            </li>
+            <li style={{ marginBottom: '8px', color: '#16a34a' }}>
+              <strong>/test</strong> → TestPage.tsx (vous êtes ici)
+            </li>
+          </ul>
+          <p style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+            💡 Ouvrez la console (F12) pour voir les logs détaillés
+          </p>
         </div>
       </div>
     </div>

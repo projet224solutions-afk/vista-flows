@@ -85,8 +85,7 @@ export default function ServicesProximite() {
   };
 
   const handleServiceClick = (serviceId: string) => {
-    // Rediriger vers la page de détails du service ou ouvrir un modal
-    toast.info('Détails du service à venir');
+    navigate(`/services-proximite/${serviceId}`);
   };
 
   const filteredServices = services;

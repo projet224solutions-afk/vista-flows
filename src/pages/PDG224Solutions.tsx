@@ -3,7 +3,7 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { emailService } from '@/services/emailService';
+import { resendEmailService } from '@/services/resendEmailService';
 import { Shield, LogOut, Lock, Brain, Bell, Mail, UserCog, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -130,15 +130,15 @@ export default function PDG224Solutions() {
     }
     try {
       // Générer un code à 6 chiffres
-      const code = emailService.generateMfaCode();
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedMfaCode(code);
       
       // Définir l'expiration à 10 minutes
       const expiryTime = Date.now() + 10 * 60 * 1000;
       setMfaCodeExpiry(expiryTime);
       
-      // Envoyer le code par email
-      const success = await emailService.sendMfaCode(user.email, code);
+      // Envoyer le code par email via Resend
+      const success = await resendEmailService.sendMfaCode(user.email, code);
       
       if (success) {
         toast.success('Code MFA à 6 chiffres envoyé à votre email');
