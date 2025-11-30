@@ -15,8 +15,8 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAgentActions, CreateUserData } from '@/hooks/useAgentActions';
 
 const USER_ROLES = [
   { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-green-600' },
@@ -37,12 +37,14 @@ interface CreateUserFormProps {
 export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated }: CreateUserFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createUser } = useAgentActions({ onUserCreated });
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    role: 'client',
+    role: 'client' as CreateUserData['role'],
     country: 'Guinée',
     city: '',
     // Données syndicat
@@ -65,119 +67,75 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.firstName || !formData.email || !formData.phone) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-
-      // Préparer les données spécifiques au rôle
-      const requestBody: any = {
-        email: formData.email,
-        password: Math.random().toString(36).slice(-8) + 'Aa1!',
+      // Préparer les données selon le rôle
+      const userData: CreateUserData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        email: formData.email,
         phone: formData.phone,
         role: formData.role,
         country: formData.country,
-        city: formData.city,
-        agentId: agentId,
-        agentCode: agentCode,
-        access_token: accessToken, // Ajouter le token d'accès si disponible
+        city: formData.city
       };
 
-      // Ajouter les données spécifiques selon le rôle
+      // Ajouter données spécifiques selon le rôle
       if (formData.role === 'syndicat') {
-        if (!formData.bureau_code || !formData.prefecture || !formData.commune) {
-          toast.error('Veuillez remplir tous les champs du bureau syndical');
-          return;
-        }
-        requestBody.syndicatData = {
+        userData.syndicatData = {
           bureau_code: formData.bureau_code,
           prefecture: formData.prefecture,
           commune: formData.commune,
-          full_location: formData.full_location,
+          full_location: formData.full_location
         };
       } else if (formData.role === 'vendeur') {
-        if (!formData.business_name) {
-          toast.error('Veuillez remplir le nom de l\'entreprise');
-          return;
-        }
-        requestBody.vendeurData = {
+        userData.vendeurData = {
           business_name: formData.business_name,
           business_description: formData.business_description,
-          business_address: formData.business_address,
+          business_address: formData.business_address
         };
       } else if (formData.role === 'taxi' || formData.role === 'livreur') {
-        if (!formData.license_number) {
-          toast.error('Veuillez remplir le numéro de permis');
-          return;
-        }
-        requestBody.driverData = {
+        userData.driverData = {
           license_number: formData.license_number,
           vehicle_type: formData.vehicle_type,
           vehicle_brand: formData.vehicle_brand,
           vehicle_model: formData.vehicle_model,
           vehicle_year: formData.vehicle_year,
-          vehicle_plate: formData.vehicle_plate,
+          vehicle_plate: formData.vehicle_plate
         };
       }
 
-      // Créer l'utilisateur dans auth.users via la fonction edge
-      const { data, error } = await supabase.functions.invoke('create-user-by-agent', {
-        body: requestBody,
-      });
+      // Appeler le hook
+      const result = await createUser(userData, agentId, agentCode, accessToken);
 
-      if (error) {
-        console.error('Edge function error:', error);
-        toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Vérifier si la réponse contient une erreur
-      if (data?.error || data?.code === 'EMAIL_EXISTS') {
-        console.error('Erreur retournée:', data);
-        if (data.code === 'EMAIL_EXISTS') {
-          toast.error('⚠️ Cet email est déjà utilisé par un autre utilisateur');
-        } else {
-          toast.error(data.error || 'Erreur lors de la création de l\'utilisateur');
-        }
-        setIsSubmitting(false);
-        return;
-      }
-
-      toast.success(`Utilisateur ${formData.role} créé avec succès!`);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        role: 'client',
-        country: 'Guinée',
-        city: '',
-        bureau_code: '',
-        prefecture: '',
-        commune: '',
-        full_location: '',
-        business_name: '',
-        business_description: '',
-        business_address: '',
-        license_number: '',
-        vehicle_type: 'moto',
-        vehicle_brand: '',
-        vehicle_model: '',
-        vehicle_year: '',
-        vehicle_plate: '',
-      });
-      setIsOpen(false);
-      
-      // Déclencher le callback pour recharger les données
-      if (onUserCreated) {
-        onUserCreated();
+      if (result.success) {
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          role: 'client',
+          country: 'Guinée',
+          city: '',
+          bureau_code: '',
+          prefecture: '',
+          commune: '',
+          full_location: '',
+          business_name: '',
+          business_description: '',
+          business_address: '',
+          license_number: '',
+          vehicle_type: 'moto',
+          vehicle_brand: '',
+          vehicle_model: '',
+          vehicle_year: '',
+          vehicle_plate: '',
+        });
+        setIsOpen(false);
+      } else {
+        toast.error(result.error || 'Erreur lors de la création');
       }
     } catch (error: any) {
       console.error('Erreur création utilisateur:', error);

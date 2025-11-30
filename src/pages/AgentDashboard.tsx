@@ -14,17 +14,19 @@ import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
+import { AgentKYCStatus } from '@/components/agent/AgentKYCStatus';
+import { useAgentStats } from '@/hooks/useAgentStats';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { error, captureError, clearError } = useAgentErrorBoundary();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [pdgUserId, setPdgUserId] = useState<string | null>(null);
-  const [stats, setStats] = useState({
-    totalUsersCreated: 0,
-    usersThisMonth: 0,
-  });
+  const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
 
   useEffect(() => {
     if (!user) {
@@ -47,59 +49,12 @@ export default function AgentDashboard() {
       
       // Les agents utilisent leur propre wallet pour faire des transactions
       setPdgUserId(user?.id || null);
-
-      // Charger les statistiques des utilisateurs créés
-      await loadUserStats(data.id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement agent:', error);
+      captureError('network', 'Erreur lors du chargement des données agent', error);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadUserStats = async (agentId: string) => {
-    try {
-      // Récupérer les sous-agents de cet agent
-      const { data: subAgents } = await supabase
-        .from('agents_management')
-        .select('id')
-        .eq('parent_agent_id', agentId)
-        .eq('is_active', true);
-
-      // Créer une liste des IDs d'agents (agent + sous-agents)
-      const agentIds = [agentId];
-      if (subAgents && subAgents.length > 0) {
-        agentIds.push(...subAgents.map(sa => sa.id));
-      }
-
-      // Compter le total d'utilisateurs créés par l'agent et ses sous-agents
-      const { count: totalCount, error: totalError } = await supabase
-        .from('agent_created_users')
-        .select('*', { count: 'exact', head: true })
-        .in('agent_id', agentIds);
-
-      if (totalError) throw totalError;
-
-      // Compter les utilisateurs créés ce mois
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { count: monthCount, error: monthError } = await supabase
-        .from('agent_created_users')
-        .select('*', { count: 'exact', head: true })
-        .in('agent_id', agentIds)
-        .gte('created_at', startOfMonth.toISOString());
-
-      if (monthError) throw monthError;
-
-      setStats({
-        totalUsersCreated: totalCount || 0,
-        usersThisMonth: monthCount || 0,
-      });
-    } catch (error) {
-      console.error('Erreur chargement stats:', error);
     }
   };
 
@@ -147,9 +102,12 @@ export default function AgentDashboard() {
               <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
               </p>
-              {pdgUserId && (
-                <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
-              )}
+              <div className="flex items-center gap-3">
+                <AgentKYCStatus kyc_status={agent.kyc_status} />
+                {pdgUserId && (
+                  <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
+                )}
+              </div>
             </div>
             <Button onClick={handleSignOut} variant="outline">
               <LogOut className="w-4 h-4 mr-2" />
@@ -161,6 +119,7 @@ export default function AgentDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && <ErrorBanner error={error} onDismiss={clearError} />}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
@@ -227,9 +186,9 @@ export default function AgentDashboard() {
                   <UserPlus className="w-4 h-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{stats.subAgentsCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    {agent.can_create_sub_agent ? 'Autorisé' : 'Non autorisé'}
+                    {stats.activeSubAgentsCount} actif(s) | {agent.can_create_sub_agent ? 'Autorisé' : 'Non autorisé'}
                   </p>
                 </CardContent>
               </Card>
@@ -278,6 +237,7 @@ export default function AgentDashboard() {
                 agentCode={agent.agent_code}
                 onUserCreated={() => {
                   loadAgentData();
+                  refetchStats();
                 }}
               />
               {agent.permissions?.includes('manage_users') && (
