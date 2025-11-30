@@ -17,6 +17,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
 import { AgentKYCStatus } from '@/components/agent/AgentKYCStatus';
+import { AgentWalletDiagnostic } from '@/components/agent/AgentWalletDiagnostic';
 import { useAgentStats } from '@/hooks/useAgentStats';
 
 export default function AgentDashboard() {
@@ -131,6 +132,9 @@ export default function AgentDashboard() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            {/* Diagnostic Wallet */}
+            <AgentWalletDiagnostic agentId={agent.id} agentCode={agent.agent_code} />
+            
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
