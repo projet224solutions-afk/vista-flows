@@ -63,6 +63,7 @@ export default function ProductManagement() {
     duplicateProduct,
     bulkUpdateStock
   } = useProductActions({
+    vendorId,
     onProductCreated: () => {
       fetchProducts();
       setShowDialog(false);
