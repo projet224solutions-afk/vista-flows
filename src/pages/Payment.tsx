@@ -17,6 +17,7 @@ import VirtualCardButton from "@/components/VirtualCardButton";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
+import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -660,15 +661,31 @@ export default function Payment() {
                   Moyens de paiement
                 </CardTitle>
                 <CardDescription>
-                  Gérez vos cartes virtuelles et moyens de paiement
+                  Gérez vos moyens de paiement pour des transactions plus rapides
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8">
-                  <CreditCard className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Carte virtuelle 224SOLUTIONS</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Gérez votre carte virtuelle pour effectuer des paiements en toute sécurité
+              <CardContent className="space-y-6">
+                {/* Gestionnaire des 5 moyens de paiement */}
+                <PaymentMethodsManager />
+
+                {/* Séparateur */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Carte virtuelle
+                    </span>
+                  </div>
+                </div>
+
+                {/* Carte virtuelle */}
+                <div className="text-center py-4">
+                  <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <h3 className="text-base font-semibold mb-2">Carte virtuelle 224SOLUTIONS</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Gérez votre carte virtuelle pour les paiements en ligne
                   </p>
                   <VirtualCardButton />
                 </div>
