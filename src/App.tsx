@@ -41,6 +41,7 @@ const PdgCommandCenter = lazy(() => import("./pages/PdgCommandCenter"));
 const PdgSecurity = lazy(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazy(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
+const SystemDebugPage = lazy(() => import("./pages/pdg/SystemDebugPage"));
 const SimpleDiagnostic = lazy(() => import("./pages/SimpleDiagnostic"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
@@ -246,6 +247,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <PDG224Solutions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pdg/debug"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SystemDebugPage />
                   </ProtectedRoute>
                 }
               />
