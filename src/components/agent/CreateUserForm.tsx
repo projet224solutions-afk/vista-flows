@@ -175,7 +175,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   <button
                     key={role.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, role: role.value })}
+                    onClick={() => setFormData({ ...formData, role: role.value as CreateUserData['role'] })}
                     className={`p-3 rounded-xl border-2 transition-all text-left ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-md'
