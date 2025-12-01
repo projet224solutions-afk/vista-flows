@@ -90,9 +90,9 @@ const BugBountyDashboard = () => {
   const [newStatus, setNewStatus] = useState<BugReportStatus | "">("");
 
   // Vérification admin simplifiée
-  const isAdmin = profile?.role === 'admin' || profile?.user_role === 'admin' || profile?.user_role === 'pdg';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo';
 
-  console.log('🔍 Bug Bounty - User:', user?.id, 'Profile:', profile?.role, profile?.user_role, 'isAdmin:', isAdmin);
+  console.log('🔍 Bug Bounty - User:', user?.id, 'Profile:', profile?.role, 'isAdmin:', isAdmin);
 
   const { data: reports, isLoading, error: reportsError } = useQuery<BugReport[], Error>({
     queryKey: ["bug-reports"],
@@ -422,7 +422,7 @@ const BugBountyDashboard = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="status">Statut</Label>
-                        <Select value={newStatus} onValueChange={setNewStatus}>
+                        <Select value={newStatus} onValueChange={(value) => setNewStatus(value as BugReportStatus)}>
                           <SelectTrigger id="status">
                             <SelectValue />
                           </SelectTrigger>
