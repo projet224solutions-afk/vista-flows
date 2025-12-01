@@ -30,12 +30,12 @@ export class DeliveryPaymentService {
       // Vérifier si déjà payé (idempotence)
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('status, payment_method')
+        .select('status')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.status === 'completed') {
-        console.log('[Payment] Delivery already completed, returning success (idempotent)');
+      if (existingDelivery?.status === 'delivered') {
+        console.log('[Payment] Delivery already delivered, returning success (idempotent)');
         return {
           success: true,
           transaction_id: deliveryId
@@ -80,11 +80,12 @@ export class DeliveryPaymentService {
         };
       }
 
-      // Mettre à jour la méthode de paiement de la livraison
+      // Mettre à jour le statut de la livraison (payment_method n'existe pas)
+      // TODO: Ajouter colonne payment_method à la table deliveries si nécessaire
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_method: 'wallet'
+          status: 'in_transit' // Paiement réussi, prêt pour livraison
         })
         .eq('id', deliveryId);
 
@@ -123,7 +124,7 @@ export class DeliveryPaymentService {
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.status === 'completed') {
+      if (existingDelivery?.status === 'delivered') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -131,7 +132,7 @@ export class DeliveryPaymentService {
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_method: 'cash'
+          status: 'assigned' // Prêt pour assignation
         })
         .eq('id', deliveryId);
 
@@ -170,7 +171,7 @@ export class DeliveryPaymentService {
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.status === 'completed') {
+      if (existingDelivery?.status === 'delivered') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -190,7 +191,7 @@ export class DeliveryPaymentService {
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_method: 'mobile_money'
+          status: 'in_transit' // Paiement réussi
         })
         .eq('id', deliveryId);
 
@@ -229,7 +230,7 @@ export class DeliveryPaymentService {
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.status === 'completed') {
+      if (existingDelivery?.status === 'delivered') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -248,7 +249,7 @@ export class DeliveryPaymentService {
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_method: 'card'
+          status: 'in_transit' // Paiement réussi
         })
         .eq('id', deliveryId);
 
@@ -287,7 +288,7 @@ export class DeliveryPaymentService {
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.status === 'completed') {
+      if (existingDelivery?.status === 'delivered') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -307,7 +308,7 @@ export class DeliveryPaymentService {
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_method: 'wallet' // PayPal processé via wallet
+          status: 'in_transit' // Paiement réussi
         })
         .eq('id', deliveryId);
 

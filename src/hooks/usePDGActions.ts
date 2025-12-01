@@ -240,29 +240,9 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       // Créer le bureau
       // TODO: Créer la table syndicat_bureau dans la base de données
       console.warn('Table syndicat_bureau not implemented yet');
+      toast.error('Fonctionnalité Bureau de Syndicat en cours de développement');
       return { success: false, error: 'Fonctionnalité Bureau de Syndicat en cours de développement' };
-      // const { data, error } = await supabase
-      //   .from('syndicat_bureau')
-      //   .insert({
-      //     bureau_code: bureauCode,
-      //     prefecture: bureauData.prefecture,
-      //     commune: bureauData.commune,
-      //     president_name: bureauData.president_name,
-      //     president_email: bureauData.president_email,
-      //     president_phone: bureauData.president_phone,
-      //     full_location: bureauData.full_location,
-      //     status: 'pending',
-      //     is_validated: false,
-      //   })
-        .select()
-        .single();
 
-      if (error) throw error;
-
-      toast.success('Bureau créé avec succès');
-      options.onBureauCreated?.();
-      
-      return { success: true, bureau: data };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur création bureau:', error);
       const errorMessage = error.message || 'Erreur lors de la création du bureau';
@@ -313,23 +293,9 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       // Supprimer les données associées d'abord
       // TODO: Créer les tables syndicat dans la base de données
       console.warn('Tables syndicat not implemented yet');
+      toast.error('Fonctionnalité Bureau de Syndicat en cours de développement');
       return { success: false, error: 'Fonctionnalité Bureau de Syndicat en cours de développement' };
-      // await supabase.from('syndicat_workers').delete().eq('bureau_id', bureauId);
-      // await supabase.from('syndicat_members').delete().eq('bureau_id', bureauId);
-      // await supabase.from('syndicat_vehicles').delete().eq('bureau_id', bureauId);
-      //
-      // // Supprimer le bureau
-      // const { error } = await supabase
-      //   .from('syndicat_bureau')
-      //   .delete()
-      //   .eq('id', bureauId);
 
-      if (error) throw error;
-
-      toast.success('Bureau supprimé avec succès');
-      options.onBureauDeleted?.();
-      
-      return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur suppression bureau:', error);
       const errorMessage = error.message || 'Erreur lors de la suppression';
@@ -348,22 +314,9 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
 
       // TODO: Créer la table syndicat_bureau dans la base de données
       console.warn('Table syndicat_bureau not implemented yet');
+      toast.error('Fonctionnalité Bureau de Syndicat en cours de développement');
       return { success: false, error: 'Fonctionnalité Bureau de Syndicat en cours de développement' };
-      // const { error } = await supabase
-      //   .from('syndicat_bureau')
-        .update({
-          is_validated: true,
-          status: 'active',
-          validated_at: new Date().toISOString(),
-        })
-        .eq('id', bureauId);
 
-      if (error) throw error;
-
-      toast.success('Bureau validé avec succès');
-      options.onBureauValidated?.();
-      
-      return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur validation bureau:', error);
       const errorMessage = error.message || 'Erreur lors de la validation';
