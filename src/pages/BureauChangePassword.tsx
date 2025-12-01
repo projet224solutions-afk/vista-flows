@@ -13,6 +13,8 @@ import { toast } from "sonner";
 const BureauChangePassword = () => {
   const navigate = useNavigate();
   const { bureau } = useBureauAuth();
+  const [bureauData, setBureauData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -32,10 +34,43 @@ const BureauChangePassword = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Charger les données du bureau (depuis MFA ou token)
   useEffect(() => {
-    if (!bureau) {
+    const loadBureauData = async () => {
+      // Vérifier d'abord si on a une session MFA
+      if (bureau) {
+        setBureauData(bureau);
+        setLoading(false);
+        return;
+      }
+
+      // Sinon, chercher le token de retour
+      const returnToken = localStorage.getItem('bureau_return_token');
+      if (returnToken) {
+        try {
+          const { data, error } = await supabase
+            .from('syndicate_bureaus')
+            .select('*')
+            .eq('access_token', returnToken)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setBureauData(data);
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Erreur chargement bureau:', error);
+        }
+      }
+
+      // Aucune session trouvée
+      toast.error('Session expirée. Veuillez vous reconnecter.');
       navigate('/bureau/login');
-    }
+    };
+
+    loadBureauData();
   }, [bureau, navigate]);
 
   // Calculer la force du nouveau mot de passe
@@ -111,7 +146,7 @@ const BureauChangePassword = () => {
     try {
       const { data, error } = await supabase.functions.invoke('change-bureau-password', {
         body: {
-          bureau_id: bureau.id,
+          bureau_id: bureauData.id,
           current_password: formData.currentPassword,
           new_password: formData.newPassword
         }
@@ -130,8 +165,16 @@ const BureauChangePassword = () => {
           newPassword: "",
           confirmPassword: ""
         });
+        
+        // Rediriger selon le mode d'accès
         setTimeout(() => {
-          navigate('/bureau');
+          const returnToken = localStorage.getItem('bureau_return_token');
+          if (returnToken) {
+            localStorage.removeItem('bureau_return_token');
+            navigate(`/bureau/${returnToken}`);
+          } else {
+            navigate('/bureau');
+          }
         }, 2000);
       } else {
         toast.error(data?.message || "Erreur inconnue");
@@ -144,7 +187,15 @@ const BureauChangePassword = () => {
     }
   };
 
-  if (!bureau) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (!bureauData) {
     return null;
   }
 
@@ -160,7 +211,7 @@ const BureauChangePassword = () => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
             Modifier votre mot de passe
           </h1>
-          <p className="text-gray-600 mt-2">Bureau Syndicat - {bureau.name}</p>
+          <p className="text-gray-600 mt-2">Bureau Syndicat - {bureauData.president_name || bureauData.bureau_code}</p>
         </div>
 
         <Card className="shadow-xl border-green-100">

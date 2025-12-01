@@ -725,7 +725,13 @@ export default function BureauDashboard() {
                       </p>
                       <Button 
                         className="w-full"
-                        onClick={() => navigate('/bureau/change-password')}
+                        onClick={() => {
+                          // Sauvegarder le token pour revenir après le changement
+                          if (bureau?.access_token) {
+                            localStorage.setItem('bureau_return_token', bureau.access_token);
+                          }
+                          navigate('/bureau/change-password');
+                        }}
                       >
                         Changer le mot de passe
                       </Button>
