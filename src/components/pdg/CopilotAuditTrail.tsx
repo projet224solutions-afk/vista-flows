@@ -30,23 +30,26 @@ export default function CopilotAuditTrail() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      let query = supabase
-        .from('copilot_audit_logs')
-        .select('*')
-        .eq('user_id', user.user.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (filter === 'success') {
-        query = query.eq('success', true);
-      } else if (filter === 'error') {
-        query = query.eq('success', false);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setLogs(data || []);
+      // TODO: Créer la table copilot_audit_logs dans la base de données
+      console.warn('Table copilot_audit_logs not implemented yet');
+      setLogs([]);
+      // let query = supabase
+      //   .from('copilot_audit_logs')
+      //   .select('*')
+      //   .eq('user_id', user.user.id)
+      //   .order('created_at', { ascending: false })
+      //   .limit(100);
+      //
+      // if (filter === 'success') {
+      //   query = query.eq('success', true);
+      // } else if (filter === 'error') {
+      //   query = query.eq('success', false);
+      // }
+      //
+      // const { data, error } = await query;
+      //
+      // if (error) throw error;
+      // setLogs(data || []);
     } catch (error) {
       console.error('Erreur chargement audit logs:', error);
       toast.error('Erreur lors du chargement des logs');

@@ -58,17 +58,18 @@ export function useDriverStats(driverId: string | null): UseDriverStatsReturn {
         console.error('Error loading driver stats:', driverError);
       }
 
-      const rating = currentDriver?.rating || 0;
+      const rating = 0; // TODO: Add rating column to taxi_drivers table
 
       let onlineTime = '0h 0m';
-      if (currentDriver?.online_since) {
-        const onlineSince = new Date(currentDriver.online_since);
-        const now = new Date();
-        const diffMs = now.getTime() - onlineSince.getTime();
-        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        onlineTime = `${hours}h ${minutes}m`;
-      }
+      // TODO: Add online_since column to taxi_drivers table
+      // if (currentDriver?.online_since) {
+      //   const onlineSince = new Date(currentDriver.online_since);
+      //   const now = new Date();
+      //   const diffMs = now.getTime() - onlineSince.getTime();
+      //   const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      //   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      //   onlineTime = `${hours}h ${minutes}m`;
+      // }
 
       setDriverStats({
         todayEarnings,

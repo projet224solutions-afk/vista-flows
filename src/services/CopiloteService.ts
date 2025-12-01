@@ -111,14 +111,16 @@ class CopiloteService {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      await supabase.from('copilot_audit_logs').insert({
-        user_id: user.user.id,
-        action_type: action,
-        action_data: data,
-        success,
-        error_message: error || null,
-        created_at: new Date().toISOString()
-      });
+      // TODO: Créer la table copilot_audit_logs dans la base de données
+      console.log('[CopiloteService] Audit log:', { action, success, error });
+      // await supabase.from('copilot_audit_logs').insert({
+      //   user_id: user.user.id,
+      //   action_type: action,
+      //   action_data: data,
+      //   success,
+      //   error_message: error || null,
+      //   created_at: new Date().toISOString()
+      // });
     } catch (e) {
       console.error('Failed to log audit:', e);
     }

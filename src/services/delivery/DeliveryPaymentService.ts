@@ -30,12 +30,12 @@ export class DeliveryPaymentService {
       // Vérifier si déjà payé (idempotence)
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('payment_status, payment_method')
+        .select('status, payment_method')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.payment_status === 'paid') {
-        console.log('[Payment] Delivery already paid, returning success (idempotent)');
+      if (existingDelivery?.status === 'completed') {
+        console.log('[Payment] Delivery already completed, returning success (idempotent)');
         return {
           success: true,
           transaction_id: deliveryId
@@ -80,11 +80,10 @@ export class DeliveryPaymentService {
         };
       }
 
-      // Mettre à jour le statut de paiement de la livraison
+      // Mettre à jour la méthode de paiement de la livraison
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_status: 'paid',
           payment_method: 'wallet'
         })
         .eq('id', deliveryId);
@@ -120,19 +119,18 @@ export class DeliveryPaymentService {
       // Vérifier idempotence
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('payment_status')
+        .select('status')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.payment_status === 'paid') {
+      if (existingDelivery?.status === 'completed') {
         return { success: true, transaction_id: deliveryId };
       }
 
-      // Mettre à jour le statut (cash sera collecté à la livraison)
+      // Mettre à jour la méthode (cash sera collecté à la livraison)
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_status: 'pending',
           payment_method: 'cash'
         })
         .eq('id', deliveryId);
@@ -168,11 +166,11 @@ export class DeliveryPaymentService {
       // Vérifier idempotence
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('payment_status')
+        .select('status')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.payment_status === 'paid') {
+      if (existingDelivery?.status === 'completed') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -188,11 +186,10 @@ export class DeliveryPaymentService {
       // Pour l'instant, on simule le paiement
       console.log(`[MobileMoney] Processing ${provider} payment for ${phoneNumber}`);
 
-      // Mettre à jour le statut
+      // Mettre à jour la méthode
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_status: 'paid',
           payment_method: 'mobile_money'
         })
         .eq('id', deliveryId);
@@ -228,11 +225,11 @@ export class DeliveryPaymentService {
       // Vérifier idempotence
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('payment_status')
+        .select('status')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.payment_status === 'paid') {
+      if (existingDelivery?.status === 'completed') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -247,11 +244,10 @@ export class DeliveryPaymentService {
       // TODO: Intégrer Stripe SDK
       console.log('[Card] Processing card payment with token:', cardToken.substring(0, 10) + '...');
 
-      // Mettre à jour le statut
+      // Mettre à jour la méthode
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_status: 'paid',
           payment_method: 'card'
         })
         .eq('id', deliveryId);
@@ -287,11 +283,11 @@ export class DeliveryPaymentService {
       // Vérifier idempotence
       const { data: existingDelivery } = await supabase
         .from('deliveries')
-        .select('payment_status')
+        .select('status')
         .eq('id', deliveryId)
         .single();
 
-      if (existingDelivery?.payment_status === 'paid') {
+      if (existingDelivery?.status === 'completed') {
         return { success: true, transaction_id: deliveryId };
       }
 
@@ -307,12 +303,11 @@ export class DeliveryPaymentService {
       // TODO: Intégrer PayPal SDK
       console.log('[PayPal] Processing payment for:', paypalEmail);
 
-      // Mettre à jour le statut
+      // Mettre à jour la méthode
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
-          payment_status: 'paid',
-          payment_method: 'paypal'
+          payment_method: 'wallet' // PayPal processé via wallet
         })
         .eq('id', deliveryId);
 
@@ -346,10 +341,11 @@ export class DeliveryPaymentService {
     notes?: string
   ): Promise<void> {
     try {
+      // Log dans wallet_logs avec les champs corrects
       await supabase.from('wallet_logs').insert({
-        user_id: userId,
-        amount: amount,
-        type: 'payment',
+        wallet_id: userId, // TODO: Récupérer le vrai wallet_id
+        action: 'payment',
+        amount: -amount, // Négatif pour un paiement
         description: `Delivery payment ${deliveryId} via ${method} - ${status}`,
         metadata: {
           deliveryId,

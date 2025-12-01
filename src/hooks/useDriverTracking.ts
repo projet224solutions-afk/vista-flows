@@ -21,24 +21,27 @@ export function useDriverTracking({ activeRide, location }: UseDriverTrackingPro
     }
 
     try {
-      const route = await GeolocationService.calculateRoute(
-        { lat: location.latitude, lng: location.longitude },
-        { lat: destination.latitude, lng: destination.longitude }
-      );
-
-      if (route) {
-        setRouteSteps(route.steps);
-        setDistanceToDestination(route.distance / 1000);
-        setTimeToDestination(route.duration / 60);
-        setNavigationActive(true);
-
-        if (route.steps.length > 0) {
-          setCurrentStep(route.steps[0].instruction);
-          if (route.steps.length > 1) {
-            setNextInstruction(route.steps[1].instruction);
-          }
-        }
-      }
+      // TODO: Implement GeolocationService.calculateRoute method
+      console.warn('GeolocationService.calculateRoute not implemented yet');
+      setNavigationActive(false);
+      // const route = await GeolocationService.calculateRoute(
+      //   { lat: location.latitude, lng: location.longitude },
+      //   { lat: destination.latitude, lng: destination.longitude }
+      // );
+      //
+      // if (route) {
+      //   setRouteSteps(route.steps);
+      //   setDistanceToDestination(route.distance / 1000);
+      //   setTimeToDestination(route.duration / 60);
+      //   setNavigationActive(true);
+      //
+      //   if (route.steps.length > 0) {
+      //     setCurrentStep(route.steps[0].instruction);
+      //     if (route.steps.length > 1) {
+      //       setNextInstruction(route.steps[1].instruction);
+      //     }
+      //   }
+      // }
     } catch (error) {
       console.error('Navigation error:', error);
     }
@@ -52,12 +55,14 @@ export function useDriverTracking({ activeRide, location }: UseDriverTrackingPro
         ? activeRide.destination.coords
         : activeRide.pickup.coords;
 
-      const distance = GeolocationService.calculateDistance(
-        location.latitude,
-        location.longitude,
-        targetCoords.latitude,
-        targetCoords.longitude
-      );
+      // TODO: Implement GeolocationService.calculateDistance method
+      const distance = 0;
+      // const distance = GeolocationService.calculateDistance(
+      //   location.latitude,
+      //   location.longitude,
+      //   targetCoords.latitude,
+      //   targetCoords.longitude
+      // );
 
       setDistanceToDestination(distance);
       setTimeToDestination(distance / 0.5);

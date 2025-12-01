@@ -4,21 +4,20 @@
  * S'ajoute aux middlewares existants sans les modifier
  */
 
-import { Request, Response, NextFunction } from 'express';
 import { logger } from '../config/logger.js';
 import crypto from 'crypto';
 
 /**
  * Stockage en mémoire des tentatives de connexion (à remplacer par Redis en production)
  */
-const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
-const suspiciousIPs = new Set<string>();
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const loginAttempts = new Map();
+const suspiciousIPs = new Set();
+const rateLimitStore = new Map();
 
 /**
  * Middleware de validation avancée des entrées
  */
-export const advancedInputValidation = (req: Request, res: Response, next: NextFunction) => {
+export const advancedInputValidation = (req, res, next) => {
   try {
     // Patterns dangereux
     const dangerousPatterns = [
@@ -34,7 +33,7 @@ export const advancedInputValidation = (req: Request, res: Response, next: NextF
     ];
 
     // Vérifier tous les champs de la requête
-    const checkObject = (obj: any, path: string = ''): boolean => {
+    const checkObject = (obj, path = '') => {
       for (const [key, value] of Object.entries(obj)) {
         const currentPath = path ? `${path}.${key}` : key;
         
@@ -78,7 +77,7 @@ export const advancedInputValidation = (req: Request, res: Response, next: NextF
 /**
  * Middleware anti-brute force pour login
  */
-export const antiBruteForce = (req: Request, res: Response, next: NextFunction) => {
+export const antiBruteForce = (req, res, next) => {
   const identifier = req.ip || 'unknown';
   const maxAttempts = 5;
   const lockoutTime = 15 * 60 * 1000; // 15 minutes
@@ -102,7 +101,7 @@ export const antiBruteForce = (req: Request, res: Response, next: NextFunction) 
   }
 
   // Enregistrer la tentative (mise à jour après la route de login)
-  res.locals.recordLoginAttempt = (success: boolean) => {
+  res.locals.recordLoginAttempt = (success) => {
     if (success) {
       loginAttempts.delete(identifier);
     } else {
@@ -120,7 +119,7 @@ export const antiBruteForce = (req: Request, res: Response, next: NextFunction) 
 /**
  * Middleware de détection d'activités suspectes
  */
-export const suspiciousActivityDetector = (req: Request, res: Response, next: NextFunction) => {
+export const suspiciousActivityDetector = (req, res, next) => {
   const ip = req.ip || 'unknown';
   
   // Vérifier si l'IP est déjà marquée comme suspecte
@@ -153,13 +152,13 @@ export const suspiciousActivityDetector = (req: Request, res: Response, next: Ne
 /**
  * Middleware de protection CSRF
  */
-export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
+export const csrfProtection = (req, res, next) => {
   // Ignorer pour les requêtes GET, HEAD, OPTIONS
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
 
-  const token = req.headers['x-csrf-token'] as string;
+  const token = req.headers['x-csrf-token'];
   const cookieToken = req.cookies?.csrfToken;
 
   if (!token || !cookieToken || token !== cookieToken) {
@@ -176,18 +175,14 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
 /**
  * Middleware de rate limiting avancé par endpoint
  */
-export const advancedRateLimit = (options: {
-  windowMs?: number;
-  maxRequests?: number;
-  keyGenerator?: (req: Request) => string;
-}) => {
+export const advancedRateLimit = (options = {}) => {
   const {
     windowMs = 60 * 1000, // 1 minute par défaut
     maxRequests = 30,
     keyGenerator = (req) => `${req.ip}-${req.path}`
   } = options;
 
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req, res, next) => {
     const key = keyGenerator(req);
     const now = Date.now();
     const limit = rateLimitStore.get(key);
@@ -227,7 +222,7 @@ export const advancedRateLimit = (options: {
 /**
  * Middleware de validation de session sécurisée
  */
-export const secureSessionValidation = (req: Request, res: Response, next: NextFunction) => {
+export const secureSessionValidation = (req, res, next) => {
   if (req.user) {
     const sessionData = {
       userId: req.user.id,
@@ -253,12 +248,12 @@ export const secureSessionValidation = (req: Request, res: Response, next: NextF
 /**
  * Middleware de logging sécurité avancé
  */
-export const securityAuditLogger = (req: Request, res: Response, next: NextFunction) => {
+export const securityAuditLogger = (req, res, next) => {
   const startTime = Date.now();
 
   // Capturer la réponse
   const originalJson = res.json.bind(res);
-  res.json = function (body: any) {
+  res.json = function (body) {
     const duration = Date.now() - startTime;
     
     // Logger les informations de sécurité
@@ -286,7 +281,7 @@ export const securityAuditLogger = (req: Request, res: Response, next: NextFunct
 /**
  * Obfuscation des données sensibles dans les logs
  */
-function obfuscateSensitiveData(data: any): any {
+function obfuscateSensitiveData(data) {
   if (!data || typeof data !== 'object') return data;
 
   const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'creditCard', 'cvv', 'pin'];
@@ -307,7 +302,7 @@ function obfuscateSensitiveData(data: any): any {
 /**
  * Middleware de protection contre l'énumération d'utilisateurs
  */
-export const antiEnumeration = (req: Request, res: Response, next: NextFunction) => {
+export const antiEnumeration = (req, res, next) => {
   // Ajouter un délai aléatoire pour masquer le timing
   const delay = Math.random() * 200 + 100; // 100-300ms
   
@@ -317,8 +312,8 @@ export const antiEnumeration = (req: Request, res: Response, next: NextFunction)
 /**
  * Middleware de validation de Content-Type
  */
-export const strictContentType = (allowedTypes: string[] = ['application/json']) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const strictContentType = (allowedTypes = ['application/json']) => {
+  return (req, res, next) => {
     const contentType = req.headers['content-type'];
     
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -338,11 +333,11 @@ export const strictContentType = (allowedTypes: string[] = ['application/json'])
 /**
  * Middleware de chiffrement des réponses sensibles
  */
-export const encryptSensitiveResponse = (encryptionKey: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const encryptSensitiveResponse = (encryptionKey) => {
+  return (req, res, next) => {
     const originalJson = res.json.bind(res);
     
-    res.json = function (data: any) {
+    res.json = function (data) {
       if (req.query.encrypted === 'true' && data.sensitive) {
         const cipher = crypto.createCipher('aes-256-cbc', encryptionKey);
         let encrypted = cipher.update(JSON.stringify(data.sensitive), 'utf8', 'hex');

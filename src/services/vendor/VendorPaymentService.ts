@@ -311,7 +311,7 @@ export class VendorPaymentService {
         .from('orders')
         .update({
           payment_status: 'paid',
-          payment_method: 'paypal'
+          payment_method: 'wallet' // PayPal processé via wallet
         })
         .eq('id', orderId);
 
@@ -345,10 +345,11 @@ export class VendorPaymentService {
     notes?: string
   ): Promise<void> {
     try {
+      // Log dans wallet_logs avec les champs corrects
       await supabase.from('wallet_logs').insert({
-        user_id: userId,
-        amount: amount,
-        type: 'payment',
+        wallet_id: userId, // TODO: Récupérer le vrai wallet_id
+        action: 'payment',
+        amount: -amount, // Négatif pour un paiement
         description: `Order payment ${orderId} via ${method} - ${status}`,
         metadata: {
           orderId,

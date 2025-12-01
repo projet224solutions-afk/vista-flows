@@ -175,11 +175,13 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         return { success: false, error: 'Erreur lors de la création du compte' };
       }
 
-      // Créer l'enregistrement agent
+      // Créer l'enregistrement agent avec les champs obligatoires
       const { data: agent, error: agentError } = await supabase
         .from('agents_management')
         .insert({
           user_id: authData.user.id,
+          agent_code: `AGT-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`,
+          pdg_id: parentAgentId, // ID du PDG ou de l'agent parent
           name: subAgentData.name,
           email: subAgentData.email,
           phone: subAgentData.phone,
