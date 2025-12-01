@@ -11,10 +11,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Shield, AlertTriangle, CheckCircle, Clock, XCircle, Trophy } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAuth } from "@/hooks/useAuth";
 
 // ============================================
 // TYPES & INTERFACES
@@ -81,7 +81,7 @@ const statusColors: Record<BugReportStatus, string> = {
 
 const BugBountyDashboard = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const { user, profile } = useAuth();
   
   // States avec types stricts
   const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
@@ -89,58 +89,10 @@ const BugBountyDashboard = () => {
   const [rewardAmount, setRewardAmount] = useState<string>("");
   const [newStatus, setNewStatus] = useState<BugReportStatus | "">("");
 
-  // Vérification admin
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
+  // Vérification admin simplifiée
+  const isAdmin = profile?.role === 'admin' || profile?.user_role === 'admin' || profile?.user_role === 'pdg';
 
-  useEffect(() => {
-    const checkAdminAccess = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          console.warn('❌ Pas d\'utilisateur connecté');
-          setIsCheckingAuth(false);
-          toast.error("Accès refusé", {
-            description: "Vous devez être connecté pour accéder à cette page."
-          });
-          navigate('/login');
-          return;
-        }
-
-        // Vérifier si l'utilisateur est admin/PDG
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('user_role')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('❌ Erreur chargement profil:', error);
-          setIsCheckingAuth(false);
-          return;
-        }
-
-        const hasAdminAccess = profile?.user_role === 'admin' || profile?.user_role === 'pdg';
-        
-        if (!hasAdminAccess) {
-          console.warn('❌ Utilisateur non-admin:', profile?.user_role);
-          toast.error("Accès refusé", {
-            description: "Seuls les administrateurs peuvent accéder au Bug Bounty."
-          });
-          navigate('/');
-        }
-
-        setIsAdmin(hasAdminAccess);
-        setIsCheckingAuth(false);
-      } catch (error) {
-        console.error('❌ Erreur vérification admin:', error);
-        setIsCheckingAuth(false);
-      }
-    };
-
-    checkAdminAccess();
-  }, [navigate]);
+  console.log('🔍 Bug Bounty - User:', user?.id, 'Profile:', profile?.role, profile?.user_role, 'isAdmin:', isAdmin);
 
   const { data: reports, isLoading, error: reportsError } = useQuery<BugReport[], Error>({
     queryKey: ["bug-reports"],
@@ -160,7 +112,7 @@ const BugBountyDashboard = () => {
       console.log('✅ Bug reports chargés:', data?.length || 0);
       return data as BugReport[];
     },
-    enabled: isAdmin && !isCheckingAuth,
+    enabled: !!user && isAdmin,
   });
 
   const { data: stats } = useQuery<BugBountyStats, Error>({
@@ -195,7 +147,7 @@ const BugBountyDashboard = () => {
       console.log('✅ Stats calculées:', stats);
       return stats;
     },
-    enabled: isAdmin && !isCheckingAuth,
+    enabled: !!user && isAdmin,
   });
 
   const updateReportMutation = useMutation<void, Error, { id: string; updates: Partial<BugReport> }>({
@@ -253,29 +205,7 @@ const BugBountyDashboard = () => {
     updateReportMutation.mutate({ id: selectedReport.id, updates });
   };
 
-  // Affichage pendant vérification auth
-  if (isCheckingAuth) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3">Vérification des accès...</span>
-      </div>
-    );
-  }
-
-  // Affichage si non-admin
-  if (!isAdmin) {
-    return (
-      <Alert>
-        <Shield className="h-4 w-4" />
-        <AlertDescription>
-          Accès réservé aux administrateurs.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Affichage erreur RLS
+  return (
   if (reportsError) {
     return (
       <Alert variant="destructive">
