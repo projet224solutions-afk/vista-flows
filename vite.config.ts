@@ -5,7 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/',
+  // Pour Hostinger: '/' si domaine racine, ou '/nom-dossier/' si sous-dossier
+  base: process.env.VITE_BASE_URL || '/',
   server: {
     host: "::",
     port: 8080,

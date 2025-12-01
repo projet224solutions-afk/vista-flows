@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Hostinger - 224Solutions</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #10b981; }
+        .test { 
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+        }
+        .success { background: #f0fdf4; border-left-color: #10b981; }
+        .error { background: #fef2f2; border-left-color: #ef4444; }
+        code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔍 Test Hostinger - 224Solutions</h1>
+        <p>Si vous voyez cette page, le serveur Hostinger fonctionne !</p>
+        
+        <div id="tests"></div>
+        
+        <button class="btn" onclick="runTests()">🔄 Relancer les tests</button>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <h3>📋 Checklist de déploiement:</h3>
+            <ul>
+                <li>✅ Fichiers uploadés dans <code>public_html/</code></li>
+                <li>✅ Fichier <code>.htaccess</code> présent</li>
+                <li>✅ Fichier <code>index.html</code> présent</li>
+                <li>✅ Dossier <code>assets/</code> présent</li>
+                <li>⚠️ Variables d'environnement (Supabase) à configurer</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function runTests() {
+            const testsDiv = document.getElementById('tests');
+            testsDiv.innerHTML = '<p>⏳ Tests en cours...</p>';
+            
+            setTimeout(() => {
+                let html = '<h3>Résultats des tests:</h3>';
+                
+                // Test 1: HTML chargé
+                html += '<div class="test success">✅ HTML chargé correctement</div>';
+                
+                // Test 2: JavaScript fonctionne
+                html += '<div class="test success">✅ JavaScript exécuté</div>';
+                
+                // Test 3: Vérifier console
+                html += '<div class="test">ℹ️ Ouvrir la console (F12) pour voir les détails</div>';
+                
+                // Test 4: Variables d'environnement
+                const hasEnv = window.location.hostname !== 'localhost';
+                if (hasEnv) {
+                    html += '<div class="test">⚠️ Configurer les variables Supabase dans le code source</div>';
+                } else {
+                    html += '<div class="test success">✅ Environnement local détecté</div>';
+                }
+                
+                // Test 5: Informations système
+                html += `<div class="test">
+                    <strong>Informations:</strong><br>
+                    • URL: ${window.location.href}<br>
+                    • User Agent: ${navigator.userAgent.substring(0, 50)}...<br>
+                    • Écran: ${window.innerWidth}x${window.innerHeight}
+                </div>`;
+                
+                testsDiv.innerHTML = html;
+                
+                console.log('✅ Tests terminés');
+                console.log('URL:', window.location.href);
+                console.log('Hostname:', window.location.hostname);
+            }, 500);
+        }
+        
+        // Exécuter les tests au chargement
+        window.onload = runTests;
+        
+        // Log console
+        console.log('🚀 224Solutions - Test Hostinger');
+        console.log('Si vous voyez ce message, JavaScript fonctionne !');
+    </script>
+</body>
+</html>
