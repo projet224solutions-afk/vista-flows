@@ -34,7 +34,9 @@ serve(async (req) => {
       agent_code, 
       name, 
       email, 
-      phone, 
+      phone,
+      agent_type,
+      password,
       permissions, 
       commission_rate,
       access_token // Token d'accès pour l'interface publique
@@ -80,9 +82,26 @@ serve(async (req) => {
     }
 
     // Validation des données
-    if (!pdg_id || !parent_agent_id || !name || !email || !phone) {
+    if (!pdg_id || !parent_agent_id || !name || !email || !phone || !agent_type || !password) {
       return new Response(
-        JSON.stringify({ error: "Données manquantes (pdg_id, parent_agent_id, name, email, phone requis)" }),
+        JSON.stringify({ error: "Données manquantes (pdg_id, parent_agent_id, name, email, phone, agent_type, password requis)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Valider le mot de passe (minimum 6 caractères)
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: "Le mot de passe doit contenir au moins 6 caractères" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Valider le type d'agent
+    const validAgentTypes = ['sales', 'support', 'manager', 'delivery', 'admin'];
+    if (!validAgentTypes.includes(agent_type)) {
+      return new Response(
+        JSON.stringify({ error: "Type d'agent invalide" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -162,13 +181,36 @@ serve(async (req) => {
     // Générer un access token unique pour le sous-agent
     const subAgentAccessToken = crypto.randomUUID();
 
+    // Créer l'utilisateur dans Supabase Auth avec le mot de passe
+    const { data: authUser, error: authError } = await supabaseServiceClient.auth.admin.createUser({
+      email: email.trim().toLowerCase(),
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        name: name.trim(),
+        phone: phone.trim(),
+        role: 'agent',
+        agent_type: agent_type
+      }
+    });
+
+    if (authError || !authUser.user) {
+      console.error("Erreur création utilisateur Auth:", authError);
+      return new Response(
+        JSON.stringify({ error: `Erreur création compte: ${authError?.message || 'Erreur inconnue'}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Créer le sous-agent avec le service role client
     const { data: newAgent, error: insertError } = await supabaseServiceClient
       .from("agents_management")
       .insert({
+        user_id: authUser.user.id,
         pdg_id: pdg_id,
         parent_agent_id: parent_agent_id,
         agent_code: agent_code,
+        agent_type: agent_type,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
@@ -183,10 +225,32 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Erreur création sous-agent:", insertError);
+      // Supprimer l'utilisateur Auth créé si l'insertion de l'agent échoue
+      await supabaseServiceClient.auth.admin.deleteUser(authUser.user.id);
       return new Response(
         JSON.stringify({ error: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Créer le profil utilisateur dans la table profiles
+    const { error: profileError } = await supabaseServiceClient
+      .from("profiles")
+      .insert({
+        id: authUser.user.id,
+        email: email.trim().toLowerCase(),
+        full_name: name.trim(),
+        phone: phone.trim(),
+        role: 'agent',
+        agent_code: agent_code,
+        agent_type: agent_type,
+        is_active: true,
+        created_at: new Date().toISOString()
+      });
+
+    if (profileError) {
+      console.error("Erreur création profil:", profileError);
+      // Note: On ne bloque pas la création si le profil échoue (peut être créé via trigger)
     }
 
     // Log de l'action dans audit_logs (seulement si un user_id est disponible)
@@ -203,6 +267,7 @@ serve(async (req) => {
             name: name,
             email: email,
             parent_agent_id: parent_agent_id,
+            agent_type: agent_type,
           },
         });
     }

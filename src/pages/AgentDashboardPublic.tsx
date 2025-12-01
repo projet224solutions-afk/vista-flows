@@ -87,6 +87,8 @@ export default function AgentDashboardPublic() {
     name: '',
     email: '',
     phone: '',
+    agent_type: 'sales',
+    password: '',
     commission_rate: 5,
     permissions: {
       create_users: true,
@@ -184,6 +186,8 @@ export default function AgentDashboardPublic() {
         name: subAgentFormData.name.trim(),
         email: subAgentFormData.email.trim().toLowerCase(),
         phone: subAgentFormData.phone.trim(),
+        agent_type: subAgentFormData.agent_type,
+        password: subAgentFormData.password,
         permissions,
         commission_rate: subAgentFormData.commission_rate,
         access_token: token, // Envoyer le token pour l'authentification
@@ -212,6 +216,8 @@ export default function AgentDashboardPublic() {
         name: '',
         email: '',
         phone: '',
+        agent_type: 'sales',
+        password: '',
         commission_rate: 5,
         permissions: {
           create_users: true,
@@ -577,6 +583,35 @@ export default function AgentDashboardPublic() {
                                 onChange={(e) => setSubAgentFormData({ ...subAgentFormData, phone: e.target.value })}
                                 placeholder="622123456"
                               />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="agent_type">Type d'Agent *</Label>
+                              <select
+                                id="agent_type"
+                                required
+                                value={subAgentFormData.agent_type}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, agent_type: e.target.value })}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              >
+                                <option value="sales">🛍️ Commercial (Ventes)</option>
+                                <option value="support">🎧 Support Client</option>
+                                <option value="manager">👔 Manager</option>
+                                <option value="delivery">🚚 Livraison</option>
+                                <option value="admin">⚙️ Administrateur</option>
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="password">Mot de Passe *</Label>
+                              <Input
+                                id="password"
+                                type="password"
+                                required
+                                minLength={6}
+                                value={subAgentFormData.password}
+                                onChange={(e) => setSubAgentFormData({ ...subAgentFormData, password: e.target.value })}
+                                placeholder="Minimum 6 caractères"
+                              />
+                              <p className="text-xs text-muted-foreground">Le mot de passe doit contenir au moins 6 caractères</p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="commission">Taux Commission (%)</Label>
