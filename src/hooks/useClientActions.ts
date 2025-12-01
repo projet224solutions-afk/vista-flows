@@ -54,15 +54,12 @@ export function useClientActions() {
   ): Promise<{ success: boolean; orderId?: string; error?: string }> => {
     setLoading(true);
     try {
-      // Calculer le total
       const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-      // Vérifier si le montant correspond
       if (Math.abs(totalAmount - paymentData.amount) > 0.01) {
         throw new Error('Le montant du paiement ne correspond pas au total de la commande');
       }
 
-      // Créer la commande
       const orderNumber = `ORD-${Date.now()}-${customerId.substring(0, 8)}`;
       
       const { data: order, error: orderError } = await supabase
@@ -81,7 +78,6 @@ export function useClientActions() {
 
       if (orderError) throw orderError;
 
-      // Créer les items de commande
       const orderItems = cartItems.map(item => ({
         order_id: order.id,
         product_id: item.product_id,
@@ -96,7 +92,6 @@ export function useClientActions() {
 
       if (itemsError) throw itemsError;
 
-      // Traiter le paiement selon la méthode
       if (paymentData.method === 'wallet') {
         await processWalletPayment(userId, totalAmount, order.id, paymentData.transaction_id);
       } else if (paymentData.method === 'mobile_money') {
@@ -122,18 +117,18 @@ export function useClientActions() {
    */
   const updateOrder = useCallback(async (
     orderId: string,
-    updates: Partial<{
-      status: string;
-      shipping_address: string;
-      shipping_phone: string;
-      notes: string;
-  const updateOrder = useCallback(async (
-    orderId: string,
     updates: {
       status?: 'pending' | 'processing' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled' | 'completed';
       notes?: string;
     }
   ): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update(updates)
+        .eq('id', orderId);
+
       if (error) throw error;
 
       toast.success('Commande mise à jour');
@@ -160,19 +155,19 @@ export function useClientActions() {
       const { error } = await supabase
         .from('orders')
         .update({
-  const cancelOrder = useCallback(async (
-    orderId: string,
-    reason: string
-  ): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
           status: 'cancelled',
           notes: `Annulé: ${reason}`
         })
-        .eq('id', orderId);ors de l\'annulation');
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast.success('Commande annulée');
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erreur annulation:', error);
+      captureError('ORDER_ERROR', 'Échec annulation', error.message, 'cancelOrder');
+      toast.error('Erreur lors de l\'annulation');
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
@@ -185,9 +180,6 @@ export function useClientActions() {
   const addToFavorites = useCallback(async (
     userId: string,
     productId: string
-  const addToFavorites = useCallback(async (
-    userId: string,
-    productId: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase
@@ -196,6 +188,9 @@ export function useClientActions() {
           customer_id: userId,
           product_id: productId
         });
+
+      if (error) throw error;
+
       toast.success('Ajouté aux favoris');
       return { success: true };
     } catch (error: any) {
@@ -211,9 +206,6 @@ export function useClientActions() {
   const removeFromFavorites = useCallback(async (
     userId: string,
     productId: string
-  const removeFromFavorites = useCallback(async (
-    userId: string,
-    productId: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase
@@ -221,6 +213,9 @@ export function useClientActions() {
         .delete()
         .eq('customer_id', userId)
         .eq('product_id', productId);
+
+      if (error) throw error;
+
       toast.success('Retiré des favoris');
       return { success: true };
     } catch (error: any) {
@@ -234,13 +229,11 @@ export function useClientActions() {
    * 6. UPDATE SHIPPING ADDRESS - Mettre à jour l'adresse de livraison
    */
   const updateShippingAddress = useCallback(async (
-  const updateShippingAddress = useCallback(async (
     customerId: string,
     addressData: ShippingInfo
   ): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      // Stocker l'adresse dans le profil utilisateur
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -248,6 +241,7 @@ export function useClientActions() {
           full_name: addressData.full_name
         })
         .eq('id', customerId);
+
       if (error) throw error;
 
       toast.success('Adresse de livraison mise à jour');
@@ -279,7 +273,6 @@ export function useClientActions() {
       }
 
       const { error } = await supabase
-      const { error } = await supabase
         .from('product_reviews')
         .insert({
           customer_id: userId,
@@ -288,6 +281,7 @@ export function useClientActions() {
           rating,
           content: comment
         });
+
       if (error) throw error;
 
       toast.success('Avis soumis avec succès');
@@ -307,15 +301,12 @@ export function useClientActions() {
    */
   const requestRefund = useCallback(async (
     userId: string,
-  const requestRefund = useCallback(async (
-    userId: string,
     orderId: string,
     reason: string,
     amount?: number
   ): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      // Créer une note sur la commande pour demande de remboursement
       const { error } = await supabase
         .from('orders')
         .update({
@@ -346,7 +337,6 @@ export function useClientActions() {
     orderId: string,
     transactionId?: string
   ) => {
-    // Débiter le wallet
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
       .select('balance')
@@ -356,13 +346,11 @@ export function useClientActions() {
     if (walletError || !wallet) throw new Error('Wallet introuvable');
     if (wallet.balance < amount) throw new Error('Solde insuffisant');
 
-    // Débiter
     await supabase
       .from('wallets')
       .update({ balance: wallet.balance - amount })
       .eq('user_id', userId);
 
-    // Enregistrer la transaction
     await supabase
       .from('enhanced_transactions')
       .insert({
@@ -386,7 +374,6 @@ export function useClientActions() {
     orderId: string,
     mobileNumber?: string
   ) => {
-    // Log la transaction (à implémenter selon l'API mobile money)
     console.log('Mobile money payment:', { userId, amount, orderId, mobileNumber });
     toast.info('Paiement mobile money en cours de traitement');
   };
@@ -400,15 +387,8 @@ export function useClientActions() {
     orderId: string,
     cardLast4?: string
   ) => {
-    // Log la transaction (à implémenter selon l'API de paiement)
     console.log('Card payment:', { userId, amount, orderId, cardLast4 });
     toast.info('Paiement par carte en cours de traitement');
-  }; Helper: Détecter le provider mobile money
-  const detectProvider = (phone?: string): string => {
-    if (!phone) return 'unknown';
-    if (phone.startsWith('622') || phone.startsWith('623')) return 'orange_money';
-    if (phone.startsWith('628') || phone.startsWith('629')) return 'mtn_mobile_money';
-    return 'unknown';
   };
 
   return {
