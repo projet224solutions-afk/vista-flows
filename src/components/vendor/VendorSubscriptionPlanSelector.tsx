@@ -112,6 +112,14 @@ export function VendorSubscriptionPlanSelector({
     try {
       setSubscribing(true);
       
+      console.log('🔄 Tentative d\'achat d\'abonnement:', {
+        userId: user.id,
+        planId: selectedPlan.id,
+        price,
+        billingCycle,
+        walletBalance
+      });
+      
       const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
         userId: user.id,
         planId: selectedPlan.id,
@@ -120,18 +128,44 @@ export function VendorSubscriptionPlanSelector({
         billingCycle: billingCycle
       });
 
+      console.log('📥 Résultat achat:', subscriptionId);
+
       if (subscriptionId) {
         toast.success("✅ Abonnement activé avec succès !", {
           description: `Plan ${selectedPlan.display_name} - ${BILLING_CYCLE_LABELS[billingCycle]}`
         });
+        
+        // Recharger le solde wallet
+        await loadWalletBalance();
+        
         onOpenChange(false);
         onSuccess?.();
       } else {
-        toast.error("Erreur lors de l'activation de l'abonnement");
+        toast.error("Erreur lors de l'activation de l'abonnement", {
+          description: "Vérifiez votre solde et réessayez"
+        });
       }
-    } catch (error) {
-      console.error("Erreur souscription:", error);
-      toast.error("Erreur système lors de la souscription");
+    } catch (error: any) {
+      console.error("❌ Erreur souscription:", error);
+      
+      // Messages d'erreur spécifiques
+      let errorMessage = "Erreur système lors de la souscription";
+      let errorDescription = "Veuillez réessayer dans quelques instants";
+      
+      if (error.message?.includes('Solde insuffisant')) {
+        errorMessage = "Solde insuffisant";
+        errorDescription = "Votre solde wallet est trop faible pour cet abonnement";
+      } else if (error.message?.includes('Wallet non trouvé')) {
+        errorMessage = "Wallet non disponible";
+        errorDescription = "Veuillez contacter le support";
+      } else if (error.message?.includes('Plan non trouvé')) {
+        errorMessage = "Plan non disponible";
+        errorDescription = "Ce plan n'est plus disponible";
+      }
+      
+      toast.error(errorMessage, {
+        description: errorDescription
+      });
     } finally {
       setSubscribing(false);
     }

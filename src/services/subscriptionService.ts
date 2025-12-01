@@ -153,6 +153,14 @@ export class SubscriptionService {
     billingCycle?: string;
   }): Promise<string | null> {
     try {
+      console.log('🔄 Appel RPC record_subscription_payment:', {
+        p_user_id: params.userId,
+        p_plan_id: params.planId,
+        p_price_paid: params.pricePaid,
+        p_payment_method: params.paymentMethod || 'wallet',
+        p_billing_cycle: params.billingCycle || 'monthly'
+      });
+
       const { data, error } = await supabase.rpc('record_subscription_payment', {
         p_user_id: params.userId,
         p_plan_id: params.planId,
@@ -163,14 +171,22 @@ export class SubscriptionService {
       });
 
       if (error) {
-        console.error('❌ Erreur enregistrement paiement:', error);
-        return null;
+        console.error('❌ Erreur RPC:', error);
+        
+        // Propager l'erreur avec un message clair
+        if (error.message) {
+          throw new Error(error.message);
+        }
+        throw new Error('Erreur lors de l\'enregistrement du paiement');
       }
 
+      console.log('✅ Abonnement créé avec succès:', data);
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Exception enregistrement paiement:', error);
-      return null;
+      
+      // Propager l'erreur pour que le composant puisse l'afficher
+      throw error;
     }
   }
 
