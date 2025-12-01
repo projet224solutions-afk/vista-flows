@@ -20,7 +20,7 @@ import ProductManagement from '@/components/vendor/ProductManagement';
 import OrderManagement from '@/components/vendor/OrderManagement';
 import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
 import { VendorAgentWalletView } from '@/components/vendor/VendorAgentWalletView';
-import VendorAnalytics from '@/components/vendor/VendorAnalytics';
+import { VendorAnalyticsDashboard } from '@/components/vendor/VendorAnalyticsDashboard';
 import InventoryManagement from '@/components/vendor/InventoryManagement';
 import WarehouseManagement from '@/components/vendor/WarehouseManagement';
 import ClientManagement from '@/components/vendor/ClientManagement';
@@ -33,7 +33,6 @@ import SupplierManagement from '@/components/vendor/SupplierManagement';
 import ProspectManagement from '@/components/vendor/ProspectManagement';
 import MarketingManagement from '@/components/vendor/MarketingManagement';
 import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
-import DebtManagement from '@/components/vendor/DebtManagement';
 import CommissionsManagement from '@/components/vendor/CommissionsManagement';
 import AgentManagement from '@/components/vendor/AgentManagement';
 
@@ -531,7 +530,7 @@ export default function VendorAgentInterface() {
 
           <TabsContent value="dashboard">
             <AgentModuleWrapper permission="view_dashboard">
-              <VendorAnalytics />
+              <VendorAnalyticsDashboard />
             </AgentModuleWrapper>
           </TabsContent>
 
@@ -664,7 +663,12 @@ export default function VendorAgentInterface() {
           {hasPermission('manage_debts') && (
             <TabsContent value="debts">
               <AgentModuleWrapper>
-                <DebtManagement />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Gestion des Créances</CardTitle>
+                    <CardDescription>Module en cours de maintenance</CardDescription>
+                  </CardHeader>
+                </Card>
               </AgentModuleWrapper>
             </TabsContent>
           )}
