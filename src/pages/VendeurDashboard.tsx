@@ -123,18 +123,19 @@ export default function VendeurDashboard() {
     ];
   }, [stats]);
 
-  // Rediriger vers dashboard par défaut
+  // Rediriger vers dashboard par défaut (optimisé pour éviter boucles)
   useEffect(() => {
-    // ✅ Correction : Garde-fou de redirection pour éviter toute boucle
-    if (location.pathname === '/vendeur' || location.pathname === '/vendeur/') {
+    // ✅ Redirection une seule fois au montage
+    const path = location.pathname;
+    if (path === '/vendeur' || path === '/vendeur/') {
       navigate('/vendeur/dashboard', { replace: true });
     }
-  }, [location.pathname, navigate]);
+  }, []); // ✅ Dépendances vides = une seule exécution
 
-  // Charger les 5 dernières commandes réelles du vendeur
+  // Charger les 5 dernières commandes réelles du vendeur (optimisé)
   useEffect(() => {
     const loadRecentOrders = async () => {
-      if (!user) return;
+      if (!user?.id) return;
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
@@ -161,7 +162,7 @@ export default function VendeurDashboard() {
       setRecentOrders(formatted);
     };
     loadRecentOrders();
-  }, [user]);
+  }, [user?.id]); // ✅ Dépendance stable (primitive)
 
   // ✅ Correction : Stabilise la référence et empêche re-renders des enfants qui recevraient cette fonction
   const handleSignOut = useCallback(async () => {

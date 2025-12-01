@@ -11,17 +11,13 @@ export function useVendorSubscription() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (user && profile) {
-      // Ne charger que si l'utilisateur est vendeur
-      if (profile.role === 'vendeur') {
-        loadSubscriptionData();
-      } else {
-        setLoading(false);
-      }
-    } else if (!user) {
+    // ✅ Optimisation: Utiliser uniquement les IDs (primitives) pour éviter rechargements
+    if (user?.id && profile?.role === 'vendeur') {
+      loadSubscriptionData();
+    } else if (!user?.id) {
       setLoading(false);
     }
-  }, [user, profile]);
+  }, [user?.id, profile?.role]); // ✅ Dépendances stables
 
   const loadSubscriptionData = async () => {
     if (!user) return;

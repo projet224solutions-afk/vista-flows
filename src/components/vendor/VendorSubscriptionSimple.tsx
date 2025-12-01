@@ -23,10 +23,11 @@ export function VendorSubscriptionSimple() {
   const [showPlanSelector, setShowPlanSelector] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    // ✅ Optimisation: Charger seulement quand user.id change
+    if (user?.id) {
       loadSubscription();
     }
-  }, [user]);
+  }, [user?.id]); // ✅ Dépendance stable
 
   const loadSubscription = async () => {
     if (!user?.id) return;
@@ -82,7 +83,8 @@ export function VendorSubscriptionSimple() {
     ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0;
 
-  if (loading) {
+  // ✅ Ne pas afficher loading si on a déjà des données
+  if (loading && !subscription) {
     return (
       <Card data-subscription-section>
         <CardHeader>
