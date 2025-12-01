@@ -205,7 +205,6 @@ const BugBountyDashboard = () => {
     updateReportMutation.mutate({ id: selectedReport.id, updates });
   };
 
-  return (
   if (reportsError) {
     return (
       <Alert variant="destructive">
