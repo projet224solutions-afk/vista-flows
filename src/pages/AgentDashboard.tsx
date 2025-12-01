@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, TrendingUp, DollarSign, UserPlus, LogOut, Wallet } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, UserPlus, LogOut, Wallet, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -127,6 +127,10 @@ export default function AgentDashboard() {
               Wallet
             </TabsTrigger>
             <TabsTrigger value="sub-agents">Sous-Agents</TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="w-4 h-4 mr-2" />
+              Paramètres
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -274,6 +278,53 @@ export default function AgentDashboard() {
 
           <TabsContent value="sub-agents">
             <AgentSubAgentsManagement agentId={agent.id} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Modifier Email */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Modifier l'email</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Email actuel</p>
+                      <p className="text-base font-medium">{agent.email}</p>
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => {
+                        toast.info('Fonctionnalité de modification d\'email en cours de développement');
+                      }}
+                    >
+                      Modifier l'email
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Modifier Mot de Passe */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Modifier le mot de passe</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Changez votre mot de passe pour sécuriser votre compte
+                    </p>
+                    <Button 
+                      className="w-full"
+                      onClick={() => navigate('/agent/change-password')}
+                    >
+                      Changer le mot de passe
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -688,6 +688,51 @@ export default function BureauDashboard() {
                   </p>
                 </div>
               </div>
+
+              {/* Gestion du compte */}
+              <div className="space-y-4 pt-6 border-t">
+                <h3 className="font-semibold text-lg">Gestion du compte</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Modifier Email */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Modifier l'email</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Email actuel</Label>
+                        <p className="font-medium text-sm">{bureau?.president_email}</p>
+                      </div>
+                      <Button 
+                        className="w-full"
+                        onClick={() => {
+                          toast.info('Fonctionnalité de modification d\'email en cours de développement');
+                        }}
+                      >
+                        Modifier l'email
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Modifier Mot de Passe */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Modifier le mot de passe</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Changez votre mot de passe pour sécuriser votre compte
+                      </p>
+                      <Button 
+                        className="w-full"
+                        onClick={() => navigate('/bureau/change-password')}
+                      >
+                        Changer le mot de passe
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
