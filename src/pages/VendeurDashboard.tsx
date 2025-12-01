@@ -49,7 +49,6 @@ import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
 import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
 import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
-import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
 import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
