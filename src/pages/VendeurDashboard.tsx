@@ -135,30 +135,48 @@ export default function VendeurDashboard() {
   useEffect(() => {
     const loadRecentOrders = async () => {
       if (!user?.id) return;
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-      if (!vendor) return;
+      
+      try {
+        const { data: vendor, error: vendorError } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (vendorError || !vendor) {
+          console.warn('Vendeur non trouvé:', vendorError);
+          return;
+        }
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`order_number,total_amount,status,created_at,customer:customers!inner(user_id)`)
-        .eq('vendor_id', vendor.id)
-        .neq('customer.user_id', user.id) // Exclude POS sales
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (error) return;
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            order_number,
+            total_amount,
+            status,
+            created_at,
+            customer:customers!inner(user_id)
+          `)
+          .eq('vendor_id', vendor.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (error) {
+          console.error('Erreur chargement commandes:', error);
+          return;
+        }
 
-      const formatted = (data || []).map((o: any) => ({
-        order_number: o.order_number,
-        customer_label: o.customer?.user_id ? `Client ${(o.customer.user_id as string).slice(0, 6)}` : 'Client',
-        status: o.status || 'pending',
-        total_amount: o.total_amount || 0,
-        created_at: o.created_at
-      }));
-      setRecentOrders(formatted);
+        const formatted = (data || []).map((o: any) => ({
+          order_number: o.order_number,
+          customer_label: o.customer?.user_id ? `Client ${(o.customer.user_id as string).slice(0, 6)}` : 'Client',
+          status: o.status || 'pending',
+          total_amount: o.total_amount || 0,
+          created_at: o.created_at
+        }));
+        setRecentOrders(formatted);
+      } catch (error) {
+        console.error('Erreur lors du chargement des commandes:', error);
+      }
     };
     loadRecentOrders();
   }, [user?.id]); // ✅ Dépendance stable (primitive)
@@ -184,6 +202,31 @@ export default function VendeurDashboard() {
 
   // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
   const isLoading = !user || typeof profile === 'undefined' || statsLoading;
+  
+  // Afficher un message d'erreur si les stats ne chargent pas
+  if (!isLoading && stats === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white p-6">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-600">Erreur de chargement</CardTitle>
+            <CardDescription>
+              Impossible de charger les données de votre espace vendeur
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Veuillez vérifier votre connexion internet et réessayer.
+            </p>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Recharger la page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">

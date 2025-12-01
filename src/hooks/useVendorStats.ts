@@ -24,13 +24,17 @@ export function useVendorStats() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
-    if (!vendorId) return;
+    if (!vendorId) {
+      setStats(null);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
 
-      // Statistiques parallèles
+      // Statistiques parallèles avec gestion d'erreur individuelle
       const [
         revenueResult,
         ordersResult,
@@ -38,7 +42,7 @@ export function useVendorStats() {
         productsResult,
         pendingResult,
         lowStockResult
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         // Chiffre d'affaires total
         supabase
           .from('orders')
@@ -80,29 +84,38 @@ export function useVendorStats() {
       ]);
 
       // Calculer le chiffre d'affaires
-      const revenue = revenueResult.data?.reduce(
-        (sum, order) => sum + (order.total_amount || 0), 
-        0
-      ) || 0;
+      const revenue = revenueResult.status === 'fulfilled' && revenueResult.value.data
+        ? revenueResult.value.data.reduce((sum, order) => sum + (order.total_amount || 0), 0)
+        : 0;
 
       // Compter les produits en stock faible
-      const lowStockCount = lowStockResult.data?.filter(
-        (p) => p.stock_quantity <= (p.low_stock_threshold || 0)
-      ).length || 0;
+      const lowStockCount = lowStockResult.status === 'fulfilled' && lowStockResult.value.data
+        ? lowStockResult.value.data.filter((p) => p.stock_quantity <= (p.low_stock_threshold || 0)).length
+        : 0;
 
       setStats({
         vendorId,
         revenue,
-        orders_count: ordersResult.count || 0,
-        customers_count: customersResult.count || 0,
-        products_count: productsResult.count || 0,
-        pending_orders: pendingResult.count || 0,
+        orders_count: ordersResult.status === 'fulfilled' ? (ordersResult.value.count || 0) : 0,
+        customers_count: customersResult.status === 'fulfilled' ? (customersResult.value.count || 0) : 0,
+        products_count: productsResult.status === 'fulfilled' ? (productsResult.value.count || 0) : 0,
+        pending_orders: pendingResult.status === 'fulfilled' ? (pendingResult.value.count || 0) : 0,
         low_stock_products: lowStockCount
       });
 
     } catch (err: any) {
       console.error('Erreur chargement stats:', err);
       setError(err.message || 'Erreur lors du chargement des statistiques');
+      // Définir des stats par défaut en cas d'erreur
+      setStats({
+        vendorId,
+        revenue: 0,
+        orders_count: 0,
+        customers_count: 0,
+        products_count: 0,
+        pending_orders: 0,
+        low_stock_products: 0
+      });
     } finally {
       setLoading(false);
     }

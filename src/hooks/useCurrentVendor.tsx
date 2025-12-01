@@ -48,6 +48,7 @@ export const useCurrentVendor = () => {
   const agentContext = useAgent();
   const [vendorData, setVendorData] = useState<VendorData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Mémoriser les IDs pour éviter les re-renders inutiles
   const authUserId = auth.user?.id;
@@ -58,6 +59,7 @@ export const useCurrentVendor = () => {
   const loadVendorData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
       if (hasAgent && agentVendorId) {
         // CAS 1: On est dans un contexte AGENT
@@ -72,6 +74,7 @@ export const useCurrentVendor = () => {
 
         if (vendorError) {
           console.error('❌ Erreur chargement vendor:', vendorError);
+          throw new Error('Impossible de charger les données du vendeur');
         }
 
         // Récupérer le profil du vendeur
@@ -125,9 +128,14 @@ export const useCurrentVendor = () => {
         });
         
         console.log('✅ Données vendeur chargées (mode direct):', { vendorId });
+      } else {
+        // CAS 3: Aucun contexte valide
+        console.warn('⚠️ Aucun contexte vendeur valide');
+        setError('Session non valide');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erreur chargement vendeur:', error);
+      setError(error.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -138,8 +146,14 @@ export const useCurrentVendor = () => {
   }, [loadVendorData]);
 
   return {
-    ...vendorData,
+    vendorId: vendorData?.vendorId || null,
+    isAgent: vendorData?.isAgent || false,
+    agentPermissions: vendorData?.agentPermissions,
+    user: vendorData?.user,
+    profile: vendorData?.profile,
     loading,
+    error,
+    reload: loadVendorData,
     hasPermission: (permission: string) => {
       if (vendorData?.isAgent && vendorData.agentPermissions) {
         return vendorData.agentPermissions[permission as keyof VendorAgentPermissions] || false;
