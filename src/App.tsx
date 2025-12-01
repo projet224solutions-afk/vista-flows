@@ -25,6 +25,8 @@ const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
 const AuthGoogleSuccess = lazy(() => import("./pages/AuthGoogleSuccess"));
 const AgentLogin = lazy(() => import("./pages/AgentLogin"));
 const BureauLogin = lazy(() => import("./pages/BureauLogin"));
+const AgentChangePassword = lazy(() => import("./pages/AgentChangePassword"));
+const BureauChangePassword = lazy(() => import("./pages/BureauChangePassword"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazy(() => import("./pages/VendeurDashboard"));
 const LivreurDashboard = lazy(() => import("./pages/LivreurDashboard"));
@@ -297,6 +299,8 @@ function App() {
               {/* Agent & Bureau Login with MFA */}
               <Route path="/agent/login" element={<AgentLogin />} />
               <Route path="/bureau/login" element={<BureauLogin />} />
+              <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
+              <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
               
               {/* Agent & Bureau Dashboards */}
               <Route path="/bureau/:token" element={<BureauDashboard />} />
