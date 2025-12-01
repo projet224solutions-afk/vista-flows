@@ -28,7 +28,7 @@ import ClientManagement from "@/components/vendor/ClientManagement";
 import AgentManagement from "@/components/vendor/AgentManagement";
 import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
 import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
-import VendorAnalytics from "@/components/vendor/VendorAnalytics";
+import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
 import InventoryManagement from "@/components/vendor/InventoryManagement";
 import MarketingManagement from "@/components/vendor/MarketingManagement";
 import ProspectManagement from "@/components/vendor/ProspectManagement";
@@ -36,7 +36,6 @@ import SupportTickets from "@/components/vendor/SupportTickets";
 import WarehouseManagement from "@/components/vendor/WarehouseManagement";
 import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
 import PaymentManagement from "@/components/vendor/PaymentManagement";
-import DebtManagement from "@/components/vendor/DebtManagement";
 import { VendorDebtManagement } from "@/components/vendor/debts/VendorDebtManagement";
 import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
@@ -412,7 +411,7 @@ export default function VendeurDashboard() {
               {/* Routes premium protégées */}
               <Route path="analytics" element={
                 <ProtectedRoute feature="analytics_basic">
-                  <VendorAnalytics />
+                  <VendorAnalyticsDashboard />
                 </ProtectedRoute>
               } />
               <Route path="pos" element={
