@@ -7,14 +7,57 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Shield, AlertTriangle, CheckCircle, Clock, XCircle, Trophy } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-const severityColors = {
+// ============================================
+// TYPES & INTERFACES
+// ============================================
+
+type BugSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type BugCategory = 'authentication' | 'authorization' | 'injection' | 'xss' | 'csrf' | 'data_exposure' | 'crypto' | 'business_logic' | 'other';
+type BugReportStatus = 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'duplicate' | 'resolved' | 'rewarded';
+
+interface BugReport {
+  id: string;
+  reporter_name: string;
+  reporter_email: string;
+  reporter_github?: string;
+  title: string;
+  description: string;
+  severity: BugSeverity;
+  category: BugCategory;
+  steps_to_reproduce: string;
+  impact: string;
+  proof_of_concept?: string;
+  suggested_fix?: string;
+  status: BugReportStatus;
+  reward_amount?: number;
+  admin_notes?: string;
+  resolved_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BugBountyStats {
+  total: number;
+  pending: number;
+  resolved: number;
+  rewarded: number;
+  totalPaid: number;
+}
+
+// ============================================
+// CONSTANTS
+// ============================================
+
+const severityColors: Record<BugSeverity, string> = {
   critical: "bg-red-500",
   high: "bg-orange-500",
   medium: "bg-yellow-500",
@@ -22,7 +65,7 @@ const severityColors = {
   info: "bg-gray-500",
 };
 
-const statusColors = {
+const statusColors: Record<BugReportStatus, string> = {
   pending: "bg-yellow-500",
   reviewing: "bg-blue-500",
   accepted: "bg-green-500",
@@ -32,46 +75,133 @@ const statusColors = {
   rewarded: "bg-emerald-500",
 };
 
+// ============================================
+// COMPONENT
+// ============================================
+
 const BugBountyDashboard = () => {
   const queryClient = useQueryClient();
-  const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [adminNotes, setAdminNotes] = useState("");
+  const navigate = useNavigate();
+  
+  // States avec types stricts
+  const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
+  const [adminNotes, setAdminNotes] = useState<string>("");
   const [rewardAmount, setRewardAmount] = useState<string>("");
-  const [newStatus, setNewStatus] = useState<string>("");
+  const [newStatus, setNewStatus] = useState<BugReportStatus | "">("");
 
-  const { data: reports, isLoading } = useQuery({
+  // Vérification admin
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.warn('❌ Pas d\'utilisateur connecté');
+          setIsCheckingAuth(false);
+          toast.error("Accès refusé", {
+            description: "Vous devez être connecté pour accéder à cette page."
+          });
+          navigate('/login');
+          return;
+        }
+
+        // Vérifier si l'utilisateur est admin/PDG
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('user_role')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('❌ Erreur chargement profil:', error);
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        const hasAdminAccess = profile?.user_role === 'admin' || profile?.user_role === 'pdg';
+        
+        if (!hasAdminAccess) {
+          console.warn('❌ Utilisateur non-admin:', profile?.user_role);
+          toast.error("Accès refusé", {
+            description: "Seuls les administrateurs peuvent accéder au Bug Bounty."
+          });
+          navigate('/');
+        }
+
+        setIsAdmin(hasAdminAccess);
+        setIsCheckingAuth(false);
+      } catch (error) {
+        console.error('❌ Erreur vérification admin:', error);
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAdminAccess();
+  }, [navigate]);
+
+  const { data: reports, isLoading, error: reportsError } = useQuery<BugReport[], Error>({
     queryKey: ["bug-reports"],
     queryFn: async () => {
+      console.log('🔍 Chargement bug reports...');
+      
       const { data, error } = await supabase
         .from("bug_reports")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('❌ Erreur chargement bug reports:', error);
+        throw error;
+      }
+
+      console.log('✅ Bug reports chargés:', data?.length || 0);
+      return data as BugReport[];
     },
+    enabled: isAdmin && !isCheckingAuth,
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<BugBountyStats, Error>({
     queryKey: ["bug-bounty-stats"],
     queryFn: async () => {
-      const { data: allReports } = await supabase.from("bug_reports").select("status, severity, reward_amount");
+      console.log('📊 Chargement stats bug bounty...');
       
-      return {
-        total: allReports?.length || 0,
-        pending: allReports?.filter(r => r.status === "pending").length || 0,
-        resolved: allReports?.filter(r => r.status === "resolved").length || 0,
-        rewarded: allReports?.filter(r => r.status === "rewarded").length || 0,
-        totalPaid: allReports?.reduce((sum, r) => {
-          const amount = parseFloat(String(r.reward_amount || "0"));
-          return sum + (isNaN(amount) ? 0 : amount);
-        }, 0) || 0,
+      const { data: allReports, error } = await supabase
+        .from("bug_reports")
+        .select("status, severity, reward_amount");
+      
+      if (error) {
+        console.error('❌ Erreur chargement stats:', error);
+        throw error;
+      }
+
+      if (!allReports) {
+        return { total: 0, pending: 0, resolved: 0, rewarded: 0, totalPaid: 0 };
+      }
+
+      const stats: BugBountyStats = {
+        total: allReports.length,
+        pending: allReports.filter(r => r.status === "pending").length,
+        resolved: allReports.filter(r => r.status === "resolved").length,
+        rewarded: allReports.filter(r => r.status === "rewarded").length,
+        totalPaid: allReports.reduce((sum, r) => {
+          const amount = r.reward_amount ?? 0;
+          return sum + amount;
+        }, 0),
       };
+
+      console.log('✅ Stats calculées:', stats);
+      return stats;
     },
+    enabled: isAdmin && !isCheckingAuth,
   });
 
-  const updateReportMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+  const updateReportMutation = useMutation<void, Error, { id: string; updates: Partial<BugReport> }>({
+    mutationFn: async ({ id, updates }) => {
+      console.log('📝 Mise à jour rapport:', id, updates);
+      
       const { error } = await supabase
         .from("bug_reports")
         .update(updates)
@@ -82,32 +212,94 @@ const BugBountyDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-bounty-stats"] });
-      toast.success("Rapport mis à jour");
+      toast.success("Rapport mis à jour avec succès");
+      
+      // Réinitialiser tous les states
       setSelectedReport(null);
+      setAdminNotes("");
+      setRewardAmount("");
+      setNewStatus("");
     },
-    onError: (error: any) => {
-      toast.error("Erreur", { description: error.message });
+    onError: (error: Error) => {
+      console.error('❌ Erreur mise à jour rapport:', error);
+      toast.error("Erreur lors de la mise à jour", { 
+        description: error.message 
+      });
     },
   });
 
   const handleUpdateReport = () => {
     if (!selectedReport) return;
 
-    const updates: any = {};
+    const updates: Partial<BugReport> = {};
+    
     if (adminNotes) updates.admin_notes = adminNotes;
+    
     if (newStatus) {
-      updates.status = newStatus;
+      updates.status = newStatus as BugReportStatus;
       if (newStatus === "resolved" || newStatus === "rewarded") {
         updates.resolved_at = new Date().toISOString();
       }
     }
-    if (rewardAmount) updates.reward_amount = parseFloat(rewardAmount);
+    
+    if (rewardAmount) {
+      const amount = parseFloat(rewardAmount);
+      if (!isNaN(amount) && amount > 0) {
+        updates.reward_amount = amount;
+      }
+    }
 
+    console.log('🔄 Envoi mise à jour:', updates);
     updateReportMutation.mutate({ id: selectedReport.id, updates });
   };
 
+  // Affichage pendant vérification auth
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3">Vérification des accès...</span>
+      </div>
+    );
+  }
+
+  // Affichage si non-admin
+  if (!isAdmin) {
+    return (
+      <Alert>
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          Accès réservé aux administrateurs.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Affichage erreur RLS
+  if (reportsError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Erreur d'accès aux données</strong>
+          <p className="text-sm mt-2">
+            {reportsError.message}
+          </p>
+          <p className="text-xs mt-2 text-muted-foreground">
+            Si le problème persiste, vérifiez que les policies RLS sont correctement configurées.
+          </p>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (isLoading) {
-    return <div className="p-8">Chargement...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3">Chargement des rapports...</span>
+      </div>
+    );
   }
 
   return (
@@ -183,7 +375,19 @@ const BugBountyDashboard = () => {
         <CardContent>
           <div className="space-y-4">
             {reports?.map((report) => (
-              <Dialog key={report.id}>
+              <Dialog 
+                key={report.id}
+                open={selectedReport?.id === report.id}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    // Réinitialiser tous les states à la fermeture
+                    setSelectedReport(null);
+                    setAdminNotes("");
+                    setRewardAmount("");
+                    setNewStatus("");
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Card 
                     className="cursor-pointer hover:bg-accent/50 transition-colors"
@@ -198,10 +402,10 @@ const BugBountyDashboard = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2">
-                            <Badge className={severityColors[report.severity as keyof typeof severityColors]}>
+                            <Badge className={severityColors[report.severity]}>
                               {report.severity}
                             </Badge>
-                            <Badge variant="outline" className={statusColors[report.status as keyof typeof statusColors]}>
+                            <Badge variant="outline" className={statusColors[report.status]}>
                               {report.status}
                             </Badge>
                             <Badge variant="outline">{report.category}</Badge>
