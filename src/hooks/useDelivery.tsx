@@ -186,14 +186,6 @@ export function useDelivery() {
       throw error;
     }
   }, [user, findNearbyDeliveries]);
-      
-      return data;
-    } catch (error: any) {
-      console.error('Erreur acceptation livraison:', error);
-      toast.error('Erreur lors de l\'acceptation');
-      throw error;
-    }
-  }, [user]);
 
   // Démarrer une livraison
   const startDelivery = useCallback(async (deliveryId: string) => {
