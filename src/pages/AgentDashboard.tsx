@@ -28,6 +28,9 @@ export default function AgentDashboard() {
   const [pdgUserId, setPdgUserId] = useState<string | null>(null);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
 
+  // Version: 2025-12-01 avec onglet Paramètres
+  console.log('[AgentDashboard] Version: 2025-12-01 - Paramètres disponible');
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');
