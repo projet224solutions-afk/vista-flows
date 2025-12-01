@@ -98,19 +98,35 @@ export function useDelivery() {
     setError(null);
 
     try {
-      // Charger toutes les livraisons en attente
+      console.log('🔍 [useDelivery] Searching nearby deliveries...');
+      
+      // Charger UNIQUEMENT les livraisons vraiment disponibles
+      // - status = 'pending' (en attente)
+      // - driver_id IS NULL (non assignées)
+      // - created_at récent (dernières 24h pour éviter vieilles commandes)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
         .eq('status', 'pending')
         .is('driver_id', null)
+        .gte('created_at', yesterday.toISOString())
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
 
-      console.log('✅ Livraisons disponibles:', data?.length || 0);
-      setNearbyDeliveries(data || []);
+      console.log('✅ Livraisons disponibles (réelles):', data?.length || 0);
+      
+      // Filtrer encore pour être sûr (double vérification)
+      const validDeliveries = (data || []).filter(d => 
+        d.status === 'pending' && !d.driver_id
+      );
+      
+      console.log('✅ Après filtrage final:', validDeliveries.length);
+      setNearbyDeliveries(validDeliveries);
     } catch (error: any) {
       console.error('❌ Erreur chargement livraisons:', error);
       setError(error.message);
@@ -125,6 +141,24 @@ export function useDelivery() {
     if (!user) return;
 
     try {
+      console.log('🎯 [useDelivery] Accepting delivery:', deliveryId);
+      
+      // Vérifier disponibilité avant acceptation
+      const { data: checkDelivery, error: checkError } = await supabase
+        .from('deliveries')
+        .select('id, status, driver_id')
+        .eq('id', deliveryId)
+        .single();
+
+      if (checkError) throw checkError;
+
+      if (checkDelivery.status !== 'pending' || checkDelivery.driver_id) {
+        toast.error('Cette livraison n\'est plus disponible');
+        // Rafraîchir la liste
+        await findNearbyDeliveries(0, 0, 99999);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('deliveries')
         .update({
@@ -133,14 +167,25 @@ export function useDelivery() {
           accepted_at: new Date().toISOString()
         })
         .eq('id', deliveryId)
+        .eq('status', 'pending')
+        .is('driver_id', null)
         .select()
         .single();
 
       if (error) throw error;
 
+      console.log('✅ Delivery accepted successfully');
       setCurrentDelivery(data);
       setNearbyDeliveries(prev => prev.filter(d => d.id !== deliveryId));
       toast.success('Livraison acceptée !');
+      
+      return data;
+    } catch (error: any) {
+      console.error('❌ Error accepting delivery:', error);
+      toast.error('Erreur lors de l\'acceptation');
+      throw error;
+    }
+  }, [user, findNearbyDeliveries]);
       
       return data;
     } catch (error: any) {

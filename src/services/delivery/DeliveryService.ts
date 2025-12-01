@@ -45,14 +45,22 @@ export class DeliveryService {
     try {
       console.log('[DeliveryService] Finding nearby deliveries:', { lat, lng, radiusKm });
 
+      // Filtrer UNIQUEMENT les livraisons vraiment disponibles
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
         .eq('status', 'pending')
+        .is('driver_id', null)
+        .gte('created_at', yesterday.toISOString())
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
+      
+      console.log('[DeliveryService] Raw deliveries found:', data?.length || 0);
 
       // Transformer les données pour extraire les adresses
       const deliveries = (data || []).map((delivery: any) => {
@@ -104,22 +112,40 @@ export class DeliveryService {
    */
   static async acceptDelivery(deliveryId: string): Promise<Delivery> {
     try {
+      console.log('[DeliveryService] Accepting delivery:', deliveryId);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
+
+      // Vérifier que la livraison est vraiment disponible avant de l'accepter
+      const { data: existingDelivery, error: checkError } = await supabase
+        .from('deliveries')
+        .select('id, status, driver_id')
+        .eq('id', deliveryId)
+        .single();
+
+      if (checkError) throw checkError;
+
+      if (existingDelivery.status !== 'pending' || existingDelivery.driver_id) {
+        throw new Error('Cette livraison n\'est plus disponible');
+      }
 
       const { data, error } = await supabase
         .from('deliveries')
         .update({
           driver_id: user.user.id,
-          status: 'picked_up',
+          status: 'assigned',
           accepted_at: new Date().toISOString()
         })
         .eq('id', deliveryId)
         .eq('status', 'pending')
+        .is('driver_id', null)
         .select()
         .single();
 
       if (error) throw error;
+
+      console.log('✅ Delivery accepted successfully');
 
       // Logger l'action
       await this.logDeliveryAction(deliveryId, 'accepted', user.user.id);

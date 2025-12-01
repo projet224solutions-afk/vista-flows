@@ -190,6 +190,29 @@ export function useDeliveryActions({
     }
 
     try {
+      console.log('🎯 [useDeliveryActions] Completing delivery:', deliveryId);
+      
+      // Vérifier que la livraison existe et appartient au driver
+      const { data: existingDelivery, error: checkError } = await supabase
+        .from('deliveries')
+        .select('id, status, driver_id')
+        .eq('id', deliveryId)
+        .eq('driver_id', driverId)
+        .single();
+
+      if (checkError || !existingDelivery) {
+        console.error('❌ Delivery not found or not assigned to driver');
+        toast.error('Livraison introuvable');
+        return;
+      }
+
+      if (existingDelivery.status === 'delivered') {
+        console.warn('⚠️ Delivery already completed');
+        toast.info('Cette livraison est déjà terminée');
+        onDeliveryCompleted?.();
+        return;
+      }
+
       // Enregistrer photo et signature
       const { error: updateError } = await supabase
         .from('deliveries')
@@ -202,12 +225,20 @@ export function useDeliveryActions({
         .eq('id', deliveryId)
         .eq('driver_id', driverId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('❌ Update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('✅ Delivery completed successfully');
       toast.success('🎉 Livraison terminée avec succès!');
-      onDeliveryCompleted?.();
+      
+      // Forcer le rechargement après un délai pour laisser la DB se synchroniser
+      setTimeout(() => {
+        onDeliveryCompleted?.();
+      }, 500);
     } catch (error) {
-      console.error('Error completing delivery with proof:', error);
+      console.error('❌ Error completing delivery with proof:', error);
       toast.error('Erreur lors de la finalisation');
       throw error;
     }

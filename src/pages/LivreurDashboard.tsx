@@ -90,16 +90,36 @@ export default function LivreurDashboard() {
     driverId: user?.id || null,
     onDeliveryAccepted: () => {
       setActiveTab('active');
+      loadCurrentDelivery();
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       }
     },
     onDeliveryCompleted: () => {
+      console.log('📥 [LivreurDashboard] onDeliveryCompleted callback triggered');
       setShowProofUpload(false);
-      setActiveTab('history');
+      setCurrentDelivery(null);
+      
+      // Recharger toutes les données
+      loadCurrentDelivery();
+      loadDeliveryHistory();
+      
+      // Recharger les livraisons disponibles
+      if (location) {
+        findNearbyDeliveries(location.latitude, location.longitude, 10);
+      }
+      
+      // Basculer vers l'historique après un court délai
+      setTimeout(() => {
+        setActiveTab('history');
+      }, 1000);
     },
     onDeliveryCancelled: () => {
+      loadCurrentDelivery();
       setActiveTab('missions');
+      if (location) {
+        findNearbyDeliveries(location.latitude, location.longitude, 10);
+      }
     },
   });
 

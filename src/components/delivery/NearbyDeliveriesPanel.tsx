@@ -56,10 +56,12 @@ export function NearbyDeliveriesPanel() {
 
   const loadAllDeliveries = async () => {
     try {
+      console.log('🔍 Loading all available deliveries (without GPS filter)');
       const all = await DeliveryService.findNearbyDeliveries(0, 0, 99999);
+      console.log(`✅ Loaded ${all.length} deliveries`);
       setDeliveries(all);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error loading deliveries:', error);
     } finally {
       setLoading(false);
     }
