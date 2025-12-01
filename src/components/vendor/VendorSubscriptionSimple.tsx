@@ -45,8 +45,11 @@ export function VendorSubscriptionSimple() {
         .maybeSingle();
 
       if (error) {
-        console.error('Erreur chargement abonnement:', error);
-        toast.error('Impossible de charger l\'abonnement');
+        // Ne montrer une erreur que si ce n'est pas simplement "pas de résultat"
+        if (error.code !== 'PGRST116' && !error.message.includes('No rows')) {
+          console.error('Erreur chargement abonnement:', error);
+          toast.error('Impossible de charger l\'abonnement');
+        }
         return;
       }
 
@@ -59,9 +62,12 @@ export function VendorSubscriptionSimple() {
           current_period_end: result.current_period_end ?? null
         });
       }
-    } catch (error) {
-      console.error('Erreur chargement abonnement:', error);
-      toast.error('Erreur lors du chargement de l\'abonnement');
+    } catch (error: any) {
+      // Ne montrer une erreur que pour les vraies erreurs, pas l'absence d'abonnement
+      if (error?.code !== 'PGRST116' && !error?.message?.includes('No rows')) {
+        console.error('Erreur chargement abonnement:', error);
+        toast.error('Erreur lors du chargement de l\'abonnement');
+      }
     } finally {
       setLoading(false);
     }
