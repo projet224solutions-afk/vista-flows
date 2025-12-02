@@ -263,7 +263,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Erreur serveur',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
         success: false
       }),
       { 
