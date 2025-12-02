@@ -61,7 +61,7 @@ export function useMessageSearch() {
 
       // Filtres optionnels
       if (type && type.length > 0) {
-        queryBuilder = queryBuilder.in('type', type);
+        queryBuilder = queryBuilder.in('type', type as any);
       }
 
       if (conversation_id) {
@@ -88,7 +88,7 @@ export function useMessageSearch() {
       const highlights: Record<string, string[]> = {};
       const searchTerms = query.toLowerCase().split(' ').filter(t => t.length > 0);
 
-      (data as Message[] || []).forEach((message) => {
+      ((data as any) || []).forEach((message: any) => {
         const contentLower = message.content.toLowerCase();
         const foundTerms = searchTerms.filter(term => contentLower.includes(term));
         if (foundTerms.length > 0) {
@@ -97,7 +97,7 @@ export function useMessageSearch() {
       });
 
       const result: SearchResult = {
-        messages: data as Message[] || [],
+        messages: (data as any) || [],
         total: count || data?.length || 0,
         highlights,
       };

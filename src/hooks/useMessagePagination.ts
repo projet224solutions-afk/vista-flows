@@ -85,7 +85,7 @@ export function useMessagePagination({
 
       if (fetchError) throw fetchError;
 
-      const newMessages = (data as Message[] || []).reverse();
+      const newMessages = ((data as any) || []).reverse();
 
       if (resetList) {
         setMessages(newMessages);
