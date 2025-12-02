@@ -2109,26 +2109,42 @@ export type Database = {
           client_signature: string | null
           completed_at: string | null
           created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
           customer_rating: number | null
           delivery_address: Json
           delivery_fee: number | null
           distance_km: number | null
+          distance_to_vendor: number | null
+          distance_vendor_to_client: number | null
+          driver_bonus: number | null
           driver_earning: number | null
           driver_id: string | null
           driver_notes: string | null
           end_time: string | null
           estimated_delivery_time: string | null
           estimated_pickup_time: string | null
+          estimated_time_minutes: number | null
           id: string
           order_id: string
+          package_description: string | null
+          package_type: string | null
+          payment_method: string | null
           pickup_address: Json
           price: number | null
           proof_photo_url: string | null
           public_id: string | null
+          ready_at: string | null
+          ready_for_pickup: boolean | null
           start_time: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["delivery_status"] | null
+          total_distance: number | null
           updated_at: string | null
+          vendor_id: string | null
+          vendor_location: Json | null
+          vendor_name: string | null
+          vendor_phone: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -2140,26 +2156,42 @@ export type Database = {
           client_signature?: string | null
           completed_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           customer_rating?: number | null
           delivery_address: Json
           delivery_fee?: number | null
           distance_km?: number | null
+          distance_to_vendor?: number | null
+          distance_vendor_to_client?: number | null
+          driver_bonus?: number | null
           driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
           end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
+          estimated_time_minutes?: number | null
           id?: string
           order_id: string
+          package_description?: string | null
+          package_type?: string | null
+          payment_method?: string | null
           pickup_address: Json
           price?: number | null
           proof_photo_url?: string | null
           public_id?: string | null
+          ready_at?: string | null
+          ready_for_pickup?: boolean | null
           start_time?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
+          total_distance?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
+          vendor_location?: Json | null
+          vendor_name?: string | null
+          vendor_phone?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -2171,26 +2203,42 @@ export type Database = {
           client_signature?: string | null
           completed_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           customer_rating?: number | null
           delivery_address?: Json
           delivery_fee?: number | null
           distance_km?: number | null
+          distance_to_vendor?: number | null
+          distance_vendor_to_client?: number | null
+          driver_bonus?: number | null
           driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
           end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
+          estimated_time_minutes?: number | null
           id?: string
           order_id?: string
+          package_description?: string | null
+          package_type?: string | null
+          payment_method?: string | null
           pickup_address?: Json
           price?: number | null
           proof_photo_url?: string | null
           public_id?: string | null
+          ready_at?: string | null
+          ready_for_pickup?: boolean | null
           start_time?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["delivery_status"] | null
+          total_distance?: number | null
           updated_at?: string | null
+          vendor_id?: string | null
+          vendor_location?: Json | null
+          vendor_name?: string | null
+          vendor_phone?: string | null
         }
         Relationships: [
           {
@@ -2205,6 +2253,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -2314,6 +2369,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "delivery_notifications_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_offers: {
+        Row: {
+          created_at: string | null
+          delivery_id: string
+          distance_to_vendor: number | null
+          driver_id: string
+          estimated_earnings: number | null
+          expires_at: string | null
+          id: string
+          offered_at: string | null
+          responded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_id: string
+          distance_to_vendor?: number | null
+          driver_id: string
+          estimated_earnings?: number | null
+          expires_at?: string | null
+          id?: string
+          offered_at?: string | null
+          responded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_id?: string
+          distance_to_vendor?: number | null
+          driver_id?: string
+          estimated_earnings?: number | null
+          expires_at?: string | null
+          id?: string
+          offered_at?: string | null
+          responded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_offers_delivery_id_fkey"
             columns: ["delivery_id"]
             isOneToOne: false
             referencedRelation: "deliveries"
