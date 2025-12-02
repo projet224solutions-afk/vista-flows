@@ -22,8 +22,9 @@ export default function TaxiMotoRequestForm() {
       // Simple distance estimate (replace with real geodesic)
       const d = Math.max(0.5, Math.abs(parseFloat(dropLat) - parseFloat(pickupLat)) + Math.abs(parseFloat(dropLng) - parseFloat(pickupLng)));
       setDistanceKm(d);
-      const price = await TaxiMotoService.calculateFare(d);
-      setEstimatedPrice(price);
+      const durationEstimate = Math.ceil(d * 10); // Simple: 10 min per km
+      const fareResult = await TaxiMotoService.calculateFare(d, durationEstimate);
+      setEstimatedPrice(fareResult.total);
     } catch (e) {
       console.warn('Fare calc error:', e);
       setEstimatedPrice(null);
@@ -38,9 +39,12 @@ export default function TaxiMotoRequestForm() {
       const ride = await TaxiMotoService.createRide({
         pickupLat: parseFloat(pickupLat),
         pickupLng: parseFloat(pickupLng),
-        dropLat: parseFloat(dropLat),
-        dropLng: parseFloat(dropLng),
+        pickupAddress: 'Adresse de départ',
+        dropoffLat: parseFloat(dropLat),
+        dropoffLng: parseFloat(dropLng),
+        dropoffAddress: 'Adresse d\'arrivée',
         distanceKm: distanceKm || 1,
+        durationMin: Math.ceil((distanceKm || 1) * 10),
         estimatedPrice: estimatedPrice || 0
       });
       setLastRideId(ride.id);

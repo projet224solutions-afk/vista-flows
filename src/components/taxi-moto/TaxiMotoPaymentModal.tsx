@@ -141,13 +141,7 @@ export default function TaxiMotoPaymentModal({
         return;
       }
 
-      if (paymentMethod === 'paypal' && (!paypalEmail || !paypalEmail.includes('@'))) {
-        toast.error('Email PayPal requis', {
-          description: 'Veuillez entrer un email PayPal valide'
-        });
-        setProcessing(false);
-        return;
-      }
+      // Validation email paypal désactivée (non supporté dans PaymentMethod)
 
       if (paymentMethod === 'card' && (!cardToken || cardToken.length < 15)) {
         toast.error('Carte bancaire requise', {
@@ -168,7 +162,6 @@ export default function TaxiMotoPaymentModal({
         payment_provider: paymentMethod === 'wallet' ? 'wallet' : 
                          paymentMethod === 'card' ? 'stripe' :
                          paymentMethod === 'orange_money' ? 'orange_money' :
-                         paymentMethod === 'paypal' ? 'paypal' :
                          paymentMethod === 'cash' ? 'cash' : 'wallet',
         metadata: {
           ride_id: rideId,
@@ -278,7 +271,7 @@ export default function TaxiMotoPaymentModal({
           </RadioGroup>
 
           {/* Champs spécifiques selon la méthode */}
-          {paymentMethod === 'mobile_money' && (
+          {paymentMethod === 'orange_money' && (
             <div className="space-y-2 mt-3">
               <Label htmlFor="phone">Numéro de téléphone</Label>
               <Input
@@ -295,19 +288,7 @@ export default function TaxiMotoPaymentModal({
             </div>
           )}
 
-          {paymentMethod === 'paypal' && (
-            <div className="space-y-2 mt-3">
-              <Label htmlFor="paypal-email">Email PayPal</Label>
-              <Input
-                id="paypal-email"
-                type="email"
-                placeholder="votre@email.com"
-                value={paypalEmail}
-                onChange={(e) => setPaypalEmail(e.target.value)}
-                className="w-full"
-              />
-            </div>
-          )}
+          {/* PayPal non supporté dans PaymentMethod type */}
 
           {paymentMethod === 'card' && (
             <div className="space-y-2 mt-3">
@@ -342,8 +323,7 @@ export default function TaxiMotoPaymentModal({
             className="flex-1"
             disabled={processing || 
               (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount) ||
-              (paymentMethod === 'mobile_money' && phoneNumber.length < 8) ||
-              (paymentMethod === 'paypal' && !paypalEmail.includes('@')) ||
+              (paymentMethod === 'orange_money' && phoneNumber.length < 8) ||
               (paymentMethod === 'card' && cardToken.length < 15)
             }
           >
@@ -354,8 +334,7 @@ export default function TaxiMotoPaymentModal({
               </>
             ) : (
               paymentMethod === 'wallet' || paymentMethod === 'card' ? 'Payer en sécurité' : 
-              paymentMethod === 'mobile_money' ? 'Payer par Mobile Money' :
-              paymentMethod === 'paypal' ? 'Payer avec PayPal' :
+              paymentMethod === 'orange_money' ? 'Payer par Mobile Money' :
               paymentMethod === 'cash' ? 'Confirmer la course' : 'Payer maintenant'
             )}
           </Button>

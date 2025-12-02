@@ -55,7 +55,7 @@ export function AgentWalletAudit() {
 
         results.push({
           agent_id: p.id,
-          profile_role: p.role,
+          profile_role: 'agent',
           main_balance: mainBalance,
           agent_balance: agentBalance,
           currency,

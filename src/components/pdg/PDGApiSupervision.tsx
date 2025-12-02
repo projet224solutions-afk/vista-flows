@@ -66,10 +66,6 @@ export default function PDGApiSupervision() {
         } else {
           setCriticalEvents(data || []);
         }
-      })
-      .catch((e) => {
-        console.warn('Erreur incidents critiques:', e);
-        setCriticalEvents([]);
       });
 
     // Incidents ouverts avec gestion erreurs
@@ -84,10 +80,6 @@ export default function PDGApiSupervision() {
         } else {
           setOpenIncidents(data || []);
         }
-      })
-      .catch((e) => {
-        console.warn('Erreur incidents ouverts:', e);
-        setOpenIncidents([]);
       });
 
     // Nombre d'incidents 24h
@@ -102,10 +94,6 @@ export default function PDGApiSupervision() {
         } else {
           setIncidents(count || 0);
         }
-      })
-      .catch((e) => {
-        console.warn('Erreur security_incidents:', e);
-        setIncidents(0);
       });
   }, []);
 
