@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const BureauChangePassword = () => {
   const navigate = useNavigate();
-  const { bureau } = useBureauAuth();
+  const bureauAuth = useBureauAuth() as any;
   const [bureauData, setBureauData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,8 +38,8 @@ const BureauChangePassword = () => {
   useEffect(() => {
     const loadBureauData = async () => {
       // Vérifier d'abord si on a une session MFA
-      if (bureau) {
-        setBureauData(bureau);
+      if (bureauAuth?.bureau) {
+        setBureauData(bureauAuth.bureau);
         setLoading(false);
         return;
       }
@@ -49,7 +49,7 @@ const BureauChangePassword = () => {
       if (returnToken) {
         try {
           const { data, error } = await supabase
-            .from('syndicate_bureaus')
+            .from('syndicate_bureaus' as any)
             .select('*')
             .eq('access_token', returnToken)
             .single();

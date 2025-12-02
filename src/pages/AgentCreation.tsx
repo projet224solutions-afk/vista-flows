@@ -39,7 +39,7 @@ export default function AgentCreation() {
   });
 
   // Vérification des permissions
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'agent')) {
+  if (!profile || (profile.role !== 'admin' && !['agent', 'admin'].includes(profile.role as string))) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Alert variant="destructive">
