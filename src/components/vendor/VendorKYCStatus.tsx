@@ -50,8 +50,11 @@ export function VendorKYCStatus({ kycStatus, className = "" }: VendorKYCStatusPr
         <Button
           size="sm"
           variant="outline"
-          onClick={() => navigate('/vendeur/settings?tab=kyc')}
-          className="h-7 text-xs"
+          onClick={() => {
+            console.log('Navigation vers KYC settings pour réessayer');
+            navigate('/vendeur/settings?tab=kyc');
+          }}
+          className="h-7 text-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           Réessayer
         </Button>
@@ -69,8 +72,11 @@ export function VendorKYCStatus({ kycStatus, className = "" }: VendorKYCStatusPr
       <Button
         size="sm"
         variant="default"
-        onClick={() => navigate('/vendeur/settings?tab=kyc')}
-        className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+        onClick={() => {
+          console.log('Navigation vers KYC settings');
+          navigate('/vendeur/settings?tab=kyc');
+        }}
+        className="h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
       >
         Vérifier maintenant
       </Button>
