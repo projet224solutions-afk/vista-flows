@@ -9935,6 +9935,24 @@ export type Database = {
       }
     }
     Views: {
+      agent_type_statistics: {
+        Row: {
+          active_agents: number | null
+          pdg_id: string | null
+          total_agents: number | null
+          total_commission_rate: number | null
+          type_agent: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bureau_pwa_stats: {
         Row: {
           bureau_id: string | null
