@@ -150,40 +150,6 @@ function Index() {
 
   // Log pour debugging
   console.log('📊 Index.tsx - État:', { user: !!user, profile: !!profile, loading });
-
-  // Redirection automatique si l'utilisateur est connecté - CRITIQUE pour persistance
-  useEffect(() => {
-    // Attendre que le chargement soit terminé
-    if (loading) {
-      console.log('🔄 Chargement de la session en cours...');
-      return;
-    }
-
-    // Si utilisateur connecté avec profil
-    if (user && profile) {
-      const roleRoutes = {
-        admin: '/pdg',
-        vendeur: '/vendeur',
-        livreur: '/livreur',
-        taxi: '/taxi-moto/driver',
-        syndicat: '/syndicat',
-        transitaire: '/transitaire',
-        client: '/client'
-      };
-      
-      const expectedRoute = roleRoutes[profile.role as keyof typeof roleRoutes];
-      if (expectedRoute) {
-        console.log(`✅ Session active détectée - Redirection vers ${expectedRoute} (rôle: ${profile.role})`);
-        navigate(expectedRoute, { replace: true });
-      } else {
-        console.warn('⚠️ Rôle non reconnu:', profile.role);
-      }
-    } else if (user && !profile) {
-      console.log('⏳ Utilisateur connecté mais profil en cours de chargement...');
-    } else {
-      console.log('👋 Aucune session active - Affichage page publique');
-    }
-  }, [user, profile, loading, navigate]);
   
   // Chargement des données réelles depuis Supabase avec try-catch
   let stats = { totalProducts: 150, totalVendors: 50, totalServices: 25, totalClients: 1000 };
