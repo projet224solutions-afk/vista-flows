@@ -119,8 +119,7 @@ export default function ServiceDetail() {
         reviews_count: 0,
         is_open: true,
         image_url: data.icon,
-        images: [data.icon],
-        features: data.features || [],
+        features: (Array.isArray(data.features) ? data.features : []) as string[],
         // Coordonnées par défaut (Conakry)
         latitude: 9.6412,
         longitude: -13.5784,

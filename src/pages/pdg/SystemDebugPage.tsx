@@ -52,7 +52,7 @@ export default function SystemDebugPage() {
     for (const tableName of requiredTables) {
       try {
         const { count, error } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .select('*', { count: 'exact', head: true });
 
         if (error) {
@@ -140,10 +140,8 @@ export default function SystemDebugPage() {
       // Lire le contenu de la migration
       const migrationUrl = '/supabase/migrations/20240130_security_services_infrastructure.sql';
       
-      Alert.alert({
-        title: 'Migration à appliquer manuellement',
-        description: 'Veuillez appliquer la migration via Supabase Dashboard ou CLI: supabase db push'
-      });
+      console.log('Migration à appliquer:', migrationUrl);
+      alert('Migration à appliquer manuellement via Supabase Dashboard ou CLI: supabase db push');
 
     } catch (error) {
       console.error('Error applying migration:', error);

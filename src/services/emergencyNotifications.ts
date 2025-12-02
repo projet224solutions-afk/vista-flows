@@ -52,7 +52,6 @@ export const emergencyNotifications = {
       badge: '/icons/emergency-badge.png',
       tag: `emergency-${payload.alert_id}`,
       requireInteraction: true, // Ne se ferme pas automatiquement
-      vibrate: [200, 100, 200, 100, 200], // Vibration pattern
       silent: payload.sound === 'default', // Pas de son si 'default'
       data: payload
     });

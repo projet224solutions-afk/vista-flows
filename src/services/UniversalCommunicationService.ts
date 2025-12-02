@@ -63,7 +63,7 @@ class UniversalCommunicationService {
         return dateB.getTime() - dateA.getTime();
       });
 
-      return allConversations;
+      return allConversations as any;
     } catch (error) {
       console.error('Erreur récupération conversations:', error);
       throw error;
@@ -669,7 +669,7 @@ class UniversalCommunicationService {
             .single();
 
           if (data) {
-            callback(data);
+            callback(data as any);
           }
         }
       )
