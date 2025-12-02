@@ -39,7 +39,18 @@ class HealthCheckService {
   private lastReport: SystemHealthReport | null = null;
   private startTime: number = Date.now();
 
+  private initialized = false;
+
   private constructor() {
+    // Ne pas initialiser automatiquement - attendre un appel explicite
+  }
+
+  /**
+   * Initialiser le service (appelé manuellement)
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
     this.initializeService();
   }
 

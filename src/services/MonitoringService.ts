@@ -53,8 +53,19 @@ class MonitoringService {
   private metrics: Map<string, any> = new Map();
   private alerts: SecurityAlert[] = [];
 
+  private initialized = false;
+
   private constructor() {
-    this.initializeMonitoring();
+    // Ne pas initialiser automatiquement - attendre un appel explicite
+  }
+
+  /**
+   * Initialiser le service (appelé manuellement)
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+    await this.initializeMonitoring();
   }
 
   static getInstance(): MonitoringService {
