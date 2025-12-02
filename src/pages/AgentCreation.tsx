@@ -34,7 +34,8 @@ export default function AgentCreation() {
     confirmPassword: '',
     agentCode: '', // Optionnel - auto-généré si vide
     typeAgent: 'principal',
-    canCreateSubAgent: true
+    canCreateSubAgent: true,
+    mfaEnabled: true // MFA activé par défaut
   });
 
   // Vérification des permissions
@@ -148,7 +149,9 @@ export default function AgentCreation() {
           pdg_id: pdgId,
           permissions: {
             photo_url: photoUrl,
-            gender: formData.gender
+            gender: formData.gender,
+            mfa_enabled: formData.mfaEnabled,
+            mfa_methods: formData.mfaEnabled ? ['totp', 'webauthn'] : []
           }
         })
         .select()
@@ -335,6 +338,34 @@ export default function AgentCreation() {
                     <SelectItem value="agent_local">Agent Local</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* MFA (Authentification Multi-Facteurs) */}
+              <div className="space-y-2 p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold">Authentification Multi-Facteurs (MFA)</Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Activer MFA pour renforcer la sécurité du compte agent
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={formData.mfaEnabled ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFormData({ ...formData, mfaEnabled: !formData.mfaEnabled })}
+                    disabled={loading}
+                  >
+                    {formData.mfaEnabled ? '✓ Activé' : 'Désactivé'}
+                  </Button>
+                </div>
+                {formData.mfaEnabled && (
+                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      🔐 MFA sera activé avec TOTP et WebAuthn. L'agent devra configurer son authenticator lors de sa première connexion.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Mot de passe */}
