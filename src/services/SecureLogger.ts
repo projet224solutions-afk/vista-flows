@@ -278,7 +278,7 @@ class SecureLogger {
 
     try {
       // Envoyer à Supabase
-      const { error } = await supabase.from('secure_logs').insert(
+      const { error } = await (supabase.from as any)('secure_logs').insert(
         logsToFlush.map(log => ({
           level: log.level,
           category: log.category,

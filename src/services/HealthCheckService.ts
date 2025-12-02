@@ -441,7 +441,7 @@ class HealthCheckService {
    */
   private async saveHealthReport(report: SystemHealthReport): Promise<void> {
     try {
-      await supabase.from('health_check_reports').insert([
+      await (supabase.from as any)('health_check_reports').insert([
         {
           overall_status: report.overall,
           checks: report.checks,

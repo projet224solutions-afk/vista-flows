@@ -95,7 +95,7 @@ export class UnifiedSubscriptionService {
    */
   static async getPlansByRole(role?: 'vendeur' | 'taxi' | 'livreur'): Promise<UnifiedPlan[]> {
     try {
-      const { data, error } = await supabase.rpc('get_plans_for_role', {
+      const { data, error } = await (supabase.rpc as any)('get_plans_for_role', {
         p_role: role || null,
       });
 
@@ -132,7 +132,7 @@ export class UnifiedSubscriptionService {
       // Si c'est un tableau, prendre le premier élément
       const subscription = Array.isArray(data) ? data[0] : data;
       
-      return subscription as UnifiedSubscription;
+      return subscription as unknown as UnifiedSubscription;
     } catch (error) {
       console.error('❌ Exception récupération abonnement:', error);
       return null;
@@ -144,7 +144,7 @@ export class UnifiedSubscriptionService {
    */
   static async hasActiveSubscription(userId: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('has_active_subscription', {
+      const { data, error } = await (supabase.rpc as any)('has_active_subscription', {
         p_user_id: userId,
       });
 
@@ -171,7 +171,7 @@ export class UnifiedSubscriptionService {
     billingCycle?: 'monthly' | 'yearly';
   }): Promise<string | null> {
     try {
-      const { data, error } = await supabase.rpc('subscribe_user', {
+      const { data, error } = await (supabase.rpc as any)('subscribe_user', {
         p_user_id: params.userId,
         p_plan_id: params.planId,
         p_payment_method: params.paymentMethod || 'wallet',
@@ -184,7 +184,7 @@ export class UnifiedSubscriptionService {
         throw error;
       }
 
-      return data as string;
+      return data as unknown as string;
     } catch (error) {
       console.error('❌ Exception souscription:', error);
       throw error;
@@ -287,7 +287,7 @@ export class UnifiedSubscriptionService {
    */
   static async markExpiredSubscriptions(): Promise<number> {
     try {
-      const { data, error } = await supabase.rpc('mark_expired_subscriptions');
+      const { data, error } = await (supabase.rpc as any)('mark_expired_subscriptions');
 
       if (error) {
         console.error('❌ Erreur marquage expirations:', error);
