@@ -62,17 +62,26 @@ export function useClientActions() {
 
       const orderNumber = `ORD-${Date.now()}-${customerId.substring(0, 8)}`;
       
+      const orderData: any = {
+        customer_id: customerId,
+        vendor_id: cartItems[0]?.vendor_id,
+        order_number: orderNumber,
+        subtotal: totalAmount,
+        total_amount: totalAmount,
+        shipping_address: {
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          phone: shippingInfo.phone
+        },
+        source: 'web' as const,
+        status: paymentData.method === 'cash' ? 'pending' : 'processing',
+        payment_method: paymentData.method,
+        notes: `Livraison: ${shippingInfo.address}, ${shippingInfo.city}. Tel: ${shippingInfo.phone}`
+      };
+      
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          order_number: orderNumber,
-          customer_id: customerId,
-          vendor_id: cartItems[0]?.vendor_id,
-          total_amount: totalAmount,
-          status: paymentData.method === 'cash' ? 'pending' : 'processing',
-          payment_method: paymentData.method,
-          notes: `Livraison: ${shippingInfo.address}, ${shippingInfo.city}. Tel: ${shippingInfo.phone}`
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -185,7 +194,7 @@ export function useClientActions() {
       const { error } = await supabase
         .from('wishlists')
         .insert({
-          customer_id: userId,
+          user_id: userId,
           product_id: productId
         });
 
@@ -211,7 +220,7 @@ export function useClientActions() {
       const { error } = await supabase
         .from('wishlists')
         .delete()
-        .eq('customer_id', userId)
+        .eq('user_id', userId)
         .eq('product_id', productId);
 
       if (error) throw error;
@@ -275,10 +284,11 @@ export function useClientActions() {
       const { error } = await supabase
         .from('product_reviews')
         .insert({
-          customer_id: userId,
+          user_id: userId,
           product_id: productId,
           order_id: orderId,
           rating,
+          title: comment.substring(0, 50) || 'Avis client',
           content: comment
         });
 
