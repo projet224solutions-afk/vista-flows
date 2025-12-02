@@ -326,6 +326,9 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean | null
+          last_login_at: string | null
+          locked_until: string | null
+          login_attempts: number | null
           name: string
           parent_agent_id: string | null
           password_hash: string | null
@@ -349,6 +352,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           name: string
           parent_agent_id?: string | null
           password_hash?: string | null
@@ -372,6 +378,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           name?: string
           parent_agent_id?: string | null
           password_hash?: string | null
@@ -1266,6 +1275,9 @@ export type Database = {
           id: string
           interface_url: string | null
           last_activity: string | null
+          last_login_at: string | null
+          locked_until: string | null
+          login_attempts: number | null
           prefecture: string
           president_email: string | null
           president_name: string | null
@@ -1285,6 +1297,9 @@ export type Database = {
           id?: string
           interface_url?: string | null
           last_activity?: string | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           prefecture: string
           president_email?: string | null
           president_name?: string | null
@@ -1304,6 +1319,9 @@ export type Database = {
           id?: string
           interface_url?: string | null
           last_activity?: string | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           prefecture?: string
           president_email?: string | null
           president_name?: string | null
@@ -4285,8 +4303,12 @@ export type Database = {
           id: string
           join_date: string | null
           last_cotisation_date: string | null
+          last_login_at: string | null
           license_number: string | null
+          locked_until: string | null
+          login_attempts: number | null
           name: string
+          password_hash: string | null
           phone: string | null
           status: string | null
           total_cotisations: number | null
@@ -4301,8 +4323,12 @@ export type Database = {
           id?: string
           join_date?: string | null
           last_cotisation_date?: string | null
+          last_login_at?: string | null
           license_number?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           name: string
+          password_hash?: string | null
           phone?: string | null
           status?: string | null
           total_cotisations?: number | null
@@ -4317,8 +4343,12 @@ export type Database = {
           id?: string
           join_date?: string | null
           last_cotisation_date?: string | null
+          last_login_at?: string | null
           license_number?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           name?: string
+          password_hash?: string | null
           phone?: string | null
           status?: string | null
           total_cotisations?: number | null
@@ -9933,6 +9963,90 @@ export type Database = {
           },
         ]
       }
+      worker_complaints: {
+        Row: {
+          bureau_id: string
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          priority: string | null
+          responded_at: string | null
+          responded_by: string | null
+          response: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          worker_id: string
+        }
+        Insert: {
+          bureau_id: string
+          category?: string
+          created_at?: string | null
+          description: string
+          id?: string
+          priority?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          worker_id: string
+        }
+        Update: {
+          bureau_id?: string
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          priority?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_complaints_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       agent_type_statistics: {
@@ -10596,6 +10710,7 @@ export type Database = {
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
+      generate_unique_agent_code: { Args: never; Returns: string }
       generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
