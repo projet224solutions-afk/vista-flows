@@ -75,6 +75,7 @@ const VendorContracts = lazy(() => import("./pages/VendorContracts"));
 const ClientContracts = lazy(() => import("./pages/ClientContracts"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -102,6 +103,7 @@ function App() {
               <Routes>
               {/* Accueil par défaut */}
               <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/auth" element={<Auth />} />
