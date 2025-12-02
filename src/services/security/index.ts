@@ -3,6 +3,7 @@
  * 224Solutions - Initialisation centralisée tous services sécurité
  */
 
+import React from 'react';
 import { monitoringService } from '../MonitoringService';
 import { cspService } from '../ContentSecurityPolicy';
 import { secureLogger } from '../SecureLogger';
@@ -269,6 +270,3 @@ export {
   healthCheckService,
   EnhancedErrorBoundary
 };
-
-// Import React pour le hook
-import React from 'react';
