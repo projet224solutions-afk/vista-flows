@@ -133,9 +133,10 @@ export default function CommunicationNotificationCenter({
                       })}
                     </span>
                     <Badge variant="outline" className="text-xs">
-                      {notification.type === 'new_message' ? 'Message' :
-                       notification.type === 'missed_call' ? 'Appel manqué' :
-                       notification.type === 'call_incoming' ? 'Appel entrant' :
+                      {notification.type === 'message' ? 'Message' :
+                       notification.type === 'call' ? 'Appel' :
+                       notification.type === 'mention' ? 'Mention' :
+                       notification.type === 'invitation' ? 'Invitation' :
                        'Notification'}
                     </Badge>
                   </div>
