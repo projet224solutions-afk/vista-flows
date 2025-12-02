@@ -55,6 +55,7 @@ import CommunicationWidget from "@/components/communication/CommunicationWidget"
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
+import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
 import VendorContracts from "@/pages/VendorContracts";
@@ -245,11 +246,11 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
+      {/* Bannière d'abonnement en haut */}
+      <VendorSubscriptionBanner />
+      
       {/* Analytics Dashboard intégré */}
       <VendorAnalyticsDashboard />
-
-      {/* Section Abonnement */}
-      <VendorSubscriptionSimple />
 
       {/* Activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
