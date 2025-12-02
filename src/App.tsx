@@ -76,6 +76,9 @@ const ClientContracts = lazy(() => import("./pages/ClientContracts"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
+const AgentCreation = lazy(() => import("./pages/AgentCreation"));
+const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -109,6 +112,9 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
+              <Route path="/universal-login" element={<UniversalLoginPage />} />
+              <Route path="/agent/create" element={<AgentCreation />} />
+              <Route path="/worker/settings" element={<WorkerSettings />} />
               {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}
               <Route path="/install-app" element={<InstallMobileApp />} />
 
