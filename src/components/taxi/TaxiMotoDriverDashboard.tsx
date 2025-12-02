@@ -41,7 +41,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
     });
 
     return () => {
-      TaxiMotoRealtimeService.unsubscribe('new-ride-requests');
+      // Cleanup si nécessaire
     };
   }, []);
 
@@ -92,11 +92,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
   const publishLocation = async () => {
     try {
       // Example: publish a dummy location (should be device GPS in real app)
-      await TaxiMotoRealtimeService.publishDriverLocation(driverId, 9.509, -13.712, {
-        heading: 90,
-        speed: 12,
-        is_available: !currentRide
-      });
+      await TaxiMotoRealtimeService.publishDriverLocation(driverId, 9.509, -13.712, 90, 12);
     } catch (e) {
       console.warn('Publish location error:', e);
     }
