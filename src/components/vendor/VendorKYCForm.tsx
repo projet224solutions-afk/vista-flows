@@ -168,9 +168,6 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
         </div>
 
         <div className="flex gap-2 pt-4">
-          <Button type="submit" disabled={loading} className="flex-1">
-            {loading ? 'Soumission...' : 'Soumettre'}
-          </Button>
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Annuler
