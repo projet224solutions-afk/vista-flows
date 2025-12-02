@@ -34,41 +34,52 @@ export function VendorSubscriptionSimple() {
     
     try {
       setLoading(true);
-      // @ts-ignore - typage temporaire pour éviter conflits avec types générés
+      
+      // ✅ Utilise la table 'subscriptions' qui existe réellement
       const { data, error } = await supabase
-        .from('vendor_subscriptions')
-        .select('*')
+        .from('subscriptions')
+        .select(`
+          id,
+          status,
+          current_period_end,
+          started_at,
+          plans (
+            name,
+            display_name
+          )
+        `)
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .gte('end_date', new Date().toISOString())
-        .order('end_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) {
-        // Ne montrer une erreur que si ce n'est pas simplement "pas de résultat"
-        if (error.code !== 'PGRST116' && !error.message.includes('No rows')) {
-          console.error('Erreur chargement abonnement:', error);
-          toast.error('Impossible de charger l\'abonnement');
-        }
+        // ✅ Logging silencieux pour debug sans toasts répétés
+        console.error('Erreur chargement abonnement:', error);
+        setLoading(false);
         return;
       }
 
-      const result = data;
-      if (result) {
+      // ✅ Conversion vers le format attendu
+      if (data) {
         setSubscription({
-          subscription_id: result.subscription_id ?? null,
-          plan_display_name: result.plan_display_name ?? result.plan_name ?? 'Inconnu',
-          status: result.status ?? 'free',
-          current_period_end: result.current_period_end ?? null
+          subscription_id: data.id,
+          plan_display_name: data.plans?.display_name || data.plans?.name || 'Plan Gratuit',
+          status: data.status || 'free',
+          current_period_end: data.current_period_end
+        });
+      } else {
+        // Pas d'abonnement = plan gratuit par défaut
+        setSubscription({
+          subscription_id: null,
+          plan_display_name: 'Plan Gratuit',
+          status: 'free',
+          current_period_end: null
         });
       }
     } catch (error: any) {
-      // Ne montrer une erreur que pour les vraies erreurs, pas l'absence d'abonnement
-      if (error?.code !== 'PGRST116' && !error?.message?.includes('No rows')) {
-        console.error('Erreur chargement abonnement:', error);
-        toast.error('Erreur lors du chargement de l\'abonnement');
-      }
+      // ✅ Logging silencieux uniquement
+      console.error('Erreur chargement abonnement:', error);
     } finally {
       setLoading(false);
     }
