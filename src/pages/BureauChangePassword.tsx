@@ -71,7 +71,7 @@ const BureauChangePassword = () => {
     };
 
     loadBureauData();
-  }, [bureau, navigate]);
+  }, [bureauAuth, navigate]);
 
   // Calculer la force du nouveau mot de passe
   useEffect(() => {

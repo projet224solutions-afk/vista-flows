@@ -40,25 +40,25 @@ export default function TransitaireDashboard() {
   const stats = [
     { 
       label: "Expéditions actives", 
-      value: statsLoading ? "..." : transitaireStats.active_shipments.toString(), 
+      value: statsLoading ? "..." : transitaireStats.totalShipments.toString(), 
       icon: Package, 
       color: "text-blue-500" 
     },
     { 
       label: "En transit", 
-      value: statsLoading ? "..." : transitaireStats.in_transit.toString(), 
+      value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(), 
       icon: Plane, 
       color: "text-green-500" 
     },
     { 
       label: "Revenus ce mois", 
-      value: statsLoading ? "..." : formatPrice(transitaireStats.monthly_revenue), 
+      value: statsLoading ? "..." : formatPrice(transitaireStats.totalRevenue), 
       icon: TrendingUp, 
       color: "text-purple-500" 
     },
     { 
       label: "Délai moyen", 
-      value: statsLoading ? "..." : `${transitaireStats.average_delivery_days}j`, 
+      value: statsLoading ? "..." : `${transitaireStats.customsInProgress}j`, 
       icon: Clock, 
       color: "text-orange-500" 
     }
@@ -100,7 +100,7 @@ export default function TransitaireDashboard() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
-                <TransitaireKYCStatus status={profile?.kyc_status} />
+                <TransitaireKYCStatus status={profile?.kyc_status as any} />
               </div>
               <p className="text-muted-foreground">
                 Transport international - {profile?.first_name || user?.email}
@@ -121,12 +121,11 @@ export default function TransitaireDashboard() {
 
       {/* Error Banner */}
       {error && (
-        <div className="px-4 py-2">
-          <ErrorBanner
-            message={error.message}
-            type={error.type}
-            onDismiss={clearError}
-          />
+        <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-red-800">{error.message}</p>
+            <button onClick={clearError} className="text-red-600 hover:text-red-800">✕</button>
+          </div>
         </div>
       )}
 
