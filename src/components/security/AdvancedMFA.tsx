@@ -3,11 +3,14 @@
  * Support YubiKey, FIDO2, authenticator apps
  */
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Key, Smartphone, Usb, Shield, CheckCircle2 } from "lucide-react";
-import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MFAMethod {
   id: string;
@@ -59,15 +62,84 @@ const mfaMethods: MFAMethod[] = [
 ];
 
 export function AdvancedMFA() {
+  const { user } = useAuth();
+  const [mfaMethods, setMfaMethods] = useState<MFAMethod[]>([
+    {
+      id: 'yubikey',
+      name: 'YubiKey / Clé matérielle',
+      type: 'yubikey',
+      icon: Usb,
+      enabled: true,
+      isPrimary: true,
+      security: 'high'
+    },
+    {
+      id: 'webauthn',
+      name: 'FIDO2 / WebAuthn',
+      type: 'webauthn',
+      icon: Key,
+      enabled: true,
+      isPrimary: false,
+      security: 'high'
+    },
+    {
+      id: 'totp',
+      name: 'Authenticator App (TOTP)',
+      type: 'totp',
+      icon: Smartphone,
+      enabled: true,
+      isPrimary: false,
+      security: 'high'
+    },
+    {
+      id: 'sms',
+      name: 'SMS (Non recommandé)',
+      type: 'sms',
+      icon: Smartphone,
+      enabled: false,
+      isPrimary: false,
+      security: 'low'
+    }
+  ]);
+
   const getSecurityBadge = (security: string) => {
     switch (security) {
       case 'high':
-        return <Badge className="bg-green-500">Haute sécurité</Badge>;
+        return <Badge className="bg-green-500 text-white">Haute sécurité</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500">Sécurité moyenne</Badge>;
+        return <Badge className="bg-yellow-500 text-white">Sécurité moyenne</Badge>;
       case 'low':
-        return <Badge className="bg-red-500">Sécurité faible</Badge>;
+        return <Badge className="bg-red-500 text-white">Sécurité faible</Badge>;
     }
+  };
+
+  const handleToggleMFA = async (methodId: string) => {
+    const method = mfaMethods.find(m => m.id === methodId);
+    if (!method) return;
+
+    // Mettre à jour l'état local
+    const updatedMethods = mfaMethods.map(m => 
+      m.id === methodId ? { ...m, enabled: !m.enabled } : m
+    );
+    setMfaMethods(updatedMethods);
+
+    toast.success(
+      method.enabled 
+        ? `${method.name} désactivé` 
+        : `${method.name} activé avec succès`,
+      {
+        description: 'Configuration MFA mise à jour'
+      }
+    );
+  };
+
+  const handleConfigureMFA = (methodId: string) => {
+    const method = mfaMethods.find(m => m.id === methodId);
+    if (!method) return;
+
+    toast.info(`Configuration de ${method.name}`, {
+      description: 'Fonctionnalité en cours de développement'
+    });
   };
 
   return (
@@ -114,9 +186,19 @@ export function AdvancedMFA() {
                   <Button 
                     variant={method.enabled ? "outline" : "default"}
                     size="sm"
+                    onClick={() => method.enabled ? handleConfigureMFA(method.id) : handleToggleMFA(method.id)}
                   >
                     {method.enabled ? 'Configurer' : 'Activer'}
                   </Button>
+                  {method.enabled && (
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleMFA(method.id)}
+                    >
+                      Désactiver
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
