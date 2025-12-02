@@ -1,19 +1,41 @@
 /**
- * PANNEAU DES COLIS À PROXIMITÉ
- * Affiche tous les colis disponibles près du livreur
+ * PANNEAU DES COLIS À PROXIMITÉ - AMÉLIORÉ
+ * Affiche tous les détails AVANT acceptation:
+ * - Distance livreur → vendeur
+ * - Distance vendeur → client  
+ * - Prix total à gagner
+ * - Nom et adresse vendeur
+ * - Adresse client CACHÉE (sécurité)
  */
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Package, Navigation, Phone, User } from 'lucide-react';
+import { 
+  MapPin, Package, Navigation, Phone, Store, Clock, 
+  DollarSign, CreditCard, Truck, Check, X, Loader2, RefreshCw 
+} from 'lucide-react';
 import { DeliveryService, type NearbyDelivery } from '@/services/delivery/DeliveryService';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface EnhancedDelivery extends NearbyDelivery {
+  vendor_name?: string;
+  vendor_phone?: string;
+  payment_method?: string;
+  package_type?: string;
+  distance_to_vendor?: number;
+  distance_vendor_to_client?: number;
+  total_distance?: number;
+  estimated_earnings?: number;
+  estimated_time?: number;
+}
+
 export function NearbyDeliveriesPanel() {
-  const [deliveries, setDeliveries] = useState<NearbyDelivery[]>([]);
+  const [deliveries, setDeliveries] = useState<EnhancedDelivery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -23,66 +45,116 @@ export function NearbyDeliveriesPanel() {
   const loadNearbyDeliveries = async () => {
     setLoading(true);
     try {
-      // Obtenir la position du livreur
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
-            const pos = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
+            const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
             setUserPosition(pos);
-
-            // Charger les livraisons à proximité (10km)
-            const nearby = await DeliveryService.findNearbyDeliveries(pos.lat, pos.lng, 10);
-            setDeliveries(nearby);
-            setLoading(false);
+            await fetchDeliveries(pos);
           },
-          (error) => {
-            console.error('Geolocation error:', error);
-            // Charger toutes les livraisons sans filtre de distance
-            loadAllDeliveries();
-          }
+          () => fetchDeliveries(null)
         );
       } else {
-        loadAllDeliveries();
+        await fetchDeliveries(null);
       }
     } catch (error) {
       console.error('Error loading deliveries:', error);
       toast.error('Erreur lors du chargement');
-      setLoading(false);
-    }
-  };
-
-  const loadAllDeliveries = async () => {
-    try {
-      console.log('🔍 Loading all available deliveries (without GPS filter)');
-      const all = await DeliveryService.findNearbyDeliveries(0, 0, 99999);
-      console.log(`✅ Loaded ${all.length} deliveries`);
-      setDeliveries(all);
-    } catch (error) {
-      console.error('❌ Error loading deliveries:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAcceptDelivery = async (deliveryId: string) => {
+  const fetchDeliveries = async (driverPos: { lat: number; lng: number } | null) => {
+    try {
+      const { data, error } = await supabase
+        .from('deliveries')
+        .select('*')
+        .eq('status', 'pending')
+        .is('driver_id', null)
+        .eq('ready_for_pickup', true)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const enhanced: EnhancedDelivery[] = (data || []).map((d: any) => {
+        const pickup = typeof d.pickup_address === 'object' ? d.pickup_address : {};
+        const delivery = typeof d.delivery_address === 'object' ? d.delivery_address : {};
+        
+        // Calcul simple des distances si position dispo
+        let distToVendor = d.distance_to_vendor || 0;
+        if (driverPos && pickup.lat && pickup.lng && !distToVendor) {
+          distToVendor = calculateDistance(driverPos.lat, driverPos.lng, pickup.lat, pickup.lng);
+        }
+        
+        const distVendorClient = d.distance_vendor_to_client || d.distance_km || 0;
+        const totalDist = distToVendor + distVendorClient;
+        const earnings = d.driver_earning || d.delivery_fee || Math.round(5000 + totalDist * 2000);
+
+        return {
+          id: d.id,
+          pickup_address: pickup.address || 'Adresse de récupération',
+          delivery_address: '🔒 Révélée après acceptation',
+          pickup_lat: pickup.lat,
+          pickup_lng: pickup.lng,
+          delivery_lat: delivery.lat,
+          delivery_lng: delivery.lng,
+          distance_km: d.distance_km,
+          delivery_fee: d.delivery_fee || 0,
+          status: d.status,
+          vendor_name: d.vendor_name || 'Vendeur',
+          vendor_phone: d.vendor_phone,
+          payment_method: d.payment_method || 'prepaid',
+          package_type: d.package_type || 'Standard',
+          distance_to_vendor: Math.round(distToVendor * 10) / 10,
+          distance_vendor_to_client: Math.round(distVendorClient * 10) / 10,
+          total_distance: Math.round(totalDist * 10) / 10,
+          estimated_earnings: earnings,
+          estimated_time: Math.round(totalDist * 3) || 30
+        };
+      });
+
+      setDeliveries(enhanced);
+    } catch (error) {
+      console.error('Error fetching deliveries:', error);
+      setDeliveries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  };
+
+  const handleAccept = async (deliveryId: string) => {
+    setAcceptingId(deliveryId);
     try {
       await DeliveryService.acceptDelivery(deliveryId);
       toast.success('✅ Livraison acceptée !');
       loadNearbyDeliveries();
-    } catch (error) {
-      console.error('Error accepting delivery:', error);
-      toast.error('Erreur lors de l\'acceptation');
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors de l\'acceptation');
+    } finally {
+      setAcceptingId(null);
     }
   };
+
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">Chargement des colis...</div>
+        <CardContent className="p-6 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-orange-600" />
+          <p className="mt-2 text-muted-foreground">Recherche de livraisons...</p>
         </CardContent>
       </Card>
     );
@@ -90,96 +162,100 @@ export function NearbyDeliveriesPanel() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Navigation className="h-5 w-5 text-orange-600" />
-          Colis à proximité
-        </CardTitle>
-        <CardDescription>
-          {deliveries.length} colis disponibles pour livraison
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {deliveries.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <Package className="h-12 w-12 mx-auto mb-2 opacity-30" />
-              <p>Aucun colis disponible pour le moment</p>
-            </div>
-          ) : (
-            deliveries.map((delivery) => (
-              <div
-                key={delivery.id}
-                className="p-4 bg-gradient-to-r from-orange-50 to-green-50 rounded-lg border border-orange-200/50 space-y-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                        {delivery.delivery_fee?.toLocaleString()} GNF
-                      </Badge>
-                      {delivery.distance_km && (
-                        <Badge variant="outline">
-                          {delivery.distance_km.toFixed(1)} km
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-orange-900">Retrait</p>
-                          <p className="text-muted-foreground">{delivery.pickup_address}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-green-900">Livraison</p>
-                          <p className="text-muted-foreground">{delivery.delivery_address}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {delivery.customer_name && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4" />
-                        <span>{delivery.customer_name}</span>
-                        {delivery.customer_phone && (
-                          <>
-                            <Phone className="h-4 w-4" />
-                            <span>{delivery.customer_phone}</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {delivery.notes && (
-                      <p className="text-sm text-muted-foreground italic">
-                        Note: {delivery.notes}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={() => handleAcceptDelivery(delivery.id)}
-                  style={{ 
-                    background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
-                    color: 'white'
-                  }}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Accepter cette livraison
-                </Button>
-              </div>
-            ))
-          )}
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Navigation className="h-5 w-5 text-orange-600" />
+              Livraisons disponibles
+            </CardTitle>
+            <CardDescription>{deliveries.length} offres près de vous</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" onClick={loadNearbyDeliveries}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {deliveries.length === 0 ? (
+          <div className="text-center py-8">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground/30 mb-2" />
+            <p className="text-muted-foreground">Aucune livraison disponible</p>
+          </div>
+        ) : (
+          deliveries.map((d) => (
+            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20 rounded-xl border border-orange-200/50 space-y-3">
+              {/* Vendeur */}
+              <div className="flex items-start gap-3">
+                <Store className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold">{d.vendor_name}</p>
+                  <p className="text-sm text-muted-foreground">{d.pickup_address}</p>
+                  {d.vendor_phone && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <Phone className="h-3 w-3" /> {d.vendor_phone}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Distances */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
+                  <p className="font-bold text-orange-700">{d.distance_to_vendor} km</p>
+                </div>
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Vendeur → Client</p>
+                  <p className="font-bold text-green-700">{d.distance_vendor_to_client} km</p>
+                </div>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="font-bold text-blue-700">{d.total_distance} km</p>
+                </div>
+              </div>
+
+              {/* Prix et infos */}
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-bold text-lg">{formatCurrency(d.estimated_earnings || 0)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className={d.payment_method === 'cod' ? 'bg-yellow-100 text-yellow-800' : 'bg-white/20 text-white'}>
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    {d.payment_method === 'cod' ? 'COD' : 'Prépayé'}
+                  </Badge>
+                  <Badge variant="secondary" className="bg-white/20 text-white">
+                    <Clock className="h-3 w-3 mr-1" />
+                    ~{d.estimated_time} min
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Note sécurité */}
+              <p className="text-xs text-center text-muted-foreground italic">
+                🔒 L'adresse du client sera révélée après acceptation
+              </p>
+
+              {/* Bouton accepter */}
+              <Button
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                onClick={() => handleAccept(d.id)}
+                disabled={acceptingId === d.id}
+              >
+                {acceptingId === d.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Accepter cette livraison
+                  </>
+                )}
+              </Button>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );
