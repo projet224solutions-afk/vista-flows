@@ -173,8 +173,13 @@ export function useSubscriptionFeatures() {
   const { subscription, loading } = useVendorSubscription();
 
   const canAccessFeature = (feature: SubscriptionFeature): boolean => {
-    if (loading || !subscription) {
-      return false;
+    // Permettre l'accès pendant le chargement ou si pas d'abonnement
+    if (loading) {
+      return true; // Permettre l'accès pendant le chargement
+    }
+    
+    if (!subscription) {
+      return true; // Permettre l'accès si pas d'abonnement trouvé
     }
 
     const planName = subscription.plan_name;
