@@ -185,3 +185,5 @@ export const AgentLogin: React.FC = () => {
     </div>
   );
 };
+
+export default AgentLogin;

@@ -351,3 +351,5 @@ export const AgentChangePassword: React.FC = () => {
     </div>
   );
 };
+
+export default AgentChangePassword;

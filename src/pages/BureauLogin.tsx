@@ -193,3 +193,5 @@ export const BureauLogin: React.FC = () => {
     </div>
   );
 };
+
+export default BureauLogin;
