@@ -18,6 +18,7 @@ import {
   Globe,
   Clock,
   Menu,
+  Bike,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -359,9 +360,27 @@ function Index() {
             <p className="text-gray-600 max-w-2xl mx-auto text-sm md:text-base">
               Découvrez notre gamme complète de services pour répondre à tous vos besoins
             </p>
+            
+            {/* Boutons Taxi-Moto et Livreur */}
+            <div className="flex flex-wrap justify-center gap-4 mt-6">
+              <Button
+                onClick={() => navigate('/taxi-moto')}
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-3 rounded-full shadow-lg"
+              >
+                <Bike className="w-5 h-5 mr-2" />
+                Taxi-Moto
+              </Button>
+              <Button
+                onClick={() => navigate('/livreur')}
+                className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white px-6 py-3 rounded-full shadow-lg"
+              >
+                <Truck className="w-5 h-5 mr-2" />
+                Livreur
+              </Button>
+            </div>
           </div>
 
-          <ResponsiveGrid 
+          <ResponsiveGrid
             mobileCols={1} 
             tabletCols={2} 
             desktopCols={4} 
