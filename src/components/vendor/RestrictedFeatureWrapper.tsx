@@ -3,7 +3,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useVendorRestrictions } from "@/hooks/useVendorRestrictions";
 
 interface RestrictedFeatureWrapperProps {
   children: ReactNode;
@@ -16,6 +15,8 @@ export function RestrictedFeatureWrapper({
   feature,
   fallbackMessage 
 }: RestrictedFeatureWrapperProps) {
+  const navigate = useNavigate();
+  
   // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
   return <>{children}</>;
 
