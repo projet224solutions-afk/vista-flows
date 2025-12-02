@@ -310,7 +310,7 @@ export function useBureauActions({
         .insert([{
           bureau_id: effectiveBureauId,
           plate_number: vehicleData.plate_number.trim().toUpperCase(),
-          moto_serial: vehicleData.moto_serial.trim().toUpperCase(),
+          serial_number: vehicleData.moto_serial.trim().toUpperCase(),
           owner_name: vehicleData.owner_name.trim(),
           owner_phone: vehicleData.owner_phone.trim(),
           model: vehicleData.model?.trim() || null,

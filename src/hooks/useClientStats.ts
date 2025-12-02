@@ -52,7 +52,7 @@ export function useClientStats() {
       const { data: ordersData } = await supabase
         .from('orders')
         .select('id, status, total_amount, created_at')
-        .eq('customer_user_id', user.id);
+        .eq('customer_id', user.id);
 
       const totalOrders = ordersData?.length || 0;
       const activeOrders = ordersData?.filter(o => 
@@ -69,12 +69,12 @@ export function useClientStats() {
 
       // 3. CART VALUE - Valeur du panier actuel
       const { data: cartData } = await supabase
-        .from('cart_items')
+        .from('carts')
         .select(`
           quantity,
           products!inner(price)
         `)
-        .eq('user_id', user.id);
+        .eq('customer_id', user.id);
 
       const cartValue = cartData?.reduce((sum, item: any) => 
         sum + (item.quantity * (item.products?.price || 0)), 0
@@ -84,7 +84,7 @@ export function useClientStats() {
       const { data: pendingPayments } = await supabase
         .from('orders')
         .select('total_amount')
-        .eq('customer_user_id', user.id)
+        .eq('customer_id', user.id)
         .eq('payment_status', 'pending');
 
       const pendingPaymentsTotal = pendingPayments?.reduce((sum, o) => 
@@ -93,7 +93,7 @@ export function useClientStats() {
 
       // 5. FAVORITES COUNT - Nombre de favoris
       const { count: favoritesCount } = await supabase
-        .from('favorites')
+        .from('wishlists')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
@@ -103,20 +103,11 @@ export function useClientStats() {
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // 7. REFUNDS REQUESTED - Remboursements demandés
-      const { count: refundsCount } = await supabase
-        .from('refund_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+      // 7. REFUNDS REQUESTED - Remboursements demandés (désactivé pour l'instant)
+      const refundsCount = 0;
 
-      // 8. LOYALTY POINTS - Points de fidélité
-      const { data: loyaltyData } = await supabase
-        .from('loyalty_points')
-        .select('points')
-        .eq('user_id', user.id)
-        .single();
-
-      const loyaltyPoints = loyaltyData?.points || 0;
+      // 8. LOYALTY POINTS - Points de fidélité (désactivé pour l'instant)
+      const loyaltyPoints = 0;
 
       // 9. LAST ORDER DATE - Date dernière commande
       const lastOrder = ordersData?.sort((a, b) => 
