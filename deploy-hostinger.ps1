@@ -1,57 +1,99 @@
-# 🚀 Script de Déploiement Hostinger - 224Solutions
+# 🚀 Script de Déploiement Automatique Hostinger - 224Solutions
 # Date: 2 décembre 2025
+# Usage: .\deploy-hostinger.ps1
+
+param(
+    [switch]$SkipBuild = $false,
+    [switch]$SkipSSH = $false
+)
 
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host "   224Solutions - Déploiement Hostinger" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 0. Vérifier que .env.production existe
-if (-not (Test-Path ".env.production")) {
-    Write-Host "❌ ERREUR: Fichier .env.production introuvable!" -ForegroundColor Red
-    Write-Host "Ce fichier est nécessaire pour que l'app fonctionne sur Hostinger" -ForegroundColor Yellow
-    exit 1
-}
+# Configuration SSH
+$SSH_HOST = "root@72.61.110.182"
+$SSH_PORT = "65002"
+$REMOTE_SCRIPT = "/home/clp/htdocs/224solutionapp.com/deploy-server.sh"
 
-Write-Host "✅ Fichier .env.production trouvé" -ForegroundColor Green
+$SSH_HOST = "root@72.61.110.182"
+$SSH_PORT = "65002"
+$REMOTE_SCRIPT = "/home/clp/htdocs/224solutionapp.com/deploy-server.sh"
+
+# Étape 1: Git Push
+Write-Host "📤 Étape 1/3: Push vers GitHub..." -ForegroundColor Yellow
 Write-Host ""
 
-# 1. Nettoyage
-Write-Host "🧹 Nettoyage des anciens builds..." -ForegroundColor Yellow
-if (Test-Path "dist") { Remove-Item -Recurse -Force dist }
-if (Test-Path "224solutions-app.zip") { Remove-Item -Force 224solutions-app.zip }
-if (Test-Path "224solutions-app.tar.gz") { Remove-Item -Force 224solutions-app.tar.gz }
-if (Test-Path "224solutions-app-final.zip") { Remove-Item -Force 224solutions-app-final.zip }
+git add -A
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "⚠️  Aucun changement à commiter" -ForegroundColor Yellow
+} else {
+    $commitMessage = Read-Host "Message de commit (ou Entrée pour 'Update deployment')"
+    if ([string]::IsNullOrWhiteSpace($commitMessage)) {
+        $commitMessage = "Update deployment $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    }
+    
+    git commit -m $commitMessage
+    git push origin main
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Erreur lors du push vers GitHub!" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "✅ Code poussé vers GitHub" -ForegroundColor Green
+}
+Write-Host ""
 
-# 2. Build de l'application
-Write-Host "📦 Étape 1/5: Build de l'application..." -ForegroundColor Yellow
-npm run build
+# Étape 2: Uploader le script de déploiement sur le serveur
+Write-Host "📦 Étape 2/3: Upload du script de déploiement..." -ForegroundColor Yellow
+
+# Convertir le script en format Unix (LF au lieu de CRLF)
+$scriptContent = Get-Content "deploy-server.sh" -Raw
+$scriptContent = $scriptContent -replace "`r`n", "`n"
+Set-Content "deploy-server.sh" -Value $scriptContent -NoNewline
+
+# Upload via SCP
+Write-Host "Uploading deploy-server.sh..." -ForegroundColor Gray
+& scp -P $SSH_PORT deploy-server.sh "${SSH_HOST}:${REMOTE_SCRIPT}"
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Erreur lors du build!" -ForegroundColor Red
+    Write-Host "❌ Erreur lors de l'upload du script!" -ForegroundColor Red
+    Write-Host "💡 Assurez-vous d'être connecté au serveur SSH" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "✅ Build réussi!" -ForegroundColor Green
+Write-Host "✅ Script uploadé sur le serveur" -ForegroundColor Green
 Write-Host ""
 
-# 3. Vérifier que dist existe et contient index.html
-if (-not (Test-Path "dist/index.html")) {
-    Write-Host "❌ ERREUR: dist/index.html introuvable!" -ForegroundColor Red
+# Étape 3: Exécuter le déploiement sur le serveur
+Write-Host "🚀 Étape 3/3: Exécution du déploiement sur le serveur..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Connexion au serveur et exécution du script..." -ForegroundColor Gray
+Write-Host "Cela peut prendre quelques minutes..." -ForegroundColor Gray
+Write-Host ""
+
+# Rendre le script exécutable et l'exécuter
+& ssh -p $SSH_PORT $SSH_HOST "chmod +x $REMOTE_SCRIPT && $REMOTE_SCRIPT"
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "❌ Erreur lors du déploiement sur le serveur!" -ForegroundColor Red
+    Write-Host "💡 Vérifiez les logs ci-dessus pour plus de détails" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "✅ Fichier index.html trouvé dans dist/" -ForegroundColor Green
 Write-Host ""
-
-# 4. Copie du fichier .htaccess
-Write-Host "📦 Étape 2/5: Préparation .htaccess..." -ForegroundColor Yellow
-Copy-Item "public/.htaccess" -Destination "dist/.htaccess" -Force
-Write-Host "✅ .htaccess copié dans dist/" -ForegroundColor Green
+Write-Host "=====================================" -ForegroundColor Green
+Write-Host "✅ DÉPLOIEMENT RÉUSSI!" -ForegroundColor Green
+Write-Host "=====================================" -ForegroundColor Green
 Write-Host ""
-
-# 5. Création des archives
-Write-Host "📦 Étape 3/5: Création des archives..." -ForegroundColor Yellow
+Write-Host "🌐 Votre site est en ligne: http://224solutionapp.com" -ForegroundColor Cyan
+Write-Host "📅 Déployé le: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Gray
+Write-Host ""
+Write-Host "💡 Prochaine mise à jour: Lancez simplement .\deploy-hostinger.ps1" -ForegroundColor Yellow
+Write-Host ""
 
 # ZIP
 Write-Host "   → Création de 224solutions-app.zip..." -ForegroundColor Gray
