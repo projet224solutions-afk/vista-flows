@@ -18,7 +18,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -33,11 +32,6 @@ export function VendorSidebar() {
   const { badges, loading } = useVendorBadges();
 
   const isActive = (path: string) => currentPath === path;
-
-  const getNavClass = (active: boolean) => 
-    active 
-      ? "bg-primary text-primary-foreground font-medium" 
-      : "hover:bg-accent hover:text-accent-foreground";
 
   // Function to get badge value based on path
   const getBadgeValue = (path: string): string | null => {
@@ -233,32 +227,35 @@ export function VendorSidebar() {
             
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items.map((item) => {
+              {section.items.map((item) => {
                   const badgeValue = getBadgeValue(item.path);
+                  const active = isActive(item.path);
                   
                   return (
                     <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton asChild>
-                        <NavLink 
-                          to={`/vendeur/${item.path}`}
-                          className={getNavClass(isActive(item.path))}
-                        >
-                          <item.icon className={collapsed ? "w-5 h-5" : "w-4 h-4 mr-3"} />
-                          {!collapsed && (
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm font-medium">{item.title}</span>
-                              {badgeValue && (
-                                <Badge 
-                                  variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                  className="text-xs px-2 py-0"
-                                >
-                                  {badgeValue}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
+                      <NavLink 
+                        to={`/vendeur/${item.path}`}
+                        className={`flex items-center w-full px-3 py-2 rounded-md transition-colors cursor-pointer ${
+                          active 
+                            ? "bg-primary text-primary-foreground font-medium" 
+                            : "hover:bg-accent hover:text-accent-foreground text-foreground"
+                        }`}
+                      >
+                        <item.icon className={collapsed ? "w-5 h-5" : "w-4 h-4 mr-3 flex-shrink-0"} />
+                        {!collapsed && (
+                          <div className="flex items-center justify-between flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate">{item.title}</span>
+                            {badgeValue && (
+                              <Badge 
+                                variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                                className="text-xs px-2 py-0 ml-2 flex-shrink-0"
+                              >
+                                {badgeValue}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </NavLink>
                     </SidebarMenuItem>
                   );
                 })}
