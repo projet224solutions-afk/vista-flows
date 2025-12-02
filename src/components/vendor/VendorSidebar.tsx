@@ -243,21 +243,18 @@ export function VendorSidebar() {
                         isActive={active}
                         tooltip={item.title}
                         onClick={() => handleNavigation(item.path)}
-                        className="cursor-pointer pointer-events-auto"
-                        asChild
+                        className="cursor-pointer"
                       >
-                        <button className="w-full" type="button">
-                          <item.icon className="w-4 h-4" />
-                          <span className="flex-1">{item.title}</span>
-                          {badgeValue && (
-                            <Badge 
-                              variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                              className="text-xs px-2 py-0 ml-auto pointer-events-none"
-                            >
-                              {badgeValue}
-                            </Badge>
-                          )}
-                        </button>
+                        <item.icon className="w-4 h-4" />
+                        <span className="flex-1">{item.title}</span>
+                        {badgeValue && (
+                          <Badge 
+                            variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                            className="text-xs px-2 py-0 ml-auto"
+                          >
+                            {badgeValue}
+                          </Badge>
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
