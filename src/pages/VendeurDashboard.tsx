@@ -50,7 +50,6 @@ import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
 import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
-import { VendorSecurityPanel } from "@/components/vendor/VendorSecurityPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
@@ -295,9 +294,6 @@ export default function VendeurDashboard() {
           <VendorNotificationsPanel />
         </div>
       </div>
-
-      {/* Panneau de sécurité */}
-      <VendorSecurityPanel />
 
       {/* Actions rapides */}
       <Card>
