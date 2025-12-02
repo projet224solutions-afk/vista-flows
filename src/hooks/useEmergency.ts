@@ -340,8 +340,17 @@ export function useEmergencyGPSTracking(alertId: string | null) {
     setError(null);
 
     try {
-      // Obtenir la position initiale
-      const position = await emergencyService.getCurrentPosition();
+      // Obtenir la position initiale via le navigateur
+      const position = await new Promise<{ latitude: number; longitude: number; accuracy: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          }),
+          reject
+        );
+      });
       
       const tracking = await emergencyService.addGPSTracking({
         alert_id: alertId,
