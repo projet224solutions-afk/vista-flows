@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet, Settings } from 'lucide-react';
+import { Building2, Users, Bike, Plus, AlertCircle, Phone, MessageSquare, RefreshCw, Download, Wallet, Settings, LogOut, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
@@ -30,12 +30,14 @@ import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
 import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import { useBureauAuth } from '@/hooks/useBureauAuth';
 
 export default function BureauDashboard() {
   const { token } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { error, captureError, clearError } = useBureauErrorBoundary();
+  const { logout } = useBureauAuth();
   
   // États déclarés AVANT leur utilisation
   const [bureau, setBureau] = useState<any>(null);
@@ -222,6 +224,10 @@ export default function BureauDashboard() {
           <Button variant="outline">
             <MessageSquare className="w-4 h-4 mr-2" />
             Messages
+          </Button>
+          <Button variant="outline" onClick={logout}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Déconnexion
           </Button>
         </div>
       </div>
