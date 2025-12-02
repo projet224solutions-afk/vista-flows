@@ -25,7 +25,7 @@ export const emergencyService = {
    * Créer une nouvelle alerte d'urgence
    */
   async createAlert(payload: CreateEmergencyAlertPayload): Promise<EmergencyAlert> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_alerts')
       .insert([payload])
       .select()
@@ -44,7 +44,7 @@ export const emergencyService = {
    * Mettre à jour une alerte existante
    */
   async updateAlert(alertId: string, payload: UpdateEmergencyAlertPayload): Promise<EmergencyAlert> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_alerts')
       .update(payload)
       .eq('id', alertId)
@@ -63,7 +63,7 @@ export const emergencyService = {
    * Obtenir une alerte par ID
    */
   async getAlert(alertId: string): Promise<EmergencyAlert | null> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_alerts')
       .select('*')
       .eq('id', alertId)
@@ -81,7 +81,7 @@ export const emergencyService = {
    * Obtenir toutes les alertes actives
    */
   async getActiveAlerts(): Promise<EmergencyAlert[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('active_emergency_alerts')
       .select('*')
       .order('created_at', { ascending: false });
@@ -98,7 +98,7 @@ export const emergencyService = {
    * Obtenir les alertes d'un conducteur spécifique
    */
   async getDriverAlerts(driverId: string, limit: number = 10): Promise<EmergencyAlert[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_alerts')
       .select('*')
       .eq('driver_id', driverId)
@@ -117,7 +117,7 @@ export const emergencyService = {
    * Obtenir les alertes d'un bureau syndicat
    */
   async getBureauAlerts(bureauId: string): Promise<EmergencyAlert[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_alerts')
       .select('*')
       .eq('bureau_syndicat_id', bureauId)
@@ -135,7 +135,7 @@ export const emergencyService = {
    * Ajouter un point GPS à l'historique de tracking
    */
   async addGPSTracking(payload: CreateGPSTrackingPayload): Promise<EmergencyGPSTracking> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_gps_tracking')
       .insert([payload])
       .select()
@@ -153,7 +153,7 @@ export const emergencyService = {
    * Obtenir l'historique GPS d'une alerte
    */
   async getGPSTracking(alertId: string, limit: number = 100): Promise<EmergencyGPSTracking[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_gps_tracking')
       .select('*')
       .eq('alert_id', alertId)
@@ -174,7 +174,7 @@ export const emergencyService = {
   async getRecentGPSTracking(alertId: string): Promise<EmergencyGPSTracking[]> {
     const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_gps_tracking')
       .select('*')
       .eq('alert_id', alertId)
@@ -193,7 +193,7 @@ export const emergencyService = {
    * Créer une action syndicat
    */
   async createAction(payload: CreateEmergencyActionPayload): Promise<EmergencyAction> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_actions')
       .insert([payload])
       .select()
@@ -211,7 +211,7 @@ export const emergencyService = {
    * Obtenir les actions d'une alerte
    */
   async getAlertActions(alertId: string): Promise<EmergencyAction[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('emergency_actions')
       .select('*')
       .eq('alert_id', alertId)
@@ -268,8 +268,7 @@ export const emergencyService = {
    */
   async getStats(bureauId?: string): Promise<EmergencyStats | null> {
     if (bureauId) {
-      const { data, error } = await supabase
-        .rpc('get_emergency_stats_by_bureau', { p_bureau_id: bureauId });
+      const { data, error } = await (supabase.rpc as any)('get_emergency_stats_by_bureau', { p_bureau_id: bureauId });
 
       if (error) {
         console.error('❌ Erreur récupération stats bureau:', error);
@@ -278,7 +277,7 @@ export const emergencyService = {
 
       return data?.[0] || null;
     } else {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('emergency_global_stats')
         .select('*')
         .single();

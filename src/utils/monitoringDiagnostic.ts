@@ -17,7 +17,7 @@ interface DiagnosticResult {
  */
 async function checkTableExists(tableName: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from(tableName)
       .select('*')
       .limit(1);
@@ -74,7 +74,7 @@ async function checkRequiredTables(): Promise<DiagnosticResult> {
  */
 async function checkHealthApiFunction(): Promise<DiagnosticResult> {
   try {
-    const { data, error } = await supabase.rpc('get_system_health_api', {});
+    const { data, error } = await (supabase.rpc as any)('get_system_health_api', {});
     
     if (error) {
       return {
@@ -106,7 +106,7 @@ async function checkHealthApiFunction(): Promise<DiagnosticResult> {
  */
 async function checkCriticalErrors(): Promise<DiagnosticResult> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from('error_logs')
       .select('*', { count: 'exact', head: true })
       .eq('level', 'critical')
@@ -151,7 +151,7 @@ async function checkCriticalErrors(): Promise<DiagnosticResult> {
  */
 async function checkRecentHealthChecks(): Promise<DiagnosticResult> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('system_health_logs')
       .select('*')
       .order('timestamp', { ascending: false })
@@ -167,7 +167,7 @@ async function checkRecentHealthChecks(): Promise<DiagnosticResult> {
       };
     }
 
-    const lastCheckTime = new Date(data.timestamp);
+    const lastCheckTime = new Date(data?.timestamp || Date.now());
     const now = new Date();
     const minutesAgo = Math.floor((now.getTime() - lastCheckTime.getTime()) / 60000);
 
@@ -176,15 +176,15 @@ async function checkRecentHealthChecks(): Promise<DiagnosticResult> {
         step: 'Recent Health Checks',
         status: 'warning',
         message: `⚠️ Dernier health check il y a ${minutesAgo} minutes`,
-        details: { lastCheck: data.timestamp, minutesAgo }
+        details: { lastCheck: data?.timestamp, minutesAgo }
       };
     }
 
     return {
       step: 'Recent Health Checks',
       status: 'success',
-      message: `✅ Health check récent (${minutesAgo}min) - Status: ${data.overall_status}`,
-      details: { lastCheck: data.timestamp, status: data.overall_status }
+      message: `✅ Health check récent (${minutesAgo}min) - Status: ${data?.overall_status}`,
+      details: { lastCheck: data?.timestamp, status: data?.overall_status }
     };
   } catch (error) {
     return {
@@ -255,7 +255,7 @@ async function checkRLSPermissions(): Promise<DiagnosticResult> {
 
     for (const table of tables) {
       try {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from(table)
           .select('*')
           .limit(1);
@@ -364,7 +364,7 @@ export async function autoFixMonitoring(): Promise<DiagnosticResult[]> {
 
   // Fix 1: Créer RPC function si manquante
   try {
-    const { error } = await supabase.rpc('get_system_health_api', {});
+    const { error } = await (supabase.rpc as any)('get_system_health_api', {});
     
     if (error && error.code === '42883') { // Function does not exist
       // Impossible de créer function via client, doit être fait en SQL
@@ -380,7 +380,7 @@ export async function autoFixMonitoring(): Promise<DiagnosticResult[]> {
 
   // Fix 2: Nettoyer vieilles erreurs critiques
   try {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('error_logs')
       .update({ resolved: true, resolved_at: new Date().toISOString() })
       .eq('level', 'critical')
@@ -400,12 +400,12 @@ export async function autoFixMonitoring(): Promise<DiagnosticResult[]> {
 
   // Fix 3: Créer entrée health check initiale si aucune
   try {
-    const { count } = await supabase
+    const { count } = await (supabase as any)
       .from('system_health_logs')
       .select('*', { count: 'exact', head: true });
 
     if (count === 0) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('system_health_logs')
         .insert([{
           overall_status: 'healthy',

@@ -76,12 +76,12 @@ export class TaxiMotoPaymentService {
       if (error) {
         console.error('[Payment] Wallet payment error:', error);
         // Log audit trail
-        await supabase.from('wallet_logs').insert({
+        await (supabase.from as any)('wallet_logs').insert({
           user_id: customerId,
           operation: 'taxi_payment_failed',
           amount,
           context: { ride_id: rideId, error: error.message }
-        }).catch(() => {});
+        });
         
         return {
           success: false,
@@ -100,12 +100,12 @@ export class TaxiMotoPaymentService {
         .eq('id', rideId);
 
       // Log audit success
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_success',
         amount,
         context: { ride_id: rideId, transaction_id: data?.transaction_id }
-      }).catch(() => {});
+      });
 
       return {
         success: true,
@@ -166,12 +166,12 @@ export class TaxiMotoPaymentService {
         .eq('id', rideId);
 
       // Log audit
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_mobile_money',
         amount,
         context: { ride_id: rideId, phone: phoneNumber }
-      }).catch(() => {});
+      });
 
       return {
         success: true,
@@ -180,12 +180,12 @@ export class TaxiMotoPaymentService {
     } catch (err: any) {
       console.error('[Payment] Mobile Money error:', err);
       // Log échec
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_mobile_money_failed',
         amount,
         context: { ride_id: rideId, error: err.message }
-      }).catch(() => {});
+      });
       return {
         success: false,
         error: err.message || 'Erreur Mobile Money'
@@ -226,12 +226,12 @@ export class TaxiMotoPaymentService {
         .eq('id', rideId);
 
       // Log audit
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_cash',
         amount: 0, // Montant sera dans taxi_trips
         context: { ride_id: rideId }
-      }).catch(() => {});
+      });
 
       return {
         success: true,
@@ -239,12 +239,12 @@ export class TaxiMotoPaymentService {
       };
     } catch (err: any) {
       console.error('[Payment] Cash payment error:', err);
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_cash_failed',
         amount: 0,
         context: { ride_id: rideId, error: err.message }
-      }).catch(() => {});
+      });
       return {
         success: false,
         error: err.message
@@ -298,12 +298,12 @@ export class TaxiMotoPaymentService {
         .eq('id', rideId);
 
       // Log audit
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_card',
         amount,
         context: { ride_id: rideId, card_last4: cardToken.slice(-4) }
-      }).catch(() => {});
+      });
 
       return {
         success: true,
@@ -311,12 +311,12 @@ export class TaxiMotoPaymentService {
       };
     } catch (err: any) {
       console.error('[Payment] Card payment error:', err);
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_card_failed',
         amount,
         context: { ride_id: rideId, error: err.message }
-      }).catch(() => {});
+      });
       return {
         success: false,
         error: err.message || 'Erreur de paiement par carte'
@@ -370,12 +370,12 @@ export class TaxiMotoPaymentService {
         .eq('id', rideId);
 
       // Log audit
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_paypal',
         amount,
         context: { ride_id: rideId, paypal_email: paypalEmail }
-      }).catch(() => {});
+      });
 
       return {
         success: true,
@@ -383,12 +383,12 @@ export class TaxiMotoPaymentService {
       };
     } catch (err: any) {
       console.error('[Payment] PayPal payment error:', err);
-      await supabase.from('wallet_logs').insert({
+      await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,
         operation: 'taxi_payment_paypal_failed',
         amount,
         context: { ride_id: rideId, error: err.message }
-      }).catch(() => {});
+      });
       return {
         success: false,
         error: err.message || 'Erreur de paiement PayPal'

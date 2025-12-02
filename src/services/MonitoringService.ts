@@ -136,7 +136,7 @@ class MonitoringService {
   private async checkSecurityHealth(): Promise<HealthStatus> {
     try {
       // Vérifier les erreurs critiques de sécurité
-      const { count: securityErrors } = await supabase
+      const { count: securityErrors } = await (supabase as any)
         .from('error_logs')
         .select('*', { count: 'exact', head: true })
         .eq('category', 'security')
@@ -189,7 +189,7 @@ class MonitoringService {
       const startTime = Date.now();
       
       // Test API Supabase
-      const { data, error } = await supabase.rpc('get_system_health_api', {});
+      const { data, error } = await (supabase.rpc as any)('get_system_health_api', {});
       
       const responseTime = Date.now() - startTime;
 
@@ -239,7 +239,7 @@ class MonitoringService {
    */
   private async countCriticalErrors(): Promise<number> {
     try {
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from('error_logs')
         .select('*', { count: 'exact', head: true })
         .eq('level', 'critical')
@@ -256,7 +256,7 @@ class MonitoringService {
    */
   private async countPendingErrors(): Promise<number> {
     try {
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from('error_logs')
         .select('*', { count: 'exact', head: true })
         .eq('resolved', false)
@@ -298,7 +298,7 @@ class MonitoringService {
    */
   private async logHealthCheck(health: SystemHealth): Promise<void> {
     try {
-      await supabase.from('system_health_logs').insert([
+      await (supabase.from as any)('system_health_logs').insert([
         {
           overall_status: health.overall,
           security_status: health.security,
@@ -363,7 +363,7 @@ class MonitoringService {
    */
   async trackPerformance(metric: PerformanceMetric): Promise<void> {
     try {
-      await supabase.from('performance_metrics').insert([metric]);
+      await (supabase.from as any)('performance_metrics').insert([metric]);
 
       // Alerter si temps de réponse trop élevé
       if (metric.responseTime > 3000) {
@@ -392,7 +392,7 @@ class MonitoringService {
     metadata?: Record<string, any>
   ): Promise<void> {
     try {
-      await supabase.from('error_logs').insert([
+      await (supabase.from as any)('error_logs').insert([
         {
           level,
           category,
@@ -445,7 +445,7 @@ class MonitoringService {
 
     // Mettre à jour en base de données
     try {
-      await supabase
+      await (supabase as any)
         .from('error_logs')
         .update({ resolved: true, resolved_at: new Date().toISOString() })
         .eq('id', alertId);

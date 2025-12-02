@@ -3,10 +3,10 @@
  * 224Solutions - Initialisation centralisée tous services sécurité
  */
 
-import { monitoringService } from './MonitoringService';
-import { cspService } from './ContentSecurityPolicy';
-import { secureLogger } from './SecureLogger';
-import { healthCheckService } from './HealthCheckService';
+import { monitoringService } from '../MonitoringService';
+import { cspService } from '../ContentSecurityPolicy';
+import { secureLogger } from '../SecureLogger';
+import { healthCheckService } from '../HealthCheckService';
 import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
 
 /**
