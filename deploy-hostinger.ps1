@@ -132,9 +132,9 @@ Write-Host "7. Vérifiez que index.html et .htaccess sont dans public_html/" -Fo
 Write-Host "8. Supprimez le fichier ZIP après extraction" -ForegroundColor White
 Write-Host "9. Ouvrez votre site en navigation privée (Ctrl+Shift+N)" -ForegroundColor White
 Write-Host ""
-Write-Host "⚠️  IMPORTANT:" -ForegroundColor Red
-Write-Host "   - Vérifiez que .htaccess est bien visible (activez 'Show Hidden Files')" -ForegroundColor Yellow
-Write-Host "   - Si page blanche: F12 → Console pour voir les erreurs" -ForegroundColor Yellow
+Write-Host "IMPORTANT:" -ForegroundColor Red
+Write-Host "   - Verifiez que .htaccess est bien visible (activez 'Show Hidden Files')" -ForegroundColor Yellow
+Write-Host "   - Si page blanche: F12 > Console pour voir les erreurs" -ForegroundColor Yellow
 Write-Host "   - Permissions: dossiers 755, fichiers 644" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "📖 Documentation: HOSTINGER_FIX_PAGE_BLANCHE.md" -ForegroundColor Cyan
