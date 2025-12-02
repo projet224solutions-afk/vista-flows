@@ -133,7 +133,7 @@ export default function TaxiMotoPaymentModal({
       }
 
       // Validation des champs requis
-      if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
+      if (paymentMethod === 'orange_money' && (!phoneNumber || phoneNumber.length < 8)) {
         toast.error('Numéro de téléphone requis', {
           description: 'Veuillez entrer votre numéro Mobile Money'
         });
@@ -167,7 +167,7 @@ export default function TaxiMotoPaymentModal({
         transaction_type: 'taxi',
         payment_provider: paymentMethod === 'wallet' ? 'wallet' : 
                          paymentMethod === 'card' ? 'stripe' :
-                         paymentMethod === 'mobile_money' ? 'mobile_money' :
+                         paymentMethod === 'orange_money' ? 'orange_money' :
                          paymentMethod === 'paypal' ? 'paypal' :
                          paymentMethod === 'cash' ? 'cash' : 'wallet',
         metadata: {
@@ -204,7 +204,7 @@ export default function TaxiMotoPaymentModal({
       } else if (paymentMethod === 'card') {
         toast.info('Redirection vers le paiement sécurisé...');
         // TODO: Intégrer Stripe
-      } else if (paymentMethod === 'mobile_money') {
+      } else if (paymentMethod === 'orange_money') {
         toast.success('Paiement Mobile Money initié !', {
           description: `Confirmez sur votre téléphone ${phoneNumber}`
         });

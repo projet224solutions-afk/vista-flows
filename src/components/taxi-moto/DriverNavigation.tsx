@@ -323,10 +323,9 @@ export function DriverNavigation({
                   const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
                     ? activeRide.destination.coords
                     : activeRide.pickup.coords;
-                  GeolocationService.openNativeNavigation(
-                    { lat: destination.latitude, lng: destination.longitude },
-                    location ? { lat: location.latitude, lng: location.longitude } : undefined
-                  );
+                  // Ouvrir Google Maps avec les coordonnées
+                  const url = `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}${location ? `&origin=${location.latitude},${location.longitude}` : ''}`;
+                  window.open(url, '_blank');
                 }}
                 className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
                 size="lg"

@@ -54,7 +54,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
       setIncoming(prev => prev.filter(r => r.id !== rideId));
       // Subscribe tracking
       TaxiMotoRealtimeService.subscribeToRideTracking(rideId, (pt) => {
-        setTrackingPoints(prev => [{ lat: pt.latitude, lng: pt.longitude, ts: pt.timestamp }, ...prev].slice(0, 50));
+        setTrackingPoints(prev => [{ lat: pt.lat, lng: pt.lng, ts: pt.timestamp }, ...prev].slice(0, 50));
       });
     } catch (e) {
       console.error('Accept ride error:', e);
@@ -92,9 +92,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
   const publishLocation = async () => {
     try {
       // Example: publish a dummy location (should be device GPS in real app)
-      await TaxiMotoRealtimeService.publishDriverLocation(driverId, {
-        latitude: 9.509,
-        longitude: -13.712,
+      await TaxiMotoRealtimeService.publishDriverLocation(driverId, 9.509, -13.712, {
         heading: 90,
         speed: 12,
         is_available: !currentRide

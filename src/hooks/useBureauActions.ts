@@ -215,7 +215,7 @@ export function useBureauActions({
         .from('members')
         .insert([{
           bureau_id: effectiveBureauId,
-          full_name: memberData.full_name.trim(),
+          name: memberData.full_name.trim(),
           email: memberData.email.trim().toLowerCase(),
           phone: memberData.phone.trim(),
           address: memberData.address?.trim() || null,
@@ -360,15 +360,16 @@ export function useBureauActions({
       // Créer une alerte sécurité
       const { data: vehicle } = await supabase
         .from('registered_motos')
-        .select('bureau_id, plate_number, moto_serial')
+        .select('bureau_id, plate_number')
         .eq('id', vehicleId)
         .single();
 
       if (vehicle) {
         await supabase.from('syndicate_alerts').insert([{
+          alert_type: 'stolen_vehicle',
           bureau_id: vehicle.bureau_id,
           title: `Véhicule volé: ${vehicle.plate_number}`,
-          message: `Le véhicule ${vehicle.plate_number} (${vehicle.moto_serial}) a été signalé volé. ${details.description || ''}`,
+          message: `Le véhicule ${vehicle.plate_number} a été signalé volé. ${details.description || ''}`,
           severity: 'critical',
           is_critical: true,
           is_read: false

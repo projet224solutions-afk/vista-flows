@@ -537,15 +537,15 @@ export default function UniversalCommunicationHub({
                     >
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={other?.avatar_url} />
+                          <AvatarImage src={other?.user?.avatar_url} />
                           <AvatarFallback>
-                            {other?.first_name?.[0]}{other?.last_name?.[0]}
+                            {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className="font-medium truncate">
-                              {other?.first_name} {other?.last_name}
+                              {other?.user?.first_name} {other?.user?.last_name}
                             </p>
                             {conversation.unread_count > 0 && (
                               <Badge variant="destructive" className="ml-2">
@@ -580,19 +580,19 @@ export default function UniversalCommunicationHub({
                     <div className="p-4 border-b flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={getOtherParticipant(selectedConversation)?.avatar_url} />
+                          <AvatarImage src={getOtherParticipant(selectedConversation)?.user?.avatar_url} />
                           <AvatarFallback>
-                            {getOtherParticipant(selectedConversation)?.first_name?.[0]}
-                            {getOtherParticipant(selectedConversation)?.last_name?.[0]}
+                            {getOtherParticipant(selectedConversation)?.user?.first_name?.[0]}
+                            {getOtherParticipant(selectedConversation)?.user?.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">
-                            {getOtherParticipant(selectedConversation)?.first_name}{' '}
-                            {getOtherParticipant(selectedConversation)?.last_name}
+                            {getOtherParticipant(selectedConversation)?.user?.first_name}{' '}
+                            {getOtherParticipant(selectedConversation)?.user?.last_name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {getOtherParticipant(selectedConversation)?.email}
+                            {getOtherParticipant(selectedConversation)?.user?.email}
                           </p>
                         </div>
                       </div>
@@ -625,10 +625,10 @@ export default function UniversalCommunicationHub({
                           // Préparer les pièces jointes avec le bon type
                           let attachments: { type: string; url: string; name: string }[] | undefined;
                           if (message.file_url) {
-                            let displayType = message.type;
+                            let displayType: string = message.type;
                             // Normaliser le type pour l'affichage
                             if (message.type === 'audio') {
-                              displayType = 'audio/webm';
+                              displayType = 'audio';
                             }
                             attachments = [{
                               type: displayType,
@@ -648,7 +648,7 @@ export default function UniversalCommunicationHub({
                                   minute: '2-digit'
                                 }),
                                 isOwn,
-                                senderName: isOwn ? undefined : `${otherParticipant?.first_name} ${otherParticipant?.last_name}`,
+                                senderName: isOwn ? undefined : `${otherParticipant?.user?.first_name || ''} ${otherParticipant?.user?.last_name || ''}`.trim(),
                                 attachments
                               }}
                               onDelete={handleDeleteMessage}

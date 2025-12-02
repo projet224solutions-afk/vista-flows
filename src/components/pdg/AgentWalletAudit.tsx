@@ -25,16 +25,15 @@ export function AgentWalletAudit() {
     setLoading(true);
     setError(null);
     try {
-      // Récupérer tous les agents (role = agent)
-      const { data: profiles, error: profErr } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .eq('role', 'agent');
+      // Récupérer tous les agents via agents_management
+      const { data: agents, error: profErr } = await supabase
+        .from('agents_management')
+        .select('id, user_id');
 
       if (profErr) throw profErr;
 
       const results: AgentWalletRow[] = [];
-      for (const p of profiles || []) {
+      for (const p of agents || []) {
         // Wallet principal
         const { data: mainWallet } = await supabase
           .from('wallets')
@@ -95,16 +94,17 @@ export function AgentWalletAudit() {
           .from('agent_wallets')
           .update({ balance: row.main_balance, updated_at: new Date().toISOString() })
           .eq('agent_id', row.agent_id);
-        // Log simple
+        // Log simple dans wallet_transactions avec champs requis
         await supabase
-          .from('wallet_logs')
+          .from('wallet_transactions')
           .insert({
-            user_id: row.agent_id,
-            operation: 'agent_wallet_resync',
+            transaction_id: `audit_${row.agent_id}_${Date.now()}`,
+            sender_wallet_id: row.agent_id,
+            receiver_wallet_id: row.agent_id,
             amount: 0,
-            context: 'audit_fix',
-            created_at: new Date().toISOString(),
-            metadata: { previous_agent_balance: row.agent_balance, new_balance: row.main_balance }
+            net_amount: 0,
+            transaction_type: 'adjustment',
+            metadata: { previous_agent_balance: row.agent_balance, new_balance: row.main_balance, operation: 'agent_wallet_resync' }
           });
       }
       await load();
