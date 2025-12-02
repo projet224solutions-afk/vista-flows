@@ -30,6 +30,11 @@ export function FeatureGuard({
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
+  // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
+  // Plus de restrictions d'abonnement
+  return <>{children}</>;
+
+  /* ANCIEN CODE AVEC RESTRICTIONS
   if (loading) {
     return <div className="animate-pulse bg-muted h-10 rounded" />;
   }
@@ -99,6 +104,7 @@ export function FeatureGuard({
   }
 
   return null;
+  */
 }
 
 // Composant pour les boutons de fonctionnalité
@@ -125,60 +131,22 @@ export function FeatureButton({
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
-  const hasAccess = canAccessFeature(feature);
-
+  // 🔓 DÉBLOCAGE TOTAL : Tous les boutons sont accessibles
   const handleClick = () => {
-    if (hasAccess && !disabled) {
+    if (!disabled) {
       onClick();
-    } else if (!hasAccess) {
-      setShowDialog(true);
     }
   };
 
   return (
-    <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
-        onClick={handleClick}
-        disabled={loading || disabled}
-      >
-        {!hasAccess && <Lock className="w-4 h-4 mr-2" />}
-        {children}
-      </Button>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-yellow-500" />
-              Fonctionnalité Premium
-            </DialogTitle>
-            <DialogDescription>
-              Cette fonctionnalité nécessite un abonnement supérieur.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Passez à un plan supérieur pour accéder à cette fonctionnalité et bien d'autres avantages.
-            </p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Fermer
-            </Button>
-            <Button onClick={() => {
-              setShowDialog(false);
-              navigate('/subscriptions');
-            }}>
-              Voir les plans
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Button
+      variant={variant}
+      size={size}
+      className={className}
+      onClick={handleClick}
+      disabled={loading || disabled}
+    >
+      {children}
+    </Button>
   );
 }
