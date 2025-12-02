@@ -60,7 +60,7 @@ import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
-import { DriverKYCStatus } from "@/components/taxi-moto/DriverKYCStatus";
+
 
 // API_BASE supprimé - Utilisation directe de Supabase
 
@@ -315,13 +315,6 @@ export default function TaxiMotoDriver() {
         
         if (!driverId) {
             toast.error('Profil conducteur non trouvé');
-            return;
-        }
-
-        // KYC gating: empêcher l'activation si KYC invalide
-        if (next && profile?.kyc_status !== 'verified') {
-            capture('permission', 'KYC requis pour être en ligne');
-            toast.error('KYC requis avant de passer en ligne');
             return;
         }
 
@@ -1133,7 +1126,7 @@ export default function TaxiMotoDriver() {
                                 <span className="text-sm text-gray-600">
                                     {isOnline ? 'En ligne' : 'Hors ligne'}
                                 </span>
-                                <DriverKYCStatus isKycValid={profile?.kyc_status === 'verified'} />
+                                
                                 {location && (
                                     <>
                                         <span className="text-gray-400">•</span>

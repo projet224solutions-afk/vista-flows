@@ -7,7 +7,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useNavigate } from "react-router-dom";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
-import { TransitaireKYCStatus } from "@/components/transitaire/TransitaireKYCStatus";
+
 import { useTransitaireStats } from "@/hooks/useTransitaireStats";
 import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
@@ -100,7 +100,6 @@ export default function TransitaireDashboard() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
-                <TransitaireKYCStatus status={profile?.kyc_status as any} />
               </div>
               <p className="text-muted-foreground">
                 Transport international - {profile?.first_name || user?.email}
