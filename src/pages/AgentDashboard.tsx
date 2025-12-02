@@ -121,7 +121,12 @@ export default function AgentDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <ErrorBanner error={error} onDismiss={clearError} />}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 mb-4">
+            <p className="font-medium">{error.message}</p>
+            <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
+          </div>
+        )}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>

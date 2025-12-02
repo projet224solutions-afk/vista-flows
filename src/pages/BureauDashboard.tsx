@@ -132,7 +132,10 @@ export default function BureauDashboard() {
     try {
       setIsSubmittingWorker(true);
 
-      const result = await addWorker(workerForm, bureau.id);
+      const result = await addWorker({
+        ...workerForm,
+        access_level: workerForm.access_level as 'standard' | 'advanced' | 'limited'
+      }, bureau.id);
 
       if (!result.success) {
         captureError('worker_error', result.error || 'Erreur lors de l\'ajout du membre');
@@ -234,11 +237,10 @@ export default function BureauDashboard() {
 
       {/* Error Banner */}
       {error && (
-        <ErrorBanner
-          error={error.message}
-          type={error.type}
-          onDismiss={clearError}
-        />
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 mb-4">
+          <p className="font-medium">{typeof error === 'string' ? error : error.message}</p>
+          <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
+        </div>
       )}
 
       {/* Statistiques */}

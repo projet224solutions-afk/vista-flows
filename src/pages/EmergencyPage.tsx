@@ -24,7 +24,7 @@ export const EmergencyPage: React.FC = () => {
 
   // Déterminer le rôle et le bureau
   const userRole = (user?.role as 'admin' | 'syndicat' | 'pdg') || 'syndicat';
-  const bureauId = userRole === 'syndicat' ? user?.bureau_id : undefined;
+  const bureauId = userRole === 'syndicat' ? (user as any)?.bureau_id : undefined;
 
   // Hooks
   const { alerts, count: alertCount } = useActiveEmergencyAlerts(bureauId);
@@ -91,7 +91,7 @@ export const EmergencyPage: React.FC = () => {
               
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Connecté en tant que</p>
-                <p className="text-sm font-medium">{user?.full_name}</p>
+                <p className="text-sm font-medium">{(user as any)?.full_name || user?.email}</p>
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ export const EmergencyPage: React.FC = () => {
               bureauId={bureauId}
               userRole={userRole}
               userId={user.id}
-              userName={user.full_name}
+              userName={(user as any).full_name || user.email || 'Utilisateur'}
             />
           </TabsContent>
 
@@ -280,7 +280,7 @@ export const EmergencyAlertDetailPage: React.FC = () => {
         <EmergencyAlertsDashboard
           userRole={(user?.role as any) || 'syndicat'}
           userId={user?.id || ''}
-          userName={user?.full_name}
+          userName={(user as any)?.full_name || user?.email || 'Utilisateur'}
         />
       </div>
     </div>

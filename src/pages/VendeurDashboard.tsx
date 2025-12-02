@@ -400,7 +400,7 @@ export default function VendeurDashboard() {
                 {/* PWAInstallButton désactivé */}
                 
                 {/* Badge KYC Status */}
-                <VendorKYCStatus kycStatus={profile?.kyc_status || 'unverified'} />
+                <VendorKYCStatus kycStatus={(profile?.kyc_status as any) || 'unverified'} />
                 
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />

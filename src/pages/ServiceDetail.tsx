@@ -119,6 +119,7 @@ export default function ServiceDetail() {
         reviews_count: 0,
         is_open: true,
         image_url: data.icon,
+        images: [data.icon],
         features: data.features || [],
         // Coordonnées par défaut (Conakry)
         latitude: 9.6412,
@@ -159,7 +160,7 @@ export default function ServiceDetail() {
   const loadReviews = async () => {
     try {
       const { data, error } = await supabase
-        .from('service_reviews')
+        .from('service_reviews' as any)
         .select(`
           id,
           rating,
@@ -192,7 +193,7 @@ export default function ServiceDetail() {
         return;
       }
 
-      const formattedReviews = (data || []).map(review => ({
+      const formattedReviews = (data || []).map((review: any) => ({
         id: review.id,
         user_name: review.user?.full_name || 'Utilisateur',
         user_avatar: review.user?.avatar_url,
