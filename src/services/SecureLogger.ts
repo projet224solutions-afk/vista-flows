@@ -414,8 +414,5 @@ class SecureLogger {
 // Instance singleton
 export const secureLogger = SecureLogger.getInstance();
 
-// Remplacer console.error par défaut
-secureLogger.replaceConsoleError();
-
 // Export pour utilisation externe
 export default secureLogger;

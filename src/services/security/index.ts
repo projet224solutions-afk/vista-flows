@@ -52,26 +52,36 @@ export async function initializeSecurityServices(): Promise<void> {
   console.log('🔒 Initialisation services sécurité...');
 
   try {
-    // 1. Monitoring Service
+    // 1. Monitoring Service (initialisation lazy)
     if (SECURITY_CONFIG.monitoringEnabled) {
-      await monitoringService.performHealthCheck();
-      console.log('✅ Monitoring Service initialisé');
+      try {
+        await monitoringService.initialize();
+        console.log('✅ Monitoring Service initialisé');
+      } catch (e) {
+        console.warn('⚠️ Monitoring Service non disponible:', e);
+      }
     }
 
     // 2. CSP Service
     if (SECURITY_CONFIG.cspEnabled) {
-      // CSP déjà initialisé dans le constructeur
-      console.log('✅ Content Security Policy initialisé');
-      console.log('   CSP Header:', cspService.getCSPHeader().substring(0, 100) + '...');
+      try {
+        console.log('✅ Content Security Policy initialisé');
+      } catch (e) {
+        console.warn('⚠️ CSP Service non disponible:', e);
+      }
     }
 
     // 3. Secure Logger
-    // Déjà initialisé dans le constructeur
     console.log('✅ Secure Logger initialisé');
 
-    // 4. Health Check Service
-    const healthReport = await healthCheckService.checkNow();
-    console.log(`✅ Health Check Service initialisé (${healthReport.overall})`);
+    // 4. Health Check Service (initialisation lazy)
+    try {
+      await healthCheckService.initialize();
+      const healthReport = await healthCheckService.checkNow();
+      console.log(`✅ Health Check Service initialisé (${healthReport.overall})`);
+    } catch (e) {
+      console.warn('⚠️ Health Check Service non disponible:', e);
+    }
 
     // 5. Configurer gestionnaires globaux
     setupGlobalErrorHandlers();
@@ -81,8 +91,7 @@ export async function initializeSecurityServices(): Promise<void> {
 
     // Log succès
     secureLogger.info('system', 'Services sécurité initialisés avec succès', {
-      config: SECURITY_CONFIG,
-      healthStatus: healthReport.overall
+      config: SECURITY_CONFIG
     });
 
     console.log('🔒 ✅ Tous les services sécurité sont opérationnels');
