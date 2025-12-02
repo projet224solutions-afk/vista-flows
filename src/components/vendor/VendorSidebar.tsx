@@ -3,7 +3,7 @@
  * Navigation complète avec tous les modules vendeur
  */
 
-import { NavLink, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Package, ShoppingCart, Users, BarChart3, CreditCard, 
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
@@ -18,6 +18,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -27,6 +28,7 @@ import { useVendorBadges } from "@/hooks/useVendorBadges";
 export function VendorSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname.split('/').pop() || 'dashboard';
   const collapsed = state === "collapsed";
   const { badges, loading } = useVendorBadges();
@@ -51,6 +53,10 @@ export function VendorSidebar() {
       default:
         return null;
     }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(`/vendeur/${path}`);
   };
 
   const menuSections = [
@@ -227,35 +233,29 @@ export function VendorSidebar() {
             
             <SidebarGroupContent>
               <SidebarMenu>
-              {section.items.map((item) => {
+                {section.items.map((item) => {
                   const badgeValue = getBadgeValue(item.path);
                   const active = isActive(item.path);
                   
                   return (
                     <SidebarMenuItem key={item.path}>
-                      <NavLink 
-                        to={`/vendeur/${item.path}`}
-                        className={`flex items-center w-full px-3 py-2 rounded-md transition-colors cursor-pointer ${
-                          active 
-                            ? "bg-primary text-primary-foreground font-medium" 
-                            : "hover:bg-accent hover:text-accent-foreground text-foreground"
-                        }`}
+                      <SidebarMenuButton 
+                        isActive={active}
+                        tooltip={item.title}
+                        onClick={() => handleNavigation(item.path)}
+                        className="cursor-pointer"
                       >
-                        <item.icon className={collapsed ? "w-5 h-5" : "w-4 h-4 mr-3 flex-shrink-0"} />
-                        {!collapsed && (
-                          <div className="flex items-center justify-between flex-1 min-w-0">
-                            <span className="text-sm font-medium truncate">{item.title}</span>
-                            {badgeValue && (
-                              <Badge 
-                                variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                className="text-xs px-2 py-0 ml-2 flex-shrink-0"
-                              >
-                                {badgeValue}
-                              </Badge>
-                            )}
-                          </div>
+                        <item.icon className="w-4 h-4" />
+                        <span className="flex-1">{item.title}</span>
+                        {badgeValue && (
+                          <Badge 
+                            variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                            className="text-xs px-2 py-0 ml-auto"
+                          >
+                            {badgeValue}
+                          </Badge>
                         )}
-                      </NavLink>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
                 })}
