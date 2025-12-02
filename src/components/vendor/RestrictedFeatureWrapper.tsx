@@ -16,30 +16,8 @@ export function RestrictedFeatureWrapper({
   feature,
   fallbackMessage 
 }: RestrictedFeatureWrapperProps) {
-  const { restrictions, loading } = useVendorRestrictions();
-  const navigate = useNavigate();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Check if feature is allowed
-  const featureAllowed = {
-    products: restrictions.canCreateProducts,
-    messages: restrictions.canSendMessages,
-    calls: restrictions.canMakeCalls,
-    transfer: restrictions.canTransfer,
-    virtualCard: restrictions.canUseVirtualCard,
-    payments: restrictions.canReceivePayments,
-  }[feature];
-
-  if (featureAllowed) {
-    return <>{children}</>;
-  }
+  // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
+  return <>{children}</>;
 
   // Show restriction message
   const defaultMessages = {
