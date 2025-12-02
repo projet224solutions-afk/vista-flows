@@ -1,5 +1,11 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[functions.calculate-delivery-distances]
+verify_jwt = false
+
+[functions.send-delivery-notification]
+verify_jwt = false
+
 [functions.moneroo-initialize-payment]
 verify_jwt = true
 
