@@ -43,6 +43,7 @@ const BugBountyDashboard = lazy(() => import('@/components/bug-bounty/BugBountyD
 const QuotesInvoicesPDG = lazy(() => import('@/components/pdg/QuotesInvoicesPDG'));
 const AgentWalletAudit = lazy(() => import('@/components/pdg/AgentWalletAudit'));
 const CopilotAuditTrail = lazy(() => import('@/components/pdg/CopilotAuditTrail'));
+const PDGKYCManagement = lazy(() => import('@/components/pdg/PDGKYCManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -534,6 +535,12 @@ export default function PDG224Solutions() {
               {activeTab === 'transfer-fees' && (
                 <ErrorBoundary>
                   <TransferFeeSettings />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'kyc' && (
+                <ErrorBoundary>
+                  <PDGKYCManagement />
                 </ErrorBoundary>
               )}
 

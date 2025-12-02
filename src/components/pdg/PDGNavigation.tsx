@@ -41,6 +41,7 @@ const categories: NavCategory[] = [
       { value: 'users', label: 'Utilisateurs', icon: Users },
       { value: 'products', label: 'Produits', icon: Package },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },
+      { value: 'kyc', label: 'Gestion KYC', icon: Shield },
     ]
   },
   {

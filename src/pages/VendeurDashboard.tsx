@@ -63,7 +63,7 @@ import VendorSettings from "@/pages/vendor/Settings";
 // NOUVEAUX IMPORTS POUR GESTION D'ERREURS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
-import { VendorKYCStatus } from "@/components/vendor/VendorKYCStatus";
+
 
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -399,9 +399,6 @@ export default function VendeurDashboard() {
               <div className="flex items-center gap-2">
                 <NetworkStatusIndicator />
                 {/* PWAInstallButton désactivé */}
-                
-                {/* Badge KYC Status */}
-                <VendorKYCStatus kycStatus={(profile?.kyc_status as any) || 'unverified'} />
                 
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />

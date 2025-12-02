@@ -34,7 +34,7 @@ import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { useCart } from "@/contexts/CartContext";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useClientErrorBoundary } from "@/hooks/useClientErrorBoundary";
-import { ClientKYCStatus } from "@/components/client/ClientKYCStatus";
+
 import { useClientStats } from "@/hooks/useClientStats";
 
 export default function ClientDashboard() {
@@ -194,7 +194,7 @@ export default function ClientDashboard() {
                   {!responsive.isMobile && (
                     <>
                       <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
-                      <ClientKYCStatus kyc_status={profile?.kyc_status as any} showIcon={true} />
+                      
                     </>
                   )}
                 </div>

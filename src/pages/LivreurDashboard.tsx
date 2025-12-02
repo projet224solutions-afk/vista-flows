@@ -36,7 +36,7 @@ import { DriverLayout } from "@/components/driver/DriverLayout";
 import DeliveryChat from "@/components/delivery/DeliveryChat";
 // NOUVEAUX IMPORTS POUR LES AMÉLIORATIONS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { DriverKYCStatus } from "@/components/taxi-moto/DriverKYCStatus";
+
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
@@ -345,10 +345,6 @@ export default function LivreurDashboard() {
                 onGoOffline={goOffline}
                 onPause={pause}
               />
-              {/* Badge KYC Status */}
-              <div className="px-3 py-1 bg-muted rounded text-xs">
-                KYC: {profile?.kyc_status || 'unverified'}
-              </div>
             </div>
           </div>
         )}
