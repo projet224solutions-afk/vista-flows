@@ -91,13 +91,65 @@ export default function TaxiMotoBooking({
     /**
      * Utilise la position actuelle comme point de départ
      */
-    const useCurrentLocation = () => {
+    const useCurrentLocation = async () => {
+        console.log('[TaxiMotoBooking] Demande de position actuelle...');
+        
         if (userLocation) {
             setPickupCoords(userLocation);
             setPickupAddress('Position actuelle');
             toast.success('Position actuelle utilisée comme point de départ');
-        } else {
-            toast.error('Position non disponible. Activez votre GPS.');
+            console.log('[TaxiMotoBooking] Position utilisée:', userLocation);
+            return;
+        }
+
+        // Si pas de position, demander l'accès GPS
+        toast.info('Demande d\'accès à votre position GPS...');
+        
+        if (!navigator.geolocation) {
+            toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+            return;
+        }
+
+        try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+
+            const newLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                timestamp: Date.now()
+            };
+
+            setPickupCoords(newLocation);
+            setPickupAddress('Position actuelle');
+            toast.success('✅ Position GPS obtenue avec succès !');
+            console.log('[TaxiMotoBooking] Position GPS obtenue:', newLocation);
+            
+        } catch (error) {
+            console.error('[TaxiMotoBooking] Erreur GPS:', error);
+            
+            if (error instanceof GeolocationPositionError) {
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        toast.error('Accès GPS refusé. Veuillez autoriser l\'accès à votre position dans les paramètres du navigateur.');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        toast.error('Position GPS non disponible. Vérifiez que le GPS est activé.');
+                        break;
+                    case error.TIMEOUT:
+                        toast.error('Délai d\'attente GPS dépassé. Réessayez.');
+                        break;
+                    default:
+                        toast.error('Erreur lors de l\'obtention de la position GPS.');
+                }
+            } else {
+                toast.error('Impossible d\'obtenir votre position. Activez votre GPS.');
+            }
         }
     };
 
@@ -353,8 +405,9 @@ export default function TaxiMotoBooking({
                             <Button
                                 onClick={useCurrentLocation}
                                 variant="outline"
-                                size="sm"
-                                disabled={!userLocation}
+                                size="icon"
+                                className="shrink-0 hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600 transition-all active:scale-95"
+                                title="Utiliser ma position actuelle"
                             >
                                 <Navigation className="w-4 h-4" />
                             </Button>
