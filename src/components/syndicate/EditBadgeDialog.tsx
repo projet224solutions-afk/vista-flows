@@ -22,6 +22,9 @@ interface EditBadgeDialogProps {
     vest_number?: string;
   };
   bureauName?: string;
+  bureauCode?: string;
+  bureauPrefecture?: string;
+  bureauCommune?: string;
   onUpdate: () => void;
 }
 
@@ -30,6 +33,9 @@ export default function EditBadgeDialog({
   onOpenChange,
   vehicleData,
   bureauName = 'VOTRE BUREAU',
+  bureauCode = '',
+  bureauPrefecture = '',
+  bureauCommune = '',
   onUpdate
 }: EditBadgeDialogProps) {
   // Séparer le nom complet en prénom et nom
@@ -134,11 +140,19 @@ export default function EditBadgeDialog({
       <DialogContent className="max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1">
               <span>Modifier les informations du badge</span>
-              <span className="text-sm font-normal text-muted-foreground mt-1">
-                TAXI-MOTO DE {bureauName.toUpperCase()}
-              </span>
+              <div className="text-sm font-normal text-muted-foreground space-y-0.5">
+                <div className="text-xs">224Solutions - Dashboard Bureau Syndicat</div>
+                <div className="font-medium">
+                  {bureauCode && `${bureauCode} - `}
+                  {bureauPrefecture}
+                  {bureauCommune && ` - ${bureauCommune}`}
+                </div>
+                <div className="text-base font-semibold text-primary mt-1">
+                  TAXI-MOTO DE {bureauName.toUpperCase()}
+                </div>
+              </div>
             </div>
             <Button 
               variant="ghost" 

@@ -82,6 +82,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [bureauName, setBureauName] = useState<string>('VOTRE BUREAU');
+    const [bureauCode, setBureauCode] = useState<string>('');
+    const [bureauPrefecture, setBureauPrefecture] = useState<string>('');
+    const [bureauCommune, setBureauCommune] = useState<string>('');
 
     // Formulaire d'ajout de véhicule
     const [formData, setFormData] = useState({
@@ -122,14 +125,19 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         try {
             const { data, error } = await supabase
                 .from('syndicate_bureaus')
-                .select('commune, prefecture')
+                .select('bureau_code, commune, prefecture')
                 .eq('id', bureauId)
                 .single();
 
             if (error) throw error;
 
             if (data) {
-                // Utiliser commune si disponible, sinon préfecture
+                // Stocker toutes les informations
+                setBureauCode(data.bureau_code || '');
+                setBureauPrefecture(data.prefecture || '');
+                setBureauCommune(data.commune || '');
+                
+                // Pour l'affichage du nom dans les badges
                 const name = data.commune || data.prefecture || 'VOTRE BUREAU';
                 setBureauName(name);
             }
@@ -1265,6 +1273,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         vest_number: (selectedVehicleForEdit as any).vest_number,
                     }}
                     bureauName={bureauName}
+                    bureauCode={bureauCode}
+                    bureauPrefecture={bureauPrefecture}
+                    bureauCommune={bureauCommune}
                     onUpdate={loadVehicles}
                 />
             )}
