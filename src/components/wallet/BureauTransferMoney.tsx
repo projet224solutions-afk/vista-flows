@@ -53,14 +53,14 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       const results: UserSearchResult[] = [];
 
       // Rechercher dans autres bureaux syndicats
-      const { data: bureaux } = await supabase
-        .from('bureau_syndicat')
+      const { data: bureaux } = await (supabase
+        .from('bureaus' as any)
         .select('id, bureau_code, prefecture, commune')
         .or(`bureau_code.ilike.%${searchQuery}%,prefecture.ilike.%${searchQuery}%,commune.ilike.%${searchQuery}%`)
-        .limit(10);
+        .limit(10) as any);
 
       if (bureaux) {
-        for (const bureau of bureaux) {
+        for (const bureau of bureaux as any[]) {
           const { data: bureauWallet } = await supabase
             .from('bureau_wallets')
             .select('id')
@@ -80,14 +80,14 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       }
 
       // Rechercher dans chauffeurs taxi-moto
-      const { data: drivers } = await supabase
-        .from('taxi_moto_drivers')
+      const { data: drivers } = await (supabase
+        .from('taxi_moto_drivers' as any)
         .select('id, first_name, last_name, phone, user_id')
         .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-        .limit(10);
+        .limit(10) as any);
 
       if (drivers) {
-        for (const driver of drivers) {
+        for (const driver of drivers as any[]) {
           const { data: driverWallet } = await supabase
             .from('wallets')
             .select('id')

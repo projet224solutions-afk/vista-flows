@@ -369,14 +369,6 @@ export default function BureauWalletManagement({
         </TabsContent>
 
         <TabsContent value="deposit" className="space-y-4">
-          </TabsTrigger>
-          <TabsTrigger value="withdraw">
-            <ArrowUpCircle className="w-4 h-4 mr-2" />
-            Retrait
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="deposit" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Effectuer un dépôt</CardTitle>
