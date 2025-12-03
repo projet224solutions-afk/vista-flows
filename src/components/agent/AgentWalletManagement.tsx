@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Shield, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AgentWalletDiagnosticTool from "./AgentWalletDiagnosticTool";
+import TransferMoney from "./TransferMoney";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -390,17 +391,30 @@ export default function AgentWalletManagement({
       </Card>
 
       {/* Tabs pour les actions */}
-      <Tabs defaultValue="withdraw" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="transfer" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="transfer">
+            <Send className="w-4 h-4 mr-2" />
+            Transférer
+          </TabsTrigger>
           <TabsTrigger value="deposit">
             <ArrowDownCircle className="w-4 h-4 mr-2" />
             Dépôt
           </TabsTrigger>
           <TabsTrigger value="withdraw">
             <ArrowUpCircle className="w-4 h-4 mr-2" />
-            Retrait Commissions
+            Retrait
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="transfer" className="space-y-4">
+          <TransferMoney
+            walletId={wallet.id}
+            currentBalance={wallet.balance}
+            currency={wallet.currency}
+            onTransferComplete={loadWallet}
+          />
+        </TabsContent>
 
         <TabsContent value="deposit" className="space-y-4">
           <Card>
