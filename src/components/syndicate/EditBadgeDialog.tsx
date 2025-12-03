@@ -19,7 +19,6 @@ interface EditBadgeDialogProps {
     member_name: string;
     driver_photo_url?: string;
     driver_date_of_birth?: string;
-    vest_number?: string;
   };
   bureauName?: string;
   bureauCode?: string;
@@ -45,7 +44,6 @@ export default function EditBadgeDialog({
 
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [vestNumber, setVestNumber] = useState(vehicleData.vest_number || '');
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
   const [uploading, setUploading] = useState(false);
@@ -109,11 +107,10 @@ export default function EditBadgeDialog({
       // Combiner prénom et nom
       const fullName = `${firstName} ${lastName}`.trim();
 
+      // Mettre à jour les informations du véhicule (uniquement les colonnes existantes)
       const { error } = await supabase
         .from('vehicles')
         .update({
-          member_name: fullName,
-          vest_number: vestNumber || null,
           driver_photo_url: photoUrl || null,
           driver_date_of_birth: dateOfBirth || null,
         })
@@ -122,6 +119,22 @@ export default function EditBadgeDialog({
       if (error) {
         console.error('Supabase error:', error);
         throw error;
+      }
+
+      // Mettre à jour le nom dans syndicate_workers si nécessaire
+      if (vehicleData.id) {
+        const { data: vehicle } = await supabase
+          .from('vehicles')
+          .select('owner_member_id')
+          .eq('id', vehicleData.id)
+          .single();
+
+        if (vehicle?.owner_member_id) {
+          await supabase
+            .from('syndicate_workers')
+            .update({ nom: fullName })
+            .eq('id', vehicle.owner_member_id);
+        }
       }
 
       toast.success('Informations mises à jour avec succès');
@@ -187,18 +200,6 @@ export default function EditBadgeDialog({
                 placeholder="Nom du conducteur"
               />
             </div>
-          </div>
-
-          {/* Matricule / N° Gilet */}
-          <div className="space-y-2">
-            <Label htmlFor="vest-number">Matricule / N° Gilet</Label>
-            <Input
-              id="vest-number"
-              type="text"
-              value={vestNumber}
-              onChange={(e) => setVestNumber(e.target.value)}
-              placeholder="Ex: 001, A-123, etc."
-            />
           </div>
 
           {/* Photo du conducteur */}
