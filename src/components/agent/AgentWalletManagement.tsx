@@ -43,7 +43,9 @@ export default function AgentWalletManagement({
 
   const loadWallet = useCallback(async () => {
     if (!agentId) {
-      console.warn('loadWallet: agentId manquant');
+      console.warn('⚠️ loadWallet: agentId manquant');
+      toast.error('ID agent manquant');
+      setLoading(false);
       return;
     }
     
@@ -51,53 +53,26 @@ export default function AgentWalletManagement({
       setLoading(true);
       console.log('🔍 Chargement wallet agent pour agentId:', agentId);
 
+      // Utiliser maybeSingle() au lieu de single() pour éviter les erreurs si pas de résultat
       const { data: walletData, error: walletError } = await supabase
         .from('agent_wallets')
         .select('*')
         .eq('agent_id', agentId)
-        .single();
+        .maybeSingle();
 
-      if (walletError) {
+      // Gérer les erreurs autres que "not found"
+      if (walletError && walletError.code !== 'PGRST116') {
         console.error('❌ Erreur chargement wallet agent:', walletError);
-        
-        // Si le wallet n'existe pas, le créer automatiquement
-        if (walletError.code === 'PGRST116') {
-          console.log('💡 Création automatique du wallet agent pour:', agentId);
-          
-          const { data: newWallet, error: createError } = await supabase
-            .from('agent_wallets')
-            .insert({
-              agent_id: agentId,
-              balance: 0,
-              currency: 'GNF'
-            })
-            .select('*')
-            .single();
-
-          if (createError) {
-            console.error('❌ Erreur création wallet agent:', createError);
-            toast.error(`Impossible de créer le wallet: ${createError.message}`);
-            throw createError;
-          }
-
-          if (newWallet) {
-            console.log('✅ Wallet agent créé avec succès:', newWallet);
-            setWallet(newWallet);
-            toast.success('Wallet créé avec succès !');
-            setLoading(false);
-            return;
-          }
-        } else {
-          toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
-          throw walletError;
-        }
+        toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
+        throw walletError;
       }
-      
-      console.log('✅ Wallet agent chargé:', walletData);
-      setWallet(walletData);
 
-      // Charger les transactions depuis wallet_transactions filtrées par le wallet_id de l'agent
+      // Si le wallet existe, l'utiliser
       if (walletData) {
+        console.log('✅ Wallet agent trouvé:', walletData);
+        setWallet(walletData);
+        
+        // Charger les transactions
         const { data: txData } = await supabase
           .from('wallet_transactions')
           .select('*')
@@ -106,12 +81,49 @@ export default function AgentWalletManagement({
           .limit(50);
 
         setTransactions(txData || []);
+        setLoading(false);
+        return;
       }
+
+      // Si le wallet n'existe pas, le créer automatiquement
+      console.log('💡 Wallet non trouvé, création automatique pour agentId:', agentId);
+      
+      const { data: newWallet, error: createError } = await supabase
+        .from('agent_wallets')
+        .insert({
+          agent_id: agentId,
+          balance: 0,
+          currency: 'GNF',
+          wallet_status: 'active'
+        })
+        .select('*')
+        .single();
+
+      if (createError) {
+        console.error('❌ Erreur création wallet agent:', createError);
+        console.error('Détails:', JSON.stringify(createError, null, 2));
+        toast.error(`Impossible de créer le wallet: ${createError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      if (newWallet) {
+        console.log('✅ Wallet agent créé avec succès:', newWallet);
+        setWallet(newWallet);
+        toast.success('Wallet créé avec succès !');
+        setLoading(false);
+        return;
+      }
+
+      // Si on arrive ici, quelque chose s'est mal passé
+      console.error('❌ Impossible de créer le wallet - raison inconnue');
+      toast.error('Impossible de créer le wallet');
+      setLoading(false);
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet agent:', error);
+      console.error('Stack:', error?.stack);
       toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
       setWallet(null);
-    } finally {
       setLoading(false);
     }
   }, [agentId]);
@@ -298,15 +310,38 @@ export default function AgentWalletManagement({
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-            <p className="text-lg font-semibold mb-2">
-              Impossible de charger ou créer le wallet de l'agent
-            </p>
-            <Button onClick={loadWallet} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
-            </Button>
+          <div className="text-center py-8 space-y-4">
+            <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+            <div>
+              <p className="text-lg font-semibold mb-2">
+                Impossible de charger ou créer le wallet de l'agent
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Agent ID: <code className="bg-muted px-2 py-1 rounded">{agentId}</code>
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Vérifiez la console pour plus de détails (F12)
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 max-w-xs mx-auto">
+              <Button onClick={loadWallet} variant="default">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Réessayer
+              </Button>
+              <Button 
+                onClick={() => {
+                  console.log('🔍 Informations de débogage:');
+                  console.log('- Agent ID:', agentId);
+                  console.log('- Agent Code:', agentCode);
+                  console.log('- Wallet:', wallet);
+                  toast.info('Informations affichées dans la console');
+                }} 
+                variant="outline"
+                size="sm"
+              >
+                Afficher les infos de débogage
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

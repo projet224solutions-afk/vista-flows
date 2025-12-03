@@ -271,11 +271,14 @@ export default function AgentDashboard() {
 
           <TabsContent value="wallet" className="space-y-6">
             {agent?.id ? (
-              <AgentWalletManagement 
-                agentId={agent.id} 
-                agentCode={agent.agent_code}
-                showTransactions={true}
-              />
+              <>
+                {console.log('🔍 AgentDashboard - Wallet Tab:', { agentId: agent.id, agentCode: agent.agent_code })}
+                <AgentWalletManagement 
+                  agentId={agent.id} 
+                  agentCode={agent.agent_code}
+                  showTransactions={true}
+                />
+              </>
             ) : (
               <Card>
                 <CardContent className="py-6">

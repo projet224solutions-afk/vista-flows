@@ -846,11 +846,14 @@ export default function AgentDashboardPublic() {
             {/* Onglet Wallet - Utilise le wallet de l'agent */}
             <TabsContent value="wallet">
               {agent?.id ? (
-                <AgentWalletManagement 
-                  agentId={agent.id} 
-                  agentCode={agent.agent_code}
-                  showTransactions={true}
-                />
+                <>
+                  {console.log('🔍 AgentDashboardPublic - Wallet Tab:', { agentId: agent.id, agentCode: agent.agent_code })}
+                  <AgentWalletManagement 
+                    agentId={agent.id} 
+                    agentCode={agent.agent_code}
+                    showTransactions={true}
+                  />
+                </>
               ) : (
                 <Card>
                   <CardContent className="py-6">
