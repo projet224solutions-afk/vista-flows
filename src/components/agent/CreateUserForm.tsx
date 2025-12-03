@@ -107,9 +107,20 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
       }
 
       // Appeler le hook
+      console.log('🔄 [CreateUserForm] Tentative création utilisateur:', {
+        agentId,
+        agentCode,
+        role: userData.role,
+        email: userData.email,
+        hasAccessToken: !!accessToken
+      });
+
       const result = await createUser(userData, agentId, agentCode, accessToken);
 
+      console.log('📥 [CreateUserForm] Résultat:', result);
+
       if (result.success) {
+        toast.success('✅ Utilisateur créé avec succès!');
         // Reset form
         setFormData({
           firstName: '',
@@ -135,6 +146,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         });
         setIsOpen(false);
       } else {
+        console.error('❌ [CreateUserForm] Erreur:', result.error);
         toast.error(result.error || 'Erreur lors de la création');
       }
     } catch (error: any) {

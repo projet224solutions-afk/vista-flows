@@ -63,6 +63,22 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
     accessToken?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Vérifier l'authentification AVANT tout
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('❌ [useAgentActions] Pas de session active:', sessionError);
+        return { 
+          success: false, 
+          error: '🔒 Session expirée. Veuillez vous reconnecter.' 
+        };
+      }
+
+      console.log('✅ [useAgentActions] Session active:', {
+        userId: session.user.id,
+        email: session.user.email
+      });
+
       // Validation basique
       if (!userData.firstName || !userData.email || !userData.phone) {
         return { success: false, error: 'Veuillez remplir tous les champs obligatoires' };
@@ -114,7 +130,8 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         agentId,
         agentCode,
         role: userData.role,
-        email: userData.email
+        email: userData.email,
+        hasSession: true
       });
 
       const { data, error } = await supabase.functions.invoke('create-user-by-agent', {
@@ -122,27 +139,61 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
       });
 
       // Log détaillé pour debug
-      console.log('[useAgentActions] Réponse edge function:', { data, error });
+      console.log('[useAgentActions] Réponse edge function:', { 
+        data, 
+        error,
+        hasError: !!error,
+        hasData: !!data 
+      });
 
       if (error) {
-        console.error('[useAgentActions] Edge function error complet:', JSON.stringify(error, null, 2));
+        console.error('[useAgentActions] Edge function error complet:', {
+          message: error.message,
+          name: error.name,
+          context: error.context,
+          details: JSON.stringify(error, null, 2)
+        });
         
-        // Erreurs spécifiques
-        if (error.message?.includes('UNAUTHORIZED') || error.message?.includes('Non autorisé')) {
-          return { success: false, error: '❌ Non autorisé. Vérifiez vos permissions.' };
+        // Extraire le code de statut si disponible
+        const statusMatch = error.message?.match(/status code (\d+)/i);
+        const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
+        
+        console.error('📍 Status Code:', statusCode);
+        
+        // Erreurs par code de statut
+        if (statusCode === 401 || error.message?.includes('UNAUTHORIZED') || error.message?.includes('Non autorisé')) {
+          return { 
+            success: false, 
+            error: '❌ Non autorisé. Vérifiez vos permissions (Code: 401)' 
+          };
         }
-        if (error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
-          return { success: false, error: '❌ Permissions insuffisantes pour créer des utilisateurs.' };
+        if (statusCode === 403 || error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
+          return { 
+            success: false, 
+            error: '❌ Permissions insuffisantes pour créer des utilisateurs (Code: 403)' 
+          };
         }
-        if (error.message?.includes('VALIDATION_ERROR')) {
-          return { success: false, error: '❌ Données invalides: ' + (error.message || '') };
+        if (statusCode === 400 || error.message?.includes('VALIDATION_ERROR')) {
+          return { 
+            success: false, 
+            error: '❌ Données invalides: ' + (error.message || 'Vérifiez le formulaire') 
+          };
+        }
+        if (statusCode === 500) {
+          return { 
+            success: false, 
+            error: '❌ Erreur serveur (Code: 500). Contactez le support.' 
+          };
         }
         
-        return { success: false, error: error.message || "Erreur lors de la création de l'utilisateur" };
+        return { 
+          success: false, 
+          error: `❌ Erreur (Code: ${statusCode || 'inconnu'}): ${error.message || "Erreur lors de la création"}` 
+        };
       }
 
       // Vérifier si la réponse contient une erreur
-      if (data?.error || data?.code === 'EMAIL_EXISTS' || data?.code) {
+      if (data?.error || data?.code) {
         console.error('[useAgentActions] Erreur dans data:', data);
         
         if (data.code === 'EMAIL_EXISTS') {
@@ -153,6 +204,9 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         }
         if (data.code === 'INSUFFICIENT_PERMISSIONS') {
           return { success: false, error: '❌ Vous n\'avez pas les permissions pour créer des utilisateurs.' };
+        }
+        if (data.code === 'CANNOT_CREATE_AGENTS') {
+          return { success: false, error: '❌ Vous ne pouvez pas créer de sous-agents.' };
         }
         
         return { success: false, error: data.error || `Erreur (${data.code})` };
