@@ -9,7 +9,7 @@ export interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'admin' | 'ceo' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client';
+  role: 'admin' | 'ceo' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'agent';
   avatar_url?: string;
   phone?: string;
   is_active: boolean;

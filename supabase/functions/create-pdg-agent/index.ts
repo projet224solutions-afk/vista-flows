@@ -82,6 +82,7 @@ serve(async (req) => {
       permissions, 
       commission_rate, 
       can_create_sub_agent,
+      type_agent,
       password 
     } = await req.json();
 
@@ -186,6 +187,7 @@ serve(async (req) => {
         permissions: permissions || [],
         commission_rate: commission_rate || 10,
         can_create_sub_agent: can_create_sub_agent || false,
+        type_agent: type_agent || null,
         is_active: true,
       })
       .select()

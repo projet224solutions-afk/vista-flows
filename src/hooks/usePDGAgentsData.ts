@@ -14,6 +14,7 @@ export interface Agent {
   permissions: string[];
   commission_rate: number;
   can_create_sub_agent: boolean;
+  type_agent?: string;
   access_token?: string;
   created_at: string;
   updated_at?: string;
