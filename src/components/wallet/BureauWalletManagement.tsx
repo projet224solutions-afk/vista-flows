@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BureauTransferMoney from "./BureauTransferMoney";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -342,11 +343,32 @@ export default function BureauWalletManagement({
       </Card>
 
       {/* Tabs pour les actions */}
-      <Tabs defaultValue="deposit" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="transfer" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="transfer">
+            <Send className="w-4 h-4 mr-2" />
+            Transférer
+          </TabsTrigger>
           <TabsTrigger value="deposit">
             <ArrowDownCircle className="w-4 h-4 mr-2" />
             Dépôt
+          </TabsTrigger>
+          <TabsTrigger value="withdraw">
+            <ArrowUpCircle className="w-4 h-4 mr-2" />
+            Retrait
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transfer" className="space-y-4">
+          <BureauTransferMoney
+            bureauWalletId={wallet.id}
+            currentBalance={wallet.balance}
+            currency={wallet.currency}
+            onTransferComplete={loadWallet}
+          />
+        </TabsContent>
+
+        <TabsContent value="deposit" className="space-y-4">
           </TabsTrigger>
           <TabsTrigger value="withdraw">
             <ArrowUpCircle className="w-4 h-4 mr-2" />
