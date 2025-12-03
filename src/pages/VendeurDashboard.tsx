@@ -430,38 +430,48 @@ export default function VendeurDashboard() {
           {/* Contenu principal */}
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
-              {/* Routes accessibles au plan gratuit */}
+              {/* Route par défaut */}
               <Route index element={<DashboardHome />} />
-              <Route path="/" element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
+              
+              {/* Vue d'ensemble */}
+              <Route path="analytics" element={<VendorAnalyticsDashboard />} />
+              
+              {/* Ventes & Commerce */}
+              <Route path="pos" element={<POSSystemWrapper />} />
               <Route path="products" element={<ProductManagement />} />
               <Route path="orders" element={<OrderManagement />} />
-              <Route path="wallet" element={<UniversalWalletTransactions />} />
-              <Route path="quotes-invoices" element={<VendorQuotesInvoices />} />
-              <Route path="contracts" element={<VendorContracts />} />
-              <Route path="settings" element={<SettingsPage />} />
-              
-              {/* Routes premium protégées */}
-              <Route path="analytics" element={<VendorAnalyticsDashboard />} />
-              <Route path="pos" element={<POSSystemWrapper />} />
               <Route path="inventory" element={<InventoryManagement />} />
               <Route path="warehouse" element={<WarehouseManagement />} />
               <Route path="suppliers" element={<SupplierManagement />} />
-              <Route path="clients" element={<ClientManagement />} />
+              
+              {/* Clients & Marketing */}
               <Route path="agents" element={<AgentManagement />} />
+              <Route path="clients" element={<ClientManagement />} />
               <Route path="prospects" element={<ProspectManagement />} />
               <Route path="marketing" element={<MarketingManagement />} />
+              
+              {/* Finances */}
+              <Route path="wallet" element={<UniversalWalletTransactions />} />
+              <Route path="quotes-invoices" element={<VendorQuotesInvoices />} />
               <Route path="payments" element={<PaymentManagement />} />
               <Route path="payment-links" element={<PaymentLinksManager />} />
               <Route path="expenses" element={<ExpenseManagementDashboard />} />
               <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
+              <Route path="contracts" element={<VendorContracts />} />
               <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
+              
+              {/* Support & Outils */}
               <Route path="delivery" element={<VendorDeliveriesPanel />} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
-              <Route path="offline-sync" element={<OfflineSyncPanel />} />
+              
+              {/* Configuration */}
               <Route path="settings" element={<VendorSettings />} />
+              
+              {/* Autres */}
+              <Route path="offline-sync" element={<OfflineSyncPanel />} />
             </Routes>
           </main>
         </div>
