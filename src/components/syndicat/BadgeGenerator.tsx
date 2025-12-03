@@ -58,6 +58,10 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
     photo: undefined
   });
 
+  const handleFieldChange = (field: keyof BadgeData, value: string) => {
+    setBadgeData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -183,7 +187,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   <Label>Prénom(s)</Label>
                   <Input
                     value={badgeData.firstName}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => handleFieldChange('firstName', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -191,7 +195,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   <Label>Nom</Label>
                   <Input
                     value={badgeData.name}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -201,17 +205,17 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                 <Label>Fonction</Label>
                 <Input
                   value={badgeData.title}
-                  onChange={(e) => setBadgeData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) => handleFieldChange('title', e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>ID N°</Label>
+                  <Label>ID N° / Matricule</Label>
                   <Input
                     value={badgeData.idNumber}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, idNumber: e.target.value }))}
+                    onChange={(e) => handleFieldChange('idNumber', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -220,7 +224,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   <Input
                     type="text"
                     value={badgeData.joinedDate}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, joinedDate: e.target.value }))}
+                    onChange={(e) => handleFieldChange('joinedDate', e.target.value)}
                     disabled={!isEditing}
                     placeholder="JJ/MM/AAAA"
                   />
@@ -233,7 +237,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   <Input
                     type="text"
                     value={badgeData.dob}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, dob: e.target.value }))}
+                    onChange={(e) => handleFieldChange('dob', e.target.value)}
                     disabled={!isEditing}
                     placeholder="JJ/MM/AAAA"
                   />
@@ -243,7 +247,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   <Input
                     type="text"
                     value={badgeData.expireDate}
-                    onChange={(e) => setBadgeData(prev => ({ ...prev, expireDate: e.target.value }))}
+                    onChange={(e) => handleFieldChange('expireDate', e.target.value)}
                     disabled={!isEditing}
                     placeholder="JJ/MM/AAAA"
                   />
@@ -274,8 +278,8 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                 {/* Header avec dégradé bleu */}
                 <div className="relative h-[230px] bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#2563eb] px-8 pt-6">
                   <div className="absolute top-6 right-8 text-white">
-                    <div className="text-4xl font-bold tracking-wider">224SOLUTIONS</div>
-                    <div className="text-xs text-right mt-1">{bureauName}</div>
+                    <div className="text-3xl font-bold tracking-widest">TAXI-MOTO DE {bureauName.toUpperCase()}</div>
+                    <div className="text-xs text-right mt-1 opacity-80">224solutions</div>
                   </div>
                 </div>
 
