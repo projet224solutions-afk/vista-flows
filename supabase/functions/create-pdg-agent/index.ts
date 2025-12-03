@@ -22,9 +22,10 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    const supabaseAdmin = createClient(
+    // Client pour vérifier l'utilisateur (utilise le token de l'utilisateur)
+    const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
           headers: {
@@ -33,8 +34,20 @@ serve(async (req) => {
         }
       }
     );
+
+    // Client admin pour les opérations privilégiées (utilise le service role key)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
     
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser(token);
 
     if (authError || !user) {
       console.error('❌ Auth error:', authError);
