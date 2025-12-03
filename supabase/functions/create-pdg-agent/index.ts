@@ -247,12 +247,48 @@ serve(async (req) => {
       console.warn('⚠️ Erreur création wallet général:', walletError);
     }
 
+    // Récupérer le nom du PDG pour l'email
+    const { data: pdgData } = await supabaseAdmin
+      .from('pdg_management')
+      .select('name')
+      .eq('id', pdgProfile.id)
+      .single();
+
+    // Envoyer l'email d'invitation à l'agent
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const invitationLink = `${supabaseUrl.replace('.supabase.co', '.lovableproject.com')}/agent/login`;
+    
+    try {
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-agent-invitation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+        },
+        body: JSON.stringify({
+          agentName: name,
+          agentEmail: email,
+          invitationLink: invitationLink,
+          pdgName: pdgData?.name || 'PDG 224Solutions',
+          password: password // On envoie le mot de passe temporaire
+        })
+      });
+
+      if (emailResponse.ok) {
+        console.log('✅ Email d\'invitation envoyé à:', email);
+      } else {
+        console.warn('⚠️ Erreur envoi email invitation:', await emailResponse.text());
+      }
+    } catch (emailError) {
+      console.warn('⚠️ Erreur envoi email:', emailError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         agent,
         wallet,
-        message: 'Agent créé avec succès'
+        message: 'Agent créé avec succès. Un email d\'invitation a été envoyé.'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
