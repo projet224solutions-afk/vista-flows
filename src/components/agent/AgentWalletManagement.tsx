@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import AgentWalletDiagnosticTool from "./AgentWalletDiagnosticTool";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -308,43 +309,48 @@ export default function AgentWalletManagement({
 
   if (!wallet) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center py-8 space-y-4">
-            <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
-            <div>
-              <p className="text-lg font-semibold mb-2">
-                Impossible de charger ou créer le wallet de l'agent
-              </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Agent ID: <code className="bg-muted px-2 py-1 rounded">{agentId}</code>
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Vérifiez la console pour plus de détails (F12)
-              </p>
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 space-y-4">
+              <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+              <div>
+                <p className="text-lg font-semibold mb-2">
+                  Impossible de charger ou créer le wallet de l'agent
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Agent ID: <code className="bg-muted px-2 py-1 rounded">{agentId}</code>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Vérifiez la console pour plus de détails (F12)
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 max-w-xs mx-auto">
+                <Button onClick={loadWallet} variant="default">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Réessayer
+                </Button>
+                <Button 
+                  onClick={() => {
+                    console.log('🔍 Informations de débogage:');
+                    console.log('- Agent ID:', agentId);
+                    console.log('- Agent Code:', agentCode);
+                    console.log('- Wallet:', wallet);
+                    toast.info('Informations affichées dans la console');
+                  }} 
+                  variant="outline"
+                  size="sm"
+                >
+                  Afficher les infos de débogage
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-col gap-2 max-w-xs mx-auto">
-              <Button onClick={loadWallet} variant="default">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer
-              </Button>
-              <Button 
-                onClick={() => {
-                  console.log('🔍 Informations de débogage:');
-                  console.log('- Agent ID:', agentId);
-                  console.log('- Agent Code:', agentCode);
-                  console.log('- Wallet:', wallet);
-                  toast.info('Informations affichées dans la console');
-                }} 
-                variant="outline"
-                size="sm"
-              >
-                Afficher les infos de débogage
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        {/* Outil de diagnostic */}
+        <AgentWalletDiagnosticTool agentId={agentId} />
+      </div>
     );
   }
 
