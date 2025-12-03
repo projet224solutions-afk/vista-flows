@@ -86,6 +86,10 @@ serve(async (req) => {
       password 
     } = await req.json();
 
+    // Valider type_agent - seules ces valeurs sont acceptées par la base de données
+    const validTypeAgents = ['principal', 'sous_agent', 'agent_regional', 'agent_local'];
+    const sanitizedTypeAgent = validTypeAgents.includes(type_agent) ? type_agent : 'principal';
+
     if (!password || password.length < 8) {
       return new Response(
         JSON.stringify({ 
@@ -187,7 +191,7 @@ serve(async (req) => {
         permissions: permissions || [],
         commission_rate: commission_rate || 10,
         can_create_sub_agent: can_create_sub_agent || false,
-        type_agent: type_agent || null,
+        type_agent: sanitizedTypeAgent,
         is_active: true,
       })
       .select()
