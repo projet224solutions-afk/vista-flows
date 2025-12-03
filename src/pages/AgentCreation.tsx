@@ -3,7 +3,7 @@
  * Formulaire complet avec génération auto d'ID
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { AutoIdGenerator } from '@/components/shared/AutoIdGenerator';
+import { generateUniqueId } from '@/lib/autoIdGenerator';
 
 export default function AgentCreation() {
   const navigate = useNavigate();
@@ -33,11 +34,22 @@ export default function AgentCreation() {
     email: '',
     password: '',
     confirmPassword: '',
-    agentCode: '', // Optionnel - auto-généré si vide
+    agentCode: '', // Auto-généré au format AGT00001
     typeAgent: 'principal',
     canCreateSubAgent: true,
     mfaEnabled: true // MFA activé par défaut
   });
+
+  // Générer automatiquement l'ID au chargement
+  useEffect(() => {
+    const generateCode = async () => {
+      if (!formData.agentCode) {
+        const newCode = await generateUniqueId('agent');
+        setFormData(prev => ({ ...prev, agentCode: newCode }));
+      }
+    };
+    generateCode();
+  }, []);
 
   // Vérification des permissions
   if (!profile || (profile.role !== 'admin' && !['agent', 'admin'].includes(profile.role as string))) {
@@ -133,7 +145,14 @@ export default function AgentCreation() {
         throw new Error('Impossible de déterminer votre organisation');
       }
 
-      // Créer l'agent
+      // S'assurer qu'on a un code agent valide au format AGT00001
+      let finalAgentCode = formData.agentCode;
+      if (!finalAgentCode || !/^AGT\d{5}$/.test(finalAgentCode)) {
+        finalAgentCode = await generateUniqueId('agent');
+        console.log('🔄 Code agent regénéré:', finalAgentCode);
+      }
+
+      // Créer l'agent avec le code correct
       const { data: newAgent, error: insertError } = await supabase
         .from('agents_management')
         .insert({
@@ -142,7 +161,7 @@ export default function AgentCreation() {
           email: formData.email,
           phone: formData.phone,
           password_hash: passwordHash,
-          agent_code: formData.agentCode || undefined, // Auto-généré par trigger si vide
+          agent_code: finalAgentCode, // Code au format AGT00001
           type_agent: formData.typeAgent,
           can_create_sub_agent: formData.canCreateSubAgent,
           role: 'agent',
