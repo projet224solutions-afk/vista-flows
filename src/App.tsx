@@ -110,6 +110,7 @@ function App() {
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/test" element={<TestPage />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
               <Route path="/universal-login" element={<UniversalLoginPage />} />
