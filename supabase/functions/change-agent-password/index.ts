@@ -53,9 +53,9 @@ serve(async (req) => {
 
     console.log(`[CHANGE-AGENT-PASSWORD] Tentative changement mot de passe agent: ${agent_id}`);
 
-    // Récupérer l'agent
+    // Récupérer l'agent depuis agents_management
     const { data: agent, error: agentError } = await supabase
-      .from('agents')
+      .from('agents_management')
       .select('id, email, password_hash, is_active')
       .eq('id', agent_id)
       .maybeSingle();
@@ -101,7 +101,7 @@ serve(async (req) => {
 
     // Mettre à jour dans la base de données
     const { error: updateError } = await supabase
-      .from('agents')
+      .from('agents_management')
       .update({
         password_hash: newPasswordHash,
         updated_at: new Date().toISOString()

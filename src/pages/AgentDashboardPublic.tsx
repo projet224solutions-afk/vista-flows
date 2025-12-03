@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit, Copy, Check, ExternalLink, Wallet } from 'lucide-react';
+import { UserCheck, Users, TrendingUp, DollarSign, Mail, Phone, Shield, AlertCircle, BarChart3, Package, UserCog, Plus, Edit, Copy, Check, ExternalLink, Wallet, Key, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -83,6 +83,13 @@ export default function AgentDashboardPublic() {
   const [loadingSubAgents, setLoadingSubAgents] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pdgUserId, setPdgUserId] = useState<string | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [subAgentFormData, setSubAgentFormData] = useState({
     name: '',
     email: '',
@@ -343,6 +350,61 @@ export default function AgentDashboardPublic() {
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!agent) {
+      toast.error('Agent non trouvé');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('change-agent-password', {
+        body: {
+          agent_id: agent.id,
+          current_password: passwordData.currentPassword,
+          new_password: passwordData.newPassword
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Mot de passe modifié avec succès');
+        setIsPasswordDialogOpen(false);
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        toast.error(data?.error || 'Erreur lors du changement de mot de passe');
+      }
+    } catch (error) {
+      console.error('Erreur changement mot de passe:', error);
+      toast.error('Erreur lors du changement de mot de passe');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleLogout = () => {
+    // Effacer les données de session
+    sessionStorage.removeItem('agent_session');
+    sessionStorage.removeItem('agent_user');
+    localStorage.removeItem('agent_token');
+    toast.success('Déconnexion réussie');
+    navigate('/login');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -395,6 +457,89 @@ export default function AgentDashboardPublic() {
               <Badge variant={agent.is_active ? "default" : "secondary"} className="text-sm">
                 {agent.is_active ? '✅ Actif' : '⏸️ Inactif'}
               </Badge>
+              
+              {/* Bouton Changer mot de passe */}
+              <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Key className="w-4 h-4" />
+                    <span className="hidden sm:inline">Mot de passe</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Key className="w-5 h-5 text-blue-600" />
+                      Changer le mot de passe
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Mot de passe actuel *</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        required
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        placeholder="Entrez votre mot de passe actuel"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">Nouveau mot de passe *</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        required
+                        minLength={8}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        placeholder="Minimum 8 caractères"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        required
+                        minLength={8}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        placeholder="Confirmez le nouveau mot de passe"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsPasswordDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Annuler
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isChangingPassword}
+                        className="flex-1"
+                      >
+                        {isChangingPassword ? 'Modification...' : 'Modifier'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {/* Bouton Déconnexion */}
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Déconnexion</span>
+              </Button>
             </div>
           </div>
         </div>
