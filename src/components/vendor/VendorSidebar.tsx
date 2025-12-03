@@ -56,6 +56,7 @@ export function VendorSidebar() {
   };
 
   const handleNavigation = (path: string) => {
+    console.log('🔄 Navigation vers:', `/vendeur/${path}`);
     navigate(`/vendeur/${path}`);
   };
 
@@ -239,11 +240,22 @@ export function VendorSidebar() {
                   
                   return (
                     <SidebarMenuItem key={item.path}>
-                      <button
-                        type="button"
-                        onClick={() => handleNavigation(item.path)}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleNavigation(item.path);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleNavigation(item.path);
+                          }
+                        }}
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors cursor-pointer",
+                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors cursor-pointer select-none",
                           "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                           active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
                           collapsed && "justify-center"
@@ -256,14 +268,14 @@ export function VendorSidebar() {
                             {badgeValue && (
                               <Badge 
                                 variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                className="text-xs px-2 py-0 ml-auto"
+                                className="text-xs px-2 py-0 ml-auto pointer-events-none"
                               >
                                 {badgeValue}
                               </Badge>
                             )}
                           </>
                         )}
-                      </button>
+                      </div>
                     </SidebarMenuItem>
                   );
                 })}
