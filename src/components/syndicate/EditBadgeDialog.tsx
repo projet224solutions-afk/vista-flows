@@ -19,7 +19,9 @@ interface EditBadgeDialogProps {
     member_name: string;
     driver_photo_url?: string;
     driver_date_of_birth?: string;
+    vest_number?: string;
   };
+  bureauName?: string;
   onUpdate: () => void;
 }
 
@@ -27,8 +29,17 @@ export default function EditBadgeDialog({
   open,
   onOpenChange,
   vehicleData,
+  bureauName = 'VOTRE BUREAU',
   onUpdate
 }: EditBadgeDialogProps) {
+  // Séparer le nom complet en prénom et nom
+  const nameParts = vehicleData.member_name.split(' ');
+  const initialFirstName = nameParts.slice(0, -1).join(' ') || '';
+  const initialLastName = nameParts.slice(-1)[0] || '';
+
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
+  const [vestNumber, setVestNumber] = useState(vehicleData.vest_number || '');
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
   const [uploading, setUploading] = useState(false);
@@ -89,9 +100,14 @@ export default function EditBadgeDialog({
       setSaving(true);
       toast.info('Enregistrement des modifications...');
 
+      // Combiner prénom et nom
+      const fullName = `${firstName} ${lastName}`.trim();
+
       const { error } = await supabase
         .from('vehicles')
         .update({
+          member_name: fullName,
+          vest_number: vestNumber || null,
           driver_photo_url: photoUrl || null,
           driver_date_of_birth: dateOfBirth || null,
         })
@@ -118,7 +134,12 @@ export default function EditBadgeDialog({
       <DialogContent className="max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Modifier les informations du badge</span>
+            <div className="flex flex-col">
+              <span>Modifier les informations du badge</span>
+              <span className="text-sm font-normal text-muted-foreground mt-1">
+                TAXI-MOTO DE {bureauName.toUpperCase()}
+              </span>
+            </div>
             <Button 
               variant="ghost" 
               size="icon"
@@ -130,6 +151,42 @@ export default function EditBadgeDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Nom et Prénom */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="first-name">Prénom(s)</Label>
+              <Input
+                id="first-name"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Prénom du conducteur"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="last-name">Nom</Label>
+              <Input
+                id="last-name"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Nom du conducteur"
+              />
+            </div>
+          </div>
+
+          {/* Matricule / N° Gilet */}
+          <div className="space-y-2">
+            <Label htmlFor="vest-number">Matricule / N° Gilet</Label>
+            <Input
+              id="vest-number"
+              type="text"
+              value={vestNumber}
+              onChange={(e) => setVestNumber(e.target.value)}
+              placeholder="Ex: 001, A-123, etc."
+            />
+          </div>
+
           {/* Photo du conducteur */}
           <div className="space-y-2">
             <Label>Photo du conducteur</Label>

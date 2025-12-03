@@ -81,6 +81,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [bureauName, setBureauName] = useState<string>('VOTRE BUREAU');
 
     // Formulaire d'ajout de véhicule
     const [formData, setFormData] = useState({
@@ -109,9 +110,33 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [members, setMembers] = useState<{ id: string; name: string; member_id: string }[]>([]);
 
     useEffect(() => {
+        loadBureauInfo();
         loadVehicles();
         loadMembers();
     }, [bureauId]);
+
+    /**
+     * Charge les informations du bureau
+     */
+    const loadBureauInfo = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('syndicate_bureaus')
+                .select('commune, prefecture')
+                .eq('id', bureauId)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                // Utiliser commune si disponible, sinon préfecture
+                const name = data.commune || data.prefecture || 'VOTRE BUREAU';
+                setBureauName(name);
+            }
+        } catch (error) {
+            console.error('Erreur chargement bureau:', error);
+        }
+    };
 
     /**
      * Charge la liste des membres
@@ -1223,7 +1248,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         driver_photo_url: (selectedVehicle as any).driver_photo_url,
                         driver_date_of_birth: (selectedVehicle as any).driver_date_of_birth,
                     }}
-                    bureauName="224SOLUTIONS TAXI-MOTO"
+                    bureauName={bureauName}
                 />
             )}
 
@@ -1237,7 +1262,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         member_name: selectedVehicleForEdit.member_name,
                         driver_photo_url: (selectedVehicleForEdit as any).driver_photo_url,
                         driver_date_of_birth: (selectedVehicleForEdit as any).driver_date_of_birth,
+                        vest_number: (selectedVehicleForEdit as any).vest_number,
                     }}
+                    bureauName={bureauName}
                     onUpdate={loadVehicles}
                 />
             )}
