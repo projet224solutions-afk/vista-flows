@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
@@ -68,6 +68,10 @@ export default function PDGAgentsManagement() {
   const [loadingSubAgentsMap, setLoadingSubAgentsMap] = useState<Record<string, boolean>>({});
   const [permissionsDialogAgent, setPermissionsDialogAgent] = useState<Agent | null>(null);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [resetPasswordAgent, setResetPasswordAgent] = useState<Agent | null>(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -185,6 +189,48 @@ export default function PDGAgentsManagement() {
   const handleManagePermissions = (agent: Agent) => {
     setPermissionsDialogAgent(agent);
     setIsPermissionsDialogOpen(true);
+  };
+
+  const handleResetPassword = (agent: Agent) => {
+    setResetPasswordAgent(agent);
+    setNewPassword('');
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!resetPasswordAgent || !newPassword) return;
+    
+    if (newPassword.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    try {
+      setIsResettingPassword(true);
+      
+      const { data, error } = await supabase.functions.invoke('reset-agent-password', {
+        body: {
+          agent_id: resetPasswordAgent.id,
+          new_password: newPassword
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success(`Mot de passe de ${resetPasswordAgent.name} réinitialisé avec succès`);
+        setIsResetPasswordDialogOpen(false);
+        setResetPasswordAgent(null);
+        setNewPassword('');
+      } else {
+        throw new Error(data?.error || 'Erreur inconnue');
+      }
+    } catch (error: any) {
+      console.error('Erreur réinitialisation mot de passe:', error);
+      toast.error(error.message || 'Erreur lors de la réinitialisation');
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
@@ -865,6 +911,15 @@ export default function PDGAgentsManagement() {
                     <Edit className="w-4 h-4 mr-1" />
                     Modifier
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleResetPassword(agent)}
+                    className="flex-1"
+                  >
+                    <KeyRound className="w-4 h-4 mr-1" />
+                    Mot de passe
+                  </Button>
                   {agent.is_active ? (
                     <Button
                       size="sm"
@@ -917,6 +972,44 @@ export default function PDGAgentsManagement() {
         open={isPermissionsDialogOpen}
         onOpenChange={setIsPermissionsDialogOpen}
       />
+
+      {/* Dialogue de réinitialisation du mot de passe */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Définir un nouveau mot de passe pour <strong>{resetPasswordAgent?.name}</strong>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="new_password">Nouveau mot de passe (min. 8 caractères)</Label>
+              <Input
+                id="new_password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsResetPasswordDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleConfirmResetPassword}
+                disabled={isResettingPassword || newPassword.length < 8}
+              >
+                {isResettingPassword ? 'Réinitialisation...' : 'Réinitialiser'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
