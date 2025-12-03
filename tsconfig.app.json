@@ -28,8 +28,9 @@
   },
   "include": ["src"],
   "exclude": [
-    "supabase/functions/**/*",
+    "supabase/**/*",
     "EMERGENCY_INTEGRATION_GUIDE.tsx",
+    "EMERGENCY_INTEGRATION_GUIDE.md.txt",
     "node_modules",
     "dist"
   ]
