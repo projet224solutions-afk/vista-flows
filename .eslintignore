@@ -1,0 +1,22 @@
+# Ignorer les Edge Functions Deno
+supabase/functions/**/*
+supabase/**/*
+
+# Ignorer les anciens dossiers
+224Solutions/**/*
+backend/**/*
+
+# Ignorer les fichiers de build
+node_modules/
+dist/
+build/
+
+# Ignorer les fichiers de configuration
+*.config.js
+*.config.ts
+vite.config.ts
+
+# Ignorer les fichiers de documentation
+*.md
+*.md.txt
+docs/**/*

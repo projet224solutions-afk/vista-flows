@@ -30,11 +30,14 @@
   "exclude": [
     "supabase/**/*",
     "224Solutions/**/*",
-    "EMERGENCY_INTEGRATION_GUIDE.*",
+    "backend/**/*",
+    "EMERGENCY_INTEGRATION_GUIDE.tsx",
+    "EMERGENCY_INTEGRATION_GUIDE.md.txt",
     "*.md.txt",
     "node_modules",
     "dist",
-    "**/*.tsx.bak",
-    "**/*.ts.bak"
+    "public",
+    "scripts",
+    "docs"
   ]
 }

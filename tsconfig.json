@@ -16,9 +16,9 @@
   "exclude": [
     "supabase/**/*",
     "224Solutions/**/*",
+    "backend/**/*",
     "node_modules",
     "dist",
-    "**/*.md.txt",
-    "EMERGENCY_INTEGRATION_GUIDE.*"
+    "*.md.txt"
   ]
 }
