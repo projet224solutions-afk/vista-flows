@@ -429,7 +429,6 @@ export default function VendeurDashboard() {
               <Route path="wallet" element={<UniversalWalletTransactions />} />
               <Route path="quotes-invoices" element={<VendorQuotesInvoices />} />
               <Route path="contracts" element={<VendorContracts />} />
-              <Route path="subscription" element={<SubscriptionRenewalPage />} />
               <Route path="settings" element={<SettingsPage />} />
               
               {/* Routes premium protégées */}
