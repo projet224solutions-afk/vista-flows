@@ -51,6 +51,9 @@ import { VendorNotificationsPanel } from "@/components/vendor/VendorNotification
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
+import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
+import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
+import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
 import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
@@ -240,6 +243,9 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
+      {/* Banner d'abonnement */}
+      <VendorSubscriptionBanner />
+      
       {/* Analytics Dashboard intégré */}
       <VendorAnalyticsDashboard />
 
@@ -392,6 +398,7 @@ export default function VendeurDashboard() {
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} />
+                <VendorSubscriptionButton />
                 
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
@@ -405,6 +412,9 @@ export default function VendeurDashboard() {
               </div>
             </div>
           </header>
+
+          {/* Banner d'expiration d'abonnement */}
+          <SubscriptionExpiryBanner />
 
           {/* Error Banner - Affichage des erreurs persistantes */}
           {error && (
