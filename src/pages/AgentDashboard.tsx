@@ -2,36 +2,40 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, TrendingUp, DollarSign, UserPlus, LogOut, Wallet, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { UserIdDisplay } from '@/components/UserIdDisplay';
-import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
+import { AgentLayout } from '@/components/agent/AgentLayout';
+import { AgentOverviewContent } from '@/components/agent/AgentOverviewContent';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
-import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
+import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
-import { ErrorBanner } from '@/components/ui/ErrorBanner';
-import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
-import { AgentWalletDiagnostic } from '@/components/agent/AgentWalletDiagnostic';
 import { useAgentStats } from '@/hooks/useAgentStats';
-import { AutoIdDisplay } from '@/components/shared/AutoIdDisplay';
-import { AgentPermissionDiagnostic } from '@/components/agent/AgentPermissionDiagnostic';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { error, captureError, clearError } = useAgentErrorBoundary();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
   const [pdgUserId, setPdgUserId] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
-
-  // Version: 2025-12-01 avec onglet Paramètres
-  console.log('[AgentDashboard] Version: 2025-12-01 - Paramètres disponible');
+  
+  // Password change state
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -40,6 +44,12 @@ export default function AgentDashboard() {
     }
     loadAgentData();
   }, [user]);
+
+  useEffect(() => {
+    if (agent?.id) {
+      loadWalletBalance();
+    }
+  }, [agent?.id]);
 
   const loadAgentData = async () => {
     try {
@@ -51,15 +61,30 @@ export default function AgentDashboard() {
 
       if (error) throw error;
       setAgent(data);
-      
-      // Les agents utilisent leur propre wallet pour faire des transactions
       setPdgUserId(user?.id || null);
     } catch (error: any) {
       console.error('Erreur chargement agent:', error);
-      captureError('network', 'Erreur lors du chargement des données agent', error);
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadWalletBalance = async () => {
+    if (!agent?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('agent_wallets')
+        .select('balance')
+        .eq('agent_id', agent.id)
+        .single();
+      
+      if (!error && data) {
+        setWalletBalance(data.balance || 0);
+      }
+    } catch (error) {
+      console.error('Erreur chargement wallet:', error);
     }
   };
 
@@ -68,297 +93,269 @@ export default function AgentDashboard() {
     navigate('/');
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!agent) {
+      toast.error('Agent non trouvé');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('change-agent-password', {
+        body: {
+          agent_id: agent.id,
+          current_password: passwordData.currentPassword,
+          new_password: passwordData.newPassword
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Mot de passe modifié avec succès');
+        setIsPasswordDialogOpen(false);
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        toast.error(data?.error || 'Erreur lors du changement de mot de passe');
+      }
+    } catch (error) {
+      console.error('Erreur changement mot de passe:', error);
+      toast.error('Erreur lors du changement de mot de passe');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement de votre interface...</p>
+        </div>
       </div>
     );
   }
 
   if (!agent) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <Card className="w-full max-w-md border-0 shadow-xl">
           <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">
-              Aucun profil agent trouvé. Veuillez contacter votre PDG.
-            </p>
-            <Button onClick={handleSignOut} className="w-full mt-4">
-              Se déconnecter
-            </Button>
+            <div className="text-center">
+              <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Profil non trouvé</h2>
+              <p className="text-slate-600 mb-4">
+                Aucun profil agent associé à ce compte. Veuillez contacter votre PDG.
+              </p>
+              <Button onClick={handleSignOut} className="w-full">
+                Se déconnecter
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">Dashboard Agent</h1>
-                <UserIdDisplay layout="horizontal" showBadge={true} />
-                {agent.agent_code && (
-                  <AutoIdDisplay 
-                    id={agent.agent_code} 
-                    roleType="agent"
-                    showCopy={true}
-                    variant="outline"
-                  />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Bienvenue, {agent.name}
-              </p>
-              <div className="flex items-center gap-3">
-                {pdgUserId && (
-                  <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
-                )}
-              </div>
-            </div>
-            <Button onClick={handleSignOut} variant="outline">
-              <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 mb-4">
-            <p className="font-medium">{error.message}</p>
-            <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
-          </div>
-        )}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="wallet">
-              <Wallet className="w-4 h-4 mr-2" />
-              Wallet
-            </TabsTrigger>
-            <TabsTrigger value="sub-agents">Sous-Agents</TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="w-4 h-4 mr-2" />
-              Paramètres
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Diagnostic Wallet */}
-            <AgentWalletDiagnostic agentId={agent.id} agentCode={agent.agent_code} />
-            
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Utilisateurs Créés
-                  </CardTitle>
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalUsersCreated}</div>
-                  <p className="text-xs text-muted-foreground">
-                    +{stats.usersThisMonth} ce mois-ci
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Commissions
-                  </CardTitle>
-                  <DollarSign className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0 GNF</div>
-                  <p className="text-xs text-muted-foreground">
-                    Taux: {agent.commission_rate}%
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Performance
-                  </CardTitle>
-                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">100%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Objectif atteint
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Sous-Agents
-                  </CardTitle>
-                  <UserPlus className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.subAgentsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.activeSubAgentsCount} actif(s) | {agent.can_create_sub_agent ? 'Autorisé' : 'Non autorisé'}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Diagnostic Permissions */}
-            <AgentPermissionDiagnostic agentId={agent.id} />
-
-            {/* Agent Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Informations Agent</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p className="text-base">{agent.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Téléphone</p>
-                    <p className="text-base">{agent.phone || 'Non renseigné'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Code Agent</p>
-                    <AgentIdDisplay agentCode={agent.agent_code} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Permissions</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {agent.permissions?.map((perm: string) => (
-                        <span 
-                          key={perm}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
-                        >
-                          {perm}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <AgentOverviewContent 
+            agent={agent}
+            stats={stats}
+            walletBalance={walletBalance}
+          />
+        );
+      
+      case 'wallet':
+        return (
+          <AgentWalletManagement 
+            agentId={agent.id} 
+            agentCode={agent.agent_code}
+            showTransactions={true}
+          />
+        );
+      
+      case 'create-user':
+        return (
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+              <CardTitle className="text-slate-800">Créer un Nouvel Utilisateur</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
               <CreateUserForm 
                 agentId={agent.id} 
                 agentCode={agent.agent_code}
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
+                  toast.success('Utilisateur créé avec succès');
                 }}
               />
-              {agent.permissions?.includes('manage_users') && (
+            </CardContent>
+          </Card>
+        );
+      
+      case 'sub-agents':
+        return <AgentSubAgentsManagement agentId={agent.id} />;
+      
+      case 'reports':
+        return (
+          <ViewReportsSection 
+            agentId={agent.id}
+            agentData={{
+              total_users_created: stats.totalUsersCreated,
+              total_commissions_earned: 0,
+              commission_rate: agent.commission_rate
+            }}
+          />
+        );
+      
+      case 'settings':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Email Settings */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-slate-800">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                  Email
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <p className="text-sm text-slate-500 mb-1">Email actuel</p>
+                  <p className="font-medium text-slate-800">{agent.email}</p>
+                </div>
                 <Button 
-                  className="h-20" 
+                  className="w-full"
                   variant="outline"
-                  onClick={() => {
-                    toast.info('Utilisez l\'interface publique de l\'agent pour voir la liste complète des utilisateurs');
-                  }}
+                  onClick={() => toast.info('Fonctionnalité en cours de développement')}
                 >
-                  <Users className="w-6 h-6 mr-2" />
-                  Voir les Utilisateurs
+                  Modifier l'email
                 </Button>
-              )}
-            </div>
-          </TabsContent>
+              </CardContent>
+            </Card>
 
-          <TabsContent value="wallet" className="space-y-6">
-            {agent?.id ? (
-              <>
-                {console.log('🔍 AgentDashboard - Wallet Tab:', { agentId: agent.id, agentCode: agent.agent_code })}
-                <AgentWalletManagement 
-                  agentId={agent.id} 
-                  agentCode={agent.agent_code}
-                  showTransactions={true}
-                />
-              </>
-            ) : (
-              <Card>
-                <CardContent className="py-6">
-                  <div className="text-center text-muted-foreground">
-                    <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Impossible de charger le wallet</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sub-agents">
-            <AgentSubAgentsManagement agentId={agent.id} />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Modifier Email */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Modifier l'email</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">Email actuel</p>
-                      <p className="text-base font-medium">{agent.email}</p>
-                    </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => {
-                        toast.info('Fonctionnalité de modification d\'email en cours de développement');
-                      }}
-                    >
-                      Modifier l'email
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Modifier Mot de Passe */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Modifier le mot de passe</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Changez votre mot de passe pour sécuriser votre compte
-                    </p>
-                    <Button 
-                      className="w-full"
-                      onClick={() => navigate('/agent/change-password')}
-                    >
+            {/* Password Settings */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
+                <CardTitle className="flex items-center gap-2 text-slate-800">
+                  <Lock className="w-5 h-5 text-green-600" />
+                  Mot de passe
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <p className="text-sm text-slate-500">
+                  Changez votre mot de passe pour sécuriser votre compte agent.
+                </p>
+                <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      <Key className="w-4 h-4 mr-2" />
                       Changer le mot de passe
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Key className="w-5 h-5 text-blue-600" />
+                        Changer le mot de passe
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          required
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          placeholder="Entrez votre mot de passe actuel"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          required
+                          minLength={8}
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                          placeholder="Minimum 8 caractères"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          required
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                          placeholder="Confirmez le nouveau mot de passe"
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setIsPasswordDialogOpen(false)}
+                        >
+                          Annuler
+                        </Button>
+                        <Button
+                          type="submit"
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600"
+                          disabled={isChangingPassword}
+                        >
+                          {isChangingPassword ? 'Modification...' : 'Modifier'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          </div>
+        );
       
-      {/* Widget de communication flottant */}
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <AgentLayout
+        agent={agent}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        pdgUserId={pdgUserId}
+        onSignOut={handleSignOut}
+      >
+        {renderContent()}
+      </AgentLayout>
+      
       <CommunicationWidget position="bottom-right" showNotifications={true} />
-    </div>
+    </>
   );
 }
