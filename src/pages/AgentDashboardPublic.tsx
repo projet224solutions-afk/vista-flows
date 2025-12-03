@@ -46,7 +46,7 @@ import { ManageUsersSection } from '@/components/agent/ManageUsersSection';
 import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
-import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
+import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 interface Agent {
@@ -843,10 +843,14 @@ export default function AgentDashboardPublic() {
               </Card>
             </TabsContent>
 
-            {/* Onglet Wallet - Utilise le wallet universel du PDG */}
+            {/* Onglet Wallet - Utilise le wallet de l'agent */}
             <TabsContent value="wallet">
-              {pdgUserId ? (
-                <UniversalWalletTransactions userId={pdgUserId} />
+              {agent?.id ? (
+                <AgentWalletManagement 
+                  agentId={agent.id} 
+                  agentCode={agent.agent_code}
+                  showTransactions={true}
+                />
               ) : (
                 <Card>
                   <CardContent className="py-6">

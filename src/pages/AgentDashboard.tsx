@@ -11,7 +11,7 @@ import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
-import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
+import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
@@ -270,8 +270,12 @@ export default function AgentDashboard() {
           </TabsContent>
 
           <TabsContent value="wallet" className="space-y-6">
-            {pdgUserId ? (
-              <UniversalWalletTransactions userId={pdgUserId} />
+            {agent?.id ? (
+              <AgentWalletManagement 
+                agentId={agent.id} 
+                agentCode={agent.agent_code}
+                showTransactions={true}
+              />
             ) : (
               <Card>
                 <CardContent className="py-6">
