@@ -26,5 +26,11 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "supabase/functions/**/*",
+    "EMERGENCY_INTEGRATION_GUIDE.tsx",
+    "node_modules",
+    "dist"
+  ]
 }
