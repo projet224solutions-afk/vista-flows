@@ -47,14 +47,9 @@ import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
 import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
 // import PWAInstallButton from "@/components/pwa/PWAInstallButton"; // PWA désactivée
 import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
-import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
-import { SubscriptionRenewalPage } from "@/components/vendor/SubscriptionRenewalPage";
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
-import { VendorSubscriptionSimple } from "@/components/vendor/VendorSubscriptionSimple";
-import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
-import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
 import VendorContracts from "@/pages/VendorContracts";
@@ -245,9 +240,6 @@ export default function VendeurDashboard() {
   // Composant Dashboard principal
   const DashboardHome = () => (
     <div className="space-y-6">
-      {/* Bannière d'abonnement en haut */}
-      <VendorSubscriptionBanner />
-      
       {/* Analytics Dashboard intégré */}
       <VendorAnalyticsDashboard />
 
@@ -401,8 +393,6 @@ export default function VendeurDashboard() {
                 </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} />
                 
-                <VendorSubscriptionButton />
-                
                 <Button variant="ghost" size="icon">
                   <Bell className="w-5 h-5" />
                 </Button>
@@ -415,9 +405,6 @@ export default function VendeurDashboard() {
               </div>
             </div>
           </header>
-
-          {/* Subscription expiry banner */}
-          <SubscriptionExpiryBanner />
 
           {/* Error Banner - Affichage des erreurs persistantes */}
           {error && (
