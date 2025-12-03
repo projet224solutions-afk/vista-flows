@@ -89,28 +89,22 @@ export default function AgentWalletManagement({
       // Si le wallet n'existe pas, le créer automatiquement
       console.log('💡 Wallet non trouvé, création automatique pour agentId:', agentId);
       
+      // Utiliser la fonction RPC pour contourner les restrictions RLS
       const { data: newWallet, error: createError } = await supabase
-        .from('agent_wallets')
-        .insert({
-          agent_id: agentId,
-          balance: 0,
-          currency: 'GNF',
-          wallet_status: 'active'
-        })
-        .select('*')
-        .single();
+        .rpc('create_agent_wallet' as any, { p_agent_id: agentId }) as any;
 
       if (createError) {
-        console.error('❌ Erreur création wallet agent:', createError);
+        console.error('❌ Erreur création wallet agent via RPC:', createError);
         console.error('Détails:', JSON.stringify(createError, null, 2));
         toast.error(`Impossible de créer le wallet: ${createError.message}`);
         setLoading(false);
         return;
       }
 
-      if (newWallet) {
-        console.log('✅ Wallet agent créé avec succès:', newWallet);
-        setWallet(newWallet);
+      if (newWallet && Array.isArray(newWallet) && newWallet.length > 0) {
+        const createdWallet = newWallet[0];
+        console.log('✅ Wallet agent créé avec succès via RPC:', createdWallet);
+        setWallet(createdWallet);
         toast.success('Wallet créé avec succès !');
         setLoading(false);
         return;

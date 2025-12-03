@@ -102,41 +102,42 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
           details: null
         });
 
-        // Test 5: Essayer de créer le wallet
-        const { data: newWallet, error: createError } = await supabase
-          .from('agent_wallets')
-          .insert({
-            agent_id: agentId,
-            balance: 0,
-            currency: 'GNF',
-            wallet_status: 'active'
-          })
-          .select('*')
-          .single();
+        // Test 5: Essayer de créer le wallet via RPC
+        try {
+          const { data: newWallet, error: createError }: any = await supabase
+            .rpc('create_agent_wallet' as any, { p_agent_id: agentId });
 
-        if (createError) {
-          diagnosticResults.push({
-            test: 'Création du wallet',
-            status: 'error',
-            message: `Impossible de créer le wallet: ${createError.message}`,
-            details: createError
-          });
-
-          // Vérifier les permissions RLS
-          if (createError.code === '42501' || createError.message.includes('permission')) {
+          if (createError) {
             diagnosticResults.push({
-              test: 'Permissions RLS',
+              test: 'Création du wallet (RPC)',
               status: 'error',
-              message: 'Erreur de permissions - RLS bloque l\'insertion',
-              details: 'Vérifiez les politiques Row Level Security sur agent_wallets'
+              message: `Impossible de créer le wallet: ${createError.message}`,
+              details: createError
+            });
+
+            // Vérifier les permissions RLS
+            if (createError.code === '42501' || createError.message.includes('permission')) {
+              diagnosticResults.push({
+                test: 'Permissions RLS',
+                status: 'error',
+                message: 'Erreur de permissions - RLS bloque l\'insertion',
+                details: 'Vérifiez les politiques Row Level Security sur agent_wallets'
+              });
+            }
+          } else if (newWallet && Array.isArray(newWallet) && newWallet.length > 0) {
+            diagnosticResults.push({
+              test: 'Création du wallet (RPC)',
+              status: 'success',
+              message: `Wallet créé avec succès via RPC!`,
+              details: newWallet[0]
             });
           }
-        } else if (newWallet) {
+        } catch (rpcError: any) {
           diagnosticResults.push({
-            test: 'Création du wallet',
-            status: 'success',
-            message: `Wallet créé avec succès!`,
-            details: newWallet
+            test: 'Création du wallet (RPC)',
+            status: 'error',
+            message: `Erreur lors de l'appel RPC: ${rpcError.message}`,
+            details: rpcError
           });
         }
       }
