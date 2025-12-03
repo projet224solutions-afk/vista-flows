@@ -87,7 +87,7 @@ export default function AgentDashboardPublic() {
     name: '',
     email: '',
     phone: '',
-    agent_type: 'sales',
+    agent_type: '',
     password: '',
     commission_rate: 5,
     permissions: {
@@ -216,7 +216,7 @@ export default function AgentDashboardPublic() {
         name: '',
         email: '',
         phone: '',
-        agent_type: 'sales',
+        agent_type: '',
         password: '',
         commission_rate: 5,
         permissions: {
@@ -585,20 +585,13 @@ export default function AgentDashboardPublic() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="agent_type">Type d'Agent *</Label>
-                              <select
+                              <Label htmlFor="agent_type">Type d'Agent</Label>
+                              <Input
                                 id="agent_type"
-                                required
                                 value={subAgentFormData.agent_type}
                                 onChange={(e) => setSubAgentFormData({ ...subAgentFormData, agent_type: e.target.value })}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                              >
-                                <option value="sales">🛍️ Commercial (Ventes)</option>
-                                <option value="support">🎧 Support Client</option>
-                                <option value="manager">👔 Manager</option>
-                                <option value="delivery">🚚 Livraison</option>
-                                <option value="admin">⚙️ Administrateur</option>
-                              </select>
+                                placeholder="Ex: Agent Commercial, Sous-agent, Agent Régional..."
+                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="password">Mot de Passe *</Label>

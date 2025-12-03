@@ -210,7 +210,7 @@ serve(async (req) => {
         pdg_id: pdg_id,
         parent_agent_id: parent_agent_id,
         agent_code: agent_code,
-        agent_type: agent_type,
+        type_agent: agent_type || null,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
