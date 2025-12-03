@@ -65,6 +65,7 @@ interface Agent {
   can_create_sub_agent?: boolean;
   created_at: string;
   access_token?: string;
+  type_agent?: string;
 }
 
 interface SubAgent extends Agent {
@@ -442,8 +443,10 @@ export default function AgentDashboardPublic() {
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Interface Agent</h1>
-                  <p className="text-sm text-gray-600">224Solutions - Dashboard Agent</p>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Interface Agent {agent.type_agent && <span className="text-blue-600">- {agent.type_agent}</span>}
+                  </h1>
+                  <p className="text-sm text-gray-600">224Solutions - {agent.name}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
