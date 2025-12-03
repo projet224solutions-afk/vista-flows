@@ -110,21 +110,52 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
       }
 
       // Créer l'utilisateur via edge function
+      console.log('[useAgentActions] Appel edge function avec:', {
+        agentId,
+        agentCode,
+        role: userData.role,
+        email: userData.email
+      });
+
       const { data, error } = await supabase.functions.invoke('create-user-by-agent', {
         body: requestBody,
       });
 
+      // Log détaillé pour debug
+      console.log('[useAgentActions] Réponse edge function:', { data, error });
+
       if (error) {
-        console.error('[useAgentActions] Edge function error:', error);
+        console.error('[useAgentActions] Edge function error complet:', JSON.stringify(error, null, 2));
+        
+        // Erreurs spécifiques
+        if (error.message?.includes('UNAUTHORIZED') || error.message?.includes('Non autorisé')) {
+          return { success: false, error: '❌ Non autorisé. Vérifiez vos permissions.' };
+        }
+        if (error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
+          return { success: false, error: '❌ Permissions insuffisantes pour créer des utilisateurs.' };
+        }
+        if (error.message?.includes('VALIDATION_ERROR')) {
+          return { success: false, error: '❌ Données invalides: ' + (error.message || '') };
+        }
+        
         return { success: false, error: error.message || "Erreur lors de la création de l'utilisateur" };
       }
 
       // Vérifier si la réponse contient une erreur
-      if (data?.error || data?.code === 'EMAIL_EXISTS') {
+      if (data?.error || data?.code === 'EMAIL_EXISTS' || data?.code) {
+        console.error('[useAgentActions] Erreur dans data:', data);
+        
         if (data.code === 'EMAIL_EXISTS') {
           return { success: false, error: '⚠️ Cet email est déjà utilisé par un autre utilisateur' };
         }
-        return { success: false, error: data.error || "Erreur lors de la création de l'utilisateur" };
+        if (data.code === 'UNAUTHORIZED' || data.code === 'UNAUTHENTICATED') {
+          return { success: false, error: '❌ Session expirée. Veuillez vous reconnecter.' };
+        }
+        if (data.code === 'INSUFFICIENT_PERMISSIONS') {
+          return { success: false, error: '❌ Vous n\'avez pas les permissions pour créer des utilisateurs.' };
+        }
+        
+        return { success: false, error: data.error || `Erreur (${data.code})` };
       }
 
       toast.success(`Utilisateur ${userData.role} créé avec succès!`);

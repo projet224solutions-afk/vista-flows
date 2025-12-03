@@ -19,6 +19,7 @@ import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
 import { AgentWalletDiagnostic } from '@/components/agent/AgentWalletDiagnostic';
 import { useAgentStats } from '@/hooks/useAgentStats';
 import { AutoIdDisplay } from '@/components/shared/AutoIdDisplay';
+import { AgentPermissionDiagnostic } from '@/components/agent/AgentPermissionDiagnostic';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -216,6 +217,9 @@ export default function AgentDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Diagnostic Permissions */}
+            <AgentPermissionDiagnostic agentId={agent.id} />
 
             {/* Agent Info */}
             <Card>
