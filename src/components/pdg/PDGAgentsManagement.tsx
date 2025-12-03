@@ -73,6 +73,7 @@ export default function PDGAgentsManagement() {
     email: '',
     phone: '',
     password: '',
+    type_agent: '',
     commission_rate: 10,
     permissions: {
       create_users: true,
@@ -126,6 +127,7 @@ export default function PDGAgentsManagement() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
+          type_agent: formData.type_agent,
           permissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
@@ -138,6 +140,7 @@ export default function PDGAgentsManagement() {
         email: '',
         phone: '',
         password: '',
+        type_agent: '',
         commission_rate: 10,
         permissions: {
           create_users: true,
@@ -165,6 +168,7 @@ export default function PDGAgentsManagement() {
       email: agent.email,
       phone: agent.phone || '',
       password: '',
+      type_agent: agent.type_agent || '',
       commission_rate: agent.commission_rate,
       permissions: {
         create_users: agent.permissions.includes('create_users'),
@@ -347,6 +351,7 @@ export default function PDGAgentsManagement() {
                 email: '',
                 phone: '',
                 password: '',
+                type_agent: '',
                 commission_rate: 10,
                 permissions: {
                   create_users: true,
@@ -417,6 +422,16 @@ export default function PDGAgentsManagement() {
                   />
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="type_agent">Type d'agent</Label>
+                <Input
+                  id="type_agent"
+                  value={formData.type_agent}
+                  onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
+                  placeholder="Ex: Agent Principal, Sous-agent, Agent Commercial..."
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="commission">Taux Commission (%)</Label>
