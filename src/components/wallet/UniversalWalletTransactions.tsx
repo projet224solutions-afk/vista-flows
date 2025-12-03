@@ -200,28 +200,28 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         if (walletData) {
           setWallet(walletData);
         } else {
-          // Initialiser le wallet si nécessaire
-          const { data: newWallet, error: insertError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: effectiveUserId,
-              balance: 0,
-              currency: 'GNF',
-              wallet_status: 'active'
-            })
-            .select('id, balance, currency')
-            .single();
+          // Initialiser le wallet via RPC sécurisée
+          const { data: newWallet, error: rpcError } = await supabase
+            .rpc('rpc_create_user_wallet', {
+              p_user_id: effectiveUserId
+            });
 
-          if (insertError) {
-            console.error('❌ Erreur création wallet:', insertError);
+          if (rpcError) {
+            console.error('❌ Erreur création wallet:', rpcError);
             toast.error('Impossible de créer le wallet');
             setLoading(false);
             return;
           }
 
-          if (newWallet) {
-            setWallet(newWallet);
+          if (newWallet && newWallet.length > 0) {
+            const walletInfo = {
+              id: newWallet[0].id,
+              balance: newWallet[0].balance,
+              currency: newWallet[0].currency
+            };
+            setWallet(walletInfo);
             console.log('✅ Wallet créé avec succès');
+            toast.success('Wallet créé avec succès');
           }
         }
       }
