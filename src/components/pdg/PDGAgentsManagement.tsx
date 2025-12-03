@@ -72,6 +72,7 @@ export default function PDGAgentsManagement() {
     name: '',
     email: '',
     phone: '',
+    password: '',
     commission_rate: 10,
     permissions: {
       create_users: true,
@@ -93,6 +94,11 @@ export default function PDGAgentsManagement() {
 
     if (!formData.name || !formData.email || !formData.phone) {
       toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    if (!editingAgent && (!formData.password || formData.password.length < 8)) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -119,6 +125,7 @@ export default function PDGAgentsManagement() {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          password: formData.password,
           permissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
@@ -130,6 +137,7 @@ export default function PDGAgentsManagement() {
         name: '',
         email: '',
         phone: '',
+        password: '',
         commission_rate: 10,
         permissions: {
           create_users: true,
@@ -156,6 +164,7 @@ export default function PDGAgentsManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone || '',
+      password: '',
       commission_rate: agent.commission_rate,
       permissions: {
         create_users: agent.permissions.includes('create_users'),
@@ -337,6 +346,7 @@ export default function PDGAgentsManagement() {
                 name: '',
                 email: '',
                 phone: '',
+                password: '',
                 commission_rate: 10,
                 permissions: {
                   create_users: true,
@@ -393,6 +403,20 @@ export default function PDGAgentsManagement() {
                   placeholder="Ex: agent@224solutions.com"
                 />
               </div>
+
+              {!editingAgent && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="commission">Taux Commission (%)</Label>

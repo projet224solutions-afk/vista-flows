@@ -6,6 +6,7 @@ interface CreateAgentData {
   name: string;
   email: string;
   phone: string;
+  password: string;
   permissions: string[];
   commission_rate?: number;
   can_create_sub_agent?: boolean;
@@ -75,6 +76,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
           name: agentData.name,
           email: agentData.email,
           phone: agentData.phone,
+          password: agentData.password,
           permissions: agentData.permissions,
           commission_rate: agentData.commission_rate || 10,
           can_create_sub_agent: agentData.can_create_sub_agent || false,
