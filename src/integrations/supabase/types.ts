@@ -10611,6 +10611,18 @@ export type Database = {
         }
         Returns: number
       }
+      create_agent_wallet: {
+        Args: { p_agent_id: string }
+        Returns: {
+          agent_id: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          wallet_status: string
+        }[]
+      }
       create_communication_notification: {
         Args: {
           p_body: string

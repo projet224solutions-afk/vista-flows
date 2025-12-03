@@ -114,14 +114,14 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       }
 
       // Rechercher dans users (clients)
-      const { data: users } = await supabase
-        .from('users')
+      const { data: users } = await (supabase
+        .from('profiles' as any)
         .select('id, email')
         .ilike('email', `%${searchQuery}%`)
-        .limit(10);
+        .limit(10) as any);
 
       if (users) {
-        for (const user of users) {
+        for (const user of users as any[]) {
           const { data: userWallet } = await supabase
             .from('wallets')
             .select('id')
@@ -131,8 +131,8 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
           if (userWallet) {
             results.push({
               id: user.id,
-              name: user.email.split('@')[0],
-              email: user.email,
+              name: user.email?.split('@')[0] || 'Utilisateur',
+              email: user.email || '',
               type: 'user',
               wallet_id: userWallet.id
             });
