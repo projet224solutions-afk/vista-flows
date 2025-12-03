@@ -10,6 +10,7 @@ interface InvitationEmailRequest {
   agentEmail: string;
   invitationLink: string;
   pdgName: string;
+  password?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -18,7 +19,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { agentName, agentEmail, invitationLink, pdgName }: InvitationEmailRequest = await req.json();
+    const { agentName, agentEmail, invitationLink, pdgName, password }: InvitationEmailRequest = await req.json();
 
     console.log('📧 Sending agent invitation email to:', agentEmail);
 
@@ -38,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "224Solutions <onboarding@resend.dev>",
         to: [agentEmail],
-        subject: "Invitation Agent - 224Solutions",
+        subject: "🎉 Votre compte Agent 224Solutions est prêt !",
         html: `
           <!DOCTYPE html>
           <html>
@@ -86,6 +87,21 @@ const handler = async (req: Request): Promise<Response> => {
                   border-left: 4px solid #667eea;
                   margin: 20px 0;
                 }
+                .credentials-box {
+                  background: #e8f5e9;
+                  padding: 20px;
+                  border-radius: 8px;
+                  border: 2px solid #4caf50;
+                  margin: 20px 0;
+                }
+                .credential-item {
+                  background: white;
+                  padding: 10px 15px;
+                  border-radius: 5px;
+                  margin: 10px 0;
+                  font-family: monospace;
+                  font-size: 14px;
+                }
               </style>
             </head>
             <body>
@@ -94,8 +110,19 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="content">
                 <h2>Bonjour ${agentName},</h2>
-                <p>${pdgName} vous a invité à rejoindre l'équipe d'agents 224Solutions !</p>
+                <p>${pdgName} vous a créé un compte agent sur la plateforme 224Solutions !</p>
                 
+                <div class="credentials-box">
+                  <h3>🔐 Vos identifiants de connexion</h3>
+                  <p><strong>Email:</strong></p>
+                  <div class="credential-item">${agentEmail}</div>
+                  ${password ? `
+                  <p><strong>Mot de passe temporaire:</strong></p>
+                  <div class="credential-item">${password}</div>
+                  <p style="color: #f44336; font-size: 12px;">⚠️ Nous vous recommandons de changer ce mot de passe après votre première connexion.</p>
+                  ` : ''}
+                </div>
+
                 <div class="info-box">
                   <h3>📋 Votre Mission</h3>
                   <p>En tant qu'agent, vous aurez accès à:</p>
@@ -108,11 +135,11 @@ const handler = async (req: Request): Promise<Response> => {
                   </ul>
                 </div>
 
-                <p><strong>Pour activer votre compte agent, cliquez sur le bouton ci-dessous:</strong></p>
+                <p><strong>Connectez-vous maintenant à votre espace agent:</strong></p>
                 
                 <div style="text-align: center;">
                   <a href="${invitationLink}" class="button">
-                    🚀 Activer mon compte agent
+                    🚀 Accéder à mon espace agent
                   </a>
                 </div>
 
@@ -122,11 +149,11 @@ const handler = async (req: Request): Promise<Response> => {
                 </p>
 
                 <div class="info-box" style="margin-top: 30px;">
-                  <p><strong>⚠️ Important:</strong></p>
+                  <p><strong>💡 Conseils de sécurité:</strong></p>
                   <ul>
-                    <li>Ce lien expire dans 7 jours</li>
-                    <li>Utilisez ce lien pour configurer votre compte</li>
-                    <li>Vos identifiants seront créés lors de l'activation</li>
+                    <li>Changez votre mot de passe après la première connexion</li>
+                    <li>Ne partagez jamais vos identifiants</li>
+                    <li>Contactez le support en cas de problème</li>
                   </ul>
                 </div>
               </div>
