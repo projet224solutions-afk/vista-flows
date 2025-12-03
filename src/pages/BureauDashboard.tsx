@@ -31,6 +31,7 @@ import { BureauIdDisplay } from '@/components/syndicat/BureauIdDisplay';
 import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useBureauAuth } from '@/hooks/useBureauAuth';
+import { AutoIdDisplay } from '@/components/shared/AutoIdDisplay';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -202,7 +203,15 @@ export default function BureauDashboard() {
           <h1 className="text-3xl font-bold">Interface Bureau Syndicat</h1>
           <p className="text-muted-foreground">224Solutions - Dashboard Bureau Syndicat</p>
           <div className="flex items-center gap-3 mt-2">
-            <p className="text-sm text-muted-foreground">{bureau.bureau_code} - {bureau.prefecture} - {bureau.commune}</p>
+            <p className="text-sm text-muted-foreground">{bureau.prefecture} - {bureau.commune}</p>
+            {bureau.bureau_code && (
+              <AutoIdDisplay 
+                id={bureau.bureau_code} 
+                roleType="bureau"
+                showCopy={true}
+                variant="secondary"
+              />
+            )}
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">

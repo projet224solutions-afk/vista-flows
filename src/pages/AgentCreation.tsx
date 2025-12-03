@@ -15,6 +15,7 @@ import { UserPlus, Upload, Loader2, Save, ArrowLeft, AlertCircle } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { AutoIdGenerator } from '@/components/shared/AutoIdGenerator';
 
 export default function AgentCreation() {
   const navigate = useNavigate();
@@ -305,18 +306,25 @@ export default function AgentCreation() {
                 </div>
               </div>
 
-              {/* Code agent (optionnel) */}
+              {/* Code agent avec génération automatique */}
               <div className="space-y-2">
-                <Label htmlFor="agentCode">Code Agent (optionnel)</Label>
-                <Input
-                  id="agentCode"
-                  placeholder="Laissez vide pour génération automatique"
-                  value={formData.agentCode}
-                  onChange={(e) => setFormData({ ...formData, agentCode: e.target.value })}
-                  disabled={loading}
+                <Label htmlFor="agentCode">Code Agent</Label>
+                <AutoIdGenerator 
+                  roleType="agent"
+                  onIdGenerated={(id) => setFormData({ ...formData, agentCode: id })}
+                  showCard={false}
                 />
+                {formData.agentCode && (
+                  <Input
+                    id="agentCode"
+                    value={formData.agentCode}
+                    onChange={(e) => setFormData({ ...formData, agentCode: e.target.value })}
+                    disabled={loading}
+                    className="mt-2"
+                  />
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Si vide, un code sera généré automatiquement (ex: AGT12345)
+                  Un code unique sera généré automatiquement (format: AGT00001)
                 </p>
               </div>
 

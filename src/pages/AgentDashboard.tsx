@@ -18,6 +18,7 @@ import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useAgentErrorBoundary } from '@/hooks/useAgentErrorBoundary';
 import { AgentWalletDiagnostic } from '@/components/agent/AgentWalletDiagnostic';
 import { useAgentStats } from '@/hooks/useAgentStats';
+import { AutoIdDisplay } from '@/components/shared/AutoIdDisplay';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -101,6 +102,14 @@ export default function AgentDashboard() {
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold">Dashboard Agent</h1>
                 <UserIdDisplay layout="horizontal" showBadge={true} />
+                {agent.agent_code && (
+                  <AutoIdDisplay 
+                    id={agent.agent_code} 
+                    roleType="agent"
+                    showCopy={true}
+                    variant="outline"
+                  />
+                )}
               </div>
               <p className="text-sm text-muted-foreground mb-2">
                 Bienvenue, {agent.name}
