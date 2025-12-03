@@ -18,12 +18,12 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useVendorBadges } from "@/hooks/useVendorBadges";
+import { cn } from "@/lib/utils";
 
 export function VendorSidebar() {
   const { state } = useSidebar();
@@ -239,23 +239,31 @@ export function VendorSidebar() {
                   
                   return (
                     <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton 
-                        isActive={active}
-                        tooltip={item.title}
+                      <button
+                        type="button"
                         onClick={() => handleNavigation(item.path)}
-                        className="cursor-pointer"
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span className="flex-1">{item.title}</span>
-                        {badgeValue && (
-                          <Badge 
-                            variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                            className="text-xs px-2 py-0 ml-auto"
-                          >
-                            {badgeValue}
-                          </Badge>
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors cursor-pointer",
+                          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                          collapsed && "justify-center"
                         )}
-                      </SidebarMenuButton>
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 truncate">{item.title}</span>
+                            {badgeValue && (
+                              <Badge 
+                                variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                                className="text-xs px-2 py-0 ml-auto"
+                              >
+                                {badgeValue}
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </button>
                     </SidebarMenuItem>
                   );
                 })}
