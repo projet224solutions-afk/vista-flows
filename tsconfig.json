@@ -12,5 +12,13 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false
-  }
+  },
+  "exclude": [
+    "supabase/**/*",
+    "224Solutions/**/*",
+    "node_modules",
+    "dist",
+    "**/*.md.txt",
+    "EMERGENCY_INTEGRATION_GUIDE.*"
+  ]
 }

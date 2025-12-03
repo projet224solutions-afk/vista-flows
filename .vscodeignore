@@ -1,0 +1,11 @@
+# VS Code - Ignorer les Edge Functions Deno
+supabase/functions/**/*
+224Solutions/**/*
+EMERGENCY_INTEGRATION_GUIDE.*
+*.md.txt
+*.bak
+.git
+node_modules
+dist
+.netlify
+bun.lockb
