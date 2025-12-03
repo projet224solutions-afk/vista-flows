@@ -37,6 +37,14 @@ export default function AgentDashboard() {
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // Email change state
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailData, setEmailData] = useState({
+    newEmail: '',
+    currentPassword: ''
+  });
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');
@@ -136,6 +144,56 @@ export default function AgentDashboard() {
       toast.error('Erreur lors du changement de mot de passe');
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!agent) {
+      toast.error('Agent non trouvé');
+      return;
+    }
+
+    if (!emailData.newEmail || !emailData.currentPassword) {
+      toast.error('Veuillez remplir tous les champs');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailData.newEmail)) {
+      toast.error('Format d\'email invalide');
+      return;
+    }
+
+    setIsChangingEmail(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('change-agent-email', {
+        body: {
+          agent_id: agent.id,
+          new_email: emailData.newEmail,
+          current_password: emailData.currentPassword
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Email modifié avec succès');
+        setIsEmailDialogOpen(false);
+        setEmailData({ newEmail: '', currentPassword: '' });
+        // Reload agent data to reflect new email
+        loadAgentData();
+      } else {
+        toast.error(data?.error || 'Erreur lors du changement d\'email');
+      }
+    } catch (error) {
+      console.error('Erreur changement email:', error);
+      toast.error('Erreur lors du changement d\'email');
+    } finally {
+      setIsChangingEmail(false);
     }
   };
 
@@ -242,13 +300,63 @@ export default function AgentDashboard() {
                   <p className="text-sm text-slate-500 mb-1">Email actuel</p>
                   <p className="font-medium text-slate-800">{agent.email}</p>
                 </div>
-                <Button 
-                  className="w-full"
-                  variant="outline"
-                  onClick={() => toast.info('Fonctionnalité en cours de développement')}
-                >
-                  Modifier l'email
-                </Button>
+                <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full" variant="outline">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Modifier l'email
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Mail className="w-5 h-5 text-blue-600" />
+                        Modifier l'email
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleChangeEmail} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newEmail">Nouvel email</Label>
+                        <Input
+                          id="newEmail"
+                          type="email"
+                          required
+                          value={emailData.newEmail}
+                          onChange={(e) => setEmailData({ ...emailData, newEmail: e.target.value })}
+                          placeholder="nouveau@email.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="emailCurrentPassword">Mot de passe actuel</Label>
+                        <Input
+                          id="emailCurrentPassword"
+                          type="password"
+                          required
+                          value={emailData.currentPassword}
+                          onChange={(e) => setEmailData({ ...emailData, currentPassword: e.target.value })}
+                          placeholder="Pour confirmer votre identité"
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setIsEmailDialogOpen(false)}
+                        >
+                          Annuler
+                        </Button>
+                        <Button
+                          type="submit"
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600"
+                          disabled={isChangingEmail}
+                        >
+                          {isChangingEmail ? 'Modification...' : 'Modifier'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
 
