@@ -31,10 +31,10 @@ interface AgentOverviewProfessionalProps {
   stats: {
     totalUsersCreated: number;
     totalCommissions: number;
-    activeUsersCount: number;
-    monthlyGrowth: number;
-    pendingTransactions?: number;
-    completedTransactions?: number;
+    usersThisMonth?: number;
+    subAgentsCount?: number;
+    activeSubAgentsCount?: number;
+    performance?: number;
   };
   walletBalance: number;
   onNavigate: (tab: string) => void;
@@ -78,38 +78,38 @@ export function AgentOverviewProfessional({
     {
       label: 'Solde Total',
       value: formatCurrency(walletBalance),
-      change: stats.monthlyGrowth,
+      change: 0,
       icon: <Wallet className="w-6 h-6" />,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
-      trend: stats.monthlyGrowth > 0 ? 'up' : stats.monthlyGrowth < 0 ? 'down' : 'neutral'
+      trend: 'neutral'
     },
     {
       label: 'Utilisateurs Créés',
       value: formatNumber(stats.totalUsersCreated),
-      change: 12.5,
+      change: stats.usersThisMonth || 0,
       icon: <Users className="w-6 h-6" />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
-      trend: 'up'
+      trend: (stats.usersThisMonth || 0) > 0 ? 'up' : 'neutral'
     },
     {
       label: 'Commissions Totales',
       value: formatCurrency(stats.totalCommissions),
-      change: 8.2,
+      change: 0,
       icon: <DollarSign className="w-6 h-6" />,
       color: 'text-violet-600',
       bgColor: 'bg-violet-50',
-      trend: 'up'
+      trend: 'neutral'
     },
     {
-      label: 'Utilisateurs Actifs',
-      value: formatNumber(stats.activeUsersCount),
-      change: 5.4,
+      label: 'Sous-Agents',
+      value: formatNumber(stats.subAgentsCount || 0),
+      change: stats.activeSubAgentsCount || 0,
       icon: <Activity className="w-6 h-6" />,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
-      trend: 'up'
+      trend: (stats.activeSubAgentsCount || 0) > 0 ? 'up' : 'neutral'
     }
   ];
 
@@ -413,11 +413,11 @@ export function AgentOverviewProfessional({
                 </span>
               </div>
               <span className="text-sm font-bold text-slate-900">
-                {((stats.activeUsersCount / Math.max(stats.totalUsersCreated, 1)) * 100).toFixed(0)}%
+                {stats.performance || 100}%
               </span>
             </div>
             <Progress 
-              value={(stats.activeUsersCount / Math.max(stats.totalUsersCreated, 1)) * 100} 
+              value={stats.performance || 100} 
               className="h-2" 
             />
           </div>

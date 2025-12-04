@@ -102,14 +102,7 @@ export function AIProductCreator() {
           vendor_id: vendor.id,
           name: productName,
           description: analysis.enrichedDescription.commercial,
-          original_description: productDescription,
-          price_gnf: price ? parseFloat(price) : null,
-          category: analysis.category,
-          tags: analysis.autoTags,
-          ai_characteristics: analysis.characteristics,
-          ai_generated_description: analysis.enrichedDescription.commercial,
-          ai_key_points: analysis.enrichedDescription.keyPoints,
-          ai_technical_specs: analysis.enrichedDescription.technicalSpecs,
+          price: price ? parseFloat(price) : 0,
           is_active: true,
           stock_quantity: 1
         })

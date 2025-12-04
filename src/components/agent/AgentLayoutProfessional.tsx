@@ -44,7 +44,6 @@ interface AgentLayoutProfessionalProps {
   stats?: {
     totalUsersCreated: number;
     totalCommissions: number;
-    monthlyGrowth: number;
   };
   onSignOut: () => void;
 }
@@ -224,9 +223,9 @@ export function AgentLayoutProfessional({
               <p className="text-xl font-bold text-slate-900 dark:text-white">
                 {formatCurrency(walletBalance)}
               </p>
-              {stats && (
+              {stats && stats.totalUsersCreated > 0 && (
                 <p className="text-xs text-emerald-600 mt-1">
-                  +{stats.monthlyGrowth}% ce mois
+                  {stats.totalUsersCreated} utilisateurs créés
                 </p>
               )}
             </div>

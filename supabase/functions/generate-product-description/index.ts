@@ -124,50 +124,16 @@ IMPORTANT: Rédige en français, style professionnel e-commerce, sans fautes, pe
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("❌ Erreur génération description:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erreur lors de la génération de la description";
     
     return new Response(
-      JSON.stringify({ error: error.message || "Erreur lors de la génération de la description" }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
-    );
-  }
-});
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Crédits IA épuisés. Veuillez recharger votre compte." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      const errorText = await response.text();
-      console.error("Erreur AI gateway:", response.status, errorText);
-      throw new Error("Erreur lors de la génération de la description");
-    }
-
-    const data = await response.json();
-    const description = data.choices?.[0]?.message?.content;
-
-    if (!description) {
-      throw new Error("Aucune description générée");
-    }
-
-    return new Response(
-      JSON.stringify({ description: description.trim() }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("Erreur dans generate-product-description:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Une erreur inattendue s'est produite" 
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
