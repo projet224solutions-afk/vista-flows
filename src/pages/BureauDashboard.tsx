@@ -23,6 +23,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 import { useBureauAuth } from '@/hooks/useBureauAuth';
 import { BureauLayout } from '@/components/bureau/BureauLayout';
 import { BureauOverviewContent } from '@/components/bureau/BureauOverviewContent';
+import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -198,6 +199,13 @@ export default function BureauDashboard() {
               alertsCount: unreadAlerts
             }}
             walletBalance={walletBalance}
+          />
+        );
+
+      case 'sos':
+        return (
+          <BureauSyndicatSOSDashboard 
+            bureauId={bureau.id}
           />
         );
 

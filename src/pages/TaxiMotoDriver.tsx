@@ -61,6 +61,7 @@ import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
+import { TaxiMotoSOSButton } from "@/components/taxi-moto/TaxiMotoSOSButton";
 
 
 // API_BASE supprimé - Utilisation directe de Supabase
@@ -1190,6 +1191,16 @@ export default function TaxiMotoDriver() {
 
                         <div className="flex items-center gap-2">
                             <DriverSubscriptionButton />
+                            
+                            {/* Bouton SOS d'urgence */}
+                            {isOnline && driverId && profile && (
+                                <TaxiMotoSOSButton
+                                    taxiId={driverId}
+                                    driverName={`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Conducteur'}
+                                    driverPhone={profile.phone || ''}
+                                    variant="compact"
+                                />
+                            )}
                             
                             <div className="hidden lg:block">
                                 <WalletBalanceWidget className="max-w-[260px]" showTransferButton={false} />

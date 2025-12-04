@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   AlertCircle,
+  AlertTriangle,
   RefreshCw,
   MessageSquare,
   MapPin
@@ -66,6 +67,11 @@ export function BureauLayout({
       id: 'overview',
       label: 'Tableau de bord',
       icon: <LayoutDashboard className="w-5 h-5" />
+    },
+    {
+      id: 'sos',
+      label: 'Alertes SOS',
+      icon: <AlertTriangle className="w-5 h-5 text-red-500" />
     },
     {
       id: 'motos',
