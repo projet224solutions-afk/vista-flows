@@ -25,23 +25,71 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
   const [trackingPoints, setTrackingPoints] = useState<Array<{ lat: number; lng: number; ts: string }>>([]);
   const [loading, setLoading] = useState(false);
 
+  // Charger les courses en attente au démarrage
+  const loadPendingRides = async () => {
+    try {
+      console.log('[TaxiMotoDriverDashboard] Loading pending rides...');
+      const { data, error } = await supabase
+        .from('taxi_trips')
+        .select('*')
+        .eq('status', 'requested')
+        .order('requested_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('[TaxiMotoDriverDashboard] Error loading pending rides:', error);
+        return;
+      }
+
+      console.log('[TaxiMotoDriverDashboard] Loaded pending rides:', data?.length || 0);
+      
+      if (data && data.length > 0) {
+        setIncoming(data.map(ride => ({
+          id: ride.id,
+          ride_code: ride.ride_code,
+          pickup_lat: ride.pickup_lat,
+          pickup_lng: ride.pickup_lng,
+          dropoff_lat: ride.dropoff_lat,
+          dropoff_lng: ride.dropoff_lng,
+          price_total: ride.price_total,
+          distance_km: ride.distance_km,
+          status: ride.status
+        })));
+      }
+    } catch (err) {
+      console.error('[TaxiMotoDriverDashboard] Error:', err);
+    }
+  };
+
   useEffect(() => {
+    // Charger les courses existantes
+    loadPendingRides();
+
+    // S'abonner aux nouvelles courses en temps réel
     const unsubNew = TaxiMotoRealtimeService.subscribeToNewRides((ride) => {
-      setIncoming((prev) => [{
-        id: ride.id,
-        ride_code: ride.ride_code,
-        pickup_lat: ride.pickup_lat,
-        pickup_lng: ride.pickup_lng,
-        dropoff_lat: ride.dropoff_lat,
-        dropoff_lng: ride.dropoff_lng,
-        price_total: ride.price_total,
-        distance_km: ride.distance_km,
-        status: ride.status
-      }, ...prev]);
+      console.log('[TaxiMotoDriverDashboard] New ride received:', ride.id);
+      setIncoming((prev) => {
+        // Éviter les doublons
+        if (prev.some(r => r.id === ride.id)) {
+          return prev;
+        }
+        return [{
+          id: ride.id,
+          ride_code: ride.ride_code,
+          pickup_lat: ride.pickup_lat,
+          pickup_lng: ride.pickup_lng,
+          dropoff_lat: ride.dropoff_lat,
+          dropoff_lng: ride.dropoff_lng,
+          price_total: ride.price_total,
+          distance_km: ride.distance_km,
+          status: ride.status
+        }, ...prev];
+      });
     });
 
     return () => {
-      // Cleanup si nécessaire
+      console.log('[TaxiMotoDriverDashboard] Cleanup subscriptions');
+      unsubNew();
     };
   }, []);
 
