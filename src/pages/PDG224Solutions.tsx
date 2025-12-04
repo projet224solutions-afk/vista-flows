@@ -49,6 +49,11 @@ export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const envOk = Boolean(import.meta.env.VITE_SUPABASE_URL && (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY));
+  
+  // Déterminer le rôle de manière cohérente (user_metadata ou profile) - DOIT être défini avant useAdminUnifiedData
+  const userRole = user?.user_metadata?.role || profile?.role;
+  const isAdmin = userRole === 'admin';
+  
   const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
     // Persistance courte dans la session du navigateur
     return sessionStorage.getItem('mfa_verified_admin') === 'true';
@@ -86,10 +91,6 @@ export default function PDG224Solutions() {
     }
     setActiveTab(tab);
   }, [navigate]);
-
-  // Déterminer le rôle de manière cohérente (user_metadata ou profile)
-  const userRole = user?.user_metadata?.role || profile?.role;
-  const isAdmin = userRole === 'admin';
 
   useEffect(() => {
     // Si pas d'utilisateur et pas en cours de chargement, rediriger vers auth
