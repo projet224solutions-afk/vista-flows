@@ -51,16 +51,18 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
     setSearching(true);
     try {
       const results: UserSearchResult[] = [];
-      const query = searchQuery.trim().toUpperCase();
+      const query = searchQuery.trim();
+      const queryUpper = query.toUpperCase();
 
-      // 1. Rechercher par ID personnalisé (CLT..., VND..., BST..., etc.)
+      // 1. Recherche directe par ID exact (CLT..., VND..., BST..., AGT..., etc.)
+      // Recherche dans user_ids
       const { data: userIds } = await supabase
         .from('user_ids')
         .select('user_id, custom_id')
-        .ilike('custom_id', `%${query}%`)
-        .limit(10);
+        .or(`custom_id.ilike.${queryUpper}%,custom_id.ilike.%${queryUpper}%`)
+        .limit(15);
 
-      if (userIds) {
+      if (userIds && userIds.length > 0) {
         for (const uid of userIds) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -84,6 +86,33 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
                 wallet_id: userWallet.id
               });
             }
+          }
+        }
+      }
+
+      // 2. Recherche directe par agent_code (AGT...)
+      const { data: agentsByCode } = await supabase
+        .from('agents_management')
+        .select('id, name, email, agent_code')
+        .ilike('agent_code', `${queryUpper}%`)
+        .limit(10);
+
+      if (agentsByCode && agentsByCode.length > 0) {
+        for (const agent of agentsByCode) {
+          const { data: agentWallet } = await supabase
+            .from('agent_wallets')
+            .select('id')
+            .eq('agent_id', agent.id)
+            .maybeSingle();
+
+          if (agentWallet && !results.find(r => r.wallet_id === agentWallet.id)) {
+            results.push({
+              id: agent.id,
+              name: `${agent.agent_code} - ${agent.name}`,
+              email: agent.email,
+              type: 'agent',
+              wallet_id: agentWallet.id
+            });
           }
         }
       }
@@ -425,7 +454,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           <Label>Rechercher un destinataire</Label>
           <div className="flex gap-2">
             <Input
-              placeholder="Nom, code bureau, téléphone..."
+              placeholder="ID (CLT..., VND..., BST..., AGT...) ou nom, téléphone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
