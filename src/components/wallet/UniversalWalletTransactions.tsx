@@ -140,90 +140,44 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
 
     try {
-      // Si c'est un agent, charger depuis agent_wallets
-      if (isAgentUser && agentInfoData) {
-        const { data: agentWalletData, error: agentWalletError } = await supabase
-          .from('agent_wallets')
-          .select('id, balance, currency')
-          .eq('agent_id', agentInfoData.id)
-          .maybeSingle();
+      // IMPORTANT: Tous les utilisateurs (y compris les agents) utilisent la table 'wallets'
+      // car c'est là que les transferts sont crédités via process_wallet_transaction
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
 
-        if (agentWalletError && agentWalletError.code !== 'PGRST116') {
-          throw agentWalletError;
-        }
+      if (walletError && walletError.code !== 'PGRST116') {
+        throw walletError;
+      }
 
-        if (agentWalletData) {
-          setWallet(agentWalletData);
-        } else {
-          // Initialiser le wallet agent si nécessaire
-          const { data: agentData } = await supabase
-            .from('agents_management')
-            .select('id')
-            .eq('user_id', effectiveUserId)
-            .single();
-
-          if (agentData) {
-            const { error: insertError } = await supabase
-              .from('agent_wallets')
-              .insert({
-                agent_id: agentData.id,
-                balance: 0,
-                currency: 'GNF',
-                wallet_status: 'active'
-              });
-
-            if (!insertError) {
-              const { data: newWallet } = await supabase
-                .from('agent_wallets')
-                .select('id, balance, currency')
-                .eq('agent_id', agentData.id)
-                .single();
-
-              if (newWallet) {
-                setWallet(newWallet);
-              }
-            }
-          }
-        }
+      if (walletData) {
+        setWallet(walletData);
       } else {
-        // Utilisateur normal - charger depuis wallets
-        const { data: walletData, error: walletError } = await supabase
+        // Créer le wallet directement dans la table wallets
+        const { data: newWallet, error: insertError } = await supabase
           .from('wallets')
+          .insert({
+            user_id: effectiveUserId,
+            balance: 0,
+            currency: 'GNF',
+            wallet_status: 'active'
+          })
           .select('id, balance, currency')
-          .eq('user_id', effectiveUserId)
-          .maybeSingle();
+          .single();
 
-        if (walletError && walletError.code !== 'PGRST116') {
-          throw walletError;
+        if (insertError) {
+          console.error('❌ Erreur création wallet:', insertError);
+          toast.error('Impossible de créer le wallet');
+          setLoading(false);
+          return;
         }
 
-        if (walletData) {
-          setWallet(walletData);
-        } else {
-          // Créer le wallet directement dans la table
-          const { data: newWallet, error: insertError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: effectiveUserId,
-              balance: 0,
-              currency: 'GNF',
-              wallet_status: 'active'
-            })
-            .select('id, balance, currency')
-            .single();
-
-          if (insertError) {
-            console.error('❌ Erreur création wallet:', insertError);
-            toast.error('Impossible de créer le wallet');
-            setLoading(false);
-            return;
-          }
-
-          if (newWallet) {
-            setWallet(newWallet);
-            console.log('✅ Wallet créé avec succès');
-            toast.success('Wallet créé avec succès');
-          }
+        if (newWallet) {
+          setWallet(newWallet);
+          console.log('✅ Wallet créé avec succès');
+          toast.success('Wallet créé avec succès');
         }
       }
       
@@ -234,6 +188,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       setLoading(false);
     }
   };
+
 
   const loadTransactions = async () => {
     if (!effectiveUserId) return;
