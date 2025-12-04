@@ -239,43 +239,85 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     if (!effectiveUserId) return;
 
     try {
-      const { data, error } = await supabase
+      // Charger depuis enhanced_transactions
+      const { data: enhancedData, error: enhancedError } = await supabase
         .from('enhanced_transactions')
         .select('*')
         .or(`sender_id.eq.${effectiveUserId},receiver_id.eq.${effectiveUserId}`)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (enhancedError) console.error('Erreur enhanced_transactions:', enhancedError);
+
+      // Charger aussi depuis wallet_transactions (pour les transferts bureau)
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallet_transactions')
+        .select('*')
+        .or(`sender_wallet_id.in.(select id from wallets where user_id='${effectiveUserId}'),receiver_wallet_id.in.(select id from wallets where user_id='${effectiveUserId}')`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (walletError) console.error('Erreur wallet_transactions:', walletError);
+
+      // Combiner les deux sources de données
+      const allTransactions: any[] = [];
       
-      // Enrichir les transactions avec les custom_id
-      if (data) {
-        const enrichedTransactions = await Promise.all(
-          data.map(async (tx) => {
-            // Récupérer le custom_id de l'expéditeur
-            const { data: senderData } = await supabase
-              .from('user_ids')
-              .select('custom_id')
-              .eq('user_id', tx.sender_id)
-              .maybeSingle();
+      // Ajouter les enhanced_transactions
+      if (enhancedData) {
+        for (const tx of enhancedData) {
+          const { data: senderData } = await supabase
+            .from('user_ids')
+            .select('custom_id')
+            .eq('user_id', tx.sender_id)
+            .maybeSingle();
 
-            // Récupérer le custom_id du destinataire
-            const { data: receiverData } = await supabase
-              .from('user_ids')
-              .select('custom_id')
-              .eq('user_id', tx.receiver_id)
-              .maybeSingle();
+          const { data: receiverData } = await supabase
+            .from('user_ids')
+            .select('custom_id')
+            .eq('user_id', tx.receiver_id)
+            .maybeSingle();
 
-            return {
-              ...tx,
-              sender_custom_id: senderData?.custom_id || tx.sender_id,
-              receiver_custom_id: receiverData?.custom_id || tx.receiver_id
-            };
-          })
-        );
-        
-        setTransactions(enrichedTransactions);
+          allTransactions.push({
+            ...tx,
+            sender_custom_id: senderData?.custom_id || tx.sender_id,
+            receiver_custom_id: receiverData?.custom_id || tx.receiver_id,
+            source: 'enhanced'
+          });
+        }
       }
+
+      // Ajouter les wallet_transactions (transferts bureau)
+      if (walletData) {
+        for (const tx of walletData) {
+          // Vérifier si c'est un transfert bureau via les metadata
+          const metadata = tx.metadata as any;
+          const isBureauTransfer = metadata?.recipient_type === 'bureau';
+          
+          allTransactions.push({
+            id: tx.id,
+            sender_id: effectiveUserId,
+            receiver_id: metadata?.bureau_id || null,
+            amount: tx.amount,
+            fee: tx.fee,
+            net_amount: tx.net_amount,
+            status: tx.status,
+            description: tx.description,
+            created_at: tx.created_at,
+            method: tx.transaction_type,
+            sender_custom_id: 'Vous',
+            receiver_custom_id: isBureauTransfer ? metadata?.bureau_code : 'Inconnu',
+            source: 'wallet',
+            is_bureau_transfer: isBureauTransfer
+          });
+        }
+      }
+
+      // Trier par date décroissante et limiter
+      allTransactions.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setTransactions(allTransactions.slice(0, 15));
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
     }
@@ -758,11 +800,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           })
           .eq('id', bureauWalletId);
 
-        if (updateBureauError) throw updateBureauError;
+        if (updateBureauError) {
+          console.error('❌ Erreur update bureau_wallets:', updateBureauError);
+          throw new Error('Impossible de créditer le portefeuille du bureau: ' + updateBureauError.message);
+        }
+
+        console.log('✅ Bureau wallet crédité avec succès');
 
         // 4. Enregistrer la transaction dans wallet_transactions
         const transactionId = `TRX-BUREAU-${Date.now()}`;
-        await supabase.from('wallet_transactions').insert({
+        const { error: txError } = await supabase.from('wallet_transactions').insert({
           transaction_id: transactionId,
           transaction_type: 'transfer',
           amount: transferPreview.total_debit,
@@ -782,15 +829,25 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           }
         });
 
+        if (txError) {
+          console.error('❌ Erreur insert wallet_transactions:', txError);
+          // Ne pas throw car le transfert est déjà fait
+        }
+
         // 5. Enregistrer aussi dans bureau_transactions
-        await supabase.from('bureau_transactions').insert({
+        const { error: bureauTxError } = await supabase.from('bureau_transactions').insert({
           bureau_id: bureauId,
           type: 'credit',
           amount: transferPreview.amount,
           date: new Date().toISOString(),
-          description: `Transfert reçu: ${transferDescription}`,
+          description: `Transfert reçu: ${transferDescription || 'Sans description'}`,
           status: 'completed'
         });
+
+        if (bureauTxError) {
+          console.error('❌ Erreur insert bureau_transactions:', bureauTxError);
+          // Ne pas throw car le transfert est déjà fait
+        }
 
         console.log('✅ Transfert bureau réussi');
       } else {
