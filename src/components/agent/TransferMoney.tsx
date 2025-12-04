@@ -16,13 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface TransferMoneyProps {
   walletId: string;
@@ -35,7 +28,7 @@ interface UserSearchResult {
   id: string;
   name: string;
   email: string;
-  type: 'agent' | 'vendor' | 'user';
+  type: 'bureau' | 'agent' | 'vendor' | 'user' | 'driver';
   wallet_id?: string;
 }
 
@@ -50,23 +43,95 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
   const [showConfirm, setShowConfirm] = useState(false);
 
   const searchUsers = async () => {
-    if (!searchQuery || searchQuery.length < 3) {
-      toast.error('Entrez au moins 3 caractères pour rechercher');
+    if (!searchQuery || searchQuery.length < 2) {
+      toast.error('Entrez au moins 2 caractères pour rechercher');
       return;
     }
 
     setSearching(true);
-    try {
-      const results: UserSearchResult[] = [];
+    const results: UserSearchResult[] = [];
+    const query = searchQuery.trim();
+    const queryUpper = query.toUpperCase();
 
-      // Rechercher dans agents_management
-      const { data: agents } = await supabase
-        .from('agents_management')
-        .select('id, name, email, user_id')
-        .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,agent_code.ilike.%${searchQuery}%`)
+    console.log('🔍 Recherche agent transfert:', query, queryUpper);
+
+    try {
+      // 1. RECHERCHE PAR ID DANS user_ids (VND..., CLT..., DRV..., PDG..., etc.)
+      const { data: userIds, error: userIdsError } = await supabase
+        .from('user_ids')
+        .select('user_id, custom_id')
+        .ilike('custom_id', `%${queryUpper}%`)
+        .limit(15);
+
+      console.log('📋 user_ids résultat:', userIds, userIdsError);
+
+      if (userIds && userIds.length > 0) {
+        for (const uid of userIds) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, role')
+            .eq('id', uid.user_id)
+            .maybeSingle();
+
+          if (profile) {
+            const { data: userWallet } = await supabase
+              .from('wallets')
+              .select('id')
+              .eq('user_id', profile.id)
+              .maybeSingle();
+
+            if (userWallet) {
+              results.push({
+                id: profile.id,
+                name: `${uid.custom_id} - ${profile.full_name || 'Utilisateur'}`,
+                email: profile.email || '',
+                type: profile.role === 'vendeur' ? 'vendor' : profile.role === 'livreur' ? 'driver' : 'user',
+                wallet_id: userWallet.id
+              });
+            }
+          }
+        }
+      }
+
+      // 2. RECHERCHE PAR CODE BUREAU (BST...)
+      const { data: bureaux, error: bureauError } = await supabase
+        .from('bureaus')
+        .select('id, bureau_code, prefecture, commune')
+        .ilike('bureau_code', `%${queryUpper}%`)
         .limit(10);
 
-      if (agents) {
+      console.log('📋 Bureaux résultat:', bureaux, bureauError);
+
+      if (bureaux && bureaux.length > 0) {
+        for (const bureau of bureaux) {
+          const { data: bureauWallet } = await supabase
+            .from('bureau_wallets')
+            .select('id')
+            .eq('bureau_id', bureau.id)
+            .maybeSingle();
+
+          if (bureauWallet) {
+            results.push({
+              id: bureau.id,
+              name: `${bureau.bureau_code} - ${bureau.prefecture || bureau.commune || 'Bureau'}`,
+              email: bureau.commune || '',
+              type: 'bureau',
+              wallet_id: bureauWallet.id
+            });
+          }
+        }
+      }
+
+      // 3. RECHERCHE PAR CODE AGENT (AGT...)
+      const { data: agents, error: agentError } = await supabase
+        .from('agents_management')
+        .select('id, name, email, agent_code')
+        .ilike('agent_code', `%${queryUpper}%`)
+        .limit(10);
+
+      console.log('📋 Agents résultat:', agents, agentError);
+
+      if (agents && agents.length > 0) {
         for (const agent of agents) {
           const { data: agentWallet } = await supabase
             .from('agent_wallets')
@@ -74,11 +139,11 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
             .eq('agent_id', agent.id)
             .maybeSingle();
 
-          if (agentWallet) {
+          if (agentWallet && agentWallet.id !== walletId && !results.find(r => r.wallet_id === agentWallet.id)) {
             results.push({
               id: agent.id,
-              name: agent.name,
-              email: agent.email,
+              name: `${agent.agent_code} - ${agent.name}`,
+              email: agent.email || '',
               type: 'agent',
               wallet_id: agentWallet.id
             });
@@ -86,66 +151,116 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         }
       }
 
-      // Rechercher dans vendors
+      // 4. RECHERCHE PAR NOM/EMAIL/TELEPHONE dans profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, role')
+        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+        .limit(10);
+
+      if (profiles && profiles.length > 0) {
+        for (const profile of profiles) {
+          if (!results.find(r => r.id === profile.id)) {
+            const { data: wallet } = await supabase
+              .from('wallets')
+              .select('id')
+              .eq('user_id', profile.id)
+              .maybeSingle();
+
+            if (wallet) {
+              const { data: userId } = await supabase
+                .from('user_ids')
+                .select('custom_id')
+                .eq('user_id', profile.id)
+                .maybeSingle();
+
+              results.push({
+                id: profile.id,
+                name: userId?.custom_id 
+                  ? `${userId.custom_id} - ${profile.full_name || 'Utilisateur'}`
+                  : profile.full_name || 'Utilisateur',
+                email: profile.email || profile.phone || '',
+                type: profile.role === 'vendeur' ? 'vendor' : profile.role === 'livreur' ? 'driver' : 'user',
+                wallet_id: wallet.id
+              });
+            }
+          }
+        }
+      }
+
+      // 5. RECHERCHE DANS VENDORS par nom
       const { data: vendors } = await supabase
         .from('vendors')
         .select('id, business_name, email, user_id')
-        .or(`business_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`business_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
 
-      if (vendors) {
+      if (vendors && vendors.length > 0) {
         for (const vendor of vendors) {
-          const { data: vendorWallet } = await supabase
-            .from('wallets')
-            .select('id')
-            .eq('user_id', vendor.user_id)
-            .maybeSingle();
+          if (!results.find(r => r.id === vendor.user_id)) {
+            const { data: vendorWallet } = await supabase
+              .from('wallets')
+              .select('id')
+              .eq('user_id', vendor.user_id)
+              .maybeSingle();
 
-          if (vendorWallet) {
-            results.push({
-              id: vendor.id,
-              name: vendor.business_name,
-              email: vendor.email,
-              type: 'vendor',
-              wallet_id: vendorWallet.id
-            });
+            if (vendorWallet && !results.find(r => r.wallet_id === vendorWallet.id)) {
+              results.push({
+                id: vendor.id,
+                name: vendor.business_name || 'Vendeur',
+                email: vendor.email || '',
+                type: 'vendor',
+                wallet_id: vendorWallet.id
+              });
+            }
           }
         }
       }
 
-      // Rechercher dans users (clients)
-      const { data: users } = await (supabase
-        .from('profiles' as any)
-        .select('id, email')
-        .ilike('email', `%${searchQuery}%`)
-        .limit(10) as any);
+      // 6. RECHERCHE PAR NOM AGENT (fallback si pas trouvé par code)
+      if (results.filter(r => r.type === 'agent').length === 0) {
+        const { data: agentsByName } = await supabase
+          .from('agents_management')
+          .select('id, name, email, agent_code')
+          .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+          .limit(10);
 
-      if (users) {
-        for (const user of users as any[]) {
-          const { data: userWallet } = await supabase
-            .from('wallets')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+        if (agentsByName && agentsByName.length > 0) {
+          for (const agent of agentsByName) {
+            const { data: agentWallet } = await supabase
+              .from('agent_wallets')
+              .select('id')
+              .eq('agent_id', agent.id)
+              .maybeSingle();
 
-          if (userWallet) {
-            results.push({
-              id: user.id,
-              name: user.email?.split('@')[0] || 'Utilisateur',
-              email: user.email || '',
-              type: 'user',
-              wallet_id: userWallet.id
-            });
+            if (agentWallet && agentWallet.id !== walletId && !results.find(r => r.wallet_id === agentWallet.id)) {
+              results.push({
+                id: agent.id,
+                name: `${agent.agent_code} - ${agent.name}`,
+                email: agent.email || '',
+                type: 'agent',
+                wallet_id: agentWallet.id
+              });
+            }
           }
         }
       }
 
-      setSearchResults(results);
-      if (results.length === 0) {
-        toast.info('Aucun utilisateur trouvé');
+      // Supprimer les doublons par wallet_id
+      const uniqueResults = results.filter((result, index, self) =>
+        index === self.findIndex(r => r.wallet_id === result.wallet_id)
+      );
+
+      console.log('✅ Résultats finaux:', uniqueResults.length, uniqueResults);
+
+      setSearchResults(uniqueResults);
+      if (uniqueResults.length === 0) {
+        toast.info('Aucun utilisateur trouvé avec cet ID ou nom');
+      } else {
+        toast.success(`${uniqueResults.length} résultat(s) trouvé(s)`);
       }
     } catch (error: any) {
-      console.error('Erreur recherche utilisateurs:', error);
+      console.error('❌ Erreur recherche:', error);
       toast.error('Erreur lors de la recherche');
     } finally {
       setSearching(false);
@@ -171,9 +286,9 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
     setTransferring(true);
     try {
-      const referenceNumber = `TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const referenceNumber = `AGT-TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      // Créer la transaction de transfert (débit pour l'expéditeur)
+      // Créer la transaction de transfert (débit pour l'agent expéditeur)
       const { error: debitError } = await supabase
         .from('wallet_transactions')
         .insert({
@@ -190,7 +305,8 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
           metadata: {
             recipient_name: selectedUser.name,
             recipient_email: selectedUser.email,
-            recipient_type: selectedUser.type
+            recipient_type: selectedUser.type,
+            sender_type: 'agent'
           }
         });
 
@@ -207,7 +323,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
           fee: 0,
           currency: currency,
           status: 'completed',
-          description: description || `Transfert reçu`,
+          description: description || `Transfert reçu d'un agent`,
           sender_wallet_id: walletId,
           receiver_wallet_id: selectedUser.wallet_id,
           metadata: {
@@ -217,7 +333,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
       if (creditError) throw creditError;
 
-      // Mettre à jour le solde de l'expéditeur
+      // Mettre à jour le solde de l'agent expéditeur
       const { error: updateSenderError } = await supabase
         .from('agent_wallets')
         .update({
@@ -228,8 +344,24 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
       if (updateSenderError) throw updateSenderError;
 
-      // Mettre à jour le solde du destinataire
-      if (selectedUser.type === 'agent') {
+      // Mettre à jour le solde du destinataire selon le type
+      if (selectedUser.type === 'bureau') {
+        const { data: recipientWallet } = await supabase
+          .from('bureau_wallets')
+          .select('balance')
+          .eq('id', selectedUser.wallet_id)
+          .single();
+
+        if (recipientWallet) {
+          await supabase
+            .from('bureau_wallets')
+            .update({
+              balance: recipientWallet.balance + transferAmount,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', selectedUser.wallet_id);
+        }
+      } else if (selectedUser.type === 'agent') {
         const { data: recipientWallet } = await supabase
           .from('agent_wallets')
           .select('balance')
@@ -246,6 +378,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
             .eq('id', selectedUser.wallet_id);
         }
       } else {
+        // Vendeur, chauffeur ou utilisateur standard
         const { data: recipientWallet } = await supabase
           .from('wallets')
           .select('balance')
@@ -286,6 +419,10 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
   const getUserTypeLabel = (type: string) => {
     switch (type) {
+      case 'bureau':
+        return '🏢 Bureau Syndicat';
+      case 'driver':
+        return '🏍️ Chauffeur';
       case 'agent':
         return '👤 Agent';
       case 'vendor':
@@ -311,7 +448,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
           <Label>Rechercher un destinataire</Label>
           <div className="flex gap-2">
             <Input
-              placeholder="Nom, email ou code..."
+              placeholder="ID (CLT..., VND..., BST..., AGT...) ou nom, téléphone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
@@ -329,7 +466,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
             <div className="max-h-48 overflow-y-auto space-y-1 border rounded-md p-2">
               {searchResults.map((user) => (
                 <button
-                  key={user.id}
+                  key={`${user.type}-${user.id}`}
                   onClick={() => {
                     setSelectedUser(user);
                     setSearchResults([]);
@@ -377,9 +514,9 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         {selectedUser && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="transfer-amount">Montant ({currency})</Label>
+              <Label htmlFor="agent-transfer-amount">Montant ({currency})</Label>
               <Input
-                id="transfer-amount"
+                id="agent-transfer-amount"
                 type="number"
                 placeholder="0"
                 value={amount}
@@ -393,9 +530,9 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="transfer-description">Description (optionnelle)</Label>
+              <Label htmlFor="agent-transfer-description">Description (optionnelle)</Label>
               <Input
-                id="transfer-description"
+                id="agent-transfer-description"
                 placeholder="Ex: Paiement pour service..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
