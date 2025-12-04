@@ -50,9 +50,8 @@ export default function PDG224Solutions() {
   const navigate = useNavigate();
   const envOk = Boolean(import.meta.env.VITE_SUPABASE_URL && (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY));
   
-  // Déterminer le rôle de manière cohérente (user_metadata ou profile) - DOIT être défini avant useAdminUnifiedData
-  const userRole = user?.user_metadata?.role || profile?.role;
-  const isAdmin = userRole === 'admin';
+  // Déterminer le rôle uniquement depuis le profil (source de vérité sécurisée)
+  const isAdmin = profile?.role === 'admin';
   
   const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
     // Persistance courte dans la session du navigateur
@@ -99,14 +98,14 @@ export default function PDG224Solutions() {
       return;
     }
 
-    // Attendre que le profil soit chargé avant de vérifier le rôle
-    if (profileLoading) {
+    // Attendre que le profil soit complètement chargé avant de vérifier le rôle
+    if (profileLoading || !profile) {
       return;
     }
 
-    // Si le profil est chargé et que le rôle n'est pas admin (vérifier les deux sources)
-    const currentRole = user?.user_metadata?.role || profile?.role;
-    if (profile && currentRole !== 'admin') {
+    // Vérifier le rôle UNIQUEMENT depuis le profil (source de vérité)
+    const currentRole = profile.role;
+    if (currentRole !== 'admin') {
       toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
       return;
