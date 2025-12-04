@@ -255,7 +255,7 @@ const NavigationTestPage: React.FC = () => {
                   <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium">Détection hors route</p>
-                    <p className="text-muted-foreground">Recalcul auto si déviation > 50m</p>
+                    <p className="text-muted-foreground">Recalcul auto si déviation &gt; 50m</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">

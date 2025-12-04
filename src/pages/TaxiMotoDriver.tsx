@@ -1190,6 +1190,7 @@ export default function TaxiMotoDriver() {
 
                         <div className="flex items-center gap-2">
                             <DriverSubscriptionButton />
+                            
                             <div className="hidden lg:block">
                                 <WalletBalanceWidget className="max-w-[260px]" showTransferButton={false} />
                             </div>
