@@ -154,18 +154,37 @@ export class TaxiMotoService {
     }
 
     // Notifier les chauffeurs à proximité
-    const drivers = await this.findNearbyDrivers(params.pickupLat, params.pickupLng, 5);
+    console.log(`[TaxiMotoService] 🔍 Recherche de chauffeurs à proximité de [${params.pickupLat}, ${params.pickupLng}]`);
+    const drivers = await this.findNearbyDrivers(params.pickupLat, params.pickupLng, 10); // Augmenté à 10km
+    console.log(`[TaxiMotoService] 👥 ${drivers.length} chauffeurs trouvés`);
     
-    for (const driver of drivers.slice(0, 5)) {
-      await supabase.rpc('create_taxi_notification' as any, {
-        p_user_id: driver.id,
-        p_ride_id: data.id,
-        p_type: 'ride_request',
-        p_title: 'Nouvelle course disponible',
-        p_body: `Course de ${params.pickupAddress} à ${params.dropoffAddress} - ${params.estimatedPrice} GNF`,
-        p_data: { distance_km: params.distanceKm, price_total: params.estimatedPrice, driver_share: driverShare }
-      });
+    // Notifier jusqu'à 10 chauffeurs (élargi)
+    const notifiedDrivers = drivers.slice(0, 10);
+    console.log(`[TaxiMotoService] 📢 Notification de ${notifiedDrivers.length} chauffeurs...`);
+    
+    for (const driver of notifiedDrivers) {
+      try {
+        console.log(`[TaxiMotoService] 📲 Envoi notification à ${driver.full_name} (${driver.id})`);
+        const { data: notifData, error: notifError } = await supabase.rpc('create_taxi_notification' as any, {
+          p_user_id: driver.id,
+          p_ride_id: data.id,
+          p_type: 'ride_request',
+          p_title: 'Nouvelle course disponible',
+          p_body: `Course de ${params.pickupAddress} à ${params.dropoffAddress} - ${params.estimatedPrice} GNF`,
+          p_data: { distance_km: params.distanceKm, price_total: params.estimatedPrice, driver_share: driverShare }
+        });
+        
+        if (notifError) {
+          console.error(`[TaxiMotoService] ❌ Erreur notification pour ${driver.id}:`, notifError);
+        } else {
+          console.log(`[TaxiMotoService] ✅ Notification envoyée à ${driver.full_name}`);
+        }
+      } catch (err) {
+        console.error(`[TaxiMotoService] ❌ Erreur lors de l'envoi notification:`, err);
+      }
     }
+    
+    console.log(`[TaxiMotoService] ✅ Course créée avec succès: ${data.ride_code} (ID: ${data.id})`);
 
     return data as TaxiRide;
   }

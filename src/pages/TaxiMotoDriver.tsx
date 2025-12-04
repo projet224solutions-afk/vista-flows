@@ -199,6 +199,8 @@ export default function TaxiMotoDriver() {
     useEffect(() => {
         if (!driverId || !isOnline || !hasAccess) return;
 
+        console.log('🔔 [TaxiMotoDriver] Subscription aux courses activée pour driver:', driverId);
+
         const channel = supabase
             .channel('driver-ride-requests')
             .on(
@@ -210,17 +212,33 @@ export default function TaxiMotoDriver() {
                     filter: `status=eq.requested`
                 },
                 async (payload) => {
-                    console.log('📲 Nouvelle course disponible:', payload);
+                    console.log('📲 [TaxiMotoDriver] Nouvelle course détectée:', payload);
                     const ride = payload.new as any;
                     
                     // Vérifier si le conducteur a déjà refusé cette course
                     const declinedDrivers = ride.declined_drivers || [];
                     if (declinedDrivers.includes(driverId)) {
-                        console.log('Course déjà refusée, ignorée');
+                        console.log('⚠️ Course déjà refusée par ce conducteur, ignorée');
                         return;
                     }
                     
-                    // Vérifier si le chauffeur est à proximité
+                    // Toujours afficher une notification, même si hors distance
+                    console.log('🔊 Affichage notification + son pour course:', ride.id);
+                    toast.success('🚗 Nouvelle course disponible!', {
+                        description: `De ${ride.pickup_address || 'Adresse inconnue'}`,
+                        duration: 10000
+                    });
+                    
+                    // Audio notification
+                    try {
+                        const audio = new Audio('/notification.mp3');
+                        audio.volume = 0.8;
+                        audio.play().catch(() => console.log('Autoplay bloqué'));
+                    } catch (e) {
+                        console.log('Erreur lecture son:', e);
+                    }
+                    
+                    // Vérifier si le chauffeur est à proximité pour afficher dans la liste
                     if (location) {
                         const distance = calculateDistance(
                             location.latitude,
@@ -229,25 +247,30 @@ export default function TaxiMotoDriver() {
                             ride.pickup_lng
                         );
                         
-                        // Si à moins de 5km, afficher la demande
-                        if (distance <= 5) {
+                        console.log(`📍 Distance calculée: ${distance.toFixed(2)}km`);
+                        
+                        // Si à moins de 10km, afficher la demande dans la liste
+                        if (distance <= 10) {
+                            console.log('✅ Ajout course à la liste (< 10km)');
                             await addRideRequestFromDB(ride);
-                            toast.success('🚗 Nouvelle course disponible!');
-                            // Audio notification
-                            try {
-                                const audio = new Audio('/notification.mp3');
-                                audio.play().catch(() => {});
-                            } catch (e) {}
+                        } else {
+                            console.log('⚠️ Course trop loin (> 10km), notification uniquement');
                         }
+                    } else {
+                        console.log('⚠️ Pas de localisation disponible, ajout de la course quand même');
+                        await addRideRequestFromDB(ride);
                     }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log('🔔 Subscription status:', status);
+            });
 
         return () => {
+            console.log('🔕 Unsubscribe des courses');
             supabase.removeChannel(channel);
         };
-    }, [driverId, isOnline, location]);
+    }, [driverId, isOnline, location, hasAccess]);
 
     // S'abonner aux mises à jour de la course active
     useEffect(() => {

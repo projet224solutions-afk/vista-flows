@@ -32,6 +32,7 @@ export const useTaxiNotifications = () => {
   useEffect(() => {
     if (!user) return;
 
+    // 1. S'abonner aux notifications dans taxi_notifications
     const unsubscribe = NotificationsService.subscribeToNotifications(
       user.id,
       (notification) => {
@@ -39,7 +40,7 @@ export const useTaxiNotifications = () => {
         setUnreadCount(prev => prev + 1);
 
         // Afficher toast selon le type
-        if (notification.type === 'new_ride_request') {
+        if (notification.type === 'ride_request' || notification.type === 'new_ride_request') {
           toast.info(notification.title, {
             description: notification.body,
             duration: 10000,
