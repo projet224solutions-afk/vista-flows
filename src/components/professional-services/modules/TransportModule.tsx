@@ -1,44 +1,79 @@
 /**
- * MODULE TRANSPORT - Service VTC et transport de personnes
+ * MODULE TRANSPORT/VTC - Stub
  */
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car } from 'lucide-react';
-import { TransportRides } from './transport/TransportRides';
-import { TransportVehicles } from './transport/TransportVehicles';
-import { TransportAnalytics } from './transport/TransportAnalytics';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Car, Users, MapPin, DollarSign } from 'lucide-react';
 
 interface TransportModuleProps {
   serviceId: string;
+  businessName?: string;
 }
 
-export function TransportModule({ serviceId }: TransportModuleProps) {
+export function TransportModule({ serviceId, businessName }: TransportModuleProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Car className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Module Transport & VTC</h2>
+    <div className="space-y-6">
+      <div className="text-center py-8">
+        <Car className="w-16 h-16 text-primary mx-auto mb-4" />
+        <h2 className="text-2xl font-bold">{businessName || 'Service Transport'}</h2>
+        <p className="text-muted-foreground">Module Taxi/VTC</p>
       </div>
 
-      <Tabs defaultValue="rides" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="rides">Courses</TabsTrigger>
-          <TabsTrigger value="vehicles">Flotte</TabsTrigger>
-          <TabsTrigger value="analytics">Statistiques</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Courses</CardTitle>
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="rides">
-          <TransportRides serviceId={serviceId} />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Chauffeurs</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="vehicles">
-          <TransportVehicles serviceId={serviceId} />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Véhicules</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="analytics">
-          <TransportAnalytics serviceId={serviceId} />
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Revenus</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">
+            🚗 Le module Taxi/VTC est en cours de développement.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+export default TransportModule;

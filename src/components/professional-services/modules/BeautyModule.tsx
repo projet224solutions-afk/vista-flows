@@ -1,51 +1,79 @@
 /**
- * MODULE BEAUTÉ - Services de beauté et esthétique
- * Salon de coiffure, esthétique, massage, etc.
+ * MODULE SALON DE BEAUTÉ - Stub
  */
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Scissors } from 'lucide-react';
-import { BeautyServices } from './beauty/BeautyServices';
-import { BeautyAppointments } from './beauty/BeautyAppointments';
-import { BeautyStaff } from './beauty/BeautyStaff';
-import { BeautyAnalytics } from './beauty/BeautyAnalytics';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, Users, Calendar, DollarSign } from 'lucide-react';
 
 interface BeautyModuleProps {
   serviceId: string;
+  businessName?: string;
 }
 
-export function BeautyModule({ serviceId }: BeautyModuleProps) {
+export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Scissors className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Module Beauté & Esthétique</h2>
+    <div className="space-y-6">
+      <div className="text-center py-8">
+        <Sparkles className="w-16 h-16 text-primary mx-auto mb-4" />
+        <h2 className="text-2xl font-bold">{businessName || 'Salon de Beauté'}</h2>
+        <p className="text-muted-foreground">Module Beauté</p>
       </div>
 
-      <Tabs defaultValue="services" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="appointments">Rendez-vous</TabsTrigger>
-          <TabsTrigger value="staff">Personnel</TabsTrigger>
-          <TabsTrigger value="analytics">Statistiques</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Rendez-vous</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="services">
-          <BeautyServices serviceId={serviceId} />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Services</CardTitle>
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="appointments">
-          <BeautyAppointments serviceId={serviceId} />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Personnel</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="staff">
-          <BeautyStaff serviceId={serviceId} />
-        </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Revenus</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">Module en développement</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="analytics">
-          <BeautyAnalytics serviceId={serviceId} />
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">
+            💅 Le module Salon de Beauté est en cours de développement.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+export default BeautyModule;
