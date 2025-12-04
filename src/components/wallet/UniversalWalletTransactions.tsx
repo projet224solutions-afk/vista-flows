@@ -568,6 +568,41 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           console.log('📋 Agent trouvé:', agentData);
           recipientUuid = agentData.user_id;
           recipientName = agentData.name || agentData.agent_code;
+        } else {
+          // 3. Sinon, chercher dans bureaus (bureau_code)
+          console.log('🔍 Recherche dans bureaus...');
+          const { data: bureauData, error: bureauError } = await supabase
+            .from('bureaus')
+            .select('id, bureau_code, president_name, commune, prefecture')
+            .eq('bureau_code', recipientId.toUpperCase())
+            .eq('status', 'active')
+            .maybeSingle();
+
+          if (bureauError) {
+            console.error('❌ Erreur recherche bureau:', bureauError);
+            toast.error('Erreur lors de la recherche du bureau');
+            return;
+          }
+
+          if (bureauData) {
+            console.log('📋 Bureau trouvé:', bureauData);
+            // Vérifier que le bureau a un wallet
+            const { data: bureauWallet, error: walletError } = await supabase
+              .from('bureau_wallets')
+              .select('id, balance')
+              .eq('bureau_id', bureauData.id)
+              .single();
+
+            if (walletError || !bureauWallet) {
+              console.error('❌ Bureau sans wallet:', walletError);
+              toast.error('Ce bureau n\'a pas de portefeuille configuré');
+              return;
+            }
+
+            // Utiliser l'ID du bureau comme identifiant spécial avec préfixe
+            recipientUuid = `bureau:${bureauData.id}:${bureauWallet.id}`;
+            recipientName = `Bureau ${bureauData.bureau_code} - ${bureauData.commune} (${bureauData.president_name || 'Président'})`;
+          }
         }
       }
 
@@ -578,7 +613,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         return;
       }
 
-      if (recipientUuid === effectiveUserId) {
+      // Vérifier si c'est un transfert vers un bureau
+      const isBureauTransfer = recipientUuid.startsWith('bureau:');
+      
+      if (!isBureauTransfer && recipientUuid === effectiveUserId) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
         return;
       }
@@ -587,39 +625,65 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         sender: effectiveUserId, 
         receiver: recipientUuid,
         recipient_name: recipientName,
-        amount 
+        amount,
+        isBureauTransfer
       });
 
-      // Appeler la fonction de prévisualisation
-      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-        p_sender_id: effectiveUserId,
-        p_receiver_id: recipientUuid,
-        p_amount: amount
-      });
+      if (isBureauTransfer) {
+        // Pour les transferts vers bureau, calculer les frais manuellement
+        const feeRate = 0.01; // 1% de frais
+        const feeAmount = Math.ceil(amount * feeRate);
+        const totalDebit = amount + feeAmount;
 
-      if (error) {
-        console.error('❌ Erreur RPC:', error);
-        toast.error(error.message || 'Erreur lors de la prévisualisation');
-        return;
+        if (totalDebit > (wallet?.balance || 0)) {
+          toast.error('Solde insuffisant pour couvrir le montant et les frais');
+          return;
+        }
+
+        setTransferPreview({ 
+          success: true,
+          amount: amount,
+          fee_amount: feeAmount,
+          total_debit: totalDebit,
+          recipient_uuid: recipientUuid,
+          recipient_name: recipientName,
+          is_bureau_transfer: true
+        });
+        setShowTransferPreview(true);
+        setTransferOpen(false);
+      } else {
+        // Appeler la fonction de prévisualisation pour les transferts normaux
+        const { data, error } = await supabase.rpc('preview_wallet_transfer', {
+          p_sender_id: effectiveUserId,
+          p_receiver_id: recipientUuid,
+          p_amount: amount
+        });
+
+        if (error) {
+          console.error('❌ Erreur RPC:', error);
+          toast.error(error.message || 'Erreur lors de la prévisualisation');
+          return;
+        }
+
+        console.log('✅ Réponse prévisualisation:', data);
+
+        const previewData = data as any;
+
+        if (!previewData.success) {
+          console.error('❌ Preview échouée:', previewData.error);
+          toast.error(previewData.error || 'Erreur inconnue');
+          return;
+        }
+
+        setTransferPreview({ 
+          ...previewData, 
+          recipient_uuid: recipientUuid,
+          recipient_name: recipientName,
+          is_bureau_transfer: false
+        });
+        setShowTransferPreview(true);
+        setTransferOpen(false);
       }
-
-      console.log('✅ Réponse prévisualisation:', data);
-
-      const previewData = data as any;
-
-      if (!previewData.success) {
-        console.error('❌ Preview échouée:', previewData.error);
-        toast.error(previewData.error || 'Erreur inconnue');
-        return;
-      }
-
-      setTransferPreview({ 
-        ...previewData, 
-        recipient_uuid: recipientUuid,
-        recipient_name: recipientName
-      });
-      setShowTransferPreview(true);
-      setTransferOpen(false);
     } catch (error: any) {
       console.error('❌ Erreur prévisualisation:', error);
       toast.error(error.message || 'Erreur lors de la prévisualisation');
@@ -639,24 +703,113 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         sender: effectiveUserId,
         receiver: transferPreview.recipient_uuid,
         amount: transferPreview.amount,
-        description: transferDescription
+        description: transferDescription,
+        is_bureau_transfer: transferPreview.is_bureau_transfer
       });
 
-      // Exécuter le transfert avec la fonction RPC
-      const { data, error } = await supabase.rpc('process_wallet_transaction', {
-        p_sender_id: effectiveUserId,
-        p_receiver_id: transferPreview.recipient_uuid,
-        p_amount: transferPreview.amount,
-        p_currency: 'GNF',
-        p_description: transferDescription
-      });
+      if (transferPreview.is_bureau_transfer) {
+        // Transfert vers un bureau - gestion manuelle
+        const parts = transferPreview.recipient_uuid.split(':');
+        const bureauId = parts[1];
+        const bureauWalletId = parts[2];
 
-      if (error) {
-        console.error('❌ Erreur transfert:', error);
-        throw error;
+        // 1. Débiter le wallet de l'expéditeur
+        const { data: senderWallet, error: senderError } = await supabase
+          .from('wallets')
+          .select('id, balance')
+          .eq('user_id', effectiveUserId)
+          .single();
+
+        if (senderError || !senderWallet) {
+          throw new Error('Impossible de trouver votre portefeuille');
+        }
+
+        if (senderWallet.balance < transferPreview.total_debit) {
+          throw new Error('Solde insuffisant');
+        }
+
+        // 2. Mettre à jour le solde de l'expéditeur
+        const { error: updateSenderError } = await supabase
+          .from('wallets')
+          .update({ 
+            balance: senderWallet.balance - transferPreview.total_debit,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', senderWallet.id);
+
+        if (updateSenderError) throw updateSenderError;
+
+        // 3. Créditer le wallet du bureau
+        const { data: bureauWallet, error: bureauWalletError } = await supabase
+          .from('bureau_wallets')
+          .select('balance')
+          .eq('id', bureauWalletId)
+          .single();
+
+        if (bureauWalletError || !bureauWallet) {
+          throw new Error('Impossible de trouver le portefeuille du bureau');
+        }
+
+        const { error: updateBureauError } = await supabase
+          .from('bureau_wallets')
+          .update({ 
+            balance: bureauWallet.balance + transferPreview.amount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bureauWalletId);
+
+        if (updateBureauError) throw updateBureauError;
+
+        // 4. Enregistrer la transaction dans wallet_transactions
+        const transactionId = `TRX-BUREAU-${Date.now()}`;
+        await supabase.from('wallet_transactions').insert({
+          transaction_id: transactionId,
+          transaction_type: 'transfer',
+          amount: transferPreview.total_debit,
+          net_amount: transferPreview.amount,
+          fee: transferPreview.fee_amount,
+          currency: 'GNF',
+          status: 'completed',
+          description: `${transferDescription} (vers Bureau ${recipientId})`,
+          sender_wallet_id: senderWallet.id,
+          receiver_wallet_id: bureauWalletId,
+          completed_at: new Date().toISOString(),
+          metadata: {
+            recipient_type: 'bureau',
+            bureau_id: bureauId,
+            bureau_wallet_id: bureauWalletId,
+            bureau_code: recipientId
+          }
+        });
+
+        // 5. Enregistrer aussi dans bureau_transactions
+        await supabase.from('bureau_transactions').insert({
+          bureau_id: bureauId,
+          type: 'credit',
+          amount: transferPreview.amount,
+          date: new Date().toISOString(),
+          description: `Transfert reçu: ${transferDescription}`,
+          status: 'completed'
+        });
+
+        console.log('✅ Transfert bureau réussi');
+      } else {
+        // Transfert normal vers un utilisateur
+        const { data, error } = await supabase.rpc('process_wallet_transaction', {
+          p_sender_id: effectiveUserId,
+          p_receiver_id: transferPreview.recipient_uuid,
+          p_amount: transferPreview.amount,
+          p_currency: 'GNF',
+          p_description: transferDescription
+        });
+
+        if (error) {
+          console.error('❌ Erreur transfert:', error);
+          throw error;
+        }
+
+        console.log('✅ Transfert réussi:', data);
       }
-
-      console.log('✅ Transfert réussi:', data);
 
       toast.success(
         `✅ Transfert réussi vers ${transferPreview.recipient_name || 'le destinataire'}\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n📤 Total débité : ${transferPreview.total_debit.toLocaleString()} GNF\n📥 Montant reçu : ${transferPreview.amount.toLocaleString()} GNF`,
