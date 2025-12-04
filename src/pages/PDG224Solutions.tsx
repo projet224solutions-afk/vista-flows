@@ -62,7 +62,7 @@ export default function PDG224Solutions() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [updatingEmail, setUpdatingEmail] = useState(false);
-  const adminData = useAdminUnifiedData(!!profile && profile.role === 'admin');
+  const adminData = useAdminUnifiedData(isAdmin);
   const { error, captureError, clearError } = usePDGErrorBoundary();
 
   // Hook IA Assistant
@@ -87,31 +87,41 @@ export default function PDG224Solutions() {
     setActiveTab(tab);
   }, [navigate]);
 
+  // Déterminer le rôle de manière cohérente (user_metadata ou profile)
+  const userRole = user?.user_metadata?.role || profile?.role;
+  const isAdmin = userRole === 'admin';
+
   useEffect(() => {
-    // Si pas d'utilisateur, rediriger vers auth
+    // Si pas d'utilisateur et pas en cours de chargement, rediriger vers auth
     if (!user && !profileLoading) {
       navigate('/auth');
       return;
     }
 
-    // Si le profil est chargé et que le rôle n'est pas admin
-    if (profile && profile.role !== 'admin') {
+    // Attendre que le profil soit chargé avant de vérifier le rôle
+    if (profileLoading) {
+      return;
+    }
+
+    // Si le profil est chargé et que le rôle n'est pas admin (vérifier les deux sources)
+    const currentRole = user?.user_metadata?.role || profile?.role;
+    if (profile && currentRole !== 'admin') {
       toast.error('Accès refusé - Réservé au PDG');
-      navigate('/');
+      navigate('/home');
       return;
     }
 
     // Exiger MFA avant toute action PDG
-    if (profile && profile.role === 'admin' && !mfaVerified) {
+    if (currentRole === 'admin' && !mfaVerified) {
       setShowMfaDialog(true);
     }
 
     // Log de l'accès PDG une fois le profil chargé (après MFA si possible)
-    if (profile && profile.role === 'admin') {
+    if (currentRole === 'admin' && user) {
       const logAccess = async () => {
         try {
           await supabase.from('audit_logs').insert({
-            actor_id: user!.id,
+            actor_id: user.id,
             action: 'PDG_ACCESS',
             target_type: 'dashboard',
             data_json: { timestamp: new Date().toISOString() }
@@ -122,7 +132,7 @@ export default function PDG224Solutions() {
       };
       logAccess();
     }
-  }, [user, profile, profileLoading, navigate]);
+  }, [user, profile, profileLoading, navigate, mfaVerified]);
 
   const handleSendMfaCode = useCallback(async () => {
     if (!user?.email) {
@@ -245,7 +255,7 @@ export default function PDG224Solutions() {
         </div>
       )}
       {/* Dialog MFA obligatoire pour PDG */}
-      {profile?.role === 'admin' && !mfaVerified && (
+      {isAdmin && !mfaVerified && (
         <Dialog open={showMfaDialog}>
           <DialogContent>
             <DialogHeader>
