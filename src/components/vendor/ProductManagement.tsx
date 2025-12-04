@@ -21,7 +21,8 @@ import { toast } from "sonner";
 import { PublicIdBadge } from "@/components/PublicIdBadge";
 import { 
   Package, Plus, Search, Filter, Edit, Trash2, Star, 
-  Eye, ShoppingCart, TrendingUp, Camera, Save, X, Copy
+  Eye, ShoppingCart, TrendingUp, Camera, Save, X, Copy,
+  Sparkles, Wand2, Loader2, ImagePlus
 } from "lucide-react";
 
 interface Product {
@@ -90,6 +91,8 @@ export default function ProductManagement() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -265,6 +268,79 @@ export default function ProductManagement() {
 
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // AI Generation Functions
+  const handleGenerateDescription = async () => {
+    if (!formData.name) {
+      toast.error('Veuillez entrer le nom du produit');
+      return;
+    }
+
+    try {
+      setGeneratingDescription(true);
+      const categoryName = formData.category_id 
+        ? categories.find(c => c.id === formData.category_id)?.name 
+        : formData.category_name || undefined;
+
+      const { data, error } = await supabase.functions.invoke('generate-product-description', {
+        body: {
+          productName: formData.name,
+          category: categoryName,
+          price: formData.price ? parseInt(formData.price) : undefined
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.description) {
+        setFormData(prev => ({ ...prev, description: data.description }));
+        toast.success('Description générée par IA');
+      }
+    } catch (error: any) {
+      console.error('Erreur génération description:', error);
+      toast.error(error.message || 'Erreur lors de la génération');
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!formData.name) {
+      toast.error('Veuillez entrer le nom du produit');
+      return;
+    }
+
+    try {
+      setGeneratingImage(true);
+      const categoryName = formData.category_id 
+        ? categories.find(c => c.id === formData.category_id)?.name 
+        : formData.category_name || undefined;
+
+      const { data, error } = await supabase.functions.invoke('generate-product-image', {
+        body: {
+          productName: formData.name,
+          category: categoryName,
+          description: formData.description
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        // Convert base64 or URL to File
+        const response = await fetch(data.imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
+        setSelectedImages(prev => [...prev, file]);
+        toast.success('Image générée par IA');
+      }
+    } catch (error: any) {
+      console.error('Erreur génération image:', error);
+      toast.error(error.message || 'Erreur lors de la génération');
+    } finally {
+      setGeneratingImage(false);
+    }
   };
 
   // Filtering
@@ -544,7 +620,23 @@ export default function ProductManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="description">Description</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingDescription || !formData.name}
+                >
+                  {generatingDescription ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Générer avec IA
+                </Button>
+              </div>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -682,6 +774,20 @@ export default function ProductManagement() {
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Sélectionner des images
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateImage}
+                  disabled={generatingImage || !formData.name}
+                  className="flex-1"
+                >
+                  {generatingImage ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                  )}
+                  Générer image IA
                 </Button>
                 <input
                   ref={fileInputRef}
