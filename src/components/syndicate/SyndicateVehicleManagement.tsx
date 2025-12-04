@@ -1270,7 +1270,6 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         member_name: selectedVehicleForEdit.member_name,
                         driver_photo_url: (selectedVehicleForEdit as any).driver_photo_url,
                         driver_date_of_birth: (selectedVehicleForEdit as any).driver_date_of_birth,
-                        vest_number: (selectedVehicleForEdit as any).vest_number,
                     }}
                     bureauName={bureauName}
                     bureauCode={bureauCode}
