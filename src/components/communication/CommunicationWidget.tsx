@@ -56,14 +56,14 @@ export default function CommunicationWidget({
 
   return (
     <>
-      {/* Widget flottant */}
-      <div className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2`}>
-        {/* Bouton principal */}
+      {/* Widget flottant - pointer-events-none sur le conteneur pour ne pas bloquer les clics */}
+      <div className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2 pointer-events-none`}>
+        {/* Bouton principal - pointer-events-auto pour réactiver les clics sur le bouton */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button
               size="lg"
-              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90 relative"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90 relative pointer-events-auto"
             >
               <MessageSquare className="h-6 w-6" />
               {unreadCount > 0 && (
@@ -102,14 +102,14 @@ export default function CommunicationWidget({
           </DialogContent>
         </Dialog>
 
-        {/* Bouton notifications (optionnel) */}
+        {/* Bouton notifications (optionnel) - pointer-events-auto */}
         {showNotifications && stats.notificationCount > 0 && (
           <Dialog open={showNotificationCenter} onOpenChange={setShowNotificationCenter}>
             <DialogTrigger asChild>
               <Button
                 variant="secondary"
                 size="lg"
-                className="h-12 w-12 rounded-full shadow-lg relative"
+                className="h-12 w-12 rounded-full shadow-lg relative pointer-events-auto"
               >
                 <Bell className="h-5 w-5" />
                 <Badge 
