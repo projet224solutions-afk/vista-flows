@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-import QuickFooter from "@/components/QuickFooter";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
@@ -408,8 +408,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Footer de navigation */}
-      <QuickFooter />
     </div>
   );
 };
