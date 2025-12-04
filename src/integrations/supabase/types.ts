@@ -7415,6 +7415,7 @@ export type Database = {
           payment_method: string | null
           payment_transaction_id: string | null
           plan_id: string
+          price_paid: number | null
           price_paid_gnf: number
           started_at: string | null
           status: string
@@ -7431,6 +7432,7 @@ export type Database = {
           payment_method?: string | null
           payment_transaction_id?: string | null
           plan_id: string
+          price_paid?: number | null
           price_paid_gnf: number
           started_at?: string | null
           status?: string
@@ -7447,6 +7449,7 @@ export type Database = {
           payment_method?: string | null
           payment_transaction_id?: string | null
           plan_id?: string
+          price_paid?: number | null
           price_paid_gnf?: number
           started_at?: string | null
           status?: string
