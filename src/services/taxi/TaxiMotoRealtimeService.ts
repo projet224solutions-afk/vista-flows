@@ -73,9 +73,10 @@ export class TaxiMotoRealtimeService {
    * Note: On écoute tous les INSERT/UPDATE et on filtre côté client
    */
   static subscribeToNewRides(
-    onNewRide: (ride: any) => void
+    onNewRide: (ride: any) => void,
+    onStatusChange?: (status: string) => void
   ): () => void {
-    console.log('[Realtime] Setting up subscription for new rides');
+    console.log('🔔 [TaxiMotoRealtimeService] Configuration subscription nouvelles courses');
     
     const channel = supabase
       .channel('new-ride-requests')
@@ -87,12 +88,21 @@ export class TaxiMotoRealtimeService {
           table: 'taxi_trips'
         },
         (payload) => {
-          console.log('[Realtime] INSERT taxi_trips:', payload.new);
+          console.log('✅ [TaxiMotoRealtimeService] INSERT taxi_trips reçu:', payload.new);
           const ride = payload.new as any;
+          
           // Filtrer côté client pour les courses "requested"
           if (ride.status === 'requested') {
-            console.log('[Realtime] Nouvelle course détectée:', ride.id);
+            console.log('🚗 [TaxiMotoRealtimeService] Nouvelle course REQUESTED détectée:', {
+              id: ride.id,
+              ride_code: ride.ride_code,
+              pickup: ride.pickup_address,
+              dropoff: ride.dropoff_address,
+              price: ride.price_total
+            });
             onNewRide(ride);
+          } else {
+            console.log('⚠️ [TaxiMotoRealtimeService] Course reçue mais status ≠ requested:', ride.status);
           }
         }
       )
@@ -104,22 +114,40 @@ export class TaxiMotoRealtimeService {
           table: 'taxi_trips'
         },
         (payload) => {
-          console.log('[Realtime] UPDATE taxi_trips:', payload.new);
+          console.log('📝 [TaxiMotoRealtimeService] UPDATE taxi_trips reçu:', payload.new);
           const ride = payload.new as any;
+          
           // Notifier aussi si une course passe en "requested"
           if (ride.status === 'requested') {
+            console.log('🚗 [TaxiMotoRealtimeService] Course UPDATE vers REQUESTED:', ride.id);
             onNewRide(ride);
           }
         }
       )
       .subscribe((status) => {
-        console.log('[Realtime] Subscription status:', status);
+        console.log('📡 [TaxiMotoRealtimeService] Status subscription:', status);
+        
+        // Notifier le composant parent du changement de status
+        if (onStatusChange) {
+          onStatusChange(status);
+        }
+        
+        // Gérer les différents statuts
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ [TaxiMotoRealtimeService] ABONNÉ avec succès aux nouvelles courses');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ [TaxiMotoRealtimeService] ERREUR canal Realtime - Vérifier configuration Supabase');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ [TaxiMotoRealtimeService] TIMEOUT subscription - Connexion trop lente');
+        } else if (status === 'CLOSED') {
+          console.warn('⚠️ [TaxiMotoRealtimeService] Canal fermé');
+        }
       });
 
     this.channels.set('new-ride-requests', channel);
 
     return () => {
-      console.log('[Realtime] Unsubscribing from new rides');
+      console.log('🔕 [TaxiMotoRealtimeService] Désabonnement nouvelles courses');
       supabase.removeChannel(channel);
       this.channels.delete('new-ride-requests');
     };

@@ -24,6 +24,8 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
   const [currentRide, setCurrentRide] = useState<RideRequestItem | null>(null);
   const [trackingPoints, setTrackingPoints] = useState<Array<{ lat: number; lng: number; ts: string }>>([]);
   const [loading, setLoading] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState<string>('disconnected');
+  const [pollingEnabled, setPollingEnabled] = useState(false);
 
   // Charger les courses en attente au démarrage
   const loadPendingRides = async () => {
@@ -61,31 +63,68 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
     }
   };
 
+  // Activer polling de secours si Realtime échoue
+  useEffect(() => {
+    if (realtimeStatus === 'CHANNEL_ERROR' || realtimeStatus === 'TIMED_OUT') {
+      console.log('⚠️ [TaxiMotoDriverDashboard] Realtime en erreur, activation polling de secours...');
+      setPollingEnabled(true);
+    } else if (realtimeStatus === 'SUBSCRIBED') {
+      console.log('✅ [TaxiMotoDriverDashboard] Realtime actif, désactivation polling');
+      setPollingEnabled(false);
+    }
+  }, [realtimeStatus]);
+
+  // Polling de secours toutes les 5 secondes
+  useEffect(() => {
+    if (!pollingEnabled) return;
+
+    console.log('🔄 [TaxiMotoDriverDashboard] Démarrage polling de secours (5s)');
+    
+    const interval = setInterval(async () => {
+      console.log('🔄 [TaxiMotoDriverDashboard] Polling courses...');
+      await loadPendingRides();
+    }, 5000);
+
+    return () => {
+      console.log('🔄 [TaxiMotoDriverDashboard] Arrêt polling');
+      clearInterval(interval);
+    };
+  }, [pollingEnabled]);
+
   useEffect(() => {
     // Charger les courses existantes
     loadPendingRides();
 
-    // S'abonner aux nouvelles courses en temps réel
-    const unsubNew = TaxiMotoRealtimeService.subscribeToNewRides((ride) => {
-      console.log('[TaxiMotoDriverDashboard] New ride received:', ride.id);
-      setIncoming((prev) => {
-        // Éviter les doublons
-        if (prev.some(r => r.id === ride.id)) {
-          return prev;
-        }
-        return [{
-          id: ride.id,
-          ride_code: ride.ride_code,
-          pickup_lat: ride.pickup_lat,
-          pickup_lng: ride.pickup_lng,
-          dropoff_lat: ride.dropoff_lat,
-          dropoff_lng: ride.dropoff_lng,
-          price_total: ride.price_total,
-          distance_km: ride.distance_km,
-          status: ride.status
-        }, ...prev];
-      });
-    });
+    // S'abonner aux nouvelles courses en temps réel avec callback status
+    const unsubNew = TaxiMotoRealtimeService.subscribeToNewRides(
+      (ride) => {
+        console.log('[TaxiMotoDriverDashboard] New ride received via Realtime:', ride.id);
+        setIncoming((prev) => {
+          // Éviter les doublons
+          if (prev.some(r => r.id === ride.id)) {
+            console.log('[TaxiMotoDriverDashboard] Course déjà présente, ignorée');
+            return prev;
+          }
+          console.log('[TaxiMotoDriverDashboard] Ajout nouvelle course à la liste');
+          return [{
+            id: ride.id,
+            ride_code: ride.ride_code,
+            pickup_lat: ride.pickup_lat,
+            pickup_lng: ride.pickup_lng,
+            dropoff_lat: ride.dropoff_lat,
+            dropoff_lng: ride.dropoff_lng,
+            price_total: ride.price_total,
+            distance_km: ride.distance_km,
+            status: ride.status
+          }, ...prev];
+        });
+      },
+      // Callback pour le status Realtime
+      (status) => {
+        console.log('[TaxiMotoDriverDashboard] Realtime status changed:', status);
+        setRealtimeStatus(status);
+      }
+    );
 
     return () => {
       console.log('[TaxiMotoDriverDashboard] Cleanup subscriptions');
