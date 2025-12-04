@@ -92,7 +92,9 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .single();
 
-      if (!driver || !driver.is_online || driver.status !== 'available') {
+      const validStatuses = ['available', 'online'];
+      if (!driver || !driver.is_online || !validStatuses.includes(driver.status)) {
+        logStep('Driver validation failed', { driver, expected: validStatuses });
         throw new Error('Driver not available');
       }
 
