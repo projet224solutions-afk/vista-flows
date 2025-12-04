@@ -70,10 +70,13 @@ export class TaxiMotoRealtimeService {
 
   /**
    * Écouter les nouvelles demandes de courses (pour chauffeurs)
+   * Note: On écoute tous les INSERT/UPDATE et on filtre côté client
    */
   static subscribeToNewRides(
     onNewRide: (ride: any) => void
   ): () => void {
+    console.log('[Realtime] Setting up subscription for new rides');
+    
     const channel = supabase
       .channel('new-ride-requests')
       .on(
@@ -81,19 +84,42 @@ export class TaxiMotoRealtimeService {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'taxi_trips',
-          filter: 'status=eq.requested'
+          table: 'taxi_trips'
         },
         (payload) => {
-          console.log('[Realtime] Nouvelle demande de course:', payload.new);
-          onNewRide(payload.new);
+          console.log('[Realtime] INSERT taxi_trips:', payload.new);
+          const ride = payload.new as any;
+          // Filtrer côté client pour les courses "requested"
+          if (ride.status === 'requested') {
+            console.log('[Realtime] Nouvelle course détectée:', ride.id);
+            onNewRide(ride);
+          }
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'taxi_trips'
+        },
+        (payload) => {
+          console.log('[Realtime] UPDATE taxi_trips:', payload.new);
+          const ride = payload.new as any;
+          // Notifier aussi si une course passe en "requested"
+          if (ride.status === 'requested') {
+            onNewRide(ride);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status);
+      });
 
     this.channels.set('new-ride-requests', channel);
 
     return () => {
+      console.log('[Realtime] Unsubscribing from new rides');
       supabase.removeChannel(channel);
       this.channels.delete('new-ride-requests');
     };
