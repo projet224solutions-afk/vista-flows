@@ -15,6 +15,7 @@ import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 
 // Types pour les données réelles
 interface ServiceStats {
@@ -29,6 +30,10 @@ export default function Home() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { isMobile, isTablet } = useResponsive();
+  
+  // Rediriger les utilisateurs connectés vers leur dashboard approprié
+  useRoleRedirect();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [serviceStats, setServiceStats] = useState<ServiceStats[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
