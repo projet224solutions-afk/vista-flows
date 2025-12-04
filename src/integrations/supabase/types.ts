@@ -7410,6 +7410,7 @@ export type Database = {
           billing_cycle: string | null
           created_at: string | null
           current_period_end: string
+          current_period_start: string | null
           id: string
           metadata: Json | null
           payment_method: string | null
@@ -7427,6 +7428,7 @@ export type Database = {
           billing_cycle?: string | null
           created_at?: string | null
           current_period_end: string
+          current_period_start?: string | null
           id?: string
           metadata?: Json | null
           payment_method?: string | null
@@ -7444,6 +7446,7 @@ export type Database = {
           billing_cycle?: string | null
           created_at?: string | null
           current_period_end?: string
+          current_period_start?: string | null
           id?: string
           metadata?: Json | null
           payment_method?: string | null
