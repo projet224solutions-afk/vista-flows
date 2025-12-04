@@ -9,8 +9,8 @@ import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AgentLayout } from '@/components/agent/AgentLayout';
-import { AgentOverviewContent } from '@/components/agent/AgentOverviewContent';
+import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
+import { AgentOverviewProfessional } from '@/components/agent/AgentOverviewProfessional';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
@@ -233,10 +233,11 @@ export default function AgentDashboard() {
     switch (activeTab) {
       case 'overview':
         return (
-          <AgentOverviewContent 
+          <AgentOverviewProfessional
             agent={agent}
             stats={stats}
             walletBalance={walletBalance}
+            onNavigate={setActiveTab}
           />
         );
       
@@ -453,15 +454,16 @@ export default function AgentDashboard() {
 
   return (
     <>
-      <AgentLayout
+      <AgentLayoutProfessional
         agent={agent}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        pdgUserId={pdgUserId}
+        walletBalance={walletBalance}
+        stats={stats}
         onSignOut={handleSignOut}
       >
         {renderContent()}
-      </AgentLayout>
+      </AgentLayoutProfessional>
       
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </>
