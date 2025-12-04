@@ -3,9 +3,35 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 /**
+ * Routes publiques accessibles à tous les utilisateurs connectés
+ * sans redirection vers leur dashboard
+ */
+const PUBLIC_ROUTES = [
+  '/home',
+  '/marketplace',
+  '/tracking',
+  '/client-tracking',
+  '/profil',
+  '/messages',
+  '/services-proximite',
+  '/taxi-moto',
+  '/taxi',
+  '/delivery',
+  '/delivery-request',
+  '/devis',
+  '/payment',
+  '/wallet',
+  '/cart',
+  '/product',
+  '/contact-user',
+  '/communication',
+  '/bug-bounty',
+];
+
+/**
  * Hook pour rediriger automatiquement l'utilisateur vers son dashboard
  * en fonction de son rôle après connexion
- * NE redirige PAS si l'utilisateur est déjà sur la bonne route de base
+ * NE redirige PAS si l'utilisateur est sur une route publique ou déjà sur son dashboard
  */
 export const useRoleRedirect = () => {
   const { profile, user, loading } = useAuth();
@@ -18,6 +44,17 @@ export const useRoleRedirect = () => {
 
     // Si utilisateur connecté avec profil
     if (user && profile) {
+      const currentPath = location.pathname;
+
+      // Ne pas rediriger si l'utilisateur est sur une route publique
+      const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
+        currentPath === route || currentPath.startsWith(route + '/')
+      );
+      
+      if (isOnPublicRoute) {
+        return;
+      }
+
       const roleRoutes: Record<string, string> = {
         admin: '/pdg',
         vendeur: '/vendeur',
@@ -31,9 +68,7 @@ export const useRoleRedirect = () => {
       const targetRoute = roleRoutes[profile.role];
       if (targetRoute) {
         // Ne pas rediriger si l'utilisateur est déjà sur la bonne route de base
-        const currentPath = location.pathname;
         if (currentPath.startsWith(targetRoute)) {
-          // L'utilisateur est déjà sur son dashboard, ne pas rediriger
           return;
         }
         
