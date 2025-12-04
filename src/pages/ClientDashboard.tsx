@@ -29,7 +29,6 @@ import ClientOrdersList from "@/components/client/ClientOrdersList";
 import { supabase } from "@/lib/supabaseClient";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
-import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { useCart } from "@/contexts/CartContext";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -669,8 +668,7 @@ export default function ClientDashboard() {
         }}
       />
 
-      {/* Widget de communication flottant */}
-      <CommunicationWidget position="bottom-right" showNotifications={true} />
+      {/* Note: CommunicationWidget et QuickFooter sont rendus globalement dans App.tsx */}
     </div>
   );
 }
