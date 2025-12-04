@@ -49,18 +49,21 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
     }
 
     setSearching(true);
-    try {
-      const results: UserSearchResult[] = [];
-      const query = searchQuery.trim();
-      const queryUpper = query.toUpperCase();
+    const results: UserSearchResult[] = [];
+    const query = searchQuery.trim();
+    const queryUpper = query.toUpperCase();
 
-      // 1. Recherche directe par ID exact (CLT..., VND..., BST..., AGT..., etc.)
-      // Recherche dans user_ids
-      const { data: userIds } = await supabase
+    console.log('🔍 Recherche bureau transfert:', query, queryUpper);
+
+    try {
+      // 1. RECHERCHE PAR ID DANS user_ids (VND..., CLT..., DRV..., PDG..., etc.)
+      const { data: userIds, error: userIdsError } = await supabase
         .from('user_ids')
         .select('user_id, custom_id')
-        .or(`custom_id.ilike.${queryUpper}%,custom_id.ilike.%${queryUpper}%`)
+        .ilike('custom_id', `%${queryUpper}%`)
         .limit(15);
+
+      console.log('📋 user_ids résultat:', userIds, userIdsError);
 
       if (userIds && userIds.length > 0) {
         for (const uid of userIds) {
@@ -90,15 +93,46 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         }
       }
 
-      // 2. Recherche directe par agent_code (AGT...)
-      const { data: agentsByCode } = await supabase
-        .from('agents_management')
-        .select('id, name, email, agent_code')
-        .ilike('agent_code', `${queryUpper}%`)
+      // 2. RECHERCHE PAR CODE BUREAU (BST...)
+      const { data: bureaux, error: bureauError } = await supabase
+        .from('bureaus')
+        .select('id, bureau_code, prefecture, commune')
+        .ilike('bureau_code', `%${queryUpper}%`)
         .limit(10);
 
-      if (agentsByCode && agentsByCode.length > 0) {
-        for (const agent of agentsByCode) {
+      console.log('📋 Bureaux résultat:', bureaux, bureauError);
+
+      if (bureaux && bureaux.length > 0) {
+        for (const bureau of bureaux) {
+          const { data: bureauWallet } = await supabase
+            .from('bureau_wallets')
+            .select('id')
+            .eq('bureau_id', bureau.id)
+            .maybeSingle();
+
+          if (bureauWallet && bureauWallet.id !== bureauWalletId) {
+            results.push({
+              id: bureau.id,
+              name: `${bureau.bureau_code} - ${bureau.prefecture || bureau.commune || 'Bureau'}`,
+              email: bureau.commune || '',
+              type: 'bureau',
+              wallet_id: bureauWallet.id
+            });
+          }
+        }
+      }
+
+      // 3. RECHERCHE PAR CODE AGENT (AGT...)
+      const { data: agents, error: agentError } = await supabase
+        .from('agents_management')
+        .select('id, name, email, agent_code')
+        .ilike('agent_code', `%${queryUpper}%`)
+        .limit(10);
+
+      console.log('📋 Agents résultat:', agents, agentError);
+
+      if (agents && agents.length > 0) {
+        for (const agent of agents) {
           const { data: agentWallet } = await supabase
             .from('agent_wallets')
             .select('id')
@@ -109,7 +143,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
             results.push({
               id: agent.id,
               name: `${agent.agent_code} - ${agent.name}`,
-              email: agent.email,
+              email: agent.email || '',
               type: 'agent',
               wallet_id: agentWallet.id
             });
@@ -117,139 +151,66 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         }
       }
 
-      // 2. Rechercher dans autres bureaux syndicats
-      const { data: bureaux } = await (supabase
-        .from('bureaus' as any)
-        .select('id, bureau_code, prefecture, commune')
-        .or(`bureau_code.ilike.%${searchQuery}%,prefecture.ilike.%${searchQuery}%,commune.ilike.%${searchQuery}%`)
-        .limit(10) as any);
-
-      if (bureaux) {
-        for (const bureau of bureaux as any[]) {
-          const { data: bureauWallet } = await supabase
-            .from('bureau_wallets')
-            .select('id')
-            .eq('bureau_id', bureau.id)
-            .maybeSingle();
-
-          if (bureauWallet && bureauWallet.id !== bureauWalletId) {
-            results.push({
-              id: bureau.id,
-              name: `${bureau.bureau_code} - ${bureau.prefecture}`,
-              email: bureau.commune || '',
-              type: 'bureau',
-              wallet_id: bureauWallet.id
-            });
-          }
-        }
-      }
-
-      // 3. Rechercher dans chauffeurs taxi-moto
-      const { data: drivers } = await (supabase
-        .from('taxi_moto_drivers' as any)
-        .select('id, first_name, last_name, phone, user_id')
-        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-        .limit(10) as any);
-
-      if (drivers) {
-        for (const driver of drivers as any[]) {
-          const { data: driverWallet } = await supabase
-            .from('wallets')
-            .select('id')
-            .eq('user_id', driver.user_id)
-            .maybeSingle();
-
-          if (driverWallet) {
-            results.push({
-              id: driver.id,
-              name: `${driver.first_name} ${driver.last_name}`,
-              email: driver.phone || '',
-              type: 'driver',
-              wallet_id: driverWallet.id
-            });
-          }
-        }
-      }
-
-      // 4. Rechercher dans agents
-      const { data: agents } = await supabase
-        .from('agents_management')
-        .select('id, name, email, agent_code')
-        .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,agent_code.ilike.%${searchQuery}%`)
+      // 4. RECHERCHE PAR NOM/EMAIL/TELEPHONE dans profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, role')
+        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
         .limit(10);
 
-      if (agents) {
-        for (const agent of agents) {
-          const { data: agentWallet } = await supabase
-            .from('agent_wallets')
-            .select('id')
-            .eq('agent_id', agent.id)
-            .maybeSingle();
+      if (profiles && profiles.length > 0) {
+        for (const profile of profiles) {
+          if (!results.find(r => r.id === profile.id)) {
+            const { data: wallet } = await supabase
+              .from('wallets')
+              .select('id')
+              .eq('user_id', profile.id)
+              .maybeSingle();
 
-          if (agentWallet) {
-            results.push({
-              id: agent.id,
-              name: `${agent.agent_code} - ${agent.name}`,
-              email: agent.email,
-              type: 'agent',
-              wallet_id: agentWallet.id
-            });
+            if (wallet) {
+              const { data: userId } = await supabase
+                .from('user_ids')
+                .select('custom_id')
+                .eq('user_id', profile.id)
+                .maybeSingle();
+
+              results.push({
+                id: profile.id,
+                name: userId?.custom_id 
+                  ? `${userId.custom_id} - ${profile.full_name || 'Utilisateur'}`
+                  : profile.full_name || 'Utilisateur',
+                email: profile.email || profile.phone || '',
+                type: profile.role === 'vendeur' ? 'vendor' : profile.role === 'livreur' ? 'driver' : 'user',
+                wallet_id: wallet.id
+              });
+            }
           }
         }
       }
 
-      // 5. Rechercher dans vendors
+      // 5. RECHERCHE DANS VENDORS par nom
       const { data: vendors } = await supabase
         .from('vendors')
         .select('id, business_name, email, user_id')
-        .or(`business_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`business_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
 
-      if (vendors) {
+      if (vendors && vendors.length > 0) {
         for (const vendor of vendors) {
-          const { data: vendorWallet } = await supabase
-            .from('wallets')
-            .select('id')
-            .eq('user_id', vendor.user_id)
-            .maybeSingle();
-
-          if (vendorWallet) {
-            results.push({
-              id: vendor.id,
-              name: vendor.business_name,
-              email: vendor.email,
-              type: 'vendor',
-              wallet_id: vendorWallet.id
-            });
-          }
-        }
-      }
-
-      // 6. Rechercher dans profiles (clients)
-      const { data: clients } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, phone, role')
-        .eq('role', 'client')
-        .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-        .limit(10);
-
-      if (clients) {
-        for (const client of clients) {
-          // Éviter les doublons déjà trouvés par user_ids
-          if (!results.find(r => r.id === client.id)) {
-            const { data: clientWallet } = await supabase
+          if (!results.find(r => r.id === vendor.user_id)) {
+            const { data: vendorWallet } = await supabase
               .from('wallets')
               .select('id')
-              .eq('user_id', client.id)
+              .eq('user_id', vendor.user_id)
               .maybeSingle();
 
-            if (clientWallet) {
+            if (vendorWallet && !results.find(r => r.wallet_id === vendorWallet.id)) {
               results.push({
-                id: client.id,
-                name: client.full_name || 'Client',
-                email: client.email || client.phone || '',
-                type: 'user',
-                wallet_id: clientWallet.id
+                id: vendor.id,
+                name: vendor.business_name || 'Vendeur',
+                email: vendor.email || '',
+                type: 'vendor',
+                wallet_id: vendorWallet.id
               });
             }
           }
@@ -261,12 +222,16 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         index === self.findIndex(r => r.wallet_id === result.wallet_id)
       );
 
+      console.log('✅ Résultats finaux:', uniqueResults.length, uniqueResults);
+
       setSearchResults(uniqueResults);
       if (uniqueResults.length === 0) {
-        toast.info('Aucun utilisateur trouvé');
+        toast.info('Aucun utilisateur trouvé avec cet ID ou nom');
+      } else {
+        toast.success(`${uniqueResults.length} résultat(s) trouvé(s)`);
       }
     } catch (error: any) {
-      console.error('Erreur recherche utilisateurs:', error);
+      console.error('❌ Erreur recherche:', error);
       toast.error('Erreur lors de la recherche');
     } finally {
       setSearching(false);
