@@ -10,17 +10,24 @@
 -- ============================================
 
 -- Table escrow_transactions
-ALTER TABLE escrow_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS escrow_transactions ENABLE ROW LEVEL SECURITY;
 
 -- Table escrow_logs (si elle existe)
 ALTER TABLE IF EXISTS escrow_logs ENABLE ROW LEVEL SECURITY;
 
 -- Table profiles
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS profiles ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- ÉTAPE 2: POLICIES POUR ESCROW_TRANSACTIONS
 -- ============================================
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view their own escrow transactions" ON escrow_transactions;
+DROP POLICY IF EXISTS "Users can create escrow transactions as payer" ON escrow_transactions;
+DROP POLICY IF EXISTS "Payer can cancel pending escrow transaction" ON escrow_transactions;
+DROP POLICY IF EXISTS "Receiver can confirm escrow transaction" ON escrow_transactions;
+DROP POLICY IF EXISTS "Service role has full access to escrow transactions" ON escrow_transactions;
 
 -- Policy 1: Les utilisateurs peuvent voir leurs propres transactions
 CREATE POLICY "Users can view their own escrow transactions"
@@ -73,6 +80,11 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ÉTAPE 3: POLICIES POUR ESCROW_LOGS
 -- ============================================
 
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view logs of their escrow transactions" ON escrow_logs;
+DROP POLICY IF EXISTS "Only system can create escrow logs" ON escrow_logs;
+DROP POLICY IF EXISTS "Service role has full access to escrow logs" ON escrow_logs;
+
 -- Policy 1: Les utilisateurs peuvent voir les logs de leurs transactions
 CREATE POLICY "Users can view logs of their escrow transactions"
 ON escrow_logs
@@ -99,6 +111,13 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ============================================
 -- ÉTAPE 4: POLICIES POUR PROFILES
 -- ============================================
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can view public profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+DROP POLICY IF EXISTS "Only system can create profiles" ON profiles;
+DROP POLICY IF EXISTS "Service role has full access to profiles" ON profiles;
 
 -- Policy 1: Les utilisateurs peuvent voir leur propre profil
 CREATE POLICY "Users can view their own profile"
@@ -136,7 +155,11 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ============================================
 
 -- Activer RLS sur wallets
-ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS wallets ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view their own wallet" ON wallets;
+DROP POLICY IF EXISTS "Only system can modify wallets" ON wallets;
 
 -- Policy 1: Les utilisateurs peuvent voir leur propre wallet
 CREATE POLICY "Users can view their own wallet"
@@ -155,7 +178,11 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ============================================
 
 -- Activer RLS sur wallet_transactions
-ALTER TABLE wallet_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS wallet_transactions ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view their wallet transactions" ON wallet_transactions;
+DROP POLICY IF EXISTS "Only system can create wallet transactions" ON wallet_transactions;
 
 -- Policy 1: Les utilisateurs peuvent voir les transactions de leur wallet
 CREATE POLICY "Users can view their wallet transactions"
@@ -178,7 +205,11 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ============================================
 
 -- Activer RLS sur revenus_pdg
-ALTER TABLE revenus_pdg ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS revenus_pdg ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Only PDG can view revenus" ON revenus_pdg;
+DROP POLICY IF EXISTS "Only system can create revenus PDG" ON revenus_pdg;
 
 -- Policy 1: Seul le PDG peut voir ses revenus
 CREATE POLICY "Only PDG can view revenus"
@@ -202,7 +233,13 @@ USING (auth.jwt()->>'role' = 'service_role');
 -- ============================================
 
 -- Activer RLS sur subscriptions
-ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Users can view their own subscriptions" ON subscriptions;
+DROP POLICY IF EXISTS "Users can create their own subscriptions" ON subscriptions;
+DROP POLICY IF EXISTS "Users can update their own subscriptions" ON subscriptions;
+DROP POLICY IF EXISTS "Service role has full access to subscriptions" ON subscriptions;
 
 -- Policy 1: Les utilisateurs peuvent voir leurs propres abonnements
 CREATE POLICY "Users can view their own subscriptions"
@@ -223,18 +260,26 @@ FOR UPDATE
 USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
--- Policy 4: Service role a accès complet
-CREATE POLICY "Service role has full access to subscriptions"
-ON subscriptions
-FOR ALL
-USING (auth.jwt()->>'role' = 'service_role');
-
 -- ============================================
 -- ÉTAPE 9: POLICIES POUR PRODUCTS
 -- ============================================
 
 -- Activer RLS sur products
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS products ENABLE ROW LEVEL SECURITY;
+
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "Anyone can view active products" ON products;
+DROP POLICY IF EXISTS "Vendors can view their own products" ON products;
+DROP POLICY IF EXISTS "Vendors can create products" ON products;
+DROP POLICY IF EXISTS "Vendors can update their products" ON products;
+DROP POLICY IF EXISTS "Vendors can delete their products" ON products;
+DROP POLICY IF EXISTS "Service role has full access to products" ON products;
+
+-- Policy 1: Tout le monde peut voir les produits actifs
+CREATE POLICY "Anyone can view active products"
+ON products
+FOR SELECT
+USING (is_active = true);LE ROW LEVEL SECURITY;
 
 -- Policy 1: Tout le monde peut voir les produits actifs
 CREATE POLICY "Anyone can view active products"
