@@ -56,6 +56,7 @@ import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
 import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
+import { DriverDiagnostic } from "@/components/taxi-moto/DriverDiagnostic";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -197,7 +198,10 @@ export default function TaxiMotoDriver() {
 
     // S'abonner aux demandes de courses temps réel
     useEffect(() => {
-        if (!driverId || !isOnline || !hasAccess) return;
+        if (!driverId || !isOnline || !hasAccess) {
+            console.log('⚠️ [TaxiMotoDriver] Subscription NON activée:', { driverId, isOnline, hasAccess });
+            return;
+        }
 
         console.log('🔔 [TaxiMotoDriver] Subscription aux courses activée pour driver:', driverId);
 
@@ -264,13 +268,22 @@ export default function TaxiMotoDriver() {
             )
             .subscribe((status) => {
                 console.log('🔔 Subscription status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ [TaxiMotoDriver] ABONNÉ avec succès aux courses pour driver:', driverId);
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('❌ [TaxiMotoDriver] ERREUR subscription Realtime!');
+                    toast.error('Erreur de connexion temps réel. Rechargez la page.');
+                } else if (status === 'TIMED_OUT') {
+                    console.error('⏱️ [TaxiMotoDriver] TIMEOUT subscription Realtime!');
+                    toast.error('Délai dépassé pour la connexion temps réel.');
+                }
             });
 
         return () => {
             console.log('🔕 Unsubscribe des courses');
             supabase.removeChannel(channel);
         };
-    }, [driverId, isOnline, location, hasAccess]);
+    }, [driverId, isOnline, hasAccess]);
 
     // S'abonner aux mises à jour de la course active
     useEffect(() => {
@@ -351,7 +364,7 @@ export default function TaxiMotoDriver() {
 
         // Si on veut passer en ligne, vérifier/obtenir la position GPS
         if (next) {
-            toast.loading('📍 Recherche GPS en cours... (25 secondes max)', { id: 'gps-loading' });
+            toast.loading('📍 Activation GPS en cours...', { id: 'gps-loading' });
             
             try {
                 // Utiliser la position existante si elle est récente (< 60 secondes) sinon en obtenir une nouvelle
@@ -439,7 +452,12 @@ export default function TaxiMotoDriver() {
      * Charge le profil conducteur
      */
     const loadDriverProfile = async () => {
-        if (!user) return;
+        if (!user) {
+            console.log('⚠️ [loadDriverProfile] Pas d\'utilisateur connecté');
+            return;
+        }
+        
+        console.log('🔄 [loadDriverProfile] Chargement profil pour user:', user.id);
         
         try {
             const { data, error } = await supabase
@@ -448,12 +466,23 @@ export default function TaxiMotoDriver() {
                 .eq('user_id', user.id)
                 .single();
 
+            if (error) {
+                console.error('❌ [loadDriverProfile] Erreur:', error);
+                toast.error('Erreur de chargement du profil conducteur');
+                return;
+            }
+
             if (data) {
+                console.log('✅ [loadDriverProfile] Profil conducteur chargé:', data.id);
                 setDriverId(data.id);
                 setIsOnline(data.is_online || false);
+            } else {
+                console.warn('⚠️ [loadDriverProfile] Aucun profil conducteur trouvé');
+                toast.error('Profil conducteur introuvable. Contactez le support.');
             }
         } catch (error) {
-            console.error('Error loading driver profile:', error);
+            console.error('❌ [loadDriverProfile] Exception:', error);
+            toast.error('Erreur lors du chargement du profil');
         }
     };
 
@@ -1211,7 +1240,7 @@ export default function TaxiMotoDriver() {
 
             {/* Message quand en ligne sans courses */}
             {isOnline && rideRequests.length === 0 && !activeRide && (
-                <div className="px-4 mt-2">
+                <div className="px-4 mt-2 space-y-2">
                     <Card className="bg-blue-50 border-blue-200 shadow-lg">
                         <CardContent className="p-3">
                             <div className="flex items-center justify-between gap-3">
@@ -1236,6 +1265,14 @@ export default function TaxiMotoDriver() {
                             </div>
                         </CardContent>
                     </Card>
+                    
+                    {/* Composant diagnostic */}
+                    <DriverDiagnostic 
+                        driverId={driverId}
+                        isOnline={isOnline}
+                        hasAccess={hasAccess}
+                        userId={user?.id}
+                    />
                 </div>
             )}
 
