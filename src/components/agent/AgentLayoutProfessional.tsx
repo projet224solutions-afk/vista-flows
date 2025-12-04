@@ -1,10 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   LayoutDashboard,
   Wallet,
@@ -16,15 +15,19 @@ import {
   Bell,
   Menu,
   X,
-  FileText,
-  TrendingUp,
   BarChart3,
-  Search,
-  Moon,
-  Sun,
-  HelpCircle
+  ChevronRight,
+  Zap,
+  Sparkles,
+  CreditCard,
+  ArrowUpRight
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AgentLayoutProfessionalProps {
   children: ReactNode;
@@ -53,7 +56,7 @@ interface NavItem {
   label: string;
   icon: ReactNode;
   badge?: string | number;
-  color?: string;
+  gradient?: string;
   disabled?: boolean;
 }
 
@@ -68,47 +71,45 @@ export function AgentLayoutProfessional({
 }: AgentLayoutProfessionalProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
 
   const navItems: NavItem[] = [
     {
       id: 'overview',
-      label: 'Vue d\'ensemble',
+      label: 'Tableau de Bord',
       icon: <LayoutDashboard className="w-5 h-5" />,
-      color: 'text-blue-600'
+      gradient: 'from-blue-500 to-cyan-500'
     },
     {
       id: 'wallet',
       label: 'Portefeuille',
       icon: <Wallet className="w-5 h-5" />,
-      color: 'text-emerald-600'
+      gradient: 'from-emerald-500 to-teal-500'
     },
     {
       id: 'create-user',
       label: 'Créer Utilisateur',
       icon: <UserPlus className="w-5 h-5" />,
-      color: 'text-violet-600'
+      gradient: 'from-violet-500 to-purple-500'
     },
     {
       id: 'sub-agents',
       label: 'Sous-Agents',
       icon: <Users className="w-5 h-5" />,
-      color: 'text-orange-600',
-      badge: agent.can_create_sub_agent ? undefined : 'Premium',
+      gradient: 'from-orange-500 to-amber-500',
+      badge: agent.can_create_sub_agent ? undefined : 'Pro',
       disabled: !agent.can_create_sub_agent
     },
     {
       id: 'reports',
-      label: 'Rapports & Analytics',
+      label: 'Analytics',
       icon: <BarChart3 className="w-5 h-5" />,
-      color: 'text-indigo-600'
+      gradient: 'from-pink-500 to-rose-500'
     },
     {
       id: 'settings',
       label: 'Paramètres',
       icon: <Settings className="w-5 h-5" />,
-      color: 'text-slate-600'
+      gradient: 'from-slate-500 to-zinc-500'
     }
   ];
 
@@ -123,207 +124,201 @@ export function AgentLayoutProfessional({
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF',
-      minimumFractionDigits: 0
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
   };
 
-  return (
-    <div className={cn(
-      "min-h-screen transition-colors duration-300",
-      darkMode 
-        ? "bg-slate-900" 
-        : "bg-gradient-to-br from-slate-50 via-blue-50/30 to-violet-50/30"
-    )}>
-      {/* Sidebar Desktop */}
-      <aside className={cn(
-        "hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col transition-all duration-300",
-        sidebarCollapsed ? "w-20" : "w-72",
-        darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200",
-        "border-r shadow-xl"
-      )}>
-        {/* Logo & Brand */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-200 dark:border-slate-800">
-          {!sidebarCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-violet-600 rounded-xl blur opacity-50"></div>
-                <div className="relative p-2.5 bg-gradient-to-br from-blue-600 to-violet-600 rounded-xl">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className={cn(
-                  "font-bold text-lg",
-                  darkMode ? "text-white" : "text-slate-900"
-                )}>
-                  Agent Pro
-                </h1>
-                <p className="text-xs text-slate-500">v2.0</p>
-              </div>
+  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
+        <div className={cn("flex items-center gap-3", sidebarCollapsed && !isMobile && "hidden")}>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-violet-500 rounded-xl blur-md opacity-60" />
+            <div className="relative p-2 bg-gradient-to-br from-blue-500 to-violet-600 rounded-xl shadow-lg">
+              <Shield className="w-5 h-5 text-white" />
             </div>
-          )}
+          </div>
+          <div>
+            <h1 className="font-bold text-white text-lg tracking-tight">Agent Hub</h1>
+            <p className="text-[10px] text-white/50 font-medium">224SOLUTIONS</p>
+          </div>
+        </div>
+        {!isMobile && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={cn(
-              "hover:bg-slate-100 dark:hover:bg-slate-800",
+              "text-white/70 hover:text-white hover:bg-white/10",
               sidebarCollapsed && "mx-auto"
             )}
           >
-            {sidebarCollapsed ? (
-              <Menu className="w-5 h-5" />
-            ) : (
-              <X className="w-5 h-5" />
-            )}
+            {sidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </Button>
-        </div>
-
-        {/* Agent Profile Card */}
-        {!sidebarCollapsed && (
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-12 w-12 ring-2 ring-blue-500/20">
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-violet-600 text-white font-semibold">
-                  {getInitials(agent.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className={cn(
-                  "font-semibold truncate",
-                  darkMode ? "text-white" : "text-slate-900"
-                )}>
-                  {agent.name}
-                </h3>
-                <p className="text-xs text-slate-500 truncate">{agent.email}</p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                    {agent.agent_code}
-                  </Badge>
-                  <Badge 
-                    variant={agent.is_active ? "default" : "destructive"}
-                    className="text-xs px-2 py-0.5"
-                  >
-                    {agent.is_active ? 'Actif' : 'Inactif'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="mt-4 p-3 bg-gradient-to-br from-blue-50 to-violet-50 dark:from-slate-800 dark:to-slate-800 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                  Solde Wallet
-                </span>
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-              </div>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">
-                {formatCurrency(walletBalance)}
-              </p>
-              {stats && stats.totalUsersCreated > 0 && (
-                <p className="text-xs text-emerald-600 mt-1">
-                  {stats.totalUsersCreated} utilisateurs créés
-                </p>
-              )}
-            </div>
-          </div>
         )}
-
-        {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.id;
-              const isDisabled = item.disabled;
-
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-3 h-11 transition-all duration-200",
-                    sidebarCollapsed ? "px-3" : "px-4",
-                    isActive && !isDisabled && [
-                      "bg-gradient-to-r from-blue-600 to-violet-600",
-                      "text-white shadow-lg shadow-blue-500/25",
-                      "hover:from-blue-700 hover:to-violet-700"
-                    ],
-                    !isActive && !isDisabled && [
-                      darkMode ? "hover:bg-slate-800" : "hover:bg-slate-100",
-                      darkMode ? "text-slate-300" : "text-slate-700"
-                    ],
-                    isDisabled && "opacity-50 cursor-not-allowed"
-                  )}
-                  onClick={() => !isDisabled && onTabChange(item.id)}
-                  disabled={isDisabled}
-                >
-                  <span className={cn(
-                    isActive && !isDisabled ? "text-white" : item.color
-                  )}>
-                    {item.icon}
-                  </span>
-                  {!sidebarCollapsed && (
-                    <>
-                      <span className="flex-1 text-left font-medium">
-                        {item.label}
-                      </span>
-                      {item.badge && (
-                        <Badge 
-                          variant={isActive ? "secondary" : "outline"}
-                          className="text-xs"
-                        >
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </Button>
-              );
-            })}
-          </nav>
-        </ScrollArea>
-
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-          {!sidebarCollapsed && (
-            <>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                onClick={() => setDarkMode(!darkMode)}
-              >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                <span className="font-medium">
-                  {darkMode ? 'Mode Clair' : 'Mode Sombre'}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <HelpCircle className="w-5 h-5" />
-                <span className="font-medium">Aide & Support</span>
-              </Button>
-            </>
-          )}
+        {isMobile && (
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-            onClick={onSignOut}
+            size="icon"
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-white/70 hover:text-white hover:bg-white/10"
           >
-            <LogOut className="w-5 h-5" />
-            {!sidebarCollapsed && <span className="font-medium">Déconnexion</span>}
+            <X className="w-5 h-5" />
           </Button>
+        )}
+      </div>
+
+      {/* Profile Section */}
+      <div className={cn(
+        "p-4 border-b border-white/10",
+        sidebarCollapsed && !isMobile && "hidden"
+      )}>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Avatar className="h-12 w-12 ring-2 ring-white/20 ring-offset-2 ring-offset-slate-900">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white font-bold">
+                {getInitials(agent.name)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-white truncate">{agent.name}</h3>
+            <p className="text-xs text-white/50 truncate">{agent.email}</p>
+          </div>
         </div>
+        
+        {/* Agent Code Badge */}
+        <div className="flex items-center gap-2 mt-3">
+          <Badge className="bg-white/10 text-white/90 hover:bg-white/20 border-0">
+            <Zap className="w-3 h-3 mr-1 text-amber-400" />
+            {agent.agent_code}
+          </Badge>
+          <Badge className={cn(
+            "border-0",
+            agent.is_active 
+              ? "bg-emerald-500/20 text-emerald-400" 
+              : "bg-red-500/20 text-red-400"
+          )}>
+            {agent.is_active ? 'Actif' : 'Inactif'}
+          </Badge>
+        </div>
+
+        {/* Wallet Balance Card */}
+        <div className="mt-4 p-3 bg-gradient-to-br from-white/5 to-white/10 rounded-xl border border-white/10">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-white/50 font-medium">Solde disponible</span>
+            <CreditCard className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-white">{formatCurrency(walletBalance)}</span>
+            <span className="text-sm text-white/50">GNF</span>
+          </div>
+          {stats && stats.totalUsersCreated > 0 && (
+            <div className="flex items-center gap-1 mt-2 text-emerald-400 text-xs">
+              <ArrowUpRight className="w-3 h-3" />
+              <span>{stats.totalUsersCreated} utilisateurs</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            const isDisabled = item.disabled;
+
+            return (
+              <TooltipProvider key={item.id} delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full h-12 transition-all duration-200",
+                        sidebarCollapsed && !isMobile ? "justify-center px-3" : "justify-start gap-3 px-4",
+                        isActive && !isDisabled && [
+                          "bg-gradient-to-r text-white shadow-lg",
+                          item.gradient
+                        ],
+                        !isActive && !isDisabled && [
+                          "text-white/70 hover:text-white hover:bg-white/10"
+                        ],
+                        isDisabled && "opacity-40 cursor-not-allowed"
+                      )}
+                      onClick={() => !isDisabled && onTabChange(item.id)}
+                      disabled={isDisabled}
+                    >
+                      <span className={cn(
+                        "transition-transform",
+                        isActive && "scale-110"
+                      )}>
+                        {item.icon}
+                      </span>
+                      {(!sidebarCollapsed || isMobile) && (
+                        <>
+                          <span className="flex-1 text-left font-medium text-sm">
+                            {item.label}
+                          </span>
+                          {item.badge && (
+                            <Badge variant="outline" className="text-[10px] px-2 py-0 border-white/30 text-white/70">
+                              {item.badge}
+                            </Badge>
+                          )}
+                          {isActive && <ChevronRight className="w-4 h-4" />}
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  {sidebarCollapsed && !isMobile && (
+                    <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+                      {item.label}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            );
+          })}
+        </nav>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-white/10 space-y-1">
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full h-11 text-red-400 hover:text-red-300 hover:bg-red-500/10",
+            sidebarCollapsed && !isMobile ? "justify-center px-3" : "justify-start gap-3 px-4"
+          )}
+          onClick={onSignOut}
+        >
+          <LogOut className="w-5 h-5" />
+          {(!sidebarCollapsed || isMobile) && <span className="font-medium">Déconnexion</span>}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      {/* Desktop Sidebar */}
+      <aside className={cn(
+        "hidden lg:flex fixed left-0 top-0 bottom-0 z-40 flex-col transition-all duration-300",
+        sidebarCollapsed ? "w-20" : "w-72",
+        "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800"
+      )}>
+        <SidebarContent />
       </aside>
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -332,78 +327,9 @@ export function AgentLayoutProfessional({
       <aside className={cn(
         "lg:hidden fixed left-0 top-0 bottom-0 z-50 w-72 transform transition-transform duration-300",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
-        darkMode ? "bg-slate-900" : "bg-white",
-        "shadow-2xl"
+        "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 shadow-2xl"
       )}>
-        {/* Mobile content - Same as desktop but always expanded */}
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between h-16 px-6 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-blue-600 to-violet-600 rounded-xl">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="font-bold text-lg text-slate-900">Agent Pro</h1>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="p-4 border-b border-slate-200">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-violet-600 text-white">
-                  {getInitials(agent.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900">{agent.name}</h3>
-                <p className="text-xs text-slate-500">{agent.email}</p>
-                <Badge variant="secondary" className="mt-1 text-xs">
-                  {agent.agent_code}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1 px-3 py-4">
-            <nav className="space-y-1">
-              {navItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start gap-3",
-                    activeTab === item.id && "bg-blue-600 text-white"
-                  )}
-                  onClick={() => {
-                    onTabChange(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  disabled={item.disabled}
-                >
-                  {item.icon}
-                  <span className="flex-1 text-left">{item.label}</span>
-                </Button>
-              ))}
-            </nav>
-          </ScrollArea>
-
-          <div className="p-4 border-t">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-red-600"
-              onClick={onSignOut}
-            >
-              <LogOut className="w-5 h-5" />
-              Déconnexion
-            </Button>
-          </div>
-        </div>
+        <SidebarContent isMobile />
       </aside>
 
       {/* Main Content */}
@@ -411,61 +337,57 @@ export function AgentLayoutProfessional({
         "transition-all duration-300",
         sidebarCollapsed ? "lg:ml-20" : "lg:ml-72"
       )}>
-        {/* Top Bar */}
-        <header className={cn(
-          "sticky top-0 z-30 h-16 border-b backdrop-blur-lg transition-colors",
-          darkMode 
-            ? "bg-slate-900/95 border-slate-800" 
-            : "bg-white/95 border-slate-200"
-        )}>
-          <div className="flex items-center justify-between h-full px-6">
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-slate-700"
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5" />
             </Button>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-4 hidden md:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  type="search"
-                  placeholder="Rechercher utilisateurs, transactions..."
-                  className={cn(
-                    "pl-10 border-slate-200",
-                    darkMode && "bg-slate-800 border-slate-700"
-                  )}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+            {/* Page Title */}
+            <div className="hidden lg:block">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {agent.type_agent ? `Agent ${agent.type_agent}` : 'Interface Agent'}
+              </p>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="relative hidden lg:flex">
+            <div className="flex items-center gap-3">
+              {/* Notification Bell */}
+              <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
               </Button>
-              
-              <div className="hidden lg:block">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-violet-600 text-white text-sm">
-                    {getInitials(agent.name)}
-                  </AvatarFallback>
-                </Avatar>
+
+              {/* Quick Stats Badge */}
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-full border border-emerald-200">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm font-semibold text-emerald-700">
+                  {formatCurrency(walletBalance)} GNF
+                </span>
               </div>
+
+              {/* Profile Avatar */}
+              <Avatar className="h-9 w-9 ring-2 ring-slate-200">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white text-sm font-bold">
+                  {getInitials(agent.name)}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-6">
+        <div className="p-4 lg:p-6">
           {children}
         </div>
       </main>
