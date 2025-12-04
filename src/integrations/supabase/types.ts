@@ -7416,7 +7416,6 @@ export type Database = {
           payment_method: string | null
           payment_transaction_id: string | null
           plan_id: string
-          price_paid: number | null
           price_paid_gnf: number
           started_at: string | null
           status: string
@@ -7434,7 +7433,6 @@ export type Database = {
           payment_method?: string | null
           payment_transaction_id?: string | null
           plan_id: string
-          price_paid?: number | null
           price_paid_gnf: number
           started_at?: string | null
           status?: string
@@ -7452,7 +7450,6 @@ export type Database = {
           payment_method?: string | null
           payment_transaction_id?: string | null
           plan_id?: string
-          price_paid?: number | null
           price_paid_gnf?: number
           started_at?: string | null
           status?: string
@@ -11380,17 +11377,29 @@ export type Database = {
         }
         Returns: string
       }
-      record_subscription_payment: {
-        Args: {
-          p_billing_cycle?: string
-          p_payment_method: string
-          p_payment_transaction_id?: string
-          p_plan_id: string
-          p_price_paid: number
-          p_user_id: string
-        }
-        Returns: string
-      }
+      record_subscription_payment:
+        | {
+            Args: {
+              p_billing_cycle?: string
+              p_payment_method?: string
+              p_payment_transaction_id?: string
+              p_plan_id: string
+              p_price_paid: number
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_billing_cycle?: string
+              p_payment_method: string
+              p_payment_transaction_id?: string
+              p_plan_id: string
+              p_price_paid: number
+              p_user_id: string
+            }
+            Returns: string
+          }
       refund_escrow: {
         Args: { p_escrow_id: string; p_reason?: string }
         Returns: boolean
