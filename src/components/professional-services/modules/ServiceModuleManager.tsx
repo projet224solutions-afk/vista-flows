@@ -7,12 +7,12 @@ import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
 // Import des modules métiers principaux
-const RestaurantModule = lazy(() => import('./restaurant/RestaurantModule'));
-const EcommerceModule = lazy(() => import('./ecommerce/EcommerceModule'));
-const BeautyModule = lazy(() => import('./beauty/BeautyModule'));
-const TransportModule = lazy(() => import('./transport/TransportModule'));
-const HealthModule = lazy(() => import('./health/HealthModule'));
-const EducationModule = lazy(() => import('./education/EducationModule'));
+const RestaurantModule = lazy(() => import('./RestaurantModule').then(m => ({ default: m.RestaurantModule })));
+const EcommerceModule = lazy(() => import('./EcommerceModule').then(m => ({ default: m.EcommerceModule })));
+const BeautyModule = lazy(() => import('./BeautyModule').then(m => ({ default: m.BeautyModule })));
+const TransportModule = lazy(() => import('./TransportModule').then(m => ({ default: m.TransportModule })));
+const HealthModule = lazy(() => import('./HealthModule').then(m => ({ default: m.HealthModule })));
+const EducationModule = lazy(() => import('./EducationModule').then(m => ({ default: m.EducationModule })));
 
 // Import des modules stubs
 import { 
