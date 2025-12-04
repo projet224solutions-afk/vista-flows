@@ -43,66 +43,23 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
   const [showConfirm, setShowConfirm] = useState(false);
 
   const searchUsers = async () => {
-    if (!searchQuery || searchQuery.length < 2) {
-      toast.error('Entrez au moins 2 caractères pour rechercher');
+    if (!searchQuery || searchQuery.length < 3) {
+      toast.error('Entrez au moins 3 caractères pour rechercher');
       return;
     }
 
     setSearching(true);
-    const results: UserSearchResult[] = [];
-    const query = searchQuery.trim();
-    const queryUpper = query.toUpperCase();
-
-    console.log('🔍 Recherche bureau transfert:', query, queryUpper);
-
     try {
-      // 1. RECHERCHE PAR ID DANS user_ids (VND..., CLT..., DRV..., PDG..., etc.)
-      const { data: userIds, error: userIdsError } = await supabase
-        .from('user_ids')
-        .select('user_id, custom_id')
-        .ilike('custom_id', `%${queryUpper}%`)
-        .limit(15);
+      const results: UserSearchResult[] = [];
 
-      console.log('📋 user_ids résultat:', userIds, userIdsError);
-
-      if (userIds && userIds.length > 0) {
-        for (const uid of userIds) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('id, full_name, email, role')
-            .eq('id', uid.user_id)
-            .maybeSingle();
-
-          if (profile) {
-            const { data: userWallet } = await supabase
-              .from('wallets')
-              .select('id')
-              .eq('user_id', profile.id)
-              .maybeSingle();
-
-            if (userWallet) {
-              results.push({
-                id: profile.id,
-                name: `${uid.custom_id} - ${profile.full_name || 'Utilisateur'}`,
-                email: profile.email || '',
-                type: profile.role === 'vendeur' ? 'vendor' : profile.role === 'livreur' ? 'driver' : 'user',
-                wallet_id: userWallet.id
-              });
-            }
-          }
-        }
-      }
-
-      // 2. RECHERCHE PAR CODE BUREAU (BST...)
-      const { data: bureaux, error: bureauError } = await supabase
-        .from('bureaus')
+      // Rechercher dans autres bureaux syndicats
+      const { data: bureaux } = await supabase
+        .from('bureau_syndicats')
         .select('id, bureau_code, prefecture, commune')
-        .ilike('bureau_code', `%${queryUpper}%`)
+        .or(`bureau_code.ilike.%${searchQuery}%,prefecture.ilike.%${searchQuery}%,commune.ilike.%${searchQuery}%`)
         .limit(10);
 
-      console.log('📋 Bureaux résultat:', bureaux, bureauError);
-
-      if (bureaux && bureaux.length > 0) {
+      if (bureaux) {
         for (const bureau of bureaux) {
           const { data: bureauWallet } = await supabase
             .from('bureau_wallets')
@@ -113,7 +70,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           if (bureauWallet && bureauWallet.id !== bureauWalletId) {
             results.push({
               id: bureau.id,
-              name: `${bureau.bureau_code} - ${bureau.prefecture || bureau.commune || 'Bureau'}`,
+              name: `${bureau.bureau_code} - ${bureau.prefecture}`,
               email: bureau.commune || '',
               type: 'bureau',
               wallet_id: bureauWallet.id
@@ -122,16 +79,41 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         }
       }
 
-      // 3. RECHERCHE PAR CODE AGENT (AGT...)
-      const { data: agents, error: agentError } = await supabase
-        .from('agents_management')
-        .select('id, name, email, agent_code')
-        .ilike('agent_code', `%${queryUpper}%`)
+      // Rechercher dans chauffeurs taxi-moto
+      const { data: drivers } = await supabase
+        .from('taxi_moto_drivers')
+        .select('id, first_name, last_name, phone, user_id')
+        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
         .limit(10);
 
-      console.log('📋 Agents résultat:', agents, agentError);
+      if (drivers) {
+        for (const driver of drivers) {
+          const { data: driverWallet } = await supabase
+            .from('wallets')
+            .select('id')
+            .eq('user_id', driver.user_id)
+            .maybeSingle();
 
-      if (agents && agents.length > 0) {
+          if (driverWallet) {
+            results.push({
+              id: driver.id,
+              name: `${driver.first_name} ${driver.last_name}`,
+              email: driver.phone || '',
+              type: 'driver',
+              wallet_id: driverWallet.id
+            });
+          }
+        }
+      }
+
+      // Rechercher dans agents
+      const { data: agents } = await supabase
+        .from('agents_management')
+        .select('id, name, email, agent_code')
+        .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,agent_code.ilike.%${searchQuery}%`)
+        .limit(10);
+
+      if (agents) {
         for (const agent of agents) {
           const { data: agentWallet } = await supabase
             .from('agent_wallets')
@@ -139,11 +121,11 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
             .eq('agent_id', agent.id)
             .maybeSingle();
 
-          if (agentWallet && !results.find(r => r.wallet_id === agentWallet.id)) {
+          if (agentWallet) {
             results.push({
               id: agent.id,
-              name: `${agent.agent_code} - ${agent.name}`,
-              email: agent.email || '',
+              name: agent.name,
+              email: agent.email,
               type: 'agent',
               wallet_id: agentWallet.id
             });
@@ -151,87 +133,39 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         }
       }
 
-      // 4. RECHERCHE PAR NOM/EMAIL/TELEPHONE dans profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, phone, role')
-        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
-        .limit(10);
-
-      if (profiles && profiles.length > 0) {
-        for (const profile of profiles) {
-          if (!results.find(r => r.id === profile.id)) {
-            const { data: wallet } = await supabase
-              .from('wallets')
-              .select('id')
-              .eq('user_id', profile.id)
-              .maybeSingle();
-
-            if (wallet) {
-              const { data: userId } = await supabase
-                .from('user_ids')
-                .select('custom_id')
-                .eq('user_id', profile.id)
-                .maybeSingle();
-
-              results.push({
-                id: profile.id,
-                name: userId?.custom_id 
-                  ? `${userId.custom_id} - ${profile.full_name || 'Utilisateur'}`
-                  : profile.full_name || 'Utilisateur',
-                email: profile.email || profile.phone || '',
-                type: profile.role === 'vendeur' ? 'vendor' : profile.role === 'livreur' ? 'driver' : 'user',
-                wallet_id: wallet.id
-              });
-            }
-          }
-        }
-      }
-
-      // 5. RECHERCHE DANS VENDORS par nom
+      // Rechercher dans vendors
       const { data: vendors } = await supabase
         .from('vendors')
         .select('id, business_name, email, user_id')
-        .or(`business_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .or(`business_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
         .limit(10);
 
-      if (vendors && vendors.length > 0) {
+      if (vendors) {
         for (const vendor of vendors) {
-          if (!results.find(r => r.id === vendor.user_id)) {
-            const { data: vendorWallet } = await supabase
-              .from('wallets')
-              .select('id')
-              .eq('user_id', vendor.user_id)
-              .maybeSingle();
+          const { data: vendorWallet } = await supabase
+            .from('wallets')
+            .select('id')
+            .eq('user_id', vendor.user_id)
+            .maybeSingle();
 
-            if (vendorWallet && !results.find(r => r.wallet_id === vendorWallet.id)) {
-              results.push({
-                id: vendor.id,
-                name: vendor.business_name || 'Vendeur',
-                email: vendor.email || '',
-                type: 'vendor',
-                wallet_id: vendorWallet.id
-              });
-            }
+          if (vendorWallet) {
+            results.push({
+              id: vendor.id,
+              name: vendor.business_name,
+              email: vendor.email,
+              type: 'vendor',
+              wallet_id: vendorWallet.id
+            });
           }
         }
       }
 
-      // Supprimer les doublons par wallet_id
-      const uniqueResults = results.filter((result, index, self) =>
-        index === self.findIndex(r => r.wallet_id === result.wallet_id)
-      );
-
-      console.log('✅ Résultats finaux:', uniqueResults.length, uniqueResults);
-
-      setSearchResults(uniqueResults);
-      if (uniqueResults.length === 0) {
-        toast.info('Aucun utilisateur trouvé avec cet ID ou nom');
-      } else {
-        toast.success(`${uniqueResults.length} résultat(s) trouvé(s)`);
+      setSearchResults(results);
+      if (results.length === 0) {
+        toast.info('Aucun utilisateur trouvé');
       }
     } catch (error: any) {
-      console.error('❌ Erreur recherche:', error);
+      console.error('Erreur recherche utilisateurs:', error);
       toast.error('Erreur lors de la recherche');
     } finally {
       setSearching(false);
@@ -419,7 +353,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           <Label>Rechercher un destinataire</Label>
           <div className="flex gap-2">
             <Input
-              placeholder="ID (CLT..., VND..., BST..., AGT...) ou nom, téléphone..."
+              placeholder="Nom, code bureau, téléphone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
