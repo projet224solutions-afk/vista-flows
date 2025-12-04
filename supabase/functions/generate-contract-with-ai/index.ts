@@ -249,12 +249,27 @@ Génère un contrat complet, professionnel et prêt à être signé selon le typ
       contractSummary = summaryData.choices?.[0]?.message?.content || contractSummary;
     }
 
+    // Map contract type to valid database values
+    const contractTypeMapping: Record<string, string> = {
+      'vente': 'vente_achat',
+      'vente_achat': 'vente_achat',
+      'livraison': 'livraison',
+      'prestation': 'prestation',
+      'agent': 'agent_sous_agent',
+      'agent_sous_agent': 'agent_sous_agent',
+      'partenariat': 'entreprise_partenaire',
+      'entreprise_partenaire': 'entreprise_partenaire',
+      'service': 'service',
+    };
+    
+    const dbContractType = contractTypeMapping[contract_type] || 'vente_achat';
+
     // Insert into DB as draft (not final yet, vendor can modify)
     const { data: contract, error } = await supabase
       .from('contracts')
       .insert({
         vendor_id: user.id,
-        contract_type: `${contract_type}_ai`,
+        contract_type: dbContractType,
         client_name,
         client_phone,
         client_info: client_address,
@@ -264,7 +279,7 @@ Génère un contrat complet, professionnel et prêt à être signé selon le typ
           creation_date: creationDate,
           summary: contractSummary,
           generated_by_ai: true,
-          contract_type_label: contract_type,
+          original_type: contract_type,
         },
         status: 'created',
         vendor_logo_url: vendor?.logo_url || null,
