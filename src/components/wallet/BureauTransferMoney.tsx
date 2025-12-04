@@ -54,7 +54,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
 
       // Rechercher dans autres bureaux syndicats
       const { data: bureaux } = await supabase
-        .from('bureau_syndicats')
+        .from('bureaus')
         .select('id, bureau_code, prefecture, commune')
         .or(`bureau_code.ilike.%${searchQuery}%,prefecture.ilike.%${searchQuery}%,commune.ilike.%${searchQuery}%`)
         .limit(10);
@@ -79,29 +79,41 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         }
       }
 
-      // Rechercher dans chauffeurs taxi-moto
+      // Rechercher dans chauffeurs taxi-moto via profiles
       const { data: drivers } = await supabase
-        .from('taxi_moto_drivers')
-        .select('id, first_name, last_name, phone, user_id')
-        .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+        .from('taxi_drivers')
+        .select('id, user_id, vehicle_plate')
         .limit(10);
 
       if (drivers) {
         for (const driver of drivers) {
-          const { data: driverWallet } = await supabase
-            .from('wallets')
-            .select('id')
-            .eq('user_id', driver.user_id)
+          // Récupérer les infos du profil
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, phone')
+            .eq('id', driver.user_id)
             .maybeSingle();
+          
+          if (profile && (
+            profile.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            profile.phone?.includes(searchQuery) ||
+            driver.vehicle_plate?.toLowerCase().includes(searchQuery.toLowerCase())
+          )) {
+            const { data: driverWallet } = await supabase
+              .from('wallets')
+              .select('id')
+              .eq('user_id', driver.user_id)
+              .maybeSingle();
 
-          if (driverWallet) {
-            results.push({
-              id: driver.id,
-              name: `${driver.first_name} ${driver.last_name}`,
-              email: driver.phone || '',
-              type: 'driver',
-              wallet_id: driverWallet.id
-            });
+            if (driverWallet) {
+              results.push({
+                id: driver.id,
+                name: profile.full_name || 'Chauffeur',
+                email: profile.phone || '',
+                type: 'driver',
+                wallet_id: driverWallet.id
+              });
+            }
           }
         }
       }
