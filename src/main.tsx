@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
+// Force clean rebuild after migration - v2
+
 // Attendre que le DOM soit complètement chargé
 const initApp = () => {
   const rootElement = document.getElementById("root");
