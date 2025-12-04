@@ -79,6 +79,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
+const NavigationTestPage = lazy(() => import("./pages/NavigationTestPage"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -138,6 +139,8 @@ function App() {
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               {/* Redirection 301 depuis l'alias vers la route normalisée */}
               <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
+              {/* Page de test Navigation GPS */}
+              <Route path="/navigation-test" element={<NavigationTestPage />} />
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
               <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
