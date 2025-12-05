@@ -307,21 +307,29 @@ export function GoogleMapsNavigation({
   };
 
   const openGoogleMapsExternal = () => {
-    if (!activeRide || !currentLocation) {
-      toast.error("Impossible d'ouvrir la navigation");
+    if (!currentLocation) {
+      toast.error("Position GPS non disponible");
       return;
     }
 
-    const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
-      ? activeRide.pickup.coords
-      : activeRide.destination.coords;
+    // Si course active, naviguer vers la destination appropriée
+    if (activeRide) {
+      const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
+        ? activeRide.pickup.coords
+        : activeRide.destination.coords;
 
-    const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
-    const destination = `${target.latitude},${target.longitude}`;
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-    
-    window.open(mapsUrl, '_blank');
-    toast.success("Navigation ouverte dans Google Maps");
+      const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
+      const destination = `${target.latitude},${target.longitude}`;
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+      
+      window.open(mapsUrl, '_blank');
+      toast.success("Navigation ouverte dans Google Maps");
+    } else {
+      // Sans course active, ouvrir Google Maps centré sur la position actuelle
+      const mapsUrl = `https://www.google.com/maps/@${currentLocation.latitude},${currentLocation.longitude},15z`;
+      window.open(mapsUrl, '_blank');
+      toast.success("Google Maps ouvert sur votre position");
+    }
   };
 
   if (loading) {
@@ -396,10 +404,10 @@ export function GoogleMapsNavigation({
         </CardContent>
       </Card>
 
-      {/* Informations de position actuelle */}
+      {/* Informations de position actuelle + Bouton navigation */}
       {currentLocation && (
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50">
-          <CardContent className="pt-4">
+          <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-3">
               <MapPin className="w-8 h-8 text-green-600" />
               <div className="flex-1">
@@ -409,6 +417,17 @@ export function GoogleMapsNavigation({
                 </p>
               </div>
             </div>
+            
+            {/* Bouton Google Maps toujours visible */}
+            {!hasActiveRide && (
+              <Button 
+                onClick={openGoogleMapsExternal}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+              >
+                <Navigation className="w-4 h-4 mr-2" />
+                Ouvrir Google Maps
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
