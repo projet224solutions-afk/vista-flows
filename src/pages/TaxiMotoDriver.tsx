@@ -121,6 +121,7 @@ export default function TaxiMotoDriver() {
         onlineTime: '0h 0m'
     });
     const [driverId, setDriverId] = useState<string | null>(null);
+    const [driverLoading, setDriverLoading] = useState(true);
     const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
     const [rideHistory, setRideHistory] = useState<any[]>([]);
 
@@ -132,11 +133,13 @@ export default function TaxiMotoDriver() {
     const [timeToDestination, setTimeToDestination] = useState(0);
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
-    // Initialisation : Charger le profil
+    // Initialisation : Charger le profil quand l'utilisateur est connecté
     useEffect(() => {
-        loadDriverProfile();
-        // GPS sera demandé uniquement quand le chauffeur se met en ligne
-    }, []);
+        if (user?.id) {
+            console.log('🔄 [useEffect] User connecté, chargement profil...');
+            loadDriverProfile();
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         if (driverId) {
@@ -473,9 +476,11 @@ export default function TaxiMotoDriver() {
     const loadDriverProfile = async () => {
         if (!user) {
             console.log('⚠️ [loadDriverProfile] Pas d\'utilisateur connecté');
+            setDriverLoading(false);
             return;
         }
         
+        setDriverLoading(true);
         console.log('🔄 [loadDriverProfile] Chargement profil pour user:', user.id);
         
         try {
@@ -487,7 +492,33 @@ export default function TaxiMotoDriver() {
 
             if (error) {
                 console.error('❌ [loadDriverProfile] Erreur:', error);
-                toast.error('Erreur de chargement du profil conducteur');
+                // Si pas de profil existant, essayer de créer
+                if (error.code === 'PGRST116') {
+                    console.log('📝 [loadDriverProfile] Création profil conducteur...');
+                    const { data: newDriver, error: createError } = await supabase
+                        .from('taxi_drivers')
+                        .insert({
+                            user_id: user.id,
+                            is_online: false,
+                            status: 'offline',
+                            rating: 5.0,
+                            total_rides: 0
+                        })
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.error('❌ [loadDriverProfile] Erreur création:', createError);
+                        toast.error('Impossible de créer le profil conducteur');
+                    } else if (newDriver) {
+                        console.log('✅ [loadDriverProfile] Profil conducteur créé:', newDriver.id);
+                        setDriverId(newDriver.id);
+                        setIsOnline(false);
+                    }
+                } else {
+                    toast.error('Erreur de chargement du profil conducteur');
+                }
+                setDriverLoading(false);
                 return;
             }
 
@@ -502,6 +533,8 @@ export default function TaxiMotoDriver() {
         } catch (error) {
             console.error('❌ [loadDriverProfile] Exception:', error);
             toast.error('Erreur lors du chargement du profil');
+        } finally {
+            setDriverLoading(false);
         }
     };
 
@@ -1352,6 +1385,7 @@ export default function TaxiMotoDriver() {
                             onContactCustomer={contactCustomer}
                             onToggleOnline={toggleOnlineStatus}
                             hasSubscription={hasAccess}
+                            driverLoading={driverLoading}
                         />
                     </TabsContent>
 
