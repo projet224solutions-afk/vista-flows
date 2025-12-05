@@ -387,72 +387,104 @@ export default function TaxiMotoDriver() {
             
             try {
                 // Demander explicitement la permission GPS
-                if ('geolocation' in navigator) {
-                    console.log('📍 Demande permission GPS...');
-                    
-                    // Forcer obtention nouvelle position avec haute précision
-                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(
-                            resolve,
-                            reject,
-                            {
-                                enableHighAccuracy: true,
-                                timeout: 10000,
-                                maximumAge: 0 // Ne pas utiliser cache
-                            }
-                        );
-                    });
-                    
-                    console.log('✅ Position GPS obtenue:', {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    });
-                    
-                    toast.dismiss('gps-loading');
-                    toast.success('✅ GPS activé avec succès');
-                    
-                    // Mettre le chauffeur en ligne avec la position
-                    await TaxiMotoService.updateDriverStatus(
-                        driverId,
-                        true,
-                        true,
-                        position.coords.latitude,
-                        position.coords.longitude
-                    );
-
-                    setIsOnline(true);
-                    toast.success('🟢 Vous êtes maintenant en ligne');
-                    
-                    // Démarrer le suivi de position
-                    startLocationTracking();
-                    
-                    // Charger les courses en attente
-                    await loadPendingRides();
-                } else {
+                if (!('geolocation' in navigator)) {
                     toast.dismiss('gps-loading');
                     toast.error('❌ GPS non disponible sur cet appareil');
                     return;
                 }
-                loadPendingRides();
+
+                console.log('📍 Demande permission GPS...');
+                
+                // Fonction pour obtenir la position avec retry
+                const getPosition = (highAccuracy: boolean, timeout: number): Promise<GeolocationPosition> => {
+                    return new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            resolve,
+                            reject,
+                            {
+                                enableHighAccuracy: highAccuracy,
+                                timeout: timeout,
+                                maximumAge: 10000 // Accepter position jusqu'à 10s
+                            }
+                        );
+                    });
+                };
+
+                let position: GeolocationPosition;
+                
+                try {
+                    // Essayer d'abord avec haute précision et timeout court
+                    position = await getPosition(true, 15000);
+                } catch (firstError: any) {
+                    console.log('⚠️ Haute précision échouée, essai basse précision...', firstError.code);
+                    toast.loading('📍 Recherche position alternative...', { id: 'gps-loading' });
+                    
+                    try {
+                        // Fallback: basse précision avec timeout plus long
+                        position = await getPosition(false, 30000);
+                    } catch (secondError: any) {
+                        throw secondError;
+                    }
+                }
+                
+                console.log('✅ Position GPS obtenue:', {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                });
+                
+                toast.dismiss('gps-loading');
+                toast.success('✅ GPS activé avec succès');
+                
+                // Mettre le chauffeur en ligne avec la position
+                await TaxiMotoService.updateDriverStatus(
+                    driverId,
+                    true,
+                    true,
+                    position.coords.latitude,
+                    position.coords.longitude
+                );
+
+                setIsOnline(true);
+                toast.success('🟢 Vous êtes maintenant en ligne');
+                
+                // Démarrer le suivi de position
+                startLocationTracking();
+                
+                // Charger les courses en attente
+                await loadPendingRides();
                 
             } catch (error: any) {
                 capture('gps', 'Erreur GPS lors de la mise en ligne', error);
                 toast.dismiss('gps-loading');
                 
-                // Message d'erreur détaillé avec instructions
-                const errorMessage = error?.message || 'Erreur GPS inconnue';
+                // Message d'erreur détaillé selon le type d'erreur
+                let errorTitle = '⚠️ Erreur GPS';
+                let errorMessage = 'Impossible d\'obtenir votre position';
+                
+                if (error?.code === 1) {
+                    errorTitle = '🚫 Permission refusée';
+                    errorMessage = 'Autorisez l\'accès GPS dans les paramètres de votre navigateur';
+                } else if (error?.code === 2) {
+                    errorTitle = '📍 Position indisponible';
+                    errorMessage = 'Activez le GPS et vérifiez votre connexion internet';
+                } else if (error?.code === 3) {
+                    errorTitle = '⏱️ Délai dépassé';
+                    errorMessage = 'La recherche GPS a pris trop de temps. Réessayez à l\'extérieur.';
+                }
+                
                 toast.error(
                     <div className="space-y-2">
-                        <p className="font-semibold">⚠️ Erreur GPS</p>
+                        <p className="font-semibold">{errorTitle}</p>
                         <p className="text-sm">{errorMessage}</p>
-                        <div className="text-xs opacity-80">
-                            <p>• Vérifiez que le GPS est activé</p>
-                            <p>• Autorisez l'accès à la localisation</p>
-                            <p>• Assurez-vous d'avoir une bonne connexion</p>
+                        <div className="text-xs opacity-80 mt-2">
+                            <p>💡 Conseils:</p>
+                            <p>• Allez à l'extérieur pour un meilleur signal</p>
+                            <p>• Activez le WiFi pour une localisation plus rapide</p>
+                            <p>• Rechargez la page et réessayez</p>
                         </div>
                     </div>,
-                    { duration: 5000 }
+                    { duration: 8000 }
                 );
                 return;
             }
