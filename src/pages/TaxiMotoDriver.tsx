@@ -314,35 +314,50 @@ export default function TaxiMotoDriver() {
      * Démarre le suivi de position en temps réel
      */
     const startLocationTracking = () => {
-        const watchId = watchLocation((position) => {
-            // Mettre à jour la position dans la DB en temps réel
-            if (driverId) {
-                supabase
-                    .from('taxi_drivers')
-                    .update({
-                        last_lat: position.coords.latitude,
-                        last_lng: position.coords.longitude,
-                        last_seen: new Date().toISOString()
-                    })
-                    .eq('id', driverId)
-                    .then(({ error }) => {
-                        if (error) console.error('Error updating driver location:', error);
-                    });
+        if (!navigator.geolocation) {
+            toast.error('GPS non disponible');
+            return;
+        }
 
-                // Si une course est active, tracker la position
-                if (activeRide && (activeRide.status === 'picked_up' || activeRide.status === 'in_progress')) {
-                    TaxiMotoService.trackPosition(
-                        activeRide.id,
-                        driverId,
-                        position.coords.latitude,
-                        position.coords.longitude,
-                        position.coords.speed || undefined,
-                        position.coords.heading || undefined,
-                        position.coords.accuracy || undefined
-                    ).catch(err => console.error('Error tracking position:', err));
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                // Mettre à jour la position dans la DB en temps réel
+                if (driverId) {
+                    supabase
+                        .from('taxi_drivers')
+                        .update({
+                            last_lat: position.coords.latitude,
+                            last_lng: position.coords.longitude,
+                            last_seen: new Date().toISOString()
+                        })
+                        .eq('id', driverId)
+                        .then(({ error }) => {
+                            if (error) console.error('Error updating driver location:', error);
+                        });
+
+                    // Si une course est active, tracker la position
+                    if (activeRide && (activeRide.status === 'picked_up' || activeRide.status === 'in_progress')) {
+                        TaxiMotoService.trackPosition(
+                            activeRide.id,
+                            driverId,
+                            position.coords.latitude,
+                            position.coords.longitude,
+                            position.coords.speed || undefined,
+                            position.coords.heading || undefined,
+                            position.coords.accuracy || undefined
+                        ).catch(err => console.error('Error tracking position:', err));
+                    }
                 }
+            },
+            (error) => {
+                console.error('Erreur suivi GPS:', error.message);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 20000,
+                maximumAge: 5000
             }
-        });
+        );
         setLocationWatchId(watchId);
         console.log('📍 Suivi de position GPS activé');
     };
