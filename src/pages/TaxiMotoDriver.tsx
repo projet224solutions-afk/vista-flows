@@ -1449,12 +1449,17 @@ export default function TaxiMotoDriver() {
                     <TabsContent value="gps-navigation" className="mt-0">
                         {!location ? (
                             <GPSPermissionHelper
-                                onLocationGranted={() => {
-                                    getCurrentLocation().catch(err => {
+                                onLocationGranted={async () => {
+                                    toast.loading('Récupération de la position...', { id: 'gps-load' });
+                                    try {
+                                        await getCurrentLocation();
+                                        toast.dismiss('gps-load');
+                                        toast.success('Position obtenue !');
+                                    } catch (err) {
                                         console.error('[TaxiMotoDriver] GPS error:', err);
+                                        toast.dismiss('gps-load');
                                         toast.error('Erreur GPS - Veuillez réessayer');
-                                    });
-                                    toast.success('GPS activé - Chargement de la carte...');
+                                    }
                                 }}
                                 currentError={null}
                             />

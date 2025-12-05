@@ -190,14 +190,15 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
   }
 
   if (permissionState === 'granted') {
+    // Afficher un loader pendant que le parent charge la position
     return (
       <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
         <CardContent className="pt-6 pb-6">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-            <div>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+            <div className="text-center">
               <p className="font-semibold text-green-900">GPS activé</p>
-              <p className="text-sm text-green-700">Votre position est maintenant disponible</p>
+              <p className="text-sm text-green-700">Chargement de la carte...</p>
             </div>
           </div>
         </CardContent>
