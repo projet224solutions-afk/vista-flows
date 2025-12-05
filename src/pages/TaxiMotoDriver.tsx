@@ -368,36 +368,54 @@ export default function TaxiMotoDriver() {
             toast.loading('📍 Activation GPS en cours...', { id: 'gps-loading' });
             
             try {
-                // Utiliser la position existante si elle est récente (< 60 secondes) sinon en obtenir une nouvelle
-                let position = location;
-                
-                if (!position || (Date.now() - position.timestamp > 60000)) {
-                    console.log('📍 Obtention nouvelle position GPS...');
-                    position = await getCurrentLocation();
-                } else {
-                    console.log('📍 Utilisation position GPS existante');
-                }
-                
-                console.log('📍 Position GPS utilisée:', position);
-                
-                toast.dismiss('gps-loading');
-                
-                // Mettre le chauffeur en ligne avec la position
-                await TaxiMotoService.updateDriverStatus(
-                    driverId,
-                    true,
-                    true,
-                    position.latitude,
-                    position.longitude
-                );
+                // Demander explicitement la permission GPS
+                if ('geolocation' in navigator) {
+                    console.log('📍 Demande permission GPS...');
+                    
+                    // Forcer obtention nouvelle position avec haute précision
+                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            resolve,
+                            reject,
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0 // Ne pas utiliser cache
+                            }
+                        );
+                    });
+                    
+                    console.log('✅ Position GPS obtenue:', {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    });
+                    
+                    toast.dismiss('gps-loading');
+                    toast.success('✅ GPS activé avec succès');
+                    
+                    // Mettre le chauffeur en ligne avec la position
+                    await TaxiMotoService.updateDriverStatus(
+                        driverId,
+                        true,
+                        true,
+                        position.coords.latitude,
+                        position.coords.longitude
+                    );
 
-                setIsOnline(true);
-                toast.success('🟢 Vous êtes maintenant en ligne');
-                
-                // Démarrer le suivi de position
-                startLocationTracking();
-                
-                // Charger les courses en attente
+                    setIsOnline(true);
+                    toast.success('🟢 Vous êtes maintenant en ligne');
+                    
+                    // Démarrer le suivi de position
+                    startLocationTracking();
+                    
+                    // Charger les courses en attente
+                    await loadPendingRides();
+                } else {
+                    toast.dismiss('gps-loading');
+                    toast.error('❌ GPS non disponible sur cet appareil');
+                    return;
+                }
                 loadPendingRides();
                 
             } catch (error: any) {
