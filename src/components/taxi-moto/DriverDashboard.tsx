@@ -52,6 +52,7 @@ interface DriverDashboardProps {
   onContactCustomer: (phone: string) => void;
   onToggleOnline: () => void;
   hasSubscription?: boolean;
+  driverLoading?: boolean;
 }
 
 export function DriverDashboard({
@@ -62,7 +63,8 @@ export function DriverDashboard({
   onNavigate,
   onContactCustomer,
   onToggleOnline,
-  hasSubscription = true
+  hasSubscription = true,
+  driverLoading = false
 }: DriverDashboardProps) {
   const [stats, setStats] = useState<DriverStats>({
     todayEarnings: 0,
@@ -245,18 +247,29 @@ export function DriverDashboard({
           <Button
             onClick={onToggleOnline}
             size="sm"
-            disabled={!isOnline && !hasSubscription}
+            disabled={driverLoading || (!isOnline && !hasSubscription)}
             className={`font-bold text-xs ${
-              isOnline 
+              driverLoading
+                ? 'bg-gray-300 text-gray-500 cursor-wait'
+                : isOnline 
                 ? 'bg-green-600 hover:bg-green-700 text-white' 
                 : !hasSubscription
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
             }`}
-            title={!hasSubscription && !isOnline ? 'Abonnement requis pour passer en ligne' : ''}
+            title={driverLoading ? 'Chargement...' : !hasSubscription && !isOnline ? 'Abonnement requis pour passer en ligne' : ''}
           >
-            <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
-            {isOnline ? 'En ligne' : 'Hors ligne'}
+            {driverLoading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-1" />
+                Chargement...
+              </>
+            ) : (
+              <>
+                <div className={`w-2 h-2 rounded-full mr-1 ${isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'}`} />
+                {isOnline ? 'En ligne' : 'Passer en ligne'}
+              </>
+            )}
           </Button>
           <Button
             onClick={() => {
