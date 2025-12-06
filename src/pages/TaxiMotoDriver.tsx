@@ -70,6 +70,7 @@ interface RideRequest {
     id: string;
     customerId: string;
     customerName: string;
+    customerPhone: string;
     customerRating: number;
     pickupAddress: string;
     destinationAddress: string;
@@ -818,17 +819,19 @@ export default function TaxiMotoDriver() {
     const addRideRequestFromDB = async (ride: any) => {
         // Charger les données du client
         let customerName = 'Client';
+        let customerPhone = '+224 600 00 00 00';
         let customerRating = 4.5;
         
         try {
             const { data: customerProfile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name')
+                .select('first_name, last_name, phone')
                 .eq('id', ride.customer_id)
                 .single();
 
             if (customerProfile) {
                 customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Client';
+                customerPhone = customerProfile.phone || customerPhone;
             }
 
             // Charger la note du client depuis taxi_ratings
@@ -848,6 +851,7 @@ export default function TaxiMotoDriver() {
             id: ride.id,
             customerId: ride.customer_id,
             customerName,
+            customerPhone,
             customerRating: Math.round(customerRating * 10) / 10,
             pickupAddress: ride.pickup_address,
             destinationAddress: ride.dropoff_address,

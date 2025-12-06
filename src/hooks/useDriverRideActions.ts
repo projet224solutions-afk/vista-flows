@@ -45,7 +45,7 @@ export function useDriverRideActions({
         id: request.id,
         customer: {
           name: request.customerName,
-          phone: request.customerPhone || '+224 600 00 00 00',
+          phone: request.customerPhone,
           rating: request.customerRating || 4.5
         },
         pickup: {
