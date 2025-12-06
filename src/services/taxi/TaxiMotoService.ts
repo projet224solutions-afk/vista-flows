@@ -113,6 +113,8 @@ export class TaxiMotoService {
     distanceKm: number;
     durationMin: number;
     estimatedPrice: number;
+    paymentMethod?: 'wallet' | 'card' | 'orange_money' | 'cash';
+    phoneNumber?: string;
   }): Promise<TaxiRide> {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('User not authenticated');
@@ -143,7 +145,9 @@ export class TaxiMotoService {
         driver_share: driverShare as any,
         platform_fee: platformFee as any,
         status: 'requested',
-        payment_status: 'pending'
+        payment_status: 'pending',
+        payment_method: params.paymentMethod || 'cash',
+        metadata: params.phoneNumber ? { orange_money_phone: params.phoneNumber } : null
       } as any)
       .select()
       .single();
