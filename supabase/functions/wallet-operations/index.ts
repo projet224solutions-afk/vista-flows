@@ -258,9 +258,10 @@ serve(async (req) => {
             sender_id: user.id,
             receiver_id: user.id,
             amount: amount,
-            method: 'deposit',
+            method: 'wallet',
             status: 'completed',
             currency: 'GNF',
+            transaction_type: 'deposit',
             metadata: { description: description || 'Dépôt sur le wallet' }
           });
 
@@ -303,9 +304,10 @@ serve(async (req) => {
             sender_id: user.id,
             receiver_id: user.id,
             amount: amount,
-            method: 'withdraw',
+            method: 'wallet',
             status: 'completed',
             currency: 'GNF',
+            transaction_type: 'withdrawal',
             metadata: { description: description || 'Retrait du wallet' }
           });
 
