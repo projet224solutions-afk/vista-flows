@@ -166,6 +166,8 @@ export class RidesService {
       updates.started_at = new Date().toISOString();
     } else if (newStatus === 'completed') {
       updates.completed_at = new Date().toISOString();
+    } else if (newStatus === 'cancelled' || newStatus === 'cancelled_by_customer') {
+      updates.cancelled_at = new Date().toISOString();
     }
 
     const { data, error } = await supabase
@@ -173,7 +175,7 @@ export class RidesService {
       .update(updates)
       .eq('id', rideId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -183,7 +185,7 @@ export class RidesService {
       await supabase.rpc('log_taxi_action', {
         p_action_type: 'ride_status_updated',
         p_actor_id: user.id,
-        p_actor_type: 'driver',
+        p_actor_type: 'customer',
         p_resource_type: 'ride',
         p_resource_id: rideId,
         p_details: { newStatus }
