@@ -28,7 +28,7 @@ const Dashboard = () => {
       'bureau': '/bureau',
       'transitaire': '/transitaire',
       'agent': '/agent-dashboard',
-      'client': '/home',
+      'client': '/client',
     };
 
     const role = user.user_metadata?.role || user.role;
