@@ -30,6 +30,8 @@ import { getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
+import PaymentMethodStep from "./PaymentMethodStep";
+import { PaymentMethod } from "@/services/taxi/paymentsService";
 
 interface LocationCoordinates {
     latitude: number;
@@ -87,6 +89,27 @@ export default function TaxiMotoBooking({
     // Coordonnées sélectionnées
     const [pickupCoords, setPickupCoords] = useState<LocationCoordinates | null>(null);
     const [destinationCoords, setDestinationCoords] = useState<LocationCoordinates | null>(null);
+
+    // État pour l'étape de paiement
+    const [showPaymentStep, setShowPaymentStep] = useState(false);
+    const [walletBalance, setWalletBalance] = useState(0);
+
+    // Charger le solde du wallet
+    useEffect(() => {
+        const loadWalletBalance = async () => {
+            if (!user) return;
+            const { data } = await supabase
+                .from('wallets')
+                .select('balance')
+                .eq('user_id', user.id)
+                .eq('currency', 'GNF')
+                .maybeSingle();
+            if (data) {
+                setWalletBalance(data.balance || 0);
+            }
+        };
+        loadWalletBalance();
+    }, [user]);
 
     /**
      * Utilise la position actuelle comme point de départ
@@ -270,9 +293,9 @@ export default function TaxiMotoBooking({
     }, [pickupCoords, destinationCoords, selectedVehicleType, isScheduled, scheduledTime]);
 
     /**
-     * Effectue la réservation
+     * Ouvre l'étape de sélection du mode de paiement
      */
-    const handleBooking = async () => {
+    const handleProceedToPayment = () => {
         if (!user) {
             toast.error('Veuillez vous connecter pour réserver');
             return;
@@ -283,11 +306,22 @@ export default function TaxiMotoBooking({
             return;
         }
 
+        setShowPaymentStep(true);
+    };
+
+    /**
+     * Effectue la réservation après sélection du mode de paiement
+     */
+    const handleConfirmBooking = async (paymentMethod: PaymentMethod, phoneNumber?: string) => {
+        if (!pickupCoords || !destinationCoords || !priceEstimate) return;
+
         console.log('[TaxiMotoBooking] Starting booking with:', {
             pickupCoords,
             destinationCoords,
             priceEstimate,
-            routeInfo
+            routeInfo,
+            paymentMethod,
+            phoneNumber
         });
 
         setBookingInProgress(true);
@@ -302,7 +336,9 @@ export default function TaxiMotoBooking({
                 dropoffAddress: destinationAddress || 'Destination',
                 distanceKm: routeInfo?.distance || 0,
                 durationMin: routeInfo?.duration || 0,
-                estimatedPrice: priceEstimate.totalPrice
+                estimatedPrice: priceEstimate.totalPrice,
+                paymentMethod,
+                phoneNumber
             });
 
             console.log('[TaxiMotoBooking] Ride created successfully:', ride);
@@ -316,6 +352,7 @@ export default function TaxiMotoBooking({
             setDestinationCoords(null);
             setRouteInfo(null);
             setPriceEstimate(null);
+            setShowPaymentStep(false);
 
         } catch (error) {
             console.error('[TaxiMotoBooking] Booking error:', error);
@@ -356,6 +393,19 @@ export default function TaxiMotoBooking({
             setShowDestinationSuggestions(false);
         }
     }, [destinationSearchQuery, geocodeAddress]);
+
+    // Si l'étape de paiement est active, afficher le composant de sélection
+    if (showPaymentStep && priceEstimate) {
+        return (
+            <PaymentMethodStep
+                amount={priceEstimate.totalPrice}
+                walletBalance={walletBalance}
+                onConfirm={handleConfirmBooking}
+                onBack={() => setShowPaymentStep(false)}
+                isLoading={bookingInProgress}
+            />
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -609,9 +659,9 @@ export default function TaxiMotoBooking({
                 </Card>
             )}
 
-            {/* Bouton de réservation */}
+            {/* Bouton de réservation - ouvre l'étape de paiement */}
             <Button
-                onClick={handleBooking}
+                onClick={handleProceedToPayment}
                 disabled={!pickupCoords || !destinationCoords || !priceEstimate || bookingInProgress}
                 className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
@@ -622,8 +672,8 @@ export default function TaxiMotoBooking({
                     </>
                 ) : (
                     <>
-                        <Zap className="w-5 h-5 mr-2" />
-                        Réserver maintenant
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Choisir le mode de paiement
                     </>
                 )}
             </Button>
