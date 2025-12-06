@@ -25,29 +25,41 @@ export function DriverStatusToggle({
   onGoOffline,
   onPause,
 }: DriverStatusToggleProps) {
-  const { location, getCurrentLocation } = useCurrentLocation();
+  const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
   const [loading, setLoading] = useState(false);
+  const [gpsActive, setGpsActive] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   const handleToggle = async (checked: boolean) => {
     setLoading(true);
     try {
       if (checked) {
         // Passer en ligne - on a besoin de la localisation
-        let currentPos = location;
-        
-        if (!currentPos) {
-          console.log('[DriverStatusToggle] 📍 Demande GPS automatique...');
-          currentPos = await getCurrentLocation();
-          console.log('[DriverStatusToggle] 📍 Position obtenue:', currentPos);
-        }
+        console.log('[DriverStatusToggle] 📍 Demande GPS automatique...');
+        const currentPos = await getCurrentLocation();
+        console.log('[DriverStatusToggle] 📍 Position obtenue:', currentPos);
         
         if (currentPos) {
           await onGoOnline({ lat: currentPos.latitude, lng: currentPos.longitude });
+          
+          // Démarrer le suivi GPS continu
+          const id = watchLocation();
+          if (id) {
+            setWatchId(id);
+            setGpsActive(true);
+            console.log('[DriverStatusToggle] 📍 Suivi GPS activé');
+          }
         } else {
           console.error('[DriverStatusToggle] ❌ Impossible d\'obtenir la position GPS');
         }
       } else {
-        // Passer hors ligne
+        // Passer hors ligne - arrêter le suivi GPS
+        if (watchId) {
+          stopWatching(watchId);
+          setWatchId(null);
+          setGpsActive(false);
+          console.log('[DriverStatusToggle] 📍 Suivi GPS désactivé');
+        }
         await onGoOffline();
       }
     } finally {
@@ -87,10 +99,10 @@ export function DriverStatusToggle({
         <div className={`w-3 h-3 rounded-full ${getStatusColor()} animate-pulse`} />
         <div className="flex flex-col">
           <span className="text-sm font-medium">{getStatusLabel()}</span>
-          {location && (
+          {(location || gpsActive) && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Navigation className="h-3 w-3" />
-              GPS actif
+              <Navigation className="h-3 w-3 text-green-500" />
+              <span className="text-green-500 font-medium">GPS actif</span>
             </span>
           )}
         </div>
