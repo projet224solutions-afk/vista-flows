@@ -33,11 +33,18 @@ export function DriverStatusToggle({
     try {
       if (checked) {
         // Passer en ligne - on a besoin de la localisation
-        if (!location) {
-          await getCurrentLocation();
+        let currentPos = location;
+        
+        if (!currentPos) {
+          console.log('[DriverStatusToggle] 📍 Demande GPS automatique...');
+          currentPos = await getCurrentLocation();
+          console.log('[DriverStatusToggle] 📍 Position obtenue:', currentPos);
         }
-        if (location) {
-          await onGoOnline({ lat: location.latitude, lng: location.longitude });
+        
+        if (currentPos) {
+          await onGoOnline({ lat: currentPos.latitude, lng: currentPos.longitude });
+        } else {
+          console.error('[DriverStatusToggle] ❌ Impossible d\'obtenir la position GPS');
         }
       } else {
         // Passer hors ligne
