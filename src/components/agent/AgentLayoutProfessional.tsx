@@ -136,14 +136,14 @@ export function AgentLayoutProfessional({
       <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
         <div className={cn("flex items-center gap-3", sidebarCollapsed && !isMobile && "hidden")}>
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-violet-500 rounded-xl blur-md opacity-60" />
-            <div className="relative p-2 bg-gradient-to-br from-blue-500 to-violet-600 rounded-xl shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-indigo-500 to-violet-500 rounded-xl blur-md opacity-70 animate-pulse" />
+            <div className="relative p-2 bg-gradient-to-br from-blue-500 via-indigo-600 to-violet-600 rounded-xl shadow-2xl">
               <Shield className="w-5 h-5 text-white" />
             </div>
           </div>
           <div>
-            <h1 className="font-bold text-white text-lg tracking-tight">Agent Hub</h1>
-            <p className="text-[10px] text-white/50 font-medium">224SOLUTIONS</p>
+            <h1 className="font-bold text-white text-lg tracking-tight">Agent Pro</h1>
+            <p className="text-[10px] text-emerald-400 font-semibold tracking-wide">224SOLUTIONS</p>
           </div>
         </div>
         {!isMobile && (
@@ -208,19 +208,23 @@ export function AgentLayoutProfessional({
         </div>
 
         {/* Wallet Balance Card */}
-        <div className="mt-4 p-3 bg-gradient-to-br from-white/5 to-white/10 rounded-xl border border-white/10">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-white/50 font-medium">Solde disponible</span>
-            <CreditCard className="w-4 h-4 text-emerald-400" />
+        <div className="mt-4 p-4 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-blue-500/10 rounded-xl border border-emerald-500/30 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-white/70 font-semibold uppercase tracking-wide">Solde disponible</span>
+            <div className="p-1.5 bg-emerald-500/20 rounded-lg">
+              <CreditCard className="w-4 h-4 text-emerald-400" />
+            </div>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-bold text-white">{formatCurrency(walletBalance)}</span>
-            <span className="text-sm text-white/50">GNF</span>
+            <span className="text-sm text-emerald-400 font-semibold">GNF</span>
           </div>
           {stats && stats.totalUsersCreated > 0 && (
-            <div className="flex items-center gap-1 mt-2 text-emerald-400 text-xs">
-              <ArrowUpRight className="w-3 h-3" />
-              <span>{stats.totalUsersCreated} utilisateurs</span>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/10">
+              <div className="p-1 bg-blue-500/20 rounded">
+                <Users className="w-3 h-3 text-blue-400" />
+              </div>
+              <span className="text-xs text-white/80 font-medium">{stats.totalUsersCreated} utilisateurs créés</span>
             </div>
           )}
         </div>
@@ -338,13 +342,13 @@ export function AgentLayoutProfessional({
         sidebarCollapsed ? "lg:ml-20" : "lg:ml-72"
       )}>
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm">
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-2xl border-b border-slate-200/60 shadow-sm">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-slate-700"
+              className="lg:hidden text-slate-700 hover:bg-slate-100"
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5" />
@@ -352,33 +356,39 @@ export function AgentLayoutProfessional({
 
             {/* Page Title */}
             <div className="hidden lg:block">
-              <h2 className="text-lg font-semibold text-slate-900">
-                {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
-              </h2>
-              <p className="text-xs text-slate-500">
-                {agent.type_agent ? `Agent ${agent.type_agent}` : 'Interface Agent'}
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900">
+                  {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                </h2>
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-xs">
+                  Pro
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Agent {agent.agent_code} • Taux {agent.commission_rate}%
               </p>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {/* Notification Bell */}
-              <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900">
+              <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-lg shadow-rose-500/50" />
               </Button>
 
               {/* Quick Stats Badge */}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-full border border-emerald-200">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span className="text-sm font-semibold text-emerald-700">
+              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all cursor-pointer"
+                   onClick={() => onTabChange('wallet')}>
+                <Wallet className="w-4 h-4 text-white" />
+                <span className="text-sm font-bold text-white">
                   {formatCurrency(walletBalance)} GNF
                 </span>
               </div>
 
               {/* Profile Avatar */}
-              <Avatar className="h-9 w-9 ring-2 ring-slate-200">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-600 text-white text-sm font-bold">
+              <Avatar className="h-9 w-9 ring-2 ring-blue-500/20 shadow-md hover:ring-blue-500/40 transition-all cursor-pointer">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 via-indigo-600 to-violet-600 text-white text-sm font-bold">
                   {getInitials(agent.name)}
                 </AvatarFallback>
               </Avatar>
