@@ -1,4 +1,4 @@
-// 🔍 Security Anomaly Detection - Edge Function
+// 🔍 Security Anomaly Detection - Edge Function (SECURED)
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -15,6 +15,9 @@ interface DetectionRequest {
   threshold?: number;
 }
 
+// Rôles autorisés pour la détection d'anomalies
+const ALLOWED_ROLES = ['admin', 'pdg', 'service_role'];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -26,14 +29,115 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // 🔐 VALIDATION AUTHENTIFICATION
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ Missing or invalid Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token manquant' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Vérifier le token et récupérer l'utilisateur
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('❌ Token invalide:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token invalide' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // 🔐 VALIDATION DU RÔLE - Vérifier dans la table profiles
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('❌ Profil non trouvé:', profileError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Profil utilisateur non trouvé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Vérifier que l'utilisateur a un rôle autorisé
+    if (!ALLOWED_ROLES.includes(profile.role)) {
+      console.error('❌ Rôle non autorisé:', profile.role);
+      
+      // Log l'tentative non autorisée
+      await supabaseClient.from('security_audit_logs').insert({
+        action: 'unauthorized_anomaly_detection_access',
+        actor_id: user.id,
+        actor_type: 'user',
+        target_type: 'security_detect_anomaly',
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+        details: { 
+          attempted_action: 'detect_anomaly',
+          user_role: profile.role 
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Accès refusé - Privilèges insuffisants' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log(`✅ Utilisateur autorisé: ${user.id} (rôle: ${profile.role})`);
+
     const body: DetectionRequest = await req.json();
-    console.log('Anomaly detection:', body.type);
+    
+    // Validation des entrées
+    if (!body.type || !['brute_force', 'rate_limit', 'geo_anomaly', 'behavior'].includes(body.type)) {
+      return new Response(
+        JSON.stringify({ error: 'Type de détection invalide' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Validation IP si fournie
+    if (body.ipAddress) {
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      if (!ipRegex.test(body.ipAddress)) {
+        return new Response(
+          JSON.stringify({ error: 'Adresse IP invalide' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    // Validation UUID si fourni
+    if (body.userId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(body.userId)) {
+        return new Response(
+          JSON.stringify({ error: 'userId invalide' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    console.log('Anomaly detection:', body.type, 'by:', user.id);
 
     let anomalyDetected = false;
     let details: any = {};
 
     switch (body.type) {
       case 'brute_force': {
+        if (!body.ipAddress) {
+          return new Response(
+            JSON.stringify({ error: 'ipAddress requis pour brute_force' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
         // Détecter les tentatives de brute force (5+ échecs login en 5 min)
         const { data: failedAttempts } = await supabaseClient
           .from('security_audit_logs')
@@ -74,6 +178,13 @@ serve(async (req) => {
       }
 
       case 'rate_limit': {
+        if (!body.ipAddress) {
+          return new Response(
+            JSON.stringify({ error: 'ipAddress requis pour rate_limit' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
         // Détecter dépassement de rate limit
         const { data: recentRequests } = await supabaseClient
           .from('security_audit_logs')
@@ -105,6 +216,13 @@ serve(async (req) => {
       }
 
       case 'geo_anomaly': {
+        if (!body.userId) {
+          return new Response(
+            JSON.stringify({ error: 'userId requis pour geo_anomaly' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
         // Détecter changement géographique suspect
         const { data: recentLogins } = await supabaseClient
           .from('security_audit_logs')
@@ -124,16 +242,16 @@ serve(async (req) => {
             details = {
               userId: body.userId,
               timeDifference: `${Math.round(timeDiff / 60000)} minutes`,
-              logins: recentLogins
+              logins: recentLogins.map(l => ({ created_at: l.created_at, ip: l.ip_address }))
             };
 
             // Créer une alerte
             await supabaseClient.from('security_alerts').insert({
               alert_type: 'geo_anomaly',
               severity: 'medium',
-              message: `Suspicious geographic activity detected for user ${body.userId}`,
+              message: `Suspicious geographic activity detected for user`,
               auto_action_taken: 'ALERT',
-              metadata: details
+              metadata: { ...details, detected_by: user.id }
             });
           }
         }
@@ -141,6 +259,13 @@ serve(async (req) => {
       }
 
       case 'behavior': {
+        if (!body.userId) {
+          return new Response(
+            JSON.stringify({ error: 'userId requis pour behavior' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
+
         // Détecter comportement anormal
         const { data: userActions } = await supabaseClient
           .from('security_audit_logs')
@@ -164,12 +289,26 @@ serve(async (req) => {
             severity: 'medium',
             message: `Abnormal user behavior: ${userActions.length} actions in 1 hour`,
             auto_action_taken: 'ALERT',
-            metadata: details
+            metadata: { ...details, detected_by: user.id }
           });
         }
         break;
       }
     }
+
+    // Log l'opération de détection
+    await supabaseClient.from('security_audit_logs').insert({
+      action: 'anomaly_detection',
+      actor_id: user.id,
+      actor_type: 'user',
+      target_type: body.type,
+      details: {
+        detected: anomalyDetected,
+        type: body.type,
+        parameters: body,
+        result: details
+      }
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -182,11 +321,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Anomaly detection error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Anomaly detection error:', error);
+    // Message d'erreur générique pour éviter la fuite d'informations
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ error: 'Une erreur est survenue lors de la détection' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
