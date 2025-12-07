@@ -143,9 +143,17 @@ export function useSecurityData(autoLoad: boolean = true) {
       console.log('✅ Données de sécurité chargées:', newStats);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      console.error('❌ Erreur chargement sécurité:', err);
+      // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin)
+      const isRLSError = errorMessage.includes('permission') || 
+                         errorMessage.includes('policy') ||
+                         errorMessage.includes('RLS') ||
+                         (err as any)?.code === '42501';
+      
+      if (!isRLSError) {
+        console.error('❌ Erreur chargement sécurité:', err);
+        toast.error('Erreur lors du chargement des données de sécurité');
+      }
       setError(errorMessage);
-      toast.error('Erreur lors du chargement des données de sécurité');
     } finally {
       setLoading(false);
     }
