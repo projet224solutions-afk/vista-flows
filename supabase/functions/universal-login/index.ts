@@ -27,13 +27,20 @@ function detectIdentifierType(identifier: string): 'email' | 'phone' | 'id' {
   return 'id';
 }
 
-// Hash du mot de passe (bcrypt-like)
+// Hash du mot de passe avec bcrypt (sécurisé avec salt)
 async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const bcrypt = await import('https://deno.land/x/bcrypt@v0.4.1/mod.ts');
+    return await bcrypt.hash(password);
+  } catch (bcryptError) {
+    console.error('❌ Bcrypt indisponible, fallback SHA-256 (moins sécurisé)');
+    // Fallback SHA-256 uniquement si bcrypt échoue (moins sécurisé mais mieux que rien)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
 }
 
 // Vérification Agent

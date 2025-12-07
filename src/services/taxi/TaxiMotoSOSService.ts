@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SecureStorage } from '@/lib/secureStorage';
 import type { GPSPosition, SOSAlert, SOSResponse, SOSStatus } from '@/types/sos.types';
 
 class TaxiMotoSOSService {
@@ -198,9 +199,10 @@ class TaxiMotoSOSService {
         triggered_at: sosRecord.triggered_at
       };
       
-      const existingAlerts = this.getLocalSOSAlerts();
+      const existingAlerts = await this.getLocalSOSAlerts();
       existingAlerts.push(sosData);
-      localStorage.setItem('taxi_sos_alerts', JSON.stringify(existingAlerts));
+      // 🔒 Stockage chiffré des alertes SOS (contient position GPS sensible)
+      await SecureStorage.setItem('taxi_sos_alerts', existingAlerts);
 
       // Envoyer notification au Bureau Syndicat
       await this.notifyBureauSyndicat(sosData);
@@ -227,12 +229,12 @@ class TaxiMotoSOSService {
   }
 
   /**
-   * Récupère les alertes SOS depuis localStorage
+   * Récupère les alertes SOS depuis localStorage (déchiffré)
    */
-  private getLocalSOSAlerts(): SOSAlert[] {
+  private async getLocalSOSAlerts(): Promise<SOSAlert[]> {
     try {
-      const stored = localStorage.getItem('taxi_sos_alerts');
-      return stored ? JSON.parse(stored) : [];
+      const stored = await SecureStorage.getItem<SOSAlert[]>('taxi_sos_alerts');
+      return stored || [];
     } catch {
       return [];
     }
@@ -348,7 +350,7 @@ class TaxiMotoSOSService {
       
       // Mettre à jour aussi localStorage en backup
       try {
-        const alerts = this.getLocalSOSAlerts();
+        const alerts = await this.getLocalSOSAlerts();
         const index = alerts.findIndex(a => a.id === sosId);
         
         if (index !== -1) {
@@ -360,7 +362,8 @@ class TaxiMotoSOSService {
             alerts[index].resolved_by = resolvedBy;
           }
           
-          localStorage.setItem('taxi_sos_alerts', JSON.stringify(alerts));
+          // 🔒 Stockage chiffré
+          await SecureStorage.setItem('taxi_sos_alerts', alerts);
         }
       } catch (localError) {
         console.warn('⚠️ Erreur localStorage:', localError);
@@ -393,7 +396,7 @@ class TaxiMotoSOSService {
       if (error) {
         console.error('❌ Erreur chargement SOS Supabase:', error);
         // Fallback vers localStorage
-        const alerts = this.getLocalSOSAlerts();
+        const alerts = await this.getLocalSOSAlerts();
         return alerts.filter(a => a.status === 'DANGER' || a.status === 'EN_INTERVENTION');
       }
 
@@ -421,7 +424,7 @@ class TaxiMotoSOSService {
     } catch (error) {
       console.error('❌ Exception getActiveSOSAlerts:', error);
       // Fallback vers localStorage
-      const alerts = this.getLocalSOSAlerts();
+      const alerts = await this.getLocalSOSAlerts();
       return alerts.filter(a => a.status === 'DANGER' || a.status === 'EN_INTERVENTION');
     }
   }
@@ -430,7 +433,7 @@ class TaxiMotoSOSService {
    * Récupère toutes les alertes SOS (y compris résolues)
    */
   public async getAllSOSAlerts(): Promise<SOSAlert[]> {
-    return this.getLocalSOSAlerts();
+    return await this.getLocalSOSAlerts();
   }
 
   /**

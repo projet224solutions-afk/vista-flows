@@ -12,6 +12,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const securityHeaders = {
+  ...securityHeaders,
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
+};
+
 interface LoginRequest {
   identifier: string; // email ou phone
   password: string;
@@ -21,7 +30,7 @@ interface LoginRequest {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: securityHeaders });
   }
 
   try {
@@ -48,7 +57,7 @@ serve(async (req) => {
         }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -67,7 +76,7 @@ serve(async (req) => {
         }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -113,7 +122,7 @@ serve(async (req) => {
         }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -140,7 +149,7 @@ serve(async (req) => {
         }),
         { 
           status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -167,7 +176,7 @@ serve(async (req) => {
         }),
         { 
           status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -186,7 +195,7 @@ serve(async (req) => {
         }),
         { 
           status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -241,7 +250,7 @@ serve(async (req) => {
           }),
           { 
             status: 403, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...securityHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
@@ -255,7 +264,7 @@ serve(async (req) => {
         }),
         { 
           status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -285,7 +294,7 @@ serve(async (req) => {
         }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -363,7 +372,7 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' }
       }
     );
 
@@ -378,8 +387,9 @@ serve(async (req) => {
       }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
 });
+

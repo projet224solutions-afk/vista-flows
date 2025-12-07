@@ -8,6 +8,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Headers de sécurité renforcés
+const securityHeaders = {
+  ...securityHeaders,
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; font-src 'self' data:;",
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()'
+};
+
 // Schéma de validation Zod avec règles de sécurité strictes
 const CreateUserSchema = z.object({
   email: z.string()
@@ -73,7 +84,7 @@ interface CreateUserRequest extends z.infer<typeof CreateUserSchema> {}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -85,7 +96,7 @@ serve(async (req) => {
           error: 'Non autorisé - token JWT manquant',
           code: 'UNAUTHORIZED'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
@@ -102,7 +113,7 @@ serve(async (req) => {
           error: 'Non authentifié',
           code: 'UNAUTHENTICATED'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
@@ -134,7 +145,7 @@ serve(async (req) => {
             message: err.message
           }))
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
     
@@ -179,7 +190,7 @@ serve(async (req) => {
             error: 'Utilisateur non autorisé (ni PDG ni Agent actif)',
             code: 'UNAUTHORIZED'
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+          { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
         );
       }
 
@@ -204,7 +215,7 @@ serve(async (req) => {
           code: 'INSUFFICIENT_PERMISSIONS',
           permissions: effectivePermissions
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
 
@@ -216,7 +227,7 @@ serve(async (req) => {
           error: 'Permission insuffisante pour créer des agents',
           code: 'CANNOT_CREATE_AGENTS'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
 
@@ -253,7 +264,7 @@ serve(async (req) => {
             error: 'Un utilisateur avec cet email existe déjà',
             code: 'EMAIL_EXISTS'
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 }
+          { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 409 }
         );
       }
       
@@ -264,7 +275,7 @@ serve(async (req) => {
           code: authError.code || 'AUTH_ERROR',
           details: authError
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
@@ -292,7 +303,7 @@ serve(async (req) => {
           error: 'Profil non créé par le trigger: ' + profileError.message,
           code: 'PROFILE_ERROR'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
@@ -500,7 +511,7 @@ serve(async (req) => {
         },
         message: `Utilisateur ${body.role} créé avec succès`
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
@@ -512,7 +523,8 @@ serve(async (req) => {
         error: errorMessage,
         code: 'GENERAL_ERROR'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
+

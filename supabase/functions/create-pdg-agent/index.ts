@@ -8,7 +8,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -16,7 +16,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -53,7 +53,7 @@ serve(async (req) => {
       console.error('❌ Auth error:', authError);
       return new Response(
         JSON.stringify({ success: false, error: 'Non autorisé' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -69,7 +69,7 @@ serve(async (req) => {
       console.error('❌ PDG check failed:', pdgError);
       return new Response(
         JSON.stringify({ success: false, error: 'Vous devez être PDG pour créer des agents' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -96,7 +96,7 @@ serve(async (req) => {
           success: false, 
           error: 'Le mot de passe doit contenir au moins 8 caractères' 
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -116,7 +116,7 @@ serve(async (req) => {
             success: false, 
             error: `Cet email est déjà utilisé par l'agent: ${existingAgent.name}` 
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
@@ -125,7 +125,7 @@ serve(async (req) => {
           success: false, 
           error: `Cet email est déjà enregistré dans le système. Veuillez utiliser un autre email.` 
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -149,7 +149,7 @@ serve(async (req) => {
           success: false, 
           error: `Erreur création utilisateur: ${authError2.message}` 
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -175,7 +175,7 @@ serve(async (req) => {
           success: false, 
           error: 'Erreur génération code agent' 
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -205,7 +205,7 @@ serve(async (req) => {
           success: false, 
           error: `Erreur création agent: ${agentError.message}` 
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -295,7 +295,7 @@ serve(async (req) => {
         message: 'Agent créé avec succès. Un email d\'invitation a été envoyé.'
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
@@ -308,9 +308,10 @@ serve(async (req) => {
         error: error.message
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 400,
       }
     );
   }
 });
+
