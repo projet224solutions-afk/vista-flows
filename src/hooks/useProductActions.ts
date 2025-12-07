@@ -262,9 +262,9 @@ export function useProductActions({
   }, [vendorId, uploadImages, handleCategory, onProductUpdated]);
 
   /**
-   * Supprimer un produit
+   * Supprimer un produit (ou désactiver si utilisé dans des commandes)
    */
-  const deleteProduct = useCallback(async (productId: string): Promise<boolean> => {
+  const deleteProduct = useCallback(async (productId: string, forceDeactivate?: boolean): Promise<boolean> => {
     if (!vendorId) {
       toast.error('Vendeur introuvable');
       return false;
@@ -281,11 +281,22 @@ export function useProductActions({
       if (ordersError) throw ordersError;
 
       if (orders && orders.length > 0) {
-        toast.error('Impossible de supprimer: produit utilisé dans des commandes');
-        return false;
+        // Produit utilisé dans des commandes - désactiver au lieu de supprimer
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ is_active: false })
+          .eq('id', productId);
+
+        if (updateError) throw updateError;
+
+        toast.success('📦 Produit désactivé (utilisé dans des commandes passées)', {
+          description: 'Le produit reste visible dans l\'historique mais n\'est plus disponible à la vente'
+        });
+        onProductDeleted?.();
+        return true;
       }
 
-      // Supprimer produit
+      // Supprimer produit (pas de commandes)
       const { error } = await supabase
         .from('products')
         .delete()
@@ -293,13 +304,13 @@ export function useProductActions({
 
       if (error) throw error;
 
-      toast.success('🗑️ Produit supprimé');
+      toast.success('🗑️ Produit supprimé définitivement');
       onProductDeleted?.();
 
       return true;
     } catch (error: any) {
       console.error('[ProductDelete] Error:', error);
-      toast.error(`Erreur suppression: ${error.message}`);
+      toast.error(`Erreur: ${error.message}`);
       return false;
     }
   }, [vendorId, onProductDeleted]);
