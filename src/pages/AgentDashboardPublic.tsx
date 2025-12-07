@@ -562,19 +562,43 @@ export default function AgentDashboardPublic() {
                           { key: 'manage_users', label: 'Gérer utilisateurs' },
                           { key: 'manage_products', label: 'Gérer produits' },
                           { key: 'create_sub_agents', label: 'Créer sous-agents' }
-                        ].map(({ key, label }) => (
-                          <div key={key} className="flex items-center gap-2">
-                            <Checkbox 
-                              id={key}
-                              checked={subAgentFormData.permissions[key as keyof typeof subAgentFormData.permissions]}
-                              onCheckedChange={(checked) => setSubAgentFormData({
-                                ...subAgentFormData,
-                                permissions: { ...subAgentFormData.permissions, [key]: checked as boolean }
-                              })}
-                            />
-                            <label htmlFor={key} className="text-sm cursor-pointer">{label}</label>
-                          </div>
-                        ))}
+                        ].map(({ key, label }) => {
+                          const permKey = key as keyof typeof subAgentFormData.permissions;
+                          return (
+                            <div 
+                              key={key} 
+                              className="flex items-center gap-2 cursor-pointer"
+                              onClick={() => {
+                                const currentValue = subAgentFormData.permissions[permKey];
+                                setSubAgentFormData(prev => ({
+                                  ...prev,
+                                  permissions: { 
+                                    ...prev.permissions, 
+                                    [key]: !currentValue 
+                                  }
+                                }));
+                              }}
+                            >
+                              <Checkbox 
+                                id={`perm-${key}`}
+                                checked={subAgentFormData.permissions[permKey]}
+                                onCheckedChange={(checked) => {
+                                  // Empêcher la propagation et mettre à jour l'état
+                                  if (typeof checked === 'boolean') {
+                                    setSubAgentFormData(prev => ({
+                                      ...prev,
+                                      permissions: { 
+                                        ...prev.permissions, 
+                                        [key]: checked 
+                                      }
+                                    }));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm select-none">{label}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
