@@ -74,19 +74,25 @@ export function useSecurityData(autoLoad: boolean = true) {
     setError(null);
     
     try {
-      // Charger les logs d'audit sans jointures complexes
+      // Charger les logs d'audit - gestion silencieuse des erreurs RLS
       const { data: audit, error: auditError } = await supabase
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
+      // Gestion silencieuse des erreurs RLS pour les non-admins
       if (auditError) {
-        console.error('Erreur audit logs:', auditError);
-        throw new Error(`Erreur audit logs: ${auditError.message}`);
+        const isRLSError = auditError.message?.includes('permission') || 
+                           auditError.message?.includes('policy') ||
+                           auditError.code === '42501' ||
+                           auditError.code === 'PGRST301';
+        if (!isRLSError) {
+          console.error('Erreur audit logs:', auditError);
+        }
       }
 
-      // Charger les logs de fraude sans jointures complexes
+      // Charger les logs de fraude - gestion silencieuse des erreurs RLS
       const { data: fraud, error: fraudError } = await supabase
         .from('fraud_detection_logs')
         .select('*')
@@ -94,8 +100,13 @@ export function useSecurityData(autoLoad: boolean = true) {
         .limit(50);
 
       if (fraudError) {
-        console.error('Erreur fraud logs:', fraudError);
-        throw new Error(`Erreur fraud logs: ${fraudError.message}`);
+        const isRLSError = fraudError.message?.includes('permission') || 
+                           fraudError.message?.includes('policy') ||
+                           fraudError.code === '42501' ||
+                           fraudError.code === 'PGRST301';
+        if (!isRLSError) {
+          console.error('Erreur fraud logs:', fraudError);
+        }
       }
 
       const auditData = (audit || []) as any;
@@ -139,15 +150,15 @@ export function useSecurityData(autoLoad: boolean = true) {
       };
 
       setStats(newStats);
-
-      console.log('✅ Données de sécurité chargées:', newStats);
+      // Ne pas logger en console pour éviter le bruit
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin)
       const isRLSError = errorMessage.includes('permission') || 
                          errorMessage.includes('policy') ||
                          errorMessage.includes('RLS') ||
-                         (err as any)?.code === '42501';
+                         (err as any)?.code === '42501' ||
+                         (err as any)?.code === 'PGRST301';
       
       if (!isRLSError) {
         console.error('❌ Erreur chargement sécurité:', err);

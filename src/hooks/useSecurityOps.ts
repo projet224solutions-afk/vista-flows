@@ -75,14 +75,23 @@ export function useSecurityOps(autoLoad?: boolean) {
     setError(null);
     
     try {
-      // Charger les incidents
+      // Charger les incidents - gestion silencieuse des erreurs RLS
       const { data: incidentsData, error: incidentsError } = await supabase
         .from('security_incidents')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (incidentsError) throw incidentsError;
+      // Si erreur RLS, retourner des données vides sans erreur
+      if (incidentsError) {
+        const isRLSError = incidentsError.message?.includes('permission') || 
+                           incidentsError.message?.includes('policy') ||
+                           incidentsError.code === '42501' ||
+                           incidentsError.code === 'PGRST301';
+        if (!isRLSError) {
+          console.error('Erreur incidents:', incidentsError);
+        }
+      }
       
       const mappedIncidents: SecurityIncident[] = (incidentsData || []).map(i => ({
         id: i.id,
@@ -105,7 +114,15 @@ export function useSecurityOps(autoLoad?: boolean) {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (alertsError) throw alertsError;
+      if (alertsError) {
+        const isRLSError = alertsError.message?.includes('permission') || 
+                           alertsError.message?.includes('policy') ||
+                           alertsError.code === '42501' ||
+                           alertsError.code === 'PGRST301';
+        if (!isRLSError) {
+          console.error('Erreur alertes:', alertsError);
+        }
+      }
       
       const mappedAlerts: SecurityAlert[] = (alertsData || []).map(a => ({
         id: a.id,
@@ -128,7 +145,15 @@ export function useSecurityOps(autoLoad?: boolean) {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (blockedError) throw blockedError;
+      if (blockedError) {
+        const isRLSError = blockedError.message?.includes('permission') || 
+                           blockedError.message?.includes('policy') ||
+                           blockedError.code === '42501' ||
+                           blockedError.code === 'PGRST301';
+        if (!isRLSError) {
+          console.error('Erreur IPs bloquées:', blockedError);
+        }
+      }
       
       const mappedBlocked: BlockedIP[] = (blockedData || []).map(b => ({
         id: b.id,
@@ -166,14 +191,15 @@ export function useSecurityOps(autoLoad?: boolean) {
         keys_need_rotation: 0,
       });
 
-      toast.success('Données de sécurité chargées');
+      // Ne pas afficher de toast de succès (trop verbeux)
     } catch (err: any) {
       // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin)
       const errorMessage = err?.message || 'Erreur inconnue';
       const isRLSError = errorMessage.includes('permission') || 
                          errorMessage.includes('policy') ||
                          errorMessage.includes('RLS') ||
-                         err?.code === '42501';
+                         err?.code === '42501' ||
+                         err?.code === 'PGRST301';
       
       if (!isRLSError) {
         console.error('Erreur chargement données sécurité:', err);
