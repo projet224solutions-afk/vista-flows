@@ -213,7 +213,7 @@ export class SOSMediaRecorder {
 
       // 4. Sauvegarder référence dans table SOS
       const { error: updateError } = await supabase
-        .from('syndicate_sos_alerts')
+        .from('syndicate_sos_alerts' as any)
         .update({
           recording_url: urlData.publicUrl,
           recording_uploaded_at: new Date().toISOString(),

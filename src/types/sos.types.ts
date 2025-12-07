@@ -23,7 +23,7 @@ export interface SOSAlert {
   direction?: number;
   speed?: number;
   gps_history: GPSPosition[];
-  status: 'DANGER' | 'EN_INTERVENTION' | 'RESOLU';
+  status: 'DANGER' | 'EN_INTERVENTION' | 'RESOLU' | 'ANNULE';
   bureau_syndicat_id?: string;
   description?: string;
   resolved_by?: string;
@@ -39,4 +39,4 @@ export interface SOSResponse {
   error?: string;
 }
 
-export type SOSStatus = 'DANGER' | 'EN_INTERVENTION' | 'RESOLU';
+export type SOSStatus = 'DANGER' | 'EN_INTERVENTION' | 'RESOLU' | 'ANNULE';

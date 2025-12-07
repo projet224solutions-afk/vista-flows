@@ -155,7 +155,7 @@ class TaxiMotoSOSService {
       console.log('🚨 Création alerte SOS dans Supabase...');
       
       const { data: sosRecord, error: insertError } = await supabase
-        .from('syndicate_sos_alerts')
+        .from('syndicate_sos_alerts' as any)
         .insert({
           taxi_driver_id: taxiId,
           driver_name: driverName,
@@ -170,7 +170,7 @@ class TaxiMotoSOSService {
           triggered_at: new Date().toISOString()
         })
         .select()
-        .single();
+        .single() as any; // Type assertion pour éviter erreurs Supabase
 
       if (insertError) {
         console.error('❌ Erreur insertion SOS:', insertError);
@@ -271,8 +271,7 @@ class TaxiMotoSOSService {
             body: `${sosAlert.driver_name} a déclenché un SOS!\nPosition: ${sosAlert.latitude.toFixed(4)}, ${sosAlert.longitude.toFixed(4)}`,
             icon: '/taxi-icon.png',
             tag: `sos-${sosAlert.id}`,
-            requireInteraction: true,
-            vibrate: [200, 100, 200, 100, 200]
+            requireInteraction: true
           });
           console.log('✅ Notification système envoyée');
         } else if (Notification.permission === 'default') {
@@ -356,7 +355,7 @@ class TaxiMotoSOSService {
       }
       
       const { error } = await supabase
-        .from('syndicate_sos_alerts')
+        .from('syndicate_sos_alerts' as any)
         .update(updateData)
         .eq('id', sosId);
       
@@ -413,7 +412,7 @@ class TaxiMotoSOSService {
       console.log('🔍 Chargement alertes SOS actives depuis Supabase...');
       
       const { data, error } = await supabase
-        .from('syndicate_sos_alerts')
+        .from('syndicate_sos_alerts' as any)
         .select('*')
         .in('status', ['DANGER', 'EN_INTERVENTION'])
         .order('triggered_at', { ascending: false })
@@ -429,7 +428,7 @@ class TaxiMotoSOSService {
       console.log(`✅ ${data?.length || 0} alertes SOS actives chargées`);
 
       // Mapper les données Supabase vers le format SOSAlert
-      return (data || []).map(record => ({
+      return (data as any[])?.map((record: any) => ({
         id: record.id,
         taxi_driver_id: record.taxi_driver_id,
         driver_name: record.driver_name,
@@ -446,7 +445,7 @@ class TaxiMotoSOSService {
         triggered_at: record.triggered_at,
         resolved_at: record.resolved_at,
         resolved_by: record.resolved_by
-      }));
+      })) || [];
     } catch (error) {
       console.error('❌ Exception getActiveSOSAlerts:', error);
       // Fallback vers localStorage
