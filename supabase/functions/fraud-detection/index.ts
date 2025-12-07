@@ -1,3 +1,4 @@
+// 🔍 Fraud Detection - Edge Function (SECURED)
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
@@ -36,6 +37,9 @@ interface FraudScore {
   requiresMFA: boolean;
 }
 
+// Rôles autorisés pour la détection de fraude
+const ALLOWED_ROLES = ['admin', 'pdg', 'service_role', 'vendeur', 'agent'];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -46,6 +50,69 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // 🔐 VALIDATION AUTHENTIFICATION
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ Missing or invalid Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token manquant' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Vérifier le token et récupérer l'utilisateur
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('❌ Token invalide:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token invalide' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // 🔐 VALIDATION DU RÔLE - Vérifier dans la table profiles
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('❌ Profil non trouvé:', profileError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Profil utilisateur non trouvé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Vérifier que l'utilisateur a un rôle autorisé
+    if (!ALLOWED_ROLES.includes(profile.role)) {
+      console.error('❌ Rôle non autorisé:', profile.role);
+      
+      // Log l'tentative non autorisée
+      await supabaseClient.from('security_audit_logs').insert({
+        action: 'unauthorized_fraud_detection_access',
+        actor_id: user.id,
+        actor_type: 'user',
+        target_type: 'fraud_detection',
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+        details: { 
+          attempted_action: 'fraud_check',
+          user_role: profile.role 
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Accès refusé - Privilèges insuffisants' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log(`✅ Utilisateur autorisé: ${user.id} (rôle: ${profile.role})`);
 
     // Validation avec Zod
     const rawPayload = await req.json();
@@ -179,15 +246,19 @@ serve(async (req) => {
     await supabaseClient
       .from('security_audit_logs')
       .insert({
-        event_type: 'fraud_check',
-        user_id: payload.userId,
-        severity: riskLevel,
-        description: `Fraud check score: ${fraudScore}`,
-        metadata: {
+        action: 'fraud_check',
+        actor_id: user.id,
+        actor_type: 'user',
+        target_type: 'transaction',
+        target_id: payload.transactionId,
+        details: {
           score: fraudScore,
+          riskLevel,
           flags,
           transactionAmount: payload.amount,
-          recipientId: payload.recipientId
+          recipientId: payload.recipientId,
+          checked_by: user.id,
+          checked_by_role: profile.role
         }
       });
 
@@ -208,8 +279,9 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ Fraud detection error:', error);
+    // Message d'erreur générique pour éviter la fuite d'informations
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Une erreur est survenue lors de l\'analyse' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

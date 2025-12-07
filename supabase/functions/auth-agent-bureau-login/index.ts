@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 const securityHeaders = {
-  ...securityHeaders,
+  ...corsHeaders,
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'X-Frame-Options': 'DENY',

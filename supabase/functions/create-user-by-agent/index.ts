@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // Headers de sécurité renforcés
 const securityHeaders = {
-  ...securityHeaders,
+  ...corsHeaders,
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; font-src 'self' data:;",
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'X-Frame-Options': 'DENY',
