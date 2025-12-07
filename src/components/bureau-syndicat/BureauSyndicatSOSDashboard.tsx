@@ -25,9 +25,10 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   // Charger les alertes depuis Supabase
   const loadSOSAlerts = async () => {
     try {
-      const alerts = await taxiMotoSOSService.getActiveSOSAlerts(bureauId);
+      // Charger TOUTES les alertes SOS actives (sans filtrer par bureau_id)
+      const alerts = await taxiMotoSOSService.getActiveSOSAlerts();
       setSosAlerts(alerts);
-      console.log('📢 Alertes SOS chargées:', alerts.length);
+      console.log('📢 Alertes SOS chargées:', alerts.length, alerts);
     } catch (error) {
       console.error('Erreur chargement SOS:', error);
       toast.error('Erreur de chargement des alertes');
@@ -36,17 +37,26 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     }
   };
 
-  // Charger au montage
+  // Charger au montage et rafraîchir périodiquement
   useEffect(() => {
     loadSOSAlerts();
-  }, [bureauId]);
+    
+    // Rafraîchissement automatique toutes les 5 secondes
+    const interval = setInterval(() => {
+      if (autoRefresh) {
+        loadSOSAlerts();
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [bureauId, autoRefresh]);
 
   // Écouter les nouvelles alertes SOS en temps réel via Supabase
   useEffect(() => {
-    console.log('🔔 Configuration Realtime SOS pour bureau:', bureauId);
+    console.log('🔔 Configuration Realtime SOS...');
     
     const channel = supabase
-      .channel('sos-alerts-realtime')
+      .channel('sos-alerts-realtime-' + Date.now())
       .on(
         'postgres_changes',
         {
@@ -55,22 +65,27 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           table: 'sos_alerts'
         },
         (payload) => {
-          console.log('🚨 NOUVELLE ALERTE SOS REÇUE:', payload);
+          console.log('🚨 NOUVELLE ALERTE SOS REÇUE EN TEMPS RÉEL:', payload);
           
-          // Notification sonore et visuelle
-          toast.error('🚨 NOUVELLE ALERTE SOS!', {
-            description: `${payload.new.driver_name || 'Un conducteur'} a déclenché un SOS!`,
-            duration: 15000,
+          // Notification sonore et visuelle IMPORTANTE
+          toast.error('🚨 ALERTE SOS D\'URGENCE!', {
+            description: `${payload.new.driver_name || 'Un conducteur'} a besoin d'aide immédiate!`,
+            duration: 30000,
             action: {
-              label: 'Voir',
-              onClick: () => loadSOSAlerts()
+              label: '🧭 Localiser',
+              onClick: () => {
+                if (payload.new.latitude && payload.new.longitude) {
+                  window.open(`https://www.google.com/maps?q=${payload.new.latitude},${payload.new.longitude}`, '_blank');
+                }
+                loadSOSAlerts();
+              }
             }
           });
 
-          // Jouer un son d'alerte
+          // Jouer un son d'alerte fort
           playAlertSound();
 
-          // Recharger les alertes
+          // Recharger les alertes immédiatement
           loadSOSAlerts();
         }
       )
@@ -87,14 +102,17 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         }
       )
       .subscribe((status) => {
-        console.log('🔔 Subscription SOS status:', status);
+        console.log('🔔 Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Connecté au temps réel SOS!');
+        }
       });
 
     return () => {
-      console.log('🔕 Unsubscribe SOS alerts');
+      console.log('🔕 Déconnexion temps réel SOS');
       supabase.removeChannel(channel);
     };
-  }, [bureauId]);
+  }, []);
 
   // Jouer un son d'alerte
   const playAlertSound = () => {
@@ -130,10 +148,31 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
-  const handleNavigateToDriver = (lat: number, lng: number) => {
-    // Ouvrir la navigation Google Maps
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    window.open(url, '_blank');
+  const handleNavigateToDriver = (lat: number, lng: number, driverName: string) => {
+    // Essayer d'obtenir la position actuelle du bureau pour navigation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const origin = `${position.coords.latitude},${position.coords.longitude}`;
+          const destination = `${lat},${lng}`;
+          // Ouvrir Google Maps avec la navigation turn-by-turn
+          const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&dir_action=navigate`;
+          window.open(url, '_blank');
+          toast.success(`Navigation vers ${driverName} démarrée!`);
+        },
+        (error) => {
+          console.error('Erreur GPS:', error);
+          // Fallback: navigation sans position d'origine
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving&dir_action=navigate`;
+          window.open(url, '_blank');
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      // Fallback: navigation simple
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+      window.open(url, '_blank');
+    }
   };
 
   const handleStartIntervention = async (sosId: string) => {
@@ -370,11 +409,11 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => handleNavigateToDriver(sos.latitude, sos.longitude)}
-                    className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleNavigateToDriver(sos.latitude, sos.longitude, sos.driver_name)}
+                    className="flex-1 min-w-[160px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
                   >
-                    <Navigation className="w-4 h-4 mr-2" />
-                    Naviguer
+                    <Navigation className="w-4 h-4 mr-2 animate-pulse" />
+                    🧭 Naviguer GPS
                   </Button>
 
                   {sos.status === 'DANGER' && (
