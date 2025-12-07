@@ -245,15 +245,12 @@ class TaxiMotoSOSService {
    */
   public async getActiveSOSAlerts(bureauId?: string): Promise<SOSAlert[]> {
     try {
-      let query = supabase
+      // Récupérer TOUTES les alertes actives (ne pas filtrer par bureau_id car souvent null)
+      const query = supabase
         .from('sos_alerts')
         .select('*')
         .in('status', ['DANGER', 'EN_INTERVENTION'])
         .order('created_at', { ascending: false });
-
-      if (bureauId) {
-        query = query.eq('bureau_id', bureauId);
-      }
 
       const { data, error } = await query;
 
