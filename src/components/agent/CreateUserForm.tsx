@@ -168,14 +168,15 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           Créer un Utilisateur
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] overflow-y-auto p-0">
-        <DialogHeader className="sticky top-0 z-10 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
           <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
           <DialogDescription className="text-emerald-100">
             Sélectionnez le type d'utilisateur et remplissez les informations
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 p-6">
+        <div className="flex-1 overflow-y-auto p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Sélection du type d'utilisateur */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Type d'utilisateur *</Label>
@@ -490,32 +491,38 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
               </div>
             </div>
           )}
-
-          {/* Boutons d'action */}
-          <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-background pb-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsOpen(false)}
-              disabled={isSubmitting}
-            >
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Création...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Créer l'utilisateur
-                </>
-              )}
-            </Button>
-          </div>
         </form>
+        </div>
+        
+        {/* Boutons d'action - toujours visibles en bas */}
+        <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setIsOpen(false)}
+            disabled={isSubmitting}
+          >
+            Annuler
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="min-w-[140px]"
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Création...
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Créer l'utilisateur
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
