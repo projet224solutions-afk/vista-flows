@@ -6,6 +6,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SecureStorage } from '@/lib/secureStorage';
+import { sosMediaRecorder } from './SOSMediaRecorder';
 import type { GPSPosition, SOSAlert, SOSResponse, SOSStatus } from '@/types/sos.types';
 
 class TaxiMotoSOSService {
@@ -178,6 +179,22 @@ class TaxiMotoSOSService {
 
       console.log('✅ Alerte SOS créée avec ID:', sosRecord.id);
 
+      // 🎬 DÉMARRER ENREGISTREMENT AUTOMATIQUE IMMÉDIATEMENT
+      console.log('🎥 Démarrage enregistrement automatique SOS...');
+      const recordingStarted = await sosMediaRecorder.startSOSRecording(sosRecord.id, {
+        audio: true,
+        video: true
+      });
+      
+      if (recordingStarted) {
+        console.log('✅ Enregistrement automatique démarré');
+        toast.info('🎥 Enregistrement en cours', {
+          description: 'Audio et vidéo enregistrés automatiquement'
+        });
+      } else {
+        console.warn('⚠️ Impossible de démarrer enregistrement automatique');
+      }
+
       // Mettre à jour le temps du dernier SOS
       this.lastSOSTime = Date.now();
 
@@ -346,6 +363,15 @@ class TaxiMotoSOSService {
       if (error) {
         console.error('❌ Erreur mise à jour SOS Supabase:', error);
         return false;
+      }
+      
+      // 🎬 ARRÊTER ENREGISTREMENT SI SOS RÉSOLU
+      if (newStatus === 'RESOLU' || newStatus === 'ANNULE') {
+        console.log('⏹️ Arrêt enregistrement automatique...');
+        sosMediaRecorder.stopSOSRecording(sosId);
+        toast.success('⏹️ Enregistrement terminé', {
+          description: 'Vidéo sauvegardée et uploadée automatiquement'
+        });
       }
       
       // Mettre à jour aussi localStorage en backup

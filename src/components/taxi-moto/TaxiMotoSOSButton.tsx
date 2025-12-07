@@ -121,12 +121,8 @@ export function TaxiMotoSOSButton({
         setActiveSOSId(result.sos_id);
         
         toast.success('🚨 SOS ENVOYÉ!', {
-          description: 'Le Bureau Syndicat a été alerté. Voulez-vous enregistrer une preuve?',
-          duration: 8000,
-          action: {
-            label: '📹 Enregistrer',
-            onClick: () => setShowRecorder(true)
-          }
+          description: '📹 Enregistrement audio/vidéo démarré automatiquement. Bureau Syndicat notifié.',
+          duration: 10000
         });
         
         // Démarrer le cooldown
