@@ -27,12 +27,12 @@ class AlertingService {
   private alertRules: AlertRule[] = [];
   private alertHistory: Map<string, number> = new Map();
   private config: AlertConfig = {
-    maxErrorsPerMinute: 10,
-    maxSameErrorPerHour: 3,
+    maxErrorsPerMinute: 50,
+    maxSameErrorPerHour: 10,
     criticalModules: ['frontend_promise', 'frontend_global', 'frontend_resource'],
     notifyAdmin: true,
     notifyPDG: true,
-    autoFix: true,
+    autoFix: false, // Désactivé pour éviter les notifications répétitives
   };
 
   private constructor() {
@@ -102,7 +102,7 @@ class AlertingService {
       enabled: true,
     });
 
-    // Règle 3: Seuil d'erreurs par module
+    // Règle 3: Seuil d'erreurs par module - désactivé pour éviter spam
     this.alertRules.push({
       id: 'module-error-threshold',
       name: 'Seuil d\'erreurs module dépassé',
@@ -113,22 +113,17 @@ class AlertingService {
           errorsByModule.set(e.module, count + 1);
         });
         
+        // Seuil augmenté à 20 pour éviter les faux positifs
         return Array.from(errorsByModule.entries()).some(([module, count]) => 
-          this.config.criticalModules.includes(module) && count >= 3
+          this.config.criticalModules.includes(module) && count >= 20
         );
       },
       severity: 'high',
       action: () => {
-        this.createAlert({
-          title: '⚠️ Seuil d\'erreurs dépassé',
-          message: 'Un module critique a généré trop d\'erreurs.',
-          severity: 'high',
-          module: 'monitoring',
-          actionable: true,
-          suggestedFix: 'Analyser les logs et redémarrer le module si nécessaire.',
-        });
+        // Ne pas afficher de toast, juste logger en console
+        console.warn('⚠️ Module error threshold exceeded - logged silently');
       },
-      enabled: true,
+      enabled: false, // Désactivé
     });
 
     // Règle 4: Erreurs de chargement lazy loading
@@ -393,10 +388,10 @@ class AlertingService {
   }
 
   private startMonitoring() {
-    // Vérifier les erreurs toutes les 30 secondes
+    // Vérifier les erreurs toutes les 5 minutes (au lieu de 30s)
     setInterval(async () => {
       await this.checkForAlerts();
-    }, 30000);
+    }, 300000);
   }
 
   private async checkForAlerts() {
