@@ -182,8 +182,8 @@ export function SOSMediaRecorder({
         .from('documents')
         .getPublicUrl(filePath);
 
-      // Enregistrer dans la base de données
-      const { error: insertError } = await supabase
+      // Enregistrer dans la base de données via RPC ou insert brut
+      const { error: insertError } = await (supabase as any)
         .from('sos_media')
         .insert({
           sos_alert_id: sosAlertId,

@@ -1,17 +1,19 @@
 /**
  * Dashboard Bureau Syndicat pour gestion alertes SOS
  * Affichage temps réel des alertes d'urgence avec Supabase Realtime
+ * Inclut lecteur de médias SOS
  */
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Phone, Map, Navigation, CheckCircle, ExternalLink, MapPin } from 'lucide-react';
+import { AlertTriangle, Phone, Map, Navigation, CheckCircle, ExternalLink, MapPin, Video } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
 import { supabase } from '@/integrations/supabase/client';
 import type { SOSAlert } from '@/types/sos.types';
 import { toast } from 'sonner';
+import { SOSMediaPlayer } from './SOSMediaPlayer';
 
 interface BureauSyndicatSOSDashboardProps {
   bureauId: string;
@@ -445,6 +447,11 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           ))}
         </div>
       )}
+
+      {/* Section Médias SOS reçus */}
+      <div className="mt-8">
+        <SOSMediaPlayer />
+      </div>
     </div>
   );
 }

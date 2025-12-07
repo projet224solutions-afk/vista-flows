@@ -7359,6 +7359,51 @@ export type Database = {
           },
         ]
       }
+      sos_media: {
+        Row: {
+          created_at: string | null
+          driver_id: string | null
+          driver_name: string | null
+          duration_seconds: number | null
+          file_path: string
+          file_url: string
+          id: string
+          is_viewed: boolean | null
+          media_type: string
+          sos_alert_id: string
+          viewed_at: string | null
+          viewed_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          driver_id?: string | null
+          driver_name?: string | null
+          duration_seconds?: number | null
+          file_path: string
+          file_url: string
+          id?: string
+          is_viewed?: boolean | null
+          media_type: string
+          sos_alert_id: string
+          viewed_at?: string | null
+          viewed_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          driver_id?: string | null
+          driver_name?: string | null
+          duration_seconds?: number | null
+          file_path?: string
+          file_url?: string
+          id?: string
+          is_viewed?: boolean | null
+          media_type?: string
+          sos_alert_id?: string
+          viewed_at?: string | null
+          viewed_by?: string | null
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
