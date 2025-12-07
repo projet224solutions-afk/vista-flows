@@ -1,14 +1,22 @@
 /**
  * Bouton SOS d'urgence pour conducteurs Taxi Moto
  * Pression longue de 1.5s pour déclencher
+ * Inclut enregistrement audio/vidéo après déclenchement
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Video, X } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { SOSMediaRecorder } from './SOSMediaRecorder';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TaxiMotoSOSButtonProps {
   taxiId: string;
@@ -30,6 +38,8 @@ export function TaxiMotoSOSButton({
   const [isPressed, setIsPressed] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [activeSOSId, setActiveSOSId] = useState<string | null>(null);
+  const [showRecorder, setShowRecorder] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const cooldownTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,6 +78,7 @@ export function TaxiMotoSOSButton({
           clearInterval(cooldownTimer.current);
         }
         setIsActive(false);
+        setActiveSOSId(null);
       }
     }, 1000);
   };
@@ -106,10 +117,16 @@ export function TaxiMotoSOSButton({
         'Alerte SOS déclenchée par le conducteur'
       );
 
-      if (result.success) {
+      if (result.success && result.sos_id) {
+        setActiveSOSId(result.sos_id);
+        
         toast.success('🚨 SOS ENVOYÉ!', {
-          description: 'Le Bureau Syndicat a été alerté de votre situation',
-          duration: 5000
+          description: 'Le Bureau Syndicat a été alerté. Voulez-vous enregistrer une preuve?',
+          duration: 8000,
+          action: {
+            label: '📹 Enregistrer',
+            onClick: () => setShowRecorder(true)
+          }
         });
         
         // Démarrer le cooldown
@@ -202,20 +219,55 @@ export function TaxiMotoSOSButton({
   };
 
   return (
-    <Button
-      className={getButtonClasses()}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleMouseDown}
-      onTouchEnd={handleMouseUp}
-      disabled={cooldownRemaining > 0}
-      variant="destructive"
-      size={variant === 'compact' ? 'sm' : 'default'}
-    >
-      <div className="flex items-center gap-2">
-        {getButtonContent()}
-      </div>
-    </Button>
+    <>
+      <Button
+        className={getButtonClasses()}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleMouseDown}
+        onTouchEnd={handleMouseUp}
+        disabled={cooldownRemaining > 0}
+        variant="destructive"
+        size={variant === 'compact' ? 'sm' : 'default'}
+      >
+        <div className="flex items-center gap-2">
+          {getButtonContent()}
+        </div>
+      </Button>
+
+      {/* Bouton flottant pour enregistrer pendant SOS actif */}
+      {isActive && activeSOSId && !showRecorder && (
+        <Button
+          onClick={() => setShowRecorder(true)}
+          className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full shadow-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 animate-pulse"
+        >
+          <Video className="w-6 h-6 text-white" />
+        </Button>
+      )}
+
+      {/* Dialog d'enregistrement */}
+      <Dialog open={showRecorder} onOpenChange={setShowRecorder}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Video className="w-5 h-5" />
+              Enregistrer une preuve
+            </DialogTitle>
+          </DialogHeader>
+          
+          {activeSOSId && (
+            <SOSMediaRecorder
+              sosAlertId={activeSOSId}
+              driverId={taxiId}
+              driverName={driverName}
+              onMediaSent={() => {
+                toast.success('Preuve envoyée!');
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

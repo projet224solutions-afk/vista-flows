@@ -7271,45 +7271,75 @@ export type Database = {
       }
       sos_alerts: {
         Row: {
+          accuracy: number | null
           address: string | null
           alert_type: string | null
           bureau_id: string | null
           created_at: string | null
           description: string | null
+          direction: number | null
+          driver_name: string | null
+          driver_phone: string | null
+          gps_history: Json | null
           id: string
           latitude: number | null
           longitude: number | null
           member_name: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           severity: string | null
+          speed: number | null
           status: string | null
+          taxi_driver_id: string | null
+          updated_at: string | null
           vehicle_serial: string | null
         }
         Insert: {
+          accuracy?: number | null
           address?: string | null
           alert_type?: string | null
           bureau_id?: string | null
           created_at?: string | null
           description?: string | null
+          direction?: number | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_history?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
+          speed?: number | null
           status?: string | null
+          taxi_driver_id?: string | null
+          updated_at?: string | null
           vehicle_serial?: string | null
         }
         Update: {
+          accuracy?: number | null
           address?: string | null
           alert_type?: string | null
           bureau_id?: string | null
           created_at?: string | null
           description?: string | null
+          direction?: number | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_history?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
+          speed?: number | null
           status?: string | null
+          taxi_driver_id?: string | null
+          updated_at?: string | null
           vehicle_serial?: string | null
         }
         Relationships: [
@@ -7328,6 +7358,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sos_media: {
+        Row: {
+          created_at: string | null
+          driver_id: string | null
+          driver_name: string | null
+          duration_seconds: number | null
+          file_path: string
+          file_url: string
+          id: string
+          is_viewed: boolean | null
+          media_type: string
+          sos_alert_id: string
+          viewed_at: string | null
+          viewed_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          driver_id?: string | null
+          driver_name?: string | null
+          duration_seconds?: number | null
+          file_path: string
+          file_url: string
+          id?: string
+          is_viewed?: boolean | null
+          media_type: string
+          sos_alert_id: string
+          viewed_at?: string | null
+          viewed_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          driver_id?: string | null
+          driver_name?: string | null
+          duration_seconds?: number | null
+          file_path?: string
+          file_url?: string
+          id?: string
+          is_viewed?: boolean | null
+          media_type?: string
+          sos_alert_id?: string
+          viewed_at?: string | null
+          viewed_by?: string | null
+        }
+        Relationships: []
       }
       spatial_ref_sys: {
         Row: {
