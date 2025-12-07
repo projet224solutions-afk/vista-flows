@@ -105,7 +105,11 @@ interface ActiveRide {
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
-    const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
+const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
+    const [activeLocation, setActiveLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+    
+    // Location effective = soit la location du hook, soit la location obtenue manuellement
+    const location = hookLocation || activeLocation;
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
     const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
@@ -324,12 +328,18 @@ export default function TaxiMotoDriver() {
         }
 
         // Utiliser directement navigator.geolocation.watchPosition
-        const watchId = navigator.geolocation.watchPosition(
+const watchId = navigator.geolocation.watchPosition(
             (position) => {
                 console.log('📍 Position mise à jour:', {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
                     accuracy: position.coords.accuracy
+                });
+                
+                // Mettre à jour l'état local de position pour l'UI
+                setActiveLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
                 });
                 
                 // Mettre à jour la position dans la DB en temps réel
@@ -467,6 +477,12 @@ export default function TaxiMotoDriver() {
                 toast.dismiss('gps-loading');
                 toast.success('✅ GPS activé avec succès');
                 
+                // Stocker la position dans l'état local pour afficher "GPS Actif"
+                setActiveLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+                
                 // Mettre le chauffeur en ligne avec la position
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
@@ -540,6 +556,7 @@ export default function TaxiMotoDriver() {
                 );
 
                 setIsOnline(false);
+                setActiveLocation(null); // Réinitialiser la position GPS
                 toast.info('🔴 Vous êtes maintenant hors ligne');
                 
                 // Vider les demandes de courses
