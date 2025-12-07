@@ -34,16 +34,16 @@ const PUBLIC_ROUTES = [
  * NE redirige PAS si l'utilisateur est sur une route publique ou déjà sur son dashboard
  */
 export const useRoleRedirect = () => {
-  const { profile, user, loading } = useAuth();
+  const { profile, user, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Attendre la fin du chargement
-    if (loading) return;
+    // Attendre la fin du chargement complet (session ET profil)
+    if (loading || profileLoading) return;
 
-    // Si utilisateur connecté avec profil
-    if (user && profile) {
+    // Si utilisateur connecté avec profil chargé
+    if (user && profile && profile.role) {
       const currentPath = location.pathname;
 
       // Ne pas rediriger si l'utilisateur est sur une route publique
@@ -57,12 +57,14 @@ export const useRoleRedirect = () => {
 
       const roleRoutes: Record<string, string> = {
         admin: '/pdg',
+        ceo: '/pdg', // Alias pour PDG
         vendeur: '/vendeur',
         livreur: '/livreur',
         taxi: '/taxi-moto/driver',
         syndicat: '/syndicat',
         transitaire: '/transitaire',
         client: '/client',
+        agent: '/agent', // Pour les agents
       };
 
       const targetRoute = roleRoutes[profile.role];
@@ -76,5 +78,5 @@ export const useRoleRedirect = () => {
         navigate(targetRoute, { replace: true });
       }
     }
-  }, [user, profile, loading, navigate, location.pathname]);
+  }, [user, profile, loading, profileLoading, navigate, location.pathname]);
 };
