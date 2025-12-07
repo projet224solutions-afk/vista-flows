@@ -70,6 +70,7 @@ interface RideRequest {
     id: string;
     customerId: string;
     customerName: string;
+    customerPhone: string;
     customerRating: number;
     pickupAddress: string;
     destinationAddress: string;
@@ -121,6 +122,7 @@ export default function TaxiMotoDriver() {
         onlineTime: '0h 0m'
     });
     const [driverId, setDriverId] = useState<string | null>(null);
+    const [driverLoading, setDriverLoading] = useState(true);
     const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
     const [rideHistory, setRideHistory] = useState<any[]>([]);
 
@@ -132,11 +134,13 @@ export default function TaxiMotoDriver() {
     const [timeToDestination, setTimeToDestination] = useState(0);
     const [routeSteps, setRouteSteps] = useState<any[]>([]);
 
-    // Initialisation : Charger le profil
+    // Initialisation : Charger le profil quand l'utilisateur est connecté
     useEffect(() => {
-        loadDriverProfile();
-        // GPS sera demandé uniquement quand le chauffeur se met en ligne
-    }, []);
+        if (user?.id) {
+            console.log('🔄 [useEffect] User connecté, chargement profil...');
+            loadDriverProfile();
+        }
+    }, [user?.id]);
 
     useEffect(() => {
         if (driverId) {
@@ -414,72 +418,104 @@ export default function TaxiMotoDriver() {
             
             try {
                 // Demander explicitement la permission GPS
-                if ('geolocation' in navigator) {
-                    console.log('📍 Demande permission GPS...');
-                    
-                    // Forcer obtention nouvelle position avec haute précision
-                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(
-                            resolve,
-                            reject,
-                            {
-                                enableHighAccuracy: true,
-                                timeout: 10000,
-                                maximumAge: 0 // Ne pas utiliser cache
-                            }
-                        );
-                    });
-                    
-                    console.log('✅ Position GPS obtenue:', {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    });
-                    
-                    toast.dismiss('gps-loading');
-                    toast.success('✅ GPS activé avec succès');
-                    
-                    // Mettre le chauffeur en ligne avec la position
-                    await TaxiMotoService.updateDriverStatus(
-                        driverId,
-                        true,
-                        true,
-                        position.coords.latitude,
-                        position.coords.longitude
-                    );
-
-                    setIsOnline(true);
-                    toast.success('🟢 Vous êtes maintenant en ligne');
-                    
-                    // Démarrer le suivi de position
-                    startLocationTracking();
-                    
-                    // Charger les courses en attente
-                    await loadPendingRides();
-                } else {
+                if (!('geolocation' in navigator)) {
                     toast.dismiss('gps-loading');
                     toast.error('❌ GPS non disponible sur cet appareil');
                     return;
                 }
-                loadPendingRides();
+
+                console.log('📍 Demande permission GPS...');
+                
+                // Fonction pour obtenir la position avec retry
+                const getPosition = (highAccuracy: boolean, timeout: number): Promise<GeolocationPosition> => {
+                    return new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            resolve,
+                            reject,
+                            {
+                                enableHighAccuracy: highAccuracy,
+                                timeout: timeout,
+                                maximumAge: 10000 // Accepter position jusqu'à 10s
+                            }
+                        );
+                    });
+                };
+
+                let position: GeolocationPosition;
+                
+                try {
+                    // Essayer d'abord avec haute précision et timeout court
+                    position = await getPosition(true, 15000);
+                } catch (firstError: any) {
+                    console.log('⚠️ Haute précision échouée, essai basse précision...', firstError.code);
+                    toast.loading('📍 Recherche position alternative...', { id: 'gps-loading' });
+                    
+                    try {
+                        // Fallback: basse précision avec timeout plus long
+                        position = await getPosition(false, 30000);
+                    } catch (secondError: any) {
+                        throw secondError;
+                    }
+                }
+                
+                console.log('✅ Position GPS obtenue:', {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                });
+                
+                toast.dismiss('gps-loading');
+                toast.success('✅ GPS activé avec succès');
+                
+                // Mettre le chauffeur en ligne avec la position
+                await TaxiMotoService.updateDriverStatus(
+                    driverId,
+                    true,
+                    true,
+                    position.coords.latitude,
+                    position.coords.longitude
+                );
+
+                setIsOnline(true);
+                toast.success('🟢 Vous êtes maintenant en ligne');
+                
+                // Démarrer le suivi de position
+                startLocationTracking();
+                
+                // Charger les courses en attente
+                await loadPendingRides();
                 
             } catch (error: any) {
                 capture('gps', 'Erreur GPS lors de la mise en ligne', error);
                 toast.dismiss('gps-loading');
                 
-                // Message d'erreur détaillé avec instructions
-                const errorMessage = error?.message || 'Erreur GPS inconnue';
+                // Message d'erreur détaillé selon le type d'erreur
+                let errorTitle = '⚠️ Erreur GPS';
+                let errorMessage = 'Impossible d\'obtenir votre position';
+                
+                if (error?.code === 1) {
+                    errorTitle = '🚫 Permission refusée';
+                    errorMessage = 'Autorisez l\'accès GPS dans les paramètres de votre navigateur';
+                } else if (error?.code === 2) {
+                    errorTitle = '📍 Position indisponible';
+                    errorMessage = 'Activez le GPS et vérifiez votre connexion internet';
+                } else if (error?.code === 3) {
+                    errorTitle = '⏱️ Délai dépassé';
+                    errorMessage = 'La recherche GPS a pris trop de temps. Réessayez à l\'extérieur.';
+                }
+                
                 toast.error(
                     <div className="space-y-2">
-                        <p className="font-semibold">⚠️ Erreur GPS</p>
+                        <p className="font-semibold">{errorTitle}</p>
                         <p className="text-sm">{errorMessage}</p>
-                        <div className="text-xs opacity-80">
-                            <p>• Vérifiez que le GPS est activé</p>
-                            <p>• Autorisez l'accès à la localisation</p>
-                            <p>• Assurez-vous d'avoir une bonne connexion</p>
+                        <div className="text-xs opacity-80 mt-2">
+                            <p>💡 Conseils:</p>
+                            <p>• Allez à l'extérieur pour un meilleur signal</p>
+                            <p>• Activez le WiFi pour une localisation plus rapide</p>
+                            <p>• Rechargez la page et réessayez</p>
                         </div>
                     </div>,
-                    { duration: 5000 }
+                    { duration: 8000 }
                 );
                 return;
             }
@@ -521,9 +557,11 @@ export default function TaxiMotoDriver() {
     const loadDriverProfile = async () => {
         if (!user) {
             console.log('⚠️ [loadDriverProfile] Pas d\'utilisateur connecté');
+            setDriverLoading(false);
             return;
         }
         
+        setDriverLoading(true);
         console.log('🔄 [loadDriverProfile] Chargement profil pour user:', user.id);
         
         try {
@@ -535,7 +573,33 @@ export default function TaxiMotoDriver() {
 
             if (error) {
                 console.error('❌ [loadDriverProfile] Erreur:', error);
-                toast.error('Erreur de chargement du profil conducteur');
+                // Si pas de profil existant, essayer de créer
+                if (error.code === 'PGRST116') {
+                    console.log('📝 [loadDriverProfile] Création profil conducteur...');
+                    const { data: newDriver, error: createError } = await supabase
+                        .from('taxi_drivers')
+                        .insert({
+                            user_id: user.id,
+                            is_online: false,
+                            status: 'offline',
+                            rating: 5.0,
+                            total_rides: 0
+                        })
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.error('❌ [loadDriverProfile] Erreur création:', createError);
+                        toast.error('Impossible de créer le profil conducteur');
+                    } else if (newDriver) {
+                        console.log('✅ [loadDriverProfile] Profil conducteur créé:', newDriver.id);
+                        setDriverId(newDriver.id);
+                        setIsOnline(false);
+                    }
+                } else {
+                    toast.error('Erreur de chargement du profil conducteur');
+                }
+                setDriverLoading(false);
                 return;
             }
 
@@ -550,6 +614,8 @@ export default function TaxiMotoDriver() {
         } catch (error) {
             console.error('❌ [loadDriverProfile] Exception:', error);
             toast.error('Erreur lors du chargement du profil');
+        } finally {
+            setDriverLoading(false);
         }
     };
 
@@ -786,17 +852,19 @@ export default function TaxiMotoDriver() {
     const addRideRequestFromDB = async (ride: any) => {
         // Charger les données du client
         let customerName = 'Client';
+        let customerPhone = '+224 600 00 00 00';
         let customerRating = 4.5;
         
         try {
             const { data: customerProfile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name')
+                .select('first_name, last_name, phone')
                 .eq('id', ride.customer_id)
                 .single();
 
             if (customerProfile) {
                 customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Client';
+                customerPhone = customerProfile.phone || customerPhone;
             }
 
             // Charger la note du client depuis taxi_ratings
@@ -816,6 +884,7 @@ export default function TaxiMotoDriver() {
             id: ride.id,
             customerId: ride.customer_id,
             customerName,
+            customerPhone,
             customerRating: Math.round(customerRating * 10) / 10,
             pickupAddress: ride.pickup_address,
             destinationAddress: ride.dropoff_address,
@@ -1400,6 +1469,7 @@ export default function TaxiMotoDriver() {
                             onContactCustomer={contactCustomer}
                             onToggleOnline={toggleOnlineStatus}
                             hasSubscription={hasAccess}
+                            driverLoading={driverLoading}
                         />
                     </TabsContent>
 
@@ -1416,12 +1486,17 @@ export default function TaxiMotoDriver() {
                     <TabsContent value="gps-navigation" className="mt-0">
                         {!location ? (
                             <GPSPermissionHelper
-                                onLocationGranted={() => {
-                                    getCurrentLocation().catch(err => {
+                                onLocationGranted={async () => {
+                                    toast.loading('Récupération de la position...', { id: 'gps-load' });
+                                    try {
+                                        await getCurrentLocation();
+                                        toast.dismiss('gps-load');
+                                        toast.success('Position obtenue !');
+                                    } catch (err) {
                                         console.error('[TaxiMotoDriver] GPS error:', err);
+                                        toast.dismiss('gps-load');
                                         toast.error('Erreur GPS - Veuillez réessayer');
-                                    });
-                                    toast.success('GPS activé - Chargement de la carte...');
+                                    }
                                 }}
                                 currentError={null}
                             />

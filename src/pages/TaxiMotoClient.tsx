@@ -86,10 +86,22 @@ export default function TaxiMotoClient() {
     }
   });
 
+  // Demander automatiquement la position GPS au chargement
   useEffect(() => {
-    // GPS sera demandé lors de la recherche de conducteurs
+    const initGPS = async () => {
+      try {
+        console.log('[TaxiMotoClient] 📍 Demande automatique de position GPS...');
+        await getCurrentLocation();
+        console.log('[TaxiMotoClient] ✅ Position GPS obtenue');
+      } catch (error) {
+        console.error('[TaxiMotoClient] ❌ Erreur GPS:', error);
+        toast.error('Activez votre GPS pour une meilleure expérience');
+      }
+    };
+    
+    initGPS();
     loadNearbyDrivers();
-  }, []);
+  }, [getCurrentLocation]);
 
   // Écouter les mises à jour de course
   useEffect(() => {

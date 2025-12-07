@@ -8,7 +8,6 @@ interface UseDriverOnlineStatusProps {
   driverId: string | null;
   profile: Profile | null;
   hasAccess: boolean;
-  location: any;
   getCurrentLocation: () => Promise<any>;
   startLocationTracking: () => void;
   loadPendingRides: () => void;
@@ -22,7 +21,6 @@ export function useDriverOnlineStatus({
   driverId,
   profile,
   hasAccess,
-  location,
   getCurrentLocation,
   startLocationTracking,
   loadPendingRides,
@@ -58,20 +56,22 @@ export function useDriverOnlineStatus({
     }
 
     if (next) {
-      toast.loading('📍 Recherche GPS en cours... (25 secondes max)', { id: 'gps-loading' });
+      toast.loading('📍 Recherche GPS en cours...', { id: 'gps-loading' });
       
       try {
-        let position = location;
+        // Toujours demander une nouvelle position GPS
+        console.log('📍 [GPS] Demande de position...');
+        const position = await getCurrentLocation();
         
-        if (!position || (Date.now() - position.timestamp > 60000)) {
-          console.log('📍 Obtention nouvelle position GPS...');
-          position = await getCurrentLocation();
-        } else {
-          console.log('📍 Utilisation position GPS existante');
+        console.log('📍 [GPS] Position reçue:', position);
+        
+        if (!position || typeof position.latitude !== 'number' || typeof position.longitude !== 'number') {
+          throw new Error('Position GPS non disponible - coordonnées invalides');
         }
         
-        console.log('📍 Position GPS utilisée:', position);
         toast.dismiss('gps-loading');
+        
+        console.log('📍 [GPS] Mise à jour statut conducteur avec position:', position.latitude, position.longitude);
         
         await TaxiMotoService.updateDriverStatus(
           driverId,
@@ -82,7 +82,9 @@ export function useDriverOnlineStatus({
         );
 
         setIsOnline(true);
-        toast.success('🟢 Vous êtes maintenant en ligne');
+        toast.success('🟢 Vous êtes maintenant en ligne', {
+          description: `GPS: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
+        });
         
         startLocationTracking();
         loadPendingRides();
@@ -91,9 +93,12 @@ export function useDriverOnlineStatus({
         capture('gps', 'Erreur GPS lors de la mise en ligne', error);
         toast.dismiss('gps-loading');
         
+        console.error('📍 [GPS] Erreur:', error);
+        
         const errorMessage = error?.message || 'Erreur GPS inconnue';
-        toast.error(`⚠️ Erreur GPS: ${errorMessage}\n\n• Vérifiez que le GPS est activé\n• Autorisez l'accès à la localisation\n• Assurez-vous d'avoir une bonne connexion`, {
-          duration: 5000
+        toast.error(`⚠️ ${errorMessage}`, {
+          description: '• Vérifiez que le GPS est activé\n• Autorisez l\'accès à la localisation\n• Réessayez dans un endroit dégagé',
+          duration: 6000
         });
         return;
       }
@@ -108,8 +113,8 @@ export function useDriverOnlineStatus({
           driverId,
           false,
           false,
-          location?.latitude,
-          location?.longitude
+          undefined,
+          undefined
         );
 
         setIsOnline(false);
@@ -125,7 +130,6 @@ export function useDriverOnlineStatus({
     driverId,
     profile,
     hasAccess,
-    location,
     getCurrentLocation,
     startLocationTracking,
     loadPendingRides,
