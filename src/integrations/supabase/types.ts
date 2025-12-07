@@ -7271,45 +7271,75 @@ export type Database = {
       }
       sos_alerts: {
         Row: {
+          accuracy: number | null
           address: string | null
           alert_type: string | null
           bureau_id: string | null
           created_at: string | null
           description: string | null
+          direction: number | null
+          driver_name: string | null
+          driver_phone: string | null
+          gps_history: Json | null
           id: string
           latitude: number | null
           longitude: number | null
           member_name: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           severity: string | null
+          speed: number | null
           status: string | null
+          taxi_driver_id: string | null
+          updated_at: string | null
           vehicle_serial: string | null
         }
         Insert: {
+          accuracy?: number | null
           address?: string | null
           alert_type?: string | null
           bureau_id?: string | null
           created_at?: string | null
           description?: string | null
+          direction?: number | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_history?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
+          speed?: number | null
           status?: string | null
+          taxi_driver_id?: string | null
+          updated_at?: string | null
           vehicle_serial?: string | null
         }
         Update: {
+          accuracy?: number | null
           address?: string | null
           alert_type?: string | null
           bureau_id?: string | null
           created_at?: string | null
           description?: string | null
+          direction?: number | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          gps_history?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
+          speed?: number | null
           status?: string | null
+          taxi_driver_id?: string | null
+          updated_at?: string | null
           vehicle_serial?: string | null
         }
         Relationships: [

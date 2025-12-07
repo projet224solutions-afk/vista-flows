@@ -1,14 +1,15 @@
 /**
  * Dashboard Bureau Syndicat pour gestion alertes SOS
- * Affichage temps réel des alertes d'urgence
+ * Affichage temps réel des alertes d'urgence avec Supabase Realtime
  */
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Phone, Map, Navigation, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Phone, Map, Navigation, CheckCircle, ExternalLink, MapPin } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
+import { supabase } from '@/integrations/supabase/client';
 import type { SOSAlert } from '@/types/sos.types';
 import { toast } from 'sonner';
 
@@ -21,11 +22,12 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // Charger les alertes
+  // Charger les alertes depuis Supabase
   const loadSOSAlerts = async () => {
     try {
-      const alerts = await taxiMotoSOSService.getActiveSOSAlerts();
+      const alerts = await taxiMotoSOSService.getActiveSOSAlerts(bureauId);
       setSosAlerts(alerts);
+      console.log('📢 Alertes SOS chargées:', alerts.length);
     } catch (error) {
       console.error('Erreur chargement SOS:', error);
       toast.error('Erreur de chargement des alertes');
@@ -37,37 +39,88 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   // Charger au montage
   useEffect(() => {
     loadSOSAlerts();
-  }, []);
+  }, [bureauId]);
 
-  // Auto-refresh toutes les 3 secondes
+  // Écouter les nouvelles alertes SOS en temps réel via Supabase
   useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      loadSOSAlerts();
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
-
-  // Écouter les nouveaux SOS via BroadcastChannel
-  useEffect(() => {
-    if (!('BroadcastChannel' in window)) return;
-
-    const channel = new BroadcastChannel('taxi-sos-alerts');
+    console.log('🔔 Configuration Realtime SOS pour bureau:', bureauId);
     
-    channel.onmessage = (event) => {
-      if (event.data.type === 'NEW_SOS') {
-        toast.error('🚨 NOUVELLE ALERTE SOS!', {
-          description: `${event.data.alert.driver_name} a déclenché un SOS`,
-          duration: 10000
-        });
-        loadSOSAlerts();
-      }
-    };
+    const channel = supabase
+      .channel('sos-alerts-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sos_alerts'
+        },
+        (payload) => {
+          console.log('🚨 NOUVELLE ALERTE SOS REÇUE:', payload);
+          
+          // Notification sonore et visuelle
+          toast.error('🚨 NOUVELLE ALERTE SOS!', {
+            description: `${payload.new.driver_name || 'Un conducteur'} a déclenché un SOS!`,
+            duration: 15000,
+            action: {
+              label: 'Voir',
+              onClick: () => loadSOSAlerts()
+            }
+          });
 
-    return () => channel.close();
-  }, []);
+          // Jouer un son d'alerte
+          playAlertSound();
+
+          // Recharger les alertes
+          loadSOSAlerts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'sos_alerts'
+        },
+        (payload) => {
+          console.log('📝 Alerte SOS mise à jour:', payload);
+          loadSOSAlerts();
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔔 Subscription SOS status:', status);
+      });
+
+    return () => {
+      console.log('🔕 Unsubscribe SOS alerts');
+      supabase.removeChannel(channel);
+    };
+  }, [bureauId]);
+
+  // Jouer un son d'alerte
+  const playAlertSound = () => {
+    try {
+      const audio = new Audio('/alert-sound.mp3');
+      audio.volume = 0.8;
+      audio.play().catch(() => {
+        // Fallback: utiliser l'API Web Audio
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), 500);
+      });
+    } catch (error) {
+      console.log('Son non disponible');
+    }
+  };
 
   const handleCallDriver = (phone: string) => {
     window.location.href = `tel:${phone}`;
@@ -75,6 +128,12 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
   const handleOpenMap = (lat: number, lng: number) => {
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  };
+
+  const handleNavigateToDriver = (lat: number, lng: number) => {
+    // Ouvrir la navigation Google Maps
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    window.open(url, '_blank');
   };
 
   const handleStartIntervention = async (sosId: string) => {
@@ -140,7 +199,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto" />
-          <p className="text-slate-600">Chargement des alertes SOS...</p>
+          <p className="text-muted-foreground">Chargement des alertes SOS...</p>
         </div>
       </div>
     );
@@ -151,23 +210,19 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+          <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <AlertTriangle className="w-8 h-8 text-red-600" />
             Alertes SOS
           </h2>
-          <p className="text-slate-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Gestion des alertes d'urgence en temps réel
           </p>
         </div>
         
         <div className="flex items-center gap-3">
-          <Button
-            variant={autoRefresh ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
-            {autoRefresh ? '⏸️ Pause' : '▶️ Auto-refresh'}
-          </Button>
+          <Badge variant={autoRefresh ? 'default' : 'outline'} className="h-8">
+            {autoRefresh ? '🟢 Temps réel actif' : '⏸️ Pause'}
+          </Badge>
           <Button
             variant="outline"
             size="sm"
@@ -180,34 +235,34 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600">
                 {sosAlerts.filter(a => a.status === 'DANGER').length}
               </div>
-              <div className="text-sm text-slate-600 mt-1">SOS Actifs</div>
+              <div className="text-sm text-muted-foreground mt-1">SOS Actifs</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-600">
                 {sosAlerts.filter(a => a.status === 'EN_INTERVENTION').length}
               </div>
-              <div className="text-sm text-slate-600 mt-1">En Intervention</div>
+              <div className="text-sm text-muted-foreground mt-1">En Intervention</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-sm text-slate-600">Auto-refresh</div>
+              <div className="text-sm text-muted-foreground">Statut Realtime</div>
               <div className="text-2xl font-bold text-green-600 mt-1">
-                {autoRefresh ? 'ON (3s)' : 'OFF'}
+                🟢 CONNECTÉ
               </div>
             </div>
           </CardContent>
@@ -218,7 +273,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       {sosAlerts.length === 0 ? (
         <Card>
           <CardContent className="py-12">
-            <div className="text-center text-slate-600">
+            <div className="text-center text-muted-foreground">
               <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
               <p className="text-lg font-medium">Aucune alerte SOS active</p>
               <p className="text-sm mt-2">Tous les conducteurs sont en sécurité</p>
@@ -236,8 +291,8 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                       <AlertTriangle className="w-5 h-5 text-red-600" />
                       {sos.driver_name}
                     </CardTitle>
-                    <p className="text-sm text-slate-600">
-                      ID: {sos.taxi_driver_id}
+                    <p className="text-sm text-muted-foreground">
+                      ID: {sos.taxi_driver_id?.substring(0, 8) || 'N/A'}
                     </p>
                   </div>
                   {getStatusBadge(sos.status)}
@@ -249,21 +304,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">📞 Téléphone:</span>
-                    <p className="text-slate-700">{sos.driver_phone}</p>
+                    <p className="text-foreground">{sos.driver_phone || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <span className="font-medium">⏱️ Déclenché:</span>
-                    <p className="text-slate-700">{formatTimeSince(sos.triggered_at)}</p>
+                    <p className="text-foreground">{formatTimeSince(sos.triggered_at)}</p>
                   </div>
                   <div>
                     <span className="font-medium">📍 Position:</span>
-                    <p className="text-slate-700 font-mono text-xs">
-                      {sos.latitude.toFixed(6)}, {sos.longitude.toFixed(6)}
+                    <p className="text-foreground font-mono text-xs">
+                      {sos.latitude?.toFixed(6) || 0}, {sos.longitude?.toFixed(6) || 0}
                     </p>
                   </div>
                   <div>
                     <span className="font-medium">🎯 Précision:</span>
-                    <p className="text-slate-700">
+                    <p className="text-foreground">
                       {sos.accuracy ? `${Math.round(sos.accuracy)}m` : 'N/A'}
                     </p>
                   </div>
@@ -271,12 +326,12 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
                 {/* Historique GPS */}
                 {sos.gps_history && sos.gps_history.length > 0 && (
-                  <div className="bg-slate-50 p-3 rounded-lg">
+                  <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="font-medium text-sm mb-2">📍 Historique GPS ({sos.gps_history.length} points):</p>
                     <div className="flex flex-wrap gap-2">
                       {sos.gps_history.slice(0, 5).map((point, idx) => (
                         <Badge key={idx} variant="outline" className="text-xs">
-                          {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
+                          {point.latitude?.toFixed(4)}, {point.longitude?.toFixed(4)}
                         </Badge>
                       ))}
                     </div>
@@ -285,8 +340,8 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
                 {/* Description */}
                 {sos.description && (
-                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                    <p className="text-sm text-slate-700">{sos.description}</p>
+                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-foreground">{sos.description}</p>
                   </div>
                 )}
 
@@ -296,7 +351,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     variant="default"
                     size="sm"
                     onClick={() => handleCallDriver(sos.driver_phone)}
-                    className="flex-1 min-w-[150px]"
+                    className="flex-1 min-w-[140px]"
                   >
                     <Phone className="w-4 h-4 mr-2" />
                     Appeler
@@ -306,10 +361,20 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenMap(sos.latitude, sos.longitude)}
-                    className="flex-1 min-w-[150px]"
+                    className="flex-1 min-w-[140px]"
                   >
                     <Map className="w-4 h-4 mr-2" />
                     Voir carte
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNavigateToDriver(sos.latitude, sos.longitude)}
+                    className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Naviguer
                   </Button>
 
                   {sos.status === 'DANGER' && (
@@ -317,9 +382,9 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                       variant="default"
                       size="sm"
                       onClick={() => handleStartIntervention(sos.id)}
-                      className="flex-1 min-w-[150px] bg-orange-600 hover:bg-orange-700"
+                      className="flex-1 min-w-[140px] bg-orange-600 hover:bg-orange-700"
                     >
-                      <Navigation className="w-4 h-4 mr-2" />
+                      <MapPin className="w-4 h-4 mr-2" />
                       Intervenir
                     </Button>
                   )}
@@ -329,7 +394,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                       variant="default"
                       size="sm"
                       onClick={() => handleResolveSOS(sos.id)}
-                      className="flex-1 min-w-[150px] bg-green-600 hover:bg-green-700"
+                      className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Résoudre
