@@ -168,18 +168,18 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           Créer un Utilisateur
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Créer un Nouvel Utilisateur</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] overflow-y-auto p-0">
+        <DialogHeader className="sticky top-0 z-10 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
+          <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
+          <DialogDescription className="text-emerald-100">
             Sélectionnez le type d'utilisateur et remplissez les informations
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 p-6">
           {/* Sélection du type d'utilisateur */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Type d'utilisateur *</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {USER_ROLES.map((role) => {
                 const Icon = role.icon;
                 const isSelected = formData.role === role.value;
@@ -188,24 +188,19 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     key={role.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, role: role.value as CreateUserData['role'] })}
-                    className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    className={`p-2 rounded-lg border-2 transition-all text-center ${
                       isSelected
-                        ? 'border-primary bg-primary/5 shadow-md'
+                        ? 'border-primary bg-primary/10 shadow-md ring-2 ring-primary/30'
                         : 'border-border hover:border-primary/50 hover:bg-accent'
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/10' : 'bg-muted'}`}>
-                        <Icon className={`w-4 h-4 ${isSelected ? role.color : 'text-muted-foreground'}`} />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary/20' : 'bg-muted'}`}>
+                        <Icon className={`w-5 h-5 ${isSelected ? role.color : 'text-muted-foreground'}`} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-semibold text-sm ${isSelected ? 'text-primary' : ''}`}>
-                          {role.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {role.description}
-                        </p>
-                      </div>
+                      <p className={`font-semibold text-xs ${isSelected ? 'text-primary' : ''}`}>
+                        {role.label}
+                      </p>
                     </div>
                   </button>
                 );
@@ -214,16 +209,16 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           </div>
 
           {/* Informations de base */}
-          <div className="space-y-4 p-4 bg-accent/50 rounded-lg">
+          <div className="space-y-4 p-4 bg-accent/50 rounded-lg border border-border">
             <div className="flex items-center gap-2 mb-2">
               <RoleIcon className={`w-5 h-5 ${selectedRole?.color}`} />
               <h3 className="font-semibold">Informations {selectedRole?.label}</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName" className="flex items-center gap-1 text-sm">
+                  <Users className="w-3 h-3" />
                   Prénom *
                 </Label>
                 <Input
@@ -232,11 +227,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   placeholder="Prénom"
+                  className="h-9"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5" />
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName" className="flex items-center gap-1 text-sm">
+                  <Users className="w-3 h-3" />
                   Nom
                 </Label>
                 <Input
@@ -244,43 +240,44 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   placeholder="Nom"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="flex items-center gap-1 text-sm">
+                  <Mail className="w-3 h-3" />
+                  Email *
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@exemple.com"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone" className="flex items-center gap-1 text-sm">
+                  <Phone className="w-3 h-3" />
+                  Téléphone *
+                </Label>
+                <Input
+                  id="phone"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="622123456"
+                  className="h-9"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5" />
-                Email *
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="email@exemple.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5" />
-                Téléphone *
-              </Label>
-              <Input
-                id="phone"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="622123456"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="country" className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="country" className="flex items-center gap-1 text-sm">
+                  <MapPin className="w-3 h-3" />
                   Pays
                 </Label>
                 <Input
@@ -288,11 +285,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                   placeholder="Guinée"
+                  className="h-9"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="city" className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5" />
+              <div className="space-y-1.5">
+                <Label htmlFor="city" className="flex items-center gap-1 text-sm">
+                  <MapPin className="w-3 h-3" />
                   Ville
                 </Label>
                 <Input
@@ -300,6 +298,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   placeholder="Conakry"
+                  className="h-9"
                 />
               </div>
             </div>
@@ -307,53 +306,54 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
           {/* Champs spécifiques au rôle Syndicat */}
           {formData.role === 'syndicat' && (
-            <div className="space-y-4 p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="space-y-3 p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
+              <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-pink-600" />
                 <h3 className="font-semibold text-pink-900 dark:text-pink-100">Informations du Bureau Syndical</h3>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bureau_code">Code Bureau *</Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="bureau_code" className="text-sm">Code Bureau *</Label>
                   <Input
                     id="bureau_code"
                     required
                     value={formData.bureau_code}
                     onChange={(e) => setFormData({ ...formData, bureau_code: e.target.value })}
                     placeholder="Ex: BUR-CON-001"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="prefecture">Préfecture *</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="prefecture" className="text-sm">Préfecture *</Label>
                   <Input
                     id="prefecture"
                     required
                     value={formData.prefecture}
                     onChange={(e) => setFormData({ ...formData, prefecture: e.target.value })}
                     placeholder="Ex: Conakry"
+                    className="h-9"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="commune">Commune *</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="commune" className="text-sm">Commune *</Label>
                   <Input
                     id="commune"
                     required
                     value={formData.commune}
                     onChange={(e) => setFormData({ ...formData, commune: e.target.value })}
                     placeholder="Ex: Matam"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="full_location">Localisation complète</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="full_location" className="text-sm">Localisation</Label>
                   <Input
                     id="full_location"
                     value={formData.full_location}
                     onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
                     placeholder="Ex: Près du marché"
+                    className="h-9"
                   />
                 </div>
               </div>
@@ -362,49 +362,52 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
           {/* Champs spécifiques au rôle Vendeur */}
           {formData.role === 'vendeur' && (
-            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-blue-600" />
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100">Informations de l'Entreprise</h3>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="business_name">Nom de l'entreprise *</Label>
-                <Input
-                  id="business_name"
-                  required
-                  value={formData.business_name}
-                  onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                  placeholder="Ex: Boutique centrale"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="business_description">Description de l'activité</Label>
-                <Input
-                  id="business_description"
-                  value={formData.business_description}
-                  onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
-                  placeholder="Ex: Vente de produits alimentaires"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="business_address">Adresse de l'entreprise</Label>
-                <Input
-                  id="business_address"
-                  value={formData.business_address}
-                  onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
-                  placeholder="Ex: Marché Madina, Conakry"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="business_name" className="text-sm">Nom de l'entreprise *</Label>
+                  <Input
+                    id="business_name"
+                    required
+                    value={formData.business_name}
+                    onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                    placeholder="Ex: Boutique centrale"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="business_description" className="text-sm">Description de l'activité</Label>
+                  <Input
+                    id="business_description"
+                    value={formData.business_description}
+                    onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
+                    placeholder="Ex: Vente de produits alimentaires"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="business_address" className="text-sm">Adresse de l'entreprise</Label>
+                  <Input
+                    id="business_address"
+                    value={formData.business_address}
+                    onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
+                    placeholder="Ex: Marché Madina, Conakry"
+                    className="h-9"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* Champs spécifiques aux rôles Taxi et Livreur */}
           {(formData.role === 'taxi' || formData.role === 'livreur') && (
-            <div className="space-y-4 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="space-y-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-2">
                 {formData.role === 'taxi' ? (
                   <Car className="w-5 h-5 text-yellow-600" />
                 ) : (
@@ -415,22 +418,23 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 </h3>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="license_number">Numéro de permis *</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="license_number" className="text-sm">Numéro de permis *</Label>
                   <Input
                     id="license_number"
                     required
                     value={formData.license_number}
                     onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
                     placeholder="Ex: GN123456"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_type">Type de véhicule *</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="vehicle_type" className="text-sm">Type de véhicule *</Label>
                   <select
                     id="vehicle_type"
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                     value={formData.vehicle_type}
                     onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
                   >
@@ -440,53 +444,55 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     <option value="truck">Camion</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_brand">Marque</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="vehicle_brand" className="text-sm">Marque</Label>
                   <Input
                     id="vehicle_brand"
                     value={formData.vehicle_brand}
                     onChange={(e) => setFormData({ ...formData, vehicle_brand: e.target.value })}
                     placeholder="Ex: Toyota"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_model">Modèle</Label>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="vehicle_model" className="text-sm">Modèle</Label>
                   <Input
                     id="vehicle_model"
                     value={formData.vehicle_model}
                     onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })}
                     placeholder="Ex: Corolla"
+                    className="h-9"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_year">Année</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="vehicle_year" className="text-sm">Année</Label>
                   <Input
                     id="vehicle_year"
                     value={formData.vehicle_year}
                     onChange={(e) => setFormData({ ...formData, vehicle_year: e.target.value })}
                     placeholder="Ex: 2020"
+                    className="h-9"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle_plate">Plaque d'immatriculation</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="vehicle_plate" className="text-sm">Plaque</Label>
                   <Input
                     id="vehicle_plate"
                     value={formData.vehicle_plate}
                     onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
                     placeholder="Ex: AB-1234-CD"
+                    className="h-9"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
+          {/* Boutons d'action */}
+          <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-background pb-2">
             <Button 
               type="button" 
               variant="outline" 
@@ -495,7 +501,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -504,7 +510,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
               ) : (
                 <>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Créer
+                  Créer l'utilisateur
                 </>
               )}
             </Button>
