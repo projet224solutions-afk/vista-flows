@@ -168,7 +168,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           Créer un Utilisateur
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[85vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl w-[95vw] h-[80vh] flex flex-col p-0 top-[10%] translate-y-0">
         <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
           <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
           <DialogDescription className="text-emerald-100">
@@ -495,19 +495,20 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         </div>
         
         {/* Boutons d'action - toujours visibles en bas */}
-        <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background">
+        <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background rounded-b-lg">
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => setIsOpen(false)}
             disabled={isSubmitting}
+            className="h-11"
           >
             Annuler
           </Button>
           <Button 
             type="submit" 
             disabled={isSubmitting} 
-            className="min-w-[140px]"
+            className="min-w-[160px] h-11"
             onClick={handleSubmit}
           >
             {isSubmitting ? (
