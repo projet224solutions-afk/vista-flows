@@ -1,6 +1,7 @@
 /**
  * Service de gestion des alertes SOS pour Taxi Moto
  * Permet aux conducteurs d'envoyer des alertes d'urgence au Bureau Syndicat
+ * Utilise Supabase pour la persistence et le temps réel
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -118,7 +119,7 @@ class TaxiMotoSOSService {
   }
 
   /**
-   * Déclenche une alerte SOS
+   * Déclenche une alerte SOS - Sauvegarde dans Supabase
    */
   public async triggerSOS(
     taxiId: string,
@@ -149,65 +150,41 @@ class TaxiMotoSOSService {
         };
       }
 
-      // Créer l'objet SOS dans Supabase
-      console.log('🚨 Création alerte SOS dans Supabase...');
-      
-      const { data: sosRecord, error: insertError } = await supabase
-        .from('syndicate_sos_alerts')
+      console.log('📍 Position SOS:', currentPosition);
+      console.log('🚨 Envoi SOS vers bureau:', bureauSyndicatId);
+
+      // Insérer dans Supabase pour persistence et temps réel
+      const { data: sosData, error } = await supabase
+        .from('sos_alerts')
         .insert({
-          taxi_driver_id: taxiId,
           driver_name: driverName,
           driver_phone: driverPhone,
+          bureau_id: bureauSyndicatId || null,
           latitude: currentPosition.latitude,
           longitude: currentPosition.longitude,
           accuracy: currentPosition.accuracy,
+          direction: currentPosition.direction,
           speed: currentPosition.speed,
+          gps_history: this.gpsHistory as any,
           status: 'DANGER',
-          bureau_id: bureauSyndicatId,
-          description: description || 'Alerte SOS d\'urgence',
-          triggered_at: new Date().toISOString()
+          description: description || 'Alerte SOS déclenchée',
+          alert_type: 'SOS_TAXI_MOTO',
+          severity: 'critical',
+          member_name: driverName,
+          address: `GPS: ${currentPosition.latitude}, ${currentPosition.longitude}`
         })
         .select()
         .single();
 
-      if (insertError) {
-        console.error('❌ Erreur insertion SOS:', insertError);
-        throw new Error(`Impossible de créer l'alerte SOS: ${insertError.message}`);
+      if (error) {
+        console.error('❌ Erreur insertion SOS:', error);
+        throw error;
       }
 
-      console.log('✅ Alerte SOS créée avec ID:', sosRecord.id);
+      console.log('✅ SOS enregistré:', sosData);
 
       // Mettre à jour le temps du dernier SOS
       this.lastSOSTime = Date.now();
-
-      // Sauvegarder aussi en localStorage en backup
-      const sosData: SOSAlert = {
-        id: sosRecord.id,
-        taxi_driver_id: taxiId,
-        driver_name: driverName,
-        driver_phone: driverPhone,
-        latitude: currentPosition.latitude,
-        longitude: currentPosition.longitude,
-        accuracy: currentPosition.accuracy,
-        direction: currentPosition.direction,
-        speed: currentPosition.speed,
-        gps_history: this.gpsHistory,
-        status: 'DANGER' as SOSStatus,
-        bureau_syndicat_id: bureauSyndicatId,
-        description: description,
-        triggered_at: sosRecord.triggered_at
-      };
-      
-      const existingAlerts = this.getLocalSOSAlerts();
-      existingAlerts.push(sosData);
-      localStorage.setItem('taxi_sos_alerts', JSON.stringify(existingAlerts));
-
-      // Envoyer notification au Bureau Syndicat
-      await this.notifyBureauSyndicat(sosData);
-
-      toast.success('🚨 SOS envoyé avec succès!', {
-        description: 'Le Bureau Syndicat a été notifié'
-      });
 
       return {
         success: true,
@@ -227,96 +204,7 @@ class TaxiMotoSOSService {
   }
 
   /**
-   * Récupère les alertes SOS depuis localStorage
-   */
-  private getLocalSOSAlerts(): SOSAlert[] {
-    try {
-      const stored = localStorage.getItem('taxi_sos_alerts');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Notifie le Bureau Syndicat d'une nouvelle alerte
-   */
-  private async notifyBureauSyndicat(sosAlert: SOSAlert): Promise<void> {
-    try {
-      console.log('📢 Envoi notification Bureau Syndicat...');
-      
-      // 1. Notification système native
-      if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-          new Notification('🚨 ALERTE SOS TAXI MOTO', {
-            body: `${sosAlert.driver_name} a déclenché un SOS!\nPosition: ${sosAlert.latitude.toFixed(4)}, ${sosAlert.longitude.toFixed(4)}`,
-            icon: '/taxi-icon.png',
-            tag: `sos-${sosAlert.id}`,
-            requireInteraction: true,
-            vibrate: [200, 100, 200, 100, 200]
-          });
-          console.log('✅ Notification système envoyée');
-        } else if (Notification.permission === 'default') {
-          // Demander permission
-          await Notification.requestPermission();
-        }
-      }
-
-      // 2. BroadcastChannel pour communication inter-onglets
-      if ('BroadcastChannel' in window) {
-        const channel = new BroadcastChannel('taxi-sos-alerts');
-        channel.postMessage({
-          type: 'NEW_SOS',
-          alert: sosAlert,
-          timestamp: Date.now()
-        });
-        channel.close();
-        console.log('✅ BroadcastChannel envoyé');
-      }
-
-      // 3. Créer notification dans la table notifications Supabase
-      try {
-        await supabase.from('notifications').insert({
-          user_id: sosAlert.bureau_syndicat_id || 'all-bureaus',
-          type: 'sos_alert',
-          title: '🚨 ALERTE SOS URGENTE',
-          message: `${sosAlert.driver_name} (${sosAlert.driver_phone}) a déclenché un SOS!`,
-          data: {
-            sos_id: sosAlert.id,
-            driver_id: sosAlert.taxi_driver_id,
-            driver_name: sosAlert.driver_name,
-            driver_phone: sosAlert.driver_phone,
-            latitude: sosAlert.latitude,
-            longitude: sosAlert.longitude,
-            accuracy: sosAlert.accuracy,
-            triggered_at: sosAlert.triggered_at
-          },
-          priority: 'urgent',
-          read: false
-        });
-        console.log('✅ Notification DB créée');
-      } catch (dbError) {
-        console.error('⚠️ Erreur notification DB:', dbError);
-      }
-
-      // 4. Jouer son d'alerte
-      try {
-        const audio = new Audio('/notification-urgent.mp3');
-        audio.volume = 1.0;
-        await audio.play();
-      } catch (audioError) {
-        console.warn('⚠️ Son alerte non joué:', audioError);
-      }
-
-      console.log('✅ Bureau Syndicat notifié pour SOS:', sosAlert.id);
-    } catch (error) {
-      console.error('❌ Erreur notification Bureau:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Met à jour le statut d'une alerte SOS dans Supabase
+   * Met à jour le statut d'une alerte SOS
    */
   public async updateSOSStatus(
     sosId: string,
@@ -324,54 +212,30 @@ class TaxiMotoSOSService {
     resolvedBy?: string
   ): Promise<boolean> {
     try {
-      console.log(`🔄 Mise à jour SOS ${sosId} vers statut: ${newStatus}`);
-      
       const updateData: any = {
         status: newStatus,
         updated_at: new Date().toISOString()
       };
-      
+
       if (newStatus === 'RESOLU') {
         updateData.resolved_at = new Date().toISOString();
         updateData.resolved_by = resolvedBy;
       }
-      
+
       const { error } = await supabase
-        .from('syndicate_sos_alerts')
+        .from('sos_alerts')
         .update(updateData)
         .eq('id', sosId);
-      
+
       if (error) {
-        console.error('❌ Erreur mise à jour SOS Supabase:', error);
+        console.error('Erreur mise à jour SOS:', error);
         return false;
       }
-      
-      // Mettre à jour aussi localStorage en backup
-      try {
-        const alerts = this.getLocalSOSAlerts();
-        const index = alerts.findIndex(a => a.id === sosId);
-        
-        if (index !== -1) {
-          alerts[index].status = newStatus;
-          alerts[index].updated_at = updateData.updated_at;
-          
-          if (newStatus === 'RESOLU') {
-            alerts[index].resolved_at = updateData.resolved_at;
-            alerts[index].resolved_by = resolvedBy;
-          }
-          
-          localStorage.setItem('taxi_sos_alerts', JSON.stringify(alerts));
-        }
-      } catch (localError) {
-        console.warn('⚠️ Erreur localStorage:', localError);
-      }
-      
-      console.log('✅ SOS mis à jour avec succès');
+
       toast.success(`Statut mis à jour: ${newStatus}`);
       return true;
     } catch (error) {
-      console.error('❌ Exception updateSOSStatus:', error);
-      toast.error('Erreur mise à jour statut SOS');
+      console.error('Erreur mise à jour statut:', error);
       return false;
     }
   }
@@ -379,58 +243,122 @@ class TaxiMotoSOSService {
   /**
    * Récupère toutes les alertes SOS actives depuis Supabase
    */
-  public async getActiveSOSAlerts(): Promise<SOSAlert[]> {
+  public async getActiveSOSAlerts(bureauId?: string): Promise<SOSAlert[]> {
     try {
-      console.log('🔍 Chargement alertes SOS actives depuis Supabase...');
-      
-      const { data, error } = await supabase
-        .from('syndicate_sos_alerts')
+      let query = supabase
+        .from('sos_alerts')
         .select('*')
         .in('status', ['DANGER', 'EN_INTERVENTION'])
-        .order('triggered_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Erreur chargement SOS Supabase:', error);
-        // Fallback vers localStorage
-        const alerts = this.getLocalSOSAlerts();
-        return alerts.filter(a => a.status === 'DANGER' || a.status === 'EN_INTERVENTION');
+      if (bureauId) {
+        query = query.eq('bureau_id', bureauId);
       }
 
-      console.log(`✅ ${data?.length || 0} alertes SOS actives chargées`);
+      const { data, error } = await query;
 
-      // Mapper les données Supabase vers le format SOSAlert
-      return (data || []).map(record => ({
-        id: record.id,
-        taxi_driver_id: record.taxi_driver_id,
-        driver_name: record.driver_name,
-        driver_phone: record.driver_phone,
-        latitude: record.latitude,
-        longitude: record.longitude,
-        accuracy: record.accuracy,
-        direction: undefined,
-        speed: record.speed,
-        gps_history: [],
-        status: record.status as SOSStatus,
-        bureau_syndicat_id: record.bureau_id,
-        description: record.description,
-        triggered_at: record.triggered_at,
-        resolved_at: record.resolved_at,
-        resolved_by: record.resolved_by
-      }));
+      if (error) {
+        console.error('Erreur récupération alertes:', error);
+        return [];
+      }
+
+      // Mapper les données Supabase vers le type SOSAlert
+      return (data || []).map(row => {
+        const gpsHistory = Array.isArray(row.gps_history) 
+          ? (row.gps_history as any[]).map(p => ({
+              latitude: Number(p?.latitude) || 0,
+              longitude: Number(p?.longitude) || 0,
+              accuracy: p?.accuracy,
+              direction: p?.direction,
+              speed: p?.speed,
+              timestamp: p?.timestamp || Date.now()
+            }))
+          : [];
+        
+        return {
+          id: row.id,
+          taxi_driver_id: row.taxi_driver_id || '',
+          driver_name: row.driver_name || row.member_name || 'Conducteur inconnu',
+          driver_phone: row.driver_phone || '',
+          latitude: Number(row.latitude) || 0,
+          longitude: Number(row.longitude) || 0,
+          accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+          direction: row.direction ? Number(row.direction) : undefined,
+          speed: row.speed ? Number(row.speed) : undefined,
+          gps_history: gpsHistory,
+          status: row.status as SOSStatus,
+          bureau_syndicat_id: row.bureau_id,
+          description: row.description,
+          resolved_by: row.resolved_by,
+          resolved_at: row.resolved_at,
+          triggered_at: row.created_at,
+          updated_at: row.updated_at
+        };
+      });
     } catch (error) {
-      console.error('❌ Exception getActiveSOSAlerts:', error);
-      // Fallback vers localStorage
-      const alerts = this.getLocalSOSAlerts();
-      return alerts.filter(a => a.status === 'DANGER' || a.status === 'EN_INTERVENTION');
+      console.error('Erreur récupération alertes:', error);
+      return [];
     }
   }
 
   /**
    * Récupère toutes les alertes SOS (y compris résolues)
    */
-  public async getAllSOSAlerts(): Promise<SOSAlert[]> {
-    return this.getLocalSOSAlerts();
+  public async getAllSOSAlerts(bureauId?: string): Promise<SOSAlert[]> {
+    try {
+      let query = supabase
+        .from('sos_alerts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (bureauId) {
+        query = query.eq('bureau_id', bureauId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Erreur récupération alertes:', error);
+        return [];
+      }
+
+      return (data || []).map(row => {
+        const gpsHistory = Array.isArray(row.gps_history) 
+          ? (row.gps_history as any[]).map(p => ({
+              latitude: Number(p?.latitude) || 0,
+              longitude: Number(p?.longitude) || 0,
+              accuracy: p?.accuracy,
+              direction: p?.direction,
+              speed: p?.speed,
+              timestamp: p?.timestamp || Date.now()
+            }))
+          : [];
+        
+        return {
+          id: row.id,
+          taxi_driver_id: row.taxi_driver_id || '',
+          driver_name: row.driver_name || row.member_name || 'Conducteur inconnu',
+          driver_phone: row.driver_phone || '',
+          latitude: Number(row.latitude) || 0,
+          longitude: Number(row.longitude) || 0,
+          accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+          direction: row.direction ? Number(row.direction) : undefined,
+          speed: row.speed ? Number(row.speed) : undefined,
+          gps_history: gpsHistory,
+          status: row.status as SOSStatus,
+          bureau_syndicat_id: row.bureau_id,
+          description: row.description,
+          resolved_by: row.resolved_by,
+          resolved_at: row.resolved_at,
+          triggered_at: row.created_at,
+          updated_at: row.updated_at
+        };
+      });
+    } catch (error) {
+      console.error('Erreur récupération alertes:', error);
+      return [];
+    }
   }
 
   /**
