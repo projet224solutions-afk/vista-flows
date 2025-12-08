@@ -155,7 +155,7 @@ class TaxiMotoSOSService {
       console.log('🚨 Création alerte SOS dans Supabase...');
       
       const { data: sosRecord, error: insertError } = await supabase
-        .from('syndicate_sos_alerts' as any)
+        .from('sos_alerts')
         .insert({
           taxi_driver_id: taxiId,
           driver_name: driverName,
@@ -164,13 +164,14 @@ class TaxiMotoSOSService {
           longitude: currentPosition.longitude,
           accuracy: currentPosition.accuracy,
           speed: currentPosition.speed,
-          status: 'DANGER',
+          status: 'active',
+          severity: 'critical',
+          alert_type: 'emergency',
           bureau_id: bureauSyndicatId,
-          description: description || 'Alerte SOS d\'urgence',
-          triggered_at: new Date().toISOString()
+          description: description || 'Alerte SOS d\'urgence'
         })
         .select()
-        .single() as any; // Type assertion pour éviter erreurs Supabase
+        .single();
 
       if (insertError) {
         console.error('❌ Erreur insertion SOS:', insertError);
@@ -213,7 +214,7 @@ class TaxiMotoSOSService {
         status: 'DANGER' as SOSStatus,
         bureau_syndicat_id: bureauSyndicatId,
         description: description,
-        triggered_at: sosRecord.triggered_at
+        triggered_at: sosRecord.created_at
       };
       
       const existingAlerts = await this.getLocalSOSAlerts();
@@ -355,7 +356,7 @@ class TaxiMotoSOSService {
       }
       
       const { error } = await supabase
-        .from('syndicate_sos_alerts' as any)
+        .from('sos_alerts')
         .update(updateData)
         .eq('id', sosId);
       
@@ -412,10 +413,10 @@ class TaxiMotoSOSService {
       console.log('🔍 Chargement alertes SOS actives depuis Supabase...');
       
       const { data, error } = await supabase
-        .from('syndicate_sos_alerts' as any)
+        .from('sos_alerts')
         .select('*')
-        .in('status', ['DANGER', 'EN_INTERVENTION'])
-        .order('triggered_at', { ascending: false })
+        .in('status', ['active', 'DANGER', 'EN_INTERVENTION'])
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) {
