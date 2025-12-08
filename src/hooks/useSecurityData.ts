@@ -153,18 +153,21 @@ export function useSecurityData(autoLoad: boolean = true) {
       // Ne pas logger en console pour éviter le bruit
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin)
-      const isRLSError = errorMessage.includes('permission') || 
-                         errorMessage.includes('policy') ||
-                         errorMessage.includes('RLS') ||
-                         (err as any)?.code === '42501' ||
-                         (err as any)?.code === 'PGRST301';
+      // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin) ou réseau
+      const isSilentError = errorMessage.includes('permission') || 
+                            errorMessage.includes('policy') ||
+                            errorMessage.includes('RLS') ||
+                            errorMessage.includes('Failed to fetch') ||
+                            errorMessage.includes('NetworkError') ||
+                            errorMessage.includes('fetch') ||
+                            (err as any)?.code === '42501' ||
+                            (err as any)?.code === 'PGRST301';
       
-      if (!isRLSError) {
+      if (!isSilentError) {
         console.error('❌ Erreur chargement sécurité:', err);
         toast.error('Erreur lors du chargement des données de sécurité');
       }
-      setError(errorMessage);
+      setError(isSilentError ? null : errorMessage);
     } finally {
       setLoading(false);
     }
