@@ -81,13 +81,15 @@ export function useSecurityData(autoLoad: boolean = true) {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Gestion silencieuse des erreurs RLS pour les non-admins
+      // Gestion silencieuse des erreurs RLS ou réseau pour les non-admins
       if (auditError) {
-        const isRLSError = auditError.message?.includes('permission') || 
-                           auditError.message?.includes('policy') ||
-                           auditError.code === '42501' ||
-                           auditError.code === 'PGRST301';
-        if (!isRLSError) {
+        const isSilentError = auditError.message?.includes('permission') || 
+                              auditError.message?.includes('policy') ||
+                              auditError.message?.includes('Failed to fetch') ||
+                              auditError.message?.includes('NetworkError') ||
+                              auditError.code === '42501' ||
+                              auditError.code === 'PGRST301';
+        if (!isSilentError) {
           console.error('Erreur audit logs:', auditError);
         }
       }
@@ -100,11 +102,13 @@ export function useSecurityData(autoLoad: boolean = true) {
         .limit(50);
 
       if (fraudError) {
-        const isRLSError = fraudError.message?.includes('permission') || 
-                           fraudError.message?.includes('policy') ||
-                           fraudError.code === '42501' ||
-                           fraudError.code === 'PGRST301';
-        if (!isRLSError) {
+        const isSilentError = fraudError.message?.includes('permission') || 
+                              fraudError.message?.includes('policy') ||
+                              fraudError.message?.includes('Failed to fetch') ||
+                              fraudError.message?.includes('NetworkError') ||
+                              fraudError.code === '42501' ||
+                              fraudError.code === 'PGRST301';
+        if (!isSilentError) {
           console.error('Erreur fraud logs:', fraudError);
         }
       }
