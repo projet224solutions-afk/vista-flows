@@ -83,9 +83,9 @@ export function useCurrentLocation() {
                     reject(new Error(errorMessage));
                 },
                 {
-                    enableHighAccuracy: true,
-                    timeout: 25000, // Augmenté à 25 secondes pour plus de fiabilité
-                    maximumAge: 5000 // Accepter position jusqu'à 5 secondes
+                    enableHighAccuracy: false, // Désactivé pour obtenir une position plus rapidement
+                    timeout: 60000, // 60 secondes pour éviter les timeouts
+                    maximumAge: 30000 // Accepter position jusqu'à 30 secondes
                 }
             );
         });
@@ -138,9 +138,9 @@ export function useCurrentLocation() {
                 }));
             },
             {
-                enableHighAccuracy: true,
-                timeout: 25000, // Augmenté à 25 secondes
-                maximumAge: 5000 // 5 secondes pour le tracking continu
+                enableHighAccuracy: false, // Désactivé pour réponse plus rapide
+                timeout: 60000, // 60 secondes
+                maximumAge: 30000 // 30 secondes pour le tracking continu
             }
         );
 
