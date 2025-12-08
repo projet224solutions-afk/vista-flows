@@ -137,11 +137,26 @@ export function NearbyDeliveriesPanel() {
   const handleAccept = async (deliveryId: string) => {
     setAcceptingId(deliveryId);
     try {
-      await DeliveryService.acceptDelivery(deliveryId);
-      toast.success('✅ Livraison acceptée !');
-      loadNearbyDeliveries();
+      const acceptedDelivery = await DeliveryService.acceptDelivery(deliveryId);
+      
+      // Retirer immédiatement de la liste pour un feedback visuel instantané
+      setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
+      
+      toast.success('✅ Livraison acceptée avec succès !', {
+        description: 'Rendez-vous chez le vendeur pour récupérer le colis'
+      });
+      
+      // Rafraîchir la liste complète après un court délai
+      setTimeout(() => loadNearbyDeliveries(), 1000);
+      
+      return acceptedDelivery;
     } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de l\'acceptation');
+      console.error('[NearbyDeliveriesPanel] Accept error:', error);
+      toast.error(error.message || 'Erreur lors de l\'acceptation', {
+        description: 'La livraison est peut-être déjà prise par un autre livreur'
+      });
+      // Rafraîchir pour avoir l'état actuel
+      loadNearbyDeliveries();
     } finally {
       setAcceptingId(null);
     }
