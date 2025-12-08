@@ -82,9 +82,22 @@ export function TaxiMotoClientInterface() {
     }
 
     try {
-      // Simulation coordonnées (en réalité utiliser geocoding)
+      // Vérifier d'abord s'il y a des conducteurs disponibles
       const pickupLat = currentLocation.coords.latitude;
       const pickupLng = currentLocation.coords.longitude;
+      
+      // Rechercher les conducteurs disponibles dans un rayon de 10km
+      const availableDrivers = await findNearbyDrivers(pickupLat, pickupLng, 10);
+      
+      if (!availableDrivers || availableDrivers.length === 0) {
+        toast.error('Aucun conducteur disponible actuellement. Veuillez réessayer plus tard.', {
+          duration: 5000,
+          description: 'Les conducteurs ne sont pas en ligne dans votre zone.'
+        });
+        return;
+      }
+
+      // Simulation coordonnées destination (en réalité utiliser geocoding)
       const dropoffLat = pickupLat + 0.05; // Simulation
       const dropoffLng = pickupLng + 0.05; // Simulation
 
@@ -100,9 +113,10 @@ export function TaxiMotoClientInterface() {
         estimatedPrice: estimatedFare.total
       });
 
-      toast.success('Course demandée avec succès!');
+      toast.success(`Course demandée! ${availableDrivers.length} conducteur(s) notifié(s).`);
     } catch (error) {
       console.error('Error requesting ride:', error);
+      toast.error('Erreur lors de la demande de course');
     }
   };
 
