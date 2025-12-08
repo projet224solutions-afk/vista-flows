@@ -1,18 +1,20 @@
 /**
  * FORMULAIRE DE CRÉATION D'EXPÉDITION
  * Inspiré de JYM Express pour 224SOLUTIONS
+ * Avec calcul automatique du prix par GPS
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Package, User, MapPin, ArrowRight } from 'lucide-react';
+import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDeliveryPriceCalculation } from '@/hooks/useDeliveryPriceCalculation';
 
 interface ShipmentFormProps {
   vendorId: string;
@@ -47,8 +49,29 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
     returnOption: false,
   });
 
+  // Hook pour calcul de prix
+  const { calculateDistance, calculating, priceResult, reset } = useDeliveryPriceCalculation(vendorId);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Réinitialiser le prix si adresse modifiée
+    if (field === 'senderAddress' || field === 'receiverAddress') {
+      reset();
+    }
+  };
+
+  // Calculer le prix de livraison
+  const handleCalculatePrice = async () => {
+    if (!formData.senderAddress || !formData.receiverAddress) {
+      toast.error('Veuillez remplir les adresses avant de calculer le prix');
+      return;
+    }
+    await calculateDistance(formData.senderAddress, formData.receiverAddress);
+  };
+
+  // Formater le prix
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,7 +219,9 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           package_type: formData.itemType || 'colis',
           payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
           price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
-          delivery_fee: 15000, // Prix de base livraison
+          delivery_fee: priceResult?.totalPrice || 15000, // Prix calculé ou par défaut
+          distance_km: priceResult?.distance || null,
+          estimated_time_minutes: priceResult?.estimatedTime || null,
           status: 'pending',
         });
 
@@ -304,6 +329,59 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               required
             />
           </div>
+
+          {/* Bouton calcul prix */}
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCalculatePrice}
+              disabled={calculating || !formData.senderAddress || !formData.receiverAddress}
+              className="w-full"
+            >
+              {calculating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Calcul en cours...
+                </>
+              ) : (
+                <>
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Calculer le prix de livraison
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Affichage du prix calculé */}
+          {priceResult && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h4 className="font-semibold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
+                <Route className="h-4 w-4" />
+                Estimation de livraison
+              </h4>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
+                  <p className="text-xs text-muted-foreground">Distance</p>
+                  <p className="font-bold text-green-700 dark:text-green-400">{priceResult.distance} km</p>
+                </div>
+                <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
+                  <p className="text-xs text-muted-foreground">Temps estimé</p>
+                  <p className="font-bold text-blue-700 dark:text-blue-400 flex items-center justify-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {priceResult.estimatedTime} min
+                  </p>
+                </div>
+                <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
+                  <p className="text-xs text-muted-foreground">Prix livraison</p>
+                  <p className="font-bold text-orange-600">{formatCurrency(priceResult.totalPrice)}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                {formatCurrency(priceResult.basePrice)} (base) + {formatCurrency(priceResult.distancePrice)} ({priceResult.distance} km × prix/km)
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
