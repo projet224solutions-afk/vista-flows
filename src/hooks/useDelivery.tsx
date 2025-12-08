@@ -51,11 +51,13 @@ export function useDelivery() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger la livraison en cours
+  // Charger la livraison en cours - filtre strict pour données valides
   const loadCurrentDelivery = useCallback(async () => {
     if (!user) return;
 
     try {
+      console.log('🚚 [useDelivery] Loading current delivery for user:', user.id);
+      
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -66,17 +68,27 @@ export function useDelivery() {
         .maybeSingle();
 
       if (error) throw error;
-      setCurrentDelivery(data);
+      
+      // Vérifier que la livraison a des données valides
+      if (data && (data.vendor_name || data.customer_name || data.order_id)) {
+        console.log('✅ [useDelivery] Current delivery loaded:', data.id);
+        setCurrentDelivery(data);
+      } else {
+        console.log('⚠️ [useDelivery] No valid current delivery found');
+        setCurrentDelivery(null);
+      }
     } catch (error) {
-      console.error('Erreur chargement livraison en cours:', error);
+      console.error('❌ Erreur chargement livraison en cours:', error);
     }
   }, [user]);
 
-  // Charger l'historique
+  // Charger l'historique - filtre strict pour éviter les données invalides
   const loadDeliveryHistory = useCallback(async () => {
     if (!user) return;
 
     try {
+      console.log('📋 [useDelivery] Loading delivery history for user:', user.id);
+      
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -86,9 +98,16 @@ export function useDelivery() {
         .limit(50);
 
       if (error) throw error;
-      setDeliveryHistory(data || []);
+      
+      // Filtrer pour exclure les livraisons sans données valides
+      const validHistory = (data || []).filter(d => 
+        d.vendor_name || d.customer_name || d.order_id
+      );
+      
+      console.log('✅ [useDelivery] Valid history loaded:', validHistory.length, 'items');
+      setDeliveryHistory(validHistory);
     } catch (error) {
-      console.error('Erreur chargement historique:', error);
+      console.error('❌ Erreur chargement historique:', error);
     }
   }, [user]);
 

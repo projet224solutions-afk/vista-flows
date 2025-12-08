@@ -780,79 +780,120 @@ export default function LivreurDashboard() {
             ) : (
               <>
                 {/* Livraisons terminées */}
-                {deliveryHistory.map((delivery) => (
-                <Card key={delivery.id} className="shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-muted-foreground" />
-                          <p className="font-medium">#{delivery.id.slice(0, 8)}</p>
-                          <Badge variant={
-                            delivery.status === 'delivered' ? 'default' : 
-                            delivery.status === 'cancelled' ? 'destructive' : 
-                            'secondary'
-                          }>
-                            {delivery.status}
-                          </Badge>
+                {deliveryHistory.map((delivery) => {
+                  const getStatusLabel = (status: string) => {
+                    switch(status) {
+                      case 'delivered': return 'Livrée';
+                      case 'cancelled': return 'Annulée';
+                      case 'pending': return 'En attente';
+                      case 'assigned': return 'Assignée';
+                      case 'picked_up': return 'Récupérée';
+                      case 'in_transit': return 'En transit';
+                      default: return status;
+                    }
+                  };
+                  
+                  return (
+                    <Card key={delivery.id} className="shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              <p className="font-medium">
+                                Livraison #{delivery.id.slice(0, 8)}
+                              </p>
+                              <Badge variant={
+                                delivery.status === 'delivered' ? 'default' : 
+                                delivery.status === 'cancelled' ? 'destructive' : 
+                                'secondary'
+                              }>
+                                {getStatusLabel(delivery.status)}
+                              </Badge>
+                            </div>
+                            {(delivery as any).vendor_name && (
+                              <p className="text-sm text-foreground">
+                                🏪 {(delivery as any).vendor_name}
+                              </p>
+                            )}
+                            {(delivery as any).customer_name && (
+                              <p className="text-sm text-muted-foreground">
+                                👤 {(delivery as any).customer_name}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(delivery.created_at || '').toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-primary">
+                              +{((delivery as any).driver_earning || delivery.delivery_fee || 0).toLocaleString()} GNF
+                            </p>
+                            {(delivery as any).distance_km && (
+                              <p className="text-xs text-muted-foreground">
+                                {(delivery as any).distance_km} km
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(delivery.created_at || '').toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">
-                          {(delivery.delivery_fee || 0).toLocaleString()} GNF
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
                 
                 {/* Courses taxi terminées */}
-                {rideHistory.map((ride) => (
-                <Card key={ride.id} className="shadow-sm border-yellow-500/20">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Car className="h-4 w-4 text-yellow-500" />
-                          <p className="font-medium">#{ride.id.slice(0, 8)}</p>
-                          <Badge variant={
-                            ride.status === 'completed' ? 'default' : 
-                            ride.status === 'cancelled' ? 'destructive' : 
-                            'secondary'
-                          }>
-                            {ride.status}
-                          </Badge>
+                {rideHistory.map((ride) => {
+                  const getRideStatusLabel = (status: string) => {
+                    switch(status) {
+                      case 'completed': return 'Terminée';
+                      case 'cancelled': return 'Annulée';
+                      default: return status;
+                    }
+                  };
+                  
+                  return (
+                    <Card key={ride.id} className="shadow-sm border-yellow-500/20">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Car className="h-4 w-4 text-yellow-500" />
+                              <p className="font-medium">Course #{ride.id.slice(0, 8)}</p>
+                              <Badge variant={
+                                ride.status === 'completed' ? 'default' : 
+                                ride.status === 'cancelled' ? 'destructive' : 
+                                'secondary'
+                              }>
+                                {getRideStatusLabel(ride.status)}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(ride.requested_at || '').toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-yellow-600">
+                              +{(ride.price_total || 0).toLocaleString()} GNF
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(ride.requested_at || '').toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-yellow-600">
-                          {(ride.price_total || 0).toLocaleString()} GNF
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </>
             )}
           </TabsContent>
 
