@@ -53,7 +53,6 @@ const Payment = lazy(() => import("./pages/Payment"));
 const ContactUserById = lazy(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazy(() => import("./pages/DirectConversation"));
 const Devis = lazy(() => import("./pages/Devis"));
-// Test pages removed
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
@@ -73,13 +72,11 @@ const Cart = lazy(() => import("./pages/Cart"));
 const VendorAgentInterface = lazy(() => import("./pages/VendorAgentInterface"));
 const VendorContracts = lazy(() => import("./pages/VendorContracts"));
 const ClientContracts = lazy(() => import("./pages/ClientContracts"));
-const TestPage = lazy(() => import("./pages/TestPage"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
-const NavigationTestPage = lazy(() => import("./pages/NavigationTestPage"));
 
 // Composant de loading
 const PageLoader = () => (
@@ -109,7 +106,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/home" element={<Index />} />
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
-              <Route path="/test" element={<TestPage />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
@@ -139,8 +136,7 @@ function App() {
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               {/* Redirection 301 depuis l'alias vers la route normalisée */}
               <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
-              {/* Page de test Navigation GPS */}
-              <Route path="/navigation-test" element={<NavigationTestPage />} />
+              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
               <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
