@@ -67,14 +67,14 @@ export function NearbyDeliveriesPanel() {
 
   const fetchDeliveries = async (driverPos: { lat: number; lng: number } | null) => {
     try {
+      // Charger les livraisons en attente (sans filtre ready_for_pickup pour inclure toutes les livraisons créées par les vendeurs)
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
         .eq('status', 'pending')
         .is('driver_id', null)
-        .eq('ready_for_pickup', true)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
 
       if (error) throw error;
 
