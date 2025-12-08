@@ -72,7 +72,76 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
     setLoading(true);
     try {
-      // 1. Créer l'expédition dans la table shipments
+      // 1. Récupérer les infos du vendeur et l'utilisateur courant
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('business_name, phone, user_id')
+        .eq('id', vendorId)
+        .single();
+
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+
+      // 2. Créer un customer temporaire si nécessaire ou utiliser le user courant
+      let customerId = currentUserId;
+      
+      // Vérifier si un customer existe pour cet utilisateur
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+
+      if (!existingCustomer) {
+        // Créer un customer temporaire
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: currentUserId,
+            addresses: [{
+              address: formData.receiverAddress,
+              name: formData.receiverName,
+              phone: formData.receiverPhone
+            }]
+          })
+          .select()
+          .single();
+
+        if (!customerError && newCustomer) {
+          customerId = newCustomer.id;
+        }
+      } else {
+        customerId = existingCustomer.id;
+      }
+
+      // 3. Générer un numéro de commande unique
+      const orderNumber = `EXP-${Date.now().toString(36).toUpperCase()}`;
+      const totalAmount = formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0;
+
+      // 4. Créer une commande pour lier la livraison
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          vendor_id: vendorId,
+          customer_id: customerId!,
+          order_number: orderNumber,
+          status: 'confirmed',
+          subtotal: totalAmount,
+          total_amount: totalAmount,
+          payment_status: formData.cashOnDelivery ? 'pending' : 'paid',
+          shipping_address: {
+            address: formData.receiverAddress,
+            name: formData.receiverName,
+            phone: formData.receiverPhone
+          },
+          notes: `Expédition: ${formData.packageDescription || formData.itemType || 'Colis'}`,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 5. Créer l'expédition dans la table shipments
       const { data: shipment, error: shipmentError } = await supabase
         .from('shipments')
         .insert({
@@ -99,21 +168,18 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
       if (shipmentError) throw shipmentError;
 
-      // 2. Récupérer les infos du vendeur
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('business_name, phone')
-        .eq('id', vendorId)
-        .single();
-
-      // 3. Créer une livraison correspondante dans la table deliveries pour les livreurs
+      // 6. Créer une livraison correspondante dans la table deliveries pour les livreurs
       const { error: deliveryError } = await supabase
         .from('deliveries')
         .insert({
-          order_id: shipment.id, // Lier à l'expédition
+          order_id: order.id, // Lier à la commande créée
           vendor_id: vendorId,
           vendor_name: vendor?.business_name || formData.senderName,
-          vendor_phone: formData.senderPhone,
+          vendor_phone: vendor?.phone || formData.senderPhone,
+          vendor_location: {
+            address: formData.senderAddress,
+            name: formData.senderName
+          },
           pickup_address: { 
             address: formData.senderAddress,
             name: formData.senderName,
@@ -130,13 +196,13 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           package_type: formData.itemType || 'colis',
           payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
           price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
-          delivery_fee: 15000, // Prix de base livraison (à ajuster selon la distance)
+          delivery_fee: 15000, // Prix de base livraison
           status: 'pending',
         });
 
       if (deliveryError) {
         console.error('Error creating delivery:', deliveryError);
-        // Ne pas bloquer si la création de livraison échoue
+        toast.error('Expédition créée mais erreur pour la livraison');
       }
 
       toast.success('✅ Expédition créée avec succès !');
