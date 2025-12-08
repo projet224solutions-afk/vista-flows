@@ -82,13 +82,15 @@ export function useSecurityOps(autoLoad?: boolean) {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      // Si erreur RLS, retourner des données vides sans erreur
+      // Si erreur RLS ou réseau, retourner des données vides sans erreur
       if (incidentsError) {
-        const isRLSError = incidentsError.message?.includes('permission') || 
-                           incidentsError.message?.includes('policy') ||
-                           incidentsError.code === '42501' ||
-                           incidentsError.code === 'PGRST301';
-        if (!isRLSError) {
+        const isSilentError = incidentsError.message?.includes('permission') || 
+                              incidentsError.message?.includes('policy') ||
+                              incidentsError.message?.includes('Failed to fetch') ||
+                              incidentsError.message?.includes('NetworkError') ||
+                              incidentsError.code === '42501' ||
+                              incidentsError.code === 'PGRST301';
+        if (!isSilentError) {
           console.error('Erreur incidents:', incidentsError);
         }
       }
@@ -115,11 +117,13 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (alertsError) {
-        const isRLSError = alertsError.message?.includes('permission') || 
-                           alertsError.message?.includes('policy') ||
-                           alertsError.code === '42501' ||
-                           alertsError.code === 'PGRST301';
-        if (!isRLSError) {
+        const isSilentError = alertsError.message?.includes('permission') || 
+                              alertsError.message?.includes('policy') ||
+                              alertsError.message?.includes('Failed to fetch') ||
+                              alertsError.message?.includes('NetworkError') ||
+                              alertsError.code === '42501' ||
+                              alertsError.code === 'PGRST301';
+        if (!isSilentError) {
           console.error('Erreur alertes:', alertsError);
         }
       }
@@ -138,19 +142,23 @@ export function useSecurityOps(autoLoad?: boolean) {
       }));
       setAlerts(mappedAlerts);
 
-      // Charger les IPs bloquées
+      // Charger les IPs bloquées - utiliser blocked_at (pas created_at)
       const { data: blockedData, error: blockedError } = await supabase
         .from('blocked_ips')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('blocked_at', { ascending: false })
         .limit(50);
 
       if (blockedError) {
-        const isRLSError = blockedError.message?.includes('permission') || 
-                           blockedError.message?.includes('policy') ||
-                           blockedError.code === '42501' ||
-                           blockedError.code === 'PGRST301';
-        if (!isRLSError) {
+        const isSilentError = blockedError.message?.includes('permission') || 
+                              blockedError.message?.includes('policy') ||
+                              blockedError.message?.includes('column') ||
+                              blockedError.message?.includes('Failed to fetch') ||
+                              blockedError.message?.includes('NetworkError') ||
+                              blockedError.code === '42501' ||
+                              blockedError.code === 'PGRST301' ||
+                              blockedError.code === '42703';
+        if (!isSilentError) {
           console.error('Erreur IPs bloquées:', blockedError);
         }
       }
