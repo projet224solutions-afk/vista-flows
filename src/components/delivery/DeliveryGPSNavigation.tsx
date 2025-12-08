@@ -121,23 +121,43 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
   }, [activeDelivery, currentLocation]);
 
   const openGoogleMaps = () => {
-    if (!activeDelivery || !currentLocation) {
-      toast.error("Impossible d'ouvrir la navigation");
+    if (!activeDelivery) {
+      toast.error("Aucune livraison active");
       return;
     }
 
     const isPickingUp = ['assigned', 'accepted', 'picked_up'].includes(activeDelivery.status);
     const targetAddr = isPickingUp ? activeDelivery.pickup_address : activeDelivery.delivery_address;
     const target = parseCoords(targetAddr);
+    const addressText = parseAddress(targetAddr);
 
-    if (!target || (target.latitude === 0 && target.longitude === 0)) {
-      toast.error("Coordonnées GPS non disponibles");
+    let mapsUrl: string;
+
+    // Si on a des coordonnées GPS valides, les utiliser
+    if (target && target.latitude !== 0 && target.longitude !== 0) {
+      if (currentLocation) {
+        const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
+        const destination = `${target.latitude},${target.longitude}`;
+        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+      } else {
+        mapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.latitude},${target.longitude}`;
+      }
+    } 
+    // Sinon utiliser l'adresse textuelle
+    else if (addressText && addressText !== 'Adresse non disponible') {
+      const encodedAddress = encodeURIComponent(addressText + ', Guinée');
+      if (currentLocation) {
+        const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
+        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodedAddress}&travelmode=driving`;
+      } else {
+        mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+      }
+    } 
+    // Aucune donnée disponible
+    else {
+      toast.error("Adresse non disponible pour la navigation");
       return;
     }
-
-    const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
-    const destination = `${target.latitude},${target.longitude}`;
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
     
     window.open(mapsUrl, '_blank');
     toast.success("Navigation ouverte dans Google Maps");
