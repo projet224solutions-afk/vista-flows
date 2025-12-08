@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import VendorBusinessSettings from '@/components/vendor/settings/VendorBusinessSettings';
+import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, Bell } from 'lucide-react';
+import { Building2, User, Bell, Truck } from 'lucide-react';
 
 export default function VendorSettings() {
   const navigate = useNavigate();
@@ -77,10 +78,14 @@ export default function VendorSettings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
             Entreprise
+          </TabsTrigger>
+          <TabsTrigger value="delivery" className="gap-2">
+            <Truck className="w-4 h-4" />
+            Livraison
           </TabsTrigger>
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
@@ -94,6 +99,10 @@ export default function VendorSettings() {
 
         <TabsContent value="business" className="mt-6">
           <VendorBusinessSettings vendorId={vendorId} />
+        </TabsContent>
+
+        <TabsContent value="delivery" className="mt-6">
+          <VendorDeliveryPricing vendorId={vendorId} />
         </TabsContent>
 
         <TabsContent value="profile" className="mt-6">

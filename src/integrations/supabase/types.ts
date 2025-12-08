@@ -9559,6 +9559,10 @@ export type Database = {
           address: string | null
           business_name: string
           created_at: string | null
+          delivery_base_price: number | null
+          delivery_enabled: boolean | null
+          delivery_price_per_km: number | null
+          delivery_rush_bonus: number | null
           description: string | null
           email: string | null
           id: string
@@ -9577,6 +9581,10 @@ export type Database = {
           address?: string | null
           business_name: string
           created_at?: string | null
+          delivery_base_price?: number | null
+          delivery_enabled?: boolean | null
+          delivery_price_per_km?: number | null
+          delivery_rush_bonus?: number | null
           description?: string | null
           email?: string | null
           id?: string
@@ -9595,6 +9603,10 @@ export type Database = {
           address?: string | null
           business_name?: string
           created_at?: string | null
+          delivery_base_price?: number | null
+          delivery_enabled?: boolean | null
+          delivery_price_per_km?: number | null
+          delivery_rush_bonus?: number | null
           description?: string | null
           email?: string | null
           id?: string
