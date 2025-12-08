@@ -36,6 +36,7 @@ import { DriverLayout } from "@/components/driver/DriverLayout";
 import DeliveryChat from "@/components/delivery/DeliveryChat";
 // NOUVEAUX IMPORTS POUR LES AMÉLIORATIONS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { DeliveryGPSNavigation } from "@/components/delivery/DeliveryGPSNavigation";
 
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
@@ -605,36 +606,12 @@ export default function LivreurDashboard() {
                     )}
 
                     <div className="flex flex-col gap-2 pt-2">
-                      {/* Bouton Navigation GPS vers Google Maps */}
-                      <Button 
-                        onClick={() => {
-                          const pickupAddr = typeof currentDelivery.pickup_address === 'object' 
-                            ? currentDelivery.pickup_address 
-                            : { lat: null, lng: null };
-                          const destAddr = typeof currentDelivery.delivery_address === 'object' 
-                            ? currentDelivery.delivery_address 
-                            : { lat: null, lng: null };
-                          
-                          // Déterminer la destination en fonction du statut
-                          const isPickingUp = ['assigned', 'picked_up'].includes(currentDelivery.status);
-                          const targetAddr = isPickingUp ? pickupAddr : destAddr;
-                          
-                          if (targetAddr?.lat && targetAddr?.lng) {
-                            window.open(
-                              `https://www.google.com/maps/dir/?api=1&destination=${targetAddr.lat},${targetAddr.lng}&travelmode=driving`,
-                              '_blank'
-                            );
-                          } else {
-                            toast.error('Coordonnées GPS non disponibles');
-                          }
-                        }}
-                        className="w-full text-white"
-                        size="lg"
-                        style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
-                      >
-                        <Navigation className="w-5 h-5 mr-2" /> 
-                        🗺️ Navigation GPS
-                      </Button>
+                      {/* Composant de Navigation GPS avec données réelles */}
+                      <DeliveryGPSNavigation 
+                        activeDelivery={currentDelivery as any}
+                        currentLocation={location ? { latitude: location.latitude, longitude: location.longitude } : null}
+                        onContactCustomer={(phone) => window.open(`tel:${phone}`, '_self')}
+                      />
 
                       {currentDelivery.status === 'picked_up' && (
                         <Button 
