@@ -72,7 +72,8 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Créer l'expédition dans la table shipments
+      const { data: shipment, error: shipmentError } = await supabase
         .from('shipments')
         .insert({
           vendor_id: vendorId,
@@ -96,10 +97,50 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         .select()
         .single();
 
-      if (error) throw error;
+      if (shipmentError) throw shipmentError;
+
+      // 2. Récupérer les infos du vendeur
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('business_name, phone')
+        .eq('id', vendorId)
+        .single();
+
+      // 3. Créer une livraison correspondante dans la table deliveries pour les livreurs
+      const { error: deliveryError } = await supabase
+        .from('deliveries')
+        .insert({
+          order_id: shipment.id, // Lier à l'expédition
+          vendor_id: vendorId,
+          vendor_name: vendor?.business_name || formData.senderName,
+          vendor_phone: formData.senderPhone,
+          pickup_address: { 
+            address: formData.senderAddress,
+            name: formData.senderName,
+            phone: formData.senderPhone
+          },
+          delivery_address: { 
+            address: formData.receiverAddress,
+            name: formData.receiverName,
+            phone: formData.receiverPhone
+          },
+          customer_name: formData.receiverName,
+          customer_phone: formData.receiverPhone,
+          package_description: formData.packageDescription || formData.itemType || `Colis ${parseFloat(formData.weight)} kg`,
+          package_type: formData.itemType || 'colis',
+          payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
+          price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
+          delivery_fee: 15000, // Prix de base livraison (à ajuster selon la distance)
+          status: 'pending',
+        });
+
+      if (deliveryError) {
+        console.error('Error creating delivery:', deliveryError);
+        // Ne pas bloquer si la création de livraison échoue
+      }
 
       toast.success('✅ Expédition créée avec succès !');
-      onSuccess(data.id, data.tracking_number);
+      onSuccess(shipment.id, shipment.tracking_number);
     } catch (error) {
       console.error('Error creating shipment:', error);
       toast.error('Erreur lors de la création de l\'expédition');
