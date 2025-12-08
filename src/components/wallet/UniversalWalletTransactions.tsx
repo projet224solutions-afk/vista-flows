@@ -204,15 +204,27 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       if (enhancedError) console.error('Erreur enhanced_transactions:', enhancedError);
 
-      // Charger aussi depuis wallet_transactions (pour les transferts bureau)
-      const { data: walletData, error: walletError } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .or(`sender_wallet_id.in.(select id from wallets where user_id='${effectiveUserId}'),receiver_wallet_id.in.(select id from wallets where user_id='${effectiveUserId}')`)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // D'abord récupérer le wallet_id de l'utilisateur
+      const { data: userWallet } = await supabase
+        .from('wallets')
+        .select('id')
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
 
-      if (walletError) console.error('Erreur wallet_transactions:', walletError);
+      let walletData: any[] = [];
+      
+      // Charger les wallet_transactions seulement si on a un wallet_id
+      if (userWallet?.id) {
+        const { data: wtData, error: walletError } = await supabase
+          .from('wallet_transactions')
+          .select('*')
+          .or(`sender_wallet_id.eq.${userWallet.id},receiver_wallet_id.eq.${userWallet.id}`)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (walletError) console.error('Erreur wallet_transactions:', walletError);
+        if (wtData) walletData = wtData;
+      }
 
       // Combiner les deux sources de données
       const allTransactions: any[] = [];
@@ -242,7 +254,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       }
 
       // Ajouter les wallet_transactions (transferts bureau)
-      if (walletData) {
+      if (walletData.length > 0) {
         for (const tx of walletData) {
           // Vérifier si c'est un transfert bureau via les metadata
           const metadata = tx.metadata as any;
