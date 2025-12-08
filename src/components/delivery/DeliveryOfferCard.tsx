@@ -2,9 +2,10 @@
  * CARTE D'OFFRE DE LIVRAISON
  * Affiche tous les détails AVANT acceptation par le livreur
  * Adresse client cachée pour sécurité
+ * Prix basé sur la configuration du vendeur
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,9 @@ import {
   Truck,
   Check,
   X,
-  Loader2
+  Loader2,
+  Route,
+  Calculator
 } from 'lucide-react';
 
 export interface DeliveryOffer {
@@ -40,6 +43,10 @@ export interface DeliveryOffer {
   packageDescription?: string;
   estimatedTime: number; // minutes
   expiresAt: string;
+  // Nouveaux champs pour le détail du prix
+  basePrice?: number;
+  pricePerKm?: number;
+  distancePrice?: number;
 }
 
 interface DeliveryOfferCardProps {
@@ -55,7 +62,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
   );
 
   // Timer countdown
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 0) {
@@ -66,7 +73,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
       });
     }, 1000);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   const handleAccept = async () => {
     setLoading('accept');
@@ -90,8 +97,11 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
     return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
   };
 
+  // Calculer les gains du livreur (98.5% du prix total)
+  const driverEarning = Math.round(offer.estimatedEarnings * 0.985);
+
   return (
-    <Card className="border-2 border-orange-500 shadow-lg animate-pulse-slow bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20">
+    <Card className="border-2 border-orange-500 shadow-lg bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -136,32 +146,66 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
             <MapPin className="h-4 w-4 mx-auto text-orange-600 mb-1" />
             <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
             <p className="font-bold text-orange-700 dark:text-orange-300">
-              {offer.distanceToVendor} km
+              {offer.distanceToVendor.toFixed(1)} km
             </p>
           </div>
           <div className="text-center p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
             <Navigation className="h-4 w-4 mx-auto text-green-600 mb-1" />
             <p className="text-xs text-muted-foreground">Vendeur → Client</p>
             <p className="font-bold text-green-700 dark:text-green-300">
-              {offer.distanceVendorToClient} km
+              {offer.distanceVendorToClient.toFixed(1)} km
             </p>
           </div>
           <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Truck className="h-4 w-4 mx-auto text-blue-600 mb-1" />
+            <Route className="h-4 w-4 mx-auto text-blue-600 mb-1" />
             <p className="text-xs text-muted-foreground">Distance totale</p>
             <p className="font-bold text-blue-700 dark:text-blue-300">
-              {offer.totalDistance} km
+              {offer.totalDistance.toFixed(1)} km
             </p>
           </div>
         </div>
 
-        {/* Prix et paiement */}
+        {/* Détail du prix - Configuration vendeur */}
+        <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2 mb-2">
+            <Calculator className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-green-800 dark:text-green-300">
+              Tarification vendeur
+            </span>
+          </div>
+          
+          {offer.basePrice && offer.distancePrice ? (
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Prix de base</span>
+                <span className="font-medium">{formatCurrency(offer.basePrice)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Distance ({offer.distanceVendorToClient.toFixed(1)} km × {offer.pricePerKm?.toLocaleString() || '1 000'} GNF/km)
+                </span>
+                <span className="font-medium">{formatCurrency(offer.distancePrice)}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-green-200 dark:border-green-700">
+                <span className="font-medium">Total livraison</span>
+                <span className="font-bold text-green-700 dark:text-green-400">{formatCurrency(offer.estimatedEarnings)}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Prix calculé par le vendeur</p>
+              <p className="font-bold text-xl text-green-700 dark:text-green-400">{formatCurrency(offer.estimatedEarnings)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Vos gains */}
         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
           <div className="flex items-center gap-2">
             <DollarSign className="h-6 w-6" />
             <div>
-              <p className="text-xs opacity-90">À gagner</p>
-              <p className="font-bold text-xl">{formatCurrency(offer.estimatedEarnings)}</p>
+              <p className="text-xs opacity-90">Vos gains (98.5%)</p>
+              <p className="font-bold text-xl">{formatCurrency(driverEarning)}</p>
             </div>
           </div>
           <Badge 
