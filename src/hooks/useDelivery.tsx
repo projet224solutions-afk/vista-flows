@@ -21,6 +21,7 @@ interface Delivery {
   distance_km?: number;
   estimated_pickup_time?: string;
   estimated_delivery_time?: string;
+  estimated_time_minutes?: number;
   accepted_at?: string;
   started_at?: string;
   completed_at?: string;
@@ -28,6 +29,23 @@ interface Delivery {
   driver_notes?: string;
   proof_photo_url?: string;
   client_signature?: string;
+  // Données vendeur
+  vendor_id?: string;
+  vendor_name?: string;
+  vendor_phone?: string;
+  vendor_location?: any;
+  customer_name?: string;
+  customer_phone?: string;
+  package_type?: string;
+  package_description?: string;
+  payment_method?: string;
+  distance_to_vendor?: number;
+  distance_vendor_to_client?: number;
+  total_distance?: number;
+  // Données de tarification vendeur
+  base_price?: number;
+  price_per_km?: number;
+  distance_price?: number;
 }
 
 interface TrackingPoint {
@@ -111,7 +129,7 @@ export function useDelivery() {
     }
   }, [user]);
 
-  // Trouver les livraisons à proximité
+  // Trouver les livraisons à proximité avec données de tarification vendeur
   const findNearbyDeliveries = useCallback(async (lat: number, lng: number, radiusKm: number) => {
     setLoading(true);
     setError(null);
@@ -120,9 +138,6 @@ export function useDelivery() {
       console.log('🔍 [useDelivery] Searching nearby deliveries...');
       
       // Charger UNIQUEMENT les livraisons vraiment disponibles
-      // - status = 'pending' (en attente)
-      // - driver_id IS NULL (non assignées)
-      // - created_at récent (dernières 24h pour éviter vieilles commandes)
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
@@ -139,13 +154,49 @@ export function useDelivery() {
 
       console.log('✅ Livraisons disponibles (réelles):', data?.length || 0);
       
-      // Filtrer encore pour être sûr (double vérification)
+      // Filtrer et enrichir avec les données de tarification vendeur
       const validDeliveries = (data || []).filter(d => 
         d.status === 'pending' && !d.driver_id
       );
       
-      console.log('✅ Après filtrage final:', validDeliveries.length);
-      setNearbyDeliveries(validDeliveries);
+      // Récupérer les configurations de prix des vendeurs
+      const vendorIds = [...new Set(validDeliveries.filter(d => d.vendor_id).map(d => d.vendor_id))];
+      
+      let vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
+      
+      if (vendorIds.length > 0) {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id, delivery_base_price, delivery_price_per_km')
+          .in('id', vendorIds);
+        
+        if (vendorData) {
+          vendorData.forEach(v => {
+            vendorPricing[v.id] = {
+              base_price: v.delivery_base_price || 5000,
+              price_per_km: v.delivery_price_per_km || 1000
+            };
+          });
+        }
+      }
+      
+      // Enrichir les livraisons avec les données de tarification
+      const enrichedDeliveries = validDeliveries.map(d => {
+        const pricing = d.vendor_id ? vendorPricing[d.vendor_id] : null;
+        const distanceKm = d.distance_km || d.distance_vendor_to_client || 5;
+        
+        return {
+          ...d,
+          base_price: pricing?.base_price || 5000,
+          price_per_km: pricing?.price_per_km || 1000,
+          distance_price: Math.round(distanceKm * (pricing?.price_per_km || 1000)),
+          distance_vendor_to_client: distanceKm,
+          total_distance: (d.distance_to_vendor || 0) + distanceKm
+        };
+      });
+      
+      console.log('✅ Après enrichissement:', enrichedDeliveries.length);
+      setNearbyDeliveries(enrichedDeliveries);
     } catch (error: any) {
       console.error('❌ Erreur chargement livraisons:', error);
       setError(error.message);
