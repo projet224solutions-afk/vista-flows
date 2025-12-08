@@ -58,19 +58,54 @@ export class TaxiMotoService {
     radiusKm: number = 5
   ): Promise<NearbyDriver[]> {
     try {
-      const data = await supabaseCall(
-        async () => {
-          const { data, error } = await supabase.rpc('find_nearby_taxi_drivers' as any, {
-            p_lat: lat,
-            p_lng: lng,
-            p_radius_km: radiusKm
-          });
-          return { data, error };
-        },
-        { context: 'Recherche de chauffeurs', timeout: 15000 }
-      );
+      // Essayer d'abord la fonction RPC si elle existe
+      try {
+        const data = await supabaseCall(
+          async () => {
+            const { data, error } = await supabase.rpc('find_nearby_taxi_drivers' as any, {
+              p_lat: lat,
+              p_lng: lng,
+              p_radius_km: radiusKm
+            });
+            return { data, error };
+          },
+          { context: 'Recherche de chauffeurs', timeout: 10000 }
+        );
 
-      return (data as any) || [];
+        if (data && Array.isArray(data) && data.length > 0) {
+          return data as any;
+        }
+      } catch (rpcError) {
+        console.log('[TaxiMotoService] RPC fallback to direct query');
+      }
+
+      // Fallback: requête directe vers taxi_drivers
+      const { data: drivers, error } = await supabase
+        .from('taxi_drivers')
+        .select('id, user_id, full_name, phone, current_lat, current_lng, vehicle_type, rating, total_trips, status, is_online')
+        .eq('status', 'available')
+        .eq('is_online', true)
+        .limit(20);
+
+      if (error) {
+        console.error('[TaxiMotoService] Error fetching drivers:', error);
+        return [];
+      }
+
+      return (drivers || []).map((d: any) => ({
+        id: d.user_id || d.id,
+        driver_code: d.driver_code || `DRV${d.id?.slice(0, 4) || '0000'}`,
+        full_name: d.full_name || 'Conducteur',
+        phone: d.phone || '',
+        current_lat: d.current_lat || 0,
+        current_lng: d.current_lng || 0,
+        vehicle_type: d.vehicle_type || 'moto',
+        vehicle_brand: d.vehicle_brand,
+        vehicle_model: d.vehicle_model,
+        rating: d.rating || 4.5,
+        total_trips: d.total_trips || 0,
+        distance_km: 0
+      }));
     } catch (error) {
       console.error('[TaxiMotoService] Error finding nearby drivers:', error);
       return [];
