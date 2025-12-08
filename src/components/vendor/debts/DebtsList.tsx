@@ -55,8 +55,20 @@ export function DebtsList({ vendorId }: DebtsListProps) {
 
       setDebts(data || []);
     } catch (error: any) {
-      console.error('Erreur chargement dettes:', error);
-      toast.error('Erreur lors du chargement des dettes');
+      // Ignorer silencieusement les erreurs RLS ou réseau
+      const errorMessage = error?.message?.toLowerCase() || '';
+      const isRlsOrNetworkError = 
+        error?.code === 'PGRST301' || 
+        error?.code === '42501' ||
+        errorMessage.includes('permission denied') ||
+        errorMessage.includes('rls') ||
+        errorMessage.includes('failed to fetch') ||
+        errorMessage.includes('networkerror');
+      
+      if (!isRlsOrNetworkError) {
+        console.error('Erreur chargement dettes:', error);
+        toast.error('Erreur lors du chargement des dettes');
+      }
     } finally {
       setLoading(false);
     }
