@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Package, User, Clock, Truck, Settings, List } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MapPin, Package, User, Clock, Truck, Settings, List, CheckCircle, Image, PenTool } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { ShipmentManager } from './shipment/ShipmentManager';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import VendorDeliveryPricing from './settings/VendorDeliveryPricing';
@@ -27,6 +29,9 @@ interface VendorDelivery {
   created_at: string;
   driver_id?: string;
   distance_km?: number;
+  completed_at?: string;
+  proof_photo_url?: string;
+  client_signature?: string;
 }
 
 export function VendorDeliveriesPanel() {
@@ -34,6 +39,7 @@ export function VendorDeliveriesPanel() {
   const [loading, setLoading] = useState(true);
   const [showShipmentManager, setShowShipmentManager] = useState(false);
   const [activeTab, setActiveTab] = useState('deliveries');
+  const [selectedDelivery, setSelectedDelivery] = useState<VendorDelivery | null>(null);
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
 
   useEffect(() => {
@@ -47,8 +53,6 @@ export function VendorDeliveriesPanel() {
     
     setLoading(true);
     try {
-
-      // Charger les livraisons du vendeur (client_id = vendor user_id)
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -88,6 +92,9 @@ export function VendorDeliveriesPanel() {
     }
   };
 
+  const pendingDeliveries = deliveries.filter(d => d.status !== 'delivered' && d.status !== 'cancelled');
+  const completedDeliveries = deliveries.filter(d => d.status === 'delivered');
+
   if (loading || vendorLoading) {
     return (
       <Card>
@@ -110,7 +117,6 @@ export function VendorDeliveriesPanel() {
     );
   }
 
-  // Si on affiche le gestionnaire d'expéditions
   if (showShipmentManager) {
     return (
       <div className="space-y-4">
@@ -125,17 +131,113 @@ export function VendorDeliveriesPanel() {
     );
   }
 
+  const renderDeliveryCard = (delivery: VendorDelivery, showDetails = false) => {
+    const pickupAddr = typeof delivery.pickup_address === 'string'
+      ? delivery.pickup_address
+      : delivery.pickup_address?.address || JSON.stringify(delivery.pickup_address);
+    const deliveryAddr = typeof delivery.delivery_address === 'string'
+      ? delivery.delivery_address
+      : delivery.delivery_address?.address || JSON.stringify(delivery.delivery_address);
+
+    return (
+      <div
+        key={delivery.id}
+        className="p-4 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/20 dark:to-background rounded-lg border space-y-3"
+      >
+        <div className="flex items-start justify-between">
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className={getStatusColor(delivery.status)}>
+                {getStatusLabel(delivery.status)}
+              </Badge>
+              <Badge variant="outline">
+                {delivery.delivery_fee?.toLocaleString()} GNF
+              </Badge>
+              {delivery.distance_km && (
+                <Badge variant="secondary">
+                  {delivery.distance_km} km
+                </Badge>
+              )}
+              {!delivery.driver_id && delivery.status !== 'delivered' && (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                  Sans livreur
+                </Badge>
+              )}
+            </div>
+
+            <div className="space-y-1 text-sm">
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Retrait</p>
+                  <p className="text-muted-foreground">{pickupAddr}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Livraison</p>
+                  <p className="text-muted-foreground">{deliveryAddr}</p>
+                </div>
+              </div>
+            </div>
+
+            {delivery.customer_name && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span>{delivery.customer_name}</span>
+                {delivery.customer_phone && (
+                  <span>- {delivery.customer_phone}</span>
+                )}
+              </div>
+            )}
+
+            {delivery.package_description && (
+              <p className="text-sm text-muted-foreground">
+                <Package className="h-4 w-4 inline mr-1" />
+                {delivery.package_description}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>Créé: {format(new Date(delivery.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+            </div>
+
+            {/* Bouton voir détails pour les livraisons complétées */}
+            {showDetails && delivery.status === 'delivered' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setSelectedDelivery(delivery)}
+              >
+                <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                Voir détails de confirmation
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="deliveries" className="gap-2">
             <List className="h-4 w-4" />
-            Mes Livraisons
+            En cours ({pendingDeliveries.length})
+          </TabsTrigger>
+          <TabsTrigger value="delivered" className="gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Livrées ({completedDeliveries.length})
           </TabsTrigger>
           <TabsTrigger value="pricing" className="gap-2">
             <Settings className="h-4 w-4" />
-            Configuration Tarifs
+            Tarifs
           </TabsTrigger>
         </TabsList>
 
@@ -146,10 +248,10 @@ export function VendorDeliveriesPanel() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-orange-600" />
-                    Mes colis à livrer
+                    Livraisons en cours
                   </CardTitle>
                   <CardDescription>
-                    {deliveries.length} colis au total
+                    {pendingDeliveries.length} colis en attente ou en livraison
                   </CardDescription>
                 </div>
                 <Button
@@ -163,90 +265,39 @@ export function VendorDeliveriesPanel() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {deliveries.length === 0 ? (
+                {pendingDeliveries.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     <Package className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>Aucun colis créé pour le moment</p>
+                    <p>Aucune livraison en cours</p>
                   </div>
                 ) : (
-                  deliveries.map((delivery) => {
-                    const pickupAddr = typeof delivery.pickup_address === 'string'
-                      ? delivery.pickup_address
-                      : delivery.pickup_address?.address || JSON.stringify(delivery.pickup_address);
-                    const deliveryAddr = typeof delivery.delivery_address === 'string'
-                      ? delivery.delivery_address
-                      : delivery.delivery_address?.address || JSON.stringify(delivery.delivery_address);
+                  pendingDeliveries.map((delivery) => renderDeliveryCard(delivery, false))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                    return (
-                      <div
-                        key={delivery.id}
-                        className="p-4 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/20 dark:to-background rounded-lg border space-y-3"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={getStatusColor(delivery.status)}>
-                                {getStatusLabel(delivery.status)}
-                              </Badge>
-                              <Badge variant="outline">
-                                {delivery.delivery_fee?.toLocaleString()} GNF
-                              </Badge>
-                              {delivery.distance_km && (
-                                <Badge variant="secondary">
-                                  {delivery.distance_km} km
-                                </Badge>
-                              )}
-                              {!delivery.driver_id && (
-                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                                  Sans livreur
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="space-y-1 text-sm">
-                              <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                  <p className="font-medium">Retrait</p>
-                                  <p className="text-muted-foreground">{pickupAddr}</p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                  <p className="font-medium">Livraison</p>
-                                  <p className="text-muted-foreground">{deliveryAddr}</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {delivery.customer_name && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <User className="h-4 w-4" />
-                                <span>{delivery.customer_name}</span>
-                                {delivery.customer_phone && (
-                                  <span>- {delivery.customer_phone}</span>
-                                )}
-                              </div>
-                            )}
-
-                            {delivery.package_description && (
-                              <p className="text-sm text-muted-foreground">
-                                <Package className="h-4 w-4 inline mr-1" />
-                                {delivery.package_description}
-                              </p>
-                            )}
-
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              <span>{format(new Date(delivery.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
+        <TabsContent value="delivered" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Livraisons complétées
+              </CardTitle>
+              <CardDescription>
+                {completedDeliveries.length} livraisons terminées avec succès
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {completedDeliveries.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                    <p>Aucune livraison complétée</p>
+                  </div>
+                ) : (
+                  completedDeliveries.map((delivery) => renderDeliveryCard(delivery, true))
                 )}
               </div>
             </CardContent>
@@ -257,6 +308,93 @@ export function VendorDeliveriesPanel() {
           <VendorDeliveryPricing vendorId={vendorId} />
         </TabsContent>
       </Tabs>
+
+      {/* Dialog détails de confirmation */}
+      <Dialog open={!!selectedDelivery} onOpenChange={() => setSelectedDelivery(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Détails de la livraison
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedDelivery && (
+            <div className="space-y-4">
+              {/* Infos client */}
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{selectedDelivery.customer_name || 'Client'}</p>
+                {selectedDelivery.customer_phone && (
+                  <p className="text-sm text-muted-foreground">{selectedDelivery.customer_phone}</p>
+                )}
+              </div>
+
+              {/* Date de confirmation */}
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <Clock className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium">Livré le</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDelivery.completed_at 
+                      ? format(new Date(selectedDelivery.completed_at), "EEEE dd MMMM yyyy 'à' HH:mm", { locale: fr })
+                      : 'Date non disponible'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Photo preuve */}
+              {selectedDelivery.proof_photo_url ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Image className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium">Photo de preuve</span>
+                  </div>
+                  <img 
+                    src={selectedDelivery.proof_photo_url} 
+                    alt="Preuve de livraison" 
+                    className="w-full rounded-lg border object-cover max-h-48"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                  <Image className="h-4 w-4" />
+                  <span>Aucune photo de preuve</span>
+                </div>
+              )}
+
+              {/* Signature */}
+              {selectedDelivery.client_signature ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <PenTool className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium">Signature du client</span>
+                  </div>
+                  <div className="border rounded-lg p-2 bg-white">
+                    <img 
+                      src={selectedDelivery.client_signature} 
+                      alt="Signature client" 
+                      className="w-full h-24 object-contain"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                  <PenTool className="h-4 w-4" />
+                  <span>Aucune signature</span>
+                </div>
+              )}
+
+              {/* Montant */}
+              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+                <span className="font-medium">Frais de livraison</span>
+                <span className="font-bold text-orange-600">
+                  {selectedDelivery.delivery_fee?.toLocaleString()} GNF
+                </span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
