@@ -56,7 +56,7 @@ export function VendorDeliveriesPanel() {
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
-        .eq('client_id', user.id)
+        .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false })
         .limit(50);
 
