@@ -220,11 +220,12 @@ export function useDelivery() {
         .eq('id', deliveryId)
         .single();
 
-      if (checkError) throw checkError;
+      if (checkError) {
+        throw checkError;
+      }
 
       if (checkDelivery.status !== 'pending' || checkDelivery.driver_id) {
         toast.error('Cette livraison n\'est plus disponible');
-        // Rafraîchir la liste
         await findNearbyDeliveries(0, 0, 99999);
         return;
       }
@@ -242,7 +243,9 @@ export function useDelivery() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       console.log('✅ Delivery accepted successfully');
       setCurrentDelivery(data);
