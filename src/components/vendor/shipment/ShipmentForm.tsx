@@ -2,6 +2,7 @@
  * FORMULAIRE DE CRÉATION D'EXPÉDITION
  * Inspiré de JYM Express pour 224SOLUTIONS
  * Avec calcul automatique du prix par GPS
+ * ET paiement escrow pour sécuriser les fonds du livreur
  */
 
 import { useState, useEffect } from 'react';
@@ -11,10 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock, CreditCard, Wallet, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useDeliveryPriceCalculation } from '@/hooks/useDeliveryPriceCalculation';
+import { UniversalEscrowService } from '@/services/UniversalEscrowService';
+import { useWallet } from '@/hooks/useWallet';
 
 interface ShipmentFormProps {
   vendorId: string;
@@ -24,6 +28,7 @@ interface ShipmentFormProps {
 
 export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProps) {
   const [loading, setLoading] = useState(false);
+  const { wallet } = useWallet();
   const [formData, setFormData] = useState({
     // Expéditeur
     senderName: '',
@@ -47,6 +52,9 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
     insurance: false,
     insuranceAmount: '',
     returnOption: false,
+    
+    // Méthode de paiement pour le livreur
+    deliveryPaymentMethod: 'wallet' as 'wallet' | 'cash',
   });
 
   // Hook pour calcul de prix
@@ -191,11 +199,14 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
       if (shipmentError) throw shipmentError;
 
-      // 6. Créer une livraison correspondante dans la table deliveries pour les livreurs
-      const { error: deliveryError } = await supabase
+      // 6. Calculer le montant de la livraison
+      const deliveryFee = priceResult?.totalPrice || 15000;
+
+      // 7. Créer une livraison correspondante dans la table deliveries pour les livreurs
+      const { data: delivery, error: deliveryError } = await supabase
         .from('deliveries')
         .insert({
-          order_id: order.id, // Lier à la commande créée
+          order_id: order.id,
           vendor_id: vendorId,
           vendor_name: vendor?.business_name || formData.senderName,
           vendor_phone: vendor?.phone || formData.senderPhone,
@@ -218,16 +229,73 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           package_description: formData.packageDescription || formData.itemType || `Colis ${parseFloat(formData.weight)} kg`,
           package_type: formData.itemType || 'colis',
           payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
+          driver_payment_method: formData.deliveryPaymentMethod,
           price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
-          delivery_fee: priceResult?.totalPrice || 15000, // Prix calculé ou par défaut
+          delivery_fee: deliveryFee,
           distance_km: priceResult?.distance || null,
           estimated_time_minutes: priceResult?.estimatedTime || null,
           status: 'pending',
-        });
+        })
+        .select()
+        .single();
 
       if (deliveryError) {
         console.error('Error creating delivery:', deliveryError);
         toast.error('Expédition créée mais erreur pour la livraison');
+      }
+
+      // 8. Si paiement par wallet, créer l'escrow pour bloquer les fonds
+      if (formData.deliveryPaymentMethod === 'wallet' && delivery) {
+        console.log('🔐 Création escrow pour livraison:', deliveryFee);
+        
+        // Vérifier le solde
+        if ((wallet?.balance || 0) < deliveryFee) {
+          toast.error('Solde insuffisant pour payer la livraison');
+          // Supprimer la livraison créée
+          await supabase.from('deliveries').delete().eq('id', delivery.id);
+          setLoading(false);
+          return;
+        }
+
+        // Créer l'escrow - les fonds sont bloqués jusqu'à confirmation du livreur
+        const escrowResult = await UniversalEscrowService.createEscrow({
+          buyer_id: vendor?.user_id || currentUserId!,
+          seller_id: 'DELIVERY_DRIVER_PLACEHOLDER', // Sera mis à jour quand un livreur accepte
+          order_id: order.id,
+          amount: deliveryFee,
+          currency: 'GNF',
+          transaction_type: 'delivery',
+          payment_provider: 'wallet',
+          metadata: {
+            delivery_id: delivery.id,
+            vendor_id: vendorId,
+            description: `Frais de livraison - ${formData.receiverName}`,
+          },
+          escrow_options: {
+            require_photo: true,
+            require_signature: true,
+          }
+        });
+
+        if (!escrowResult.success) {
+          console.error('❌ Escrow creation failed:', escrowResult.error);
+          toast.error('Erreur lors du blocage des fonds');
+          await supabase.from('deliveries').delete().eq('id', delivery.id);
+          setLoading(false);
+          return;
+        }
+
+        // Mettre à jour la livraison avec l'ID escrow
+        await supabase
+          .from('deliveries')
+          .update({ 
+            escrow_id: escrowResult.escrow_id,
+            payment_status: 'escrow_held'
+          })
+          .eq('id', delivery.id);
+
+        console.log('✅ Escrow créé:', escrowResult.escrow_id);
+        toast.success('💰 Fonds bloqués en escrow - libérés à la confirmation du livreur');
       }
 
       toast.success('✅ Expédition créée avec succès !');
