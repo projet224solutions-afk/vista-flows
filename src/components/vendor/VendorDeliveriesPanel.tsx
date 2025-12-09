@@ -3,13 +3,16 @@
  * Affiche tous les colis créés par le vendeur + Configuration tarification
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MapPin, Package, User, Clock, Truck, Settings, List, CheckCircle, Image, PenTool } from 'lucide-react';
+import { 
+  MapPin, Package, User, Clock, Truck, Settings, List, CheckCircle, Image, PenTool,
+  TrendingUp, CircleDollarSign, Timer, RefreshCw, XCircle
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -38,7 +41,7 @@ export function VendorDeliveriesPanel() {
   const [deliveries, setDeliveries] = useState<VendorDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShipmentManager, setShowShipmentManager] = useState(false);
-  const [activeTab, setActiveTab] = useState('deliveries');
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedDelivery, setSelectedDelivery] = useState<VendorDelivery | null>(null);
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
 
@@ -58,11 +61,9 @@ export function VendorDeliveriesPanel() {
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
-
-      console.log('📦 Livraisons chargées:', data);
       setDeliveries(data as any || []);
     } catch (error) {
       console.error('Error loading vendor deliveries:', error);
@@ -71,15 +72,39 @@ export function VendorDeliveriesPanel() {
     }
   };
 
+  // Statistiques calculées
+  const stats = useMemo(() => {
+    const pending = deliveries.filter(d => d.status === 'pending');
+    const inProgress = deliveries.filter(d => ['assigned', 'picked_up', 'in_transit'].includes(d.status));
+    const completed = deliveries.filter(d => d.status === 'delivered');
+    const cancelled = deliveries.filter(d => d.status === 'cancelled');
+    
+    const totalRevenue = completed.reduce((sum, d) => sum + (d.delivery_fee || 0), 0);
+    const totalDistance = completed.reduce((sum, d) => sum + (d.distance_km || 0), 0);
+    
+    return {
+      total: deliveries.length,
+      pending: pending.length,
+      inProgress: inProgress.length,
+      completed: completed.length,
+      cancelled: cancelled.length,
+      totalRevenue,
+      totalDistance,
+      successRate: deliveries.length > 0 
+        ? Math.round((completed.length / (deliveries.length - cancelled.length)) * 100) || 0
+        : 0
+    };
+  }, [deliveries]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'picked_up': return 'bg-indigo-100 text-indigo-800';
-      case 'in_transit': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'assigned': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'picked_up': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
+      case 'in_transit': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
     }
   };
 
@@ -98,13 +123,14 @@ export function VendorDeliveriesPanel() {
   const pendingDeliveries = deliveries.filter(d => d.status !== 'delivered' && d.status !== 'cancelled');
   const completedDeliveries = deliveries.filter(d => d.status === 'delivered');
 
-  console.log('📊 Pending:', pendingDeliveries.length, 'Completed:', completedDeliveries.length);
-
   if (loading || vendorLoading) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">Chargement...</div>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Chargement...
+          </div>
         </CardContent>
       </Card>
     );
@@ -127,7 +153,10 @@ export function VendorDeliveriesPanel() {
       <div className="space-y-4">
         <Button
           variant="outline"
-          onClick={() => setShowShipmentManager(false)}
+          onClick={() => {
+            setShowShipmentManager(false);
+            loadVendorDeliveries();
+          }}
         >
           ← Retour aux livraisons
         </Button>
@@ -229,44 +258,239 @@ export function VendorDeliveriesPanel() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header avec bouton de création */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Truck className="h-6 w-6 text-orange-600" />
+            Gestion des Livraisons
+          </h2>
+          <p className="text-muted-foreground">Suivez et gérez toutes vos expéditions</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={loadVendorDeliveries}>
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Actualiser
+          </Button>
+          <Button
+            onClick={() => setShowShipmentManager(true)}
+            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Nouvelle Expédition
+          </Button>
+        </div>
+      </div>
+
+      {/* Statistiques détaillées */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Total</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.total}</p>
+              </div>
+              <Package className="h-8 w-8 text-blue-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-950/30 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">En attente</p>
+                <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</p>
+              </div>
+              <Timer className="h-8 w-8 text-yellow-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">En cours</p>
+                <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.inProgress}</p>
+              </div>
+              <Truck className="h-8 w-8 text-purple-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/30 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-green-600 dark:text-green-400 font-medium">Livrées</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Revenus</p>
+                <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                  {stats.totalRevenue.toLocaleString()}
+                  <span className="text-xs ml-1">GNF</span>
+                </p>
+              </div>
+              <CircleDollarSign className="h-8 w-8 text-orange-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">Taux réussite</p>
+                <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">{stats.successRate}%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-teal-500/50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="deliveries" className="gap-2">
+        <TabsList className="grid w-full grid-cols-4 h-12">
+          <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+            <TrendingUp className="h-4 w-4" />
+            Vue d'ensemble
+          </TabsTrigger>
+          <TabsTrigger value="deliveries" className="gap-2 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-700">
             <List className="h-4 w-4" />
             En cours ({pendingDeliveries.length})
           </TabsTrigger>
-          <TabsTrigger value="delivered" className="gap-2">
+          <TabsTrigger value="delivered" className="gap-2 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
             <CheckCircle className="h-4 w-4" />
             Livrées ({completedDeliveries.length})
           </TabsTrigger>
-          <TabsTrigger value="pricing" className="gap-2">
+          <TabsTrigger value="pricing" className="gap-2 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
             <Settings className="h-4 w-4" />
             Tarifs
           </TabsTrigger>
         </TabsList>
 
+        {/* Vue d'ensemble */}
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Dernières livraisons en cours */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Timer className="h-5 w-5 text-yellow-600" />
+                  Livraisons en cours
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingDeliveries.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-6">
+                    <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Aucune livraison en cours</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {pendingDeliveries.slice(0, 5).map((delivery) => (
+                      <div key={delivery.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{delivery.customer_name || 'Client'}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {typeof delivery.delivery_address === 'string' 
+                              ? delivery.delivery_address 
+                              : delivery.delivery_address?.address}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(delivery.status)}>
+                          {getStatusLabel(delivery.status)}
+                        </Badge>
+                      </div>
+                    ))}
+                    {pendingDeliveries.length > 5 && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full text-sm"
+                        onClick={() => setActiveTab('deliveries')}
+                      >
+                        Voir tout ({pendingDeliveries.length})
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Dernières livraisons complétées */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Récemment livrées
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {completedDeliveries.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-6">
+                    <CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Aucune livraison complétée</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {completedDeliveries.slice(0, 5).map((delivery) => (
+                      <div 
+                        key={delivery.id} 
+                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors"
+                        onClick={() => setSelectedDelivery(delivery)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{delivery.customer_name || 'Client'}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {delivery.completed_at 
+                              ? format(new Date(delivery.completed_at), 'dd/MM HH:mm', { locale: fr })
+                              : '-'}
+                          </p>
+                        </div>
+                        <span className="text-sm font-medium text-green-600">
+                          {delivery.delivery_fee?.toLocaleString()} GNF
+                        </span>
+                      </div>
+                    ))}
+                    {completedDeliveries.length > 5 && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full text-sm"
+                        onClick={() => setActiveTab('delivered')}
+                      >
+                        Voir tout ({completedDeliveries.length})
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="deliveries" className="mt-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-orange-600" />
-                    Livraisons en cours
-                  </CardTitle>
-                  <CardDescription>
-                    {pendingDeliveries.length} colis en attente ou en livraison
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={() => setShowShipmentManager(true)}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                >
-                  <Truck className="mr-2 h-4 w-4" />
-                  Gestion expéditions
-                </Button>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-orange-600" />
+                Livraisons en cours
+              </CardTitle>
+              <CardDescription>
+                {pendingDeliveries.length} colis en attente ou en livraison
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -274,6 +498,13 @@ export function VendorDeliveriesPanel() {
                   <div className="text-center text-muted-foreground py-8">
                     <Package className="h-12 w-12 mx-auto mb-2 opacity-30" />
                     <p>Aucune livraison en cours</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setShowShipmentManager(true)}
+                    >
+                      Créer une expédition
+                    </Button>
                   </div>
                 ) : (
                   pendingDeliveries.map((delivery) => renderDeliveryCard(delivery, false))
@@ -291,7 +522,7 @@ export function VendorDeliveriesPanel() {
                 Livraisons complétées
               </CardTitle>
               <CardDescription>
-                {completedDeliveries.length} livraisons terminées avec succès
+                {completedDeliveries.length} livraisons terminées • {stats.totalRevenue.toLocaleString()} GNF générés
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -285,15 +285,6 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           return;
         }
 
-        // Mettre à jour la livraison avec l'ID escrow
-        await supabase
-          .from('deliveries')
-          .update({ 
-            escrow_id: escrowResult.escrow_id,
-            payment_status: 'escrow_held'
-          })
-          .eq('id', delivery.id);
-
         console.log('✅ Escrow créé:', escrowResult.escrow_id);
         toast.success('💰 Fonds bloqués en escrow - libérés à la confirmation du livreur');
       }
