@@ -230,6 +230,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           package_description: formData.packageDescription || formData.itemType || `Colis ${parseFloat(formData.weight)} kg`,
           package_type: formData.itemType || 'colis',
           payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
+          driver_payment_method: formData.deliveryPaymentMethod || 'cash',
           price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
           delivery_fee: deliveryFee,
           distance_km: priceResult?.distance || null,
