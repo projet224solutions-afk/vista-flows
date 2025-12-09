@@ -203,6 +203,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       const deliveryFee = priceResult?.totalPrice || 15000;
 
       // 7. Créer une livraison correspondante dans la table deliveries pour les livreurs
+      console.log('📦 Création de la livraison pour les livreurs...');
       const { data: delivery, error: deliveryError } = await supabase
         .from('deliveries')
         .insert({
@@ -229,7 +230,6 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           package_description: formData.packageDescription || formData.itemType || `Colis ${parseFloat(formData.weight)} kg`,
           package_type: formData.itemType || 'colis',
           payment_method: formData.cashOnDelivery ? 'cod' : 'prepaid',
-          driver_payment_method: formData.deliveryPaymentMethod,
           price: formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0,
           delivery_fee: deliveryFee,
           distance_km: priceResult?.distance || null,
@@ -240,8 +240,10 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         .single();
 
       if (deliveryError) {
-        console.error('Error creating delivery:', deliveryError);
-        toast.error('Expédition créée mais erreur pour la livraison');
+        console.error('❌ Error creating delivery:', deliveryError);
+        toast.error('Expédition créée mais erreur pour la livraison: ' + deliveryError.message);
+      } else {
+        console.log('✅ Livraison créée avec succès:', delivery?.id);
       }
 
       // 8. Si paiement par wallet, créer l'escrow pour bloquer les fonds
