@@ -2,14 +2,22 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Utilisation dynamique des clés avec priorité à la clé publiable, fallback sur anon
+// Configuration Supabase avec valeurs par défaut pour production
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY 
+  || import.meta.env.VITE_SUPABASE_ANON_KEY 
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI5NjMxNDUsImV4cCI6MjA0ODUzOTE0NX0.AjFhGMzMxF3BTlm88K5xwEJb_PaBRQjJZMEA4j9P2sc';
+
+console.log('🔧 [Supabase Client] Configuration:', {
+  url: SUPABASE_URL,
+  keyPresent: !!SUPABASE_KEY,
+  keyLength: SUPABASE_KEY?.length
+});
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,

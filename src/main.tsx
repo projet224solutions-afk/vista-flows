@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Force clean rebuild after migration - v2
+// Force clean rebuild after migration - v3
 
 // Attendre que le DOM soit complètement chargé
 const initApp = () => {
+  console.log("🚀 [main.tsx] Initialisation de l'application...");
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
@@ -16,22 +17,23 @@ const initApp = () => {
   }
 
   try {
-    // Les clés Supabase sont configurées directement dans le code
-    // Pas besoin de vérification car elles sont en dur dans client.ts
-
+    console.log("✅ Root element trouvé, montage de React...");
+    
     const root = createRoot(rootElement);
     root.render(
       <React.StrictMode>
         <App />
       </React.StrictMode>
     );
+    
     console.log("✅ Application React montée avec succès");
   } catch (error) {
     console.error("❌ Erreur lors du montage de React:", error);
     rootElement.innerHTML = `
       <div style="padding: 20px; text-align: center; color: red;">
         <h1>Erreur de chargement</h1>
-        <pre>${error instanceof Error ? error.message : 'Erreur inconnue'}</pre>
+        <pre style="text-align: left; background: #f5f5f5; padding: 10px; border-radius: 5px;">${error instanceof Error ? error.message : 'Erreur inconnue'}</pre>
+        <p style="margin-top: 20px; font-size: 14px; color: #666;">Vérifiez la console pour plus de détails</p>
       </div>
     `;
   }
@@ -39,7 +41,9 @@ const initApp = () => {
 
 // Lancer l'app quand le DOM est prêt
 if (document.readyState === 'loading') {
+  console.log("⏳ DOM en chargement, attente de DOMContentLoaded...");
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
+  console.log("✅ DOM déjà chargé, initialisation immédiate");
   initApp();
 }

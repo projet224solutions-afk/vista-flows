@@ -23,11 +23,12 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error('❌ [ErrorBoundary] Erreur capturée:', error);
     return { hasError: true, error, errorInfo: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    console.error('❌ [ErrorBoundary] Uncaught error:', error, errorInfo);
 
     this.setState({
       error,
@@ -35,16 +36,20 @@ class ErrorBoundary extends Component<Props, State> {
     });
 
     // Log l'erreur dans le système de monitoring
-    errorMonitor.logError({
-      module: 'react_error_boundary',
-      error_type: error.name,
-      error_message: error.message,
-      stack_trace: error.stack,
-      severity: 'critique',
-      metadata: {
-        componentStack: errorInfo.componentStack,
-      },
-    });
+    try {
+      errorMonitor.logError({
+        module: 'react_error_boundary',
+        error_type: error.name,
+        error_message: error.message,
+        stack_trace: error.stack,
+        severity: 'critique',
+        metadata: {
+          componentStack: errorInfo.componentStack,
+        },
+      });
+    } catch (monitorError) {
+      console.error('❌ Erreur lors du logging:', monitorError);
+    }
   }
 
   private handleReload = () => {
