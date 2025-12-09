@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   MapPin, Package, User, Clock, Truck, Settings, List, CheckCircle, Image, PenTool,
-  TrendingUp, CircleDollarSign, Timer, RefreshCw, XCircle
+  TrendingUp, Timer, RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -337,13 +337,13 @@ export function VendorDeliveriesPanel() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Revenus</p>
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Distance totale</p>
                 <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
-                  {stats.totalRevenue.toLocaleString()}
-                  <span className="text-xs ml-1">GNF</span>
+                  {stats.totalDistance.toFixed(1)}
+                  <span className="text-xs ml-1">km</span>
                 </p>
               </div>
-              <CircleDollarSign className="h-8 w-8 text-orange-500/50" />
+              <MapPin className="h-8 w-8 text-orange-500/50" />
             </div>
           </CardContent>
         </Card>
@@ -522,7 +522,7 @@ export function VendorDeliveriesPanel() {
                 Livraisons complétées
               </CardTitle>
               <CardDescription>
-                {completedDeliveries.length} livraisons terminées • {stats.totalRevenue.toLocaleString()} GNF générés
+                {completedDeliveries.length} livraisons terminées avec succès
               </CardDescription>
             </CardHeader>
             <CardContent>
