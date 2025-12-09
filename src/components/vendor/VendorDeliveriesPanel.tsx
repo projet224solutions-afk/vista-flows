@@ -62,6 +62,7 @@ export function VendorDeliveriesPanel() {
 
       if (error) throw error;
 
+      console.log('📦 Livraisons chargées:', data);
       setDeliveries(data as any || []);
     } catch (error) {
       console.error('Error loading vendor deliveries:', error);
@@ -73,7 +74,8 @@ export function VendorDeliveriesPanel() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'picked_up': return 'bg-blue-100 text-blue-800';
+      case 'assigned': return 'bg-blue-100 text-blue-800';
+      case 'picked_up': return 'bg-indigo-100 text-indigo-800';
       case 'in_transit': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
@@ -84,6 +86,7 @@ export function VendorDeliveriesPanel() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending': return 'En attente';
+      case 'assigned': return 'Assigné';
       case 'picked_up': return 'Récupéré';
       case 'in_transit': return 'En livraison';
       case 'delivered': return 'Livré';
@@ -94,6 +97,8 @@ export function VendorDeliveriesPanel() {
 
   const pendingDeliveries = deliveries.filter(d => d.status !== 'delivered' && d.status !== 'cancelled');
   const completedDeliveries = deliveries.filter(d => d.status === 'delivered');
+
+  console.log('📊 Pending:', pendingDeliveries.length, 'Completed:', completedDeliveries.length);
 
   if (loading || vendorLoading) {
     return (
