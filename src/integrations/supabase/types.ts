@@ -2121,6 +2121,7 @@ export type Database = {
           driver_earning: number | null
           driver_id: string | null
           driver_notes: string | null
+          driver_payment_method: string | null
           end_time: string | null
           estimated_delivery_time: string | null
           estimated_pickup_time: string | null
@@ -2168,6 +2169,7 @@ export type Database = {
           driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
+          driver_payment_method?: string | null
           end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
@@ -2215,6 +2217,7 @@ export type Database = {
           driver_earning?: number | null
           driver_id?: string | null
           driver_notes?: string | null
+          driver_payment_method?: string | null
           end_time?: string | null
           estimated_delivery_time?: string | null
           estimated_pickup_time?: string | null
