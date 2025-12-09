@@ -189,9 +189,5 @@ verify_jwt = true
 [functions.ai-contract-assistant]
 verify_jwt = true
 
-[functions.calculate-delivery-distances]
+[functions.notify-vendor-delivery-complete]
 verify_jwt = true
-
-[functions.send-delivery-notification]
-verify_jwt = true
-

@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { QRCodeSVG } from 'qrcode.react';
+import { VendorDeliveryNotifications } from './VendorDeliveryNotifications';
 
 interface DeliveryOrder {
   id: string;
@@ -197,10 +198,13 @@ export function VendorDeliveryManagement() {
           <Package className="h-5 w-5 text-orange-600" />
           Gestion des livraisons
         </h2>
-        <Button variant="outline" size="sm" onClick={loadOrders}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          <VendorDeliveryNotifications />
+          <Button variant="outline" size="sm" onClick={loadOrders}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Stats rapides */}
