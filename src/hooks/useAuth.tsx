@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, startSessionMonitor, stopSessionMonitor, refreshSession } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface Profile {
@@ -234,6 +234,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     getInitialSession();
 
+    // Démarrer le moniteur de session
+    startSessionMonitor();
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -244,6 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(null);
           setUser(null);
           setProfile(null);
+          stopSessionMonitor();
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('🔄 Token rafraîchi');
           setSession(session);
@@ -257,7 +261,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Gérer la visibilité de la page pour rafraîchir la session
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ Page redevenue visible, vérification session...');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession && user) {
+          console.log('⚠️ Session perdue, tentative de rafraîchissement...');
+          const newSession = await refreshSession();
+          if (!newSession) {
+            console.log('❌ Impossible de restaurer la session');
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          }
+        } else if (currentSession) {
+          console.log('✅ Session toujours active');
+          setSession(currentSession);
+          setUser(currentSession.user);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      stopSessionMonitor();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Fetch profile when user changes
