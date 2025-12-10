@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchBar from "@/components/SearchBar";
-import ProductCard from "@/components/ProductCard";
+import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
+import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import ServiceCard from "@/components/ServiceCard";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -377,12 +378,12 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap={isMobile ? "sm" : "md"}>
+          <MarketplaceGrid>
             {universalProducts.map((product) => (
-              <ProductCard
+              <MarketplaceProductCard
                 key={product.id}
                 id={product.id}
-                image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                image={product.images || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                 title={product.name}
                 price={product.price}
                 vendor={product.vendor_name}
@@ -404,7 +405,7 @@ export default function Home() {
                 isPremium={product.is_hot}
               />
             ))}
-          </ResponsiveGrid>
+          </MarketplaceGrid>
         )}
       </section>
 
