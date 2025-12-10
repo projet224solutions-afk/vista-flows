@@ -1,38 +1,49 @@
 /**
  * Service Worker Registration
- * Gère l'enregistrement du SW et les notifications de mise à jour
+ * Gère l'enregistrement du SW de manière non-bloquante
  */
 
 export function registerServiceWorker() {
+  // Enregistrer le SW de manière différée pour ne pas bloquer le chargement initial
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/service-worker.js")
-        .then((registration) => {
-          console.log("[PWA] Service Worker enregistré:", registration.scope);
-
-          // Détection nouvelle version
-          registration.onupdatefound = () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.onstatechange = () => {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  showUpdateMessage();
-                }
-              };
-            }
-          };
-
-          // Vérifier les mises à jour périodiquement (toutes les heures)
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
-        })
-        .catch((error) => {
-          console.error("[PWA] Erreur enregistrement Service Worker:", error);
-        });
-    });
+    // Attendre que l'app soit chargée avant d'enregistrer le SW
+    if (document.readyState === 'complete') {
+      registerSW();
+    } else {
+      window.addEventListener("load", registerSW);
+    }
   }
+}
+
+function registerSW() {
+  // Petit délai pour s'assurer que l'app React est montée
+  setTimeout(() => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then((registration) => {
+        console.log("[PWA] Service Worker enregistré");
+
+        // Détection nouvelle version
+        registration.onupdatefound = () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.onstatechange = () => {
+              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                showUpdateMessage();
+              }
+            };
+          }
+        };
+
+        // Vérifier les mises à jour périodiquement (toutes les heures)
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+      })
+      .catch((error) => {
+        console.warn("[PWA] Erreur SW:", error);
+      });
+  }, 2000); // 2 secondes de délai
 }
 
 function showUpdateMessage() {

@@ -200,14 +200,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    // Get initial session - CRITIQUE pour restaurer la session au rechargement
+    // Get initial session - avec timeout pour éviter blocage
     const getInitialSession = async () => {
-      console.log('🔍 Vérification session existante...');
+      console.log('🔍 Vérification session...');
+      
+      // Timeout de sécurité - ne pas bloquer plus de 3s
+      const timeoutId = setTimeout(() => {
+        console.log('⚠️ Timeout session - continuer sans auth');
+        setLoading(false);
+      }, 3000);
+      
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        clearTimeout(timeoutId);
         
         if (error) {
-          console.error('❌ Erreur lors de la récupération de la session:', error);
+          console.error('❌ Erreur session:', error);
           setSession(null);
           setUser(null);
           setLoading(false);
@@ -219,12 +227,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(session);
           setUser(session.user);
         } else {
-          console.log('ℹ️ Aucune session active - utilisateur non connecté');
+          console.log('ℹ️ Pas de session active');
           setSession(null);
           setUser(null);
         }
       } catch (error) {
-        console.error('❌ Erreur inattendue lors de la récupération de la session:', error);
+        clearTimeout(timeoutId);
+        console.error('❌ Erreur inattendue:', error);
         setSession(null);
         setUser(null);
       } finally {
