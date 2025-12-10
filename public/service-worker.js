@@ -1,85 +1,124 @@
-const CACHE_NAME = "224solutions-cache-v1";
-const STATIC_ASSETS = [
+const CACHE_NAME = "224solutions-v2";
+const STATIC_CACHE = "224solutions-static-v2";
+const DYNAMIC_CACHE = "224solutions-dynamic-v2";
+
+// Assets statiques critiques - préchargés immédiatement
+const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
   "/favicon.png"
 ];
 
-// INSTALL — Mise en cache initiale
+// INSTALL — Mise en cache initiale rapide
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("[SW] Cache ouvert, ajout des assets statiques");
-      return cache.addAll(STATIC_ASSETS);
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
+  // Activer immédiatement
   self.skipWaiting();
 });
 
-// ACTIVATE — Suppression ancien cache
+// ACTIVATE — Nettoyage des anciens caches
 self.addEventListener("activate", (event) => {
+  const validCaches = [CACHE_NAME, STATIC_CACHE, DYNAMIC_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => {
-            console.log("[SW] Suppression ancien cache:", key);
-            return caches.delete(key);
-          })
+          .filter((key) => !validCaches.includes(key))
+          .map((key) => caches.delete(key))
       )
     )
   );
   self.clients.claim();
 });
 
-// FETCH — Stratégie Network first + fallback offline
+// Déterminer la stratégie de cache selon le type de ressource
+const getCacheStrategy = (request) => {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  
+  // Assets statiques: Cache First (JS, CSS, images, fonts)
+  if (path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+    return 'cache-first';
+  }
+  
+  // HTML et navigation: Network First avec fallback
+  if (request.mode === 'navigate' || path.endsWith('.html')) {
+    return 'network-first';
+  }
+  
+  // API et données: Network Only
+  return 'network-only';
+};
+
+// FETCH — Stratégies optimisées
 self.addEventListener("fetch", (event) => {
   // Ignorer les requêtes non-GET
   if (event.request.method !== "GET") return;
   
-  // Ignorer les requêtes vers Supabase et APIs externes
   const url = new URL(event.request.url);
+  
+  // Ignorer les APIs externes
   if (url.hostname.includes("supabase") || 
       url.hostname.includes("googleapis") ||
-      url.hostname.includes("mapbox")) {
+      url.hostname.includes("mapbox") ||
+      url.hostname.includes("api.")) {
     return;
   }
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Ne pas mettre en cache les erreurs
-        if (!response || response.status !== 200 || response.type !== "basic") {
-          return response;
-        }
-        
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, clone);
-        });
-        return response;
-      })
-      .catch(() => {
-        // Fallback vers le cache en cas d'erreur réseau
-        return caches.match(event.request).then((cached) => {
-          if (cached) {
-            return cached;
-          }
-          // Pour les navigations, retourner index.html (SPA)
-          if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
-          }
-          return new Response("Offline", { status: 503 });
-        });
-      })
-  );
+  
+  const strategy = getCacheStrategy(event.request);
+  
+  if (strategy === 'cache-first') {
+    event.respondWith(cacheFirst(event.request));
+  } else if (strategy === 'network-first') {
+    event.respondWith(networkFirst(event.request));
+  }
+  // network-only: ne pas intercepter
 });
 
-// Message pour diriger la mise à jour
+// Cache First: rapide pour assets statiques
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// Network First: frais pour HTML, fallback cache
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    
+    // SPA: retourner index.html pour navigation
+    if (request.mode === 'navigate') {
+      return caches.match('/index.html');
+    }
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// Message pour mise à jour
 self.addEventListener("message", (event) => {
   if (event.data === "skipWaiting") {
     self.skipWaiting();

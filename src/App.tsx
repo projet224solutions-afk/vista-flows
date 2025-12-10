@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, memo } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,11 +8,15 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import QuickFooter from "@/components/QuickFooter";
-import CommunicationWidget from "@/components/communication/CommunicationWidget";
 
-// Lazy loading des pages pour optimiser le bundle
-const Index = lazy(() => import("./pages/Index"));
+// Import eagerly - critical components always needed
+import Index from "./pages/Index";
+
+// Lazy load non-critical components with better chunking
+const QuickFooter = lazy(() => import("@/components/QuickFooter"));
+const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+
+// Lazy loading des pages - regroupées par priorité
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -57,7 +61,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AgentActivation = lazy(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AgentDashboardPublic = lazy(() => import("./pages/AgentDashboardPublic"));
-// const InstallPWA = lazy(() => import("./pages/InstallPWA")); // PWA désactivée
 const InstallMobileApp = lazy(() => import("./pages/InstallMobileApp"));
 const ServiceSelection = lazy(() => import("./pages/ServiceSelection"));
 const ServiceDashboard = lazy(() => import("./pages/ServiceDashboard"));
@@ -78,17 +81,25 @@ const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 
-// Composant de loading
-const PageLoader = () => (
+// Optimized loading component - minimal and fast
+const PageLoader = memo(() => (
   <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="flex items-center space-x-2">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      <span>Chargement...</span>
-    </div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
   </div>
-);
+));
+PageLoader.displayName = 'PageLoader';
 
-const queryClient = new QueryClient();
+// Configure QueryClient with better defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (anciennement cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
@@ -353,8 +364,10 @@ function App() {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <CommunicationWidget position="bottom-right" showNotifications={true} />
-            <QuickFooter />
+            <Suspense fallback={null}>
+              <CommunicationWidget position="bottom-right" showNotifications={true} />
+              <QuickFooter />
+            </Suspense>
           </Suspense>
           </ErrorBoundary>
         </TooltipProvider>
