@@ -3,13 +3,14 @@
  * Interface complète pour les appels vidéo avec Agora
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAgora } from '@/hooks/useAgora';
 import { useAuth } from '@/hooks/useAuth';
+import { agoraService, RemoteUser } from '@/services/agoraService';
 import { 
   Phone, 
   Video, 
@@ -17,10 +18,8 @@ import {
   MicOff, 
   VideoOff, 
   PhoneOff, 
-  Users, 
   Wifi,
-  Clock,
-  Settings
+  Clock
 } from 'lucide-react';
 
 interface AgoraVideoCallProps {
@@ -41,14 +40,40 @@ export default function AgoraVideoCall({
   onCallEnd 
 }: AgoraVideoCallProps) {
   const { user } = useAuth();
-  const { callState, isLoading, joinCall, leaveCall, toggleMute, toggleVideo, endCall } = useAgora();
+  const { callState, joinCall, toggleMute, toggleVideo, endCall } = useAgora();
   
   const [callDuration, setCallDuration] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
   
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Configurer les callbacks pour les utilisateurs distants
+  useEffect(() => {
+    agoraService.setEventCallbacks({
+      onUserJoined: (user) => {
+        console.log('👤 Utilisateur rejoint:', user.uid);
+        setRemoteUsers(agoraService.getRemoteUsers());
+        
+        // Jouer la vidéo distante si disponible
+        if (user.videoTrack && remoteVideoRef.current) {
+          setTimeout(() => {
+            agoraService.playRemoteVideo(String(user.uid), remoteVideoRef.current!);
+          }, 100);
+        }
+      },
+      onUserLeft: (uid) => {
+        console.log('👤 Utilisateur parti:', uid);
+        setRemoteUsers(agoraService.getRemoteUsers());
+      }
+    });
+
+    return () => {
+      agoraService.setEventCallbacks({});
+    };
+  }, []);
 
   // Démarrer l'appel automatiquement
   useEffect(() => {
@@ -63,6 +88,13 @@ export default function AgoraVideoCall({
       durationIntervalRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
+      
+      // Jouer la vidéo locale
+      if (localVideoRef.current) {
+        setTimeout(() => {
+          agoraService.playLocalVideo(localVideoRef.current!);
+        }, 100);
+      }
     } else {
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
@@ -77,7 +109,7 @@ export default function AgoraVideoCall({
     };
   }, [callState.isInCall]);
 
-  const handleJoinCall = async () => {
+  const handleJoinCall = useCallback(async () => {
     setIsConnecting(true);
     try {
       await joinCall(channel, true);
@@ -86,12 +118,12 @@ export default function AgoraVideoCall({
     } finally {
       setIsConnecting(false);
     }
-  };
+  }, [channel, joinCall]);
 
-  const handleEndCall = async () => {
+  const handleEndCall = useCallback(async () => {
     await endCall();
     onCallEnd?.();
-  };
+  }, [endCall, onCallEnd]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -160,15 +192,15 @@ export default function AgoraVideoCall({
   }
 
   return (
-    <div className="w-full h-full bg-black rounded-lg overflow-hidden relative">
+    <div className="w-full h-full bg-black rounded-lg overflow-hidden relative min-h-[400px]">
       {/* Interface vidéo principale */}
       <div className="relative w-full h-full">
         {/* Vidéo distante */}
         <div 
           ref={remoteVideoRef}
-          className="w-full h-full bg-gray-900 flex items-center justify-center"
+          className="w-full h-full bg-gray-900 flex items-center justify-center min-h-[400px]"
         >
-          {callerInfo && (
+          {remoteUsers.length === 0 && callerInfo && (
             <div className="text-center text-white">
               <Avatar className="w-20 h-20 mx-auto mb-4">
                 <AvatarImage src={callerInfo.avatar} />
@@ -177,7 +209,9 @@ export default function AgoraVideoCall({
                 </AvatarFallback>
               </Avatar>
               <h3 className="text-xl font-semibold">{callerInfo.name}</h3>
-              <p className="text-gray-400">En attente de connexion...</p>
+              <p className="text-gray-400">
+                {callState.isConnected ? 'En attente de la vidéo...' : 'Connexion en cours...'}
+              </p>
             </div>
           )}
         </div>
@@ -185,7 +219,7 @@ export default function AgoraVideoCall({
         {/* Vidéo locale (picture-in-picture) */}
         <div 
           ref={localVideoRef}
-          className="absolute top-4 right-4 w-32 h-24 bg-gray-800 rounded-lg overflow-hidden border-2 border-white"
+          className="absolute top-4 right-4 w-32 h-24 bg-gray-800 rounded-lg overflow-hidden border-2 border-white shadow-lg"
         >
           <div className="w-full h-full bg-gray-700 flex items-center justify-center">
             <Video className="w-8 h-8 text-white" />
