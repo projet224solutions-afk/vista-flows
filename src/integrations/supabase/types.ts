@@ -3020,6 +3020,42 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          level: string
+          message: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          level?: string
+          message: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          level?: string
+          message?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: []
+      }
       escrow_action_logs: {
         Row: {
           action_type: string
@@ -3773,6 +3809,39 @@ export type Database = {
           last_number?: number | null
           prefix?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      health_check_reports: {
+        Row: {
+          checks: Json
+          checks_failed: number | null
+          checks_passed: number | null
+          checks_performed: number | null
+          id: string
+          overall_status: string
+          timestamp: string | null
+          uptime: number | null
+        }
+        Insert: {
+          checks: Json
+          checks_failed?: number | null
+          checks_passed?: number | null
+          checks_performed?: number | null
+          id?: string
+          overall_status: string
+          timestamp?: string | null
+          uptime?: number | null
+        }
+        Update: {
+          checks?: Json
+          checks_failed?: number | null
+          checks_passed?: number | null
+          checks_performed?: number | null
+          id?: string
+          overall_status?: string
+          timestamp?: string | null
+          uptime?: number | null
         }
         Relationships: []
       }
@@ -5120,6 +5189,36 @@ export type Database = {
           setting_value?: Json
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      performance_metrics: {
+        Row: {
+          endpoint: string | null
+          id: string
+          method: string | null
+          response_time: number | null
+          status_code: number | null
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          endpoint?: string | null
+          id?: string
+          method?: string | null
+          response_time?: number | null
+          status_code?: number | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          endpoint?: string | null
+          id?: string
+          method?: string | null
+          response_time?: number | null
+          status_code?: number | null
+          timestamp?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -6520,6 +6619,42 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      secure_logs: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          level: string
+          message: string
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          level: string
+          message: string
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          level?: string
+          message?: string
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -8043,6 +8178,51 @@ export type Database = {
           metadata?: Json | null
           status?: string | null
           timestamp?: string | null
+        }
+        Relationships: []
+      }
+      system_health_logs: {
+        Row: {
+          active_users: number | null
+          api_status: string | null
+          critical_errors: number | null
+          database_status: string | null
+          frontend_status: string | null
+          id: string
+          overall_status: string
+          pending_errors: number | null
+          response_time: number | null
+          security_status: string | null
+          timestamp: string | null
+          uptime: number | null
+        }
+        Insert: {
+          active_users?: number | null
+          api_status?: string | null
+          critical_errors?: number | null
+          database_status?: string | null
+          frontend_status?: string | null
+          id?: string
+          overall_status: string
+          pending_errors?: number | null
+          response_time?: number | null
+          security_status?: string | null
+          timestamp?: string | null
+          uptime?: number | null
+        }
+        Update: {
+          active_users?: number | null
+          api_status?: string | null
+          critical_errors?: number | null
+          database_status?: string | null
+          frontend_status?: string | null
+          id?: string
+          overall_status?: string
+          pending_errors?: number | null
+          response_time?: number | null
+          security_status?: string | null
+          timestamp?: string | null
+          uptime?: number | null
         }
         Relationships: []
       }
@@ -11121,6 +11301,7 @@ export type Database = {
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
+      get_system_health_api: { Args: never; Returns: Json }
       get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products: {
         Args: { p_days?: number; p_limit?: number }
