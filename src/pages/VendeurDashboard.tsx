@@ -16,8 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from "@/hooks/useUserInfo";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-// VendorSidebar supprimé
+// Sidebar supprimée
 import { useVendorStats } from "@/hooks/useVendorData";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -362,14 +361,10 @@ export default function VendeurDashboard() {
   );
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
-        {/* Sidebar supprimée */}
-
-        <div className="flex-1 flex flex-col w-full">
-          {/* Header global avec trigger */}
-          <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-6">
-            <SidebarTrigger className="mr-4" />
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <div className="flex-1 flex flex-col w-full">
+        {/* Header global */}
+        <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-6">
 
             <div className="flex items-center justify-between flex-1">
               <div className="flex items-center gap-4">
@@ -474,12 +469,11 @@ export default function VendeurDashboard() {
               <Route path="offline-sync" element={<OfflineSyncPanel />} />
             </Routes>
           </main>
-        </div>
       </div>
       
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
-    </SidebarProvider>
+    </div>
   );
 }
 
