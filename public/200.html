@@ -3,21 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>224Solutions</title>
+  <title>224Solutions - Redirection</title>
   <script>
-    // Fallback SPA redirect for hosting providers that support 200.html
+    // SPA redirect fallback for hosting providers that support 200.html
     // This handles direct URL navigation for SPAs
-    var pathSegmentsToKeep = 0;
-    var l = window.location;
-    var path = l.pathname.slice(1);
-    if (path && !path.includes('.')) {
-      // Store the path and redirect to root
-      sessionStorage.setItem('spa_redirect', path + l.search + l.hash);
-    }
+    (function() {
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+      
+      // Only redirect if not accessing a file (no extension in path)
+      if (path && path !== '/' && !path.includes('.')) {
+        // Store the original path for restoration after redirect
+        sessionStorage.setItem('spa_redirect', path.slice(1) + search + hash);
+        // Redirect to root where the SPA will handle routing
+        window.location.replace('/');
+      } else {
+        // Already at root or accessing a file, redirect to root
+        window.location.replace('/');
+      }
+    })();
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/" />
+  </noscript>
+  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, sans-serif;">
+    <div style="text-align: center;">
+      <div style="font-size: 24px; color: #007BFF; font-weight: bold;">224Solutions</div>
+      <div style="margin-top: 16px;">Redirection en cours...</div>
+    </div>
+  </div>
 </body>
 </html>
