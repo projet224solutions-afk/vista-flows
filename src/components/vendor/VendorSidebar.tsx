@@ -35,7 +35,6 @@ export function VendorSidebar() {
 
   const isActive = (path: string) => currentPath === path;
 
-  // Function to get badge value based on path
   const getBadgeValue = (path: string): string | null => {
     if (loading) return null;
     
@@ -56,7 +55,6 @@ export function VendorSidebar() {
   };
 
   const handleNavigation = (path: string) => {
-    console.log('🔄 Navigation vers:', `/vendeur/${path}`);
     navigate(`/vendeur/${path}`);
   };
 
@@ -64,165 +62,62 @@ export function VendorSidebar() {
     {
       label: "Vue d'ensemble",
       items: [
-        { 
-          title: "Dashboard", 
-          icon: BarChart3, 
-          path: "dashboard"
-        },
-        { 
-          title: "Analytiques", 
-          icon: TrendingUp, 
-          path: "analytics"
-        },
+        { title: "Dashboard", icon: BarChart3, path: "dashboard" },
+        { title: "Analytiques", icon: TrendingUp, path: "analytics" },
       ]
     },
     {
       label: "Ventes & Commerce",
       items: [
-        { 
-          title: "Point de vente (POS)", 
-          icon: Store, 
-          path: "pos"
-        },
-        { 
-          title: "Produits", 
-          icon: Package, 
-          path: "products"
-        },
-        { 
-          title: "Commandes", 
-          icon: ShoppingCart, 
-          path: "orders"
-        },
-        { 
-          title: "Inventaire", 
-          icon: Box, 
-          path: "inventory"
-        },
-        { 
-          title: "Entrepôts", 
-          icon: Boxes, 
-          path: "warehouse"
-        },
-        { 
-          title: "Fournisseurs", 
-          icon: Building2, 
-          path: "suppliers"
-        },
+        { title: "Point de vente (POS)", icon: Store, path: "pos" },
+        { title: "Produits", icon: Package, path: "products" },
+        { title: "Commandes", icon: ShoppingCart, path: "orders" },
+        { title: "Inventaire", icon: Box, path: "inventory" },
+        { title: "Entrepôts", icon: Boxes, path: "warehouse" },
+        { title: "Fournisseurs", icon: Building2, path: "suppliers" },
       ]
     },
     {
       label: "Clients & Marketing",
       items: [
-        { 
-          title: "Agents", 
-          icon: Users, 
-          path: "agents"
-        },
-        { 
-          title: "Clients", 
-          icon: Users, 
-          path: "clients"
-        },
-        { 
-          title: "Prospects", 
-          icon: Target, 
-          path: "prospects"
-        },
-        { 
-          title: "Marketing", 
-          icon: Megaphone, 
-          path: "marketing"
-        },
+        { title: "Agents", icon: Users, path: "agents" },
+        { title: "Clients", icon: Users, path: "clients" },
+        { title: "Prospects", icon: Target, path: "prospects" },
+        { title: "Marketing", icon: Megaphone, path: "marketing" },
       ]
     },
     {
       label: "Finances",
       items: [
-        { 
-          title: "Wallet", 
-          icon: Wallet, 
-          path: "wallet"
-        },
-        { 
-          title: "Devis & Factures", 
-          icon: FileText, 
-          path: "quotes-invoices"
-        },
-        { 
-          title: "Paiements", 
-          icon: CreditCard, 
-          path: "payments"
-        },
-        { 
-          title: "Liens de paiement", 
-          icon: DollarSign, 
-          path: "payment-links"
-        },
-        { 
-          title: "Dépenses", 
-          icon: Receipt, 
-          path: "expenses"
-        },
-        {
-          title: "Dettes",
-          icon: AlertTriangle,
-          path: "debts"
-        },
-        {
-          title: "Contrats",
-          icon: FileText,
-          path: "contracts"
-        },
-        {
-          title: "Affiliation",
-          icon: Link,
-          path: "affiliate"
-        },
+        { title: "Wallet", icon: Wallet, path: "wallet" },
+        { title: "Devis & Factures", icon: FileText, path: "quotes-invoices" },
+        { title: "Paiements", icon: CreditCard, path: "payments" },
+        { title: "Liens de paiement", icon: DollarSign, path: "payment-links" },
+        { title: "Dépenses", icon: Receipt, path: "expenses" },
+        { title: "Dettes", icon: AlertTriangle, path: "debts" },
+        { title: "Contrats", icon: FileText, path: "contracts" },
+        { title: "Affiliation", icon: Link, path: "affiliate" },
       ]
     },
     {
       label: "Support & Outils",
       items: [
-        { 
-          title: "Livraisons", 
-          icon: Truck, 
-          path: "delivery"
-        },
-        { 
-          title: "Support Tickets", 
-          icon: HeadphonesIcon, 
-          path: "support"
-        },
-        { 
-          title: "Communication", 
-          icon: MessageSquare, 
-          path: "communication"
-        },
-        { 
-          title: "Rapports", 
-          icon: FileText, 
-          path: "reports"
-        },
+        { title: "Livraisons", icon: Truck, path: "delivery" },
+        { title: "Support Tickets", icon: HeadphonesIcon, path: "support" },
+        { title: "Communication", icon: MessageSquare, path: "communication" },
+        { title: "Rapports", icon: FileText, path: "reports" },
       ]
     },
     {
       label: "Configuration",
       items: [
-        { 
-          title: "Paramètres", 
-          icon: Settings, 
-          path: "settings"
-        },
+        { title: "Paramètres", icon: Settings, path: "settings" },
       ]
     }
   ];
 
   return (
-    <Sidebar
-      className={collapsed ? "w-16" : "w-64"}
-      collapsible="icon"
-    >
+    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-gradient-to-b from-slate-50 to-white">
         {menuSections.map((section) => (
           <SidebarGroup key={section.label}>
