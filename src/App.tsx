@@ -102,8 +102,9 @@ function App() {
               <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
-              {/* Redirection automatique selon le rôle */}
-              <Route path="/" element={<Dashboard />} />
+              {/* Page d'accueil publique - toujours accessible */}
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/home" element={<Index />} />
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/auth" element={<Auth />} />
