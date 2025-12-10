@@ -32,9 +32,15 @@ serve(async (req) => {
   }
 
   try {
-    const { name, description, category, characteristics }: RequestBody = await req.json();
+    const body = await req.json();
+    // Support both 'name' and 'productName' for backwards compatibility
+    const name = body.name || body.productName;
+    const description = body.description || '';
+    const category = body.category || '';
+    const characteristics = body.characteristics || {};
     
     if (!name) {
+      console.log('❌ Paramètres reçus:', JSON.stringify(body));
       return new Response(
         JSON.stringify({ error: "Le nom du produit est requis" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
