@@ -1,48 +1,207 @@
+# ===========================================
+# 224Solutions - Configuration Apache
+# SPA React/Vite/PWA - Production Ready
+# ===========================================
+
+# ===========================================
+# 1. REDIRECTION SPA (React Router)
+# ===========================================
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
   
-  # Ne pas rediriger les fichiers qui existent
+  # Ne pas rediriger les fichiers statiques existants
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-l
   
-  # Rediriger tout vers index.html
-  RewriteRule . /index.html [L]
+  # Exclure les assets, icons, manifest et favicon
+  RewriteCond %{REQUEST_URI} !^/assets/
+  RewriteCond %{REQUEST_URI} !^/icons/
+  RewriteCond %{REQUEST_URI} !^/favicon\.png$
+  RewriteCond %{REQUEST_URI} !^/manifest\.json$
+  RewriteCond %{REQUEST_URI} !^/service-worker\.js$
+  RewriteCond %{REQUEST_URI} !^/robots\.txt$
+  RewriteCond %{REQUEST_URI} !^/sitemap\.xml$
+  
+  # Rediriger toutes les autres routes vers index.html
+  RewriteRule ^(.*)$ /index.html [L]
 </IfModule>
 
-# Compression Gzip
+# ===========================================
+# 2. COMPRESSION GZIP
+# ===========================================
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+  # Compresser les types de fichiers courants
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/plain
+  AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE application/xhtml+xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE application/rss+xml
+  AddOutputFilterByType DEFLATE application/atom+xml
+  AddOutputFilterByType DEFLATE font/ttf
+  AddOutputFilterByType DEFLATE font/otf
+  AddOutputFilterByType DEFLATE font/woff
+  AddOutputFilterByType DEFLATE font/woff2
+  AddOutputFilterByType DEFLATE application/font-woff
+  AddOutputFilterByType DEFLATE application/font-woff2
 </IfModule>
 
-# Cache des fichiers statiques
+# ===========================================
+# 3. CACHE NAVIGATEUR
+# ===========================================
 <IfModule mod_expires.c>
   ExpiresActive On
+  
+  # HTML - Pas de cache (toujours frais pour SPA)
+  ExpiresByType text/html "access plus 0 seconds"
+  
+  # Images - Cache 1 an
   ExpiresByType image/jpg "access plus 1 year"
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/gif "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType image/ico "access plus 1 year"
+  
+  # CSS/JS - Cache 1 mois
   ExpiresByType text/css "access plus 1 month"
   ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  
+  # JSON - Cache 1 mois
+  ExpiresByType application/json "access plus 1 month"
+  
+  # PDF - Cache 1 mois
   ExpiresByType application/pdf "access plus 1 month"
-  ExpiresByType text/html "access plus 0 seconds"
+  
+  # Fonts - Cache 1 mois
+  ExpiresByType font/ttf "access plus 1 month"
+  ExpiresByType font/otf "access plus 1 month"
+  ExpiresByType font/woff "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 month"
+  ExpiresByType application/font-woff "access plus 1 month"
+  ExpiresByType application/font-woff2 "access plus 1 month"
+  ExpiresByType application/vnd.ms-fontobject "access plus 1 month"
+  
+  # Manifest et Service Worker - Cache court
+  ExpiresByType application/manifest+json "access plus 1 day"
 </IfModule>
 
-# Sécurité
+# Cache-Control headers additionnels
 <IfModule mod_headers.c>
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "DENY"
-  Header set X-XSS-Protection "1; mode=block"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Assets avec hash Vite - Cache immutable
+  <FilesMatch "\.[a-f0-9]{8}\.(js|css|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  
+  # Service Worker - Pas de cache
+  <FilesMatch "service-worker\.js$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
 </IfModule>
 
-# Désactiver le listing des répertoires
+# ===========================================
+# 4. HEADERS DE SECURITE
+# ===========================================
+<IfModule mod_headers.c>
+  # Protection contre le sniffing MIME
+  Header set X-Content-Type-Options "nosniff"
+  
+  # Protection contre le clickjacking
+  Header set X-Frame-Options "SAMEORIGIN"
+  
+  # Protection XSS
+  Header set X-XSS-Protection "1; mode=block"
+  
+  # Politique de referrer
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # HSTS - Force HTTPS (1 an)
+  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  
+  # Cross-Origin Opener Policy
+  Header set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  
+  # Cross-Origin Embedder Policy (désactivé pour compatibilité CDN)
+  # Header set Cross-Origin-Embedder-Policy "require-corp"
+  
+  # Cross-Origin Resource Policy
+  Header set Cross-Origin-Resource-Policy "same-site"
+  
+  # Permissions Policy
+  Header set Permissions-Policy "geolocation=(self), camera=(self), microphone=(self), payment=(self)"
+  
+  # Supprimer headers serveur sensibles
+  Header unset X-Powered-By
+  Header unset Server
+</IfModule>
+
+# ===========================================
+# 5. DESACTIVER LISTING REPERTOIRES
+# ===========================================
 Options -Indexes
 
-# Bloquer l'accès aux fichiers sensibles
-<FilesMatch "\.(env|json|lock|md|git)$">
-  Order allow,deny
-  Deny from all
+# ===========================================
+# 6. BLOCAGE FICHIERS SENSIBLES
+# ===========================================
+<FilesMatch "\.(env|json|lock|md|git|gitignore|key|pem|yml|yaml|log|bak|sql|sh|config)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
 </FilesMatch>
+
+# Autoriser manifest.json (exception)
+<FilesMatch "^manifest\.json$">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+  </IfModule>
+</FilesMatch>
+
+# Bloquer l'accès aux dossiers cachés
+<DirectoryMatch "/\.">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</DirectoryMatch>
+
+# ===========================================
+# 7. TYPES MIME CORRECTS
+# ===========================================
+<IfModule mod_mime.c>
+  AddType application/javascript js mjs
+  AddType application/json json
+  AddType application/manifest+json webmanifest
+  AddType font/woff woff
+  AddType font/woff2 woff2
+  AddType image/svg+xml svg svgz
+  AddType image/webp webp
+</IfModule>
+
+# ===========================================
+# 8. ETags (désactivé pour CDN)
+# ===========================================
+<IfModule mod_headers.c>
+  Header unset ETag
+</IfModule>
+FileETag None
