@@ -4,21 +4,12 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker } from "./lib/serviceWorkerRegistration";
 
-// Gestion de la redirection SPA pour les hébergeurs qui supportent 200.html
-const handleSpaRedirect = () => {
-  const redirect = sessionStorage.getItem('spa_redirect');
-  if (redirect) {
-    sessionStorage.removeItem('spa_redirect');
-    window.history.replaceState(null, '', '/' + redirect);
-    console.log('🔄 SPA redirect restauré:', '/' + redirect);
-  }
-};
-
-// Masquer le loader initial
+// Masquer le loader initial de façon robuste
 const hideLoader = () => {
   const loader = document.getElementById('initial-loader');
-  if (loader) {
+  if (loader && loader.style.display !== 'none') {
     loader.style.opacity = '0';
+    loader.style.pointerEvents = 'none';
     setTimeout(() => {
       loader.style.display = 'none';
     }, 300);
@@ -27,6 +18,7 @@ const hideLoader = () => {
 
 // Afficher une erreur visuelle
 const showError = (rootElement: HTMLElement, error: unknown) => {
+  hideLoader();
   const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
@@ -46,27 +38,20 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
 
 // Initialisation de l'application
 const initApp = () => {
-  console.log("🚀 [main.tsx] Initialisation de l'application 224Solutions...");
-  
-  // Gérer la redirection SPA si nécessaire
-  handleSpaRedirect();
+  console.log("🚀 224Solutions - Initialisation...");
   
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
-    console.error("❌ Root element not found in HTML");
-    // Créer un élément root de secours
+    console.error("❌ Root element not found");
     const fallbackRoot = document.createElement('div');
     fallbackRoot.id = 'root';
     document.body.appendChild(fallbackRoot);
-    showError(fallbackRoot, new Error('Élément root manquant dans index.html'));
-    hideLoader();
+    showError(fallbackRoot, new Error('Élément root manquant'));
     return;
   }
 
   try {
-    console.log("✅ Root element trouvé, montage de React...");
-    
     const root = createRoot(rootElement);
     root.render(
       <React.StrictMode>
@@ -74,30 +59,29 @@ const initApp = () => {
       </React.StrictMode>
     );
     
-    console.log("✅ Application React montée avec succès");
-    hideLoader();
+    console.log("✅ Application démarrée");
+    
+    // Attendre un peu que React monte les composants
+    requestAnimationFrame(() => {
+      setTimeout(hideLoader, 100);
+    });
   } catch (error) {
-    console.error("❌ Erreur lors du montage de React:", error);
+    console.error("❌ Erreur:", error);
     showError(rootElement, error);
-    hideLoader();
   }
 };
 
-// Lancer l'app quand le DOM est prêt
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
+// Lancer l'app immédiatement
+initApp();
 
-// Enregistrer le Service Worker pour PWA
+// Enregistrer le Service Worker
 registerServiceWorker();
 
-// Capturer les erreurs globales non gérées
+// Capturer les erreurs globales
 window.addEventListener('error', (event) => {
-  console.error('❌ Erreur globale:', event.error || event.message);
+  console.error('Erreur globale:', event.error || event.message);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('❌ Promise rejetée:', event.reason);
+  console.error('Promise rejetée:', event.reason);
 });

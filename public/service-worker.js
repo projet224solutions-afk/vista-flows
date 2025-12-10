@@ -1,20 +1,21 @@
-const CACHE_NAME = "224solutions-v2";
-const STATIC_CACHE = "224solutions-static-v2";
-const DYNAMIC_CACHE = "224solutions-dynamic-v2";
+const CACHE_NAME = "224solutions-v3";
+const STATIC_CACHE = "224solutions-static-v3";
+const DYNAMIC_CACHE = "224solutions-dynamic-v3";
 
 // Assets statiques critiques - préchargés immédiatement
 const PRECACHE_ASSETS = [
-  "/",
-  "/index.html",
   "/manifest.json",
   "/favicon.png"
 ];
 
-// INSTALL — Mise en cache initiale rapide
+// INSTALL — Mise en cache initiale rapide (ne pas bloquer sur index.html)
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+      // Précharger seulement les assets non-critiques
+      return cache.addAll(PRECACHE_ASSETS).catch(() => {
+        console.log('[SW] Precache partiel');
+      });
     })
   );
   // Activer immédiatement

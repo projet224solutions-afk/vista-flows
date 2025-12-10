@@ -5,13 +5,17 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Pour Hostinger: '/' si domaine racine, ou '/nom-dossier/' si sous-dossier
-  base: process.env.VITE_BASE_URL || '/',
+  // Base URL absolue pour Vercel/Netlify
+  base: '/',
   server: {
     host: "::",
     port: 8080,
     strictPort: false,
     open: false,
+  },
+  preview: {
+    port: 4173,
+    host: true,
   },
   plugins: [
     react(),

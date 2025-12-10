@@ -110,16 +110,44 @@
     }
   </style>
   
-  <!-- Auto-hide loader after 5 seconds max -->
+  <!-- Robust loader management -->
   <script>
-    setTimeout(function() {
-      var loader = document.getElementById('initial-loader');
-      if (loader) {
-        loader.style.opacity = '0';
-        loader.style.pointerEvents = 'none';
-        setTimeout(function() { loader.style.display = 'none'; }, 300);
-      }
-    }, 5000);
+    (function() {
+      var hideLoader = function() {
+        var loader = document.getElementById('initial-loader');
+        if (loader && loader.style.display !== 'none') {
+          loader.style.opacity = '0';
+          loader.style.pointerEvents = 'none';
+          setTimeout(function() { loader.style.display = 'none'; }, 300);
+        }
+      };
+      
+      // Hide when DOM is ready and root has content
+      var checkRoot = function() {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          hideLoader();
+          return true;
+        }
+        return false;
+      };
+      
+      // Check periodically
+      var interval = setInterval(function() {
+        if (checkRoot()) clearInterval(interval);
+      }, 100);
+      
+      // Force hide after 8 seconds max
+      setTimeout(function() {
+        clearInterval(interval);
+        hideLoader();
+      }, 8000);
+      
+      // Also hide on load event
+      window.addEventListener('load', function() {
+        setTimeout(checkRoot, 500);
+      });
+    })();
   </script>
 </head>
 

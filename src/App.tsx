@@ -1,4 +1,4 @@
-import { Suspense, lazy, memo } from "react";
+import { Suspense, lazy, memo, useEffect, useState } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,10 +9,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-// Import eagerly - critical components always needed
-import Index from "./pages/Index";
+// Lazy load all pages for optimal bundle splitting
+const Index = lazy(() => import("./pages/Index"));
 
-// Lazy load non-critical components with better chunking
+// Lazy load non-critical components
 const QuickFooter = lazy(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
 
@@ -83,8 +83,11 @@ const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 
 // Optimized loading component - minimal and fast
 const PageLoader = memo(() => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+  <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
+    <div className="text-center">
+      <h1 className="text-2xl font-bold text-primary mb-4">224Solutions</h1>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+    </div>
   </div>
 ));
 PageLoader.displayName = 'PageLoader';
