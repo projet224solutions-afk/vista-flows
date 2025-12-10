@@ -22,5 +22,57 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+  },
+  global: {
+    headers: {
+      'X-Client-Info': '224solutions-web',
+    },
+  },
 });
+
+// Fonction pour rafraîchir manuellement la session si elle expire
+export const refreshSession = async () => {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) {
+      console.error('❌ Erreur rafraîchissement session:', error);
+      return null;
+    }
+    console.log('✅ Session rafraîchie avec succès');
+    return data.session;
+  } catch (e) {
+    console.error('❌ Exception rafraîchissement session:', e);
+    return null;
+  }
+};
+
+// Vérification périodique de la session (toutes les 5 minutes)
+let sessionCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+export const startSessionMonitor = () => {
+  if (sessionCheckInterval) return;
+  
+  sessionCheckInterval = setInterval(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      // Vérifier si le token expire dans moins de 10 minutes
+      const expiresAt = session.expires_at || 0;
+      const now = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = expiresAt - now;
+      
+      if (timeUntilExpiry < 600 && timeUntilExpiry > 0) {
+        console.log('⚠️ Session expire bientôt, rafraîchissement...');
+        await refreshSession();
+      }
+    }
+  }, 5 * 60 * 1000); // Toutes les 5 minutes
+};
+
+export const stopSessionMonitor = () => {
+  if (sessionCheckInterval) {
+    clearInterval(sessionCheckInterval);
+    sessionCheckInterval = null;
+  }
+};
