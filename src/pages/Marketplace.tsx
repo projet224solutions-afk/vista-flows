@@ -317,11 +317,16 @@ export default function Marketplace() {
                 image={product.images || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                 title={product.name}
                 price={product.price}
+                originalPrice={product.original_price}
                 vendor={product.vendor_name}
+                vendorLocation={product.vendor_location}
                 vendorRating={product.vendor_rating}
                 vendorRatingCount={product.vendor_rating_count}
-                rating={product.rating}
-                reviewCount={product.reviews_count}
+                rating={product.rating || 0}
+                reviewCount={product.reviews_count || 0}
+                stock={product.stock}
+                category={product.category_name}
+                deliveryTime={product.delivery_time}
                 onBuy={() => handleProductClick(product.id)}
                 onAddToCart={() => {
                   addToCart({

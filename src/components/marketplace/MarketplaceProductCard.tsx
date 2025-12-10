@@ -1,20 +1,22 @@
 /**
- * MARKETPLACE PRODUCT CARD - Card Produit Professionnelle
- * 224Solutions - Standard International E-Commerce
+ * MARKETPLACE PRODUCT CARD - Card Produit Premium
+ * 224Solutions - Design Professionnel E-Commerce
  * 
- * Design moderne avec:
- * - Image carrée optimisée
- * - Coins arrondis (10px)
- * - Ombre légère professionnelle
- * - Lazy loading pour performance
- * - Texte clair et espacé
+ * Features:
+ * - Images grandes et haute qualité
+ * - Avis clients (étoiles + nombre)
+ * - Informations vendeur
+ * - Design moderne avec coins arrondis et ombres
+ * - Lazy loading optimisé
+ * - Responsive premium
  */
 
-import { Star, ShoppingCart, MessageCircle } from "lucide-react";
+import { Star, ShoppingCart, MessageCircle, MapPin, Package } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface MarketplaceProductCardProps {
   id: string;
@@ -29,6 +31,9 @@ interface MarketplaceProductCardProps {
   rating: number;
   reviewCount: number;
   isPremium?: boolean;
+  stock?: number;
+  category?: string;
+  deliveryTime?: string;
   onBuy?: () => void;
   onAddToCart?: () => void;
   onContact?: () => void;
@@ -46,6 +51,9 @@ export function MarketplaceProductCard({
   rating,
   reviewCount,
   isPremium,
+  stock,
+  category,
+  deliveryTime,
   onBuy,
   onAddToCart,
   onContact
@@ -63,13 +71,38 @@ export function MarketplaceProductCard({
     }).format(value);
   };
 
+  // Render stars pour les avis
+  const renderStars = (rating: number, size: 'sm' | 'md' = 'sm') => {
+    const fullStars = Math.floor(rating);
+    const hasHalf = rating % 1 >= 0.5;
+    const starSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    
+    return (
+      <div className="flex items-center gap-0.5">
+        {[...Array(5)].map((_, i) => (
+          <Star 
+            key={i} 
+            className={cn(
+              starSize,
+              i < fullStars 
+                ? 'fill-yellow-400 text-yellow-400' 
+                : i === fullStars && hasHalf
+                  ? 'fill-yellow-400/50 text-yellow-400'
+                  : 'text-muted-foreground/30'
+            )} 
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Card className="marketplace-card group overflow-hidden">
-      {/* Image Container - Format Carré */}
+      {/* Image Container - Format Carré Grande */}
       <div className="marketplace-card-image-container">
         {/* Placeholder skeleton */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-muted animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-muted to-secondary animate-pulse" />
         )}
         
         <img 
@@ -89,70 +122,104 @@ export function MarketplaceProductCard({
         
         {/* Badge Premium */}
         {isPremium && (
-          <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-medium shadow-md">
-            Premium
-          </Badge>
+          <div className="marketplace-card-badge">
+            <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
+              ★ Premium
+            </Badge>
+          </div>
         )}
 
         {/* Discount Badge */}
         {originalPrice && originalPrice > price && (
+          <div className="marketplace-card-discount">
+            <Badge 
+              variant="destructive" 
+              className="text-[10px] font-bold shadow-md"
+            >
+              -{Math.round((1 - price / originalPrice) * 100)}%
+            </Badge>
+          </div>
+        )}
+
+        {/* Stock Badge (si faible) */}
+        {stock !== undefined && stock > 0 && stock <= 5 && (
           <Badge 
-            variant="destructive" 
-            className="absolute top-2 right-2 text-xs font-medium"
+            variant="secondary" 
+            className="absolute bottom-2 left-2 text-[9px] bg-background/90 backdrop-blur-sm"
           >
-            -{Math.round((1 - price / originalPrice) * 100)}%
+            <Package className="w-2.5 h-2.5 mr-1" />
+            Plus que {stock}
           </Badge>
         )}
       </div>
       
       {/* Content */}
       <CardContent className="marketplace-card-content">
-        {/* Title */}
-        <h3 className="marketplace-card-title">
+        {/* Category si existante */}
+        {category && (
+          <span className="text-[10px] text-primary font-medium uppercase tracking-wide mb-1 block">
+            {category}
+          </span>
+        )}
+
+        {/* Title - 1 ligne */}
+        <h3 className="marketplace-card-title" title={title}>
           {title}
         </h3>
         
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-1.5">
-          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-          <span className="text-xs font-medium text-foreground">{rating.toFixed(1)}</span>
-          <span className="text-xs text-muted-foreground">({reviewCount})</span>
+        {/* Rating / Avis clients */}
+        <div className="marketplace-card-rating">
+          {renderStars(rating)}
+          <span className="text-[11px] font-medium text-foreground ml-1">{rating.toFixed(1)}</span>
+          <span className="text-[10px] text-muted-foreground">({reviewCount})</span>
         </div>
         
-        {/* Vendor Info */}
-        <div className="flex items-center gap-1 mb-2">
-          <p className="text-xs text-muted-foreground truncate flex-1">{vendor}</p>
+        {/* Vendor Info avec localisation */}
+        <div className="marketplace-card-vendor">
+          <span className="truncate flex-1">{vendor}</span>
           {vendorLocation && (
-            <span className="text-xs text-muted-foreground/70 truncate">• {vendorLocation}</span>
+            <>
+              <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate text-[10px]">{vendorLocation}</span>
+            </>
           )}
         </div>
+
+        {/* Temps de livraison si disponible */}
+        {deliveryTime && (
+          <div className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+            <Package className="w-2.5 h-2.5" />
+            <span>Livraison: {deliveryTime}</span>
+          </div>
+        )}
         
-        {/* Price */}
-        <div className="flex items-baseline gap-1.5 mb-3">
+        {/* Price - Bien visible */}
+        <div className="flex items-baseline gap-1.5 mb-2">
           <span className="marketplace-card-price">
             {formatPrice(price)} GNF
           </span>
           {originalPrice && originalPrice > price && (
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-[11px] text-muted-foreground line-through">
               {formatPrice(originalPrice)}
             </span>
           )}
         </div>
         
-        {/* Actions */}
-        <div className="flex gap-1.5">
+        {/* Actions - CTA modernisés */}
+        <div className="marketplace-card-actions">
           <Button 
             onClick={onBuy}
-            className="flex-1 h-8 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="flex-1 h-8 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
             size="sm"
           >
-            Acheter
+            Voir
           </Button>
           <Button 
             onClick={onAddToCart}
             variant="outline" 
             size="sm"
-            className="h-8 w-8 p-0 border-border hover:bg-accent"
+            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            title="Ajouter au panier"
           >
             <ShoppingCart className="w-3.5 h-3.5" />
           </Button>
@@ -160,7 +227,8 @@ export function MarketplaceProductCard({
             onClick={onContact}
             variant="outline" 
             size="sm"
-            className="h-8 w-8 p-0 border-border hover:bg-accent"
+            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            title="Contacter le vendeur"
           >
             <MessageCircle className="w-3.5 h-3.5" />
           </Button>
@@ -168,11 +236,6 @@ export function MarketplaceProductCard({
       </CardContent>
     </Card>
   );
-}
-
-// Helper cn function for conditional classes
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
 }
 
 export default MarketplaceProductCard;
