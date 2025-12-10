@@ -2,9 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
+// Client Supabase avec service_role pour bypasser RLS
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
 );
 
 // Schéma de validation Zod
