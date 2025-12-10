@@ -28,6 +28,13 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
+      // Ignore eval warning from agora-rtm-sdk
+      onwarn(warning, warn) {
+        if (warning.code === 'EVAL' && warning.id?.includes('agora-rtm-sdk')) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         manualChunks(id) {
           // Vendor dependencies
