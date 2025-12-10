@@ -17,7 +17,7 @@ import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { VendorSidebar } from "@/components/vendor/VendorSidebar";
+// VendorSidebar supprimé
 import { useVendorStats } from "@/hooks/useVendorData";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -364,7 +364,7 @@ export default function VendeurDashboard() {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
-        <VendorSidebar />
+        {/* Sidebar supprimée */}
 
         <div className="flex-1 flex flex-col w-full">
           {/* Header global avec trigger */}
