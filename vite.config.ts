@@ -26,41 +26,89 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Vendor dependencies
           if (id.includes('node_modules')) {
-            if (id.match(/react|react-dom|react-router-dom/)) return 'vendor-react';
+            // Core React ecosystem
+            if (id.match(/react-dom/)) return 'vendor-react-dom';
+            if (id.match(/react-router/)) return 'vendor-router';
+            if (id.match(/\/react\//)) return 'vendor-react';
+            
+            // UI Libraries
             if (id.includes('@radix-ui')) return 'vendor-radix';
-            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
-            if (id.includes('recharts')) return 'vendor-charts';
-            if (id.match(/react-hook-form|@hookform\/resolvers|zod/)) return 'vendor-forms';
-            if (id.match(/date-fns|clsx|tailwind-merge/)) return 'vendor-utils';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            
+            // Data & Backend
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('@tanstack')) return 'vendor-tanstack';
+            
+            // Charts & Visualization
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+            
+            // Forms & Validation
+            if (id.match(/react-hook-form|@hookform|zod/)) return 'vendor-forms';
+            
+            // PDF & Documents
+            if (id.match(/jspdf|html2canvas|qrcode/)) return 'vendor-pdf';
+            
+            // Maps
+            if (id.includes('mapbox')) return 'vendor-maps';
+            
+            // Communication
+            if (id.includes('agora')) return 'vendor-agora';
+            
+            // Firebase
+            if (id.includes('firebase')) return 'vendor-firebase';
+            
+            // Utilities
+            if (id.match(/date-fns|clsx|tailwind-merge|class-variance/)) return 'vendor-utils';
+            
+            // Remaining node_modules
+            return 'vendor-misc';
           }
-          // Split VendeurDashboard components into separate chunks
-          if (id.includes('src/components/vendor/')) {
-            if (id.includes('ProductManagement') || id.includes('InventoryManagement')) {
-              return 'vendor-products';
-            }
-            if (id.includes('OrderManagement') || id.includes('DeliveryManagement')) {
-              return 'vendor-orders';
-            }
-            if (id.includes('ClientManagement') || id.includes('AgentManagement')) {
-              return 'vendor-management';
-            }
-            if (id.includes('Analytics') || id.includes('Reports')) {
-              return 'vendor-analytics';
-            }
-            return 'vendor-common';
+          
+          // Application code splitting
+          
+          // Pages - split large dashboards
+          if (id.includes('src/pages/')) {
+            if (id.includes('PDGDashboard')) return 'page-pdg';
+            if (id.includes('VendeurDashboard')) return 'page-vendeur';
+            if (id.includes('BureauDashboard')) return 'page-bureau';
+            if (id.includes('AgentDashboard')) return 'page-agent';
+            if (id.includes('LivreurDashboard')) return 'page-livreur';
+            if (id.includes('TaxiMoto')) return 'page-taxi';
+            if (id.includes('Client')) return 'page-client';
           }
-          // Split BureauDashboard to reduce size
-          if (id.includes('src/pages/BureauDashboard')) {
-            return 'bureau-dashboard';
+          
+          // Components - split by feature
+          if (id.includes('src/components/')) {
+            if (id.includes('/vendor/')) {
+              if (id.match(/Product|Inventory|Stock/)) return 'comp-vendor-products';
+              if (id.match(/Order|Delivery|Shipment/)) return 'comp-vendor-orders';
+              if (id.match(/Quote|Invoice|Contract/)) return 'comp-vendor-docs';
+              if (id.match(/Analytics|Report|Stats/)) return 'comp-vendor-analytics';
+              return 'comp-vendor-common';
+            }
+            if (id.includes('/pdg/')) return 'comp-pdg';
+            if (id.includes('/agent/')) return 'comp-agent';
+            if (id.includes('/bureau/')) return 'comp-bureau';
+            if (id.includes('/delivery/')) return 'comp-delivery';
+            if (id.includes('/taxi/')) return 'comp-taxi';
+            if (id.includes('/communication/')) return 'comp-communication';
+            if (id.includes('/wallet/')) return 'comp-wallet';
+            if (id.includes('/ui/')) return 'comp-ui';
           }
-          // Split large delivery panel
-          if (id.includes('VendorDeliveriesPanel')) {
-            return 'vendor-deliveries';
-          }
+          
+          // Hooks
+          if (id.includes('src/hooks/')) return 'hooks';
+          
+          // Contexts
+          if (id.includes('src/contexts/')) return 'contexts';
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1500,
+    sourcemap: false,
+    minify: 'esbuild'
   }
 }));
