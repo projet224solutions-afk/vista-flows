@@ -4,15 +4,14 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker } from "./lib/serviceWorkerRegistration";
 
-// Masquer le loader initial de façon robuste
+// Masquer le loader de façon robuste
 const hideLoader = () => {
   const loader = document.getElementById('initial-loader');
-  if (loader && loader.style.display !== 'none') {
-    loader.style.opacity = '0';
-    loader.style.pointerEvents = 'none';
+  if (loader && !loader.classList.contains('hidden')) {
+    loader.classList.add('hidden');
     setTimeout(() => {
       loader.style.display = 'none';
-    }, 300);
+    }, 350);
   }
 };
 
@@ -29,11 +28,34 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
         <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${errorMessage}</pre>
         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
           <button onclick="location.reload()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Recharger</button>
-          <button onclick="localStorage.clear(); sessionStorage.clear(); location.reload()" style="padding: 12px 24px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Vider le cache</button>
+          <button onclick="clearCachesAndReload()" style="padding: 12px 24px; background: #95a5a6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Vider le cache</button>
         </div>
       </div>
     </div>
   `;
+  
+  // Fonction globale pour vider le cache
+  (window as any).clearCachesAndReload = async () => {
+    try {
+      // Désinscrire tous les service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+      // Vider tous les caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      // Vider localStorage et sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('Erreur nettoyage cache:', e);
+    }
+    // Recharger
+    location.reload();
+  };
 };
 
 // Initialisation de l'application
@@ -53,20 +75,24 @@ const initApp = () => {
 
   try {
     const root = createRoot(rootElement);
+    
     root.render(
       <React.StrictMode>
         <App />
       </React.StrictMode>
     );
     
-    console.log("✅ Application démarrée");
+    console.log("✅ Application React montée");
     
-    // Attendre un peu que React monte les composants
+    // Cacher le loader après que React a rendu
     requestAnimationFrame(() => {
-      setTimeout(hideLoader, 100);
+      requestAnimationFrame(() => {
+        hideLoader();
+      });
     });
+    
   } catch (error) {
-    console.error("❌ Erreur:", error);
+    console.error("❌ Erreur rendu React:", error);
     showError(rootElement, error);
   }
 };
@@ -74,8 +100,10 @@ const initApp = () => {
 // Lancer l'app immédiatement
 initApp();
 
-// Enregistrer le Service Worker
-registerServiceWorker();
+// Enregistrer le Service Worker de manière différée
+setTimeout(() => {
+  registerServiceWorker();
+}, 3000);
 
 // Capturer les erreurs globales
 window.addEventListener('error', (event) => {
