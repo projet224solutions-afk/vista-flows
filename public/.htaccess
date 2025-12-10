@@ -18,14 +18,16 @@
   # Exclure les assets, icons, manifest et favicon
   RewriteCond %{REQUEST_URI} !^/assets/
   RewriteCond %{REQUEST_URI} !^/icons/
-  RewriteCond %{REQUEST_URI} !^/favicon\.png$
+  RewriteCond %{REQUEST_URI} !^/images/
+  RewriteCond %{REQUEST_URI} !^/favicon\.(ico|png)$
   RewriteCond %{REQUEST_URI} !^/manifest\.json$
   RewriteCond %{REQUEST_URI} !^/service-worker\.js$
+  RewriteCond %{REQUEST_URI} !^/(sw|workbox-).*\.js$
   RewriteCond %{REQUEST_URI} !^/robots\.txt$
   RewriteCond %{REQUEST_URI} !^/sitemap\.xml$
   
-  # Rediriger toutes les autres routes vers index.html
-  RewriteRule ^(.*)$ /index.html [L]
+  # Rediriger toutes les autres routes vers index.html (avec query string)
+  RewriteRule ^(.*)$ /index.html [L,QSA]
 </IfModule>
 
 # ===========================================
@@ -39,7 +41,9 @@
   AddOutputFilterByType DEFLATE text/css
   AddOutputFilterByType DEFLATE text/javascript
   AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/x-javascript
   AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE application/ld+json
   AddOutputFilterByType DEFLATE application/xml
   AddOutputFilterByType DEFLATE application/xhtml+xml
   AddOutputFilterByType DEFLATE image/svg+xml
@@ -51,6 +55,14 @@
   AddOutputFilterByType DEFLATE font/woff2
   AddOutputFilterByType DEFLATE application/font-woff
   AddOutputFilterByType DEFLATE application/font-woff2
+  
+  # Support navigateurs anciens
+  BrowserMatch ^Mozilla/4 gzip-only-text/html
+  BrowserMatch ^Mozilla/4\.0[678] no-gzip
+  BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+  
+  # Éviter double compression par proxies
+  Header append Vary User-Agent
 </IfModule>
 
 # ===========================================
@@ -153,7 +165,7 @@ Options -Indexes
 # ===========================================
 # 6. BLOCAGE FICHIERS SENSIBLES
 # ===========================================
-<FilesMatch "\.(env|json|lock|md|git|gitignore|key|pem|yml|yaml|log|bak|sql|sh|config)$">
+<FilesMatch "\.(env|env\.local|env\.production|lock|md|gitignore|gitattributes|key|pem|cer|crt|p12|pfx|yml|yaml|log|bak|backup|sql|sh|bash|config|ini|conf)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -163,7 +175,18 @@ Options -Indexes
   </IfModule>
 </FilesMatch>
 
-# Autoriser manifest.json (exception)
+# Bloquer fichiers de configuration spécifiques
+<FilesMatch "^(package\.json|package-lock\.json|composer\.json|composer\.lock|yarn\.lock|bun\.lockb|tsconfig\.json|vite\.config\.|netlify\.toml|vercel\.json)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Autoriser manifest.json (exception pour PWA)
 <FilesMatch "^manifest\.json$">
   <IfModule mod_authz_core.c>
     Require all granted
@@ -174,8 +197,8 @@ Options -Indexes
   </IfModule>
 </FilesMatch>
 
-# Bloquer l'accès aux dossiers cachés
-<DirectoryMatch "/\.">
+# Bloquer l'accès aux dossiers cachés et système
+<DirectoryMatch "^(.*/)?(\.|node_modules|src|supabase|\.git|\.vscode|\.idea)">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
