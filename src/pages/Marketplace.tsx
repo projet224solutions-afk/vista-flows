@@ -6,18 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
-import ProductCard from "@/components/ProductCard";
+import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
+import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
-import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 
-const PAGE_LIMIT = 12;
+const PAGE_LIMIT = 24;
 
 interface Category {
   id: string;
@@ -62,7 +63,7 @@ export default function Marketplace() {
     hasMore, 
     loadMore 
   } = useUniversalProducts({
-    limit: 12,
+    limit: 24,
     category: selectedCategory,
     searchQuery,
     minPrice: filters.minPrice,
@@ -290,24 +291,30 @@ export default function Marketplace() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+          <div className="marketplace-grid">
+            {/* Skeleton Loading */}
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="marketplace-card animate-pulse">
+                <div className="marketplace-card-image-container bg-muted" />
+                <div className="marketplace-card-content space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-5 bg-muted rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-12">
             <p className="text-muted-foreground">Aucun produit trouvé</p>
           </div>
         ) : (
-          <ResponsiveGrid 
-            mobileCols={1} 
-            tabletCols={2} 
-            desktopCols={3} 
-            gap={isMobile ? "sm" : "md"}
-            className={viewMode === 'list' ? 'grid-cols-1' : ''}
-          >
+          <MarketplaceGrid>
             {products.map((product) => (
-              <ProductCard 
+              <MarketplaceProductCard 
                 key={product.id} 
                 id={product.id}
-                image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                image={product.images || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                 title={product.name}
                 price={product.price}
                 vendor={product.vendor_name}
@@ -331,7 +338,7 @@ export default function Marketplace() {
                 isPremium={product.is_hot}
               />
             ))}
-          </ResponsiveGrid>
+          </MarketplaceGrid>
         )}
 
         {hasMore && !loading && (
