@@ -587,8 +587,10 @@ class UniversalCommunicationService {
   }
 
   /**
-   * Récupérer un utilisateur par custom_id (format: 3 lettres + 4 chiffres)
-   * Exemples: USR0001, VEN0001, PDG0001, DRV0001
+   * Récupérer un utilisateur par ID personnalisé
+   * Supporte plusieurs formats:
+   * - Custom ID (3 lettres + 4 chiffres): USR0001, VEN0001, PDG0001, DRV0001, CLT0001, AGT0001
+   * - Public ID (format 224): 224-XXX-XXX
    */
   async getUserByCustomId(customId: string): Promise<{
     id: string;
@@ -596,43 +598,110 @@ class UniversalCommunicationService {
     last_name: string;
     email: string;
     avatar_url?: string;
+    public_id?: string;
   } | null> {
     try {
-      // Rechercher dans user_ids pour trouver le user_id correspondant au custom_id
-      const { data: userIdData, error: userIdError } = await supabase
-        .from('user_ids')
-        .select('user_id')
-        .eq('custom_id', customId.toUpperCase())
-        .single();
+      const normalizedId = customId.toUpperCase().trim();
+      console.log('Recherche utilisateur par ID:', normalizedId);
 
-      if (userIdError) {
-        if (userIdError.code === 'PGRST116') {
-          return null;
+      // Format 1: ID personnalisé 3 lettres + 4 chiffres (USR0001, VEN0001, etc.)
+      const customIdRegex = /^[A-Z]{3}\d{4}$/;
+      if (customIdRegex.test(normalizedId)) {
+        // Rechercher dans user_ids
+        const { data: userIdData, error: userIdError } = await supabase
+          .from('user_ids')
+          .select('user_id')
+          .eq('custom_id', normalizedId)
+          .maybeSingle();
+
+        if (userIdData?.user_id) {
+          console.log('Trouvé dans user_ids:', userIdData.user_id);
+          return await this.getProfileById(userIdData.user_id);
         }
-        throw userIdError;
+
+        // Fallback: chercher dans profiles.public_id
+        const { data: profileByPublicId } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id')
+          .eq('public_id', normalizedId)
+          .maybeSingle();
+
+        if (profileByPublicId) {
+          console.log('Trouvé dans profiles.public_id:', profileByPublicId.id);
+          return profileByPublicId as any;
+        }
       }
 
-      if (!userIdData) return null;
+      // Format 2: ID public 224-XXX-XXX
+      const publicIdRegex = /^224-[A-Z]{3}-\d{3}$/;
+      if (publicIdRegex.test(normalizedId)) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id')
+          .eq('public_id', normalizedId)
+          .maybeSingle();
 
-      // Récupérer le profil complet de l'utilisateur
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url')
-        .eq('id', userIdData.user_id)
-        .single();
-
-      if (profileError) {
-        if (profileError.code === 'PGRST116') {
-          return null;
+        if (profileData) {
+          console.log('Trouvé par public_id:', profileData.id);
+          return profileData as any;
         }
-        throw profileError;
       }
 
-      return profileData as any;
+      // Format 3: Recherche flexible (préfixes connus: CLT, VND, AGT, DRV, PDG, BST, USR, VEN)
+      const knownPrefixes = ['CLT', 'VND', 'AGT', 'DRV', 'PDG', 'BST', 'USR', 'VEN'];
+      const prefix = normalizedId.substring(0, 3);
+      
+      if (knownPrefixes.includes(prefix)) {
+        // Rechercher dans toutes les sources possibles
+        const { data: allUserIds } = await supabase
+          .from('user_ids')
+          .select('user_id, custom_id')
+          .ilike('custom_id', `${normalizedId}%`)
+          .limit(1);
+
+        if (allUserIds && allUserIds.length > 0) {
+          return await this.getProfileById(allUserIds[0].user_id);
+        }
+
+        // Recherche dans profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id')
+          .ilike('public_id', `%${normalizedId}%`)
+          .limit(1);
+
+        if (profiles && profiles.length > 0) {
+          return profiles[0] as any;
+        }
+      }
+
+      console.log('Utilisateur non trouvé pour ID:', normalizedId);
+      return null;
     } catch (error) {
       console.error('Erreur récupération utilisateur par custom_id:', error);
       return null;
     }
+  }
+
+  /**
+   * Helper pour récupérer un profil par son UUID
+   */
+  private async getProfileById(userId: string): Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    avatar_url?: string;
+    public_id?: string;
+  } | null> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, avatar_url, public_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as any;
   }
 
   /**

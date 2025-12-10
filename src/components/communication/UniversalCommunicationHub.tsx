@@ -340,18 +340,24 @@ export default function UniversalCommunicationHub({
       return;
     }
 
-    // Validation du format: 3 lettres + 4 chiffres (ex: USR0001, VEN0001, PDG0001)
+    // Validation flexible: accepter plusieurs formats
+    // Format 1: 3 lettres + 4 chiffres (USR0001, VEN0001, CLT0001, etc.)
+    // Format 2: 224-XXX-XXX
     const customIdRegex = /^[A-Z]{3}\d{4}$/;
-    if (!customIdRegex.test(customId)) {
+    const publicIdRegex = /^224-[A-Z]{3}-\d{3}$/;
+    
+    if (!customIdRegex.test(customId) && !publicIdRegex.test(customId)) {
       toast({
         title: "Format invalide",
-        description: "L'ID doit être au format 3 lettres + 4 chiffres (ex: USR0001, VEN0001)",
+        description: "Formats acceptés: USR0001, VEN0001, CLT0001 ou 224-XXX-XXX",
         variant: "destructive"
       });
       return;
     }
     
     try {
+      console.log('Recherche utilisateur par ID:', customId);
+      
       // Rechercher l'utilisateur par custom_id
       const profile = await universalCommunicationService.getUserByCustomId(customId);
       
@@ -363,6 +369,8 @@ export default function UniversalCommunicationHub({
         });
         return;
       }
+
+      console.log('Utilisateur trouvé:', profile);
 
       // Vérifier qu'on ne s'ajoute pas soi-même
       if (profile.id === user?.id) {
@@ -774,11 +782,11 @@ export default function UniversalCommunicationHub({
               </TabsContent>
               
               <TabsContent value="id" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">ID Utilisateur (Custom ID)</label>
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">ID Utilisateur</label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="USR0001"
+                      placeholder="CLT0001 ou 224-ABC-123"
                       className="font-mono text-sm uppercase"
                       value={userIdSearch}
                       onChange={(e) => setUserIdSearch(e.target.value.toUpperCase())}
@@ -788,29 +796,43 @@ export default function UniversalCommunicationHub({
                           handleSearchById();
                         }
                       }}
-                      maxLength={7}
+                      maxLength={11}
                     />
                     <Button 
                       onClick={handleSearchById}
                       disabled={!userIdSearch.trim()}
+                      className="shrink-0"
                     >
-                      <Search className="w-4 h-4" />
+                      <Search className="w-4 h-4 mr-2" />
+                      Rechercher
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    💡 Format: 3 lettres + 4 chiffres. Appuyez sur Entrée ou cliquez sur rechercher
-                  </p>
                 </div>
                 
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">📋 Exemples de format d'ID</p>
-                  <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• <span className="font-mono font-semibold">USR0001</span> - ID Client</li>
-                    <li>• <span className="font-mono font-semibold">VEN0001</span> - ID Vendeur</li>
-                    <li>• <span className="font-mono font-semibold">PDG0001</span> - ID PDG</li>
-                    <li>• <span className="font-mono font-semibold">DRV0001</span> - ID Chauffeur</li>
-                    <li className="mt-2 pt-2 border-t">💡 Demandez à l'utilisateur de partager son ID personnalisé visible dans son profil</li>
-                  </ul>
+                <div className="p-4 bg-muted/50 rounded-lg border">
+                  <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                    📋 Formats d'ID acceptés
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Format Standard</p>
+                      <ul className="space-y-1">
+                        <li><span className="font-mono bg-background px-1 rounded">CLT0001</span> Client</li>
+                        <li><span className="font-mono bg-background px-1 rounded">VND0001</span> Vendeur</li>
+                        <li><span className="font-mono bg-background px-1 rounded">AGT0001</span> Agent</li>
+                        <li><span className="font-mono bg-background px-1 rounded">DRV0001</span> Chauffeur</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Format 224</p>
+                      <ul className="space-y-1">
+                        <li><span className="font-mono bg-background px-1 rounded">224-ABC-123</span></li>
+                      </ul>
+                      <p className="mt-2 text-muted-foreground">
+                        💡 L'ID est visible dans le profil de chaque utilisateur
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
