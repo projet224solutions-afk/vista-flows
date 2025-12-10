@@ -110,43 +110,67 @@
     }
   </style>
   
-  <!-- Robust loader management -->
+  <!-- Ultra-robust loader management for SPA deployment -->
   <script>
     (function() {
+      var loaderHidden = false;
+      
       var hideLoader = function() {
+        if (loaderHidden) return;
         var loader = document.getElementById('initial-loader');
-        if (loader && loader.style.display !== 'none') {
+        if (loader) {
+          loaderHidden = true;
           loader.style.opacity = '0';
           loader.style.pointerEvents = 'none';
-          setTimeout(function() { loader.style.display = 'none'; }, 300);
+          setTimeout(function() { 
+            loader.style.display = 'none'; 
+          }, 300);
         }
       };
       
-      // Hide when DOM is ready and root has content
+      // Check if root has meaningful content
       var checkRoot = function() {
         var root = document.getElementById('root');
-        if (root && root.children.length > 0) {
+        if (root && root.innerHTML.length > 50) {
           hideLoader();
           return true;
         }
         return false;
       };
       
-      // Check periodically
+      // Multiple check strategies
       var interval = setInterval(function() {
         if (checkRoot()) clearInterval(interval);
-      }, 100);
+      }, 150);
       
-      // Force hide after 8 seconds max
+      // Force hide after 5 seconds max (reduced from 8)
       setTimeout(function() {
         clearInterval(interval);
         hideLoader();
-      }, 8000);
+      }, 5000);
       
-      // Also hide on load event
+      // DOMContentLoaded check
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(checkRoot, 300);
+      });
+      
+      // Window load event
       window.addEventListener('load', function() {
         setTimeout(checkRoot, 500);
       });
+      
+      // React render detection via MutationObserver
+      var observer = new MutationObserver(function(mutations) {
+        if (checkRoot()) {
+          observer.disconnect();
+          clearInterval(interval);
+        }
+      });
+      
+      var root = document.getElementById('root');
+      if (root) {
+        observer.observe(root, { childList: true, subtree: true });
+      }
     })();
   </script>
 </head>
