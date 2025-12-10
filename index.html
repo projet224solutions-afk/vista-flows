@@ -53,9 +53,15 @@
   <!-- Preconnect to external domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   
-  <!-- 224SOLUTIONS Fonts: Poppins, Rubik, Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Rubik:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Preload critical fonts -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" /></noscript>
+  
+  <!-- Load non-critical fonts async -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 
   <!-- Inline critical CSS for initial loader -->
   <style>
