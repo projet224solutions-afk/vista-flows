@@ -1,17 +1,18 @@
-// @ts-nocheck
 /**
  * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
  * Service opérationnel pour communications audio/vidéo avec Agora
+ * Utilise agora-rtm v2 (sans eval) au lieu de agora-rtm-sdk v1
  */
 
 import AgoraRTC, { 
   IAgoraRTCClient, 
   ICameraVideoTrack, 
   IMicrophoneAudioTrack,
-  ConnectionState,
   NetworkQuality
 } from 'agora-rtc-sdk-ng';
-import AgoraRTM from 'agora-rtm-sdk';
+import AgoraRTM from 'agora-rtm';
+
+const { RTM } = AgoraRTM;
 
 export interface AgoraConfig {
   appId: string;
@@ -35,36 +36,58 @@ export interface UserInfo {
 
 class AgoraService {
   private client: IAgoraRTCClient | null = null;
-  private rtmClient: unknown = null;
+  private rtmClient: InstanceType<typeof RTM> | null = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private isConnected = false;
   private currentChannel = '';
   private currentUid = '';
+  private appId = '';
 
   /**
    * Initialiser le client Agora
    */
   async initialize(config: AgoraConfig): Promise<void> {
     try {
+      this.appId = config.appId;
+      
       // Initialiser RTC Client
       this.client = AgoraRTC.createClient({ 
         mode: 'rtc', 
         codec: 'vp8' 
       });
 
-      // Initialiser RTM Client pour la messagerie
-      this.rtmClient = AgoraRTM.createInstance(config.appId);
-
       // Configurer les événements RTC
       this.setupRTCEvents();
+
+      console.log('✅ Agora RTC initialisé avec succès');
+    } catch (error) {
+      console.error('❌ Erreur initialisation Agora:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialiser RTM pour un utilisateur spécifique
+   */
+  async initializeRTM(userId: string, token?: string): Promise<void> {
+    try {
+      if (!this.appId) {
+        throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
+      }
+
+      // Créer instance RTM v2
+      this.rtmClient = new RTM(this.appId, userId);
       
       // Configurer les événements RTM
       this.setupRTMEvents();
 
-      console.log('✅ Agora initialisé avec succès');
+      // Login au serveur RTM
+      await this.rtmClient.login({ token: token || undefined });
+
+      console.log('✅ Agora RTM initialisé et connecté');
     } catch (error) {
-      console.error('❌ Erreur initialisation Agora:', error);
+      console.error('❌ Erreur initialisation RTM:', error);
       throw error;
     }
   }
@@ -92,8 +115,8 @@ class AgoraService {
       console.log('👤 Utilisateur parti:', user.uid);
     });
 
-    this.client.on('connection-state-change', (curState, revState) => {
-      console.log('🔗 État connexion:', curState, revState);
+    this.client.on('connection-state-change', (curState) => {
+      console.log('🔗 État connexion RTC:', curState);
       this.isConnected = curState === 'CONNECTED';
     });
 
@@ -103,18 +126,59 @@ class AgoraService {
   }
 
   /**
-   * Configurer les événements RTM
+   * Configurer les événements RTM v2
    */
   private setupRTMEvents(): void {
     if (!this.rtmClient) return;
 
-    this.rtmClient.on('ConnectionStateChanged', (newState, reason) => {
-      console.log('🔗 RTM État connexion:', newState, reason);
+    // RTM v2 events
+    this.rtmClient.addEventListener('message', (event) => {
+      console.log('💬 Message reçu:', event.message, 'de:', event.publisher);
     });
 
-    this.rtmClient.on('MessageFromPeer', (message, peerId) => {
-      console.log('💬 Message reçu:', message, 'de:', peerId);
+    this.rtmClient.addEventListener('presence', (event) => {
+      console.log('👥 Présence:', event.eventType, event.publisher);
     });
+
+    this.rtmClient.addEventListener('status', (event) => {
+      console.log('🔗 RTM État connexion:', event.state, event.reason);
+    });
+  }
+
+  /**
+   * S'abonner à un canal RTM
+   */
+  async subscribeToChannel(channelName: string): Promise<void> {
+    if (!this.rtmClient) {
+      console.warn('RTM non initialisé');
+      return;
+    }
+
+    try {
+      await this.rtmClient.subscribe(channelName);
+      console.log('✅ Abonné au canal RTM:', channelName);
+    } catch (error) {
+      console.error('❌ Erreur abonnement canal RTM:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Envoyer un message sur un canal RTM
+   */
+  async sendMessage(channelName: string, message: string): Promise<void> {
+    if (!this.rtmClient) {
+      console.warn('RTM non initialisé');
+      return;
+    }
+
+    try {
+      await this.rtmClient.publish(channelName, message);
+      console.log('✅ Message envoyé sur:', channelName);
+    } catch (error) {
+      console.error('❌ Erreur envoi message RTM:', error);
+      throw error;
+    }
   }
 
   /**
@@ -126,10 +190,10 @@ class AgoraService {
     try {
       // Rejoindre le canal
       await this.client.join(
-        config.token || undefined,
+        this.appId,
         config.channel,
-        config.uid,
-        config.token || undefined
+        config.token || null,
+        config.uid
       );
 
       this.currentChannel = config.channel;
@@ -188,11 +252,6 @@ class AgoraService {
       // Quitter le canal RTC
       if (this.client) {
         await this.client.leave();
-      }
-
-      // Quitter le canal RTM
-      if (this.rtmClient && this.currentChannel) {
-        await this.rtmClient.leaveChannel(this.currentChannel);
       }
 
       this.isConnected = false;
