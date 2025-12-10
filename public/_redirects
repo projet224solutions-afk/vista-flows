@@ -1,8 +1,12 @@
-# Redirections Netlify pour Single Page Application
-# Toutes les routes sont gérées par React Router
+# Netlify SPA Redirects - 224Solutions
+# Cette règle redirige toutes les routes vers index.html pour le routing client-side
 
-# API redirects vers Supabase Edge Functions (si nécessaire)
-# /api/* https://your-supabase-project.supabase.co/functions/v1/:splat 200
+# Exclusion des fichiers statiques (assets, images, etc.)
+/assets/* /assets/:splat 200
+/favicon.png /favicon.png 200
+/icon-192.png /icon-192.png 200
+/icon-512.png /icon-512.png 200
+/manifest.json /manifest.json 200
 
-# Fallback pour toutes les autres routes - doit être en dernier
+# SPA fallback - DOIT être en dernier
 /* /index.html 200

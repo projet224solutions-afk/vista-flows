@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>224Solutions</title>
+  <script>
+    // Fallback SPA redirect for hosting providers that support 200.html
+    // This handles direct URL navigation for SPAs
+    var pathSegmentsToKeep = 0;
+    var l = window.location;
+    var path = l.pathname.slice(1);
+    if (path && !path.includes('.')) {
+      // Store the path and redirect to root
+      sessionStorage.setItem('spa_redirect', path + l.search + l.hash);
+    }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
