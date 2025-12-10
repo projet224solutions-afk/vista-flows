@@ -9,8 +9,8 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-// Lazy load all pages for optimal bundle splitting
-const Index = lazy(() => import("./pages/Index"));
+// Import EAGER - Page d'accueil critique pour performance initiale
+import Index from "./pages/Index";
 
 // Lazy load non-critical components
 const QuickFooter = lazy(() => import("@/components/QuickFooter"));
@@ -81,13 +81,34 @@ const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 
-// Optimized loading component - minimal and fast
+// Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
-  <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-primary mb-4">224Solutions</h1>
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+  <div style={{ 
+    minHeight: '100vh', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    background: '#fff'
+  }}>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ 
+        fontSize: '24px', 
+        fontWeight: '700', 
+        color: '#007BFF', 
+        marginBottom: '16px',
+        fontFamily: 'system-ui, sans-serif'
+      }}>224Solutions</div>
+      <div style={{
+        width: '32px',
+        height: '32px',
+        border: '3px solid #f3f4f6',
+        borderTop: '3px solid #007BFF',
+        borderRadius: '50%',
+        margin: '0 auto',
+        animation: 'spin 0.8s linear infinite'
+      }} />
     </div>
+    <style dangerouslySetInnerHTML={{__html: '@keyframes spin { to { transform: rotate(360deg); } }'}} />
   </div>
 ));
 PageLoader.displayName = 'PageLoader';
@@ -105,6 +126,13 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Debug log immédiat
+  console.log('🎯 App component rendering...');
+  
+  useEffect(() => {
+    console.log('✅ App component mounted successfully');
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
