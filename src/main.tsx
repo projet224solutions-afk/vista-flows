@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { registerServiceWorker } from "./lib/serviceWorkerRegistration";
 
 // Gestion de la redirection SPA pour les hébergeurs qui supportent 200.html
 const handleSpaRedirect = () => {
@@ -88,6 +89,9 @@ if (document.readyState === 'loading') {
 } else {
   initApp();
 }
+
+// Enregistrer le Service Worker pour PWA
+registerServiceWorker();
 
 // Capturer les erreurs globales non gérées
 window.addEventListener('error', (event) => {
