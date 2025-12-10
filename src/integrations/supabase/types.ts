@@ -1646,6 +1646,74 @@ export type Database = {
           },
         ]
       }
+      compliance_audits: {
+        Row: {
+          audit_type: string
+          auditor_company: string | null
+          auditor_name: string | null
+          certification_id: string | null
+          completed_date: string | null
+          created_at: string | null
+          findings: Json | null
+          id: string
+          next_audit_date: string | null
+          non_conformities: number | null
+          observations: number | null
+          overall_score: number | null
+          recommendations: string[] | null
+          report_url: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          audit_type: string
+          auditor_company?: string | null
+          auditor_name?: string | null
+          certification_id?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          next_audit_date?: string | null
+          non_conformities?: number | null
+          observations?: number | null
+          overall_score?: number | null
+          recommendations?: string[] | null
+          report_url?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          audit_type?: string
+          auditor_company?: string | null
+          auditor_name?: string | null
+          certification_id?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          next_audit_date?: string | null
+          non_conformities?: number | null
+          observations?: number | null
+          overall_score?: number | null
+          recommendations?: string[] | null
+          report_url?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_audits_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "security_certifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           amount: number | null
@@ -4658,6 +4726,119 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_fraud_models: {
+        Row: {
+          accuracy: number | null
+          created_at: string | null
+          f1_score: number | null
+          false_positives: number | null
+          features_used: string[] | null
+          id: string
+          last_trained_at: string | null
+          model_name: string
+          model_type: string
+          model_version: string
+          precision_score: number | null
+          recall_score: number | null
+          status: string
+          total_predictions: number | null
+          training_data_size: number | null
+          true_positives: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          false_positives?: number | null
+          features_used?: string[] | null
+          id?: string
+          last_trained_at?: string | null
+          model_name: string
+          model_type: string
+          model_version: string
+          precision_score?: number | null
+          recall_score?: number | null
+          status?: string
+          total_predictions?: number | null
+          training_data_size?: number | null
+          true_positives?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          false_positives?: number | null
+          features_used?: string[] | null
+          id?: string
+          last_trained_at?: string | null
+          model_name?: string
+          model_type?: string
+          model_version?: string
+          precision_score?: number | null
+          recall_score?: number | null
+          status?: string
+          total_predictions?: number | null
+          training_data_size?: number | null
+          true_positives?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ml_fraud_patterns: {
+        Row: {
+          confidence: number
+          created_at: string | null
+          description: string | null
+          detection_rules: Json | null
+          id: string
+          is_active: boolean | null
+          last_detected_at: string | null
+          model_id: string | null
+          occurrences: number | null
+          pattern_name: string
+          pattern_type: string
+          risk_score: number
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string | null
+          description?: string | null
+          detection_rules?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_detected_at?: string | null
+          model_id?: string | null
+          occurrences?: number | null
+          pattern_name: string
+          pattern_type: string
+          risk_score?: number
+        }
+        Update: {
+          confidence?: number
+          created_at?: string | null
+          description?: string | null
+          detection_rules?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_detected_at?: string | null
+          model_id?: string | null
+          occurrences?: number | null
+          pattern_name?: string
+          pattern_type?: string
+          risk_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_fraud_patterns_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ml_fraud_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moneroo_payments: {
         Row: {
           amount: number
@@ -7403,6 +7584,151 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soc_analysts: {
+        Row: {
+          analyst_role: string
+          created_at: string | null
+          current_cases: number | null
+          email: string
+          id: string
+          is_on_call: boolean | null
+          last_activity_at: string | null
+          max_cases: number | null
+          name: string
+          shift_end: string | null
+          shift_start: string | null
+          specialization: string[] | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analyst_role?: string
+          created_at?: string | null
+          current_cases?: number | null
+          email: string
+          id?: string
+          is_on_call?: boolean | null
+          last_activity_at?: string | null
+          max_cases?: number | null
+          name: string
+          shift_end?: string | null
+          shift_start?: string | null
+          specialization?: string[] | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analyst_role?: string
+          created_at?: string | null
+          current_cases?: number | null
+          email?: string
+          id?: string
+          is_on_call?: boolean | null
+          last_activity_at?: string | null
+          max_cases?: number | null
+          name?: string
+          shift_end?: string | null
+          shift_start?: string | null
+          specialization?: string[] | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      soc_investigations: {
+        Row: {
+          alert_id: string | null
+          analyst_id: string | null
+          closed_at: string | null
+          created_at: string | null
+          description: string | null
+          escalated_to: string | null
+          evidence: Json | null
+          findings: string | null
+          id: string
+          incident_id: string | null
+          investigation_type: string
+          priority: string
+          recommended_actions: string[] | null
+          resolution_notes: string | null
+          started_at: string | null
+          status: string
+          time_spent_minutes: number | null
+          timeline: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_id?: string | null
+          analyst_id?: string | null
+          closed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          escalated_to?: string | null
+          evidence?: Json | null
+          findings?: string | null
+          id?: string
+          incident_id?: string | null
+          investigation_type: string
+          priority?: string
+          recommended_actions?: string[] | null
+          resolution_notes?: string | null
+          started_at?: string | null
+          status?: string
+          time_spent_minutes?: number | null
+          timeline?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_id?: string | null
+          analyst_id?: string | null
+          closed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          escalated_to?: string | null
+          evidence?: Json | null
+          findings?: string | null
+          id?: string
+          incident_id?: string | null
+          investigation_type?: string
+          priority?: string
+          recommended_actions?: string[] | null
+          resolution_notes?: string | null
+          started_at?: string | null
+          status?: string
+          time_spent_minutes?: number | null
+          timeline?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soc_investigations_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "security_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soc_investigations_analyst_id_fkey"
+            columns: ["analyst_id"]
+            isOneToOne: false
+            referencedRelation: "soc_analysts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soc_investigations_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
             referencedColumns: ["id"]
           },
         ]
