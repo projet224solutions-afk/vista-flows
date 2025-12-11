@@ -71,8 +71,9 @@ export default function PdgCommandCenter() {
       const { data } = await supabase
         .from('system_errors')
         .select('*')
+        .neq('status', 'fixed')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
       
       if (data) {
         setRecentErrors(data);
