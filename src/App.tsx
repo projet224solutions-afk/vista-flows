@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import EAGER - Page d'accueil critique pour performance initiale
@@ -136,12 +137,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <ErrorBoundary>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
               {/* Page d'accueil publique - toujours accessible */}
@@ -404,6 +406,7 @@ function App() {
         </TooltipProvider>
       </CartProvider>
     </AuthProvider>
+  </LanguageProvider>
   </BrowserRouter>
 </QueryClientProvider>
   );

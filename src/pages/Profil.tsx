@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import QuickFooter from "@/components/QuickFooter";
+import LanguageSelector from "@/components/LanguageSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -586,6 +587,11 @@ export default function Profil() {
             <div>
               <label className="text-sm font-medium">Rôle</label>
               <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
+            </div>
+            
+            {/* Sélecteur de langue */}
+            <div className="pt-2 border-t border-border">
+              <LanguageSelector variant="default" />
             </div>
           </div>
           <DialogFooter>
