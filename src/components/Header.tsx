@@ -5,10 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function Header() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <header className="border-b bg-background/80 backdrop-blur-lg sticky top-0 z-50">
@@ -24,7 +26,7 @@ export function Header() {
                   224Solutions
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Plateforme Intégrée Multi-Services
+                  {t('header.subtitle')}
                 </p>
               </div>
             </div>
@@ -37,7 +39,7 @@ export function Header() {
                   <WalletBalanceWidget className="min-w-[280px]" />
                 </div>
                 <div className="hidden md:flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Connecté en tant que</span>
+                  <span className="text-muted-foreground">{t('header.connectedAs')}</span>
                   <span className="font-medium text-foreground capitalize">{profile.role}</span>
                 </div>
               </>
@@ -62,7 +64,7 @@ export function Header() {
                   onClick={() => signOut()}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  Déconnexion
+                  {t('nav.logout')}
                 </Button>
               </>
             ) : (
@@ -71,7 +73,7 @@ export function Header() {
                 size="sm"
                 onClick={() => navigate('/auth')}
               >
-                Connexion
+                {t('nav.login')}
               </Button>
             )}
           </div>
