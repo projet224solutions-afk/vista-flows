@@ -8,6 +8,8 @@ import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import ServiceCard from "@/components/ServiceCard";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useTranslation } from "@/hooks/useTranslation";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +33,7 @@ export default function Home() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { isMobile, isTablet } = useResponsive();
+  const { t, userCountry } = useTranslation();
   
   // Rediriger les utilisateurs connectés vers leur dashboard approprié
   useRoleRedirect();
@@ -204,6 +207,9 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Sélecteur de langue */}
+              <LanguageSelector variant="minimal" />
+              
               {user && (
                 <Button 
                   variant="ghost" 
