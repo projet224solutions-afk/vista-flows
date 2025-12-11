@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
@@ -21,6 +22,7 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -202,7 +204,7 @@ export default function AgentDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Chargement de votre interface...</p>
+          <p className="text-slate-600">{t('agent.loadingInterface')}</p>
         </div>
       </div>
     );
@@ -215,12 +217,12 @@ export default function AgentDashboard() {
           <CardContent className="pt-6">
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-slate-800 mb-2">Profil non trouvé</h2>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">{t('agent.profileNotFound')}</h2>
               <p className="text-slate-600 mb-4">
-                Aucun profil agent associé à ce compte. Veuillez contacter votre PDG.
+                {t('agent.noProfileAssociated')}
               </p>
               <Button onClick={handleSignOut} className="w-full">
-                Se déconnecter
+                {t('common.signOut')}
               </Button>
             </div>
           </CardContent>
@@ -254,7 +256,7 @@ export default function AgentDashboard() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-              <CardTitle className="text-slate-800">Créer un Nouvel Utilisateur</CardTitle>
+              <CardTitle className="text-slate-800">{t('agent.createNewUser')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <CreateUserForm 
@@ -263,7 +265,7 @@ export default function AgentDashboard() {
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
-                  toast.success('Utilisateur créé avec succès');
+                  toast.success(t('agent.userCreatedSuccess'));
                 }}
               />
             </CardContent>

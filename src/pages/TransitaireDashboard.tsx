@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
@@ -17,6 +18,7 @@ import CommunicationWidget from "@/components/communication/CommunicationWidget"
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
   const { error, captureError, clearError } = useTransitaireErrorBoundary();
   const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
@@ -39,25 +41,25 @@ export default function TransitaireDashboard() {
   // Stats dynamiques basées sur les données réelles
   const stats = [
     { 
-      label: "Expéditions actives", 
+      label: t('transit.activeShipments'), 
       value: statsLoading ? "..." : transitaireStats.totalShipments.toString(), 
       icon: Package, 
       color: "text-blue-500" 
     },
     { 
-      label: "En transit", 
+      label: t('transit.inTransit'), 
       value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(), 
       icon: Plane, 
       color: "text-green-500" 
     },
     { 
-      label: "Revenus ce mois", 
+      label: t('transit.monthlyRevenue'), 
       value: statsLoading ? "..." : formatPrice(transitaireStats.totalRevenue), 
       icon: TrendingUp, 
       color: "text-purple-500" 
     },
     { 
-      label: "Délai moyen", 
+      label: t('transit.averageDelay'), 
       value: statsLoading ? "..." : `${transitaireStats.customsInProgress}j`, 
       icon: Clock, 
       color: "text-orange-500" 
@@ -99,10 +101,10 @@ export default function TransitaireDashboard() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-foreground">Dashboard Transitaire</h1>
+                <h1 className="text-2xl font-bold text-foreground">{t('transit.dashboard')}</h1>
               </div>
               <p className="text-muted-foreground">
-                Transport international - {profile?.first_name || user?.email}
+                {t('transit.internationalTransport')} - {profile?.first_name || user?.email}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -111,7 +113,7 @@ export default function TransitaireDashboard() {
               </div>
               <QuickTransferButton variant="outline" size="sm" />
               <Button variant="outline" onClick={handleSignOut}>
-                Se déconnecter
+                {t('common.signOut')}
               </Button>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Bike, Users, Plus, AlertCircle, RefreshCw, MessageSquare, Settings, Lock, Mail, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { useBureauErrorBoundary } from '@/hooks/useBureauErrorBoundary';
 import { useBureauActions } from '@/hooks/useBureauActions';
@@ -31,6 +32,7 @@ export default function BureauDashboard() {
   const [searchParams] = useSearchParams();
   const { error, captureError, clearError } = useBureauErrorBoundary();
   const { logout } = useBureauAuth();
+  const { t } = useTranslation();
   
   const [bureau, setBureau] = useState<any>(null);
   const [workers, setWorkers] = useState<any[]>([]);
@@ -165,7 +167,7 @@ export default function BureauDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Chargement de votre interface...</p>
+          <p className="text-slate-600">{t('bureau.loadingInterface')}</p>
         </div>
       </div>
     );
@@ -176,10 +178,10 @@ export default function BureauDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <Card className="max-w-md border-0 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-center">Bureau non trouvé</CardTitle>
+            <CardTitle className="text-center">{t('bureau.notFound')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-slate-600">Le lien d'accès est invalide ou a expiré.</p>
+            <p className="text-center text-slate-600">{t('bureau.invalidLink')}</p>
           </CardContent>
         </Card>
       </div>

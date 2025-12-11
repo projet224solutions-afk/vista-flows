@@ -11,6 +11,7 @@ import {
   Plus, Truck, Bot, User
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useClientData } from "@/hooks/useClientData";
@@ -40,6 +41,7 @@ export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const responsive = useResponsive();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -81,10 +83,10 @@ export default function ClientDashboard() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success('Déconnexion réussie');
+      toast.success(t('common.signOutSuccess'));
       navigate('/');
     } catch (error) {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error(t('common.error'));
     }
   };
 
@@ -113,12 +115,12 @@ export default function ClientDashboard() {
 
   const handleCheckout = async () => {
     if (!user?.id) {
-      toast.error('Veuillez vous connecter');
+      toast.error(t('client.connectionRequired'));
       return;
     }
     
     if (cartItems.length === 0) {
-      toast.error('Votre panier est vide');
+      toast.error(t('client.emptyCart'));
       return;
     }
     

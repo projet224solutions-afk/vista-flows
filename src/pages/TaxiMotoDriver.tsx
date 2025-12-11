@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,6 +106,7 @@ interface ActiveRide {
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
+    const { t } = useTranslation();
 const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
     const [activeLocation, setActiveLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     
