@@ -20,6 +20,10 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.notifications": "Notifications",
     "nav.wallet": "Portefeuille",
     
+    // Header
+    "header.subtitle": "Plateforme Intégrée Multi-Services",
+    "header.connectedAs": "Connecté en tant que",
+    
     // Common
     "common.loading": "Chargement...",
     "common.error": "Erreur",
@@ -144,6 +148,10 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.notifications": "Notifications",
     "nav.wallet": "Wallet",
     
+    // Header
+    "header.subtitle": "Integrated Multi-Services Platform",
+    "header.connectedAs": "Connected as",
+    
     // Common
     "common.loading": "Loading...",
     "common.error": "Error",
@@ -266,6 +274,8 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "Mensajes",
     "nav.notifications": "Notificaciones",
     "nav.wallet": "Billetera",
+    "header.subtitle": "Plataforma Integrada Multi-Servicios",
+    "header.connectedAs": "Conectado como",
     "common.loading": "Cargando...",
     "common.error": "Error",
     "common.success": "Éxito",
@@ -373,6 +383,8 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "Mensagens",
     "nav.notifications": "Notificações",
     "nav.wallet": "Carteira",
+    "header.subtitle": "Plataforma Integrada Multi-Serviços",
+    "header.connectedAs": "Conectado como",
     "common.loading": "Carregando...",
     "common.error": "Erro",
     "common.success": "Sucesso",
@@ -480,6 +492,8 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "الرسائل",
     "nav.notifications": "الإشعارات",
     "nav.wallet": "المحفظة",
+    "header.subtitle": "منصة متعددة الخدمات المتكاملة",
+    "header.connectedAs": "متصل بصفتك",
     "common.loading": "جاري التحميل...",
     "common.error": "خطأ",
     "common.success": "نجاح",
