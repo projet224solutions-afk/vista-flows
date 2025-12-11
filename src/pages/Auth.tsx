@@ -10,6 +10,8 @@ import { User } from "@supabase/supabase-js";
 import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
+import { useTranslation } from "@/hooks/useTranslation";
+import LanguageSelector from "@/components/LanguageSelector";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -27,6 +29,7 @@ const signupSchema = loginSchema.extend({
 type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin';
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -393,6 +396,9 @@ export default function Auth() {
     <div className="min-h-screen bg-white pb-20">
       {/* Header avec 224SOLUTIONS et boutons */}
       <div className="text-center py-8 px-4">
+        <div className="flex justify-end mb-4 px-4">
+          <LanguageSelector variant="compact" />
+        </div>
         <h1 className="text-4xl font-bold text-purple-600 mb-6">224SOLUTIONS</h1>
 
         {/* Boutons du header */}
@@ -402,29 +408,29 @@ export default function Auth() {
             className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full"
             onClick={() => navigate('/home')}
           >
-            Accueil
+            {t('auth.home')}
           </Button>
           <Button
             size="sm"
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
             onClick={() => navigate('/marketplace')}
           >
-            Marché
+            {t('auth.market')}
           </Button>
           <Button
             size="sm"
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full"
           >
-            Services
+            {t('auth.services')}
           </Button>
         </div>
 
         {/* Authentification avec Supabase */}
-        <p className="text-gray-500 mb-4 text-lg">Authentification avec Supabase</p>
+        <p className="text-gray-500 mb-4 text-lg">{t('auth.supabaseAuth')}</p>
 
         {/* Titre principal */}
         <h2 className="text-2xl text-gray-600 mb-8">
-          Connectez-vous à votre <span className="font-bold text-gray-800">espace professionnel</span>
+          {t('auth.connectToSpace')} <span className="font-bold text-gray-800">{t('auth.professionalSpace')}</span>
         </h2>
       </div>
 
@@ -432,7 +438,7 @@ export default function Auth() {
       <div className="max-w-4xl mx-auto px-6 mt-8">
         <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
           <h3 className="text-xl font-bold text-center mb-4">
-            {showSignup ? "Sélectionnez votre type de compte" : "Types de comptes supportés"}
+            {showSignup ? t('auth.selectAccountType') : t('auth.supportedAccounts')}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <button
@@ -441,7 +447,7 @@ export default function Auth() {
                 }`}
             >
               <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
-              <span className="font-medium">Client</span>
+              <span className="font-medium">{t('auth.client')}</span>
             </button>
             <button
               onClick={() => handleRoleClick('vendeur')}
@@ -449,8 +455,8 @@ export default function Auth() {
                 }`}
             >
               <Store className="h-6 w-6 text-green-600 mb-2" />
-              <span className="font-medium">Marchand</span>
-              <span className="text-xs text-muted-foreground">15 services pro</span>
+              <span className="font-medium">{t('auth.merchant')}</span>
+              <span className="text-xs text-muted-foreground">{t('auth.merchantSub')}</span>
             </button>
             <button
               onClick={() => handleRoleClick('livreur')}
@@ -458,7 +464,7 @@ export default function Auth() {
                 }`}
             >
               <Truck className="h-6 w-6 text-orange-600 mb-2" />
-              <span className="font-medium">Livreur</span>
+              <span className="font-medium">{t('auth.deliveryDriver')}</span>
             </button>
             <button
               onClick={() => handleRoleClick('taxi')}
@@ -466,7 +472,7 @@ export default function Auth() {
                 }`}
             >
               <Bike className="h-6 w-6 text-yellow-600 mb-2" />
-              <span className="font-medium">Taxi Moto</span>
+              <span className="font-medium">{t('auth.taxiMoto')}</span>
             </button>
             <button
               onClick={() => handleRoleClick('transitaire')}
@@ -474,7 +480,7 @@ export default function Auth() {
                 }`}
             >
               <Ship className="h-6 w-6 text-indigo-600 mb-2" />
-              <span className="font-medium">Transitaire</span>
+              <span className="font-medium">{t('auth.transitAgent')}</span>
             </button>
           </div>
         </div>
@@ -775,25 +781,25 @@ export default function Auth() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">Prénom</Label>
+                      <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                       <Input
                         id="firstName"
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        placeholder="Votre prénom"
+                        placeholder={t('auth.firstName')}
                         required
                         className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Nom</Label>
+                      <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                       <Input
                         id="lastName"
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
-                        placeholder="Votre nom"
+                        placeholder={t('auth.lastName')}
                         required
                         className="mt-1"
                       />
@@ -896,14 +902,14 @@ export default function Auth() {
               </div>
 
               <div>
-                <Label htmlFor="password">Mot de passe</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <div className="relative mt-1">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="Minimum 6 caractères"
+                    placeholder={t('auth.password')}
                     required
                     className="pr-10"
                   />
@@ -919,14 +925,14 @@ export default function Auth() {
 
               {showSignup && (
                 <div>
-                  <Label htmlFor="confirmPassword">Retaper le mot de passe</Label>
+                  <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
                   <div className="relative mt-1">
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      placeholder="Retapez votre mot de passe"
+                      placeholder={t('auth.confirmPassword')}
                       required
                       className="pr-10"
                     />
@@ -952,7 +958,7 @@ export default function Auth() {
                     }}
                     className="text-sm text-purple-600 hover:underline"
                   >
-                    Mot de passe oublié ?
+                    {t('auth.forgotPassword')}
                   </button>
                 </div>
               )}
@@ -965,10 +971,10 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {showSignup ? "Inscription en cours..." : "Connexion en cours..."}
+                    {showSignup ? t('auth.registering') : t('auth.loggingIn')}
                   </>
                 ) : (
-                  showSignup ? "S'inscrire" : 'Se connecter'
+                  showSignup ? t('auth.register') : t('auth.login')
                 )}
               </Button>
 
@@ -983,7 +989,7 @@ export default function Auth() {
                   }}
                   className="text-sm text-purple-600 font-medium hover:underline"
                 >
-                  {showSignup ? "Déjà un compte ? Se connecter" : "Pas de compte ? S'inscrire"}
+                  {showSignup ? `${t('auth.hasAccount')} ${t('auth.loginHere')}` : `${t('auth.noAccount')} ${t('auth.createOne')}`}
                 </button>
               </div>
             </form>
