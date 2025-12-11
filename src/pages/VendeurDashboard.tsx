@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from "@/hooks/useUserInfo";
+import { useTranslation } from "@/hooks/useTranslation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { VendorSidebar } from "@/components/vendor/VendorSidebar";
 import { useVendorStats } from "@/hooks/useVendorData";
@@ -65,6 +66,7 @@ import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 export default function VendeurDashboard() {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   useRoleRedirect();
@@ -90,35 +92,35 @@ export default function VendeurDashboard() {
 
     return [
       {
-        label: "Chiffre d'affaires",
+        label: t('vendor.revenue'),
         value: `${Math.round(revenue).toLocaleString()} GNF`,
         change: "",
         icon: DollarSign,
         color: "bg-green-50 text-green-600"
       },
       {
-        label: "Commandes",
+        label: t('vendor.orders'),
         value: `${ordersCount.toLocaleString()}`,
         change: "",
         icon: ShoppingCart,
         color: "bg-blue-50 text-blue-600"
       },
       {
-        label: "Clients actifs",
+        label: t('vendor.activeClients'),
         value: `${customersCount.toLocaleString()}`,
         change: "",
         icon: Users,
         color: "bg-purple-50 text-purple-600"
       },
       {
-        label: "Taux conversion",
+        label: t('vendor.conversionRate'),
         value: `${conversion.toFixed(1)}%`,
         change: "",
         icon: Target,
         color: "bg-orange-50 text-orange-600"
       }
     ];
-  }, [stats]);
+  }, [stats, t]);
 
   // Rediriger vers dashboard par défaut (optimisé pour éviter boucles)
   useEffect(() => {
@@ -184,19 +186,19 @@ export default function VendeurDashboard() {
     try {
       await signOut();
       toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
+        title: t('common.signOutSuccess'),
+        description: t('common.signOutSuccess'),
       });
       navigate('/');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       toast({
-        title: "Erreur de déconnexion",
-        description: "Une erreur est survenue lors de la déconnexion",
+        title: t('common.error'),
+        description: t('error.generic'),
         variant: "destructive"
       });
     }
-  }, [signOut, toast, navigate]);
+  }, [signOut, toast, navigate, t]);
 
   // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
   const isLoading = !user || typeof profile === 'undefined' || statsLoading;
@@ -207,17 +209,17 @@ export default function VendeurDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-white p-6">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle className="text-red-600">Erreur de chargement</CardTitle>
+            <CardTitle className="text-red-600">{t('vendor.loadError')}</CardTitle>
             <CardDescription>
-              Impossible de charger les données de votre espace vendeur
+              {t('vendor.loadErrorDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Veuillez vérifier votre connexion internet et réessayer.
+              {t('vendor.checkConnection')}
             </p>
             <Button onClick={() => window.location.reload()} className="w-full">
-              Recharger la page
+              {t('common.reloadPage')}
             </Button>
           </CardContent>
         </Card>
@@ -232,7 +234,7 @@ export default function VendeurDashboard() {
           <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
           <div className="w-3 h-3 rounded-full bg-indigo-600 animate-pulse [animation-delay:150ms]"></div>
           <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse [animation-delay:300ms]"></div>
-          <span className="text-sm font-medium">Chargement de votre espace vendeur…</span>
+          <span className="text-sm font-medium">{t('vendor.loadingSpace')}</span>
         </div>
       </div>
     );
@@ -258,8 +260,8 @@ export default function VendeurDashboard() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Commandes récentes</CardTitle>
-            <CardDescription>Vos 5 dernières commandes</CardDescription>
+            <CardTitle>{t('vendor.recentOrders')}</CardTitle>
+            <CardDescription>{t('vendor.last5Orders')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -270,7 +272,7 @@ export default function VendeurDashboard() {
                       <Package className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium">Commande #{o.order_number}</p>
+                      <p className="font-medium">{t('vendor.orders')} #{o.order_number}</p>
                       <p className="text-sm text-muted-foreground">{o.customer_label}</p>
                     </div>
                   </div>
@@ -281,7 +283,7 @@ export default function VendeurDashboard() {
                 </div>
               ))}
               {recentOrders.length === 0 && (
-                <div className="text-sm text-muted-foreground">Aucune commande récente.</div>
+                <div className="text-sm text-muted-foreground">{t('vendor.noRecentOrders')}</div>
               )}
             </div>
           </CardContent>
@@ -296,8 +298,8 @@ export default function VendeurDashboard() {
       {/* Actions rapides */}
       <Card>
         <CardHeader>
-          <CardTitle>Actions rapides</CardTitle>
-          <CardDescription>Accédez rapidement aux fonctionnalités principales</CardDescription>
+          <CardTitle>{t('vendor.quickActions')}</CardTitle>
+          <CardDescription>{t('vendor.quickActionsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -307,7 +309,7 @@ export default function VendeurDashboard() {
               onClick={() => navigate('/vendeur/pos')}
             >
               <Activity className="w-6 h-6" />
-              <span className="text-sm font-medium">Point de vente</span>
+              <span className="text-sm font-medium">{t('vendor.pos')}</span>
             </Button>
             <Button
               variant="outline"
@@ -315,7 +317,7 @@ export default function VendeurDashboard() {
               onClick={() => navigate('/vendeur/products')}
             >
               <Package className="w-6 h-6" />
-              <span className="text-sm font-medium">Produits</span>
+              <span className="text-sm font-medium">{t('vendor.products')}</span>
             </Button>
             <Button
               variant="outline"
@@ -323,7 +325,7 @@ export default function VendeurDashboard() {
               onClick={() => navigate('/vendeur/orders')}
             >
               <ShoppingCart className="w-6 h-6" />
-              <span className="text-sm font-medium">Commandes</span>
+              <span className="text-sm font-medium">{t('vendor.orders')}</span>
             </Button>
             <Button
               variant="outline"
@@ -331,7 +333,7 @@ export default function VendeurDashboard() {
               onClick={() => navigate('/vendeur/wallet')}
             >
               <DollarSign className="w-6 h-6" />
-              <span className="text-sm font-medium">Wallet</span>
+              <span className="text-sm font-medium">{t('vendor.wallet')}</span>
             </Button>
           </div>
         </CardContent>
@@ -343,15 +345,15 @@ export default function VendeurDashboard() {
   const SettingsPage = () => (
     <Card>
       <CardHeader>
-        <CardTitle>Paramètres du compte</CardTitle>
-        <CardDescription>Configurez votre espace vendeur</CardDescription>
+        <CardTitle>{t('vendor.settings')}</CardTitle>
+        <CardDescription>{t('vendor.settingsDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2">Informations du compte</h3>
-            <p className="text-sm text-muted-foreground">Email: {user?.email}</p>
-            <p className="text-sm text-muted-foreground">Nom: {profile?.first_name} {profile?.last_name}</p>
+            <h3 className="font-semibold mb-2">{t('vendor.accountInfo')}</h3>
+            <p className="text-sm text-muted-foreground">{t('common.email')}: {user?.email}</p>
+            <p className="text-sm text-muted-foreground">{t('common.name')}: {profile?.first_name} {profile?.last_name}</p>
             {userInfo && (
               <p className="text-sm text-muted-foreground">ID: {userInfo.public_id}</p>
             )}
