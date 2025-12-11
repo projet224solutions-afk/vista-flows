@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Crown, Globe, Settings, User, Menu } from "lucide-react";
+import { Crown, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export function Header() {
   const { profile, signOut } = useAuth();
@@ -42,10 +43,7 @@ export function Header() {
               </>
             )}
 
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Globe className="h-4 w-4 mr-2" />
-              FR
-            </Button>
+            <LanguageSelector variant="compact" />
 
             {profile ? (
               <>
