@@ -24,6 +24,28 @@ export const translations: Record<string, Record<string, string>> = {
     "header.subtitle": "Plateforme Intégrée Multi-Services",
     "header.connectedAs": "Connecté en tant que",
     
+    // Home Page
+    "home.welcome": "Bienvenue sur 224Solutions",
+    "home.discoverServices": "Découvrez nos services à proximité et nos produits",
+    "home.createService": "Créez votre Service Professionnel",
+    "home.serviceCategories": "Restaurant, Boutique, Livraison, Transport, Beauté, Santé, Éducation...",
+    "home.professionalCategories": "15 catégories professionnelles",
+    "home.withCompleteTools": "avec des outils complets inspirés des meilleurs standards internationaux",
+    "home.startNow": "Commencer maintenant",
+    "home.discover15Services": "Découvrir les 15 services",
+    "home.restaurant": "Restaurant",
+    "home.boutique": "Boutique",
+    "home.delivery": "Livraison",
+    "home.transport": "Transport",
+    "home.andMore": "+11 autres",
+    "home.nearbyServices": "Services à proximité",
+    "home.latestProducts": "Derniers produits",
+    "home.seeAll": "Voir tout",
+    "home.noProducts": "Aucun produit disponible",
+    "home.exploreMarketplace": "Explorer la marketplace",
+    "home.taxiMotos": "Taxi-Motos",
+    "home.shops": "Boutiques",
+    
     // Common
     "common.loading": "Chargement...",
     "common.error": "Erreur",
@@ -151,6 +173,28 @@ export const translations: Record<string, Record<string, string>> = {
     // Header
     "header.subtitle": "Integrated Multi-Services Platform",
     "header.connectedAs": "Connected as",
+    
+    // Home Page
+    "home.welcome": "Welcome to 224Solutions",
+    "home.discoverServices": "Discover our nearby services and products",
+    "home.createService": "Create your Professional Service",
+    "home.serviceCategories": "Restaurant, Shop, Delivery, Transport, Beauty, Health, Education...",
+    "home.professionalCategories": "15 professional categories",
+    "home.withCompleteTools": "with complete tools inspired by the best international standards",
+    "home.startNow": "Start now",
+    "home.discover15Services": "Discover 15 services",
+    "home.restaurant": "Restaurant",
+    "home.boutique": "Shop",
+    "home.delivery": "Delivery",
+    "home.transport": "Transport",
+    "home.andMore": "+11 more",
+    "home.nearbyServices": "Nearby services",
+    "home.latestProducts": "Latest products",
+    "home.seeAll": "See all",
+    "home.noProducts": "No products available",
+    "home.exploreMarketplace": "Explore marketplace",
+    "home.taxiMotos": "Taxi-Motos",
+    "home.shops": "Shops",
     
     // Common
     "common.loading": "Loading...",

@@ -21,11 +21,10 @@ import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/Res
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 
 // Types pour les données réelles
-interface ServiceStats {
-  id: string;
-  title: string;
-  icon: JSX.Element;
-  count: string;
+interface ServiceStatsData {
+  boutiques: number;
+  taxi: number;
+  livraison: number;
 }
 
 export default function Home() {
@@ -39,7 +38,7 @@ export default function Home() {
   useRoleRedirect();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [serviceStats, setServiceStats] = useState<ServiceStats[]>([]);
+  const [serviceStats, setServiceStats] = useState<ServiceStatsData>({ boutiques: 0, taxi: 0, livraison: 0 });
   const [notificationCount, setNotificationCount] = useState(0);
 
   // Utiliser le hook universel pour les produits
@@ -110,49 +109,15 @@ export default function Home() {
         livreurs: livreurCount
       });
 
-      setServiceStats([
-        {
-          id: 'boutiques',
-          title: 'Boutiques',
-          icon: <Store className="w-6 h-6 text-vendeur-primary" />,
-          count: `${vendorsCount || 0}`
-        },
-        {
-          id: 'taxi',
-          title: 'Taxi-Motos',
-          icon: <Car className="w-6 h-6 text-taxi-primary" />,
-          count: `${taxiCount || 0}`
-        },
-        {
-          id: 'livraison',
-          title: 'Livraison',
-          icon: <Truck className="w-6 h-6 text-livreur-primary" />,
-          count: `${livreurCount || 0}`
-        }
-      ]);
+      setServiceStats({
+        boutiques: vendorsCount || 0,
+        taxi: taxiCount || 0,
+        livraison: livreurCount || 0
+      });
     } catch (error) {
       console.error('❌ Erreur chargement statistiques:', error);
       // Afficher des valeurs par défaut en cas d'erreur
-      setServiceStats([
-        {
-          id: 'boutiques',
-          title: 'Boutiques',
-          icon: <Store className="w-6 h-6 text-vendeur-primary" />,
-          count: '0'
-        },
-        {
-          id: 'taxi',
-          title: 'Taxi-Motos',
-          icon: <Car className="w-6 h-6 text-taxi-primary" />,
-          count: '0'
-        },
-        {
-          id: 'livraison',
-          title: 'Livraison',
-          icon: <Truck className="w-6 h-6 text-livreur-primary" />,
-          count: '0'
-        }
-      ]);
+      setServiceStats({ boutiques: 0, taxi: 0, livraison: 0 });
     }
   };
 
@@ -256,8 +221,8 @@ export default function Home() {
       <section className="px-4 py-6">
         <Card className="overflow-hidden">
           <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
-            <h2 className="text-2xl font-bold mb-2">Bienvenue sur 224Solutions</h2>
-            <p className="text-sm opacity-90">Découvrez nos services à proximité et nos produits</p>
+            <h2 className="text-2xl font-bold mb-2">{t('home.welcome')}</h2>
+            <p className="text-sm opacity-90">{t('home.discoverServices')}</p>
           </div>
         </Card>
       </section>
@@ -275,12 +240,12 @@ export default function Home() {
               
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  Créez votre Service Professionnel
+                  {t('home.createService')}
                 </h2>
                 <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                  Restaurant, Boutique, Livraison, Transport, Beauté, Santé, Éducation... 
+                  {t('home.serviceCategories')} 
                   <br />
-                  <span className="font-semibold text-foreground">15 catégories professionnelles</span> avec des outils complets inspirés des meilleurs standards internationaux
+                  <span className="font-semibold text-foreground">{t('home.professionalCategories')}</span> {t('home.withCompleteTools')}
                 </p>
               </div>
 
@@ -291,7 +256,7 @@ export default function Home() {
                   className="gap-2 text-lg px-8 shadow-lg hover:scale-105 transition-transform"
                 >
                   <Store className="w-5 h-5" />
-                  Commencer maintenant
+                  {t('home.startNow')}
                 </Button>
                 <Button
                   variant="outline"
@@ -299,30 +264,30 @@ export default function Home() {
                   onClick={() => navigate('/services')}
                   className="gap-2"
                 >
-                  Découvrir les 15 services
+                  {t('home.discover15Services')}
                 </Button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 text-xs text-muted-foreground">
                 <div className="flex items-center justify-center gap-1">
                   <Utensils className="w-4 h-4 text-primary" />
-                  <span>Restaurant</span>
+                  <span>{t('home.restaurant')}</span>
                 </div>
                 <div className="flex items-center justify-center gap-1">
                   <Store className="w-4 h-4 text-primary" />
-                  <span>Boutique</span>
+                  <span>{t('home.boutique')}</span>
                 </div>
                 <div className="flex items-center justify-center gap-1">
                   <Truck className="w-4 h-4 text-primary" />
-                  <span>Livraison</span>
+                  <span>{t('home.delivery')}</span>
                 </div>
                 <div className="flex items-center justify-center gap-1">
                   <Car className="w-4 h-4 text-primary" />
-                  <span>Transport</span>
+                  <span>{t('home.transport')}</span>
                 </div>
                 <div className="flex items-center justify-center gap-1">
                   <Plane className="w-4 h-4 text-primary" />
-                  <span>+11 autres</span>
+                  <span>{t('home.andMore')}</span>
                 </div>
               </div>
             </div>
@@ -333,10 +298,14 @@ export default function Home() {
       {/* Services à proximité - Responsive */}
       <section className="p-responsive">
         <h2 className="heading-responsive font-bold text-foreground mb-4">
-          Services à proximité
+          {t('home.nearbyServices')}
         </h2>
         <ResponsiveGrid mobileCols={2} tabletCols={3} desktopCols={3} gap={isMobile ? "sm" : "md"}>
-          {serviceStats.map((service) => (
+          {[
+            { id: 'boutiques', titleKey: 'home.shops', icon: <Store className="w-6 h-6 text-vendeur-primary" />, count: serviceStats.boutiques },
+            { id: 'taxi', titleKey: 'home.taxiMotos', icon: <Car className="w-6 h-6 text-taxi-primary" />, count: serviceStats.taxi },
+            { id: 'livraison', titleKey: 'home.delivery', icon: <Truck className="w-6 h-6 text-livreur-primary" />, count: serviceStats.livraison }
+          ].map((service) => (
             <Card 
               key={service.id} 
               className="text-center hover:shadow-elegant transition-all cursor-pointer"
@@ -347,7 +316,7 @@ export default function Home() {
                   <div className="p-3 bg-accent rounded-full mb-2">
                     {service.icon}
                   </div>
-                  <h3 className="font-medium text-sm mb-1">{service.title}</h3>
+                  <h3 className="font-medium text-sm mb-1">{t(service.titleKey)}</h3>
                   <p className="text-xs text-muted-foreground">{service.count}</p>
                 </div>
               </CardContent>
@@ -360,27 +329,27 @@ export default function Home() {
       <section className="p-responsive">
         <div className="flex items-center justify-between mb-4">
           <h2 className="heading-responsive font-bold text-foreground">
-            Derniers produits
+            {t('home.latestProducts')}
           </h2>
           <Button 
             variant="ghost" 
             size={isMobile ? "sm" : "default"} 
             onClick={() => navigate('/marketplace')}
           >
-            Voir tout
+            {t('home.seeAll')}
           </Button>
         </div>
         {productsLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
         ) : universalProducts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Aucun produit disponible</p>
+            <p className="text-muted-foreground">{t('home.noProducts')}</p>
             <Button 
               variant="outline" 
               className="mt-4"
               onClick={() => navigate('/marketplace')}
             >
-              Explorer la marketplace
+              {t('home.exploreMarketplace')}
             </Button>
           </div>
         ) : (
