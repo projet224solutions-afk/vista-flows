@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,7 @@ export default function LivreurDashboard() {
   const { location, getCurrentLocation } = useCurrentLocation();
   const { isMobile, isTablet } = useResponsive();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('missions');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -303,7 +305,7 @@ export default function LivreurDashboard() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Truck className="h-12 w-12 animate-bounce mx-auto mb-4 text-primary" />
-          <p>Chargement des données...</p>
+          <p>{t('delivery.loadingData')}</p>
         </div>
       </div>
     );
@@ -370,11 +372,11 @@ export default function LivreurDashboard() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className={`font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
-                🚴 Tableau de Bord Livreur
+                🚴 {t('delivery.dashboard')}
               </h1>
             </div>
             <p className="text-sm md:text-base text-muted-foreground">
-              Bienvenue {profile?.first_name || 'Livreur'} - 224Solutions Delivery
+              {t('common.welcome')} {profile?.first_name || 'Livreur'} - 224Solutions Delivery
             </p>
             <div className="mt-1">
               <UserIdDisplay />
@@ -385,7 +387,7 @@ export default function LivreurDashboard() {
                 className="mt-2 gap-1"
                 style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
               >
-                ⚡ {currentDelivery ? 'Livraison en cours' : 'Course en cours'}
+                ⚡ {currentDelivery ? t('delivery.inProgressDelivery') : t('taxi.dashboard')}
               </Badge>
             )}
           </div>
@@ -400,7 +402,7 @@ export default function LivreurDashboard() {
             className="gap-2"
           >
             <Package className="h-4 w-4" />
-            {!isMobile && 'Nouvelle Livraison'}
+            {!isMobile && t('delivery.newDelivery')}
           </Button>
         </div>
 
