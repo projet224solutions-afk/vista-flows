@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
-  ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText
+  ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,7 @@ const categories: NavCategory[] = [
     color: 'from-emerald-500 to-emerald-600',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
+      { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true },
     ]
   },
   {

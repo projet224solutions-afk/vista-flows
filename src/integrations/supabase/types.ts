@@ -836,6 +836,48 @@ export type Database = {
           },
         ]
       }
+      balance_reconciliation: {
+        Row: {
+          calculated_balance: number
+          created_at: string | null
+          difference: number
+          id: string
+          is_reconciled: boolean | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reconciliation_action: string | null
+          stored_balance: number
+          wallet_id: string
+          wallet_type: string
+        }
+        Insert: {
+          calculated_balance: number
+          created_at?: string | null
+          difference: number
+          id?: string
+          is_reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_action?: string | null
+          stored_balance: number
+          wallet_id: string
+          wallet_type: string
+        }
+        Update: {
+          calculated_balance?: number
+          created_at?: string | null
+          difference?: number
+          id?: string
+          is_reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_action?: string | null
+          stored_balance?: number
+          wallet_id?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       blocked_ips: {
         Row: {
           blocked_at: string | null
@@ -3681,6 +3723,195 @@ export type Database = {
           },
         ]
       }
+      financial_ledger: {
+        Row: {
+          actor_id: string
+          actor_type: string
+          amount: number
+          balance_after_credit: number | null
+          balance_after_debit: number | null
+          balance_before_credit: number | null
+          balance_before_debit: number | null
+          confirmed_at: string | null
+          created_at: string | null
+          credit_account: string | null
+          currency: string | null
+          debit_account: string | null
+          description: string | null
+          id: string
+          is_valid: boolean | null
+          ledger_hash: string
+          metadata: Json | null
+          module_name: string | null
+          module_signature: string | null
+          previous_hash: string | null
+          transaction_id: string
+          transaction_type: string
+          validation_status: string | null
+        }
+        Insert: {
+          actor_id: string
+          actor_type: string
+          amount: number
+          balance_after_credit?: number | null
+          balance_after_debit?: number | null
+          balance_before_credit?: number | null
+          balance_before_debit?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          credit_account?: string | null
+          currency?: string | null
+          debit_account?: string | null
+          description?: string | null
+          id?: string
+          is_valid?: boolean | null
+          ledger_hash: string
+          metadata?: Json | null
+          module_name?: string | null
+          module_signature?: string | null
+          previous_hash?: string | null
+          transaction_id: string
+          transaction_type: string
+          validation_status?: string | null
+        }
+        Update: {
+          actor_id?: string
+          actor_type?: string
+          amount?: number
+          balance_after_credit?: number | null
+          balance_after_debit?: number | null
+          balance_before_credit?: number | null
+          balance_before_debit?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          credit_account?: string | null
+          currency?: string | null
+          debit_account?: string | null
+          description?: string | null
+          id?: string
+          is_valid?: boolean | null
+          ledger_hash?: string
+          metadata?: Json | null
+          module_name?: string | null
+          module_signature?: string | null
+          previous_hash?: string | null
+          transaction_id?: string
+          transaction_type?: string
+          validation_status?: string | null
+        }
+        Relationships: []
+      }
+      financial_quarantine: {
+        Row: {
+          actor_id: string
+          actor_type: string
+          amount: number
+          anomaly_details: Json | null
+          created_at: string | null
+          credit_account: string | null
+          debit_account: string | null
+          id: string
+          original_payload: Json | null
+          original_transaction_id: string
+          quarantine_reason: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          rule_violated: string | null
+          status: string | null
+          transaction_type: string
+        }
+        Insert: {
+          actor_id: string
+          actor_type: string
+          amount: number
+          anomaly_details?: Json | null
+          created_at?: string | null
+          credit_account?: string | null
+          debit_account?: string | null
+          id?: string
+          original_payload?: Json | null
+          original_transaction_id: string
+          quarantine_reason: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          rule_violated?: string | null
+          status?: string | null
+          transaction_type: string
+        }
+        Update: {
+          actor_id?: string
+          actor_type?: string
+          amount?: number
+          anomaly_details?: Json | null
+          created_at?: string | null
+          credit_account?: string | null
+          debit_account?: string | null
+          id?: string
+          original_payload?: Json | null
+          original_transaction_id?: string
+          quarantine_reason?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          rule_violated?: string | null
+          status?: string | null
+          transaction_type?: string
+        }
+        Relationships: []
+      }
+      financial_rules: {
+        Row: {
+          applies_to: string[] | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          rule_code: string
+          rule_description: string | null
+          rule_logic: Json
+          rule_name: string
+          rule_type: string
+          severity: string | null
+          updated_at: string | null
+          updated_by: string | null
+          version: number | null
+        }
+        Insert: {
+          applies_to?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_code: string
+          rule_description?: string | null
+          rule_logic: Json
+          rule_name: string
+          rule_type: string
+          severity?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          applies_to?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_code?: string
+          rule_description?: string | null
+          rule_logic?: Json
+          rule_name?: string
+          rule_type?: string
+          severity?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
       financial_transactions: {
         Row: {
           amount: number
@@ -4842,6 +5073,33 @@ export type Database = {
           },
         ]
       }
+      module_signatures: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          module_key: string
+          module_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          module_key: string
+          module_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          module_key?: string
+          module_name?: string
+        }
+        Relationships: []
+      }
       moneroo_payments: {
         Row: {
           amount: number
@@ -5309,6 +5567,135 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pdg_financial_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          is_resolved: boolean | null
+          message: string
+          metadata: Json | null
+          related_actor_id: string | null
+          related_transaction_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message: string
+          metadata?: Json | null
+          related_actor_id?: string | null
+          related_transaction_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_resolved?: boolean | null
+          message?: string
+          metadata?: Json | null
+          related_actor_id?: string | null
+          related_transaction_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      pdg_financial_control: {
+        Row: {
+          activated_at: string | null
+          activated_by: string
+          affected_types: string[] | null
+          control_type: string
+          deactivated_at: string | null
+          deactivated_by: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          reason: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by: string
+          affected_types?: string[] | null
+          control_type: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string
+          affected_types?: string[] | null
+          control_type?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      pdg_financial_stats: {
+        Row: {
+          created_at: string | null
+          failed_transactions: number | null
+          id: string
+          quarantined_transactions: number | null
+          stat_date: string | null
+          stat_hour: number | null
+          successful_transactions: number | null
+          total_transactions: number | null
+          total_volume: number | null
+          transactions_by_type: Json | null
+          volume_by_actor_type: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          failed_transactions?: number | null
+          id?: string
+          quarantined_transactions?: number | null
+          stat_date?: string | null
+          stat_hour?: number | null
+          successful_transactions?: number | null
+          total_transactions?: number | null
+          total_volume?: number | null
+          transactions_by_type?: Json | null
+          volume_by_actor_type?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          failed_transactions?: number | null
+          id?: string
+          quarantined_transactions?: number | null
+          stat_date?: string | null
+          stat_hour?: number | null
+          successful_transactions?: number | null
+          total_transactions?: number | null
+          total_volume?: number | null
+          transactions_by_type?: Json | null
+          volume_by_actor_type?: Json | null
+        }
+        Relationships: []
       }
       pdg_management: {
         Row: {
@@ -11083,6 +11470,10 @@ export type Database = {
             }
             Returns: boolean
           }
+      activate_panic_mode: {
+        Args: { p_pdg_id: string; p_reason: string }
+        Returns: Json
+      }
       addauth: { Args: { "": string }; Returns: boolean }
       addgeometrycolumn:
         | {
@@ -11375,6 +11766,7 @@ export type Database = {
         Args: { credit_amount: number; receiver_user_id: string }
         Returns: undefined
       }
+      deactivate_panic_mode: { Args: { p_pdg_id: string }; Returns: Json }
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
@@ -11424,6 +11816,21 @@ export type Database = {
         Returns: string
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      execute_banking_transaction: {
+        Args: {
+          p_actor_id: string
+          p_actor_type: string
+          p_amount: number
+          p_credit_account: string
+          p_debit_account: string
+          p_description?: string
+          p_metadata?: Json
+          p_module_name?: string
+          p_transaction_id: string
+          p_transaction_type: string
+        }
+        Returns: Json
+      }
       extract_number: { Args: { p_id: string }; Returns: number }
       extract_prefix: { Args: { p_id: string }; Returns: string }
       find_nearby_taxi_drivers: {
@@ -11471,6 +11878,17 @@ export type Database = {
         Returns: string
       }
       generate_invitation_token: { Args: never; Returns: string }
+      generate_ledger_hash: {
+        Args: {
+          p_actor_id: string
+          p_amount: number
+          p_credit_account: string
+          p_debit_account: string
+          p_previous_hash?: string
+          p_transaction_id: string
+        }
+        Returns: string
+      }
       generate_public_id: { Args: never; Returns: string }
       generate_random_digits: { Args: { length: number }; Returns: string }
       generate_random_letters: { Args: { length: number }; Returns: string }
@@ -11658,6 +12076,7 @@ export type Database = {
         }[]
       }
       get_pdg_dashboard_stats: { Args: never; Returns: Json }
+      get_pdg_financial_dashboard: { Args: never; Returns: Json }
       get_pdg_revenue_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -12755,6 +13174,14 @@ export type Database = {
         Returns: string
       }
       validate_standard_id: { Args: { p_id: string }; Returns: boolean }
+      verify_ledger_integrity: {
+        Args: never
+        Returns: {
+          invalid_entries: number
+          is_valid: boolean
+          last_verified_at: string
+        }[]
+      }
       verify_wallet_exists: {
         Args: { target_user_id: string }
         Returns: boolean
