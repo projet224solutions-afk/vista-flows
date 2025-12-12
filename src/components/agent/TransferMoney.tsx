@@ -206,7 +206,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
             if (vendorWallet && !results.find(r => r.wallet_id === vendorWallet.id)) {
               results.push({
-                id: vendor.id,
+                id: vendor.user_id, // CORRECTION: utiliser user_id pas vendor.id
                 name: vendor.business_name || 'Vendeur',
                 email: vendor.email || '',
                 type: 'vendor',
