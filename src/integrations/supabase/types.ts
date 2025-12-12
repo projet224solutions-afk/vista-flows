@@ -11939,6 +11939,17 @@ export type Database = {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
       }
+      process_secure_bureau_transfer: {
+        Args: {
+          p_amount: number
+          p_bureau_id: string
+          p_description?: string
+          p_fee_percent?: number
+          p_receiver_id: string
+          p_receiver_type: string
+        }
+        Returns: Json
+      }
       process_secure_wallet_transfer: {
         Args: {
           p_amount: number
