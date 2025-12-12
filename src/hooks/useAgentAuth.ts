@@ -139,10 +139,10 @@ export const useAgentAuth = () => {
         return false;
       }
 
-      // Succès → Stocker session
+      // Succès → Stocker session (localStorage pour persistance après refresh)
       if (data.session_token && data.user) {
-        sessionStorage.setItem('agent_session', data.session_token);
-        sessionStorage.setItem('agent_user', JSON.stringify(data.user));
+        localStorage.setItem('agent_session', data.session_token);
+        localStorage.setItem('agent_user', JSON.stringify(data.user));
         
         toast.success(`Bienvenue ${data.user.first_name} ${data.user.last_name} !`);
         
@@ -196,6 +196,8 @@ export const useAgentAuth = () => {
    * Logout
    */
   const logout = () => {
+    localStorage.removeItem('agent_session');
+    localStorage.removeItem('agent_user');
     sessionStorage.removeItem('agent_session');
     sessionStorage.removeItem('agent_user');
     toast.success('Déconnexion réussie');
@@ -206,8 +208,8 @@ export const useAgentAuth = () => {
    * Vérifier si agent connecté
    */
   const isAuthenticated = (): boolean => {
-    const session = sessionStorage.getItem('agent_session');
-    const user = sessionStorage.getItem('agent_user');
+    const session = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+    const user = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
     return !!session && !!user;
   };
 
@@ -215,7 +217,7 @@ export const useAgentAuth = () => {
    * Obtenir agent connecté
    */
   const getCurrentAgent = () => {
-    const userStr = sessionStorage.getItem('agent_user');
+    const userStr = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
     if (!userStr) return null;
     
     try {
