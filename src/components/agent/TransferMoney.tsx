@@ -286,114 +286,83 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
     setTransferring(true);
     try {
-      const referenceNumber = `AGT-TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-      // Créer la transaction de transfert (débit pour l'agent expéditeur)
-      const { error: debitError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: `${referenceNumber}-OUT`,
-          transaction_type: 'transfer_out',
-          amount: -transferAmount,
-          net_amount: -transferAmount,
-          fee: 0,
-          currency: currency,
-          status: 'completed',
-          description: description || `Transfert vers ${selectedUser.name}`,
-          sender_wallet_id: walletId,
-          receiver_wallet_id: selectedUser.wallet_id,
-          metadata: {
-            recipient_name: selectedUser.name,
-            recipient_email: selectedUser.email,
-            recipient_type: selectedUser.type,
-            sender_type: 'agent'
-          }
-        });
-
-      if (debitError) throw debitError;
-
-      // Créer la transaction de réception (crédit pour le destinataire)
-      const { error: creditError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: `${referenceNumber}-IN`,
-          transaction_type: 'transfer_in',
-          amount: transferAmount,
-          net_amount: transferAmount,
-          fee: 0,
-          currency: currency,
-          status: 'completed',
-          description: description || `Transfert reçu d'un agent`,
-          sender_wallet_id: walletId,
-          receiver_wallet_id: selectedUser.wallet_id,
-          metadata: {
-            sender_type: 'agent'
-          }
-        });
-
-      if (creditError) throw creditError;
-
-      // Mettre à jour le solde de l'agent expéditeur
-      const { error: updateSenderError } = await supabase
+      // Récupérer le user_id de l'agent depuis agent_wallets
+      const { data: agentWalletData } = await supabase
         .from('agent_wallets')
-        .update({
-          balance: currentBalance - transferAmount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', walletId);
+        .select('agent_id')
+        .eq('id', walletId)
+        .single();
 
-      if (updateSenderError) throw updateSenderError;
+      if (!agentWalletData) {
+        throw new Error('Wallet agent non trouvé');
+      }
 
-      // Mettre à jour le solde du destinataire selon le type
+      // Récupérer le user_id de l'agent depuis agents_management
+      const { data: agentData } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentWalletData.agent_id)
+        .single();
+
+      if (!agentData?.user_id) {
+        throw new Error('Agent non lié à un utilisateur');
+      }
+
+      // Déterminer le receiver_id selon le type
+      let receiverId: string;
+      
       if (selectedUser.type === 'bureau') {
-        const { data: recipientWallet } = await supabase
-          .from('bureau_wallets')
-          .select('balance')
-          .eq('id', selectedUser.wallet_id)
-          .single();
-
-        if (recipientWallet) {
-          await supabase
-            .from('bureau_wallets')
-            .update({
-              balance: recipientWallet.balance + transferAmount,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', selectedUser.wallet_id);
-        }
+        // Pour les bureaux, on utilise directement l'ID du bureau
+        receiverId = selectedUser.id;
       } else if (selectedUser.type === 'agent') {
-        const { data: recipientWallet } = await supabase
-          .from('agent_wallets')
-          .select('balance')
-          .eq('id', selectedUser.wallet_id)
+        // Pour les agents, récupérer le user_id depuis agents_management
+        const { data: recipientAgent } = await supabase
+          .from('agents_management')
+          .select('user_id')
+          .eq('id', selectedUser.id)
           .single();
-
-        if (recipientWallet) {
-          await supabase
-            .from('agent_wallets')
-            .update({
-              balance: recipientWallet.balance + transferAmount,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', selectedUser.wallet_id);
+        
+        if (!recipientAgent?.user_id) {
+          throw new Error('Agent destinataire non lié à un utilisateur');
         }
+        receiverId = recipientAgent.user_id;
       } else {
-        // Vendeur, chauffeur ou utilisateur standard
-        const { data: recipientWallet } = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('id', selectedUser.wallet_id)
-          .single();
+        // Pour les autres types (vendor, user, driver), utiliser directement l'ID
+        receiverId = selectedUser.id;
+      }
 
-        if (recipientWallet) {
-          await supabase
-            .from('wallets')
-            .update({
-              balance: recipientWallet.balance + transferAmount,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', selectedUser.wallet_id);
-        }
+      // Utiliser la fonction RPC unifiée pour le transfert avec frais
+      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
+        p_sender_id: agentData.user_id,
+        p_receiver_id: receiverId,
+        p_amount: transferAmount,
+        p_currency: currency,
+        p_description: description || `Transfert vers ${selectedUser.name}`,
+        p_is_bureau_transfer: selectedUser.type === 'bureau'
+      });
+
+      if (error) {
+        console.error('❌ Erreur RPC transfert:', error);
+        throw error;
+      }
+
+      console.log('✅ Transfert agent réussi:', data);
+
+      // Mettre à jour le solde de l'agent dans agent_wallets (synchronisation)
+      const { data: updatedWallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', agentData.user_id)
+        .single();
+
+      if (updatedWallet) {
+        await supabase
+          .from('agent_wallets')
+          .update({
+            balance: updatedWallet.balance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', walletId);
       }
 
       toast.success(`Transfert de ${transferAmount.toLocaleString()} ${currency} effectué avec succès`);
