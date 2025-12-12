@@ -11399,7 +11399,7 @@ export type Database = {
       generate_custom_id: { Args: never; Returns: string }
       generate_custom_id_original: { Args: never; Returns: string }
       generate_custom_id_with_role: {
-        Args: { p_role?: string }
+        Args: { p_role: string }
         Returns: string
       }
       generate_invitation_token: { Args: never; Returns: string }
