@@ -11950,16 +11950,27 @@ export type Database = {
         }
         Returns: Json
       }
-      process_secure_wallet_transfer: {
-        Args: {
-          p_amount: number
-          p_description?: string
-          p_fee_percent?: number
-          p_receiver_id: string
-          p_sender_id: string
-        }
-        Returns: Json
-      }
+      process_secure_wallet_transfer:
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_fee_percent?: number
+              p_receiver_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_receiver_id: string
+              p_sender_id: string
+              p_transaction_id?: string
+            }
+            Returns: Json
+          }
       process_wallet_to_card: {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
