@@ -3,21 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-  <!-- Favicon Ultra Professionnel - 224 SOLUTIONS -->
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192" />
-  <link rel="icon" type="image/png" href="/icon-512.png" sizes="512x512" />
   <link rel="shortcut icon" href="/favicon.png" />
   
-  <!-- Mobile Optimized Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
   
-  <!-- iOS Safari -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="224Solutions" />
-  
-  <!-- Android -->
   <meta name="mobile-web-app-capable" content="yes" />
   
   <title>224Solutions - Taxi-Moto, Livraison &amp; E-Commerce</title>
@@ -25,68 +19,47 @@
   <meta name="keywords" content="taxi moto, livraison, e-commerce, Conakry, Guinée, transport, marketplace, courses">
   <meta name="author" content="224Solutions" />
 
-  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://224solutions.com/" />
   <meta property="og:title" content="224Solutions - Taxi-Moto, Livraison &amp; E-Commerce">
   <meta property="og:description" content="Réservez un taxi, commandez vos repas, faites vos achats en ligne. La super-app tout-en-un de la Guinée.">
   <meta property="og:image" content="/favicon.png" />
 
-  <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://224solutions.com/" />
   <meta property="twitter:title" content="224Solutions - Taxi-Moto, Livraison &amp; E-Commerce">
   <meta name="twitter:description" content="Réservez un taxi, commandez vos repas, faites vos achats en ligne. La super-app tout-en-un de la Guinée.">
-  <meta property="twitter:image" content="/favicon.png" />
 
-  <!-- PWA -->
   <meta name="theme-color" content="#2563eb" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#2563eb" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1d4ed8" />
-  <!-- Apple Touch Icons Professionnels -->
-  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
 
-  <!-- Preconnect to external domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  
-  <!-- Preload critical fonts -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" /></noscript>
-  
-  <!-- Load non-critical fonts async -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Critical CSS for loader -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; width: 100%; }
     
-    #initial-loader {
+    #app-loader {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+      background: #fafafa;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.4s ease-out, visibility 0.4s;
+      transition: opacity 0.3s ease-out;
     }
     
-    #initial-loader.hidden {
+    #app-loader.fade-out {
       opacity: 0;
-      visibility: hidden;
       pointer-events: none;
     }
     
-    #initial-loader .logo {
+    #app-loader .logo {
       font-size: 2rem;
       font-weight: 700;
       color: #007BFF;
@@ -94,7 +67,7 @@
       font-family: 'Poppins', system-ui, sans-serif;
     }
     
-    #initial-loader .spinner {
+    #app-loader .spinner {
       width: 40px;
       height: 40px;
       border: 3px solid #e5e7eb;
@@ -103,11 +76,10 @@
       animation: spin 0.8s linear infinite;
     }
     
-    #initial-loader .loading-text {
+    #app-loader .text {
       margin-top: 1rem;
       color: #6b7280;
       font-size: 0.875rem;
-      font-family: system-ui, sans-serif;
     }
     
     @keyframes spin {
@@ -119,94 +91,63 @@
       width: 100%;
     }
   </style>
-  
-  <!-- Ultra-robust loader management for Vercel -->
-  <script>
-    (function() {
-      'use strict';
-      
-      var MAX_WAIT = 8000; // 8 secondes max avant de forcer le hide
-      var loaderHidden = false;
-      
-      function hideLoader() {
-        if (loaderHidden) return;
-        loaderHidden = true;
-        
-        var loader = document.getElementById('initial-loader');
-        if (loader) {
-          loader.classList.add('hidden');
-          setTimeout(function() {
-            if (loader && loader.parentNode) {
-              loader.style.display = 'none';
-            }
-          }, 500);
-        }
-      }
-      
-      // Exposer globalement
-      window.__hideLoader = hideLoader;
-      
-      // Vérifier si l'app React est montée
-      function checkAppMounted() {
-        var root = document.getElementById('root');
-        if (root && root.children && root.children.length > 0) {
-          hideLoader();
-          return true;
-        }
-        return false;
-      }
-      
-      // Polling pour détecter quand React est monté
-      var pollInterval = setInterval(function() {
-        if (checkAppMounted()) {
-          clearInterval(pollInterval);
-        }
-      }, 100);
-      
-      // Timeout de sécurité absolue
-      setTimeout(function() {
-        clearInterval(pollInterval);
-        hideLoader();
-      }, MAX_WAIT);
-      
-      // DOMContentLoaded
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(checkAppMounted, 500);
-      });
-      
-      // Window load
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          if (!checkAppMounted()) {
-            // Si après load l'app n'est toujours pas là, forcer hide après 2s
-            setTimeout(hideLoader, 2000);
-          }
-        }, 500);
-      });
-    })();
-  </script>
 </head>
 
 <body>
   <div id="root"></div>
   
-  <!-- Initial loader -->
-  <div id="initial-loader">
+  <div id="app-loader">
     <div class="logo">224Solutions</div>
     <div class="spinner"></div>
-    <div class="loading-text">Chargement...</div>
+    <div class="text">Chargement...</div>
   </div>
 
   <script type="module" src="/src/main.tsx"></script>
   
-  <!-- Fallback for JavaScript disabled -->
+  <script>
+    // Hide loader when app is ready - ultra simple version
+    (function() {
+      var loader = document.getElementById('app-loader');
+      var maxWait = 10000; // 10 seconds max
+      
+      function hide() {
+        if (loader) {
+          loader.classList.add('fade-out');
+          setTimeout(function() { 
+            if (loader) loader.style.display = 'none'; 
+          }, 400);
+        }
+      }
+      
+      // Check if React mounted
+      function check() {
+        var root = document.getElementById('root');
+        return root && root.innerHTML.length > 50;
+      }
+      
+      // Poll every 100ms
+      var interval = setInterval(function() {
+        if (check()) {
+          clearInterval(interval);
+          hide();
+        }
+      }, 100);
+      
+      // Force hide after max wait
+      setTimeout(function() {
+        clearInterval(interval);
+        hide();
+      }, maxWait);
+      
+      // Expose globally for manual hide
+      window.__hideLoader = hide;
+    })();
+  </script>
+  
   <noscript>
     <div style="padding: 40px; text-align: center; font-family: system-ui, sans-serif;">
       <h1 style="color: #007BFF;">224Solutions</h1>
-      <p style="margin-top: 20px; color: #666;">
-        JavaScript est requis pour utiliser cette application.
-        <br>Veuillez activer JavaScript dans votre navigateur.
-      </p>
+      <p style="margin-top: 20px; color: #666;">JavaScript est requis pour utiliser cette application.</p>
     </div>
   </noscript>
 </body>

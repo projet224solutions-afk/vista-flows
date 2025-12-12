@@ -3,37 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>224Solutions - Redirection</title>
-  <script>
-    // SPA redirect fallback for hosting providers that support 200.html
-    // This handles direct URL navigation for SPAs
-    (function() {
-      var path = window.location.pathname;
-      var search = window.location.search;
-      var hash = window.location.hash;
-      
-      // Only redirect if not accessing a file (no extension in path)
-      if (path && path !== '/' && !path.includes('.')) {
-        // Store the original path for restoration after redirect
-        sessionStorage.setItem('spa_redirect', path.slice(1) + search + hash);
-        // Redirect to root where the SPA will handle routing
-        window.location.replace('/');
-      } else {
-        // Already at root or accessing a file, redirect to root
-        window.location.replace('/');
-      }
-    })();
-  </script>
+  <title>224Solutions</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loader {
+      text-align: center;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #007BFF;
+      margin-bottom: 1.5rem;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #007BFF;
+      border-radius: 50%;
+      margin: 0 auto;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .text {
+      margin-top: 1rem;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+  </style>
 </head>
 <body>
-  <noscript>
-    <meta http-equiv="refresh" content="0; url=/" />
-  </noscript>
-  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, sans-serif;">
-    <div style="text-align: center;">
-      <div style="font-size: 24px; color: #007BFF; font-weight: bold;">224Solutions</div>
-      <div style="margin-top: 16px;">Redirection en cours...</div>
-    </div>
+  <div class="loader">
+    <div class="logo">224Solutions</div>
+    <div class="spinner"></div>
+    <div class="text">Chargement...</div>
   </div>
+  <script>
+    // Redirect SPA to index.html preserving path
+    var redirect = sessionStorage.redirect;
+    delete sessionStorage.redirect;
+    if (redirect && redirect !== location.href) {
+      history.replaceState(null, null, redirect);
+    }
+  </script>
 </body>
 </html>
