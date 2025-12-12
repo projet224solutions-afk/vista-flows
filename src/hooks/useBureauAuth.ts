@@ -140,10 +140,10 @@ export const useBureauAuth = () => {
         return false;
       }
 
-      // Succès → Stocker session
+      // Succès → Stocker session (localStorage pour persistance après refresh)
       if (data.session_token && data.user) {
-        sessionStorage.setItem('bureau_session', data.session_token);
-        sessionStorage.setItem('bureau_user', JSON.stringify(data.user));
+        localStorage.setItem('bureau_session', data.session_token);
+        localStorage.setItem('bureau_user', JSON.stringify(data.user));
         
         toast.success(`Bienvenue Bureau ${data.user.bureau_code} - ${data.user.commune} !`);
         
@@ -192,6 +192,8 @@ export const useBureauAuth = () => {
    * Logout
    */
   const logout = () => {
+    localStorage.removeItem('bureau_session');
+    localStorage.removeItem('bureau_user');
     sessionStorage.removeItem('bureau_session');
     sessionStorage.removeItem('bureau_user');
     toast.success('Déconnexion réussie');
@@ -202,8 +204,8 @@ export const useBureauAuth = () => {
    * Vérifier si bureau connecté
    */
   const isAuthenticated = (): boolean => {
-    const session = sessionStorage.getItem('bureau_session');
-    const user = sessionStorage.getItem('bureau_user');
+    const session = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
+    const user = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
     return !!session && !!user;
   };
 
@@ -211,7 +213,7 @@ export const useBureauAuth = () => {
    * Obtenir bureau connecté
    */
   const getCurrentBureau = () => {
-    const userStr = sessionStorage.getItem('bureau_user');
+    const userStr = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
     if (!userStr) return null;
     
     try {
