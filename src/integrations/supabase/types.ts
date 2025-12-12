@@ -9317,6 +9317,57 @@ export type Database = {
           },
         ]
       }
+      transaction_audit_log: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string | null
+          error_message: string | null
+          expected_balance: number
+          fee_amount: number | null
+          id: string
+          is_valid: boolean | null
+          metadata: Json | null
+          operation_type: string
+          transaction_id: string | null
+          user_id: string
+          user_type: string | null
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string | null
+          error_message?: string | null
+          expected_balance: number
+          fee_amount?: number | null
+          id?: string
+          is_valid?: boolean | null
+          metadata?: Json | null
+          operation_type: string
+          transaction_id?: string | null
+          user_id: string
+          user_type?: string | null
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string | null
+          error_message?: string | null
+          expected_balance?: number
+          fee_amount?: number | null
+          id?: string
+          is_valid?: boolean | null
+          metadata?: Json | null
+          operation_type?: string
+          transaction_id?: string | null
+          user_id?: string
+          user_type?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -11887,6 +11938,16 @@ export type Database = {
       process_card_to_wallet: {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
+      }
+      process_secure_wallet_transfer: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_fee_percent?: number
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: Json
       }
       process_wallet_to_card: {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
