@@ -77,7 +77,7 @@
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.3s ease-out, visibility 0.3s;
+      transition: opacity 0.4s ease-out, visibility 0.4s;
     }
     
     #initial-loader.hidden {
@@ -120,93 +120,69 @@
     }
   </style>
   
-  <!-- Ultra-robust loader management -->
+  <!-- Ultra-robust loader management for Vercel -->
   <script>
     (function() {
       'use strict';
       
-      var LOADER_TIMEOUT = 2000; // 2 secondes max (réduit pour Vercel)
-      var CHECK_INTERVAL = 50; // Vérifier plus souvent
+      var MAX_WAIT = 8000; // 8 secondes max avant de forcer le hide
       var loaderHidden = false;
-      var loader = null;
-      var checkInterval = null;
       
       function hideLoader() {
         if (loaderHidden) return;
         loaderHidden = true;
         
-        if (!loader) loader = document.getElementById('initial-loader');
+        var loader = document.getElementById('initial-loader');
         if (loader) {
           loader.classList.add('hidden');
           setTimeout(function() {
-            if (loader.parentNode) loader.style.display = 'none';
-          }, 350);
-        }
-        
-        if (checkInterval) {
-          clearInterval(checkInterval);
-          checkInterval = null;
+            if (loader && loader.parentNode) {
+              loader.style.display = 'none';
+            }
+          }, 500);
         }
       }
       
-      function isAppLoaded() {
+      // Exposer globalement
+      window.__hideLoader = hideLoader;
+      
+      // Vérifier si l'app React est montée
+      function checkAppMounted() {
         var root = document.getElementById('root');
-        // Vérifier si root a du contenu significatif (pas juste des espaces)
-        return root && root.innerHTML && root.innerHTML.trim().length > 100;
+        if (root && root.children && root.children.length > 0) {
+          hideLoader();
+          return true;
+        }
+        return false;
       }
       
-      // Commencer les vérifications après le DOM ready
-      function startChecking() {
-        loader = document.getElementById('initial-loader');
-        
-        // Vérification périodique
-        checkInterval = setInterval(function() {
-          if (isAppLoaded()) hideLoader();
-        }, CHECK_INTERVAL);
-        
-        // Timeout de sécurité - toujours cacher après X secondes
-        setTimeout(hideLoader, LOADER_TIMEOUT);
-      }
+      // Polling pour détecter quand React est monté
+      var pollInterval = setInterval(function() {
+        if (checkAppMounted()) {
+          clearInterval(pollInterval);
+        }
+      }, 100);
       
-      // Observer les mutations du DOM pour détecter quand React monte
-      function setupMutationObserver() {
-        var root = document.getElementById('root');
-        if (!root) return;
-        
-        var observer = new MutationObserver(function(mutations) {
-          if (isAppLoaded()) {
-            hideLoader();
-            observer.disconnect();
-          }
-        });
-        
-        observer.observe(root, { 
-          childList: true, 
-          subtree: true,
-          characterData: true
-        });
-      }
+      // Timeout de sécurité absolue
+      setTimeout(function() {
+        clearInterval(pollInterval);
+        hideLoader();
+      }, MAX_WAIT);
       
-      // Initialisation
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-          startChecking();
-          setupMutationObserver();
-        });
-      } else {
-        startChecking();
-        setupMutationObserver();
-      }
-      
-      // Backup sur window.load
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          if (isAppLoaded()) hideLoader();
-        }, 200);
+      // DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(checkAppMounted, 500);
       });
       
-      // Exposer globalement pour debug
-      window.__hideLoader = hideLoader;
+      // Window load
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (!checkAppMounted()) {
+            // Si après load l'app n'est toujours pas là, forcer hide après 2s
+            setTimeout(hideLoader, 2000);
+          }
+        }, 500);
+      });
     })();
   </script>
 </head>
