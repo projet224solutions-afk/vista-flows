@@ -11,13 +11,13 @@ import { toast } from 'sonner';
  * Mapping des scopes vers les préfixes
  */
 export const SCOPE_PREFIX_MAP: Record<string, string> = {
-  'users': 'USR',
-  'user': 'USR',
+  'users': 'CLT',
+  'user': 'CLT',
   'vendors': 'VND',
   'vendor': 'VND',
   'pdg': 'PDG',
-  'agents': 'AGE',
-  'agent': 'AGE',
+  'agents': 'AGT',
+  'agent': 'AGT',
   'sub_agents': 'SAG',
   'sub_agent': 'SAG',
   'syndicats': 'BST',
@@ -26,10 +26,10 @@ export const SCOPE_PREFIX_MAP: Record<string, string> = {
   'bureaus': 'BST',
   'drivers': 'DRV',
   'driver': 'DRV',
-  'clients': 'CLI',
-  'client': 'CLI',
-  'customers': 'CLI',
-  'customer': 'CLI',
+  'clients': 'CLT',
+  'client': 'CLT',
+  'customers': 'CLT',
+  'customer': 'CLT',
   'products': 'PRD',
   'product': 'PRD',
   'orders': 'ORD',
@@ -62,7 +62,7 @@ export const useStandardId = () => {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Génère un ID standardisé au format 224-XXX-XXX
+   * Génère un ID standardisé séquentiel (ex: CLT0001, VND0002)
    */
   const generateStandardId = async (
     scope: string,
@@ -72,27 +72,32 @@ export const useStandardId = () => {
     setError(null);
 
     try {
-      // Générer un ID au format 224-XXX-XXX
-      // XXX = 3 chiffres aléatoires entre 000 et 999
-      const firstPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const secondPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const generatedId = `224-${firstPart}-${secondPart}`;
+      const prefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'CLT';
 
-      // Vérifier si l'ID existe déjà
-      const { data: existingId } = await supabase
-        .from('profiles')
-        .select('public_id')
-        .eq('public_id', generatedId)
-        .single();
+      // Utiliser l'Edge Function pour générer un ID séquentiel
+      const { data, error: funcError } = await supabase.functions.invoke(
+        'generate-unique-id',
+        {
+          body: { scope, prefix, batch: 1 }
+        }
+      );
 
-      // Si l'ID existe, régénérer (récursif)
-      if (existingId) {
-        return generateStandardId(scope, false);
+      if (funcError) {
+        console.error('Edge function error:', funcError);
+        // Fallback: générer localement basé sur user_ids
+        return await generateLocalSequentialId(prefix);
       }
 
+      if (!data?.success || !data?.ids || data.ids.length === 0) {
+        console.error('Invalid response from edge function:', data);
+        return await generateLocalSequentialId(prefix);
+      }
+
+      const generatedId = data.ids[0];
+
       if (showToast) {
-        toast.success(`ID 224Solutions généré: ${generatedId}`, {
-          description: `Format: 224-XXX-XXX`
+        toast.success(`ID généré: ${generatedId}`, {
+          description: `Format séquentiel ${prefix}XXXX`
         });
       }
 
@@ -100,16 +105,68 @@ export const useStandardId = () => {
     } catch (err: any) {
       const errorMsg = err.message || 'Erreur génération ID';
       setError(errorMsg);
+      console.error('Erreur génération ID:', err);
       
-      if (showToast) {
-        toast.error('Échec génération ID', {
-          description: errorMsg
-        });
-      }
-      
-      return null;
+      // Fallback local
+      const prefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'CLT';
+      return await generateLocalSequentialId(prefix);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Génère un ID séquentiel localement en vérifiant user_ids
+   */
+  const generateLocalSequentialId = async (prefix: string): Promise<string | null> => {
+    try {
+      // Chercher le dernier ID avec ce préfixe dans user_ids
+      const { data: lastIds, error } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .ilike('custom_id', `${prefix}%`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching last IDs:', error);
+      }
+
+      let nextNumber = 1;
+
+      if (lastIds && lastIds.length > 0) {
+        // Trouver le plus grand numéro
+        for (const item of lastIds) {
+          const numPart = item.custom_id.replace(prefix, '');
+          const num = parseInt(numPart, 10);
+          if (!isNaN(num) && num >= nextNumber) {
+            nextNumber = num + 1;
+          }
+        }
+      }
+
+      // Générer l'ID avec 4 chiffres (CLT0001)
+      const newId = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+      
+      // Vérifier que l'ID n'existe pas déjà
+      const { data: existing } = await supabase
+        .from('user_ids')
+        .select('custom_id')
+        .eq('custom_id', newId)
+        .maybeSingle();
+
+      if (existing) {
+        // ID existe, incrémenter
+        return `${prefix}${(nextNumber + 1).toString().padStart(4, '0')}`;
+      }
+
+      console.log(`✅ ID local généré: ${newId}`);
+      return newId;
+    } catch (err) {
+      console.error('Erreur génération locale:', err);
+      // Dernier fallback avec timestamp
+      const timestamp = Date.now().toString().slice(-4);
+      return `${prefix}${timestamp}`;
     }
   };
 
