@@ -331,14 +331,13 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         receiverId = selectedUser.id;
       }
 
-      // Utiliser la fonction RPC unifiée pour le transfert avec frais
-      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
+      // Utiliser la fonction RPC sécurisée avec journalisation complète
+      const { data, error } = await supabase.rpc('process_secure_wallet_transfer', {
         p_sender_id: agentData.user_id,
         p_receiver_id: receiverId,
         p_amount: transferAmount,
-        p_currency: currency,
         p_description: description || `Transfert vers ${selectedUser.name}`,
-        p_is_bureau_transfer: selectedUser.type === 'bureau'
+        p_fee_percent: 1.5
       });
 
       if (error) {
@@ -346,24 +345,22 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         throw error;
       }
 
-      console.log('✅ Transfert agent réussi:', data);
-
-      // Mettre à jour le solde de l'agent dans agent_wallets (synchronisation)
-      const { data: updatedWallet } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', agentData.user_id)
-        .single();
-
-      if (updatedWallet) {
-        await supabase
-          .from('agent_wallets')
-          .update({
-            balance: updatedWallet.balance,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', walletId);
+      // Vérifier le résultat de la transaction
+      const result = data as { 
+        success: boolean; 
+        error?: string; 
+        transaction_id?: string;
+        sender_balance_after?: number;
+        receiver_balance_after?: number;
+      };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Échec de la transaction');
       }
+
+      console.log('✅ Transfert agent réussi:', result);
+      console.log('📊 Solde expéditeur après:', result.sender_balance_after);
+      console.log('📊 Solde destinataire après:', result.receiver_balance_after);
 
       toast.success(`Transfert de ${transferAmount.toLocaleString()} ${currency} effectué avec succès`);
       setAmount('');
