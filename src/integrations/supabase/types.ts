@@ -4541,6 +4541,7 @@ export type Database = {
           bureau_id: string | null
           cotisation_status: string | null
           created_at: string | null
+          custom_id: string | null
           email: string | null
           id: string
           join_date: string | null
@@ -4561,6 +4562,7 @@ export type Database = {
           bureau_id?: string | null
           cotisation_status?: string | null
           created_at?: string | null
+          custom_id?: string | null
           email?: string | null
           id?: string
           join_date?: string | null
@@ -4581,6 +4583,7 @@ export type Database = {
           bureau_id?: string | null
           cotisation_status?: string | null
           created_at?: string | null
+          custom_id?: string | null
           email?: string | null
           id?: string
           join_date?: string | null
@@ -8312,6 +8315,7 @@ export type Database = {
           access_token: string
           bureau_id: string | null
           created_at: string | null
+          custom_id: string | null
           email: string
           id: string
           interface_url: string
@@ -8326,6 +8330,7 @@ export type Database = {
           access_token: string
           bureau_id?: string | null
           created_at?: string | null
+          custom_id?: string | null
           email: string
           id?: string
           interface_url: string
@@ -8340,6 +8345,7 @@ export type Database = {
           access_token?: string
           bureau_id?: string | null
           created_at?: string | null
+          custom_id?: string | null
           email?: string
           id?: string
           interface_url?: string
@@ -9684,6 +9690,7 @@ export type Database = {
           can_create_sub_agent: boolean | null
           commission_rate: number | null
           created_at: string | null
+          custom_id: string | null
           email: string
           id: string
           is_active: boolean | null
@@ -9702,6 +9709,7 @@ export type Database = {
           can_create_sub_agent?: boolean | null
           commission_rate?: number | null
           created_at?: string | null
+          custom_id?: string | null
           email: string
           id?: string
           is_active?: boolean | null
@@ -9720,6 +9728,7 @@ export type Database = {
           can_create_sub_agent?: boolean | null
           commission_rate?: number | null
           created_at?: string | null
+          custom_id?: string | null
           email?: string
           id?: string
           is_active?: boolean | null
@@ -11382,7 +11391,15 @@ export type Database = {
           vehicle_type: string
         }[]
       }
-      find_user_by_code: { Args: { p_code: string }; Returns: string }
+      find_user_by_code: {
+        Args: { p_code: string }
+        Returns: {
+          display_name: string
+          identifier: string
+          user_id: string
+          user_type: string
+        }[]
+      }
       fix_missing_user_data: {
         Args: never
         Returns: {
