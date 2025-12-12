@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>224Solutions</title>
+  <script>
+    // SPA redirect: redirect to index with preserved path
+    sessionStorage.setItem('redirect', location.pathname + location.search + location.hash);
+    location.replace('/');
+  </script>
+</head>
+<body>
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;">
+    <div style="text-align:center;">
+      <div style="font-size:24px;color:#007BFF;font-weight:bold;">224Solutions</div>
+      <div style="margin-top:16px;color:#666;">Redirection...</div>
+    </div>
+  </div>
+</body>
+</html>
