@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Search, User, Check, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface UserSearchResult {
@@ -29,7 +28,7 @@ export const UserSearchInput = ({
   onChange,
   onUserSelect,
   label = "ID du destinataire",
-  placeholder = "Ex: USR0001"
+  placeholder = "Ex: USR0001, AEG1234"
 }: UserSearchInputProps) => {
   const [searching, setSearching] = useState(false);
   const [userInfo, setUserInfo] = useState<UserSearchResult | null>(null);
@@ -37,31 +36,67 @@ export const UserSearchInput = ({
   const [availableUsers, setAvailableUsers] = useState<UserSearchResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Charger tous les utilisateurs disponibles au montage
+  // Charger tous les utilisateurs disponibles au montage (combinant user_ids ET profiles)
   useEffect(() => {
     const loadAvailableUsers = async () => {
       try {
         const { data: currentUser } = await supabase.auth.getUser();
         if (!currentUser.user) return;
 
-        const { data, error } = await supabase
+        const usersMap = new Map<string, UserSearchResult>();
+
+        // 1. D'abord charger depuis user_ids (système principal pour nouveaux utilisateurs)
+        const { data: userIdsData, error: userIdsError } = await supabase
+          .from('user_ids')
+          .select('user_id, custom_id')
+          .neq('user_id', currentUser.user.id);
+
+        if (!userIdsError && userIdsData) {
+          for (const uid of userIdsData) {
+            if (uid.custom_id && uid.user_id) {
+              usersMap.set(uid.user_id, {
+                public_id: uid.custom_id,
+                user_id: uid.user_id,
+                email: null,
+                first_name: null,
+                last_name: null,
+                phone: null
+              });
+            }
+          }
+        }
+
+        // 2. Enrichir avec les données de profiles
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, public_id, email, first_name, last_name, phone')
-          .neq('id', currentUser.user.id) // Exclure l'utilisateur actuel
-          .not('public_id', 'is', null); // Uniquement les utilisateurs avec public_id
+          .neq('id', currentUser.user.id);
 
-        if (!error && data) {
-          // Formater les données pour correspondre à UserSearchResult
-          const formattedUsers = data.map(profile => ({
-            public_id: profile.public_id || '',
-            user_id: profile.id,
-            email: profile.email,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            phone: profile.phone
-          }));
-          setAvailableUsers(formattedUsers);
+        if (!profilesError && profilesData) {
+          for (const profile of profilesData) {
+            const existing = usersMap.get(profile.id);
+            if (existing) {
+              // Enrichir les données existantes
+              existing.email = profile.email;
+              existing.first_name = profile.first_name;
+              existing.last_name = profile.last_name;
+              existing.phone = profile.phone;
+              // Si profiles.public_id existe et est différent, garder le custom_id de user_ids
+            } else if (profile.public_id) {
+              // Ajouter les utilisateurs qui n'ont pas d'entrée dans user_ids mais ont public_id
+              usersMap.set(profile.id, {
+                public_id: profile.public_id,
+                user_id: profile.id,
+                email: profile.email,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+                phone: profile.phone
+              });
+            }
+          }
         }
+
+        setAvailableUsers(Array.from(usersMap.values()));
       } catch (error) {
         console.error('❌ Erreur chargement utilisateurs:', error);
       }
@@ -70,8 +105,8 @@ export const UserSearchInput = ({
     loadAvailableUsers();
   }, []);
 
-  const searchUser = async (publicId: string) => {
-    if (!publicId || publicId.length < 3) {
+  const searchUser = async (searchId: string) => {
+    if (!searchId || searchId.length < 3) {
       setUserInfo(null);
       setSearchError(null);
       return;
@@ -81,35 +116,95 @@ export const UserSearchInput = ({
     setSearchError(null);
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, public_id, email, first_name, last_name, phone')
-        .ilike('public_id', `%${publicId.toUpperCase()}%`)
-        .limit(1)
-        .single();
+      const upperSearchId = searchId.toUpperCase();
+      let foundUser: UserSearchResult | null = null;
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setSearchError('Aucun utilisateur trouvé avec cet ID');
-        } else {
-          throw error;
-        }
-        setUserInfo(null);
-      } else {
-        // Formater les données pour correspondre à UserSearchResult
-        const formattedUser = {
-          public_id: data.public_id || '',
-          user_id: data.id,
-          email: data.email,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          phone: data.phone
+      // PRIORITÉ 1: Chercher dans user_ids.custom_id (système principal)
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('user_ids')
+        .select('user_id, custom_id')
+        .ilike('custom_id', `%${upperSearchId}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (userIdData) {
+        console.log('✅ Trouvé dans user_ids:', userIdData);
+        // Récupérer les infos du profil
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name, phone')
+          .eq('id', userIdData.user_id)
+          .maybeSingle();
+
+        foundUser = {
+          public_id: userIdData.custom_id,
+          user_id: userIdData.user_id,
+          email: profileData?.email || null,
+          first_name: profileData?.first_name || null,
+          last_name: profileData?.last_name || null,
+          phone: profileData?.phone || null
         };
-        setUserInfo(formattedUser);
-        setSearchError(null);
-        if (onUserSelect && data.id) {
-          onUserSelect(data.id);
+      }
+
+      // PRIORITÉ 2: Si pas trouvé dans user_ids, chercher dans profiles.public_id
+      if (!foundUser) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, public_id, email, first_name, last_name, phone')
+          .ilike('public_id', `%${upperSearchId}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (profileData && profileData.public_id) {
+          console.log('✅ Trouvé dans profiles.public_id:', profileData);
+          foundUser = {
+            public_id: profileData.public_id,
+            user_id: profileData.id,
+            email: profileData.email,
+            first_name: profileData.first_name,
+            last_name: profileData.last_name,
+            phone: profileData.phone
+          };
         }
+      }
+
+      // PRIORITÉ 3: Chercher par email ou téléphone
+      if (!foundUser) {
+        const { data: profileByContact } = await supabase
+          .from('profiles')
+          .select('id, public_id, email, first_name, last_name, phone')
+          .or(`email.ilike.%${searchId}%,phone.ilike.%${searchId}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (profileByContact) {
+          // Récupérer le custom_id de user_ids si disponible
+          const { data: userIdForContact } = await supabase
+            .from('user_ids')
+            .select('custom_id')
+            .eq('user_id', profileByContact.id)
+            .maybeSingle();
+
+          foundUser = {
+            public_id: userIdForContact?.custom_id || profileByContact.public_id || 'N/A',
+            user_id: profileByContact.id,
+            email: profileByContact.email,
+            first_name: profileByContact.first_name,
+            last_name: profileByContact.last_name,
+            phone: profileByContact.phone
+          };
+        }
+      }
+
+      if (foundUser) {
+        setUserInfo(foundUser);
+        setSearchError(null);
+        if (onUserSelect && foundUser.user_id) {
+          onUserSelect(foundUser.user_id);
+        }
+      } else {
+        setSearchError(`Destinataire introuvable: ${searchId}`);
+        setUserInfo(null);
       }
     } catch (error) {
       console.error('❌ Erreur recherche utilisateur:', error);
@@ -147,7 +242,8 @@ export const UserSearchInput = ({
     user.public_id?.toLowerCase().includes(value.toLowerCase()) ||
     user.first_name?.toLowerCase().includes(value.toLowerCase()) ||
     user.last_name?.toLowerCase().includes(value.toLowerCase()) ||
-    user.email?.toLowerCase().includes(value.toLowerCase())
+    user.email?.toLowerCase().includes(value.toLowerCase()) ||
+    user.phone?.includes(value)
   );
 
   const selectUser = (user: UserSearchResult) => {
