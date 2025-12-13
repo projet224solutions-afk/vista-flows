@@ -1167,7 +1167,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     }}
                                                     title="Modifier le véhicule"
                                                 >
-                                                    <Car className="w-4 h-4" />
+                                                    <Settings className="w-4 h-4" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
