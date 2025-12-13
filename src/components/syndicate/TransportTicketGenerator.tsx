@@ -99,7 +99,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       const startNumber = (lastBatch?.end_number || 0) + 1;
-      const endNumber = startNumber + 49; // 50 tickets
+      const endNumber = startNumber + 39; // 40 tickets
       const batchNumber = generateBatchNumber();
 
       // Créer le lot dans la base de données
@@ -111,7 +111,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
           ticket_config: config,
           start_number: startNumber,
           end_number: endNumber,
-          tickets_count: 50,
+          tickets_count: 40,
         })
         .select()
         .single();
@@ -121,7 +121,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       // Générer les numéros de tickets
-      const ticketNumbers = Array.from({ length: 50 }, (_, i) => startNumber + i);
+      const ticketNumbers = Array.from({ length: 40 }, (_, i) => startNumber + i);
       
       setGeneratedTickets(ticketNumbers);
       setBatchId(newBatch?.id || null);
@@ -252,7 +252,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
               ) : (
                 <>
                   <FileText className="w-5 h-5 mr-2" />
-                  Générer 50 Tickets
+                  Générer 40 Tickets
                 </>
               )}
             </Button>
