@@ -1257,6 +1257,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         driver_date_of_birth: (selectedVehicle as any).driver_date_of_birth,
                     }}
                     bureauName={bureauName}
+                    bureauCommune={bureauCommune}
                 />
             )}
 

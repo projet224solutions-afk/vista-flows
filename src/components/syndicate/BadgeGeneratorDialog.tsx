@@ -26,14 +26,22 @@ interface BadgeGeneratorDialogProps {
     driver_date_of_birth?: string;
   };
   bureauName?: string;
+  bureauCommune?: string;
 }
 
 export default function BadgeGeneratorDialog({
   open,
   onOpenChange,
   vehicleData,
-  bureauName
+  bureauName,
+  bureauCommune
 }: BadgeGeneratorDialogProps) {
+  // Construire le titre du badge basé sur la commune
+  const badgeTitle = bureauCommune 
+    ? `TAXI-MOTO Bureau Syndicat de ${bureauCommune}` 
+    : bureauName 
+      ? `TAXI-MOTO Bureau Syndicat de ${bureauName}`
+      : 'TAXI-MOTO Bureau Syndicat';
   const badgeRef = useRef<HTMLDivElement>(null);
 
   // Calculer les dates
@@ -182,7 +190,8 @@ export default function BadgeGeneratorDialog({
               dateOfBirth={vehicleData.driver_date_of_birth ? new Date(vehicleData.driver_date_of_birth).toLocaleDateString('fr-FR') : undefined}
               joinedDate={joinedDate}
               expireDate={expireDate}
-              bureauName={bureauName}
+              bureauName={bureauCommune || bureauName}
+              badgeTitle={badgeTitle}
             />
           </div>
 
