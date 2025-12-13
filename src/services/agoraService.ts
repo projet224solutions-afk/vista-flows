@@ -43,7 +43,8 @@ export interface RemoteUser {
 
 class AgoraService {
   private client: IAgoraRTCClient | null = null;
-  private rtmClient: InstanceType<typeof RTM> | null = null;
+  private rtmClient: any = null;
+  private rtmChannel: any = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private remoteUsers: Map<string, RemoteUser> = new Map();
