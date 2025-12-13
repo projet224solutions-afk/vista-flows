@@ -1,6 +1,6 @@
 /**
  * Ticket de Transport Professionnel - Design Officiel Guinéen
- * Orientation PAYSAGE - Style Gouvernemental/Syndical Premium
+ * Orientation PAYSAGE - Style Gouvernemental Premium
  */
 
 interface TicketConfig {
@@ -31,251 +31,280 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
       style={{
         width: '100%',
         height: '100%',
-        fontFamily: "'Times New Roman', Georgia, serif",
-        background: 'linear-gradient(135deg, #fefefe 0%, #f8f9fa 50%, #f0f1f2 100%)',
-        border: '2px solid #1a365d',
-        borderRadius: '4px',
-        padding: '3mm',
+        fontFamily: "'Georgia', 'Times New Roman', serif",
+        background: '#ffffff',
+        border: '1.5px solid #1e3a5f',
+        borderRadius: '3px',
+        display: 'flex',
+        flexDirection: 'row',
         boxSizing: 'border-box',
       }}
     >
-      {/* Fond décoratif avec motif guilloche */}
+      {/* Bande tricolore gauche - fine et élégante */}
       <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage: `
-            repeating-linear-gradient(45deg, #1a365d 0px, transparent 1px, transparent 8px),
-            repeating-linear-gradient(-45deg, #1a365d 0px, transparent 1px, transparent 8px)
-          `,
+          width: '2.5mm',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
         }}
-      />
-
-      {/* Bandeau supérieur coloré */}
-      <div 
-        className="absolute top-0 left-0 right-0"
-        style={{
-          height: '6mm',
-          background: 'linear-gradient(90deg, #CE1126 0%, #CE1126 33%, #FCD116 33%, #FCD116 66%, #009639 66%, #009639 100%)',
-        }}
-      />
+      >
+        <div style={{ flex: 1, background: '#CE1126' }} />
+        <div style={{ flex: 1, background: '#FCD116' }} />
+        <div style={{ flex: 1, background: '#009639' }} />
+      </div>
 
       {/* Contenu principal */}
-      <div className="relative" style={{ marginTop: '4mm' }}>
-        
-        {/* En-tête République */}
-        <div className="text-center" style={{ marginBottom: '1.5mm' }}>
-          <div 
-            style={{ 
-              fontSize: '7px', 
-              fontWeight: 'bold',
-              letterSpacing: '1px',
-              color: '#1a365d',
-              textTransform: 'uppercase',
-            }}
-          >
-            République de Guinée
-          </div>
-          <div 
-            style={{ 
-              fontSize: '5px', 
-              fontStyle: 'italic',
-              color: '#4a5568',
-              marginTop: '0.5mm',
-            }}
-          >
-            Travail – Justice – Solidarité
-          </div>
-        </div>
-
-        {/* Commune */}
+      <div 
+        style={{ 
+          flex: 1, 
+          padding: '2mm 3mm 2mm 2.5mm',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          position: 'relative',
+        }}
+      >
+        {/* Filigrane de sécurité */}
         <div 
-          className="text-center"
-          style={{ 
-            fontSize: '6px', 
-            fontWeight: 'bold',
-            color: '#CE1126',
-            marginBottom: '1mm',
-            textTransform: 'uppercase',
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            opacity: 0.03,
+            backgroundImage: `
+              repeating-linear-gradient(45deg, #1e3a5f 0px, transparent 1px, transparent 6px),
+              repeating-linear-gradient(-45deg, #1e3a5f 0px, transparent 1px, transparent 6px)
+            `,
           }}
-        >
-          Commune de {config.commune}
+        />
+
+        {/* Section supérieure */}
+        <div className="relative">
+          {/* En-tête avec République et devise */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1mm' }}>
+            <div>
+              <div 
+                style={{ 
+                  fontSize: '6.5px', 
+                  fontWeight: 'bold',
+                  letterSpacing: '0.8px',
+                  color: '#1e3a5f',
+                  textTransform: 'uppercase',
+                }}
+              >
+                République de Guinée
+              </div>
+              <div 
+                style={{ 
+                  fontSize: '4.5px', 
+                  fontStyle: 'italic',
+                  color: '#64748b',
+                }}
+              >
+                Travail • Justice • Solidarité
+              </div>
+            </div>
+            
+            {/* Numéro de ticket */}
+            <div 
+              style={{ 
+                background: '#1e3a5f',
+                color: '#ffffff',
+                padding: '0.8mm 2mm',
+                borderRadius: '2px',
+                fontSize: '5.5px',
+                fontWeight: 'bold',
+                fontFamily: "'Courier New', monospace",
+                letterSpacing: '0.5px',
+              }}
+            >
+              N° {formattedNumber}
+            </div>
+          </div>
+
+          {/* Commune */}
+          <div 
+            style={{ 
+              fontSize: '5.5px', 
+              fontWeight: 'bold',
+              color: '#CE1126',
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
+              marginBottom: '1.5mm',
+            }}
+          >
+            Commune de {config.commune}
+          </div>
         </div>
 
-        {/* Bloc central - Type et Montant */}
+        {/* Section centrale - Type et Montant */}
         <div 
           style={{
-            background: 'linear-gradient(180deg, #1a365d 0%, #2c5282 100%)',
-            borderRadius: '3px',
-            padding: '1.5mm 2mm',
-            marginBottom: '1.5mm',
-            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '3mm',
           }}
         >
-          <div 
-            style={{ 
-              fontSize: '6px', 
-              color: '#ffffff',
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-          >
-            {ticketTypeLabel}
+          {/* Type de ticket */}
+          <div style={{ flex: 1 }}>
+            <div 
+              style={{ 
+                fontSize: '5px', 
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '0.5mm',
+              }}
+            >
+              Type
+            </div>
+            <div 
+              style={{ 
+                fontSize: '6.5px', 
+                fontWeight: 'bold',
+                color: '#1e3a5f',
+              }}
+            >
+              {ticketTypeLabel}
+            </div>
           </div>
-          <div 
-            style={{ 
-              fontSize: '9px', 
-              color: '#FCD116',
-              fontWeight: 'bold',
-              marginTop: '0.5mm',
-            }}
-          >
-            {formatAmount(config.amount)} GNF
+
+          {/* Icône Moto */}
+          <div style={{ flexShrink: 0 }}>
+            <svg 
+              viewBox="0 0 50 24" 
+              style={{ width: '12mm', height: '6mm' }}
+            >
+              <circle cx="8" cy="17" r="5" fill="none" stroke="#1e3a5f" strokeWidth="1.2"/>
+              <circle cx="8" cy="17" r="2" fill="#1e3a5f"/>
+              <circle cx="40" cy="17" r="5" fill="none" stroke="#1e3a5f" strokeWidth="1.2"/>
+              <circle cx="40" cy="17" r="2" fill="#1e3a5f"/>
+              <path d="M8 17 L15 10 L30 8 L40 17" fill="none" stroke="#1e3a5f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 10 L20 5 L26 5" fill="none" stroke="#1e3a5f" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M30 8 L35 4 L40 6" fill="none" stroke="#1e3a5f" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="40" cy="6" r="2" fill="#FCD116" stroke="#1e3a5f" strokeWidth="0.5"/>
+              <circle cx="20" cy="2" r="2.5" fill="#1e3a5f"/>
+            </svg>
+          </div>
+
+          {/* Montant */}
+          <div style={{ textAlign: 'right' }}>
+            <div 
+              style={{ 
+                fontSize: '5px', 
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '0.5mm',
+              }}
+            >
+              Montant
+            </div>
+            <div 
+              style={{ 
+                fontSize: '8px', 
+                fontWeight: 'bold',
+                color: '#009639',
+              }}
+            >
+              {formatAmount(config.amount)} <span style={{ fontSize: '5px' }}>GNF</span>
+            </div>
           </div>
         </div>
 
-        {/* Syndicat */}
+        {/* Section inférieure */}
+        <div className="relative">
+          {/* Ligne de séparation */}
+          <div 
+            style={{ 
+              borderTop: '0.5px dashed #94a3b8',
+              marginBottom: '1mm',
+            }}
+          />
+
+          {/* Syndicat et Date */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div 
+                style={{ 
+                  fontSize: '4.5px', 
+                  color: '#475569',
+                  maxWidth: '25mm',
+                  lineHeight: 1.2,
+                }}
+              >
+                {config.syndicateName}
+              </div>
+              {config.optionalMention && (
+                <div 
+                  style={{ 
+                    fontSize: '3.5px', 
+                    color: '#94a3b8',
+                    fontStyle: 'italic',
+                    marginTop: '0.3mm',
+                  }}
+                >
+                  {config.optionalMention}
+                </div>
+              )}
+            </div>
+            
+            <div 
+              style={{ 
+                fontSize: '4.5px', 
+                color: '#64748b',
+                fontFamily: "'Courier New', monospace",
+              }}
+            >
+              {config.date}
+            </div>
+          </div>
+        </div>
+
+        {/* Sceau discret */}
         <div 
-          className="text-center"
+          className="absolute"
           style={{ 
-            fontSize: '5px', 
-            color: '#2d3748',
-            marginBottom: '1.5mm',
-            fontWeight: '500',
+            bottom: '2mm', 
+            right: '12mm',
+            width: '8mm',
+            height: '8mm',
+            opacity: 0.08,
           }}
         >
-          {config.syndicateName}
-        </div>
-
-        {/* Icône Moto stylisée */}
-        <div className="flex justify-center" style={{ marginBottom: '1.5mm' }}>
-          <svg 
-            viewBox="0 0 60 28" 
-            style={{ width: '14mm', height: '7mm' }}
-          >
-            {/* Roue arrière */}
-            <circle cx="10" cy="20" r="6" fill="none" stroke="#1a365d" strokeWidth="1.5"/>
-            <circle cx="10" cy="20" r="3" fill="#1a365d"/>
-            
-            {/* Roue avant */}
-            <circle cx="48" cy="20" r="6" fill="none" stroke="#1a365d" strokeWidth="1.5"/>
-            <circle cx="48" cy="20" r="3" fill="#1a365d"/>
-            
-            {/* Cadre */}
-            <path 
-              d="M10 20 L18 12 L35 10 L48 20" 
-              fill="none" 
-              stroke="#1a365d" 
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            
-            {/* Selle */}
-            <path 
-              d="M18 12 L24 6 L30 6 L32 8" 
-              fill="none" 
-              stroke="#1a365d" 
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-            
-            {/* Guidon */}
-            <path 
-              d="M35 10 L40 5 L46 7" 
-              fill="none" 
-              stroke="#1a365d" 
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            
-            {/* Phare */}
-            <circle cx="46" cy="7" r="2.5" fill="#FCD116" stroke="#1a365d" strokeWidth="0.5"/>
-            
-            {/* Conducteur */}
-            <circle cx="24" cy="2" r="3" fill="#1a365d"/>
-            <ellipse cx="24" cy="7" rx="3" ry="4" fill="#1a365d"/>
+          <svg viewBox="0 0 40 40" style={{ width: '100%', height: '100%' }}>
+            <circle cx="20" cy="20" r="18" fill="none" stroke="#1e3a5f" strokeWidth="1.5"/>
+            <circle cx="20" cy="20" r="14" fill="none" stroke="#1e3a5f" strokeWidth="0.8"/>
+            <text x="20" y="18" textAnchor="middle" fontSize="5" fill="#1e3a5f" fontWeight="bold">TAXI</text>
+            <text x="20" y="24" textAnchor="middle" fontSize="4" fill="#1e3a5f">MOTO</text>
           </svg>
         </div>
+      </div>
 
-        {/* Pied de ticket */}
+      {/* Bande droite avec code série */}
+      <div 
+        style={{
+          width: '4mm',
+          background: 'linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)',
+          borderLeft: '0.5px solid #cbd5e1',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
         <div 
-          style={{ 
-            borderTop: '1px dashed #a0aec0',
-            paddingTop: '1mm',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+          style={{
+            transform: 'rotate(-90deg)',
+            whiteSpace: 'nowrap',
+            fontSize: '3.5px',
+            color: '#94a3b8',
+            fontFamily: "'Courier New', monospace",
+            letterSpacing: '0.5px',
           }}
         >
-          <div style={{ fontSize: '4.5px', color: '#718096' }}>
-            {config.date}
-          </div>
-          <div 
-            style={{ 
-              fontSize: '6px', 
-              fontWeight: 'bold',
-              color: '#1a365d',
-              fontFamily: "'Courier New', monospace",
-            }}
-          >
-            N° {formattedNumber}
-          </div>
+          SN-{formattedNumber}
         </div>
-
-        {/* Mention optionnelle */}
-        {config.optionalMention && (
-          <div 
-            className="text-center"
-            style={{ 
-              fontSize: '4px', 
-              color: '#a0aec0',
-              fontStyle: 'italic',
-              marginTop: '0.5mm',
-            }}
-          >
-            {config.optionalMention}
-          </div>
-        )}
-      </div>
-
-      {/* Sceau officiel (coin inférieur droit) */}
-      <div 
-        className="absolute"
-        style={{ 
-          bottom: '2mm', 
-          right: '2mm',
-          width: '10mm',
-          height: '10mm',
-          opacity: 0.15,
-        }}
-      >
-        <svg viewBox="0 0 50 50" style={{ width: '100%', height: '100%' }}>
-          <circle cx="25" cy="25" r="23" fill="none" stroke="#1a365d" strokeWidth="2"/>
-          <circle cx="25" cy="25" r="18" fill="none" stroke="#1a365d" strokeWidth="1"/>
-          <text x="25" y="22" textAnchor="middle" fontSize="6" fill="#1a365d" fontWeight="bold">
-            SYNDICAT
-          </text>
-          <text x="25" y="30" textAnchor="middle" fontSize="5" fill="#1a365d">
-            OFFICIEL
-          </text>
-        </svg>
-      </div>
-
-      {/* Numéro de série discret (coin supérieur gauche) */}
-      <div 
-        className="absolute"
-        style={{ 
-          top: '7mm', 
-          left: '2mm',
-          fontSize: '3.5px',
-          color: '#a0aec0',
-          fontFamily: "'Courier New', monospace",
-          transform: 'rotate(-90deg)',
-          transformOrigin: 'left top',
-        }}
-      >
-        SN-{formattedNumber}
       </div>
     </div>
   );
