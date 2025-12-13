@@ -15,6 +15,7 @@ interface TaxiMotoBadgeProps {
   memberId: string;
   vehicleType: string;
   vehiclePlate: string;
+  serialNumber?: string;
   dateOfBirth?: string;
   joinedDate: string;
   expireDate: string;
@@ -30,6 +31,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   memberId,
   vehicleType,
   vehiclePlate,
+  serialNumber,
   dateOfBirth,
   joinedDate,
   expireDate,
@@ -176,25 +178,25 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
             </div>
 
+            {/* Numéro de série */}
+            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100">
+              <div className="flex items-center gap-2 text-purple-600 mb-1">
+                <Bike className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">N° Série</span>
+              </div>
+              <div className="text-lg font-bold text-slate-900 font-mono">
+                {serialNumber || 'N/A'}
+              </div>
+            </div>
+
             {/* Date de naissance */}
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
               <div className="flex items-center gap-2 text-amber-600 mb-1">
                 <Calendar className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Date de Naissance</span>
-              </div>
-              <div className="text-lg font-bold text-slate-900">
-                {dateOfBirth || 'Non renseigné'}
-              </div>
-            </div>
-
-            {/* Date d'inscription */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 border border-green-100">
-              <div className="flex items-center gap-2 text-green-600 mb-1">
-                <Calendar className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Date d'Inscription</span>
+                <span className="text-xs font-semibold uppercase tracking-wider">Naissance</span>
               </div>
               <div className="text-base font-bold text-slate-900">
-                {joinedDate}
+                {dateOfBirth || 'Non renseigné'}
               </div>
             </div>
 
@@ -202,7 +204,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-3 border border-red-100">
               <div className="flex items-center gap-2 text-red-600 mb-1">
                 <Calendar className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Date d'Expiration</span>
+                <span className="text-xs font-semibold uppercase tracking-wider">Expiration</span>
               </div>
               <div className="text-base font-bold text-slate-900">
                 {expireDate}
@@ -221,15 +223,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Section code-barres et QR */}
+          {/* Section code-barres et QR - QR code bien visible */}
           <div className="flex items-center gap-4 flex-1">
             {/* Code-barres */}
             <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200">
               <div className="flex items-center justify-center">
                 <Barcode 
                   value={memberId}
-                  width={1.8}
-                  height={40}
+                  width={1.5}
+                  height={35}
                   fontSize={0}
                   margin={0}
                   background="transparent"
@@ -238,13 +240,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
             </div>
 
-            {/* QR Code */}
-            <div className="bg-white rounded-lg p-3 border border-slate-200 flex-shrink-0">
+            {/* QR Code - Plus grand et bien visible */}
+            <div className="bg-white rounded-xl p-4 border-2 border-slate-300 shadow-lg flex-shrink-0">
               <QRCodeSVG 
-                value={`224SOLUTIONS:${memberId}`}
-                size={70}
-                level="M"
-                includeMargin={false}
+                value={`224SOLUTIONS:${memberId}:${serialNumber || vehiclePlate}`}
+                size={100}
+                level="H"
+                includeMargin={true}
+                bgColor="#ffffff"
+                fgColor="#000000"
               />
             </div>
           </div>

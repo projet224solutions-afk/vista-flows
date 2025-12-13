@@ -523,6 +523,26 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     };
 
     /**
+     * Réactive un véhicule suspendu dans Supabase
+     */
+    const reactivateVehicle = async (vehicleId: string) => {
+        try {
+            const { error } = await supabase
+                .from('vehicles')
+                .update({ status: 'active' })
+                .eq('id', vehicleId);
+
+            if (error) throw error;
+
+            await loadVehicles();
+            toast.success('Véhicule réactivé avec succès');
+        } catch (error) {
+            console.error('Erreur réactivation véhicule:', error);
+            toast.error('Erreur lors de la réactivation');
+        }
+    };
+
+    /**
      * Génère un nouveau badge
      */
     const regenerateBadge = (vehicleId: string) => {
@@ -1178,8 +1198,20 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     size="sm"
                                                     variant="destructive"
                                                     onClick={() => suspendVehicle(vehicle.id)}
+                                                    title="Suspendre"
                                                 >
                                                     <XCircle className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            {vehicle.status === 'suspended' && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="default"
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    onClick={() => reactivateVehicle(vehicle.id)}
+                                                    title="Réactiver"
+                                                >
+                                                    <CheckCircle className="w-4 h-4" />
                                                 </Button>
                                             )}
                                         </div>
