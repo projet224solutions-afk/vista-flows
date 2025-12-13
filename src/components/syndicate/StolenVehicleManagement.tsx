@@ -156,23 +156,34 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 owner_name: v.members?.name || 'Non assigné'
             }));
 
+            console.log('🚗 Véhicules chargés:', { 
+                bureauId, 
+                total: formattedVehicles.length,
+                stolen: formattedVehicles.filter((v: any) => v.stolen_status === 'stolen').length,
+                vehicles: formattedVehicles.map((v: any) => ({ id: v.id, plate: v.license_plate, stolen_status: v.stolen_status }))
+            });
+
             setAllVehicles(formattedVehicles);
-            setStolenVehicles(formattedVehicles.filter((v: any) => v.stolen_status === 'stolen'));
+            const stolenList = formattedVehicles.filter((v: any) => v.stolen_status === 'stolen');
+            setStolenVehicles(stolenList);
 
             // Calculer les stats
             setStats({
-                totalStolen: formattedVehicles.filter((v: any) => v.stolen_status === 'stolen').length,
+                totalStolen: stolenList.length,
                 totalRecovered: formattedVehicles.filter((v: any) => v.stolen_status === 'recovered').length,
                 pendingAlerts: 0,
                 securityEvents30d: 0
             });
 
-            // Charger les alertes de fraude
+            // Charger les alertes de fraude du bureau
             const { data: alerts, error: alertsError } = await supabase
                 .from('vehicle_fraud_alerts')
                 .select('*')
+                .eq('bureau_id', bureauId)
                 .eq('is_resolved', false)
                 .order('created_at', { ascending: false });
+
+            console.log('🔍 Alertes fraude chargées:', { bureauId, alerts, error: alertsError });
 
             if (!alertsError && alerts) {
                 setFraudAlerts(alerts as FraudAlert[]);
