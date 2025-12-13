@@ -1,7 +1,7 @@
 /**
  * Générateur de Tickets de Transport - Bureau Syndicat
  * Design fidèle au modèle officiel guinéen (orientation PAYSAGE)
- * 20 tickets par page A4
+ * 30 tickets par page A4 (5 colonnes x 6 lignes)
  */
 
 import { useState, useRef } from 'react';
@@ -151,7 +151,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       const startNumber = (lastBatch?.end_number || 0) + 1;
-      const endNumber = startNumber + 19; // 20 tickets
+      const endNumber = startNumber + 29; // 30 tickets
       const batchNumber = generateBatchNumber();
 
       // Config avec cachet
@@ -169,7 +169,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
           ticket_config: configWithStamp,
           start_number: startNumber,
           end_number: endNumber,
-          tickets_count: 20,
+          tickets_count: 30,
         })
         .select()
         .single();
@@ -179,7 +179,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       // Générer les numéros de tickets
-      const ticketNumbers = Array.from({ length: 20 }, (_, i) => startNumber + i);
+      const ticketNumbers = Array.from({ length: 30 }, (_, i) => startNumber + i);
       
       setGeneratedTickets(ticketNumbers);
       setBatchId(newBatch?.id || null);
@@ -370,7 +370,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
               ) : (
                 <>
                   <FileText className="w-5 h-5 mr-2" />
-                  Générer 20 Tickets
+                  Générer 30 Tickets
                 </>
               )}
             </Button>
