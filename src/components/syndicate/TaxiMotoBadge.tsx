@@ -39,7 +39,19 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   bureauLogo,
   badgeTitle
 }, ref) => {
-  const displayTitle = badgeTitle || `TAXI-MOTO DE ${bureauName.toUpperCase()}`;
+  const displayTitle = badgeTitle || `TAXI-MOTO ${bureauName.toUpperCase()}`;
+  
+  // Formater l'ID pour l'affichage (raccourcir si c'est un UUID)
+  const formatMemberId = (id: string) => {
+    if (!id) return 'N/A';
+    // Si c'est un UUID, prendre les 8 premiers caractères
+    if (id.includes('-') && id.length > 20) {
+      return `MBR-${id.substring(0, 8).toUpperCase()}`;
+    }
+    return id;
+  };
+
+  const displayMemberId = formatMemberId(memberId);
   
   const getVehicleLabel = () => {
     switch (vehicleType) {
@@ -49,42 +61,45 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
     }
   };
 
+  // Nom du bureau à afficher (jamais "VOTRE BUREAU")
+  const displayBureauName = bureauName && bureauName !== 'VOTRE BUREAU' ? bureauName : '224SOLUTIONS';
+
   return (
     <div 
       ref={ref}
-      className="w-[900px] h-[560px] bg-gradient-to-br from-slate-50 to-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200"
+      className="w-[850px] h-[520px] bg-gradient-to-br from-slate-50 to-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200"
       style={{ 
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
         background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)'
       }}
     >
-      {/* En-tête principal avec design moderne */}
-      <div className="relative h-[140px] bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] overflow-hidden">
+      {/* En-tête principal */}
+      <div className="relative h-[120px] bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] overflow-hidden">
         {/* Motif géométrique subtil */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-white/10 rounded-full translate-y-1/2" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-white/10 rounded-full translate-y-1/2" />
         </div>
 
         {/* Contenu de l'en-tête */}
-        <div className="relative h-full flex items-center justify-between px-8">
+        <div className="relative h-full flex items-center justify-between px-6">
           {/* Logo et titre gauche */}
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
               {bureauLogo ? (
-                <img src={bureauLogo} alt="Logo" className="w-14 h-14 object-contain" />
+                <img src={bureauLogo} alt="Logo" className="w-12 h-12 object-contain" />
               ) : (
-                <Shield className="w-10 h-10 text-white" />
+                <Shield className="w-8 h-8 text-white" />
               )}
             </div>
             <div>
-              <div className="text-white/60 text-xs font-medium tracking-[0.3em] uppercase mb-1">
+              <div className="text-white/60 text-xs font-medium tracking-[0.25em] uppercase mb-1">
                 République de Guinée
               </div>
-              <h1 className="text-white text-2xl font-bold tracking-wide">
+              <h1 className="text-white text-xl font-bold tracking-wide">
                 {displayTitle}
               </h1>
-              <div className="text-blue-200 text-sm font-medium mt-1">
+              <div className="text-blue-200 text-sm font-medium mt-0.5">
                 Carte Professionnelle de Transport
               </div>
             </div>
@@ -92,11 +107,11 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
 
           {/* Badge de sécurité droite */}
           <div className="text-right">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-white text-sm font-semibold">CARTE OFFICIELLE</span>
+              <span className="text-white text-xs font-semibold">CARTE OFFICIELLE</span>
             </div>
-            <div className="text-white/50 text-xs mt-2 tracking-wider">
+            <div className="text-white/50 text-xs mt-1.5 tracking-wider">
               224SOLUTIONS • Système Certifié
             </div>
           </div>
@@ -107,12 +122,12 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
       </div>
 
       {/* Corps principal */}
-      <div className="flex h-[420px]">
+      <div className="flex h-[400px]">
         {/* Section photo et identité - Gauche */}
-        <div className="w-[300px] p-6 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200">
+        <div className="w-[240px] p-4 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200">
           {/* Photo du conducteur */}
-          <div className="relative mb-6">
-            <div className="w-full aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden border-4 border-white shadow-xl">
+          <div className="relative mb-4">
+            <div className="w-full aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden border-3 border-white shadow-lg">
               {driverPhoto ? (
                 <img 
                   src={driverPhoto} 
@@ -122,8 +137,8 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                   <div className="text-center">
-                    <User className="w-16 h-16 text-blue-300 mx-auto mb-2" />
-                    <div className="text-5xl font-bold text-blue-400">
+                    <User className="w-12 h-12 text-blue-300 mx-auto mb-1" />
+                    <div className="text-4xl font-bold text-blue-400">
                       {driverName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </div>
                   </div>
@@ -131,32 +146,32 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               )}
             </div>
             {/* Badge véhicule */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
-              <div className="flex items-center gap-1.5">
-                <Bike className="w-3.5 h-3.5" />
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
+              <div className="flex items-center gap-1">
+                <Bike className="w-3 h-3" />
                 {getVehicleLabel()}
               </div>
             </div>
           </div>
 
-          {/* Nom du conducteur - Style simple */}
-          <div className="text-center mt-6">
-            <h2 className="text-sm font-bold text-slate-800 tracking-wide uppercase">
+          {/* Nom du conducteur */}
+          <div className="text-center mt-4">
+            <h2 className="text-sm font-bold text-slate-800 tracking-wide uppercase leading-tight">
               {driverName}
             </h2>
-            <div className="flex items-center justify-center gap-2 mt-2 text-slate-600">
-              <CreditCard className="w-3.5 h-3.5" />
-              <span className="text-xs font-mono font-bold tracking-wider">{memberId}</span>
+            <div className="flex items-center justify-center gap-1.5 mt-1.5 text-slate-600">
+              <CreditCard className="w-3 h-3" />
+              <span className="text-xs font-mono font-bold">{displayMemberId}</span>
             </div>
           </div>
 
           {/* Signature */}
-          <div className="mt-4 pt-3 border-t border-slate-200">
-            <div className="text-xs text-slate-400 text-center mb-2 uppercase tracking-wider">
+          <div className="mt-3 pt-2 border-t border-slate-200">
+            <div className="text-[10px] text-slate-400 text-center mb-1 uppercase tracking-wider">
               Signature du Titulaire
             </div>
-            <div className="h-10 border-b-2 border-slate-300 flex items-end justify-center pb-1">
-              <span className="text-lg text-slate-600 italic font-serif">
+            <div className="h-8 border-b-2 border-slate-300 flex items-end justify-center pb-0.5">
+              <span className="text-base text-slate-600 italic font-serif">
                 {driverName.split(' ')[0]}
               </span>
             </div>
@@ -164,89 +179,87 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
         </div>
 
         {/* Section informations - Droite */}
-        <div className="flex-1 p-5 flex flex-col">
+        <div className="flex-1 p-4 flex flex-col">
           {/* Grille d'informations */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-2 gap-2.5 mb-2.5">
             {/* Matricule véhicule */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100">
-              <div className="flex items-center gap-2 text-blue-600 mb-1">
-                <CreditCard className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Immatriculation</span>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2.5 border border-blue-100">
+              <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
+                <CreditCard className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">Immatriculation</span>
               </div>
-              <div className="text-lg font-bold text-slate-900 font-mono">
+              <div className="text-base font-bold text-slate-900 font-mono">
                 {vehiclePlate}
               </div>
             </div>
 
             {/* Numéro de série */}
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100">
-              <div className="flex items-center gap-2 text-purple-600 mb-1">
-                <Bike className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">N° Série</span>
+            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-2.5 border border-purple-100">
+              <div className="flex items-center gap-1.5 text-purple-600 mb-0.5">
+                <Bike className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">N° Série</span>
               </div>
-              <div className="text-lg font-bold text-slate-900 font-mono">
+              <div className="text-base font-bold text-slate-900 font-mono">
                 {serialNumber || 'N/A'}
               </div>
             </div>
 
             {/* Date de naissance */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
-              <div className="flex items-center gap-2 text-amber-600 mb-1">
-                <Calendar className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Naissance</span>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-2.5 border border-amber-100">
+              <div className="flex items-center gap-1.5 text-amber-600 mb-0.5">
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">Naissance</span>
               </div>
-              <div className="text-base font-bold text-slate-900">
+              <div className="text-sm font-bold text-slate-900">
                 {dateOfBirth || 'Non renseigné'}
               </div>
             </div>
 
             {/* Date d'expiration */}
-            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-3 border border-red-100">
-              <div className="flex items-center gap-2 text-red-600 mb-1">
-                <Calendar className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Expiration</span>
+            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg p-2.5 border border-red-100">
+              <div className="flex items-center gap-1.5 text-red-600 mb-0.5">
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">Expiration</span>
               </div>
-              <div className="text-base font-bold text-slate-900">
+              <div className="text-sm font-bold text-slate-900">
                 {expireDate}
               </div>
             </div>
           </div>
 
           {/* Bureau et localisation */}
-          <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-3 mb-3 border border-slate-200">
-            <div className="flex items-center gap-2 text-slate-600 mb-1">
-              <MapPin className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Bureau de Rattachement</span>
+          <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-lg p-2.5 mb-2.5 border border-slate-200">
+            <div className="flex items-center gap-1.5 text-slate-600 mb-0.5">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Bureau de Rattachement</span>
             </div>
-            <div className="text-base font-bold text-slate-900">
-              {bureauName}
+            <div className="text-sm font-bold text-slate-900">
+              {displayBureauName}
             </div>
           </div>
 
-          {/* Section code-barres et QR - QR code bien visible */}
-          <div className="flex items-center gap-4 flex-1">
+          {/* Section code-barres et QR */}
+          <div className="flex items-center gap-3 flex-1 min-h-0">
             {/* Code-barres */}
-            <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200">
-              <div className="flex items-center justify-center">
-                <Barcode 
-                  value={memberId}
-                  width={1.5}
-                  height={35}
-                  fontSize={0}
-                  margin={0}
-                  background="transparent"
-                  displayValue={false}
-                />
-              </div>
+            <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200 h-full flex items-center justify-center">
+              <Barcode 
+                value={displayMemberId}
+                width={1.2}
+                height={50}
+                fontSize={0}
+                margin={0}
+                background="transparent"
+                displayValue={false}
+              />
             </div>
 
-            {/* QR Code - Plus grand et bien visible */}
-            <div className="bg-white rounded-xl p-4 border-2 border-slate-300 shadow-lg flex-shrink-0">
+            {/* QR Code - Bien dimensionné et visible */}
+            <div className="bg-white rounded-lg p-3 border-2 border-slate-200 shadow-sm flex-shrink-0">
               <QRCodeSVG 
-                value={`224SOLUTIONS:${memberId}:${serialNumber || vehiclePlate}`}
-                size={100}
-                level="H"
-                includeMargin={true}
+                value={`224SOLUTIONS|${displayMemberId}|${vehiclePlate}|${serialNumber || 'NA'}`}
+                size={80}
+                level="M"
+                includeMargin={false}
                 bgColor="#ffffff"
                 fgColor="#000000"
               />
@@ -254,15 +267,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           </div>
 
           {/* Pied de page */}
-          <div className="pt-3 border-t border-slate-200 mt-2">
-            <div className="flex items-center justify-between text-xs text-slate-500">
-              <div className="flex items-center gap-2">
+          <div className="pt-2 border-t border-slate-200 mt-2">
+            <div className="flex items-center justify-between text-[10px] text-slate-500">
+              <div className="flex items-center gap-1.5">
                 <span className="font-semibold">Émis par 224Solutions</span>
                 <span>•</span>
                 <span>République de Guinée</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-3 h-3" />
                 <span className="font-medium">Document sécurisé</span>
               </div>
             </div>
