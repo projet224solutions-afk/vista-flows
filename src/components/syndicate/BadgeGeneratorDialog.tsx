@@ -36,12 +36,11 @@ export default function BadgeGeneratorDialog({
   bureauName,
   bureauCommune
 }: BadgeGeneratorDialogProps) {
-  // Construire le titre du badge basé sur la commune
-  const badgeTitle = bureauCommune 
-    ? `TAXI-MOTO Bureau Syndicat de ${bureauCommune}` 
-    : bureauName 
-      ? `TAXI-MOTO Bureau Syndicat de ${bureauName}`
-      : 'TAXI-MOTO Bureau Syndicat';
+  // Construire le titre du badge automatiquement basé sur la commune
+  const locationName = bureauCommune || bureauName;
+  const badgeTitle = locationName && locationName !== 'VOTRE BUREAU'
+    ? `TAXI-MOTO Bureau Syndicat de ${locationName}` 
+    : 'TAXI-MOTO Bureau Syndicat';
   const badgeRef = useRef<HTMLDivElement>(null);
 
   // Calculer les dates

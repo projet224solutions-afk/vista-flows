@@ -32,7 +32,7 @@ export default function EditBadgeDialog({
   open,
   onOpenChange,
   vehicleData,
-  bureauName = 'VOTRE BUREAU',
+  bureauName = '',
   bureauCode = '',
   bureauPrefecture = '',
   bureauCommune = '',
@@ -47,12 +47,12 @@ export default function EditBadgeDialog({
   const [lastName, setLastName] = useState(initialLastName);
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
-  // Construire le titre du badge basé sur la commune du bureau
-  const defaultBadgeTitle = bureauCommune 
-    ? `TAXI-MOTO Bureau Syndicat de ${bureauCommune}` 
-    : bureauName 
-      ? `TAXI-MOTO Bureau Syndicat de ${bureauName}`
-      : 'TAXI-MOTO Bureau Syndicat';
+  
+  // Construire le titre du badge automatiquement basé sur la commune ou préfecture
+  const locationName = bureauCommune || bureauPrefecture || bureauName;
+  const defaultBadgeTitle = locationName && locationName !== 'VOTRE BUREAU'
+    ? `TAXI-MOTO Bureau Syndicat de ${locationName}` 
+    : 'TAXI-MOTO Bureau Syndicat';
   const [badgeTitle, setBadgeTitle] = useState(defaultBadgeTitle);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
