@@ -62,6 +62,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
         reported_bureau_id: moto.bureau_id,
         reported_bureau_name: bureauName,
         reported_location: bureauLocation,
+        detected_bureau_id: moto.bureau_id, // Bureau qui détecte = bureau qui déclare
         description: description,
         status: 'active',
         created_at: new Date().toISOString()
@@ -69,32 +70,54 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
 
       if (isOnline) {
         // Insertion directe si en ligne
-        const { error } = await (supabase as any)
+        console.log('📝 Insertion alerte vol:', alertData);
+        
+        const { data: insertedData, error: insertError } = await (supabase as any)
           .from('moto_security_alerts')
-          .insert(alertData);
+          .insert(alertData)
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (insertError) {
+          console.error('❌ Erreur insertion alerte:', insertError);
+          throw insertError;
+        }
+        
+        console.log('✅ Alerte insérée:', insertedData);
 
         // Marquer la moto comme volée
-        await supabase
+        const { error: updateError } = await supabase
           .from('registered_motos')
-          .update({ status: 'stolen', stolen_reported_at: new Date().toISOString() })
+          .update({ 
+            status: 'stolen', 
+            stolen_reported_at: new Date().toISOString() 
+          })
           .eq('id', moto.id);
+        
+        if (updateError) {
+          console.error('⚠️ Erreur mise à jour moto:', updateError);
+          // Continue quand même, l'alerte est créée
+        }
 
-        // Créer une notification pour le PDG
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: 'pdg', // À ajuster selon votre système
-            type: 'MOTO_STOLEN',
-            title: '🚨 ALERTE VOL DE MOTO',
-            message: `Une moto ${moto.brand} ${moto.model} (${moto.plate_number}) a été déclarée volée à ${bureauLocation}`,
-            data: { moto_id: moto.id, alert_id: alertData.id },
-            priority: 'high'
-          });
+        // Créer une notification pour le PDG (optionnel)
+        try {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: 'pdg',
+              type: 'MOTO_STOLEN',
+              title: '🚨 ALERTE VOL DE MOTO',
+              message: `Une moto ${moto.brand} ${moto.model} (${moto.plate_number}) a été déclarée volée à ${bureauLocation}`,
+              data: { moto_id: moto.id, alert_id: insertedData.id },
+              priority: 'high'
+            });
+        } catch (notifError) {
+          console.error('⚠️ Erreur notification PDG:', notifError);
+          // Continue, l'alerte est créée
+        }
 
         toast.success('🚨 Alerte de vol enregistrée', {
-          description: 'Tous les bureaux ont été notifiés'
+          description: 'Tous les bureaux ont été notifiés. Rechargez la page pour voir l\'alerte.'
         });
       } else {
         // Stockage hors ligne
@@ -108,8 +131,10 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
       setOpen(false);
       setDescription('');
     } catch (error: any) {
-      console.error('Erreur déclaration vol:', error);
-      toast.error(error.message || 'Erreur lors de la déclaration');
+      console.error('❌ Erreur déclaration vol:', error);
+      toast.error('Erreur lors de la déclaration', {
+        description: error.message || 'Impossible d\'enregistrer l\'alerte de vol'
+      });
     } finally {
       setSubmitting(false);
     }

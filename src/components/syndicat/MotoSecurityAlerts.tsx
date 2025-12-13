@@ -33,17 +33,28 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const loadAlerts = async () => {
     try {
       setLoading(true);
+      
+      // Charger TOUTES les alertes actives (réseau complet de sécurité)
+      // Pas seulement celles détectées dans ce bureau
       const { data, error } = await (supabase as any)
         .from('moto_security_alerts')
         .select('*')
-        .eq('detected_bureau_id', bureauId)
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        throw error;
+      }
+      
+      console.log('✅ Alertes chargées:', data?.length || 0);
       setAlerts(data as SecurityAlert[] || []);
-    } catch (error) {
-      console.error('Erreur chargement alertes:', error);
-      toast.error('Erreur lors du chargement des alertes');
+    } catch (error: any) {
+      console.error('❌ Erreur chargement alertes sécurité:', error);
+      toast.error('Erreur lors du chargement des données', {
+        description: error.message || 'Impossible de charger les alertes de sécurité'
+      });
+      setAlerts([]); // Éviter l'affichage de données anciennes
     } finally {
       setLoading(false);
     }
@@ -52,18 +63,18 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   useEffect(() => {
     loadAlerts();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates - écouter TOUTES les alertes actives
     const channel = (supabase as any)
-      .channel('security_alerts')
+      .channel('security_alerts_all')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'moto_security_alerts',
-          filter: `detected_bureau_id=eq.${bureauId}`
+          table: 'moto_security_alerts'
         },
-        () => {
+        (payload: any) => {
+          console.log('🔔 Alerte temps réel:', payload);
           loadAlerts();
         }
       )
