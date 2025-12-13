@@ -62,27 +62,55 @@ export function useSyndicatUltraProData() {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError('Utilisateur non authentifié');
-        return;
+      // Essayer d'abord la session bureau locale (authentification personnalisée)
+      let currentBureauId: string | null = null;
+      let currentBureauName: string | null = null;
+      
+      const bureauSession = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
+      if (bureauSession) {
+        try {
+          const session = JSON.parse(bureauSession);
+          if (session.bureauId) {
+            const { data: bureauData } = await supabase
+              .from('bureaus')
+              .select('id, commune, prefecture')
+              .eq('id', session.bureauId)
+              .single();
+            
+            if (bureauData) {
+              currentBureauId = bureauData.id;
+              currentBureauName = `Syndicat de ${bureauData.commune} - ${bureauData.prefecture}`;
+            }
+          }
+        } catch (e) {
+          console.error('Erreur parsing session bureau:', e);
+        }
+      }
+      
+      // Si pas de session bureau, essayer avec l'utilisateur Supabase
+      if (!currentBureauId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userBureau } = await supabase
+            .from('bureaus')
+            .select('id, commune, prefecture')
+            .eq('president_email', user.email)
+            .single();
+
+          if (userBureau) {
+            currentBureauId = userBureau.id;
+            currentBureauName = `Syndicat de ${userBureau.commune} - ${userBureau.prefecture}`;
+          }
+        }
       }
 
-      // Récupérer le bureau de l'utilisateur
-      const { data: userBureau } = await supabase
-        .from('bureaus')
-        .select('id, commune, prefecture')
-        .eq('president_email', user.email)
-        .single();
-
-      if (!userBureau) {
+      if (!currentBureauId) {
         setError('Bureau non trouvé');
         return;
       }
 
-      const currentBureauId = userBureau.id;
       setBureauId(currentBureauId);
-      setBureauName(`Syndicat de ${userBureau.commune} - ${userBureau.prefecture}`);
+      setBureauName(currentBureauName);
 
       // Requêtes optimisées avec COUNT et agrégations SQL
       const [membersRes, driversRes, walletRes, alertsRes] = await Promise.all([
