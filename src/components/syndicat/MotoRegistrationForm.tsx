@@ -246,24 +246,39 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       };
 
       if (isOnline) {
-        // Enregistrement direct si en ligne
+        // CENTRALISÉ: Enregistrement dans la table vehicles (pas registered_motos)
+        const vehicleData = {
+          serial_number: form.serial_number,
+          license_plate: form.plate_number,
+          brand: form.brand,
+          model: form.model,
+          year: form.year,
+          color: form.color || null,
+          type: 'motorcycle',
+          status: 'pending',
+          bureau_id: bureauId
+        };
+        
         const { data, error } = await supabase
-          .from('registered_motos')
-          .insert([motoData])
+          .from('vehicles')
+          .insert([vehicleData])
           .select()
           .single();
 
         if (error) throw error;
 
-        toast.success('🏍️ Moto enregistrée avec succès!', {
+        // Note: L'association propriétaire-véhicule se fait via owner_member_id dans vehicles
+        // syndicate_workers est géré séparément via l'interface de gestion des membres
+
+        toast.success('🏍️ Véhicule enregistré avec succès!', {
           description: 'En attente de validation'
         });
       } else {
-        // Stockage hors ligne
-        await storeOfflineEvent('moto_registration', motoData);
+        // Stockage hors ligne - sera synchronisé vers vehicles
+        await storeOfflineEvent('moto_registration', { ...motoData, target_table: 'vehicles' });
         
-        toast.success('📴 Moto enregistrée localement', {
-          description: 'Elle sera synchronisée à la reconnexion'
+        toast.success('📴 Véhicule enregistré localement', {
+          description: 'Il sera synchronisé à la reconnexion'
         });
       }
       

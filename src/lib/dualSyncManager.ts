@@ -35,8 +35,9 @@ export interface SyncConfig {
  */
 export const SYNC_CONFIGS: Record<string, SyncConfig> = {
   motos: {
-    collection: 'registered_motos',
-    supabaseTable: 'registered_motos',
+    // CENTRALISÉ: Utilise la table vehicles au lieu de registered_motos
+    collection: 'vehicles',
+    supabaseTable: 'vehicles',
     uniqueField: 'serial_number',
     encrypted: true,
     syncDirection: 'both'
@@ -49,15 +50,17 @@ export const SYNC_CONFIGS: Record<string, SyncConfig> = {
     syncDirection: 'both'
   },
   members: {
-    collection: 'members',
-    supabaseTable: 'members',
-    uniqueField: 'phone',
+    // CENTRALISÉ: Utilise syndicate_workers au lieu de members
+    collection: 'syndicate_workers',
+    supabaseTable: 'syndicate_workers',
+    uniqueField: 'telephone',
     encrypted: false,
     syncDirection: 'both'
   },
   security_alerts: {
-    collection: 'security_alerts',
-    supabaseTable: 'moto_security_alerts',
+    // CENTRALISÉ: Utilise vehicle_security_log au lieu de moto_security_alerts
+    collection: 'vehicle_security_log',
+    supabaseTable: 'vehicle_security_log',
     uniqueField: 'id',
     encrypted: false,
     syncDirection: 'both'
