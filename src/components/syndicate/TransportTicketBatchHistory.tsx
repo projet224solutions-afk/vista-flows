@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, Download, FileText, Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Eye, Trash2, FileText, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import TransportTicketPreview from './TransportTicketPreview';
@@ -20,6 +21,7 @@ interface TicketConfig {
   amount: number;
   date: string;
   optionalMention: string;
+  bureauStampUrl?: string;
 }
 
 interface TicketBatch {
@@ -38,6 +40,8 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   const [loading, setLoading] = useState(true);
   const [selectedBatch, setSelectedBatch] = useState<TicketBatch | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null);
 
   useEffect(() => {
     loadBatches();
@@ -65,6 +69,50 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   const handleViewBatch = (batch: TicketBatch) => {
     setSelectedBatch(batch);
     setShowPreview(true);
+  };
+
+  const handleDeleteBatch = async (batchId: string) => {
+    setIsDeleting(true);
+    setDeletingBatchId(batchId);
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('transport_ticket_batches')
+        .delete()
+        .eq('id', batchId);
+
+      if (error) throw error;
+
+      setBatches(prev => prev.filter(b => b.id !== batchId));
+      toast.success('Lot supprimé avec succès');
+    } catch (error: any) {
+      console.error('Erreur suppression lot:', error);
+      toast.error('Erreur lors de la suppression du lot');
+    } finally {
+      setIsDeleting(false);
+      setDeletingBatchId(null);
+    }
+  };
+
+  const handleDeleteAllBatches = async () => {
+    setIsDeleting(true);
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('transport_ticket_batches')
+        .delete()
+        .eq('bureau_id', bureauId);
+
+      if (error) throw error;
+
+      setBatches([]);
+      toast.success('Tout l\'historique a été supprimé');
+    } catch (error: any) {
+      console.error('Erreur suppression historique:', error);
+      toast.error('Erreur lors de la suppression de l\'historique');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -112,11 +160,50 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
 
   return (
     <div className="space-y-4">
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-        <p className="text-sm text-amber-800">
-          <strong>{batches.length}</strong> lot(s) de tickets générés au total • 
-          <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)}</strong> tickets
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm text-amber-800">
+            <strong>{batches.length}</strong> lot(s) de tickets générés au total • 
+            <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)}</strong> tickets
+          </p>
+        </div>
+
+        {/* Bouton supprimer tout l'historique */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer tout l'historique
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer tout l'historique des tickets ?
+                Cette action est irréversible et supprimera <strong>{batches.length} lot(s)</strong> contenant 
+                <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)} tickets</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAllBatches}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Supprimer tout'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <Table>
@@ -158,15 +245,52 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                 {formatDate(batch.created_at)}
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleViewBatch(batch)}
-                  className="border-amber-300 hover:bg-amber-50"
-                >
-                  <Eye className="w-4 h-4 mr-1" />
-                  Voir
-                </Button>
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleViewBatch(batch)}
+                    className="border-amber-300 hover:bg-amber-50"
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    Voir
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 hover:bg-red-50 text-red-600"
+                        disabled={isDeleting && deletingBatchId === batch.id}
+                      >
+                        {isDeleting && deletingBatchId === batch.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce lot ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Voulez-vous supprimer le lot <strong>{batch.batch_number}</strong> ?
+                          Cette action est irréversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteBatch(batch.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -1,7 +1,7 @@
 /**
  * Générateur de Tickets de Transport - Bureau Syndicat
  * Design fidèle au modèle officiel guinéen (orientation PAYSAGE)
- * 50 tickets par page A4
+ * 20 tickets par page A4
  */
 
 import { useState, useRef } from 'react';
@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Printer, Download, FileText, Eye, History, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Printer, Download, FileText, Eye, History, Loader2, Upload, Stamp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import TransportTicketPreview from './TransportTicketPreview';
@@ -24,6 +24,7 @@ interface TicketConfig {
   amount: number;
   date: string;
   optionalMention: string;
+  bureauStampUrl?: string;
 }
 
 interface TicketBatch {
@@ -44,6 +45,9 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
   const [showHistory, setShowHistory] = useState(false);
   const [generatedTickets, setGeneratedTickets] = useState<number[]>([]);
   const [batchId, setBatchId] = useState<string | null>(null);
+  const [stampUrl, setStampUrl] = useState<string | null>(null);
+  const [isUploadingStamp, setIsUploadingStamp] = useState(false);
+  const stampInputRef = useRef<HTMLInputElement>(null);
   
   const [config, setConfig] = useState<TicketConfig>({
     syndicateName: bureauName || 'Syndicat de Transports Moto-Taxi',
@@ -70,6 +74,54 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     const day = String(date.getDate()).padStart(2, '0');
     const time = String(date.getHours()).padStart(2, '0') + String(date.getMinutes()).padStart(2, '0');
     return `LOT-${year}${month}${day}-${time}`;
+  };
+
+  // Upload du cachet
+  const handleStampUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez sélectionner une image');
+      return;
+    }
+
+    // Vérifier la taille (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('L\'image ne doit pas dépasser 2MB');
+      return;
+    }
+
+    setIsUploadingStamp(true);
+    try {
+      const fileName = `stamps/${bureauId}/${Date.now()}_${file.name}`;
+      
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      setStampUrl(urlData.publicUrl);
+      toast.success('Cachet téléchargé avec succès');
+    } catch (error: any) {
+      console.error('Erreur upload cachet:', error);
+      toast.error('Erreur lors du téléchargement du cachet');
+    } finally {
+      setIsUploadingStamp(false);
+    }
+  };
+
+  const handleRemoveStamp = () => {
+    setStampUrl(null);
+    if (stampInputRef.current) {
+      stampInputRef.current.value = '';
+    }
   };
 
   const handleGenerateTickets = async () => {
@@ -102,13 +154,19 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       const endNumber = startNumber + 19; // 20 tickets
       const batchNumber = generateBatchNumber();
 
+      // Config avec cachet
+      const configWithStamp = {
+        ...config,
+        bureauStampUrl: stampUrl || undefined,
+      };
+
       // Créer le lot dans la base de données
       const { data: newBatch, error: insertError } = await (supabase as any)
         .from('transport_ticket_batches')
         .insert({
           batch_number: batchNumber,
           bureau_id: bureauId,
-          ticket_config: config,
+          ticket_config: configWithStamp,
           start_number: startNumber,
           end_number: endNumber,
           tickets_count: 20,
@@ -125,6 +183,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       
       setGeneratedTickets(ticketNumbers);
       setBatchId(newBatch?.id || null);
+      setConfig(configWithStamp);
       setShowPreview(true);
       
       toast.success(`Lot ${batchNumber} généré avec succès (tickets ${startNumber} à ${endNumber})`);
@@ -235,6 +294,65 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                 placeholder="Ex: Valable 24h"
               />
             </div>
+          </div>
+
+          {/* Upload du cachet */}
+          <div className="mt-6 p-4 border-2 border-dashed border-amber-300 rounded-xl bg-amber-50/50">
+            <Label className="text-sm font-semibold text-amber-800 flex items-center gap-2 mb-3">
+              <Stamp className="w-4 h-4" />
+              Cachet du Bureau Syndicat (optionnel)
+            </Label>
+            
+            {stampUrl ? (
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 border-2 border-amber-400 rounded-full overflow-hidden bg-white flex items-center justify-center">
+                  <img 
+                    src={stampUrl} 
+                    alt="Cachet" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-green-600 font-medium">✓ Cachet téléchargé</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveStamp}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Supprimer
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <input
+                  ref={stampInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleStampUpload}
+                  className="hidden"
+                  id="stamp-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => stampInputRef.current?.click()}
+                  disabled={isUploadingStamp}
+                  className="border-amber-400 hover:bg-amber-100"
+                >
+                  {isUploadingStamp ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  Télécharger le cachet
+                </Button>
+                <span className="text-xs text-gray-500">
+                  Format: PNG, JPG (max 2MB)
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Bouton de génération */}
