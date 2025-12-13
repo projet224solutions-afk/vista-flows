@@ -47,7 +47,13 @@ export default function EditBadgeDialog({
   const [lastName, setLastName] = useState(initialLastName);
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
-  const [badgeTitle, setBadgeTitle] = useState(`TAXI-MOTO DE ${bureauName.toUpperCase()}`);
+  // Construire le titre du badge basé sur la commune du bureau
+  const defaultBadgeTitle = bureauCommune 
+    ? `TAXI-MOTO Bureau Syndicat de ${bureauCommune}` 
+    : bureauName 
+      ? `TAXI-MOTO Bureau Syndicat de ${bureauName}`
+      : 'TAXI-MOTO Bureau Syndicat';
+  const [badgeTitle, setBadgeTitle] = useState(defaultBadgeTitle);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -186,7 +192,7 @@ export default function EditBadgeDialog({
               type="text"
               value={badgeTitle}
               onChange={(e) => setBadgeTitle(e.target.value)}
-              placeholder="Ex: TAXI-MOTO DE VOTRE BUREAU"
+              placeholder={`Ex: TAXI-MOTO Bureau Syndicat de ${bureauCommune || 'Coyah'}`}
               className="font-semibold"
             />
             <p className="text-xs text-muted-foreground">
