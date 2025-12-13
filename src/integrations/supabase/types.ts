@@ -9925,6 +9925,64 @@ export type Database = {
           },
         ]
       }
+      transport_ticket_batches: {
+        Row: {
+          batch_number: string
+          bureau_id: string
+          created_at: string | null
+          created_by: string | null
+          end_number: number
+          id: string
+          start_number: number
+          ticket_config: Json
+          tickets_count: number
+        }
+        Insert: {
+          batch_number: string
+          bureau_id: string
+          created_at?: string | null
+          created_by?: string | null
+          end_number: number
+          id?: string
+          start_number: number
+          ticket_config: Json
+          tickets_count?: number
+        }
+        Update: {
+          batch_number?: string
+          bureau_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_number?: number
+          id?: string
+          start_number?: number
+          ticket_config?: Json
+          tickets_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_ticket_batches_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "transport_ticket_batches_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "transport_ticket_batches_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_addresses: {
         Row: {
           city: string

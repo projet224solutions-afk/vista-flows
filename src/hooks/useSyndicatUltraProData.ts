@@ -42,6 +42,8 @@ export interface SyndicateStats {
 export function useSyndicatUltraProData() {
   const [members, setMembers] = useState<SyndicateMember[]>([]);
   const [drivers, setDrivers] = useState<TaxiDriver[]>([]);
+  const [bureauId, setBureauId] = useState<string | null>(null);
+  const [bureauName, setBureauName] = useState<string | null>(null);
   const [stats, setStats] = useState<SyndicateStats>({
     total_members: 0,
     active_members: 0,
@@ -69,7 +71,7 @@ export function useSyndicatUltraProData() {
       // Récupérer le bureau de l'utilisateur
       const { data: userBureau } = await supabase
         .from('bureaus')
-        .select('id')
+        .select('id, commune, prefecture')
         .eq('president_email', user.email)
         .single();
 
@@ -78,7 +80,9 @@ export function useSyndicatUltraProData() {
         return;
       }
 
-      const bureauId = userBureau.id;
+      const currentBureauId = userBureau.id;
+      setBureauId(currentBureauId);
+      setBureauName(`Syndicat de ${userBureau.commune} - ${userBureau.prefecture}`);
 
       // Requêtes optimisées avec COUNT et agrégations SQL
       const [membersRes, driversRes, walletRes, alertsRes] = await Promise.all([
@@ -86,26 +90,26 @@ export function useSyndicatUltraProData() {
         supabase
           .from('syndicate_workers')
           .select('*', { count: 'exact' })
-          .eq('bureau_id', bureauId),
+          .eq('bureau_id', currentBureauId),
         
         // Chauffeurs avec stats
         supabase
           .from('taxi_drivers')
           .select('*', { count: 'exact' })
-          .eq('bureau_id', bureauId),
+          .eq('bureau_id', currentBureauId),
         
         // Wallet du bureau
         supabase
           .from('wallets')
           .select('balance')
-          .eq('bureau_id', bureauId)
+          .eq('bureau_id', currentBureauId)
           .single(),
         
         // Alertes actives
         supabase
           .from('syndicate_alerts')
           .select('*', { count: 'exact' })
-          .eq('bureau_id', bureauId)
+          .eq('bureau_id', currentBureauId)
           .eq('is_read', false)
       ]);
 
@@ -131,7 +135,7 @@ export function useSyndicatUltraProData() {
       const { data: transactions } = await supabase
         .from('bureau_transactions')
         .select('amount')
-        .eq('bureau_id', bureauId)
+        .eq('bureau_id', currentBureauId)
         .eq('type', 'revenue')
         .gte('created_at', startOfMonth.toISOString());
 
@@ -172,7 +176,7 @@ export function useSyndicatUltraProData() {
     };
   }, [refresh]);
 
-  return { members, drivers, stats, loading, error, refresh };
+  return { members, drivers, stats, loading, error, refresh, bureauId, bureauName };
 }
 
 
