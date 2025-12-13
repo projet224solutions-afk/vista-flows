@@ -724,6 +724,36 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_attempts_log: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          identifier: string
+          ip_address: string | null
+          role: string | null
+          success: boolean | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          identifier: string
+          ip_address?: string | null
+          role?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          identifier?: string
+          ip_address?: string | null
+          role?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       auto_fixes: {
         Row: {
           created_at: string | null
@@ -11002,6 +11032,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_idempotency_keys: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          idempotency_key: string
+          operation: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          idempotency_key: string
+          operation: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          idempotency_key?: string
+          operation?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_logs: {
         Row: {
           action: string
@@ -11409,6 +11466,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_audit_logs: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          event_type: string
+          id: string
+          payment_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          event_type: string
+          id?: string
+          payment_id?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          event_type?: string
+          id?: string
+          payment_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      webhook_processed_events: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          payment_id: string
+          processed_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payment_id: string
+          processed_at: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payment_id?: string
+          processed_at?: string
+        }
+        Relationships: []
       }
       wishlists: {
         Row: {
@@ -12214,6 +12322,19 @@ export type Database = {
         Returns: string
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      execute_atomic_wallet_transfer: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_receiver_id: string
+          p_recipient_balance_before: number
+          p_recipient_wallet_id: string
+          p_sender_balance_before: number
+          p_sender_id: string
+          p_sender_wallet_id: string
+        }
+        Returns: Json
+      }
       execute_banking_transaction: {
         Args: {
           p_actor_id: string
