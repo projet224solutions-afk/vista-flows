@@ -93,8 +93,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               )}
             </div>
             <div>
-              <div className="text-white/60 text-xs font-medium tracking-[0.25em] uppercase mb-1">
+              <div className="text-white text-sm font-bold tracking-[0.2em] uppercase mb-0.5">
                 République de Guinée
+              </div>
+              <div className="flex items-center gap-1 text-xs font-semibold mb-1">
+                <span className="text-red-400">Travail</span>
+                <span className="text-white">-</span>
+                <span className="text-yellow-400">Justice</span>
+                <span className="text-white">-</span>
+                <span className="text-green-400">Solidarité</span>
               </div>
               <h1 className="text-white text-xl font-bold tracking-wide">
                 {displayTitle}
