@@ -10014,6 +10014,7 @@ export type Database = {
       vehicles: {
         Row: {
           badge_generated_at: string | null
+          badge_title: string | null
           brand: string | null
           bureau_id: string | null
           chassis_number: string | null
@@ -10044,6 +10045,7 @@ export type Database = {
         }
         Insert: {
           badge_generated_at?: string | null
+          badge_title?: string | null
           brand?: string | null
           bureau_id?: string | null
           chassis_number?: string | null
@@ -10074,6 +10076,7 @@ export type Database = {
         }
         Update: {
           badge_generated_at?: string | null
+          badge_title?: string | null
           brand?: string | null
           bureau_id?: string | null
           chassis_number?: string | null

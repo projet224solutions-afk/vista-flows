@@ -235,6 +235,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 created_at: v.created_at,
                 driver_photo_url: v.driver_photo_url,
                 driver_date_of_birth: v.driver_date_of_birth,
+                badge_title: v.badge_title,
             } as any));
 
             setVehicles(formattedVehicles);
@@ -1255,6 +1256,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         digital_badge_id: selectedVehicle.digital_badge_id,
                         driver_photo_url: (selectedVehicle as any).driver_photo_url,
                         driver_date_of_birth: (selectedVehicle as any).driver_date_of_birth,
+                        badge_title: (selectedVehicle as any).badge_title,
                     }}
                     bureauName={bureauName}
                     bureauCommune={bureauCommune}
