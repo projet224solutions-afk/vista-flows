@@ -129,7 +129,7 @@ export function usePdgMonitoring() {
         },
         {
           name: 'Monitoring System',
-          status: (errorStats?.total || 0) < 50 ? 'online' : 'degraded',
+          status: ((errorStats?.pending || 0) + (errorStats?.critical || 0)) < 50 ? 'online' : 'degraded',
           responseTime: 25,
           errorRate: 0.2
         }
