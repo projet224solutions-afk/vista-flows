@@ -124,9 +124,9 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
       {/* Corps principal */}
       <div className="flex h-[400px]">
         {/* Section photo et identité - Gauche */}
-        <div className="w-[240px] p-4 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200">
+        <div className="w-[240px] p-4 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 flex flex-col">
           {/* Photo du conducteur */}
-          <div className="relative mb-4">
+          <div className="relative">
             <div className="w-full aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden border-3 border-white shadow-lg">
               {driverPhoto ? (
                 <img 
@@ -145,17 +145,20 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
                 </div>
               )}
             </div>
-            {/* Badge véhicule */}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
-              <div className="flex items-center gap-1">
-                <Bike className="w-3 h-3" />
-                {getVehicleLabel()}
+          </div>
+
+          {/* Badge véhicule - Séparé et bien stylé */}
+          <div className="mt-3 flex justify-center">
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400/30">
+              <div className="flex items-center gap-2">
+                <Bike className="w-4 h-4" />
+                <span className="tracking-wide">{getVehicleLabel()}</span>
               </div>
             </div>
           </div>
 
           {/* Nom du conducteur */}
-          <div className="text-center mt-4">
+          <div className="text-center mt-3">
             <h2 className="text-sm font-bold text-slate-800 tracking-wide uppercase leading-tight">
               {driverName}
             </h2>
@@ -166,7 +169,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           </div>
 
           {/* Signature */}
-          <div className="mt-3 pt-2 border-t border-slate-200">
+          <div className="mt-auto pt-2 border-t border-slate-200">
             <div className="text-[10px] text-slate-400 text-center mb-1 uppercase tracking-wider">
               Signature du Titulaire
             </div>
