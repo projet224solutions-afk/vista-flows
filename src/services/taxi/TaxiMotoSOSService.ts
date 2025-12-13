@@ -435,10 +435,11 @@ class TaxiMotoSOSService {
     try {
       console.log('🔍 Chargement alertes SOS actives depuis Supabase...');
       
+      // Statuts actifs: 'active' (nouveau format DB) + 'DANGER', 'EN_INTERVENTION' (ancien format)
       const { data, error } = await supabase
         .from('sos_alerts')
         .select('*')
-        .in('status', ['active', 'DANGER', 'EN_INTERVENTION'])
+        .in('status', ['active', 'DANGER', 'EN_INTERVENTION', 'pending', 'in_progress'])
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -446,30 +447,41 @@ class TaxiMotoSOSService {
         console.error('❌ Erreur chargement SOS Supabase:', error);
         // Fallback vers localStorage
         const alerts = await this.getLocalSOSAlerts();
-        return alerts.filter(a => a.status === 'DANGER' || a.status === 'EN_INTERVENTION');
+        return alerts.filter(a => ['active', 'DANGER', 'EN_INTERVENTION'].includes(a.status));
       }
 
       console.log(`✅ ${data?.length || 0} alertes SOS actives chargées`);
 
       // Mapper les données Supabase vers le format SOSAlert
-      return (data as any[])?.map((record: any) => ({
-        id: record.id,
-        taxi_driver_id: record.taxi_driver_id,
-        driver_name: record.driver_name,
-        driver_phone: record.driver_phone,
-        latitude: record.latitude,
-        longitude: record.longitude,
-        accuracy: record.accuracy,
-        direction: record.direction,
-        speed: record.speed,
-        gps_history: record.gps_history || [],
-        status: record.status as SOSStatus,
-        bureau_syndicat_id: record.bureau_id,
-        description: record.description,
-        triggered_at: record.created_at, // Utiliser created_at car triggered_at n'existe pas
-        resolved_at: record.resolved_at,
-        resolved_by: record.resolved_by
-      })) || [];
+      // Normaliser les statuts: 'active' -> 'DANGER' pour l'affichage
+      return (data as any[])?.map((record: any) => {
+        // Normaliser le statut pour l'interface
+        let normalizedStatus = record.status;
+        if (record.status === 'active' || record.status === 'pending') {
+          normalizedStatus = 'DANGER';
+        } else if (record.status === 'in_progress') {
+          normalizedStatus = 'EN_INTERVENTION';
+        }
+        
+        return {
+          id: record.id,
+          taxi_driver_id: record.taxi_driver_id,
+          driver_name: record.driver_name,
+          driver_phone: record.driver_phone,
+          latitude: record.latitude,
+          longitude: record.longitude,
+          accuracy: record.accuracy,
+          direction: record.direction,
+          speed: record.speed,
+          gps_history: record.gps_history || [],
+          status: normalizedStatus as SOSStatus,
+          bureau_syndicat_id: record.bureau_id,
+          description: record.description,
+          triggered_at: record.created_at,
+          resolved_at: record.resolved_at,
+          resolved_by: record.resolved_by
+        };
+      }) || [];
     } catch (error) {
       console.error('❌ Exception getActiveSOSAlerts:', error);
       // Fallback vers localStorage

@@ -194,28 +194,29 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'DANGER':
-        return (
-          <Badge className="bg-red-600 text-white animate-pulse">
-            🚨 DANGER ACTIF
-          </Badge>
-        );
-      case 'EN_INTERVENTION':
-        return (
-          <Badge className="bg-orange-500 text-white">
-            🚑 EN INTERVENTION
-          </Badge>
-        );
-      case 'RESOLU':
-        return (
-          <Badge className="bg-green-600 text-white">
-            ✅ RÉSOLU
-          </Badge>
-        );
-      default:
-        return <Badge>{status}</Badge>;
+    // Normaliser les statuts pour l'affichage
+    if (['DANGER', 'active', 'pending'].includes(status)) {
+      return (
+        <Badge className="bg-red-600 text-white animate-pulse">
+          🚨 DANGER ACTIF
+        </Badge>
+      );
     }
+    if (['EN_INTERVENTION', 'in_progress'].includes(status)) {
+      return (
+        <Badge className="bg-orange-500 text-white">
+          🚑 EN INTERVENTION
+        </Badge>
+      );
+    }
+    if (['RESOLU', 'resolved'].includes(status)) {
+      return (
+        <Badge className="bg-green-600 text-white">
+          ✅ RÉSOLU
+        </Badge>
+      );
+    }
+    return <Badge>{status}</Badge>;
   };
 
   const formatTimeSince = (timestamp: string) => {
@@ -280,7 +281,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600">
-                {sosAlerts.filter(a => a.status === 'DANGER').length}
+                {sosAlerts.filter(a => ['DANGER', 'active', 'pending'].includes(a.status)).length}
               </div>
               <div className="text-sm text-muted-foreground mt-1">SOS Actifs</div>
             </div>
@@ -291,7 +292,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-4xl font-bold text-orange-600">
-                {sosAlerts.filter(a => a.status === 'EN_INTERVENTION').length}
+                {sosAlerts.filter(a => ['EN_INTERVENTION', 'in_progress'].includes(a.status)).length}
               </div>
               <div className="text-sm text-muted-foreground mt-1">En Intervention</div>
             </div>
@@ -418,7 +419,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     🧭 Naviguer GPS
                   </Button>
 
-                  {sos.status === 'DANGER' && (
+                  {['DANGER', 'active', 'pending'].includes(sos.status) && (
                     <Button
                       variant="default"
                       size="sm"
@@ -430,7 +431,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     </Button>
                   )}
 
-                  {(sos.status === 'DANGER' || sos.status === 'EN_INTERVENTION') && (
+                  {['DANGER', 'active', 'pending', 'EN_INTERVENTION', 'in_progress'].includes(sos.status) && (
                     <Button
                       variant="default"
                       size="sm"
