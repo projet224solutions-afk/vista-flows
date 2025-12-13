@@ -494,12 +494,19 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 <TabsContent value="vehicles">
                     <Card>
                         <CardHeader>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
                                 <CardTitle className="flex items-center gap-2">
                                     <Shield className="w-5 h-5" />
                                     Gestion des véhicules
                                 </CardTitle>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Button 
+                                        onClick={() => window.location.href = '/stolen-moto-declaration'}
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        <ShieldAlert className="w-4 h-4 mr-2" />
+                                        🚨 Déclarer Moto Volée
+                                    </Button>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input

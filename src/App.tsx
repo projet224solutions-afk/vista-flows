@@ -82,6 +82,7 @@ const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazy(() => import("./pages/BadgeVerification"));
+const StolenMotoDeclaration = lazy(() => import("./pages/StolenMotoDeclaration"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -366,6 +367,7 @@ function App() {
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route path="/agent-dashboard" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
+              <Route path="/stolen-moto-declaration" element={<StolenMotoDeclaration />} />
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
               <Route
