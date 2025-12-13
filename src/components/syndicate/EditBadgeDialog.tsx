@@ -46,6 +46,7 @@ export default function EditBadgeDialog({
   const [lastName, setLastName] = useState(initialLastName);
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
+  const [badgeTitle, setBadgeTitle] = useState(`TAXI-MOTO DE ${bureauName.toUpperCase()}`);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -162,9 +163,6 @@ export default function EditBadgeDialog({
                   {bureauPrefecture}
                   {bureauCommune && ` - ${bureauCommune}`}
                 </div>
-                <div className="text-base font-semibold text-primary mt-1">
-                  TAXI-MOTO DE {bureauName.toUpperCase()}
-                </div>
               </div>
             </div>
             <Button 
@@ -178,6 +176,22 @@ export default function EditBadgeDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Titre du badge */}
+          <div className="space-y-2">
+            <Label htmlFor="badge-title">Titre du badge</Label>
+            <Input
+              id="badge-title"
+              type="text"
+              value={badgeTitle}
+              onChange={(e) => setBadgeTitle(e.target.value)}
+              placeholder="Ex: TAXI-MOTO DE VOTRE BUREAU"
+              className="font-semibold"
+            />
+            <p className="text-xs text-muted-foreground">
+              Ce titre apparaîtra sur le badge du conducteur
+            </p>
+          </div>
+
           {/* Nom et Prénom */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
