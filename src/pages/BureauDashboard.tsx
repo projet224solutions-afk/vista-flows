@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bike, Users, Plus, AlertCircle, RefreshCw, MessageSquare, Settings, Lock, Mail, Copy } from 'lucide-react';
+import { Bike, Users, Plus, AlertCircle, RefreshCw, MessageSquare, Settings, Lock, Mail, Copy, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +26,7 @@ import { useBureauAuth } from '@/hooks/useBureauAuth';
 import { BureauLayout } from '@/components/bureau/BureauLayout';
 import { BureauOverviewContent } from '@/components/bureau/BureauOverviewContent';
 import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
+import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -238,6 +239,14 @@ export default function BureauDashboard() {
             bureauId={bureau.id}
             bureauCode={bureau.bureau_code}
             showTransactions={true}
+          />
+        );
+
+      case 'tickets':
+        return (
+          <TransportTicketGenerator 
+            bureauId={bureau.id}
+            bureauName={`Syndicat de ${bureau.commune} - ${bureau.prefecture}`}
           />
         );
 
