@@ -9211,6 +9211,7 @@ export type Database = {
           login_attempts: number | null
           nom: string
           permissions: Json | null
+          prenom: string | null
           telephone: string | null
           updated_at: string | null
         }
@@ -9230,6 +9231,7 @@ export type Database = {
           login_attempts?: number | null
           nom: string
           permissions?: Json | null
+          prenom?: string | null
           telephone?: string | null
           updated_at?: string | null
         }
@@ -9249,6 +9251,7 @@ export type Database = {
           login_attempts?: number | null
           nom?: string
           permissions?: Json | null
+          prenom?: string | null
           telephone?: string | null
           updated_at?: string | null
         }
