@@ -10098,6 +10098,7 @@ export type Database = {
       vehicle_fraud_alerts: {
         Row: {
           alert_type: string
+          bureau_id: string | null
           created_at: string
           description: string
           detected_latitude: number | null
@@ -10113,6 +10114,7 @@ export type Database = {
         }
         Insert: {
           alert_type: string
+          bureau_id?: string | null
           created_at?: string
           description: string
           detected_latitude?: number | null
@@ -10128,6 +10130,7 @@ export type Database = {
         }
         Update: {
           alert_type?: string
+          bureau_id?: string | null
           created_at?: string
           description?: string
           detected_latitude?: number | null
@@ -10142,6 +10145,27 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_fraud_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "vehicle_fraud_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "vehicle_fraud_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_fraud_alerts_vehicle_id_fkey"
             columns: ["vehicle_id"]
