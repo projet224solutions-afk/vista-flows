@@ -130,18 +130,18 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
         style={{
           width: '297mm',
           minHeight: '210mm',
-          padding: '3mm',
+          padding: '5mm',
           boxSizing: 'border-box',
         }}
       >
-        {/* Grille de 50 tickets (10 colonnes x 5 lignes) */}
+        {/* Grille de 50 tickets PAYSAGE (5 colonnes x 10 lignes) */}
         <div 
-          className="grid gap-[1mm]"
+          className="grid gap-[2mm]"
           style={{
-            gridTemplateColumns: 'repeat(10, 1fr)',
-            gridTemplateRows: 'repeat(5, 1fr)',
+            gridTemplateColumns: 'repeat(5, 1fr)', // 5 colonnes pour tickets paysage
+            gridTemplateRows: 'repeat(10, 1fr)', // 10 lignes
             width: '100%',
-            height: '204mm',
+            height: '200mm',
           }}
         >
           {ticketNumbers.map((ticketNumber, index) => (

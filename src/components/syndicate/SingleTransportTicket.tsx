@@ -1,6 +1,6 @@
 /**
  * Ticket de Transport Professionnel - Design Officiel Guinéen
- * Orientation PAYSAGE - Style Gouvernemental Premium
+ * Orientation PAYSAGE - Texte très visible - Drapeau discret
  */
 
 interface TicketConfig {
@@ -10,6 +10,7 @@ interface TicketConfig {
   amount: number;
   date: string;
   optionalMention: string;
+  bureauStampUrl?: string; // URL du cachet du bureau syndicat
 }
 
 interface Props {
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export default function SingleTransportTicket({ ticketNumber, config, ticketTypeLabel }: Props) {
-  const formattedNumber = String(ticketNumber).padStart(6, '0');
+  const formattedNumber = String(ticketNumber).padStart(4, '0');
   
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('fr-GN').format(amount);
@@ -31,22 +32,31 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
       style={{
         width: '100%',
         height: '100%',
-        fontFamily: "'Georgia', 'Times New Roman', serif",
-        background: '#ffffff',
-        border: '1.5px solid #1e3a5f',
-        borderRadius: '3px',
+        aspectRatio: '2.5 / 1', // Ratio paysage horizontal
+        fontFamily: "'Arial', 'Helvetica', sans-serif",
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        border: '2px solid #1e3a5f',
+        borderRadius: '4px',
         display: 'flex',
         flexDirection: 'row',
         boxSizing: 'border-box',
+        boxShadow: 'inset 0 0 0 1px rgba(30, 58, 95, 0.1)',
       }}
     >
-      {/* Bande tricolore gauche - fine et élégante */}
+      {/* Petit drapeau Guinéen - coin supérieur gauche */}
       <div 
         style={{
-          width: '2.5mm',
+          position: 'absolute',
+          top: '2px',
+          left: '2px',
+          width: '12px',
+          height: '8px',
           display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
+          flexDirection: 'row',
+          borderRadius: '1px',
+          overflow: 'hidden',
+          border: '0.5px solid rgba(0,0,0,0.2)',
+          zIndex: 10,
         }}
       >
         <div style={{ flex: 1, background: '#CE1126' }} />
@@ -54,11 +64,11 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         <div style={{ flex: 1, background: '#009639' }} />
       </div>
 
-      {/* Contenu principal */}
+      {/* Contenu principal - Layout horizontal */}
       <div 
         style={{ 
           flex: 1, 
-          padding: '2mm 3mm 2mm 2.5mm',
+          padding: '3px 5px 3px 18px', // Espace pour le drapeau
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -67,226 +77,224 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
       >
         {/* Filigrane de sécurité */}
         <div 
-          className="absolute inset-0 pointer-events-none"
           style={{
+            position: 'absolute',
+            inset: 0,
             opacity: 0.03,
             backgroundImage: `
-              repeating-linear-gradient(45deg, #1e3a5f 0px, transparent 1px, transparent 6px),
-              repeating-linear-gradient(-45deg, #1e3a5f 0px, transparent 1px, transparent 6px)
+              repeating-linear-gradient(45deg, #1e3a5f 0px, transparent 1px, transparent 8px),
+              repeating-linear-gradient(-45deg, #1e3a5f 0px, transparent 1px, transparent 8px)
             `,
+            pointerEvents: 'none',
           }}
         />
 
-        {/* Section supérieure */}
-        <div className="relative">
-          {/* En-tête avec République et devise */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1mm' }}>
-            <div>
-              <div 
-                style={{ 
-                  fontSize: '6.5px', 
-                  fontWeight: 'bold',
-                  letterSpacing: '0.8px',
-                  color: '#1e3a5f',
-                  textTransform: 'uppercase',
-                }}
-              >
-                République de Guinée
-              </div>
-              <div 
-                style={{ 
-                  fontSize: '4.5px', 
-                  fontStyle: 'italic',
-                  color: '#64748b',
-                }}
-              >
-                Travail • Justice • Solidarité
-              </div>
-            </div>
-            
-            {/* Numéro de ticket */}
+        {/* LIGNE 1: En-tête - République + Numéro */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
             <div 
               style={{ 
-                background: '#1e3a5f',
-                color: '#ffffff',
-                padding: '0.8mm 2mm',
-                borderRadius: '2px',
-                fontSize: '5.5px',
+                fontSize: '8px', 
                 fontWeight: 'bold',
-                fontFamily: "'Courier New', monospace",
                 letterSpacing: '0.5px',
+                color: '#1e3a5f',
+                textTransform: 'uppercase',
               }}
             >
-              N° {formattedNumber}
+              RÉPUBLIQUE DE GUINÉE
+            </div>
+            <div 
+              style={{ 
+                fontSize: '6px', 
+                color: '#64748b',
+                fontStyle: 'italic',
+              }}
+            >
+              Travail • Justice • Solidarité
             </div>
           </div>
-
-          {/* Commune */}
+          
+          {/* Numéro de ticket - TRÈS VISIBLE */}
           <div 
             style={{ 
-              fontSize: '5.5px', 
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
+              color: '#ffffff',
+              padding: '3px 8px',
+              borderRadius: '3px',
+              fontSize: '10px',
               fontWeight: 'bold',
-              color: '#CE1126',
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-              marginBottom: '1.5mm',
+              fontFamily: "'Courier New', 'Consolas', monospace",
+              letterSpacing: '1px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             }}
           >
-            Commune de {config.commune}
+            N° {formattedNumber}
           </div>
         </div>
 
-        {/* Section centrale - Type et Montant */}
+        {/* LIGNE 2: Commune - VISIBLE */}
+        <div 
+          style={{ 
+            fontSize: '9px', 
+            fontWeight: 'bold',
+            color: '#CE1126',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            textAlign: 'center',
+            padding: '2px 0',
+            borderTop: '1px dashed #e2e8f0',
+            borderBottom: '1px dashed #e2e8f0',
+            margin: '2px 0',
+          }}
+        >
+          COMMUNE DE {config.commune.toUpperCase()}
+        </div>
+
+        {/* LIGNE 3: Type + Montant + Cachet Syndicat */}
         <div 
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '3mm',
+            flex: 1,
           }}
         >
           {/* Type de ticket */}
           <div style={{ flex: 1 }}>
             <div 
               style={{ 
-                fontSize: '5px', 
-                color: '#64748b',
+                fontSize: '6px', 
+                color: '#94a3b8',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-                marginBottom: '0.5mm',
               }}
             >
-              Type
+              TYPE
             </div>
             <div 
               style={{ 
-                fontSize: '6.5px', 
+                fontSize: '9px', 
                 fontWeight: 'bold',
                 color: '#1e3a5f',
+                lineHeight: 1.2,
               }}
             >
               {ticketTypeLabel}
             </div>
           </div>
 
-          {/* Icône Moto */}
-          <div style={{ flexShrink: 0 }}>
-            <svg 
-              viewBox="0 0 50 24" 
-              style={{ width: '12mm', height: '6mm' }}
-            >
-              <circle cx="8" cy="17" r="5" fill="none" stroke="#1e3a5f" strokeWidth="1.2"/>
-              <circle cx="8" cy="17" r="2" fill="#1e3a5f"/>
-              <circle cx="40" cy="17" r="5" fill="none" stroke="#1e3a5f" strokeWidth="1.2"/>
-              <circle cx="40" cy="17" r="2" fill="#1e3a5f"/>
-              <path d="M8 17 L15 10 L30 8 L40 17" fill="none" stroke="#1e3a5f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M15 10 L20 5 L26 5" fill="none" stroke="#1e3a5f" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M30 8 L35 4 L40 6" fill="none" stroke="#1e3a5f" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="40" cy="6" r="2" fill="#FCD116" stroke="#1e3a5f" strokeWidth="0.5"/>
-              <circle cx="20" cy="2" r="2.5" fill="#1e3a5f"/>
-            </svg>
-          </div>
-
-          {/* Montant */}
-          <div style={{ textAlign: 'right' }}>
-            <div 
-              style={{ 
-                fontSize: '5px', 
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '0.5mm',
-              }}
-            >
-              Montant
-            </div>
-            <div 
-              style={{ 
-                fontSize: '8px', 
-                fontWeight: 'bold',
-                color: '#009639',
-              }}
-            >
-              {formatAmount(config.amount)} <span style={{ fontSize: '5px' }}>GNF</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Section inférieure */}
-        <div className="relative">
-          {/* Ligne de séparation */}
+          {/* Montant - TRÈS VISIBLE */}
           <div 
             style={{ 
-              borderTop: '0.5px dashed #94a3b8',
-              marginBottom: '1mm',
+              background: 'linear-gradient(135deg, #009639 0%, #00752c 100%)',
+              color: '#ffffff',
+              padding: '4px 10px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}
-          />
-
-          {/* Syndicat et Date */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              <div 
-                style={{ 
-                  fontSize: '4.5px', 
-                  color: '#475569',
-                  maxWidth: '25mm',
-                  lineHeight: 1.2,
-                }}
-              >
-                {config.syndicateName}
-              </div>
-              {config.optionalMention && (
-                <div 
-                  style={{ 
-                    fontSize: '3.5px', 
-                    color: '#94a3b8',
-                    fontStyle: 'italic',
-                    marginTop: '0.3mm',
-                  }}
-                >
-                  {config.optionalMention}
-                </div>
-              )}
-            </div>
-            
+          >
             <div 
               style={{ 
-                fontSize: '4.5px', 
-                color: '#64748b',
-                fontFamily: "'Courier New', monospace",
+                fontSize: '12px', 
+                fontWeight: 'bold',
+                lineHeight: 1.1,
               }}
             >
-              {config.date}
+              {formatAmount(config.amount)}
             </div>
+            <div style={{ fontSize: '6px', opacity: 0.9 }}>GNF</div>
+          </div>
+
+          {/* Zone cachet du bureau syndicat */}
+          <div 
+            style={{ 
+              width: '32px',
+              height: '32px',
+              marginLeft: '6px',
+              border: '1.5px dashed #94a3b8',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: config.bureauStampUrl ? 'transparent' : 'rgba(248,250,252,0.8)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {config.bureauStampUrl ? (
+              <img 
+                src={config.bureauStampUrl} 
+                alt="Cachet" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '50%',
+                }}
+              />
+            ) : (
+              <div 
+                style={{ 
+                  fontSize: '5px', 
+                  color: '#94a3b8',
+                  textAlign: 'center',
+                  lineHeight: 1.1,
+                }}
+              >
+                CACHET
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Sceau discret */}
-        <div 
-          className="absolute"
-          style={{ 
-            bottom: '2mm', 
-            right: '12mm',
-            width: '8mm',
-            height: '8mm',
-            opacity: 0.08,
-          }}
-        >
-          <svg viewBox="0 0 40 40" style={{ width: '100%', height: '100%' }}>
-            <circle cx="20" cy="20" r="18" fill="none" stroke="#1e3a5f" strokeWidth="1.5"/>
-            <circle cx="20" cy="20" r="14" fill="none" stroke="#1e3a5f" strokeWidth="0.8"/>
-            <text x="20" y="18" textAnchor="middle" fontSize="5" fill="#1e3a5f" fontWeight="bold">TAXI</text>
-            <text x="20" y="24" textAnchor="middle" fontSize="4" fill="#1e3a5f">MOTO</text>
-          </svg>
+        {/* LIGNE 4: Syndicat + Date */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <div 
+              style={{ 
+                fontSize: '7px', 
+                color: '#475569',
+                fontWeight: '500',
+                maxWidth: '80%',
+                lineHeight: 1.2,
+              }}
+            >
+              {config.syndicateName}
+            </div>
+            {config.optionalMention && (
+              <div 
+                style={{ 
+                  fontSize: '5px', 
+                  color: '#94a3b8',
+                  fontStyle: 'italic',
+                }}
+              >
+                {config.optionalMention}
+              </div>
+            )}
+          </div>
+          
+          <div 
+            style={{ 
+              fontSize: '7px', 
+              color: '#64748b',
+              fontFamily: "'Courier New', monospace",
+              background: '#f1f5f9',
+              padding: '1px 4px',
+              borderRadius: '2px',
+            }}
+          >
+            {config.date}
+          </div>
         </div>
       </div>
 
-      {/* Bande droite avec code série */}
+      {/* Bande série droite */}
       <div 
         style={{
-          width: '4mm',
-          background: 'linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)',
-          borderLeft: '0.5px solid #cbd5e1',
+          width: '16px',
+          background: 'linear-gradient(180deg, #1e3a5f 0%, #0f172a 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -297,10 +305,11 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
           style={{
             transform: 'rotate(-90deg)',
             whiteSpace: 'nowrap',
-            fontSize: '3.5px',
-            color: '#94a3b8',
+            fontSize: '7px',
+            color: '#ffffff',
             fontFamily: "'Courier New', monospace",
-            letterSpacing: '0.5px',
+            letterSpacing: '1px',
+            fontWeight: 'bold',
           }}
         >
           SN-{formattedNumber}
