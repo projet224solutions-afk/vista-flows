@@ -68,11 +68,10 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
           created_at,
           bureau_id,
           owner_member_id,
-          members:owner_member_id (
+          syndicate_workers:owner_member_id (
             id,
-            first_name,
-            last_name,
-            phone
+            nom,
+            telephone
           )
         `)
         .eq('bureau_id', bureauId)
@@ -89,8 +88,8 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       // Transformer les données pour compatibilité avec l'interface existante
       const transformedData = (data || []).map((v: any) => ({
         id: v.id,
-        owner_name: v.members ? `${v.members.first_name || ''} ${v.members.last_name || ''}`.trim() : 'Non assigné',
-        owner_phone: v.members?.phone || '',
+        owner_name: v.syndicate_workers?.nom || 'Non assigné',
+        owner_phone: v.syndicate_workers?.telephone || '',
         vest_number: '',
         plate_number: v.license_plate || v.serial_number,
         serial_number: v.serial_number,
