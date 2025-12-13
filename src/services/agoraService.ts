@@ -1,7 +1,7 @@
 /**
  * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
  * Service opérationnel pour communications audio/vidéo avec Agora
- * Utilise agora-rtm v2 (sans eval) au lieu de agora-rtm-sdk v1
+ * Utilise agora-rtm-sdk v1 pour compatibilité Vite build
  */
 
 import AgoraRTC, { 
@@ -13,9 +13,7 @@ import AgoraRTC, {
   NetworkQuality,
   IAgoraRTCRemoteUser
 } from 'agora-rtc-sdk-ng';
-import AgoraRTM from 'agora-rtm';
-
-const { RTM } = AgoraRTM;
+import AgoraRTM from 'agora-rtm-sdk';
 
 export interface AgoraConfig {
   appId: string;
@@ -91,14 +89,14 @@ class AgoraService {
         throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
       }
 
-      // Créer instance RTM v2
-      this.rtmClient = new RTM(this.appId, userId);
+      // Créer instance RTM v1 (agora-rtm-sdk)
+      this.rtmClient = AgoraRTM.createInstance(this.appId);
       
       // Configurer les événements RTM
       this.setupRTMEvents();
 
       // Login au serveur RTM
-      await this.rtmClient.login({ token: token || undefined });
+      await this.rtmClient.login({ uid: userId, token: token || undefined });
 
       console.log('✅ Agora RTM initialisé et connecté');
     } catch (error) {
