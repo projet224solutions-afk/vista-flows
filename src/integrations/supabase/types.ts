@@ -5664,9 +5664,11 @@ export type Database = {
           stat_date: string | null
           stat_hour: number | null
           successful_transactions: number | null
+          total_fees_collected: number | null
           total_transactions: number | null
           total_volume: number | null
           transactions_by_type: Json | null
+          updated_at: string | null
           volume_by_actor_type: Json | null
         }
         Insert: {
@@ -5677,9 +5679,11 @@ export type Database = {
           stat_date?: string | null
           stat_hour?: number | null
           successful_transactions?: number | null
+          total_fees_collected?: number | null
           total_transactions?: number | null
           total_volume?: number | null
           transactions_by_type?: Json | null
+          updated_at?: string | null
           volume_by_actor_type?: Json | null
         }
         Update: {
@@ -5690,9 +5694,11 @@ export type Database = {
           stat_date?: string | null
           stat_hour?: number | null
           successful_transactions?: number | null
+          total_fees_collected?: number | null
           total_transactions?: number | null
           total_volume?: number | null
           transactions_by_type?: Json | null
+          updated_at?: string | null
           volume_by_actor_type?: Json | null
         }
         Relationships: []
