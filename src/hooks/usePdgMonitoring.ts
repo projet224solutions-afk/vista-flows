@@ -135,19 +135,27 @@ export function usePdgMonitoring() {
         }
       ];
 
-      // Calculer la santé globale
-      const healthScore = healthData && healthData.length > 0
-        ? healthData.filter(h => h.status === 'healthy').length / healthData.length * 100
-        : 100;
-
-      // Si on a des métriques, ajuster le score de santé (uniquement avec les erreurs actives)
-      const activeErrors = errorStats?.pending || 0;
-      const adjustedHealthScore = activeErrors > 0 
-        ? Math.max(50, healthScore - (activeErrors * 0.5))
-        : healthScore;
+      // Calculer la santé globale via la fonction RPC intelligente
+      let adjustedHealthScore = 100;
+      let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+      
+      try {
+        const { data: healthResult } = await supabase.rpc('calculate_system_health');
+        if (healthResult && typeof healthResult === 'object' && !Array.isArray(healthResult)) {
+          const result = healthResult as { health_score?: number; health_status?: string };
+          adjustedHealthScore = result.health_score ?? 100;
+          healthStatus = (result.health_status as 'healthy' | 'warning' | 'critical') || 'healthy';
+        }
+      } catch (e) {
+        // Fallback au calcul local si RPC échoue
+        const criticalCount = errorStats?.critical || 0;
+        const pendingCount = errorStats?.pending || 0;
+        adjustedHealthScore = Math.max(0, 100 - (criticalCount * 10) - (pendingCount * 0.5));
+        healthStatus = adjustedHealthScore >= 80 ? 'healthy' : adjustedHealthScore >= 50 ? 'warning' : 'critical';
+      }
 
       setSystemHealth({
-        status: adjustedHealthScore > 80 ? 'healthy' : adjustedHealthScore > 50 ? 'warning' : 'critical',
+        status: healthStatus,
         uptime: 99.9,
         lastCheck: new Date().toISOString(),
         services
