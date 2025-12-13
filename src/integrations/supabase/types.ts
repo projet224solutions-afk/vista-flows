@@ -12145,9 +12145,9 @@ export type Database = {
       declare_vehicle_recovered: {
         Args: {
           p_bureau_id: string
-          p_declared_by: string
           p_ip_address?: string
-          p_reason: string
+          p_recovered_by: string
+          p_recovery_notes?: string
           p_user_agent?: string
           p_vehicle_id: string
         }
