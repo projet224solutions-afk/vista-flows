@@ -130,6 +130,31 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     }
   };
 
+  // Calculer la période de validité selon le type de ticket
+  const getValidityPeriod = (ticketType: string): { days: number; name: string } => {
+    switch (ticketType) {
+      case 'journalier':
+      case 'stationnement':
+        return { days: 1, name: '24h' };
+      case 'hebdomadaire':
+        return { days: 7, name: '7 jours' };
+      case 'mensuel':
+        return { days: 30, name: '30 jours' };
+      default:
+        return { days: 1, name: '24h' }; // Par défaut 24h
+    }
+  };
+
+  // Vérifier si un lot doit être réinitialisé (période expirée)
+  const shouldResetNumbering = (lastBatchDate: string, ticketType: string): boolean => {
+    const { days } = getValidityPeriod(ticketType);
+    const lastDate = new Date(lastBatchDate);
+    const now = new Date();
+    const diffTime = now.getTime() - lastDate.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays >= days;
+  };
+
   const handleGenerateTickets = async () => {
     if (!config.commune) {
       toast.error('Veuillez saisir la commune');
@@ -143,12 +168,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     setIsGenerating(true);
     
     try {
-      // Récupérer le dernier numéro de ticket pour ce bureau
+      // Récupérer le dernier lot de tickets pour ce bureau ET ce type de ticket
       const { data: lastBatch, error: fetchError } = await (supabase as any)
         .from('transport_ticket_batches')
-        .select('end_number')
+        .select('end_number, created_at, ticket_config')
         .eq('bureau_id', bureauId)
-        .order('end_number', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -156,7 +181,23 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         console.error('Erreur récupération dernier lot:', fetchError);
       }
 
-      const startNumber = (lastBatch?.end_number || 0) + 1;
+      let startNumber = 1; // Par défaut recommencer à 1
+
+      if (lastBatch) {
+        // Vérifier le type du dernier lot
+        const lastTicketType = lastBatch.ticket_config?.ticketType || 'journalier';
+        
+        // Si le type de ticket est différent OU si la période est expirée, recommencer à 1
+        if (lastTicketType !== config.ticketType || shouldResetNumbering(lastBatch.created_at, config.ticketType)) {
+          startNumber = 1;
+          const { name } = getValidityPeriod(config.ticketType);
+          console.log(`Réinitialisation de la numérotation (période ${name} expirée ou type changé)`);
+        } else {
+          // Sinon continuer la séquence
+          startNumber = (lastBatch.end_number || 0) + 1;
+        }
+      }
+
       const endNumber = startNumber + 29; // 30 tickets
       const batchNumber = generateBatchNumber();
 
@@ -192,7 +233,8 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       setConfig(configWithStamp);
       setShowPreview(true);
       
-      toast.success(`Lot ${batchNumber} généré avec succès (tickets ${startNumber} à ${endNumber})`);
+      const { name } = getValidityPeriod(config.ticketType);
+      toast.success(`Lot ${batchNumber} généré (tickets ${startNumber} à ${endNumber}) - Validité: ${name}`);
     } catch (error: any) {
       console.error('Erreur génération tickets:', error);
       toast.error(error.message || 'Erreur lors de la génération des tickets');
