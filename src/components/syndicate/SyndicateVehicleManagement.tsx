@@ -1207,11 +1207,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                 <Button
                                                     size="sm"
                                                     variant="default"
-                                                    className="bg-green-600 hover:bg-green-700"
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
                                                     onClick={() => reactivateVehicle(vehicle.id)}
-                                                    title="Réactiver"
+                                                    title="Réactiver ce véhicule"
                                                 >
-                                                    <CheckCircle className="w-4 h-4" />
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    Réactiver
                                                 </Button>
                                             )}
                                         </div>
