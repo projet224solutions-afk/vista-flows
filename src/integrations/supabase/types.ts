@@ -824,6 +824,13 @@ export type Database = {
             foreignKeyName: "badges_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "badges_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -1117,6 +1124,13 @@ export type Database = {
             foreignKeyName: "bureau_access_logs_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_access_logs_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -1150,6 +1164,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_feature_assignments_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -1250,6 +1271,13 @@ export type Database = {
             foreignKeyName: "bureau_transactions_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_transactions_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -1296,6 +1324,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: true
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "bureau_wallets_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: true
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -4843,6 +4878,13 @@ export type Database = {
             foreignKeyName: "members_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "members_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -6738,6 +6780,13 @@ export type Database = {
             foreignKeyName: "pwa_installations_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "pwa_installations_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -6780,6 +6829,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "pwa_tokens_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -6963,6 +7019,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "registered_motos_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -8214,6 +8277,13 @@ export type Database = {
             foreignKeyName: "sos_alerts_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "sos_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -8697,6 +8767,13 @@ export type Database = {
             foreignKeyName: "syndicate_alerts_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "syndicate_alerts_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -8754,6 +8831,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "syndicate_workers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -10011,6 +10095,177 @@ export type Database = {
           },
         ]
       }
+      vehicle_fraud_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          detected_latitude: number | null
+          detected_longitude: number | null
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          vehicle_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description: string
+          detected_latitude?: number | null
+          detected_longitude?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          vehicle_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          detected_latitude?: number | null
+          detected_longitude?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_fraud_alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_gps_tracking: {
+        Row: {
+          accuracy: number | null
+          altitude: number | null
+          created_at: string
+          device_id: string | null
+          heading: number | null
+          id: string
+          ip_address: string | null
+          is_stolen_vehicle: boolean | null
+          latitude: number
+          longitude: number
+          source: string | null
+          speed: number | null
+          vehicle_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          altitude?: number | null
+          created_at?: string
+          device_id?: string | null
+          heading?: number | null
+          id?: string
+          ip_address?: string | null
+          is_stolen_vehicle?: boolean | null
+          latitude: number
+          longitude: number
+          source?: string | null
+          speed?: number | null
+          vehicle_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          altitude?: number | null
+          created_at?: string
+          device_id?: string | null
+          heading?: number | null
+          id?: string
+          ip_address?: string | null
+          is_stolen_vehicle?: boolean | null
+          latitude?: number
+          longitude?: number
+          source?: string | null
+          speed?: number | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_gps_tracking_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_security_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string | null
+          bureau_id: string | null
+          created_at: string
+          description: string
+          device_fingerprint: string | null
+          id: string
+          ip_address: string | null
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          user_agent: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string | null
+          bureau_id?: string | null
+          created_at?: string
+          description: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          user_agent?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string | null
+          bureau_id?: string | null
+          created_at?: string
+          description?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          user_agent?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_security_log_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           badge_generated_at: string | null
@@ -10023,19 +10278,32 @@ export type Database = {
           digital_badge_id: string | null
           driver_date_of_birth: string | null
           driver_photo_url: string | null
+          engine_number: string | null
           id: string
           insurance_expiration: string | null
           insurance_expiry: string | null
           is_stolen: boolean | null
           last_inspection: string | null
+          last_known_latitude: number | null
+          last_known_location_at: string | null
+          last_known_longitude: number | null
           license_plate: string | null
           model: string | null
           owner_member_id: string | null
           photo_url: string | null
           qr_code_data: string | null
+          recovery_declared_at: string | null
+          recovery_declared_by: string | null
+          recovery_reason: string | null
           registration_number: string | null
+          security_lock_level: number | null
           serial_number: string | null
           status: string | null
+          stolen_declared_at: string | null
+          stolen_declared_by: string | null
+          stolen_location: string | null
+          stolen_reason: string | null
+          stolen_status: string | null
           tech_control_expiration: string | null
           type: string | null
           verified: boolean | null
@@ -10054,19 +10322,32 @@ export type Database = {
           digital_badge_id?: string | null
           driver_date_of_birth?: string | null
           driver_photo_url?: string | null
+          engine_number?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null
           is_stolen?: boolean | null
           last_inspection?: string | null
+          last_known_latitude?: number | null
+          last_known_location_at?: string | null
+          last_known_longitude?: number | null
           license_plate?: string | null
           model?: string | null
           owner_member_id?: string | null
           photo_url?: string | null
           qr_code_data?: string | null
+          recovery_declared_at?: string | null
+          recovery_declared_by?: string | null
+          recovery_reason?: string | null
           registration_number?: string | null
+          security_lock_level?: number | null
           serial_number?: string | null
           status?: string | null
+          stolen_declared_at?: string | null
+          stolen_declared_by?: string | null
+          stolen_location?: string | null
+          stolen_reason?: string | null
+          stolen_status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
           verified?: boolean | null
@@ -10085,19 +10366,32 @@ export type Database = {
           digital_badge_id?: string | null
           driver_date_of_birth?: string | null
           driver_photo_url?: string | null
+          engine_number?: string | null
           id?: string
           insurance_expiration?: string | null
           insurance_expiry?: string | null
           is_stolen?: boolean | null
           last_inspection?: string | null
+          last_known_latitude?: number | null
+          last_known_location_at?: string | null
+          last_known_longitude?: number | null
           license_plate?: string | null
           model?: string | null
           owner_member_id?: string | null
           photo_url?: string | null
           qr_code_data?: string | null
+          recovery_declared_at?: string | null
+          recovery_declared_by?: string | null
+          recovery_reason?: string | null
           registration_number?: string | null
+          security_lock_level?: number | null
           serial_number?: string | null
           status?: string | null
+          stolen_declared_at?: string | null
+          stolen_declared_by?: string | null
+          stolen_location?: string | null
+          stolen_reason?: string | null
+          stolen_status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
           verified?: boolean | null
@@ -10111,6 +10405,13 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "vehicles_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -11178,6 +11479,13 @@ export type Database = {
             foreignKeyName: "worker_complaints_bureau_id_fkey"
             columns: ["bureau_id"]
             isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
             referencedRelation: "bureaus"
             referencedColumns: ["id"]
           },
@@ -11186,6 +11494,13 @@ export type Database = {
             columns: ["responded_by"]
             isOneToOne: false
             referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "worker_complaints_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
             referencedColumns: ["bureau_id"]
           },
           {
@@ -11237,6 +11552,18 @@ export type Database = {
           total_access_attempts: number | null
           total_installations: number | null
           total_tokens_generated: number | null
+        }
+        Relationships: []
+      }
+      bureau_security_stats: {
+        Row: {
+          active_thefts: number | null
+          bureau_code: string | null
+          bureau_id: string | null
+          commune: string | null
+          pending_alerts: number | null
+          recovered_count: number | null
+          security_events_30d: number | null
         }
         Relationships: []
       }
@@ -11776,6 +12103,29 @@ export type Database = {
         Returns: undefined
       }
       deactivate_panic_mode: { Args: { p_pdg_id: string }; Returns: Json }
+      declare_vehicle_recovered: {
+        Args: {
+          p_bureau_id: string
+          p_declared_by: string
+          p_ip_address?: string
+          p_reason: string
+          p_user_agent?: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
+      declare_vehicle_stolen: {
+        Args: {
+          p_bureau_id: string
+          p_declared_by: string
+          p_ip_address?: string
+          p_location?: string
+          p_reason: string
+          p_user_agent?: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
@@ -12256,6 +12606,18 @@ export type Database = {
           p_performed_by: string
         }
         Returns: string
+      }
+      log_stolen_vehicle_gps: {
+        Args: {
+          p_accuracy?: number
+          p_device_id?: string
+          p_ip_address?: string
+          p_latitude: number
+          p_longitude: number
+          p_speed?: number
+          p_vehicle_id: string
+        }
+        Returns: undefined
       }
       log_taxi_action: {
         Args: {

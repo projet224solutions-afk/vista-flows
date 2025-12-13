@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   RefreshCw,
   MessageSquare,
-  MapPin
+  MapPin,
+  ShieldAlert
 } from 'lucide-react';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 
@@ -77,6 +78,11 @@ export function BureauLayout({
       id: 'motos',
       label: 'Véhicules',
       icon: <Bike className="w-5 h-5" />
+    },
+    {
+      id: 'security',
+      label: 'Sécurité Vol',
+      icon: <ShieldAlert className="w-5 h-5 text-red-600" />
     },
     {
       id: 'wallet',
