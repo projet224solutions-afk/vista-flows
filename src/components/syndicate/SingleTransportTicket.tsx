@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function SingleTransportTicket({ ticketNumber, config, ticketTypeLabel }: Props) {
-  const formattedNumber = String(ticketNumber).padStart(4, '0');
+  const formattedNumber = String(ticketNumber).padStart(2, '0');
   
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('fr-GN').format(amount);
