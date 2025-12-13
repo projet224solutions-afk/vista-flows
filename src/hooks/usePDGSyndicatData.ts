@@ -268,14 +268,16 @@ export const usePDGSyndicatData = () => {
   // Supprimer un bureau
   const deleteBureau = useCallback(async (bureauId: string) => {
     try {
-      // Supprimer d'abord les enregistrements liés
+      // CENTRALISÉ: Supprimer les enregistrements des tables centralisées
       await Promise.all([
         supabase.from('syndicate_workers').delete().eq('bureau_id', bureauId),
-        supabase.from('members').delete().eq('bureau_id', bureauId),
-        supabase.from('registered_motos').delete().eq('bureau_id', bureauId),
+        supabase.from('vehicles').delete().eq('bureau_id', bureauId),
+        supabase.from('vehicle_security_log').delete().eq('bureau_id', bureauId),
         supabase.from('syndicate_alerts').delete().eq('bureau_id', bureauId),
         supabase.from('bureau_transactions').delete().eq('bureau_id', bureauId),
-        supabase.from('bureau_feature_assignments').delete().eq('bureau_id', bureauId)
+        supabase.from('bureau_wallets').delete().eq('bureau_id', bureauId),
+        supabase.from('bureau_feature_assignments').delete().eq('bureau_id', bureauId),
+        supabase.from('badges').delete().eq('bureau_id', bureauId)
       ]);
 
       // Ensuite supprimer le bureau

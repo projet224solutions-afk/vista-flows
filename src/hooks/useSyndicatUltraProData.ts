@@ -157,9 +157,11 @@ export function useSyndicatUltraProData() {
 
   useEffect(() => {
     refresh();
+    // CENTRALISÉ: Écouter syndicate_workers et vehicles au lieu de members
     const channel = supabase
       .channel('realtime-syndicate')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'syndicate_workers' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'taxi_drivers' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bureau_transactions' }, refresh)
       .subscribe();
