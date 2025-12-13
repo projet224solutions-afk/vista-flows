@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Save, X } from 'lucide-react';
@@ -151,7 +152,7 @@ export default function EditBadgeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[500px]">
+      <DialogContent className="max-w-[500px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -175,6 +176,7 @@ export default function EditBadgeDialog({
           </DialogTitle>
         </DialogHeader>
 
+        <ScrollArea className="max-h-[60vh] pr-4">
         <div className="space-y-6">
           {/* Titre du badge */}
           <div className="space-y-2">
@@ -280,6 +282,7 @@ export default function EditBadgeDialog({
             </Button>
           </div>
         </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
