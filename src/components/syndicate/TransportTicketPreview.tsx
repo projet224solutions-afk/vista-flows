@@ -134,12 +134,12 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
           boxSizing: 'border-box',
         }}
       >
-        {/* Grille de 40 tickets PAYSAGE (5 colonnes x 8 lignes) */}
+        {/* Grille de tickets PAYSAGE (4 colonnes x 5 lignes = 20 tickets) */}
         <div 
-          className="grid gap-[2.5mm]"
+          className="grid gap-[3mm]"
           style={{
-            gridTemplateColumns: 'repeat(5, 1fr)', // 5 colonnes pour tickets paysage
-            gridTemplateRows: 'repeat(8, 1fr)', // 8 lignes = 40 tickets
+            gridTemplateColumns: 'repeat(4, 1fr)', // 4 colonnes
+            gridTemplateRows: 'repeat(5, 1fr)', // 5 lignes = 20 tickets par page
             width: '100%',
             height: '200mm',
           }}
