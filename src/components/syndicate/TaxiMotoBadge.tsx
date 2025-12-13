@@ -20,6 +20,7 @@ interface TaxiMotoBadgeProps {
   joinedDate: string;
   expireDate: string;
   bureauName?: string;
+  bureauPhone?: string;
   bureauLogo?: string;
   badgeTitle?: string;
 }
@@ -36,6 +37,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   joinedDate,
   expireDate,
   bureauName = '224SOLUTIONS',
+  bureauPhone,
   bureauLogo,
   badgeTitle
 }, ref) => {
@@ -243,8 +245,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               <MapPin className="w-3.5 h-3.5" />
               <span className="text-[10px] font-semibold uppercase tracking-wider">Bureau de Rattachement</span>
             </div>
-            <div className="text-sm font-bold text-slate-900">
-              {displayBureauName}
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-bold text-slate-900">
+                {displayBureauName}
+              </div>
+              {bureauPhone && (
+                <div className="flex items-center gap-1 text-blue-600">
+                  <span className="text-xs font-semibold">📞 {bureauPhone}</span>
+                </div>
+              )}
             </div>
           </div>
 

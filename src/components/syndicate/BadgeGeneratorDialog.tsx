@@ -29,6 +29,7 @@ interface BadgeGeneratorDialogProps {
   };
   bureauName?: string;
   bureauCommune?: string;
+  bureauPhone?: string;
 }
 
 export default function BadgeGeneratorDialog({
@@ -36,7 +37,8 @@ export default function BadgeGeneratorDialog({
   onOpenChange,
   vehicleData,
   bureauName,
-  bureauCommune
+  bureauCommune,
+  bureauPhone
 }: BadgeGeneratorDialogProps) {
   // Utiliser le titre sauvegardé ou construire automatiquement basé sur la commune
   const locationName = bureauCommune || bureauName;
@@ -194,6 +196,7 @@ export default function BadgeGeneratorDialog({
               joinedDate={joinedDate}
               expireDate={expireDate}
               bureauName={bureauCommune || bureauName}
+              bureauPhone={bureauPhone}
               badgeTitle={badgeTitle}
             />
           </div>
