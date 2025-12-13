@@ -9,6 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   ShoppingCart, 
   Plus, 
@@ -34,7 +36,8 @@ import {
   Check,
   Euro,
   Eye,
-  Package
+  Package,
+  Store
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -67,6 +70,8 @@ interface Customer {
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
   const { user, session } = useAuth();
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
   // Récupérer le vendor_id de l'utilisateur connecté
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -461,24 +466,24 @@ export function POSSystem() {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
-      {/* En-tête professionnel */}
+      {/* En-tête professionnel - Compact sur mobile */}
       <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg">
-        <div className="flex items-center justify-between p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-              <Building className="h-7 w-7 text-primary-foreground" />
+        <div className="flex items-center justify-between p-3 md:p-6">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg">
+              <Store className="h-5 w-5 md:h-7 md:w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              <h1 className="text-base md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent truncate max-w-[140px] md:max-w-none">
                 {settings?.company_name || companyName}
               </h1>
-              <p className="text-muted-foreground font-medium">Système Point de Vente Professionnel</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground font-medium hidden sm:block">Point de Vente</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Statistiques temps réel */}
-            <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-md">
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Horloge - Desktop only */}
+            <div className="hidden md:flex bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-md">
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-primary" />
                 <div>
@@ -491,12 +496,12 @@ export function POSSystem() {
             {/* Dialog des paramètres */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="shadow-md">
-                  <Settings className="h-4 w-4 mr-2" />
-                  TVA & Config
+                <Button variant="outline" size={isMobile ? "sm" : "default"} className="shadow-md">
+                  <Settings className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">TVA & Config</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Settings className="h-5 w-5 text-primary" />
@@ -600,54 +605,85 @@ export function POSSystem() {
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0 gap-4 p-4">
+      {/* Mobile: Tabs pour basculer entre Produits et Panier */}
+      {isMobile && (
+        <div className="bg-card border-b border-border/50 px-2 py-2 sticky top-0 z-30">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={mobileTab === 'products' ? 'default' : 'outline'}
+              onClick={() => setMobileTab('products')}
+              className="h-10"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Produits
+            </Button>
+            <Button
+              variant={mobileTab === 'cart' ? 'default' : 'outline'}
+              onClick={() => setMobileTab('cart')}
+              className="h-10 relative"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Panier
+              {cart.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className={`flex flex-1 min-h-0 gap-2 md:gap-4 p-2 md:p-4 ${isMobile ? 'flex-col' : ''}`}>
         {/* Section Produits - Design moderne */}
-        <div className="flex-1 flex flex-col space-y-4">
-          {/* Barre de recherche améliorée */}
+        <div className={`flex-1 flex flex-col space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
+          {/* Barre de recherche améliorée - Compact sur mobile */}
           <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher un produit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 h-12 text-base border-2 border-border/50 focus:border-primary/50 bg-background/80"
-                  />
+            <CardContent className="p-3 md:p-6">
+              <div className="flex flex-col gap-2 md:gap-4">
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
+                    />
+                  </div>
+                  
+                  {/* Vue mode - Desktop only */}
+                  <div className="hidden md:flex gap-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
+                {/* Barre-code - Desktop only */}
                 <Input
                   placeholder="Scanner code-barres"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
-                  className="lg:w-56 h-12 text-base border-2 border-border/50 focus:border-primary/50 bg-background/80"
+                  className="hidden md:block h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
                 />
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="lg"
-                    onClick={() => setViewMode('grid')}
-                    className="shadow-md"
-                  >
-                    <Grid3X3 className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'outline'}
-                    size="lg"
-                    onClick={() => setViewMode('list')}
-                    className="shadow-md"
-                  >
-                    <List className="h-5 w-5" />
-                  </Button>
-                </div>
               </div>
               
-              {/* Filtres par catégorie */}
-              <div className="flex gap-2 mt-4 flex-wrap">
+              {/* Filtres par catégorie - Scroll horizontal sur mobile */}
+              <div className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-1 scrollbar-hide">
                 {categoriesLoading ? (
-                  <div className="text-sm text-muted-foreground">Chargement des catégories...</div>
+                  <div className="text-xs text-muted-foreground">Chargement...</div>
                 ) : (
                   <>
                     <Button
@@ -675,116 +711,99 @@ export function POSSystem() {
             </CardContent>
           </Card>
 
-          {/* Grille de produits professionnelle */}
+          {/* Grille de produits professionnelle - Mobile optimisé */}
           <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
-            <CardContent className="p-6 h-full">
-              <ScrollArea className="h-full">
+            <CardContent className="p-2 md:p-6 h-full">
+              <ScrollArea className="h-[calc(100vh-280px)] md:h-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center gap-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      <div className="text-muted-foreground">Chargement des produits du marketplace...</div>
+                      <div className="text-muted-foreground text-sm">Chargement...</div>
                     </div>
                   </div>
                 ) : filteredProducts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-4">
-                    <ShoppingBag className="h-16 w-16 text-muted-foreground/50" />
+                  <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
+                    <ShoppingBag className="h-12 w-12 text-muted-foreground/50" />
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-muted-foreground mb-2">Aucun produit disponible</div>
-                      <div className="text-sm text-muted-foreground">
-                        {searchTerm || selectedCategory !== 'all' 
-                          ? 'Essayez de modifier vos critères de recherche' 
-                          : 'Les produits du marketplace apparaîtront ici'}
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Aucun produit</div>
+                      <div className="text-xs text-muted-foreground">
+                        {searchTerm ? 'Modifiez votre recherche' : 'Ajoutez des produits'}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 p-1 md:p-2">
                     {filteredProducts.map(product => (
                       <Card 
                         key={product.id} 
-                        className="group relative cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-2xl border-2 border-border/50 hover:border-primary/40 bg-card/95 backdrop-blur-sm hover:-translate-y-1"
+                        className="group relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-xl border border-border/50 hover:border-primary/40 bg-card/95 active:scale-[0.98]"
                         onClick={() => addToCart(product)}
                       >
                         <CardContent className="p-0">
-                          {/* Image produit moderne */}
-                          <div className="relative w-full h-40 bg-gradient-to-br from-primary/5 via-background to-primary/5 overflow-hidden border-b-2 border-border/30">
-                            {/* Badge stock flottant */}
-                            <div className="absolute top-2 right-2 z-10">
+                          {/* Image produit - Compact sur mobile */}
+                          <div className="relative w-full aspect-square md:h-32 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
+                            {/* Badge stock */}
+                            <div className="absolute top-1 right-1 z-10">
                               <Badge 
                                 variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
-                                className="shadow-lg font-bold text-xs px-2.5 py-0.5"
+                                className="shadow-md font-bold text-[10px] px-1.5 py-0.5"
                               >
                                 {product.stock}
                               </Badge>
                             </div>
 
-                            {/* Image du produit ou icône */}
+                            {/* Badge quantité panier */}
+                            {cart.find(item => item.id === product.id) && (
+                              <div className="absolute top-1 left-1 z-10">
+                                <Badge variant="default" className="font-mono font-bold text-[10px] px-1.5 py-0.5 bg-primary">
+                                  ×{cart.find(item => item.id === product.id)?.quantity}
+                                </Badge>
+                              </div>
+                            )}
+
                             {product.images && product.images.length > 0 ? (
                               <img 
                                 src={product.images[0]} 
                                 alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="relative">
-                                  <div className="absolute inset-0 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors duration-500" />
-                                  <Package className="relative h-16 w-16 text-muted-foreground/40 group-hover:text-primary/60 transition-colors duration-300" />
-                                </div>
+                                <Package className="h-10 w-10 text-muted-foreground/40" />
                               </div>
                             )}
-
-                            {/* Overlay gradient au survol */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                           
-                          {/* Contenu compact et professionnel */}
-                          <div className="p-4 space-y-3">
-                            {/* Catégorie compacte */}
-                            <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wide">
-                              {product.category}
-                            </Badge>
-
-                            {/* Nom du produit */}
-                            <h3 className="font-bold text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors duration-200">
+                          {/* Info produit - Très compact sur mobile */}
+                          <div className="p-2 md:p-3 space-y-1">
+                            {/* Nom produit */}
+                            <h3 className="font-semibold text-xs md:text-sm leading-tight line-clamp-2 min-h-[2rem]">
                               {product.name}
                             </h3>
                             
-                            {/* Prix prominent */}
-                            <div className="flex items-baseline gap-1.5 justify-between">
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black text-primary">
-                                  {product.price.toLocaleString()}
-                                </span>
-                                <span className="text-xs font-bold text-muted-foreground">
-                                  GNF
-                                </span>
-                              </div>
-                              
-                              {/* Quantité dans le panier */}
-                              {cart.find(item => item.id === product.id) && (
-                                <Badge variant="secondary" className="font-mono font-bold">
-                                  ×{cart.find(item => item.id === product.id)?.quantity}
-                                </Badge>
-                              )}
+                            {/* Prix */}
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-sm md:text-lg font-bold text-primary">
+                                {product.price.toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">GNF</span>
                             </div>
                             
-                            <Separator className="my-2" />
-
-                            {/* Actions compactes */}
-                            <div className="grid grid-cols-5 gap-1.5">
+                            {/* Boutons d'action - Compact */}
+                            <div className="flex gap-1 pt-1">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1);
+                                  const qty = cart.find(item => item.id === product.id)?.quantity || 0;
+                                  if (qty > 0) updateQuantity(product.id, qty - 1);
                                 }}
                                 disabled={!cart.find(item => item.id === product.id)}
-                                className="h-9 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"
+                                className="h-7 w-7 p-0"
                               >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-3 w-3" />
                               </Button>
                               
                               <Button
@@ -794,22 +813,10 @@ export function POSSystem() {
                                   e.stopPropagation();
                                   addToCart(product);
                                 }}
-                                className="col-span-3 h-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg font-semibold"
+                                className="flex-1 h-7 text-[10px] md:text-xs font-semibold"
                               >
-                                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                                Ajouter
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addToCart(product);
-                                }}
-                                className="h-9 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
-                              >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-3 w-3 mr-0.5" />
+                                <span className="hidden sm:inline">Ajouter</span>
                               </Button>
                             </div>
                           </div>
@@ -823,8 +830,8 @@ export function POSSystem() {
           </Card>
         </div>
 
-        {/* Section Panier - Interface professionnelle */}
-        <div className="w-96 flex flex-col space-y-4">
+        {/* Section Panier - Interface professionnelle - Responsive */}
+        <div className={`w-full md:w-96 flex flex-col space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier Ultra Professionnel */}
           <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg">
             {/* En-tête du panier avec statistiques */}
@@ -860,55 +867,55 @@ export function POSSystem() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-4 flex-1">
-              <ScrollArea className="h-96">
+            <CardContent className="p-2 md:p-4 flex-1">
+              <ScrollArea className="h-[200px] md:h-96">
                 {cart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                    <ShoppingBag className="h-16 w-16 text-muted-foreground/40 mb-4" />
-                    <p className="text-muted-foreground font-medium">Panier vide</p>
-                    <p className="text-sm text-muted-foreground/80">Ajoutez des produits pour commencer</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center py-6">
+                    <ShoppingBag className="h-10 w-10 md:h-16 md:w-16 text-muted-foreground/40 mb-2" />
+                    <p className="text-muted-foreground font-medium text-sm">Panier vide</p>
+                    <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {cart.map(item => (
-                      <Card key={item.id} className="bg-gradient-to-r from-background/80 to-background/60 border border-border/50 transition-all duration-200 hover:shadow-lg">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
+                      <Card key={item.id} className="bg-background/80 border border-border/50">
+                        <CardContent className="p-2 md:p-3">
+                          <div className="flex justify-between items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm line-clamp-2 mb-1">{item.name}</h4>
-                              <p className="text-xs text-muted-foreground mb-2">{item.price.toLocaleString()} GNF × {item.quantity}</p>
+                              <h4 className="font-semibold text-xs md:text-sm line-clamp-1">{item.name}</h4>
+                              <p className="text-[10px] md:text-xs text-muted-foreground">{item.price.toLocaleString()} × {item.quantity}</p>
                             </div>
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               onClick={() => removeFromCart(item.id)}
-                              className="text-muted-foreground hover:text-destructive ml-2 h-6 w-6 p-0"
+                              className="text-muted-foreground hover:text-destructive h-6 w-6 p-0"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center bg-muted/30 rounded-lg p-1">
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center bg-muted/30 rounded-md">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                className="h-6 w-6 p-0"
                               >
                                 <Minus className="h-3 w-3" />
                               </Button>
-                              <span className="mx-2 font-mono font-bold text-sm min-w-[2rem] text-center">{item.quantity}</span>
+                              <span className="mx-1 font-mono font-bold text-xs min-w-[1.5rem] text-center">{item.quantity}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => addToCart(item)}
-                                className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
+                                className="h-6 w-6 p-0"
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
-                            <div className="font-bold text-primary text-right">
+                            <div className="font-bold text-primary text-xs md:text-sm">
                               {item.total.toLocaleString()} GNF
                             </div>
                           </div>
@@ -920,36 +927,32 @@ export function POSSystem() {
               </ScrollArea>
             </CardContent>
 
-            {/* Section totaux et paiement */}
+            {/* Section totaux et paiement - Compact sur mobile */}
             {cart.length > 0 && (
-              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5 backdrop-blur-sm">
-                <div className="p-6 space-y-4">
+              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5">
+                <div className="p-3 md:p-6 space-y-3 md:space-y-4">
                   {/* Calculs détaillés */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs md:text-sm">
                       <span className="text-muted-foreground">Sous-total</span>
                       <span className="font-mono">{subtotal.toLocaleString()} GNF</span>
                     </div>
                     
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        TVA {taxEnabled && `(${(taxRate * 100).toFixed(1)}%)`}
-                        <Badge variant={taxEnabled ? 'default' : 'secondary'} className="text-xs px-1.5 py-0.5">
+                    <div className="flex justify-between items-center text-xs md:text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        TVA
+                        <Badge variant={taxEnabled ? 'default' : 'secondary'} className="text-[10px] px-1 py-0">
                           {taxEnabled ? 'ON' : 'OFF'}
                         </Badge>
                       </span>
                       <span className="font-mono">{tax.toLocaleString()} GNF</span>
                     </div>
                     
-                    <Separator className="my-2" />
+                    <Separator className="my-1" />
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold">TOTAL</span>
-                      <span className="text-2xl font-bold text-primary font-mono">{total.toLocaleString()} GNF</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <label className="text-sm text-muted-foreground">Remise (%)</label>
-                      <Input type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} className="w-24" />
+                      <span className="text-sm md:text-lg font-bold">TOTAL</span>
+                      <span className="text-lg md:text-2xl font-bold text-primary font-mono">{total.toLocaleString()} GNF</span>
                     </div>
                   </div>
 
