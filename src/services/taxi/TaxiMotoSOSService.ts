@@ -294,26 +294,49 @@ class TaxiMotoSOSService {
       }
 
       // 3. Créer notification dans la table notifications Supabase
+      // UNIQUEMENT si on a un bureau_syndicat_id valide (UUID)
       try {
-        await supabase.from('notifications').insert({
-          user_id: sosAlert.bureau_syndicat_id || 'all-bureaus',
-          type: 'sos_alert',
-          title: '🚨 ALERTE SOS URGENTE',
-          message: `${sosAlert.driver_name} (${sosAlert.driver_phone}) a déclenché un SOS!`,
-          data: {
-            sos_id: sosAlert.id,
-            driver_id: sosAlert.taxi_driver_id,
-            driver_name: sosAlert.driver_name,
-            driver_phone: sosAlert.driver_phone,
-            latitude: sosAlert.latitude,
-            longitude: sosAlert.longitude,
-            accuracy: sosAlert.accuracy,
-            triggered_at: sosAlert.triggered_at
-          },
-          priority: 'urgent',
-          read: false
-        });
-        console.log('✅ Notification DB créée');
+        if (sosAlert.bureau_syndicat_id && sosAlert.bureau_syndicat_id.length === 36) {
+          // Récupérer le president_email du bureau pour trouver son user_id
+          const { data: bureauData } = await supabase
+            .from('bureaus')
+            .select('president_email')
+            .eq('id', sosAlert.bureau_syndicat_id)
+            .single();
+          
+          if (bureauData?.president_email) {
+            // Chercher le profile avec cet email
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', bureauData.president_email)
+              .single();
+            
+            if (profileData?.id) {
+              await supabase.from('notifications').insert({
+                user_id: profileData.id,
+                type: 'sos_alert',
+                title: '🚨 ALERTE SOS URGENTE',
+                message: `${sosAlert.driver_name} (${sosAlert.driver_phone}) a déclenché un SOS!`,
+                data: {
+                  sos_id: sosAlert.id,
+                  driver_id: sosAlert.taxi_driver_id,
+                  driver_name: sosAlert.driver_name,
+                  driver_phone: sosAlert.driver_phone,
+                  latitude: sosAlert.latitude,
+                  longitude: sosAlert.longitude,
+                  accuracy: sosAlert.accuracy,
+                  triggered_at: sosAlert.triggered_at
+                },
+                priority: 'urgent',
+                read: false
+              });
+              console.log('✅ Notification DB créée pour bureau');
+            }
+          }
+        } else {
+          console.log('⚠️ Pas de bureau_syndicat_id valide, notification DB ignorée');
+        }
       } catch (dbError) {
         console.error('⚠️ Erreur notification DB:', dbError);
       }
@@ -437,13 +460,13 @@ class TaxiMotoSOSService {
         latitude: record.latitude,
         longitude: record.longitude,
         accuracy: record.accuracy,
-        direction: undefined,
+        direction: record.direction,
         speed: record.speed,
-        gps_history: [],
+        gps_history: record.gps_history || [],
         status: record.status as SOSStatus,
         bureau_syndicat_id: record.bureau_id,
         description: record.description,
-        triggered_at: record.triggered_at,
+        triggered_at: record.created_at, // Utiliser created_at car triggered_at n'existe pas
         resolved_at: record.resolved_at,
         resolved_by: record.resolved_by
       })) || [];
