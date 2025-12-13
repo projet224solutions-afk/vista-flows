@@ -152,6 +152,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     const now = new Date();
     const diffTime = now.getTime() - lastDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    console.log(`Vérification reset: ${diffDays.toFixed(2)} jours écoulés, période: ${days} jours`);
     return diffDays >= days;
   };
 
@@ -168,7 +169,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     setIsGenerating(true);
     
     try {
-      // Récupérer le dernier lot de tickets pour ce bureau ET ce type de ticket
+      // Récupérer le dernier lot DE CE TYPE pour ce bureau
       const { data: lastBatch, error: fetchError } = await (supabase as any)
         .from('transport_ticket_batches')
         .select('end_number, created_at, ticket_config')
@@ -182,19 +183,33 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       let startNumber = 1; // Par défaut recommencer à 1
+      let resetReason = '';
 
-      if (lastBatch) {
-        // Vérifier le type du dernier lot
+      // Si aucun lot existe (historique vide), recommencer à 1
+      if (!lastBatch) {
+        startNumber = 1;
+        resetReason = 'Historique vide';
+        console.log('Aucun lot trouvé, numérotation à 1');
+      } else {
         const lastTicketType = lastBatch.ticket_config?.ticketType || 'journalier';
         
-        // Si le type de ticket est différent OU si la période est expirée, recommencer à 1
-        if (lastTicketType !== config.ticketType || shouldResetNumbering(lastBatch.created_at, config.ticketType)) {
+        // Si le type de ticket est différent, recommencer à 1
+        if (lastTicketType !== config.ticketType) {
+          startNumber = 1;
+          resetReason = `Type changé (${lastTicketType} → ${config.ticketType})`;
+          console.log(`Type de ticket changé, numérotation à 1`);
+        }
+        // Si la période est expirée, recommencer à 1
+        else if (shouldResetNumbering(lastBatch.created_at, config.ticketType)) {
           startNumber = 1;
           const { name } = getValidityPeriod(config.ticketType);
-          console.log(`Réinitialisation de la numérotation (période ${name} expirée ou type changé)`);
-        } else {
-          // Sinon continuer la séquence
+          resetReason = `Période ${name} expirée`;
+          console.log(`Période expirée, numérotation à 1`);
+        }
+        // Sinon continuer la séquence
+        else {
           startNumber = (lastBatch.end_number || 0) + 1;
+          console.log(`Continuation séquence depuis ${startNumber}`);
         }
       }
 
@@ -234,7 +249,10 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       setShowPreview(true);
       
       const { name } = getValidityPeriod(config.ticketType);
-      toast.success(`Lot ${batchNumber} généré (tickets ${startNumber} à ${endNumber}) - Validité: ${name}`);
+      const successMsg = resetReason 
+        ? `Lot ${batchNumber} généré (tickets 01-30) - ${resetReason}`
+        : `Lot ${batchNumber} généré (tickets ${startNumber}-${endNumber}) - Validité: ${name}`;
+      toast.success(successMsg);
     } catch (error: any) {
       console.error('Erreur génération tickets:', error);
       toast.error(error.message || 'Erreur lors de la génération des tickets');
