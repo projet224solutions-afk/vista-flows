@@ -280,8 +280,8 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
                 p_vehicle_id: selectedVehicle.id,
                 p_bureau_id: bureauId,
-                p_declared_by: bureauId,
-                p_reason: recoveryReason,
+                p_recovered_by: bureauId,
+                p_recovery_notes: recoveryReason,
                 p_ip_address: null,
                 p_user_agent: navigator.userAgent
             });
