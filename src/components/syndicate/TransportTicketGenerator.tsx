@@ -111,7 +111,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       toast.success('Cachet téléchargé avec succès');
     } catch (error: any) {
       console.error('Erreur upload cachet:', error);
-      toast.error('Erreur lors du téléchargement du cachet');
+      toast.error(`Erreur: ${error?.message || 'Téléchargement échoué'}`);
     } finally {
       setIsUploadingStamp(false);
     }
