@@ -81,7 +81,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazy(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
-
+const BadgeVerification = lazy(() => import("./pages/BadgeVerification"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -393,6 +393,9 @@ function App() {
 
               {/* Bug Bounty - Public */}
               <Route path="/bug-bounty" element={<BugBounty />} />
+
+              {/* Badge Verification - Public */}
+              <Route path="/badge/:vehicleId" element={<BadgeVerification />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
