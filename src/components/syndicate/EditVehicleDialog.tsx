@@ -65,7 +65,7 @@ export default function EditVehicleDialog({
         .update({
           serial_number: serialNumber,
           license_plate: licensePlate,
-          vehicle_type: vehicleType,
+          type: vehicleType,
           brand: brand || null,
           model: model || null,
           year: year || null,
