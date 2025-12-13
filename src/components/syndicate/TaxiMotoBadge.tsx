@@ -137,24 +137,24 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Nom du conducteur - Style simple et professionnel */}
+          {/* Nom du conducteur - Style simple */}
           <div className="text-center mt-6">
-            <h2 className="text-base font-bold text-slate-800 tracking-wide uppercase">
+            <h2 className="text-sm font-bold text-slate-800 tracking-wide uppercase">
               {driverName}
             </h2>
             <div className="flex items-center justify-center gap-2 mt-2 text-slate-600">
-              <CreditCard className="w-4 h-4" />
-              <span className="text-sm font-mono font-bold tracking-wider">{memberId}</span>
+              <CreditCard className="w-3.5 h-3.5" />
+              <span className="text-xs font-mono font-bold tracking-wider">{memberId}</span>
             </div>
           </div>
 
           {/* Signature */}
-          <div className="mt-6 pt-4 border-t border-slate-200">
+          <div className="mt-4 pt-3 border-t border-slate-200">
             <div className="text-xs text-slate-400 text-center mb-2 uppercase tracking-wider">
               Signature du Titulaire
             </div>
-            <div className="h-12 border-b-2 border-slate-300 flex items-end justify-center pb-1">
-              <span className="text-xl text-slate-600 italic font-serif">
+            <div className="h-10 border-b-2 border-slate-300 flex items-end justify-center pb-1">
+              <span className="text-lg text-slate-600 italic font-serif">
                 {driverName.split(' ')[0]}
               </span>
             </div>
@@ -162,95 +162,95 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
         </div>
 
         {/* Section informations - Droite */}
-        <div className="flex-1 p-6 flex flex-col">
+        <div className="flex-1 p-5 flex flex-col">
           {/* Grille d'informations */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             {/* Matricule véhicule */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-              <div className="flex items-center gap-2 text-blue-600 mb-2">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100">
+              <div className="flex items-center gap-2 text-blue-600 mb-1">
                 <CreditCard className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase tracking-wider">Immatriculation</span>
               </div>
-              <div className="text-xl font-bold text-slate-900 font-mono">
+              <div className="text-lg font-bold text-slate-900 font-mono">
                 {vehiclePlate}
               </div>
             </div>
 
             {/* Date de naissance */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
-              <div className="flex items-center gap-2 text-amber-600 mb-2">
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
+              <div className="flex items-center gap-2 text-amber-600 mb-1">
                 <Calendar className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase tracking-wider">Date de Naissance</span>
               </div>
-              <div className="text-xl font-bold text-slate-900">
+              <div className="text-lg font-bold text-slate-900">
                 {dateOfBirth || 'Non renseigné'}
               </div>
             </div>
 
             {/* Date d'inscription */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
-              <div className="flex items-center gap-2 text-green-600 mb-2">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 border border-green-100">
+              <div className="flex items-center gap-2 text-green-600 mb-1">
                 <Calendar className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase tracking-wider">Date d'Inscription</span>
               </div>
-              <div className="text-lg font-bold text-slate-900">
+              <div className="text-base font-bold text-slate-900">
                 {joinedDate}
               </div>
             </div>
 
             {/* Date d'expiration */}
-            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border border-red-100">
-              <div className="flex items-center gap-2 text-red-600 mb-2">
+            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-3 border border-red-100">
+              <div className="flex items-center gap-2 text-red-600 mb-1">
                 <Calendar className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase tracking-wider">Date d'Expiration</span>
               </div>
-              <div className="text-lg font-bold text-slate-900">
+              <div className="text-base font-bold text-slate-900">
                 {expireDate}
               </div>
             </div>
           </div>
 
           {/* Bureau et localisation */}
-          <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
-            <div className="flex items-center gap-2 text-slate-600 mb-2">
+          <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-3 mb-3 border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-600 mb-1">
               <MapPin className="w-4 h-4" />
               <span className="text-xs font-semibold uppercase tracking-wider">Bureau de Rattachement</span>
             </div>
-            <div className="text-lg font-bold text-slate-900">
+            <div className="text-base font-bold text-slate-900">
               {bureauName}
             </div>
           </div>
 
           {/* Section code-barres et QR */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1">
             {/* Code-barres */}
-            <div className="flex-1 bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+            <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200">
               <div className="flex items-center justify-center">
                 <Barcode 
                   value={memberId}
-                  width={2}
-                  height={45}
-                  fontSize={10}
-                  textMargin={4}
+                  width={1.8}
+                  height={40}
+                  fontSize={0}
                   margin={0}
                   background="transparent"
+                  displayValue={false}
                 />
               </div>
             </div>
 
-            {/* QR Code - Compact et visible */}
-            <div className="bg-white rounded-lg p-2 border border-slate-200 shadow-sm">
+            {/* QR Code */}
+            <div className="bg-white rounded-lg p-3 border border-slate-200 flex-shrink-0">
               <QRCodeSVG 
                 value={`224SOLUTIONS:${memberId}`}
                 size={70}
-                level="H"
+                level="M"
                 includeMargin={false}
               />
             </div>
           </div>
 
-          {/* Pied de page avec informations de sécurité - Sans UUID */}
-          <div className="mt-4 pt-4 border-t border-slate-200">
+          {/* Pied de page */}
+          <div className="pt-3 border-t border-slate-200 mt-2">
             <div className="flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Émis par 224Solutions</span>
@@ -259,7 +259,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5" />
-                <span className="font-medium">Document sécurisé - Vérifiable en ligne</span>
+                <span className="font-medium">Document sécurisé</span>
               </div>
             </div>
           </div>
