@@ -1,6 +1,7 @@
 /**
  * SIDEBAR VENDEUR PROFESSIONNELLE - 224SOLUTIONS
  * Navigation complète avec tous les modules vendeur
+ * @version 2.0.0 - Production Build Fix
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
