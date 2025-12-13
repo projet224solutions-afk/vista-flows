@@ -59,13 +59,13 @@ export default function WorkerDashboard() {
 
       if (permissions.view_members) {
         promises.push(
-          supabase.from('members').select('*').eq('bureau_id', workerData.bureau_id)
+          supabase.from('syndicate_workers').select('*').eq('bureau_id', workerData.bureau_id) // Utiliser syndicate_workers
         );
       }
 
       if (permissions.view_vehicles) {
         promises.push(
-          supabase.from('registered_motos').select('*').eq('bureau_id', workerData.bureau_id)
+          supabase.from('vehicles').select('*').eq('bureau_id', workerData.bureau_id) // Utiliser vehicles
         );
       }
 

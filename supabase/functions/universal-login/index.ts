@@ -125,22 +125,22 @@ async function verifyBureau(supabase: any, identifier: string, password: string,
   };
 }
 
-// Vérification Travailleur (Member)
+// Vérification Travailleur (syndicate_workers au lieu de members)
 async function verifyWorker(supabase: any, identifier: string, password: string, identifierType: string) {
   console.log('🔍 Vérification Travailleur...', { identifier, identifierType });
   
   let query = supabase
-    .from('members')
+    .from('syndicate_workers')
     .select('*')
-    .eq('status', 'active')
+    .eq('is_active', true)
     .single();
   
   if (identifierType === 'email') {
     query = query.eq('email', identifier);
   } else if (identifierType === 'phone') {
-    query = query.eq('phone', identifier);
+    query = query.eq('telephone', identifier);
   } else {
-    query = query.eq('license_number', identifier);
+    query = query.eq('custom_id', identifier);
   }
   
   const { data: worker, error } = await query;

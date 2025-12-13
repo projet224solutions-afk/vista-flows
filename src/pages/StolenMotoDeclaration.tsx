@@ -163,16 +163,22 @@ export default function StolenMotoDeclaration() {
 
       setVehicle(foundVehicle);
 
-      // Charger les informations du propriétaire
+      // Charger les informations du propriétaire (maintenant depuis syndicate_workers)
       if (foundVehicle.owner_member_id) {
-        const { data: memberData } = await supabase
-          .from('members')
-          .select('id, name, custom_id, phone')
+        const { data: workerData } = await supabase
+          .from('syndicate_workers')
+          .select('id, nom, custom_id, telephone')
           .eq('id', foundVehicle.owner_member_id)
           .single();
 
-        if (memberData) {
-          setMember(memberData as MemberData);
+        if (workerData) {
+          // Mapper les champs syndicate_workers vers MemberData
+          setMember({
+            id: workerData.id,
+            name: workerData.nom,
+            custom_id: workerData.custom_id,
+            phone: workerData.telephone
+          } as MemberData);
         }
       }
 

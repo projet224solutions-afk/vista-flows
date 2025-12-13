@@ -145,7 +145,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 .from('vehicles')
                 .select(`
                     *,
-                    members:owner_member_id(name)
+                    syndicate_workers:owner_member_id(nom)
                 `)
                 .eq('bureau_id', bureauId);
 
@@ -153,7 +153,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
             const formattedVehicles = (vehicles || []).map((v: any) => ({
                 ...v,
-                owner_name: v.members?.name || 'Non assigné'
+                owner_name: v.syndicate_workers?.nom || 'Non assigné'
             }));
 
             console.log('🚗 Véhicules chargés:', { 

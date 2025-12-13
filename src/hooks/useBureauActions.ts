@@ -211,16 +211,18 @@ export function useBureauActions({
     }
 
     try {
+      // Utiliser syndicate_workers au lieu de members
       const { data, error } = await supabase
-        .from('members')
+        .from('syndicate_workers')
         .insert([{
           bureau_id: effectiveBureauId,
-          name: memberData.full_name.trim(),
+          nom: memberData.full_name.trim(),
           email: memberData.email.trim().toLowerCase(),
-          phone: memberData.phone.trim(),
-          address: memberData.address?.trim() || null,
-          membership_type: memberData.membership_type || 'individual',
-          status: 'pending'
+          telephone: memberData.phone.trim(),
+          access_level: 'standard',
+          is_active: true,
+          access_token: crypto.randomUUID(),
+          interface_url: `/worker/dashboard`
         }])
         .select()
         .single();
@@ -244,9 +246,15 @@ export function useBureauActions({
     updates: Partial<MemberData>
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Mapper les champs pour syndicate_workers
+      const workerUpdates: any = {};
+      if (updates.full_name) workerUpdates.nom = updates.full_name;
+      if (updates.email) workerUpdates.email = updates.email;
+      if (updates.phone) workerUpdates.telephone = updates.phone;
+      
       const { error } = await supabase
-        .from('members')
-        .update(updates)
+        .from('syndicate_workers')
+        .update(workerUpdates)
         .eq('id', memberId);
 
       if (error) throw error;
@@ -266,8 +274,8 @@ export function useBureauActions({
   const validateMember = useCallback(async (memberId: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase
-        .from('members')
-        .update({ status: 'active' })
+        .from('syndicate_workers')
+        .update({ is_active: true })
         .eq('id', memberId);
 
       if (error) throw error;
@@ -305,19 +313,18 @@ export function useBureauActions({
     }
 
     try {
+      // Utiliser la table vehicles au lieu de registered_motos
       const { data, error } = await supabase
-        .from('registered_motos')
+        .from('vehicles')
         .insert([{
           bureau_id: effectiveBureauId,
-          plate_number: vehicleData.plate_number.trim().toUpperCase(),
+          license_plate: vehicleData.plate_number.trim().toUpperCase(),
           serial_number: vehicleData.moto_serial.trim().toUpperCase(),
-          owner_name: vehicleData.owner_name.trim(),
-          owner_phone: vehicleData.owner_phone.trim(),
-          model: vehicleData.model?.trim() || null,
-          year: vehicleData.year || null,
+          brand: vehicleData.model?.split(' ')[0] || 'Inconnu',
+          model: vehicleData.model?.trim() || 'Inconnu',
           color: vehicleData.color?.trim() || null,
           status: 'active',
-          is_verified: false
+          stolen_status: 'clean'
         }])
         .select()
         .single();
