@@ -260,7 +260,7 @@ export default function StolenMotoDeclaration() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-50 py-6 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-50 pt-6 pb-32 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
