@@ -264,15 +264,12 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
         return { success: false, error: 'ID bureau manquant' };
       }
 
-      // TODO: Créer la table syndicat_bureau dans la base de données
-      console.warn('Table syndicat_bureau not implemented yet');
-      return { success: false, error: 'Fonctionnalité Bureau de Syndicat en cours de développement' };
-      // const { error } = await supabase
-      //   .from('syndicat_bureau')
-      //   .update(updates)
-      //   .eq('id', bureauId);
-      //
-      // if (error) throw error;
+      const { error } = await supabase
+        .from('bureaus')
+        .update(updates)
+        .eq('id', bureauId);
+
+      if (error) throw error;
 
       toast.success('Bureau mis à jour avec succès');
       options.onBureauUpdated?.();
