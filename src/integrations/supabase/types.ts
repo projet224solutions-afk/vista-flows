@@ -13190,6 +13190,7 @@ export type Database = {
             }
             Returns: undefined
           }
+      run_daily_wallet_audit: { Args: never; Returns: Json }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
         Returns: Json
@@ -13831,6 +13832,10 @@ export type Database = {
         Returns: string
       }
       validate_standard_id: { Args: { p_id: string }; Returns: boolean }
+      validate_transaction_integrity: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
       verify_ledger_integrity: {
         Args: never
         Returns: {
