@@ -12948,7 +12948,7 @@ export type Database = {
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       delete_syndicate_worker_secure: {
         Args: { p_bureau_id: string; p_worker_id: string }
-        Returns: boolean
+        Returns: undefined
       }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
@@ -14377,7 +14377,7 @@ export type Database = {
       }
       toggle_syndicate_worker_status_secure: {
         Args: { p_bureau_id: string; p_is_active: boolean; p_worker_id: string }
-        Returns: boolean
+        Returns: undefined
       }
       unlockrows: { Args: { "": string }; Returns: number }
       update_agent: {
@@ -14404,7 +14404,7 @@ export type Database = {
           p_telephone?: string
           p_worker_id: string
         }
-        Returns: boolean
+        Returns: undefined
       }
       updategeometrysrid: {
         Args: {
