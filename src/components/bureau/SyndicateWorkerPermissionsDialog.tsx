@@ -62,63 +62,87 @@ export function SyndicateWorkerPermissionsDialog({
     }
   };
 
-  // Group permissions by category
+  // Group permissions by category - toutes les fonctionnalités du bureau syndicat
   const permissionCategories = {
-    'Dashboard & Vue d\'ensemble': [
+    'Dashboard': [
       'view_dashboard',
       'view_statistics',
+      'view_recent_activity',
     ] as SyndicateWorkerPermissionKey[],
-    'Gestion des Membres': [
+    'SOS & Alertes': [
+      'view_sos_alerts',
+      'respond_sos',
+      'manage_sos_alerts',
+      'call_sos_driver',
+      'view_sos_location',
+    ] as SyndicateWorkerPermissionKey[],
+    'Membres du Bureau': [
       'view_members',
       'add_members',
       'edit_members',
       'delete_members',
+      'manage_member_permissions',
+      'toggle_member_status',
     ] as SyndicateWorkerPermissionKey[],
     'Taxi-Motards': [
       'view_drivers',
       'add_drivers',
       'edit_drivers',
       'delete_drivers',
+      'view_driver_details',
+      'generate_driver_badge',
+      'manage_driver_wallet',
     ] as SyndicateWorkerPermissionKey[],
-    'Véhicules': [
+    'Véhicules & Motos': [
       'view_vehicles',
       'add_vehicles',
       'edit_vehicles',
       'delete_vehicles',
       'manage_stolen_vehicles',
-    ] as SyndicateWorkerPermissionKey[],
-    'SOS & Alertes': [
-      'view_sos_alerts',
-      'manage_sos_alerts',
-      'respond_sos',
+      'declare_stolen',
+      'recover_vehicle',
+      'view_vehicle_security_log',
     ] as SyndicateWorkerPermissionKey[],
     'Tickets de Transport': [
       'view_tickets',
       'generate_tickets',
-      'manage_tickets',
+      'print_tickets',
+      'export_tickets',
+      'manage_ticket_history',
+      'upload_bureau_stamp',
     ] as SyndicateWorkerPermissionKey[],
     'Trésorerie & Wallet': [
       'view_wallet',
-      'make_transfers',
+      'view_balance',
       'view_transactions',
+      'make_transfers',
+      'receive_transfers',
       'manage_cotisations',
-    ] as SyndicateWorkerPermissionKey[],
-    'Badges': [
-      'view_badges',
-      'generate_badges',
+      'export_transactions',
     ] as SyndicateWorkerPermissionKey[],
     'Gestion & Paramètres': [
       'view_settings',
       'edit_settings',
       'manage_bureau_info',
+      'edit_bureau_photo',
+      'edit_bureau_contact',
     ] as SyndicateWorkerPermissionKey[],
     'Analytics & Rapports': [
       'view_analytics',
+      'view_performance_reports',
+      'view_financial_reports',
       'export_reports',
     ] as SyndicateWorkerPermissionKey[],
     'Communication': [
       'send_notifications',
       'manage_communications',
+      'use_communication_widget',
+    ] as SyndicateWorkerPermissionKey[],
+    'Badges': [
+      'view_badges',
+      'generate_badges',
+      'print_badges',
+      'download_badges',
     ] as SyndicateWorkerPermissionKey[],
   };
 

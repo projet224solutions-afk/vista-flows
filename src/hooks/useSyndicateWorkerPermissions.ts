@@ -3,62 +3,87 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Permissions disponibles pour les membres du bureau syndicat
+// Organisées par catégorie correspondant aux onglets de l'interface
 export const SYNDICATE_WORKER_PERMISSIONS = {
-  // Dashboard & Vue d'ensemble
-  view_dashboard: 'Voir le tableau de bord',
-  view_statistics: 'Voir les statistiques',
+  // ===== DASHBOARD =====
+  view_dashboard: 'Accéder au Dashboard',
+  view_statistics: 'Voir les statistiques globales',
+  view_recent_activity: 'Voir l\'activité récente',
   
-  // Gestion des membres
-  view_members: 'Voir les membres',
+  // ===== SOS & ALERTES =====
+  view_sos_alerts: 'Voir les alertes SOS',
+  respond_sos: 'Répondre aux SOS',
+  manage_sos_alerts: 'Gérer/Clôturer les alertes SOS',
+  call_sos_driver: 'Appeler le conducteur en SOS',
+  view_sos_location: 'Voir la localisation SOS',
+  
+  // ===== MEMBRES DU BUREAU =====
+  view_members: 'Voir les membres du bureau',
   add_members: 'Ajouter des membres',
   edit_members: 'Modifier les membres',
   delete_members: 'Supprimer les membres',
+  manage_member_permissions: 'Gérer les permissions des membres',
+  toggle_member_status: 'Activer/Désactiver les membres',
   
-  // Gestion des taxi-motards
+  // ===== TAXI-MOTARDS =====
   view_drivers: 'Voir les taxi-motards',
   add_drivers: 'Ajouter des taxi-motards',
   edit_drivers: 'Modifier les taxi-motards',
-  delete_drivers: 'Supprimer les taxi-motards',
+  delete_drivers: 'Supprimer des taxi-motards',
+  view_driver_details: 'Voir les détails d\'un taxi-motard',
+  generate_driver_badge: 'Générer les badges taxi-motard',
+  manage_driver_wallet: 'Gérer le wallet des taxi-motards',
   
-  // Véhicules
+  // ===== VÉHICULES & MOTOS =====
   view_vehicles: 'Voir les véhicules',
-  add_vehicles: 'Ajouter des véhicules',
+  add_vehicles: 'Enregistrer des véhicules',
   edit_vehicles: 'Modifier les véhicules',
-  delete_vehicles: 'Supprimer les véhicules',
+  delete_vehicles: 'Supprimer des véhicules',
   manage_stolen_vehicles: 'Gérer les véhicules volés',
+  declare_stolen: 'Déclarer un véhicule volé',
+  recover_vehicle: 'Récupérer un véhicule volé',
+  view_vehicle_security_log: 'Voir l\'historique sécurité véhicules',
   
-  // SOS & Alertes
-  view_sos_alerts: 'Voir les alertes SOS',
-  manage_sos_alerts: 'Gérer les alertes SOS',
-  respond_sos: 'Répondre aux SOS',
-  
-  // Tickets de transport
+  // ===== TICKETS DE TRANSPORT =====
   view_tickets: 'Voir les tickets',
   generate_tickets: 'Générer des tickets',
-  manage_tickets: 'Gérer les tickets',
+  print_tickets: 'Imprimer les tickets',
+  export_tickets: 'Exporter les tickets en PDF',
+  manage_ticket_history: 'Gérer l\'historique des tickets',
+  upload_bureau_stamp: 'Uploader le tampon du bureau',
   
-  // Trésorerie & Wallet
+  // ===== TRÉSORERIE & WALLET =====
   view_wallet: 'Voir le portefeuille',
-  make_transfers: 'Effectuer des transferts',
+  view_balance: 'Voir le solde',
   view_transactions: 'Voir les transactions',
+  make_transfers: 'Effectuer des transferts',
+  receive_transfers: 'Recevoir des transferts',
   manage_cotisations: 'Gérer les cotisations',
+  export_transactions: 'Exporter les transactions',
   
-  // Badges
-  view_badges: 'Voir les badges',
-  generate_badges: 'Générer des badges',
-  
-  // Gestion & Paramètres
+  // ===== GESTION & PARAMÈTRES =====
   view_settings: 'Voir les paramètres',
   edit_settings: 'Modifier les paramètres',
-  manage_bureau_info: 'Gérer les infos du bureau',
+  manage_bureau_info: 'Modifier les infos du bureau',
+  edit_bureau_photo: 'Modifier la photo du bureau',
+  edit_bureau_contact: 'Modifier les contacts du bureau',
   
-  // Analytics & Rapports
-  view_analytics: 'Voir les analytics',
+  // ===== ANALYTICS & RAPPORTS =====
+  view_analytics: 'Accéder aux analytics',
+  view_performance_reports: 'Voir les rapports de performance',
+  view_financial_reports: 'Voir les rapports financiers',
   export_reports: 'Exporter les rapports',
   
-  // Communication
+  // ===== COMMUNICATION =====
   send_notifications: 'Envoyer des notifications',
   manage_communications: 'Gérer les communications',
+  use_communication_widget: 'Utiliser le widget de communication',
+  
+  // ===== BADGES =====
+  view_badges: 'Voir les badges',
+  generate_badges: 'Générer des badges',
+  print_badges: 'Imprimer les badges',
+  download_badges: 'Télécharger les badges',
 } as const;
 
 export type SyndicateWorkerPermissionKey = keyof typeof SYNDICATE_WORKER_PERMISSIONS;
