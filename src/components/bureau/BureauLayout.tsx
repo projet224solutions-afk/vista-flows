@@ -23,7 +23,8 @@ import {
   RefreshCw,
   MessageSquare,
   MapPin,
-  ShieldAlert
+  ShieldAlert,
+  Ticket
 } from 'lucide-react';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 
@@ -88,6 +89,11 @@ export function BureauLayout({
       id: 'wallet',
       label: 'Wallet',
       icon: <Wallet className="w-5 h-5" />
+    },
+    {
+      id: 'tickets',
+      label: 'Tickets Transport',
+      icon: <Ticket className="w-5 h-5 text-amber-600" />
     },
     {
       id: 'workers',
