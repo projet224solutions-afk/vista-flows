@@ -256,10 +256,10 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               />
             </div>
 
-            {/* QR Code - Bien dimensionné et visible */}
+            {/* QR Code - Lien vers la page de vérification */}
             <div className="bg-white rounded-lg p-3 border-2 border-slate-200 shadow-sm flex-shrink-0">
               <QRCodeSVG 
-                value={`224SOLUTIONS|${displayMemberId}|${vehiclePlate}|${serialNumber || 'NA'}`}
+                value={`${window.location.origin}/badge/${badgeId}`}
                 size={80}
                 level="M"
                 includeMargin={false}
