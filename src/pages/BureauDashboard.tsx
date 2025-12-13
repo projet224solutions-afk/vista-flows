@@ -17,6 +17,7 @@ import { useBureauActions } from '@/hooks/useBureauActions';
 import MotoSecurityAlerts from '@/components/syndicat/MotoSecurityAlerts';
 import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotifications';
 import SyndicateVehicleManagement from '@/components/syndicate/SyndicateVehicleManagement';
+import StolenVehicleManagement from '@/components/syndicate/StolenVehicleManagement';
 import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
 import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
 import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
@@ -224,6 +225,11 @@ export default function BureauDashboard() {
               </div>
             </div>
           </div>
+        );
+
+      case 'security':
+        return (
+          <StolenVehicleManagement bureauId={bureau.id} />
         );
 
       case 'wallet':
