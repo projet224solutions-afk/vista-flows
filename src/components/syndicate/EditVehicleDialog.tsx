@@ -60,6 +60,33 @@ export default function EditVehicleDialog({
       setSaving(true);
       toast.info('Enregistrement des modifications...');
 
+      // SÉCURITÉ: Vérifier si le véhicule est volé avant de permettre un changement de statut
+      const { data: currentVehicle, error: checkError } = await supabase
+        .from('vehicles')
+        .select('is_stolen, stolen_status, security_lock_level, status')
+        .eq('id', vehicleData.id)
+        .single();
+
+      if (checkError) throw checkError;
+
+      // BLOQUER le changement manuel de statut si le véhicule est volé
+      if (currentVehicle?.is_stolen || currentVehicle?.stolen_status === 'stolen') {
+        if (status !== 'suspended' && status !== currentVehicle.status) {
+          toast.error('Impossible de modifier le statut d\'un véhicule volé. Utilisez la procédure de récupération.');
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Ne pas permettre de changer manuellement vers/depuis 'stolen' ou 'suspended' si security_lock
+      if (currentVehicle?.security_lock_level && currentVehicle.security_lock_level > 0) {
+        if (status !== currentVehicle.status) {
+          toast.error('Véhicule verrouillé pour raison de sécurité. Contactez l\'administrateur.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('vehicles')
         .update({
@@ -70,7 +97,8 @@ export default function EditVehicleDialog({
           model: model || null,
           year: year || null,
           color: color || null,
-          status: status,
+          // Ne pas permettre le changement de statut si verrouillé
+          ...(currentVehicle?.security_lock_level === 0 || !currentVehicle?.security_lock_level ? { status } : {})
         })
         .eq('id', vehicleData.id);
 

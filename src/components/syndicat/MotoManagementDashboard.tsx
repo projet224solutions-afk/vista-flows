@@ -49,11 +49,34 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const loadMotos = async () => {
     try {
       setLoading(true);
+      // CENTRALISÉ: Utilise la table vehicles au lieu de registered_motos
       let query = supabase
-        .from('registered_motos')
-        .select('*')
+        .from('vehicles')
+        .select(`
+          id,
+          serial_number,
+          license_plate,
+          brand,
+          model,
+          year,
+          color,
+          status,
+          type,
+          is_stolen,
+          stolen_status,
+          security_lock_level,
+          created_at,
+          bureau_id,
+          owner_member_id,
+          members:owner_member_id (
+            id,
+            first_name,
+            last_name,
+            phone
+          )
+        `)
         .eq('bureau_id', bureauId)
-        .order('registration_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -62,7 +85,26 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       const { data, error } = await query;
 
       if (error) throw error;
-      setMotos(data as any || []);
+      
+      // Transformer les données pour compatibilité avec l'interface existante
+      const transformedData = (data || []).map((v: any) => ({
+        id: v.id,
+        owner_name: v.members ? `${v.members.first_name || ''} ${v.members.last_name || ''}`.trim() : 'Non assigné',
+        owner_phone: v.members?.phone || '',
+        vest_number: '',
+        plate_number: v.license_plate || v.serial_number,
+        serial_number: v.serial_number,
+        brand: v.brand || '',
+        model: v.model || '',
+        year: v.year || 0,
+        color: v.color || '',
+        status: v.is_stolen ? 'stolen' : v.status,
+        registration_date: v.created_at,
+        bureau_id: v.bureau_id,
+        security_lock_level: v.security_lock_level
+      }));
+      
+      setMotos(transformedData);
     } catch (error) {
       console.error('Erreur chargement motos:', error);
       toast.error('Erreur lors du chargement');
@@ -86,14 +128,15 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
     try {
       setLoadingAction(true);
       
+      // CENTRALISÉ: Utilise la table vehicles
       const { error } = await supabase
-        .from('registered_motos')
-        .update({ status: 'validated' })
+        .from('vehicles')
+        .update({ status: 'active', verified: true, verified_at: new Date().toISOString() })
         .eq('id', motoId);
 
       if (error) throw error;
 
-      toast.success('Moto validée avec succès!');
+      toast.success('Véhicule validé avec succès!');
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
@@ -105,18 +148,24 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
     }
   };
 
-  const handleReportStolen = async (motoId: string) => {
+  const handleReportStolen = async (motoId: string, reason: string = 'Vol signalé via interface bureau') => {
     try {
       setLoadingAction(true);
       
-      const { error } = await supabase
-        .from('registered_motos')
-        .update({ status: 'stolen' })
-        .eq('id', motoId);
+      // CENTRALISÉ: Utilise le RPC declare_vehicle_stolen
+      const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
+        p_vehicle_id: motoId,
+        p_bureau_id: bureauId,
+        p_declared_by: null, // Sera rempli côté serveur si possible
+        p_reason: reason || validationComment || 'Vol signalé via gestion motos',
+        p_location: null,
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
 
       if (error) throw error;
 
-      toast.success('Moto signalée volée!');
+      toast.success('Véhicule signalé volé! Alerte diffusée à tous les bureaux.');
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
