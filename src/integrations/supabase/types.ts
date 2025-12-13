@@ -9159,17 +9159,56 @@ export type Database = {
           },
         ]
       }
+      syndicate_worker_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission_key: string
+          permission_value: boolean | null
+          updated_at: string | null
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission_key: string
+          permission_value?: boolean | null
+          updated_at?: string | null
+          worker_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission_key?: string
+          permission_value?: boolean | null
+          updated_at?: string | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syndicate_worker_permissions_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "syndicate_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syndicate_workers: {
         Row: {
           access_level: string
           access_token: string
           bureau_id: string | null
+          commission_rate: number | null
           created_at: string | null
           custom_id: string | null
           email: string
           id: string
           interface_url: string
           is_active: boolean | null
+          last_login_at: string | null
+          locked_until: string | null
+          login_attempts: number | null
           nom: string
           permissions: Json | null
           telephone: string | null
@@ -9179,12 +9218,16 @@ export type Database = {
           access_level?: string
           access_token: string
           bureau_id?: string | null
+          commission_rate?: number | null
           created_at?: string | null
           custom_id?: string | null
           email: string
           id?: string
           interface_url: string
           is_active?: boolean | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           nom: string
           permissions?: Json | null
           telephone?: string | null
@@ -9194,12 +9237,16 @@ export type Database = {
           access_level?: string
           access_token?: string
           bureau_id?: string | null
+          commission_rate?: number | null
           created_at?: string | null
           custom_id?: string | null
           email?: string
           id?: string
           interface_url?: string
           is_active?: boolean | null
+          last_login_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
           nom?: string
           permissions?: Json | null
           telephone?: string | null
@@ -13243,6 +13290,10 @@ export type Database = {
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
+      get_syndicate_worker_permissions: {
+        Args: { p_worker_id: string }
+        Returns: Json
+      }
       get_system_health_api: { Args: never; Returns: Json }
       get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products: {
@@ -13687,6 +13738,10 @@ export type Database = {
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
         Returns: Json
+      }
+      set_syndicate_worker_permissions: {
+        Args: { p_permissions: Json; p_worker_id: string }
+        Returns: boolean
       }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
