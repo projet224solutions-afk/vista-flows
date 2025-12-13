@@ -19,6 +19,7 @@ interface BadgeGeneratorDialogProps {
     member_name: string;
     member_id: string;
     license_plate: string;
+    serial_number?: string;
     vehicle_type: string;
     badge_generated_at: string;
     digital_badge_id?: string;
@@ -188,6 +189,7 @@ export default function BadgeGeneratorDialog({
               memberId={vehicleData.member_id}
               vehicleType={vehicleData.vehicle_type}
               vehiclePlate={vehicleData.license_plate}
+              serialNumber={vehicleData.serial_number}
               dateOfBirth={vehicleData.driver_date_of_birth ? new Date(vehicleData.driver_date_of_birth).toLocaleDateString('fr-FR') : undefined}
               joinedDate={joinedDate}
               expireDate={expireDate}
