@@ -46,14 +46,14 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   const loadBatches = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('transport_ticket_batches')
         .select('*')
         .eq('bureau_id', bureauId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBatches((data as unknown as TicketBatch[]) || []);
+      setBatches((data as TicketBatch[]) || []);
     } catch (error: any) {
       console.error('Erreur chargement historique:', error);
       toast.error('Erreur lors du chargement de l\'historique');

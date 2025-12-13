@@ -86,7 +86,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     
     try {
       // Récupérer le dernier numéro de ticket pour ce bureau
-      const { data: lastBatch, error: fetchError } = await supabase
+      const { data: lastBatch, error: fetchError } = await (supabase as any)
         .from('transport_ticket_batches')
         .select('end_number')
         .eq('bureau_id', bureauId)
@@ -103,12 +103,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       const batchNumber = generateBatchNumber();
 
       // Créer le lot dans la base de données
-      const { data: newBatch, error: insertError } = await supabase
+      const { data: newBatch, error: insertError } = await (supabase as any)
         .from('transport_ticket_batches')
         .insert({
           batch_number: batchNumber,
           bureau_id: bureauId,
-          ticket_config: config as any,
+          ticket_config: config,
           start_number: startNumber,
           end_number: endNumber,
           tickets_count: 50,
@@ -124,7 +124,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       const ticketNumbers = Array.from({ length: 50 }, (_, i) => startNumber + i);
       
       setGeneratedTickets(ticketNumbers);
-      setBatchId(newBatch.id);
+      setBatchId(newBatch?.id || null);
       setShowPreview(true);
       
       toast.success(`Lot ${batchNumber} généré avec succès (tickets ${startNumber} à ${endNumber})`);

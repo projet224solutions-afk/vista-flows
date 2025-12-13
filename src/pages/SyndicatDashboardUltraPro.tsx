@@ -43,7 +43,8 @@ import {
     Bell,
     LogOut,
     Home,
-    Globe
+    Globe,
+    Ticket
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -54,6 +55,7 @@ import AutoDownloadDetector from '@/components/download/AutoDownloadDetector';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 
 interface SyndicateMember {
     id: string;
@@ -93,7 +95,7 @@ export default function SyndicatDashboardUltraPro() {
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
     // Données du bureau
-    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh } = useSyndicatUltraProData();
+    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
 
     useEffect(() => {
         // Data is managed by hook; keep UI loading state in sync
@@ -266,7 +268,7 @@ export default function SyndicatDashboardUltraPro() {
 
                 {/* Navigation par onglets ultra-stylée */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-6 bg-white shadow-lg rounded-2xl p-2 border border-gray-100 mb-8">
+                    <TabsList className="grid w-full grid-cols-7 bg-white shadow-lg rounded-2xl p-2 border border-gray-100 mb-8">
                         <TabsTrigger
                             value="dashboard"
                             className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
@@ -287,6 +289,13 @@ export default function SyndicatDashboardUltraPro() {
                         >
                             <Bike className="w-4 h-4 mr-2" />
                             Taxi-Motards
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="tickets"
+                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+                        >
+                            <Ticket className="w-4 h-4 mr-2" />
+                            Tickets
                         </TabsTrigger>
                         <TabsTrigger
                             value="wallet"
@@ -705,6 +714,23 @@ export default function SyndicatDashboardUltraPro() {
                                 </CardContent>
                             </Card>
                         </div>
+                    </TabsContent>
+
+                    {/* Onglet Tickets de Transport */}
+                    <TabsContent value="tickets" className="space-y-6">
+                        {bureauId ? (
+                            <TransportTicketGenerator 
+                                bureauId={bureauId} 
+                                bureauName={bureauName || undefined} 
+                            />
+                        ) : (
+                            <Card className="border-0 shadow-xl rounded-2xl">
+                                <CardContent className="p-12 text-center">
+                                    <Ticket className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                    <p className="text-gray-600">Chargement du bureau...</p>
+                                </CardContent>
+                            </Card>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
