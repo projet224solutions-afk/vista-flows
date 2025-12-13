@@ -34,27 +34,64 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
     try {
       setLoading(true);
       
-      // Charger TOUTES les alertes actives (réseau complet de sécurité)
-      // Pas seulement celles détectées dans ce bureau
-      const { data, error } = await (supabase as any)
-        .from('moto_security_alerts')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+      // CENTRALISÉ: Charger depuis vehicles + vehicle_security_log
+      // Véhicules actuellement volés (is_stolen = true ou stolen_status = 'stolen')
+      const { data: stolenVehicles, error: vehiclesError } = await supabase
+        .from('vehicles')
+        .select(`
+          id,
+          serial_number,
+          license_plate,
+          brand,
+          model,
+          is_stolen,
+          stolen_status,
+          stolen_declared_at,
+          stolen_reason,
+          stolen_location,
+          bureau_id,
+          bureaus:bureau_id (
+            commune,
+            prefecture
+          ),
+          members:owner_member_id (
+            first_name,
+            last_name,
+            phone
+          )
+        `)
+        .or('is_stolen.eq.true,stolen_status.eq.stolen')
+        .order('stolen_declared_at', { ascending: false });
 
-      if (error) {
-        console.error('Erreur Supabase:', error);
-        throw error;
+      if (vehiclesError) {
+        console.error('Erreur Supabase:', vehiclesError);
+        throw vehiclesError;
       }
       
-      console.log('✅ Alertes chargées:', data?.length || 0);
-      setAlerts(data as SecurityAlert[] || []);
+      // Transformer en format d'alerte pour compatibilité
+      const transformedAlerts: SecurityAlert[] = (stolenVehicles || []).map((v: any) => ({
+        id: v.id,
+        plate_number: v.license_plate || v.serial_number,
+        serial_number: v.serial_number,
+        brand: v.brand || 'Non spécifié',
+        model: v.model || '',
+        owner_name: v.members ? `${v.members.first_name || ''} ${v.members.last_name || ''}`.trim() : 'Non assigné',
+        owner_phone: v.members?.phone || '',
+        reported_bureau_name: v.bureaus?.commune || 'Bureau inconnu',
+        reported_location: v.stolen_location || v.bureaus?.prefecture || '',
+        description: v.stolen_reason || 'Vol déclaré',
+        status: 'active',
+        created_at: v.stolen_declared_at || new Date().toISOString()
+      }));
+      
+      console.log('✅ Alertes centralisées chargées:', transformedAlerts.length);
+      setAlerts(transformedAlerts);
     } catch (error: any) {
       console.error('❌ Erreur chargement alertes sécurité:', error);
       toast.error('Erreur lors du chargement des données', {
         description: error.message || 'Impossible de charger les alertes de sécurité'
       });
-      setAlerts([]); // Éviter l'affichage de données anciennes
+      setAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -63,18 +100,31 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   useEffect(() => {
     loadAlerts();
 
-    // Subscribe to real-time updates - écouter TOUTES les alertes actives
-    const channel = (supabase as any)
-      .channel('security_alerts_all')
+    // CENTRALISÉ: Subscribe to real-time updates sur vehicles (stolen changes)
+    const channel = supabase
+      .channel('stolen_vehicles_alerts')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'moto_security_alerts'
+          table: 'vehicles',
+          filter: 'is_stolen=eq.true'
         },
         (payload: any) => {
-          console.log('🔔 Alerte temps réel:', payload);
+          console.log('🔔 Alerte vol temps réel:', payload);
+          loadAlerts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'vehicle_security_log'
+        },
+        (payload: any) => {
+          console.log('🔔 Nouveau log sécurité:', payload);
           loadAlerts();
         }
       )
@@ -87,14 +137,20 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
 
   const handleResolve = async (alertId: string) => {
     try {
-      const { error } = await (supabase as any)
-        .from('moto_security_alerts')
-        .update({ status: 'resolved' })
-        .eq('id', alertId);
+      // CENTRALISÉ: Utilise le RPC declare_vehicle_recovered
+      const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
+        p_vehicle_id: alertId,
+        p_bureau_id: bureauId,
+        p_recovered_by: null as any, // Sera rempli côté serveur si possible
+        p_recovery_notes: 'Résolu via interface alertes',
+        p_recovery_location: null,
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
 
       if (error) throw error;
       
-      toast.success('Alerte résolue avec succès');
+      toast.success('Véhicule marqué comme récupéré avec succès');
       loadAlerts();
     } catch (error: any) {
       console.error('Erreur résolution alerte:', error);

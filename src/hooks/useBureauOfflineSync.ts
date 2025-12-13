@@ -57,20 +57,33 @@ export function useBureauOfflineSync(bureauId?: string) {
   }, []);
 
   /**
-   * Synchronise un événement de moto
+   * Synchronise un événement de véhicule - CENTRALISÉ vers table vehicles
    */
   const syncMotoEvent = async (event: any) => {
     try {
+      // CENTRALISÉ: Utilise la table vehicles au lieu de registered_motos
+      const vehicleData = {
+        serial_number: event.data.serial_number,
+        license_plate: event.data.plate_number || event.data.license_plate,
+        brand: event.data.brand,
+        model: event.data.model,
+        year: event.data.year,
+        color: event.data.color,
+        status: event.data.status || 'pending',
+        bureau_id: event.data.bureau_id,
+        type: 'motorcycle'
+      };
+      
       const { data, error } = await supabase
-        .from('registered_motos')
-        .upsert(event.data, { onConflict: 'serial_number' });
+        .from('vehicles')
+        .upsert(vehicleData, { onConflict: 'serial_number' });
 
       if (error) throw error;
 
       await offlineDB.markEventAsSynced(event.client_event_id);
       return { success: true };
     } catch (error: any) {
-      console.error('Erreur sync moto:', error);
+      console.error('Erreur sync véhicule:', error);
       await offlineDB.markEventAsFailed(event.client_event_id, error.message);
       return { success: false, error: error.message };
     }
@@ -97,21 +110,40 @@ export function useBureauOfflineSync(bureauId?: string) {
   };
 
   /**
-   * Synchronise une alerte de sécurité
+   * Synchronise une alerte de sécurité - CENTRALISÉ via RPC
    */
   const syncSecurityAlert = async (event: any) => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('moto_security_alerts')
-        .insert(event.data);
+      // CENTRALISÉ: Utilise le RPC declare_vehicle_stolen
+      // D'abord, trouver le véhicule par numéro de série
+      const { data: vehicle, error: findError } = await supabase
+        .from('vehicles')
+        .select('id')
+        .eq('serial_number', event.data.serial_number || event.data.numero_serie)
+        .maybeSingle();
+      
+      if (findError) throw findError;
+      
+      if (vehicle) {
+        const { error } = await supabase.rpc('declare_vehicle_stolen', {
+          p_vehicle_id: vehicle.id,
+          p_bureau_id: event.data.bureau_id,
+          p_declared_by: event.data.declared_by || null,
+          p_reason: event.data.description || 'Vol signalé hors-ligne',
+          p_location: event.data.location || event.data.ville,
+          p_ip_address: null,
+          p_user_agent: 'offline-sync'
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        console.warn('Véhicule non trouvé pour alerte:', event.data.serial_number);
+      }
 
       await offlineDB.markEventAsSynced(event.client_event_id);
       
-      // Notifier tous les bureaux concernés
       toast.success('🚨 Alerte de sécurité synchronisée', {
-        description: 'Tous les bureaux ont été notifiés'
+        description: 'Véhicule volé signalé dans le système central'
       });
 
       return { success: true };
