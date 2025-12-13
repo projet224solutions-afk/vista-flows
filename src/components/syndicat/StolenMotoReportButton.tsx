@@ -51,76 +51,47 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
     setSubmitting(true);
 
     try {
-      const alertData = {
-        id: crypto.randomUUID(),
-        plate_number: moto.plate_number,
-        serial_number: moto.serial_number,
-        brand: moto.brand,
-        model: moto.model,
-        owner_name: moto.owner_name,
-        owner_phone: moto.owner_phone,
-        reported_bureau_id: moto.bureau_id,
-        reported_bureau_name: bureauName,
-        reported_location: bureauLocation,
-        detected_bureau_id: moto.bureau_id, // Bureau qui détecte = bureau qui déclare
-        description: description,
-        status: 'active',
-        created_at: new Date().toISOString()
-      };
-
       if (isOnline) {
-        // Insertion directe si en ligne
-        console.log('📝 Insertion alerte vol:', alertData);
+        // CENTRALISÉ: Utiliser le RPC declare_vehicle_stolen
+        console.log('📝 Déclaration vol via RPC centralisé:', moto.id);
         
-        const { data: insertedData, error: insertError } = await (supabase as any)
-          .from('moto_security_alerts')
-          .insert(alertData)
-          .select()
-          .single();
+        const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
+          p_vehicle_id: moto.id,
+          p_bureau_id: moto.bureau_id,
+          p_declared_by: moto.bureau_id,
+          p_reason: description,
+          p_location: bureauLocation,
+          p_ip_address: null,
+          p_user_agent: navigator.userAgent
+        });
 
-        if (insertError) {
-          console.error('❌ Erreur insertion alerte:', insertError);
-          throw insertError;
-        }
-        
-        console.log('✅ Alerte insérée:', insertedData);
-
-        // Marquer la moto comme volée
-        const { error: updateError } = await supabase
-          .from('registered_motos')
-          .update({ 
-            status: 'stolen', 
-            stolen_reported_at: new Date().toISOString() 
-          })
-          .eq('id', moto.id);
-        
-        if (updateError) {
-          console.error('⚠️ Erreur mise à jour moto:', updateError);
-          // Continue quand même, l'alerte est créée
+        if (error) {
+          console.error('❌ Erreur RPC declare_vehicle_stolen:', error);
+          throw error;
         }
 
-        // Créer une notification pour le PDG (optionnel)
-        try {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: 'pdg',
-              type: 'MOTO_STOLEN',
-              title: '🚨 ALERTE VOL DE MOTO',
-              message: `Une moto ${moto.brand} ${moto.model} (${moto.plate_number}) a été déclarée volée à ${bureauLocation}`,
-              data: { moto_id: moto.id, alert_id: insertedData.id },
-              priority: 'high'
-            });
-        } catch (notifError) {
-          console.error('⚠️ Erreur notification PDG:', notifError);
-          // Continue, l'alerte est créée
+        const result = data as { success: boolean; error?: string; message?: string };
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur lors de la déclaration');
         }
+        
+        console.log('✅ Véhicule déclaré volé via RPC:', result);
 
         toast.success('🚨 Alerte de vol enregistrée', {
-          description: 'Tous les bureaux ont été notifiés. Rechargez la page pour voir l\'alerte.'
+          description: 'Tous les bureaux ont été notifiés. Le véhicule est bloqué.'
         });
       } else {
-        // Stockage hors ligne
+        // Stockage hors ligne - garder la structure pour sync ultérieure
+        const alertData = {
+          id: crypto.randomUUID(),
+          vehicle_id: moto.id,
+          bureau_id: moto.bureau_id,
+          reason: description,
+          location: bureauLocation,
+          created_at: new Date().toISOString()
+        };
+        
         await storeOfflineEvent('security_alert', alertData);
         
         toast.success('📴 Alerte enregistrée localement', {
