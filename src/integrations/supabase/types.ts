@@ -12095,6 +12095,7 @@ export type Database = {
         }
         Returns: string
       }
+      bureau_exists: { Args: { p_bureau_id: string }; Returns: boolean }
       calculate_agent_commission: {
         Args: {
           p_agent_id: string
