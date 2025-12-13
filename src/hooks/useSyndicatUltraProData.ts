@@ -82,9 +82,9 @@ export function useSyndicatUltraProData() {
 
       // Requêtes optimisées avec COUNT et agrégations SQL
       const [membersRes, driversRes, walletRes, alertsRes] = await Promise.all([
-        // Membres avec stats
+        // Travailleurs syndiqués (syndicate_workers au lieu de members)
         supabase
-          .from('members')
+          .from('syndicate_workers')
           .select('*', { count: 'exact' })
           .eq('bureau_id', bureauId),
         

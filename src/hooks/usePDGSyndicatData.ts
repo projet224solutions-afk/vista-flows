@@ -103,7 +103,7 @@ export const usePDGSyndicatData = () => {
         supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }),
         supabase.from('syndicate_alerts').select('*').eq('is_critical', true).order('created_at', { ascending: false }).limit(10),
         supabase.from('bureau_features').select('*').eq('is_active', true),
-        supabase.from('members').select('*').order('created_at', { ascending: false })
+        supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }) // Remplacé members par syndicate_workers
       ]);
 
       // Gérer les erreurs individuellement sans bloquer tout le chargement

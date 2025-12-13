@@ -81,8 +81,8 @@ export default function BureauDashboard() {
 
       const [workersRes, membersRes, motosRes, alertsRes, walletRes] = await Promise.all([
         supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id),
-        supabase.from('members').select('*').eq('bureau_id', bureauData.id),
-        supabase.from('registered_motos').select('*').eq('bureau_id', bureauData.id),
+        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id), // Utiliser syndicate_workers comme source unique
+        supabase.from('vehicles').select('*').eq('bureau_id', bureauData.id), // Utiliser vehicles au lieu de registered_motos
         supabase.from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false }),
         supabase.from('bureau_wallets').select('balance').eq('bureau_id', bureauData.id).single()
       ]);
