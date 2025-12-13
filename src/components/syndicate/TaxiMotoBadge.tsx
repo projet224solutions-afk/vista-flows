@@ -1,11 +1,12 @@
 /**
- * Badge professionnel pour taxi-motards
- * Style inspiré de badges d'entreprise professionnels
+ * Badge professionnel ULTRA pour taxi-motards
+ * Design inspiré de badges officiels gouvernementaux et entreprises internationales
  */
 
 import { forwardRef } from 'react';
 import Barcode from 'react-barcode';
-import { Card } from '@/components/ui/card';
+import { QRCodeSVG } from 'qrcode.react';
+import { Shield, MapPin, Calendar, CreditCard, User, Bike } from 'lucide-react';
 
 interface TaxiMotoBadgeProps {
   driverName: string;
@@ -19,6 +20,7 @@ interface TaxiMotoBadgeProps {
   expireDate: string;
   bureauName?: string;
   bureauLogo?: string;
+  badgeTitle?: string;
 }
 
 const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
@@ -32,134 +34,238 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   joinedDate,
   expireDate,
   bureauName = '224SOLUTIONS',
-  bureauLogo
+  bureauLogo,
+  badgeTitle
 }, ref) => {
+  const displayTitle = badgeTitle || `TAXI-MOTO DE ${bureauName.toUpperCase()}`;
+  
+  const getVehicleLabel = () => {
+    switch (vehicleType) {
+      case 'motorcycle': return 'CONDUCTEUR MOTO';
+      case 'tricycle': return 'CONDUCTEUR TRICYCLE';
+      default: return 'CONDUCTEUR TAXI';
+    }
+  };
+
   return (
-    <Card 
+    <div 
       ref={ref}
-      className="w-[850px] h-[540px] bg-white overflow-hidden shadow-2xl rounded-3xl"
+      className="w-[900px] h-[560px] bg-gradient-to-br from-slate-50 to-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200"
+      style={{ 
+        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+        background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)'
+      }}
     >
-      {/* En-tête avec dégradé bleu */}
-      <div className="relative h-[200px] bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#2563eb]">
-        {/* Logo du bureau */}
-        <div className="absolute top-4 right-6">
-          {bureauLogo ? (
-            <img 
-              src={bureauLogo} 
-              alt="Bureau Logo" 
-              className="h-16 w-auto"
-            />
-          ) : (
-            <div className="text-white text-right">
-              <div className="text-2xl font-bold tracking-widest">
-                TAXI-MOTO DE {bureauName.toUpperCase()}
-              </div>
-              <div className="text-[10px] tracking-wide mt-1 opacity-80">224solutions</div>
-            </div>
-          )}
+      {/* En-tête principal avec design moderne */}
+      <div className="relative h-[140px] bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] overflow-hidden">
+        {/* Motif géométrique subtil */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-white/10 rounded-full translate-y-1/2" />
         </div>
 
-        {/* Photo du conducteur */}
-        <div className="absolute left-8 top-8 w-[240px] h-[240px] bg-white rounded-2xl p-3 shadow-xl">
-          {driverPhoto ? (
-            <img 
-              src={driverPhoto} 
-              alt={driverName}
-              className="w-full h-full object-cover rounded-xl"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl font-bold text-blue-600">
-                  {driverName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-                <div className="text-xs text-blue-500 mt-2">PHOTO</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Corps du badge */}
-      <div className="px-8 pt-16 pb-8 bg-gradient-to-b from-gray-50 to-white">
-        <div className="grid grid-cols-2 gap-x-8">
-          {/* Colonne gauche */}
-          <div className="space-y-6">
-            {/* Nom */}
-            <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-1">
-                {driverName}
-              </h2>
-              <p className="text-xl text-blue-600 font-medium">
-                Conducteur {vehicleType === 'motorcycle' ? 'Moto' : vehicleType === 'tricycle' ? 'Tricycle' : 'Taxi'}
-              </p>
-            </div>
-
-            {/* Informations */}
-            <div className="space-y-4">
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-sm font-semibold text-blue-700">ID No</span>
-                <span className="text-sm font-bold text-gray-900">{memberId}</span>
-              </div>
-
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-sm font-semibold text-blue-700">Matricule</span>
-                <span className="text-sm font-bold text-gray-900">{vehiclePlate}</span>
-              </div>
-
-              {dateOfBirth && (
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-sm font-semibold text-blue-700">D.O.B</span>
-                  <span className="text-sm font-bold text-gray-900">{dateOfBirth}</span>
-                </div>
+        {/* Contenu de l'en-tête */}
+        <div className="relative h-full flex items-center justify-between px-8">
+          {/* Logo et titre gauche */}
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+              {bureauLogo ? (
+                <img src={bureauLogo} alt="Logo" className="w-14 h-14 object-contain" />
+              ) : (
+                <Shield className="w-10 h-10 text-white" />
               )}
-
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-sm font-semibold text-blue-700">Date d'inscription</span>
-                <span className="text-sm font-bold text-gray-900">{joinedDate}</span>
+            </div>
+            <div>
+              <div className="text-white/60 text-xs font-medium tracking-[0.3em] uppercase mb-1">
+                République de Guinée
               </div>
-
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-sm font-semibold text-blue-700">Date d'expiration</span>
-                <span className="text-sm font-bold text-gray-900">{expireDate}</span>
+              <h1 className="text-white text-2xl font-bold tracking-wide">
+                {displayTitle}
+              </h1>
+              <div className="text-blue-200 text-sm font-medium mt-1">
+                Carte Professionnelle de Transport
               </div>
             </div>
           </div>
 
-          {/* Colonne droite */}
-          <div className="flex flex-col justify-between">
-            {/* Signature */}
-            <div className="text-center pt-4">
-              <div className="text-xs text-gray-500 mb-2">Signature du titulaire</div>
-              <div className="h-16 border-b-2 border-gray-300 flex items-center justify-center">
-                <span className="text-2xl font-signature text-gray-600 italic">
-                  {driverName.split(' ')[0]}
-                </span>
+          {/* Badge de sécurité droite */}
+          <div className="text-right">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-white text-sm font-semibold">CARTE OFFICIELLE</span>
+            </div>
+            <div className="text-white/50 text-xs mt-2 tracking-wider">
+              224SOLUTIONS • Système Certifié
+            </div>
+          </div>
+        </div>
+
+        {/* Bande de sécurité holographique */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400" />
+      </div>
+
+      {/* Corps principal */}
+      <div className="flex h-[420px]">
+        {/* Section photo et identité - Gauche */}
+        <div className="w-[300px] p-6 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200">
+          {/* Photo du conducteur */}
+          <div className="relative mb-6">
+            <div className="w-full aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden border-4 border-white shadow-xl">
+              {driverPhoto ? (
+                <img 
+                  src={driverPhoto} 
+                  alt={driverName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                  <div className="text-center">
+                    <User className="w-16 h-16 text-blue-300 mx-auto mb-2" />
+                    <div className="text-5xl font-bold text-blue-400">
+                      {driverName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Badge véhicule */}
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+              <div className="flex items-center gap-1.5">
+                <Bike className="w-3.5 h-3.5" />
+                {getVehicleLabel()}
+              </div>
+            </div>
+          </div>
+
+          {/* Nom du conducteur */}
+          <div className="text-center mt-8">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-wide">
+              {driverName.toUpperCase()}
+            </h2>
+            <div className="flex items-center justify-center gap-2 mt-2 text-slate-500">
+              <CreditCard className="w-4 h-4" />
+              <span className="text-sm font-mono font-semibold">{memberId}</span>
+            </div>
+          </div>
+
+          {/* Signature */}
+          <div className="mt-6 pt-4 border-t border-slate-200">
+            <div className="text-xs text-slate-400 text-center mb-2 uppercase tracking-wider">
+              Signature du Titulaire
+            </div>
+            <div className="h-12 border-b-2 border-slate-300 flex items-end justify-center pb-1">
+              <span className="text-xl text-slate-600 italic font-serif">
+                {driverName.split(' ')[0]}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Section informations - Droite */}
+        <div className="flex-1 p-6 flex flex-col">
+          {/* Grille d'informations */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Matricule véhicule */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+              <div className="flex items-center gap-2 text-blue-600 mb-2">
+                <CreditCard className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Immatriculation</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 font-mono">
+                {vehiclePlate}
               </div>
             </div>
 
+            {/* Date de naissance */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
+              <div className="flex items-center gap-2 text-amber-600 mb-2">
+                <Calendar className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Date de Naissance</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900">
+                {dateOfBirth || 'Non renseigné'}
+              </div>
+            </div>
+
+            {/* Date d'inscription */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+              <div className="flex items-center gap-2 text-green-600 mb-2">
+                <Calendar className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Date d'Inscription</span>
+              </div>
+              <div className="text-lg font-bold text-slate-900">
+                {joinedDate}
+              </div>
+            </div>
+
+            {/* Date d'expiration */}
+            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border border-red-100">
+              <div className="flex items-center gap-2 text-red-600 mb-2">
+                <Calendar className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wider">Date d'Expiration</span>
+              </div>
+              <div className="text-lg font-bold text-slate-900">
+                {expireDate}
+              </div>
+            </div>
+          </div>
+
+          {/* Bureau et localisation */}
+          <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
+            <div className="flex items-center gap-2 text-slate-600 mb-2">
+              <MapPin className="w-4 h-4" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Bureau de Rattachement</span>
+            </div>
+            <div className="text-lg font-bold text-slate-900">
+              {bureauName}
+            </div>
+          </div>
+
+          {/* Section code-barres et QR */}
+          <div className="mt-auto flex items-end justify-between gap-6">
             {/* Code-barres */}
-            <div className="bg-white p-4 rounded-lg shadow-inner flex items-center justify-center">
-              <Barcode 
-                value={badgeId}
-                width={2}
-                height={60}
-                fontSize={12}
-                textMargin={4}
-                margin={0}
+            <div className="flex-1 bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-center">
+                <Barcode 
+                  value={badgeId}
+                  width={2}
+                  height={50}
+                  fontSize={10}
+                  textMargin={4}
+                  margin={0}
+                  background="transparent"
+                />
+              </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+              <QRCodeSVG 
+                value={`224SOLUTIONS:${badgeId}:${memberId}`}
+                size={80}
+                level="H"
+                includeMargin={false}
               />
             </div>
           </div>
-        </div>
 
-        {/* Pied de page */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs text-center text-gray-500">
-            Ce badge est la propriété de {bureauName} • En cas de perte, merci de le retourner
-          </p>
+          {/* Pied de page avec informations de sécurité */}
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center gap-4">
+                <span className="font-mono">ID: {badgeId}</span>
+                <span>•</span>
+                <span>Émis par 224Solutions</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5" />
+                <span>Document sécurisé - Vérifiable en ligne</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 });
 
