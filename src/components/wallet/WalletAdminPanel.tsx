@@ -46,10 +46,10 @@ interface WalletAdminData {
 
 interface AdminStats {
   total_wallets: number;
-  active_wallets: number;
-  blocked_wallets: number;
   total_balance: number;
-  average_balance: number;
+  transactions_24h: number;
+  agent_wallets: number;
+  bureau_wallets: number;
 }
 
 export function WalletAdminPanel() {
@@ -206,8 +206,8 @@ export function WalletAdminPanel() {
                   <Activity className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.active_wallets}</p>
-                  <p className="text-sm text-muted-foreground">Actifs</p>
+                  <p className="text-2xl font-bold">{stats.agent_wallets}</p>
+                  <p className="text-sm text-muted-foreground">Agents</p>
                 </div>
               </div>
             </CardContent>
@@ -216,12 +216,12 @@ export function WalletAdminPanel() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.blocked_wallets}</p>
-                  <p className="text-sm text-muted-foreground">Bloqués</p>
+                  <p className="text-2xl font-bold">{stats.bureau_wallets}</p>
+                  <p className="text-sm text-muted-foreground">Bureaux</p>
                 </div>
               </div>
             </CardContent>

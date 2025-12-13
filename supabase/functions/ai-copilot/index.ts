@@ -64,6 +64,27 @@ Réponds de manière concise et professionnelle. Fournis des recommandations act
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI Gateway error:', response.status, errorText);
+      
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Crédits IA insuffisants. Veuillez recharger vos crédits dans Paramètres > Workspace > Usage.',
+            code: 'INSUFFICIENT_CREDITS'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+        );
+      }
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.',
+            code: 'RATE_LIMITED'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+        );
+      }
+      
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 

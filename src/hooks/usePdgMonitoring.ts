@@ -286,7 +286,18 @@ export function usePdgMonitoring() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Vérifier si c'est une erreur de crédits ou rate limit
+        if (error.message?.includes('402') || error.context?.status === 402) {
+          toast.error('Crédits IA insuffisants. Rechargez vos crédits dans Paramètres > Workspace > Usage.');
+          return { error: 'INSUFFICIENT_CREDITS' };
+        }
+        if (error.message?.includes('429') || error.context?.status === 429) {
+          toast.error('Limite de requêtes atteinte. Réessayez dans quelques instants.');
+          return { error: 'RATE_LIMITED' };
+        }
+        throw error;
+      }
       return data;
     } catch (error: any) {
       console.error('Erreur AI copilot:', error);

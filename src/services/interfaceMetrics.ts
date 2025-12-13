@@ -45,12 +45,13 @@ export class InterfaceMetricsService {
       }
 
       // Transformer les données de la vue en RealInterfaceMetrics
+      // La vue pdg_interface_stats a les colonnes: interface, users, pending_alerts
       return data.map(row => ({
         interface: row.interface,
-        activeUsers: Number(row.active_users || 0),
-        transactions: Number(row.transactions || 0),
-        errors: Number(row.errors || 0),
-        performance: Number(row.performance || 95),
+        activeUsers: Number(row.users || 0),
+        transactions: 0, // Non disponible dans la vue actuelle
+        errors: Number(row.pending_alerts || 0),
+        performance: 100 - Math.min(Number(row.pending_alerts || 0), 20), // Estimation basée sur les alertes
       }));
     } catch (error) {
       console.error('Error getting interface metrics:', error);
