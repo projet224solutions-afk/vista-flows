@@ -191,3 +191,6 @@ verify_jwt = true
 
 [functions.notify-vendor-delivery-complete]
 verify_jwt = true
+
+[functions.upload-bureau-stamp]
+verify_jwt = false
