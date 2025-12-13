@@ -10306,6 +10306,7 @@ export type Database = {
           stolen_status: string | null
           tech_control_expiration: string | null
           type: string | null
+          updated_at: string | null
           verified: boolean | null
           verified_at: string | null
           verified_by: string | null
@@ -10350,6 +10351,7 @@ export type Database = {
           stolen_status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
+          updated_at?: string | null
           verified?: boolean | null
           verified_at?: string | null
           verified_by?: string | null
@@ -10394,6 +10396,7 @@ export type Database = {
           stolen_status?: string | null
           tech_control_expiration?: string | null
           type?: string | null
+          updated_at?: string | null
           verified?: boolean | null
           verified_at?: string | null
           verified_by?: string | null
