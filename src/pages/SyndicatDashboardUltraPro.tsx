@@ -58,6 +58,7 @@ import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
+import { SyndicateWorkersManagement } from '@/components/bureau/SyndicateWorkersManagement';
 interface SyndicateMember {
     id: string;
     name: string;
@@ -440,69 +441,21 @@ export default function SyndicatDashboardUltraPro() {
                         </div>
                     </TabsContent>
 
-                    {/* Onglet Membres */}
+                    {/* Onglet Membres - Avec gestion des permissions */}
                     <TabsContent value="members" className="space-y-6">
-                        <Card className="border-0 shadow-xl rounded-2xl">
-                            <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
-                                <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                    <Users className="w-5 h-5" />
-                                    Membres du Bureau ({syndicateMembers.length})
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {syndicateMembers.map((member) => (
-                                        <Card key={member.id} className="border border-gray-200 hover:shadow-lg transition-all duration-300">
-                                            <CardContent className="p-6">
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                        {member.name.charAt(0)}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="font-bold text-gray-800">{member.name}</h3>
-                                                        <Badge className={`${getRoleColor(member.role)} text-xs`}>
-                                                            {getRoleLabel(member.role)}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2 text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <Mail className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-gray-600">{member.email}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Phone className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-gray-600">{member.phone}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <QrCode className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-gray-600">{member.badge_number}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Wallet className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-green-600 font-semibold">
-                                                            {member.wallet_balance.toLocaleString()} FCFA
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex gap-2 mt-4">
-                                                    <Button size="sm" variant="outline" className="flex-1 rounded-lg">
-                                                        <Eye className="w-3 h-3 mr-1" />
-                                                        Voir
-                                                    </Button>
-                                                    <Button size="sm" variant="outline" className="flex-1 rounded-lg">
-                                                        <Edit className="w-3 h-3 mr-1" />
-                                                        Modifier
-                                                    </Button>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {bureauId ? (
+                            <SyndicateWorkersManagement 
+                                bureauId={bureauId} 
+                                bureauName={bureauName}
+                            />
+                        ) : (
+                            <Card className="border-0 shadow-xl rounded-2xl">
+                                <CardContent className="p-12 text-center">
+                                    <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                                    <p className="text-gray-600">Chargement des membres...</p>
+                                </CardContent>
+                            </Card>
+                        )}
                     </TabsContent>
 
                     {/* Onglet Taxi-Motards */}
