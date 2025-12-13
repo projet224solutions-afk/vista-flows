@@ -10346,8 +10346,12 @@ export type Database = {
           owner_member_id: string | null
           photo_url: string | null
           qr_code_data: string | null
+          recovered_at: string | null
+          recovered_by: string | null
           recovery_declared_at: string | null
           recovery_declared_by: string | null
+          recovery_location: string | null
+          recovery_notes: string | null
           recovery_reason: string | null
           registration_number: string | null
           security_lock_level: number | null
@@ -10391,8 +10395,12 @@ export type Database = {
           owner_member_id?: string | null
           photo_url?: string | null
           qr_code_data?: string | null
+          recovered_at?: string | null
+          recovered_by?: string | null
           recovery_declared_at?: string | null
           recovery_declared_by?: string | null
+          recovery_location?: string | null
+          recovery_notes?: string | null
           recovery_reason?: string | null
           registration_number?: string | null
           security_lock_level?: number | null
@@ -10436,8 +10444,12 @@ export type Database = {
           owner_member_id?: string | null
           photo_url?: string | null
           qr_code_data?: string | null
+          recovered_at?: string | null
+          recovered_by?: string | null
           recovery_declared_at?: string | null
           recovery_declared_by?: string | null
+          recovery_location?: string | null
+          recovery_notes?: string | null
           recovery_reason?: string | null
           registration_number?: string | null
           security_lock_level?: number | null
