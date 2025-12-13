@@ -12851,6 +12851,18 @@ export type Database = {
         }
         Returns: string
       }
+      create_syndicate_worker_secure: {
+        Args: {
+          p_access_level?: string
+          p_bureau_id: string
+          p_email?: string
+          p_nom: string
+          p_permissions?: Json
+          p_prenom?: string
+          p_telephone?: string
+        }
+        Returns: string
+      }
       create_taxi_notification: {
         Args: {
           p_body: string
@@ -12934,6 +12946,10 @@ export type Database = {
             Returns: Json
           }
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
+      delete_syndicate_worker_secure: {
+        Args: { p_bureau_id: string; p_worker_id: string }
+        Returns: boolean
+      }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
         Args: {
@@ -14359,6 +14375,10 @@ export type Database = {
         Args: { p_agent_id: string; p_is_active: boolean }
         Returns: Json
       }
+      toggle_syndicate_worker_status_secure: {
+        Args: { p_bureau_id: string; p_is_active: boolean; p_worker_id: string }
+        Returns: boolean
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       update_agent: {
         Args: {
@@ -14371,6 +14391,20 @@ export type Database = {
           p_phone?: string
         }
         Returns: Json
+      }
+      update_syndicate_worker_secure: {
+        Args: {
+          p_access_level?: string
+          p_bureau_id: string
+          p_email?: string
+          p_is_active?: boolean
+          p_nom?: string
+          p_permissions?: Json
+          p_prenom?: string
+          p_telephone?: string
+          p_worker_id: string
+        }
+        Returns: boolean
       }
       updategeometrysrid: {
         Args: {

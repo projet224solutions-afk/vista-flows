@@ -104,22 +104,16 @@ export const useSyndicateWorkersData = (bureauId?: string) => {
     }
 
     try {
-      const insertData: any = {
-        bureau_id: bureauId,
-        nom: workerData.nom,
-        prenom: workerData.prenom,
-        email: workerData.email,
-        telephone: workerData.telephone,
-        access_level: workerData.access_level || 'member',
-        permissions: workerData.permissions || {},
-        is_active: true,
-      };
-
-      const { data, error } = await supabase
-        .from('syndicate_workers')
-        .insert(insertData)
-        .select()
-        .single();
+      // Utiliser la fonction SECURITY DEFINER pour contourner les RLS
+      const { data: workerId, error } = await supabase.rpc('create_syndicate_worker_secure', {
+        p_bureau_id: bureauId,
+        p_nom: workerData.nom,
+        p_prenom: workerData.prenom || null,
+        p_email: workerData.email || null,
+        p_telephone: workerData.telephone || null,
+        p_access_level: workerData.access_level || 'member',
+        p_permissions: workerData.permissions || {}
+      });
 
       if (error) {
         console.error('Error creating worker:', error);
@@ -129,7 +123,7 @@ export const useSyndicateWorkersData = (bureauId?: string) => {
 
       toast.success('Membre créé avec succès');
       await loadWorkers();
-      return data;
+      return { id: workerId };
     } catch (err) {
       console.error('Error in createWorker:', err);
       toast.error('Erreur lors de la création du membre');
@@ -144,11 +138,18 @@ export const useSyndicateWorkersData = (bureauId?: string) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('syndicate_workers')
-        .update(updates)
-        .eq('id', workerId)
-        .eq('bureau_id', bureauId);
+      // Utiliser la fonction SECURITY DEFINER pour contourner les RLS
+      const { error } = await supabase.rpc('update_syndicate_worker_secure', {
+        p_worker_id: workerId,
+        p_bureau_id: bureauId,
+        p_nom: updates.nom || null,
+        p_prenom: updates.prenom || null,
+        p_email: updates.email || null,
+        p_telephone: updates.telephone || null,
+        p_access_level: updates.access_level || null,
+        p_permissions: updates.permissions || null,
+        p_is_active: updates.is_active !== undefined ? updates.is_active : null
+      });
 
       if (error) {
         console.error('Error updating worker:', error);
@@ -171,11 +172,11 @@ export const useSyndicateWorkersData = (bureauId?: string) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('syndicate_workers')
-        .delete()
-        .eq('id', workerId)
-        .eq('bureau_id', bureauId);
+      // Utiliser la fonction SECURITY DEFINER pour contourner les RLS
+      const { error } = await supabase.rpc('delete_syndicate_worker_secure', {
+        p_worker_id: workerId,
+        p_bureau_id: bureauId
+      });
 
       if (error) {
         console.error('Error deleting worker:', error);
@@ -198,11 +199,12 @@ export const useSyndicateWorkersData = (bureauId?: string) => {
     }
 
     try {
-      const { error } = await supabase
-        .from('syndicate_workers')
-        .update({ is_active: isActive })
-        .eq('id', workerId)
-        .eq('bureau_id', bureauId);
+      // Utiliser la fonction SECURITY DEFINER pour contourner les RLS
+      const { error } = await supabase.rpc('toggle_syndicate_worker_status_secure', {
+        p_worker_id: workerId,
+        p_bureau_id: bureauId,
+        p_is_active: isActive
+      });
 
       if (error) {
         console.error('Error toggling worker status:', error);
