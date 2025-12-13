@@ -12092,6 +12092,7 @@ export type Database = {
         Args: { p_product_id: string; p_user_id: string }
         Returns: number
       }
+      calculate_system_health: { Args: never; Returns: Json }
       calculate_taxi_fare: {
         Args: {
           p_distance_km: number
@@ -12144,6 +12145,7 @@ export type Database = {
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_system_errors: { Args: never; Returns: Json }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
         Returns: Json
