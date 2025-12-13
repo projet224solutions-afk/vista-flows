@@ -8946,6 +8946,7 @@ export type Database = {
           severity: string | null
           stack_trace: string | null
           status: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -8963,6 +8964,7 @@ export type Database = {
           severity?: string | null
           stack_trace?: string | null
           status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -8980,6 +8982,7 @@ export type Database = {
           severity?: string | null
           stack_trace?: string | null
           status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
