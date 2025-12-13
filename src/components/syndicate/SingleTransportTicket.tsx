@@ -290,31 +290,6 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         </div>
       </div>
 
-      {/* Bande série droite */}
-      <div 
-        style={{
-          width: '16px',
-          background: 'linear-gradient(180deg, #1e3a5f 0%, #0f172a 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <div 
-          style={{
-            transform: 'rotate(-90deg)',
-            whiteSpace: 'nowrap',
-            fontSize: '7px',
-            color: '#ffffff',
-            fontFamily: "'Courier New', monospace",
-            letterSpacing: '1px',
-            fontWeight: 'bold',
-          }}
-        >
-          SN-{formattedNumber}
-        </div>
-      </div>
     </div>
   );
 }
