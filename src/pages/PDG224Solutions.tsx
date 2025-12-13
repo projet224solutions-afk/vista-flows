@@ -309,7 +309,7 @@ export default function PDG224Solutions() {
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 h-screen overflow-y-auto scrollbar-thin">
         {/* Header */}
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
           <div className="max-w-[1600px] mx-auto px-6 py-6">
