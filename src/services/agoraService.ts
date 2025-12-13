@@ -177,27 +177,23 @@ class AgoraService {
   }
 
   /**
-   * Configurer les événements RTM v2
+   * Configurer les événements RTM v1
    */
   private setupRTMEvents(): void {
     if (!this.rtmClient) return;
 
-    // RTM v2 events
-    this.rtmClient.addEventListener('message', (event) => {
-      console.log('💬 Message reçu:', event.message, 'de:', event.publisher);
+    // RTM v1 events - using 'on' method
+    this.rtmClient.on('MessageFromPeer', (message: any, peerId: string) => {
+      console.log('💬 Message reçu de:', peerId, message.text);
     });
 
-    this.rtmClient.addEventListener('presence', (event) => {
-      console.log('👥 Présence:', event.eventType, event.publisher);
-    });
-
-    this.rtmClient.addEventListener('status', (event) => {
-      console.log('🔗 RTM État connexion:', event.state, event.reason);
+    this.rtmClient.on('ConnectionStateChanged', (newState: string, reason: string) => {
+      console.log('🔗 RTM État connexion:', newState, reason);
     });
   }
 
   /**
-   * S'abonner à un canal RTM
+   * Rejoindre un canal RTM v1
    */
   async subscribeToChannel(channelName: string): Promise<void> {
     if (!this.rtmClient) {
@@ -206,25 +202,42 @@ class AgoraService {
     }
 
     try {
-      await this.rtmClient.subscribe(channelName);
-      console.log('✅ Abonné au canal RTM:', channelName);
+      // RTM v1 - create and join channel
+      this.rtmChannel = this.rtmClient.createChannel(channelName);
+      
+      // Setup channel events
+      this.rtmChannel.on('ChannelMessage', (message: any, memberId: string) => {
+        console.log('💬 Message canal de', memberId, ':', message.text);
+      });
+      
+      this.rtmChannel.on('MemberJoined', (memberId: string) => {
+        console.log('👥 Membre rejoint:', memberId);
+      });
+      
+      this.rtmChannel.on('MemberLeft', (memberId: string) => {
+        console.log('👥 Membre parti:', memberId);
+      });
+      
+      await this.rtmChannel.join();
+      console.log('✅ Rejoint le canal RTM:', channelName);
     } catch (error) {
-      console.error('❌ Erreur abonnement canal RTM:', error);
+      console.error('❌ Erreur rejoindre canal RTM:', error);
       throw error;
     }
   }
 
   /**
-   * Envoyer un message sur un canal RTM
+   * Envoyer un message sur un canal RTM v1
    */
   async sendMessage(channelName: string, message: string): Promise<void> {
-    if (!this.rtmClient) {
-      console.warn('RTM non initialisé');
+    if (!this.rtmChannel) {
+      console.warn('Canal RTM non rejoint');
       return;
     }
 
     try {
-      await this.rtmClient.publish(channelName, message);
+      // RTM v1 - send channel message
+      await this.rtmChannel.sendMessage({ text: message });
       console.log('✅ Message envoyé sur:', channelName);
     } catch (error) {
       console.error('❌ Erreur envoi message RTM:', error);
@@ -443,6 +456,12 @@ class AgoraService {
   async cleanup(): Promise<void> {
     try {
       await this.leaveChannel();
+      
+      // Quitter le canal RTM v1
+      if (this.rtmChannel) {
+        await this.rtmChannel.leave();
+        this.rtmChannel = null;
+      }
       
       if (this.rtmClient) {
         await this.rtmClient.logout();
