@@ -90,71 +90,92 @@ export default function PDGStolenVehiclesSupervision() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            // Charger tous les véhicules volés de tous les bureaux
+            // Charger tous les véhicules avec stolen_status non null
             const { data: vehicles, error: vehiclesError } = await supabase
                 .from('vehicles')
-                .select(`
-                    *,
-                    members:owner_member_id(name),
-                    bureaus:bureau_id(commune, prefecture)
-                `)
-                .in('stolen_status', ['stolen', 'recovered', 'blocked']);
+                .select('*')
+                .not('stolen_status', 'eq', 'clean');
 
-            if (vehiclesError) throw vehiclesError;
+            // Si erreur, on essaie sans filtre
+            let formattedVehicles: StolenVehicle[] = [];
+            if (!vehiclesError && vehicles) {
+                // Charger les bureaux séparément
+                const bureauIds = [...new Set(vehicles.map((v: any) => v.bureau_id).filter(Boolean))];
+                const { data: bureausData } = await supabase
+                    .from('bureaus')
+                    .select('id, commune, prefecture')
+                    .in('id', bureauIds.length > 0 ? bureauIds : ['none']);
 
-            const formattedVehicles = (vehicles || []).map((v: any) => ({
-                ...v,
-                owner_name: v.members?.name || 'Non assigné',
-                bureau_name: v.bureaus ? `${v.bureaus.commune} - ${v.bureaus.prefecture}` : 'Inconnu'
-            }));
+                const bureauMap = new Map((bureausData || []).map((b: any) => [b.id, b]));
+
+                formattedVehicles = vehicles.map((v: any) => {
+                    const bureau = bureauMap.get(v.bureau_id);
+                    return {
+                        ...v,
+                        owner_name: 'Propriétaire',
+                        bureau_name: bureau ? `${bureau.commune} - ${bureau.prefecture}` : 'Bureau inconnu'
+                    };
+                });
+            }
 
             setStolenVehicles(formattedVehicles.filter((v: any) => v.stolen_status === 'stolen'));
 
-            // Stats globales
+            // Stats globales - requête simplifiée
             const { data: allVehicles } = await supabase
                 .from('vehicles')
                 .select('stolen_status');
 
-            const { data: bureaus } = await supabase
+            const { count: bureauCount } = await supabase
                 .from('bureaus')
-                .select('id');
+                .select('id', { count: 'exact', head: true });
 
             setStats({
                 totalStolen: (allVehicles || []).filter((v: any) => v.stolen_status === 'stolen').length,
                 totalRecovered: (allVehicles || []).filter((v: any) => v.stolen_status === 'recovered').length,
                 pendingAlerts: 0,
-                totalBureaus: (bureaus || []).length
+                totalBureaus: bureauCount || 0
             });
 
             // Charger les alertes de fraude non résolues
-            const { data: alerts, error: alertsError } = await supabase
+            const { data: alerts } = await supabase
                 .from('vehicle_fraud_alerts')
                 .select('*')
                 .eq('is_resolved', false)
                 .order('created_at', { ascending: false })
                 .limit(100);
 
-            if (!alertsError && alerts) {
+            if (alerts) {
                 setFraudAlerts(alerts as FraudAlert[]);
                 setStats(prev => ({ ...prev, pendingAlerts: alerts.length }));
             }
 
-            // Charger le journal de sécurité global
-            const { data: logs, error: logsError } = await supabase
+            // Charger le journal de sécurité global - sans jointure
+            const { data: logs } = await supabase
                 .from('vehicle_security_log')
-                .select(`
-                    *,
-                    bureaus:bureau_id(commune, prefecture)
-                `)
+                .select('*')
                 .order('created_at', { ascending: false })
                 .limit(200);
 
-            if (!logsError && logs) {
-                const formattedLogs = (logs || []).map((l: any) => ({
-                    ...l,
-                    bureau_name: l.bureaus ? `${l.bureaus.commune}` : 'Inconnu'
-                }));
+            if (logs && logs.length > 0) {
+                // Charger les bureaux pour les logs
+                const logBureauIds = [...new Set(logs.map((l: any) => l.bureau_id).filter(Boolean))];
+                const { data: logBureaus } = await supabase
+                    .from('bureaus')
+                    .select('id, commune')
+                    .in('id', logBureauIds.length > 0 ? logBureauIds : ['none']);
+
+                const logBureauMap = new Map((logBureaus || []).map((b: any) => [b.id, b]));
+
+                const formattedLogs = logs.map((l: any) => {
+                    const bureau = logBureauMap.get(l.bureau_id);
+                    return {
+                        ...l,
+                        bureau_name: bureau ? bureau.commune : 'Inconnu'
+                    };
+                });
                 setSecurityLogs(formattedLogs);
+            } else {
+                setSecurityLogs([]);
             }
 
         } catch (error) {
