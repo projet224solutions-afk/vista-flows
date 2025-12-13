@@ -90,15 +90,18 @@ export default function PDGStolenVehiclesSupervision() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            // Charger tous les véhicules avec stolen_status non null
+            console.log('🔍 [PDG Security] Début chargement données...');
+            
+            // Charger tous les véhicules avec stolen_status = 'stolen'
             const { data: vehicles, error: vehiclesError } = await supabase
                 .from('vehicles')
                 .select('*')
-                .not('stolen_status', 'eq', 'clean');
+                .eq('stolen_status', 'stolen');
 
-            // Si erreur, on essaie sans filtre
+            console.log('🚗 [PDG Security] Véhicules volés:', { vehicles, error: vehiclesError });
+
             let formattedVehicles: StolenVehicle[] = [];
-            if (!vehiclesError && vehicles) {
+            if (!vehiclesError && vehicles && vehicles.length > 0) {
                 // Charger les bureaux séparément
                 const bureauIds = [...new Set(vehicles.map((v: any) => v.bureau_id).filter(Boolean))];
                 const { data: bureausData } = await supabase
@@ -116,33 +119,45 @@ export default function PDGStolenVehiclesSupervision() {
                         bureau_name: bureau ? `${bureau.commune} - ${bureau.prefecture}` : 'Bureau inconnu'
                     };
                 });
+            } else if (vehiclesError) {
+                console.error('❌ [PDG Security] Erreur véhicules:', vehiclesError);
             }
 
-            setStolenVehicles(formattedVehicles.filter((v: any) => v.stolen_status === 'stolen'));
+            console.log('📊 [PDG Security] Véhicules formatés:', formattedVehicles);
+            setStolenVehicles(formattedVehicles);
 
             // Stats globales - requête simplifiée
-            const { data: allVehicles } = await supabase
+            const { data: allVehicles, error: allVehiclesError } = await supabase
                 .from('vehicles')
                 .select('stolen_status');
+
+            console.log('📈 [PDG Security] All vehicles stats:', { count: allVehicles?.length, error: allVehiclesError });
 
             const { count: bureauCount } = await supabase
                 .from('bureaus')
                 .select('id', { count: 'exact', head: true });
 
+            const stolenCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'stolen').length;
+            const recoveredCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'recovered').length;
+            
+            console.log('📊 [PDG Security] Stats calculées:', { stolenCount, recoveredCount, bureauCount });
+
             setStats({
-                totalStolen: (allVehicles || []).filter((v: any) => v.stolen_status === 'stolen').length,
-                totalRecovered: (allVehicles || []).filter((v: any) => v.stolen_status === 'recovered').length,
+                totalStolen: stolenCount,
+                totalRecovered: recoveredCount,
                 pendingAlerts: 0,
                 totalBureaus: bureauCount || 0
             });
 
             // Charger les alertes de fraude non résolues
-            const { data: alerts } = await supabase
+            const { data: alerts, error: alertsError } = await supabase
                 .from('vehicle_fraud_alerts')
                 .select('*')
                 .eq('is_resolved', false)
                 .order('created_at', { ascending: false })
                 .limit(100);
+
+            console.log('⚠️ [PDG Security] Alertes:', { alerts, error: alertsError });
 
             if (alerts) {
                 setFraudAlerts(alerts as FraudAlert[]);
@@ -150,11 +165,13 @@ export default function PDGStolenVehiclesSupervision() {
             }
 
             // Charger le journal de sécurité global - sans jointure
-            const { data: logs } = await supabase
+            const { data: logs, error: logsError } = await supabase
                 .from('vehicle_security_log')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(200);
+
+            console.log('📋 [PDG Security] Logs sécurité:', { logs, error: logsError });
 
             if (logs && logs.length > 0) {
                 // Charger les bureaux pour les logs
@@ -177,6 +194,8 @@ export default function PDGStolenVehiclesSupervision() {
             } else {
                 setSecurityLogs([]);
             }
+
+            console.log('✅ [PDG Security] Chargement terminé');
 
         } catch (error) {
             console.error('Erreur chargement données:', error);
