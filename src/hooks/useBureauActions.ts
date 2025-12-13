@@ -341,7 +341,7 @@ export function useBureauActions({
   }, [bureauId, onVehicleRegistered]);
 
   /**
-   * Signaler un véhicule volé
+   * Signaler un véhicule volé - CENTRALISÉ via RPC
    */
   const reportStolenVehicle = useCallback(async (
     vehicleId: string,
@@ -352,35 +352,28 @@ export function useBureauActions({
     }
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Mettre à jour le véhicule
-      const { error: updateError } = await supabase
-        .from('registered_motos')
-        .update({
-          status: 'stolen',
-          stolen_date: new Date().toISOString(),
-          stolen_details: details
-        })
-        .eq('id', vehicleId);
+      // Utiliser le RPC centralisé declare_vehicle_stolen
+      const reason = [
+        details.description,
+        details.police_report ? `Rapport police: ${details.police_report}` : null
+      ].filter(Boolean).join(' - ') || 'Vol signalé par le bureau';
 
-      if (updateError) throw updateError;
+      const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
+        p_vehicle_id: vehicleId,
+        p_bureau_id: bureauId,
+        p_declared_by: bureauId,
+        p_reason: reason,
+        p_location: details.location || null,
+        p_ip_address: null,
+        p_user_agent: navigator.userAgent
+      });
 
-      // Créer une alerte sécurité
-      const { data: vehicle } = await supabase
-        .from('registered_motos')
-        .select('bureau_id, plate_number')
-        .eq('id', vehicleId)
-        .single();
+      if (error) throw error;
 
-      if (vehicle) {
-        await supabase.from('syndicate_alerts').insert([{
-          alert_type: 'stolen_vehicle',
-          bureau_id: vehicle.bureau_id,
-          title: `Véhicule volé: ${vehicle.plate_number}`,
-          message: `Le véhicule ${vehicle.plate_number} a été signalé volé. ${details.description || ''}`,
-          severity: 'critical',
-          is_critical: true,
-          is_read: false
-        }]);
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la déclaration');
       }
 
       toast.success('Véhicule signalé comme volé');
@@ -389,7 +382,7 @@ export function useBureauActions({
       console.error('Erreur signalement vol:', error);
       return { success: false, error: error.message };
     }
-  }, []);
+  }, [bureauId]);
 
   return {
     // Workers
