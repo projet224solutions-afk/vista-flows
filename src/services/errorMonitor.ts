@@ -160,7 +160,14 @@ class ErrorMonitorService {
         const shouldIgnore = 
           resourceUrl.includes('analytics') ||
           resourceUrl.includes('tracking') ||
-          resourceUrl.includes('ads');
+          resourceUrl.includes('ads') ||
+          // Ignorer les erreurs audio/media (non critiques)
+          resourceUrl.startsWith('data:audio') ||
+          resourceUrl.includes('audio/mpeg') ||
+          resourceUrl.includes('audio/wav') ||
+          resourceUrl.includes('audio/mp3') ||
+          resourceType === 'audio' ||
+          resourceType === 'video';
         
         if (shouldIgnore) return;
         
@@ -352,19 +359,43 @@ class ErrorMonitorService {
 
   async getErrorStats() {
     try {
+      // Utiliser la fonction RPC pour des stats précises
+      const { data: healthResult, error: rpcError } = await supabase.rpc('calculate_system_health');
+      
+      if (!rpcError && healthResult && typeof healthResult === 'object') {
+        const result = healthResult as { 
+          critical_pending?: number; 
+          moderate_pending?: number; 
+          minor_pending?: number;
+          total_pending?: number;
+          fixed_last_24h?: number;
+        };
+        
+        return {
+          total: (result.total_pending || 0) + (result.fixed_last_24h || 0),
+          critical: result.critical_pending || 0,
+          moderate: result.moderate_pending || 0,
+          minor: result.minor_pending || 0,
+          fixed: result.fixed_last_24h || 0,
+          pending: result.total_pending || 0,
+        };
+      }
+
+      // Fallback: requête directe avec filtre status != 'fixed'
       const { data, error } = await supabase
         .from('system_errors')
-        .select('severity, status, fix_applied');
+        .select('severity, status, fix_applied')
+        .neq('status', 'fixed');
 
       if (error) throw error;
 
       const stats = {
         total: data?.length || 0,
-        critical: data?.filter((e) => e.severity === 'critique').length || 0,
+        critical: data?.filter((e) => e.severity === 'critique' || e.severity === 'critical').length || 0,
         moderate: data?.filter((e) => e.severity === 'modérée').length || 0,
         minor: data?.filter((e) => e.severity === 'mineure').length || 0,
-        fixed: data?.filter((e) => e.fix_applied).length || 0,
-        pending: data?.filter((e) => e.status === 'detected').length || 0,
+        fixed: 0,
+        pending: data?.length || 0,
       };
 
       return stats;
