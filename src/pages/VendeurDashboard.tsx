@@ -369,47 +369,52 @@ export default function VendeurDashboard() {
         <VendorSidebar />
 
         <div className="flex-1 flex flex-col w-full">
-          {/* Header global avec trigger */}
-          <header className="h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-6">
-            <SidebarTrigger className="mr-4" />
+          {/* Header global optimisé mobile */}
+          <header className="h-14 md:h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-3 md:px-6">
+            <SidebarTrigger className="mr-2 md:mr-4" />
 
-            <div className="flex items-center justify-between flex-1">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between flex-1 min-w-0">
+              <div className="flex items-center gap-2 md:gap-4 min-w-0">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+                <div className="min-w-0">
+                  <h1 className="text-base md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent truncate">
                     224SOLUTIONS
                   </h1>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                      {profile?.first_name || user?.email?.split('@')[0]}
+                      <span className="truncate max-w-[60px] md:max-w-none">{profile?.first_name || user?.email?.split('@')[0]}</span>
                     </p>
-                    <VendorIdDisplay showName={false} />
+                    <div className="hidden sm:block">
+                      <VendorIdDisplay showName={false} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <NetworkStatusIndicator />
-                {/* PWAInstallButton désactivé */}
+              <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                <div className="hidden md:block">
+                  <NetworkStatusIndicator />
+                </div>
                 
                 <div className="hidden lg:block">
                   <WalletBalanceWidget className="max-w-[280px]" />
                 </div>
-                <QuickTransferButton variant="ghost" size="icon" showText={false} />
-                <VendorSubscriptionButton />
+                <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
+                <div className="hidden sm:block">
+                  <VendorSubscriptionButton />
+                </div>
                 
-                <Button variant="ghost" size="icon">
-                  <Bell className="w-5 h-5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+                  <Bell className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
-                <Button variant="ghost" size="icon">
-                  <User className="w-5 h-5" />
+                <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 md:h-10 md:w-10">
+                  <User className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                  <LogOut className="w-5 h-5" />
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 md:h-10 md:w-10">
+                  <LogOut className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
@@ -429,8 +434,8 @@ export default function VendeurDashboard() {
             </div>
           )}
 
-          {/* Contenu principal */}
-          <main className="flex-1 p-6 overflow-auto">
+          {/* Contenu principal - padding réduit sur mobile */}
+          <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6">
             <Routes>
               {/* Route par défaut */}
               <Route index element={<DashboardHome />} />

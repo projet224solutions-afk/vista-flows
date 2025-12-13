@@ -377,124 +377,127 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Package className="h-8 w-8" />
-            Gestion des produits
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gérez votre catalogue de produits
-          </p>
+      {/* Header - optimisé mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Package className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold">
+              Gestion des produits
+            </h1>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Gérez votre catalogue de produits
+            </p>
+          </div>
         </div>
-        <Button onClick={() => { resetForm(); setShowDialog(true); }}>
+        <Button onClick={() => { resetForm(); setShowDialog(true); }} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Nouveau produit
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Produits</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+      {/* Stats Cards - grille 2x2 sur mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <Card className="p-2 md:p-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">Total Produits</CardTitle>
+            <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               {stats.active} actifs
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-orange-500" />
+        <Card className="p-2 md:p-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">Stock Bas</CardTitle>
+            <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-orange-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{stats.lowStock}</div>
-            <p className="text-xs text-muted-foreground">
-              Nécessitent réapprovisionnement
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="text-lg md:text-2xl font-bold text-orange-500">{stats.lowStock}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
+              Réappro. requis
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valeur Stock</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+        <Card className="p-2 md:p-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">Valeur Stock</CardTitle>
+            <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="text-sm md:text-2xl font-bold truncate">
               {new Intl.NumberFormat('fr-GN', {
-                style: 'currency',
-                currency: 'GNF'
-              }).format(stats.totalValue)}
+                maximumFractionDigits: 0
+              }).format(stats.totalValue)} GNF
             </div>
-            <p className="text-xs text-muted-foreground">
-              Valeur totale inventaire
+            <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
+              Valeur inventaire
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Catégories</CardTitle>
-            <Filter className="h-4 w-4 text-muted-foreground" />
+        <Card className="p-2 md:p-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">Catégories</CardTitle>
+            <Filter className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{categories.length}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="text-lg md:text-2xl font-bold">{categories.length}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground">
               Catégories actives
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters - optimisé mobile */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un produit..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        <CardContent className="p-3 md:pt-6 md:p-6">
+          <div className="flex flex-col gap-2 md:gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un produit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-9 md:h-10 text-sm"
+              />
             </div>
-            <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les produits</SelectItem>
-                <SelectItem value="active">Actifs uniquement</SelectItem>
-                <SelectItem value="inactive">Inactifs uniquement</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant={lowStockFilter ? "default" : "outline"}
-              onClick={() => setLowStockFilter(!lowStockFilter)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Stock bas
-            </Button>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                <SelectTrigger className="flex-1 h-9 md:h-10 text-xs md:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les produits</SelectItem>
+                  <SelectItem value="active">Actifs</SelectItem>
+                  <SelectItem value="inactive">Inactifs</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant={lowStockFilter ? "default" : "outline"}
+                onClick={() => setLowStockFilter(!lowStockFilter)}
+                className="h-9 md:h-10 text-xs md:text-sm px-2 md:px-4"
+              >
+                <Filter className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                Stock bas
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Products Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Products Grid - 2 colonnes sur mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         {filteredProducts.map((product) => (
           <Card key={product.id} className="overflow-hidden">
-            <div className="aspect-video bg-muted relative">
+            {/* Image plus petite sur mobile */}
+            <div className="aspect-square md:aspect-video bg-muted relative">
               {product.images && product.images[0] ? (
                 <img
                   src={product.images[0]}
@@ -503,77 +506,78 @@ export default function ProductManagement() {
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <Package className="h-12 w-12 text-muted-foreground" />
+                  <Package className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground" />
                 </div>
               )}
               {product.public_id && (
-                <div className="absolute top-2 left-2">
-                  <PublicIdBadge publicId={product.public_id} variant="default" />
+                <div className="absolute top-1 left-1 md:top-2 md:left-2">
+                  <PublicIdBadge publicId={product.public_id} variant="default" className="text-[8px] md:text-xs px-1 md:px-2" />
                 </div>
               )}
               {!product.is_active && (
-                <Badge className="absolute top-2 right-2" variant="destructive">
+                <Badge className="absolute top-1 right-1 md:top-2 md:right-2 text-[10px] md:text-xs px-1 md:px-2" variant="destructive">
                   Inactif
                 </Badge>
               )}
               {product.stock_quantity <= product.low_stock_threshold && (
-                <Badge className="absolute bottom-2 right-2 bg-orange-500 text-white" variant="outline">
+                <Badge className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-orange-500 text-white text-[10px] md:text-xs px-1 md:px-2" variant="outline">
                   Stock bas
                 </Badge>
               )}
             </div>
-            <CardHeader>
-              <CardTitle className="text-lg">{product.name}</CardTitle>
-              {product.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.description}
-                </p>
-              )}
+            
+            {/* Info produit compacte sur mobile */}
+            <CardHeader className="p-2 md:p-6 pb-1 md:pb-2">
+              <CardTitle className="text-xs md:text-lg line-clamp-2 leading-tight">{product.name}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-primary">
+            
+            <CardContent className="p-2 md:p-6 pt-0 space-y-1 md:space-y-3">
+              {/* Prix */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <span className="text-sm md:text-2xl font-bold text-primary truncate">
                   {new Intl.NumberFormat('fr-GN', {
-                    style: 'currency',
-                    currency: 'GNF'
-                  }).format(product.price)}
+                    maximumFractionDigits: 0
+                  }).format(product.price)} GNF
                 </span>
                 {product.compare_price && (
-                  <span className="text-sm line-through text-muted-foreground">
+                  <span className="text-[10px] md:text-sm line-through text-muted-foreground">
                     {new Intl.NumberFormat('fr-GN', {
-                      style: 'currency',
-                      currency: 'GNF'
-                    }).format(product.compare_price)}
+                      maximumFractionDigits: 0
+                    }).format(product.compare_price)} GNF
                   </span>
                 )}
               </div>
               
-              <div className="flex items-center justify-between text-sm">
+              {/* Stock - simplifié sur mobile */}
+              <div className="flex items-center justify-between text-[10px] md:text-sm">
                 <span className="text-muted-foreground">Stock:</span>
-                <span className="font-medium">{product.stock_quantity} unités</span>
+                <span className="font-medium">{product.stock_quantity}</span>
               </div>
 
+              {/* SKU masqué sur mobile */}
               {product.sku && (
-                <div className="flex items-center justify-between text-sm">
+                <div className="hidden md:flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">SKU:</span>
                   <span className="font-mono">{product.sku}</span>
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
+              {/* Boutons d'action compacts sur mobile */}
+              <div className="flex gap-1 md:gap-2 pt-1 md:pt-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleEdit(product)}
-                  className="flex-1"
+                  className="flex-1 h-7 md:h-9 text-[10px] md:text-sm px-1 md:px-3"
                 >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Éditer
+                  <Edit className="h-3 w-3 md:mr-1" />
+                  <span className="hidden md:inline">Éditer</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleDuplicate(product.id)}
+                  className="h-7 md:h-9 px-1.5 md:px-3"
                 >
                   <Copy className="h-3 w-3" />
                 </Button>
@@ -581,6 +585,7 @@ export default function ProductManagement() {
                   size="sm"
                   variant="destructive"
                   onClick={() => handleDelete(product.id)}
+                  className="h-7 md:h-9 px-1.5 md:px-3"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
