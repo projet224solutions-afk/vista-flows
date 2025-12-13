@@ -11646,6 +11646,18 @@ export type Database = {
         }
         Relationships: []
       }
+      pdg_vehicle_security_overview: {
+        Row: {
+          events_30d: number | null
+          events_7d: number | null
+          pending_alerts: number | null
+          total_blocked: number | null
+          total_clean: number | null
+          total_recovered: number | null
+          total_stolen: number | null
+        }
+        Relationships: []
+      }
       security_stats: {
         Row: {
           active_blocks: number | null
@@ -12516,6 +12528,10 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_vehicle_security_summary: {
+        Args: { p_vehicle_id: string }
+        Returns: Json
+      }
       get_vendor_average_rating: {
         Args: { p_vendor_id: string }
         Returns: Json
@@ -12593,6 +12609,7 @@ export type Database = {
         Returns: boolean
       }
       is_real_user: { Args: { p_user_id: string }; Returns: boolean }
+      is_vehicle_blocked: { Args: { p_vehicle_id: string }; Returns: boolean }
       log_api_usage: {
         Args: { p_cost?: number; p_service_type: string }
         Returns: undefined
