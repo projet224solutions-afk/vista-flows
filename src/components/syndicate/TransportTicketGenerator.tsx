@@ -76,7 +76,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     return `LOT-${year}${month}${day}-${time}`;
   };
 
-  // Upload du cachet
+  // Upload du cachet via Edge Function (bypass RLS)
   const handleStampUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -95,19 +95,25 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
     setIsUploadingStamp(true);
     try {
-      const fileName = `stamps/${bureauId}/${Date.now()}_${file.name}`;
-      
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(fileName, file, { upsert: true });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bureauId', bureauId);
 
-      if (error) throw error;
+      const response = await fetch(
+        'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/upload-bureau-stamp',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
-      const { data: urlData } = supabase.storage
-        .from('documents')
-        .getPublicUrl(fileName);
+      const result = await response.json();
 
-      setStampUrl(urlData.publicUrl);
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur upload');
+      }
+
+      setStampUrl(result.url);
       toast.success('Cachet téléchargé avec succès');
     } catch (error: any) {
       console.error('Erreur upload cachet:', error);
