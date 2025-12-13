@@ -12230,6 +12230,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_panic_mode_active: { Args: never; Returns: boolean }
       is_payment_link_publicly_accessible: {
         Args: { p_payment_id: string }
         Returns: boolean
@@ -12375,17 +12376,30 @@ export type Database = {
         }
         Returns: Json
       }
-      process_secure_wallet_transfer: {
-        Args: {
-          p_amount: number
-          p_description?: string
-          p_receiver_id: string
-          p_receiver_type?: string
-          p_sender_id: string
-          p_sender_type?: string
-        }
-        Returns: Json
-      }
+      process_secure_wallet_transfer:
+        | {
+            Args: {
+              p_amount: number
+              p_currency?: string
+              p_description?: string
+              p_receiver_id: string
+              p_receiver_type?: string
+              p_sender_id: string
+              p_sender_type?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_receiver_id: string
+              p_receiver_type?: string
+              p_sender_id: string
+              p_sender_type?: string
+            }
+            Returns: Json
+          }
       process_wallet_to_card: {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
