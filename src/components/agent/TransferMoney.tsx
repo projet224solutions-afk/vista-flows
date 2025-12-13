@@ -331,13 +331,30 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         receiverId = selectedUser.id;
       }
 
-      // Utiliser la fonction RPC sécurisée avec journalisation complète
+      // Déterminer les types d'expéditeur et de destinataire
+      const senderType = 'user'; // L'agent utilise son user_id
+      const receiverType = selectedUser.type === 'bureau' ? 'bureau' : 
+                           selectedUser.type === 'agent' ? 'agent' : 'user';
+
+      // Pour les agents destinataires, on passe l'ID de l'agent management, pas le user_id
+      const finalReceiverId = selectedUser.type === 'agent' ? selectedUser.id : receiverId;
+
+      console.log('📤 Transfert agent:', {
+        sender: agentData.user_id,
+        receiver: finalReceiverId,
+        senderType,
+        receiverType,
+        amount: transferAmount
+      });
+
+      // Utiliser la fonction RPC sécurisée avec types de wallet
       const { data, error } = await supabase.rpc('process_secure_wallet_transfer', {
         p_sender_id: agentData.user_id,
-        p_receiver_id: receiverId,
+        p_receiver_id: finalReceiverId,
         p_amount: transferAmount,
         p_description: description || `Transfert vers ${selectedUser.name}`,
-        p_fee_percent: 1.5
+        p_sender_type: senderType,
+        p_receiver_type: receiverType
       });
 
       if (error) {
