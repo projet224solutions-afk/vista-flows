@@ -130,10 +130,8 @@ export default function CommunicationWidget({
         )}
       </div>
 
-      {/* Sound notification (hidden audio) */}
-      <audio id="notification-sound" preload="auto">
-        <source src="data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAIAAABIgCBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAAAAExhdmM1OC45MS4xMDAAAAAAAAAAAAAAAACQAAAAAAAAASIAAAAAAAAAAAAAAAAA" type="audio/mpeg" />
-      </audio>
+      {/* Sound notification (hidden audio) - uses file to avoid CSP blocking */}
+      <audio id="notification-sound" preload="none" />
     </>
   );
 }

@@ -98,9 +98,22 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
           const newMedia = payload.new as SOSMedia;
           setMediaList(prev => [newMedia, ...prev]);
           
-          // Notification sonore et visuelle
-          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH+Ck4uDfXd4fX+ChoeHhYF8eHd6f4WKjIuHgXt2dXZ7gYeJioqHgn56dnh7gIWIiomHgn98eXd5fYKGiImIhoJ+e3l4eX6DhomIh4WCfnt5eHt/hIeJiIeFgn57eXl6foSHiYiHhYJ+e3l5en6Eh4mIh4WCfnt5eXp+hIeJiIeFgn57eXl6foSHiYiHhYJ+e3l5');
-          audio.play().catch(() => {});
+          // Notification sonore via Web Audio API (évite CSP)
+          try {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+          } catch (e) {
+            // Ignorer si Web Audio non supporté
+          }
           
           toast.success(`🎥 Nouveau ${newMedia.media_type === 'video' ? 'vidéo' : 'audio'} reçu!`, {
             description: `De: ${newMedia.driver_name}`,
