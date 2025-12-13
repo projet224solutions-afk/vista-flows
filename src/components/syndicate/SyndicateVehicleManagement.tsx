@@ -1283,6 +1283,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         member_name: selectedVehicle.member_name,
                         member_id: selectedVehicle.member_id,
                         license_plate: selectedVehicle.license_plate,
+                        serial_number: selectedVehicle.serial_number,
                         vehicle_type: selectedVehicle.vehicle_type,
                         badge_generated_at: selectedVehicle.badge_generated_at,
                         digital_badge_id: selectedVehicle.digital_badge_id,
