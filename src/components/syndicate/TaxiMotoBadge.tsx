@@ -137,14 +137,16 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Nom du conducteur */}
+          {/* Nom du conducteur - Style ultra professionnel */}
           <div className="text-center mt-8">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-wide">
-              {driverName.toUpperCase()}
-            </h2>
-            <div className="flex items-center justify-center gap-2 mt-2 text-slate-500">
+            <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-lg py-3 px-4 shadow-lg">
+              <h2 className="text-xl font-bold text-white tracking-widest uppercase">
+                {driverName}
+              </h2>
+            </div>
+            <div className="flex items-center justify-center gap-2 mt-3 text-slate-600">
               <CreditCard className="w-4 h-4" />
-              <span className="text-sm font-mono font-semibold">{memberId}</span>
+              <span className="text-sm font-mono font-bold tracking-wider">{memberId}</span>
             </div>
           </div>
 
@@ -238,28 +240,28 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
             </div>
 
-            {/* QR Code */}
-            <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+            {/* QR Code - Entièrement visible */}
+            <div className="bg-white rounded-xl p-4 border-2 border-slate-300 shadow-md">
               <QRCodeSVG 
-                value={`224SOLUTIONS:${badgeId}:${memberId}`}
-                size={80}
+                value={`224SOLUTIONS:${memberId}`}
+                size={90}
                 level="H"
-                includeMargin={false}
+                includeMargin={true}
               />
             </div>
           </div>
 
-          {/* Pied de page avec informations de sécurité */}
+          {/* Pied de page avec informations de sécurité - Sans UUID */}
           <div className="mt-4 pt-4 border-t border-slate-200">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <div className="flex items-center gap-4">
-                <span className="font-mono">ID: {badgeId}</span>
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Émis par 224Solutions</span>
                 <span>•</span>
-                <span>Émis par 224Solutions</span>
+                <span>République de Guinée</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5" />
-                <span>Document sécurisé - Vérifiable en ligne</span>
+                <span className="font-medium">Document sécurisé - Vérifiable en ligne</span>
               </div>
             </div>
           </div>
