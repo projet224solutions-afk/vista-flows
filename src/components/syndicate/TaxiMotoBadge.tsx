@@ -137,14 +137,12 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Nom du conducteur - Style ultra professionnel */}
-          <div className="text-center mt-8">
-            <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-lg py-3 px-4 shadow-lg">
-              <h2 className="text-xl font-bold text-white tracking-widest uppercase">
-                {driverName}
-              </h2>
-            </div>
-            <div className="flex items-center justify-center gap-2 mt-3 text-slate-600">
+          {/* Nom du conducteur - Style simple et professionnel */}
+          <div className="text-center mt-6">
+            <h2 className="text-base font-bold text-slate-800 tracking-wide uppercase">
+              {driverName}
+            </h2>
+            <div className="flex items-center justify-center gap-2 mt-2 text-slate-600">
               <CreditCard className="w-4 h-4" />
               <span className="text-sm font-mono font-bold tracking-wider">{memberId}</span>
             </div>
@@ -224,14 +222,14 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           </div>
 
           {/* Section code-barres et QR */}
-          <div className="mt-auto flex items-end justify-between gap-6">
+          <div className="flex items-center justify-between gap-4">
             {/* Code-barres */}
-            <div className="flex-1 bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+            <div className="flex-1 bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-center">
                 <Barcode 
-                  value={badgeId}
+                  value={memberId}
                   width={2}
-                  height={50}
+                  height={45}
                   fontSize={10}
                   textMargin={4}
                   margin={0}
@@ -240,13 +238,13 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
             </div>
 
-            {/* QR Code - Entièrement visible */}
-            <div className="bg-white rounded-xl p-4 border-2 border-slate-300 shadow-md">
+            {/* QR Code - Compact et visible */}
+            <div className="bg-white rounded-lg p-2 border border-slate-200 shadow-sm">
               <QRCodeSVG 
                 value={`224SOLUTIONS:${memberId}`}
-                size={90}
+                size={70}
                 level="H"
-                includeMargin={true}
+                includeMargin={false}
               />
             </div>
           </div>
