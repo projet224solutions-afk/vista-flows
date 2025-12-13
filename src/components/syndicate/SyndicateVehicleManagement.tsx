@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import BadgeGeneratorDialog from './BadgeGeneratorDialog';
 import EditBadgeDialog from './EditBadgeDialog';
+import EditVehicleDialog from './EditVehicleDialog';
 import {
     Car,
     Plus,
@@ -76,6 +77,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [showBadgeDialog, setShowBadgeDialog] = useState(false);
     const [showProfessionalBadgeDialog, setShowProfessionalBadgeDialog] = useState(false);
     const [showEditBadgeDialog, setShowEditBadgeDialog] = useState(false);
+    const [showEditVehicleDialog, setShowEditVehicleDialog] = useState(false);
     const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -1161,6 +1163,17 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     variant="outline"
                                                     onClick={() => {
                                                         setSelectedVehicleForEdit(vehicle);
+                                                        setShowEditVehicleDialog(true);
+                                                    }}
+                                                    title="Modifier le véhicule"
+                                                >
+                                                    <Car className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedVehicleForEdit(vehicle);
                                                         setShowEditBadgeDialog(true);
                                                     }}
                                                     title="Modifier infos badge"
@@ -1323,6 +1336,27 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     bureauCode={bureauCode}
                     bureauPrefecture={bureauPrefecture}
                     bureauCommune={bureauCommune}
+                    onUpdate={loadVehicles}
+                />
+            )}
+
+            {/* Dialog d'édition des informations du véhicule */}
+            {selectedVehicleForEdit && (
+                <EditVehicleDialog
+                    open={showEditVehicleDialog}
+                    onOpenChange={setShowEditVehicleDialog}
+                    vehicleData={{
+                        id: selectedVehicleForEdit.id,
+                        serial_number: selectedVehicleForEdit.serial_number,
+                        license_plate: selectedVehicleForEdit.license_plate,
+                        vehicle_type: selectedVehicleForEdit.vehicle_type,
+                        brand: selectedVehicleForEdit.brand,
+                        model: selectedVehicleForEdit.model,
+                        year: selectedVehicleForEdit.year,
+                        color: selectedVehicleForEdit.color,
+                        status: selectedVehicleForEdit.status,
+                        member_name: selectedVehicleForEdit.member_name,
+                    }}
                     onUpdate={loadVehicles}
                 />
             )}
