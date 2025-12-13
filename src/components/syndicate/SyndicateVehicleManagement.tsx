@@ -85,6 +85,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const [bureauCode, setBureauCode] = useState<string>('');
     const [bureauPrefecture, setBureauPrefecture] = useState<string>('');
     const [bureauCommune, setBureauCommune] = useState<string>('');
+    const [bureauPhone, setBureauPhone] = useState<string>('');
 
     // Formulaire d'ajout de véhicule
     const [formData, setFormData] = useState({
@@ -124,8 +125,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const loadBureauInfo = async () => {
         try {
             const { data, error } = await supabase
-                .from('syndicate_bureaus')
-                .select('bureau_code, commune, prefecture')
+                .from('bureaus')
+                .select('bureau_code, commune, prefecture, president_phone')
                 .eq('id', bureauId)
                 .single();
 
@@ -133,12 +134,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
             if (data) {
                 // Stocker toutes les informations
-                setBureauCode(data.bureau_code || '');
-                setBureauPrefecture(data.prefecture || '');
-                setBureauCommune(data.commune || '');
+                setBureauCode((data as any).bureau_code || '');
+                setBureauPrefecture((data as any).prefecture || '');
+                setBureauCommune((data as any).commune || '');
+                setBureauPhone((data as any).president_phone || '');
                 
                 // Pour l'affichage du nom dans les badges
-                const name = data.commune || data.prefecture || 'VOTRE BUREAU';
+                const name = (data as any).commune || (data as any).prefecture || 'VOTRE BUREAU';
                 setBureauName(name);
             }
         } catch (error) {
@@ -1302,6 +1304,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     }}
                     bureauName={bureauName}
                     bureauCommune={bureauCommune}
+                    bureauPhone={bureauPhone}
                 />
             )}
 
