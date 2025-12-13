@@ -24,6 +24,7 @@ interface BadgeGeneratorDialogProps {
     digital_badge_id?: string;
     driver_photo_url?: string;
     driver_date_of_birth?: string;
+    badge_title?: string;
   };
   bureauName?: string;
   bureauCommune?: string;
@@ -36,11 +37,12 @@ export default function BadgeGeneratorDialog({
   bureauName,
   bureauCommune
 }: BadgeGeneratorDialogProps) {
-  // Construire le titre du badge automatiquement basé sur la commune
+  // Utiliser le titre sauvegardé ou construire automatiquement basé sur la commune
   const locationName = bureauCommune || bureauName;
-  const badgeTitle = locationName && locationName !== 'VOTRE BUREAU'
+  const defaultTitle = locationName && locationName !== 'VOTRE BUREAU'
     ? `TAXI-MOTO Bureau Syndicat de ${locationName}` 
     : 'TAXI-MOTO Bureau Syndicat';
+  const badgeTitle = vehicleData.badge_title || defaultTitle;
   const badgeRef = useRef<HTMLDivElement>(null);
 
   // Calculer les dates

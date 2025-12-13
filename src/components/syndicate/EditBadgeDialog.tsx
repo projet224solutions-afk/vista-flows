@@ -115,12 +115,13 @@ export default function EditBadgeDialog({
       // Combiner prénom et nom
       const fullName = `${firstName} ${lastName}`.trim();
 
-      // Mettre à jour les informations du véhicule (uniquement les colonnes existantes)
+      // Mettre à jour les informations du véhicule (y compris le titre du badge)
       const { error } = await supabase
         .from('vehicles')
         .update({
           driver_photo_url: photoUrl || null,
           driver_date_of_birth: dateOfBirth || null,
+          badge_title: badgeTitle || null,
         })
         .eq('id', vehicleData.id);
 
