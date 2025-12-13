@@ -1,7 +1,7 @@
 /**
  * Prévisualisation et Export PDF des Tickets de Transport
  * Design fidèle au modèle officiel guinéen (orientation PAYSAGE)
- * 50 tickets par page A4 avec grille 10x5
+ * 30 tickets par page A4 avec grille 5x6
  */
 
 import { useRef, useState } from 'react';
@@ -19,6 +19,7 @@ interface TicketConfig {
   amount: number;
   date: string;
   optionalMention: string;
+  bureauStampUrl?: string;
 }
 
 interface Props {
@@ -134,12 +135,12 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
           boxSizing: 'border-box',
         }}
       >
-        {/* Grille de tickets PAYSAGE (4 colonnes x 5 lignes = 20 tickets) */}
+        {/* Grille de tickets PAYSAGE (5 colonnes x 6 lignes = 30 tickets) */}
         <div 
-          className="grid gap-[3mm]"
+          className="grid gap-[2mm]"
           style={{
-            gridTemplateColumns: 'repeat(4, 1fr)', // 4 colonnes
-            gridTemplateRows: 'repeat(5, 1fr)', // 5 lignes = 20 tickets par page
+            gridTemplateColumns: 'repeat(5, 1fr)', // 5 colonnes
+            gridTemplateRows: 'repeat(6, 1fr)', // 6 lignes = 30 tickets par page
             width: '100%',
             height: '200mm',
           }}
