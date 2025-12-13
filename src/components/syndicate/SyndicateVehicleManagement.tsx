@@ -1151,70 +1151,78 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex gap-1">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setSelectedVehicleForEdit(vehicle);
-                                                    setShowEditBadgeDialog(true);
-                                                }}
-                                                title="Modifier infos badge"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => openProfessionalBadge(vehicle)}
-                                                title="Générer badge professionnel"
-                                            >
-                                                <IdCard className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => downloadBadge(vehicle)}
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => printBadge(vehicle)}
-                                            >
-                                                <Printer className="w-4 h-4" />
-                                            </Button>
-                                            {!vehicle.verified && (
+                                        <div className="flex flex-col gap-2">
+                                            {/* Boutons principaux */}
+                                            <div className="flex gap-1">
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => verifyVehicle(vehicle.id)}
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedVehicleForEdit(vehicle);
+                                                        setShowEditBadgeDialog(true);
+                                                    }}
+                                                    title="Modifier infos badge"
                                                 >
-                                                    <CheckCircle className="w-4 h-4" />
+                                                    <Edit className="w-4 h-4" />
                                                 </Button>
-                                            )}
-                                            {vehicle.status === 'active' && (
                                                 <Button
                                                     size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => suspendVehicle(vehicle.id)}
-                                                    title="Suspendre"
+                                                    variant="outline"
+                                                    onClick={() => openProfessionalBadge(vehicle)}
+                                                    title="Générer badge professionnel"
                                                 >
-                                                    <XCircle className="w-4 h-4" />
+                                                    <IdCard className="w-4 h-4" />
                                                 </Button>
-                                            )}
-                                            {vehicle.status === 'suspended' && (
                                                 <Button
                                                     size="sm"
-                                                    variant="default"
-                                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                                    onClick={() => reactivateVehicle(vehicle.id)}
-                                                    title="Réactiver ce véhicule"
+                                                    variant="outline"
+                                                    onClick={() => downloadBadge(vehicle)}
                                                 >
-                                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                                    Réactiver
+                                                    <Download className="w-4 h-4" />
                                                 </Button>
-                                            )}
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => printBadge(vehicle)}
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                            
+                                            {/* Boutons de statut - Bien visibles */}
+                                            <div className="flex gap-1">
+                                                {!vehicle.verified && (
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                        onClick={() => verifyVehicle(vehicle.id)}
+                                                    >
+                                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                                        Vérifier
+                                                    </Button>
+                                                )}
+                                                {vehicle.status === 'active' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => suspendVehicle(vehicle.id)}
+                                                        title="Suspendre"
+                                                    >
+                                                        <XCircle className="w-4 h-4 mr-1" />
+                                                        Suspendre
+                                                    </Button>
+                                                )}
+                                                {vehicle.status === 'suspended' && (
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                        onClick={() => reactivateVehicle(vehicle.id)}
+                                                    >
+                                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                                        Réactiver
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </TableCell>
                                 </TableRow>
