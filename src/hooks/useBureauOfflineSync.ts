@@ -95,7 +95,7 @@ export function useBureauOfflineSync(bureauId?: string) {
   const syncMemberEvent = async (event: any) => {
     try {
       const { data, error } = await supabase
-        .from('members')
+        .from('syndicate_workers')
         .upsert(event.data);
 
       if (error) throw error;

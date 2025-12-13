@@ -54,10 +54,9 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
             commune,
             prefecture
           ),
-          members:owner_member_id (
-            first_name,
-            last_name,
-            phone
+          syndicate_workers:owner_member_id (
+            nom,
+            telephone
           )
         `)
         .or('is_stolen.eq.true,stolen_status.eq.stolen')
@@ -75,8 +74,8 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         serial_number: v.serial_number,
         brand: v.brand || 'Non spécifié',
         model: v.model || '',
-        owner_name: v.members ? `${v.members.first_name || ''} ${v.members.last_name || ''}`.trim() : 'Non assigné',
-        owner_phone: v.members?.phone || '',
+        owner_name: v.syndicate_workers?.nom || 'Non assigné',
+        owner_phone: v.syndicate_workers?.telephone || '',
         reported_bureau_name: v.bureaus?.commune || 'Bureau inconnu',
         reported_location: v.stolen_location || v.bureaus?.prefecture || '',
         description: v.stolen_reason || 'Vol déclaré',
