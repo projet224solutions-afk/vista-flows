@@ -12030,6 +12030,27 @@ export type Database = {
         Args: { p_pdg_id: string; p_reason: string }
         Returns: Json
       }
+      add_syndicate_member_for_vehicle: {
+        Args: { p_bureau_id: string; p_nom: string }
+        Returns: string
+      }
+      add_vehicle_for_bureau: {
+        Args: {
+          p_brand?: string
+          p_bureau_id: string
+          p_color?: string
+          p_driver_date_of_birth?: string
+          p_driver_photo_url?: string
+          p_license_plate?: string
+          p_member_id?: string
+          p_model?: string
+          p_owner_name?: string
+          p_serial_number?: string
+          p_vehicle_type?: string
+          p_year?: number
+        }
+        Returns: Json
+      }
       addauth: { Args: { "": string }; Returns: boolean }
       addgeometrycolumn:
         | {

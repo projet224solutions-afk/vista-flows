@@ -322,103 +322,46 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         }
 
         try {
-            // Chercher ou créer le membre
-            let memberId = formData.member_id;
-            let memberName = formData.owner_name;
-            
-            if (!memberId && formData.owner_name) {
-                console.log('[VehicleAdd] Création nouveau membre:', formData.owner_name);
-                
-                // Créer un nouveau membre dans syndicate_workers
-                const { data: newMember, error: memberError } = await supabase
-                    .from('syndicate_workers')
-                    .insert({
-                        bureau_id: bureauId,
-                        nom: formData.owner_name,
-                        email: `temp_${Date.now()}@bureau.local`,
-                        telephone: '',
-                        access_token: `temp_${Date.now()}`,
-                        interface_url: '',
-                        access_level: 'member',
-                        is_active: true
-                    })
-                    .select()
-                    .single();
-                
-                if (memberError) {
-                    console.error('[VehicleAdd] Erreur création membre:', memberError);
-                    throw new Error(`Erreur création membre: ${memberError.message}`);
-                }
-                
-                memberId = newMember.id;
-                memberName = newMember.nom;
-                console.log('[VehicleAdd] Membre créé:', memberId);
-            } else if (memberId) {
-                // Récupérer le nom du membre existant
-                const member = members.find(m => m.id === memberId);
-                memberName = member?.name || formData.owner_name;
-                console.log('[VehicleAdd] Membre existant:', memberId, memberName);
+            console.log('[VehicleAdd] Appel RPC add_vehicle_for_bureau:', {
+                bureau_id: bureauId,
+                owner_name: formData.owner_name,
+                member_id: formData.member_id || null,
+                serial_number: formData.serial_number,
+                license_plate: formData.license_plate
+            });
+
+            // Utiliser la fonction RPC sécurisée qui contourne les problèmes RLS
+            const { data: result, error: rpcError } = await supabase.rpc('add_vehicle_for_bureau', {
+                p_bureau_id: bureauId,
+                p_owner_name: formData.member_id ? null : formData.owner_name,
+                p_member_id: formData.member_id || null,
+                p_serial_number: formData.serial_number,
+                p_license_plate: formData.license_plate,
+                p_vehicle_type: formData.vehicle_type || 'motorcycle',
+                p_brand: formData.brand || null,
+                p_model: formData.model || null,
+                p_year: formData.year ? parseInt(formData.year) : null,
+                p_color: formData.color || null,
+                p_driver_photo_url: formData.driver_photo_url || null,
+                p_driver_date_of_birth: formData.driver_date_of_birth || null
+            });
+
+            if (rpcError) {
+                console.error('[VehicleAdd] Erreur RPC:', rpcError);
+                throw new Error(`Erreur RPC: ${rpcError.message}`);
             }
-            
-            if (!memberId) {
-                console.error('[VehicleAdd] Aucun membre valide');
-                toast.error('Erreur: Aucun membre valide');
+
+            console.log('[VehicleAdd] Résultat RPC:', result);
+
+            // Vérifier le résultat de la fonction
+            if (!result?.success) {
+                const errorMsg = result?.error || 'Erreur inconnue lors de l\'ajout du véhicule';
+                console.error('[VehicleAdd] Échec:', errorMsg);
+                toast.error(errorMsg);
                 return;
             }
 
-            // Générer un badge ID unique
-            const badgeId = generateBadgeId();
-            const currentDate = new Date().toISOString();
-            
-            // Générer les données QR code
-            const qrCodeData = JSON.stringify({
-                vehicle_id: `TMP-${Date.now()}`,
-                serial_number: formData.serial_number,
-                license_plate: formData.license_plate,
-                owner: memberName,
-                bureau: bureauId,
-                type: formData.vehicle_type,
-                issued_date: currentDate
-            });
-
-            console.log('[VehicleAdd] Insertion véhicule dans Supabase:', {
-                bureau_id: bureauId,
-                owner_member_id: memberId,
-                serial_number: formData.serial_number,
-                license_plate: formData.license_plate,
-                digital_badge_id: badgeId
-            });
-
-            // Insérer le véhicule dans vehicles
-            const { data, error } = await supabase
-                .from('vehicles')
-                .insert({
-                    bureau_id: bureauId,
-                    owner_member_id: memberId,
-                    serial_number: formData.serial_number,
-                    license_plate: formData.license_plate,
-                    type: formData.vehicle_type,
-                    brand: formData.brand || null,
-                    model: formData.model || null,
-                    year: formData.year ? parseInt(formData.year) : null,
-                    color: formData.color || null,
-                    digital_badge_id: badgeId,
-                    qr_code_data: qrCodeData,
-                    badge_generated_at: currentDate,
-                    driver_photo_url: formData.driver_photo_url || null,
-                    driver_date_of_birth: formData.driver_date_of_birth || null,
-                    status: 'active',
-                    verified: false
-                })
-                .select()
-                .single();
-
-            if (error) {
-                console.error('[VehicleAdd] Erreur insertion Supabase:', error);
-                throw new Error(`Erreur BD: ${error.message}`);
-            }
-            
-            console.log('[VehicleAdd] Véhicule créé avec succès:', data);
+            console.log('[VehicleAdd] Véhicule créé avec succès:', result);
 
             // Réinitialiser le formulaire
             setFormData({
@@ -448,22 +391,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
             setShowAddDialog(false);
             
-            // Message de succès avec détails des documents uploadés
-            const uploadedDocs = [];
-            if (uploadedFiles.registration_document) uploadedDocs.push('Immatriculation');
-            if (uploadedFiles.insurance_document) uploadedDocs.push('Assurance');
-            if (uploadedFiles.technical_control) uploadedDocs.push('Contrôle technique');
-            if (uploadedFiles.vehicle_photo) uploadedDocs.push('Photo');
-            
-            if (uploadedDocs.length > 0) {
-                toast.success(`Véhicule ajouté avec succès ! Documents: ${uploadedDocs.join(', ')}`);
-            } else {
-                toast.success('Véhicule ajouté avec succès ! Badge numérique généré.');
-            }
+            // Message de succès avec détails
+            toast.success(`Véhicule ajouté avec succès ! Badge: ${result.badge_id}`);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erreur ajout véhicule:', error);
-            toast.error('Erreur lors de l\'ajout du véhicule');
+            toast.error(error.message || 'Erreur lors de l\'ajout du véhicule');
         }
     };
 
