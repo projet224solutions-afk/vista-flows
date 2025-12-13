@@ -22,6 +22,35 @@ export interface AutoFix {
   is_active: boolean;
 }
 
+// Liste blanche des patterns d'erreurs à ignorer (non critiques)
+const IGNORED_ERROR_PATTERNS = [
+  // Audio/Media resources
+  'data:audio', 'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg',
+  'data:video', 'video/mp4', 'video/webm',
+  // Analytics/Tracking
+  'analytics', 'tracking', 'ads', 'gtag', 'ga.js', 'gtm.js',
+  // External services non critiques
+  'facebook', 'twitter', 'linkedin', 'pinterest',
+  // Ressources CDN non critiques
+  'fonts.googleapis', 'fonts.gstatic',
+  // Browser extensions
+  'chrome-extension://', 'moz-extension://',
+  // Common non-critical warnings
+  'ResizeObserver loop', 'Non-Error promise rejection',
+  'Loading chunk', 'ChunkLoadError',
+  // Service worker updates
+  'workbox', 'service-worker',
+  // Development artifacts
+  'hot-update', 'hmr', 'webpack',
+];
+
+// Patterns d'erreurs à toujours capturer (critiques)
+const CRITICAL_ERROR_PATTERNS = [
+  'TypeError', 'ReferenceError', 'SyntaxError',
+  'supabase', 'auth', 'wallet', 'payment', 'transaction',
+  'security', 'injection', 'unauthorized',
+];
+
 class ErrorMonitorService {
   private static instance: ErrorMonitorService;
   private errorQueue: Map<string, SystemError> = new Map();
@@ -30,6 +59,29 @@ class ErrorMonitorService {
   private readonly MAX_QUEUE_SIZE = 50;
   private processedErrors: Set<string> = new Set();
   private readonly DEDUP_WINDOW = 5000; // 5 secondes pour déduplication
+
+  /**
+   * Vérifie si une erreur doit être ignorée
+   */
+  private shouldIgnoreError(message: string, resourceUrl?: string): boolean {
+    const textToCheck = `${message} ${resourceUrl || ''}`.toLowerCase();
+    
+    // Toujours capturer les erreurs critiques
+    for (const pattern of CRITICAL_ERROR_PATTERNS) {
+      if (textToCheck.includes(pattern.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Ignorer si match avec pattern non critique
+    for (const pattern of IGNORED_ERROR_PATTERNS) {
+      if (textToCheck.includes(pattern.toLowerCase())) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
 
   private constructor() {
     this.setupGlobalErrorHandlers();
@@ -76,10 +128,17 @@ class ErrorMonitorService {
         return;
       }
 
+      const errorMessage = event.message || 'Uncaught exception without message';
+      
+      // Filtrer les erreurs non critiques
+      if (this.shouldIgnoreError(errorMessage)) {
+        return;
+      }
+
       this.logError({
         module: 'frontend_global',
         error_type: 'uncaught_exception',
-        error_message: event.message || 'Uncaught exception without message',
+        error_message: errorMessage,
         stack_trace: event.error?.stack || 'No stack trace available',
         severity: 'modérée',
         metadata: {
@@ -130,6 +189,11 @@ class ErrorMonitorService {
         stackTrace = new Error().stack || 'No stack trace';
       }
 
+      // Filtrer les erreurs non critiques
+      if (this.shouldIgnoreError(errorMessage)) {
+        return;
+      }
+
       this.logError({
         module: 'frontend_promise',
         error_type: 'unhandled_rejection',
@@ -156,20 +220,12 @@ class ErrorMonitorService {
         const resourceUrl = target.src || target.href;
         const resourceType = target.tagName?.toLowerCase() || 'unknown';
         
-        // Ignorer certaines ressources non critiques
-        const shouldIgnore = 
-          resourceUrl.includes('analytics') ||
-          resourceUrl.includes('tracking') ||
-          resourceUrl.includes('ads') ||
-          // Ignorer les erreurs audio/media (non critiques)
-          resourceUrl.startsWith('data:audio') ||
-          resourceUrl.includes('audio/mpeg') ||
-          resourceUrl.includes('audio/wav') ||
-          resourceUrl.includes('audio/mp3') ||
-          resourceType === 'audio' ||
-          resourceType === 'video';
-        
-        if (shouldIgnore) return;
+        // Utiliser le filtrage centralisé
+        if (this.shouldIgnoreError('', resourceUrl) || 
+            resourceType === 'audio' || 
+            resourceType === 'video') {
+          return;
+        }
         
         this.logError({
           module: 'frontend_resource',
