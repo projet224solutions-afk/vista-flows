@@ -518,51 +518,49 @@ export default function OrderManagement() {
   if (loading) return <div className="p-4">Chargement des commandes...</div>;
 
   return (
-    <div className="space-y-6">
-      {/* Titre et actions */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Commandes</h2>
-          <p className="text-muted-foreground">Suivez et gérez toutes vos commandes clients</p>
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+      {/* Titre et actions - Mobile optimisé */}
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
+        <div className="min-w-0">
+          <h2 className="text-lg md:text-2xl font-bold truncate">Gestion des Commandes</h2>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">Suivez et gérez vos commandes</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Button 
             variant="outline" 
             onClick={fetchOrders}
             disabled={isRefreshing}
-            className="relative"
+            className="relative flex-shrink-0 h-9 px-3 text-xs md:text-sm"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Actualiser
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          <Button variant="outline" onClick={() => {
-            // Export functionality
+          <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm" onClick={() => {
             toast({
               title: "Export en cours",
               description: "L'export des commandes sera bientôt disponible."
             });
           }}>
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            <span className="hidden sm:inline">Exporter</span>
           </Button>
-          <Button variant="outline" onClick={() => {
-            // Report functionality
+          <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm" onClick={() => {
             toast({
               title: "Rapport généré",
               description: "Le rapport des commandes sera bientôt disponible."
             });
           }}>
-            <FileText className="w-4 h-4 mr-2" />
-            Rapport
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            <span className="hidden sm:inline">Rapport</span>
           </Button>
         </div>
       </div>
 
-      {/* Boutons Ventes POS et En Ligne */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Boutons Ventes POS et En Ligne - Mobile optimisé */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {/* Bouton Ventes POS */}
         <Card 
-          className="border-2 border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
+          className="border-2 border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
           onClick={() => {
             setActiveView('pos');
             setTimeout(() => {
@@ -570,41 +568,41 @@ export default function OrderManagement() {
             }, 100);
           }}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-purple-700">
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-purple-700 text-base md:text-lg">
               🛒 Ventes POS
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Toutes les ventes passées par points de vente
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
+              Ventes par points de vente
             </p>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
-                <p className="text-3xl font-bold text-purple-700">
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total ventes</p>
+                <p className="text-xl md:text-3xl font-bold text-purple-700">
                   {orders.filter(o => o.source === 'pos').length}
                 </p>
               </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Chiffre d'affaires</p>
-                <p className="text-xl font-bold text-purple-700">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
+                <p className="text-sm md:text-xl font-bold text-purple-700 truncate">
                   {orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
                     .reduce((sum, o) => sum + o.total_amount, 0)
-                    .toLocaleString()} GNF
+                    .toLocaleString()} <span className="text-xs">GNF</span>
                 </p>
               </div>
             </div>
-            <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
-              Voir toutes les ventes POS
+            <Button className="w-full mt-3 md:mt-4 bg-purple-600 hover:bg-purple-700 h-9 text-xs md:text-sm">
+              Voir les ventes POS
             </Button>
           </CardContent>
         </Card>
 
         {/* Bouton Ventes En Ligne */}
         <Card 
-          className="border-2 border-blue-300 bg-blue-50/50 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
+          className="border-2 border-blue-300 bg-blue-50/50 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
           onClick={() => {
             setActiveView('online');
             setTimeout(() => {
@@ -612,75 +610,77 @@ export default function OrderManagement() {
             }, 100);
           }}
         >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700">
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-blue-700 text-base md:text-lg">
               🌐 Ventes En Ligne
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Toutes les commandes passées via le compte client
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
+              Commandes via compte client
             </p>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
-                <p className="text-3xl font-bold text-blue-700">
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total</p>
+                <p className="text-xl md:text-3xl font-bold text-blue-700">
                   {totalOnlineOrders}
                 </p>
               </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">En cours</p>
-                <p className="text-2xl font-bold text-blue-600">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">En cours</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-600">
                   {orders.filter(o => o.source === 'online' && o.status === 'processing').length}
                 </p>
               </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">En attente</p>
-                <p className="text-2xl font-bold text-yellow-600">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">En attente</p>
+                <p className="text-lg md:text-2xl font-bold text-yellow-600">
                   {pendingOnlineOrders}
                 </p>
               </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
-                <p className="text-2xl font-bold text-green-600">
+              <div className="bg-white/80 rounded-lg p-2 md:p-4">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Livrées</p>
+                <p className="text-lg md:text-2xl font-bold text-green-600">
                   {deliveredOnlineOrders}
                 </p>
               </div>
             </div>
-            <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-              Voir toutes les ventes en ligne
+            <Button className="w-full mt-3 md:mt-4 bg-blue-600 hover:bg-blue-700 h-9 text-xs md:text-sm">
+              Voir les ventes en ligne
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filtres */}
+      {/* Filtres - Mobile optimisé */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1 max-w-sm">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col gap-2 md:flex-row md:gap-4 md:items-center">
+            <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par numéro de commande..."
+                placeholder="Rechercher..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9 text-sm"
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="pending">En attente</option>
-              <option value="confirmed">Confirmées</option>
-              <option value="processing">En préparation</option>
-              <option value="shipped">Expédiées</option>
-              <option value="delivered">Livrées</option>
-              <option value="cancelled">Annulées</option>
-            </select>
-            <Filter className="w-4 h-4 text-muted-foreground" />
+            <div className="flex gap-2 items-center">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-2 py-1.5 border rounded-md text-sm flex-1 md:flex-none h-9"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="pending">En attente</option>
+                <option value="confirmed">Confirmées</option>
+                <option value="processing">En préparation</option>
+                <option value="shipped">Expédiées</option>
+                <option value="delivered">Livrées</option>
+                <option value="cancelled">Annulées</option>
+              </select>
+              <Filter className="w-4 h-4 text-muted-foreground hidden md:block" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -689,15 +689,15 @@ export default function OrderManagement() {
       {/* Tableau des Ventes POS */}
       {activeView === 'pos' && (
         <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-700">
+        <CardHeader className="p-3 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-purple-700 text-base md:text-lg">
             🛒 Ventes POS ({orders.filter(o => o.source === 'pos').length})
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Commandes passées via les points de vente
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Commandes via points de vente
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
           {/* Statistiques Ventes POS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <Card className="bg-white/80">
