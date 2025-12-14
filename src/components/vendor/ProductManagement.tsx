@@ -353,6 +353,34 @@ export default function ProductManagement() {
     }
   };
 
+  // Generate SKU
+  const handleGenerateSKU = () => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const sku = `SKU-${timestamp}-${random}`;
+    setFormData(prev => ({ ...prev, sku }));
+    toast.success('SKU généré');
+  };
+
+  // Generate Barcode (EAN-13 format)
+  const handleGenerateBarcode = () => {
+    // Generate a valid EAN-13 barcode
+    const prefix = '224'; // Guinea country code
+    const randomDigits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('');
+    const baseCode = prefix + randomDigits;
+    
+    // Calculate check digit for EAN-13
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(baseCode[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+    
+    const barcode = baseCode + checkDigit;
+    setFormData(prev => ({ ...prev, barcode }));
+    toast.success('Code-barres EAN-13 généré');
+  };
+
   // Filtering
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -843,7 +871,19 @@ export default function ProductManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sku">Code SKU</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="sku">Code SKU</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGenerateSKU}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Générer
+                    </Button>
+                  </div>
                   <Input
                     id="sku"
                     value={formData.sku}
@@ -852,7 +892,19 @@ export default function ProductManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="barcode">Code-barres</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="barcode">Code-barres</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGenerateBarcode}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Générer
+                    </Button>
+                  </div>
                   <Input
                     id="barcode"
                     value={formData.barcode}
