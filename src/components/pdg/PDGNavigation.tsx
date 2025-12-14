@@ -1,17 +1,22 @@
 /**
  * 🎨 NAVIGATION PDG - INTERFACE ORGANISÉE
- * Navigation par catégories pour une meilleure lisibilité
+ * Navigation par catégories avec version mobile optimisée
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
-  ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark
+  ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
+  Menu, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NavItem {
   value: string;
@@ -23,6 +28,7 @@ interface NavItem {
 interface NavCategory {
   title: string;
   color: string;
+  bgColor: string;
   items: NavItem[];
 }
 
@@ -30,6 +36,7 @@ const categories: NavCategory[] = [
   {
     title: 'Finance',
     color: 'from-emerald-500 to-emerald-600',
+    bgColor: 'bg-emerald-500',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
       { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true },
@@ -38,6 +45,7 @@ const categories: NavCategory[] = [
   {
     title: 'Gestion',
     color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-500',
     items: [
       { value: 'users', label: 'Utilisateurs', icon: Users },
       { value: 'products', label: 'Produits', icon: Package },
@@ -48,6 +56,7 @@ const categories: NavCategory[] = [
   {
     title: 'Opérations',
     color: 'from-green-500 to-green-600',
+    bgColor: 'bg-green-500',
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
@@ -63,6 +72,7 @@ const categories: NavCategory[] = [
   {
     title: 'Système',
     color: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-500',
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield },
@@ -75,6 +85,7 @@ const categories: NavCategory[] = [
   {
     title: 'Intelligence',
     color: 'from-pink-500 to-pink-600',
+    bgColor: 'bg-pink-500',
     items: [
       { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true },
       { value: 'copilot', label: 'Copilote IA', icon: MessageSquare },
@@ -91,27 +102,175 @@ interface PDGNavigationProps {
 }
 
 export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGNavigationProps) {
+  const isMobile = useIsMobile();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleCategory = (title: string) => {
     setExpandedCategory(expandedCategory === title ? null : title);
   };
 
   // Auto-expand la catégorie active au chargement
-  useState(() => {
+  useEffect(() => {
     const activeCategory = categories.find(cat => 
       cat.items.some(item => item.value === activeTab)
     );
     if (activeCategory) {
       setExpandedCategory(activeCategory.title);
     }
-  });
+  }, [activeTab]);
 
-  // Trouver la catégorie active
+  // Trouver la catégorie et l'item actifs
   const activeCategory = categories.find(cat => 
     cat.items.some(item => item.value === activeTab)
   );
+  const activeItem = categories.flatMap(c => c.items).find(item => item.value === activeTab);
 
+  const handleItemClick = (value: string) => {
+    onTabChange(value);
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Version Mobile - Menu Sheet
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {/* Bouton menu + navigation actuelle */}
+        <div className="flex items-center gap-2">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="gap-2 flex-1 justify-between h-12 px-3"
+              >
+                <div className="flex items-center gap-2">
+                  <Menu className="w-4 h-4" />
+                  <div className="flex items-center gap-2">
+                    {activeCategory && (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-full text-xs font-medium text-white",
+                        activeCategory.bgColor
+                      )}>
+                        {activeCategory.title}
+                      </span>
+                    )}
+                    <span className="font-medium text-sm truncate max-w-[120px]">
+                      {activeItem?.label || 'Menu'}
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[85vh] p-0">
+              <SheetHeader className="px-4 py-3 border-b bg-muted/30">
+                <SheetTitle className="flex items-center gap-2 text-base">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Navigation PDG
+                </SheetTitle>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(85vh-60px)]">
+                <div className="p-3 space-y-2">
+                  {categories.map((category) => {
+                    const isExpanded = expandedCategory === category.title;
+                    const hasActiveItem = category.items.some(item => item.value === activeTab);
+                    
+                    return (
+                      <div key={category.title} className="space-y-1">
+                        {/* Header catégorie */}
+                        <button
+                          onClick={() => toggleCategory(category.title)}
+                          className={cn(
+                            "w-full flex items-center justify-between p-3 rounded-xl transition-all",
+                            "bg-gradient-to-r text-white font-medium",
+                            category.color,
+                            hasActiveItem && "ring-2 ring-primary ring-offset-2"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{category.title}</span>
+                            {hasActiveItem && (
+                              <Badge variant="secondary" className="bg-white/20 text-white text-xs">
+                                Actif
+                              </Badge>
+                            )}
+                          </div>
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                        
+                        {/* Items de la catégorie */}
+                        {isExpanded && (
+                          <div className="pl-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                            {category.items.map((item) => {
+                              const Icon = item.icon;
+                              const isActive = activeTab === item.value;
+                              
+                              return (
+                                <button
+                                  key={item.value}
+                                  onClick={() => handleItemClick(item.value)}
+                                  className={cn(
+                                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                    "hover:bg-muted/80 active:scale-[0.98]",
+                                    isActive && "bg-primary text-primary-foreground shadow-md"
+                                  )}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                  <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
+                                  {item.badge && aiActive && (
+                                    <Zap className="w-3 h-3 text-yellow-500" />
+                                  )}
+                                  {isActive && (
+                                    <ChevronRight className="w-4 h-4" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Accès rapide catégories - horizontal scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {categories.map((category) => {
+            const hasActiveItem = category.items.some(item => item.value === activeTab);
+            return (
+              <button
+                key={category.title}
+                onClick={() => {
+                  setExpandedCategory(category.title);
+                  setMobileMenuOpen(true);
+                }}
+                className={cn(
+                  "flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                  "bg-gradient-to-r text-white",
+                  category.color,
+                  hasActiveItem && "ring-2 ring-offset-1 ring-primary"
+                )}
+              >
+                {category.title}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Version Desktop - Grille de cartes
   return (
     <div className="space-y-4">
       {/* Navigation compacte en grid */}
@@ -171,11 +330,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                     return (
                       <button
                         key={item.value}
-                        onClick={() => {
-                          onTabChange(item.value);
-                          // Auto-scroll vers le haut après changement d'onglet
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handleItemClick(item.value)}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                           "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
@@ -225,9 +380,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 </span>
                 <span className="text-muted-foreground">/</span>
                 <span className="font-semibold text-foreground px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                  {categories
-                    .flatMap(c => c.items)
-                    .find(item => item.value === activeTab)?.label}
+                  {activeItem?.label}
                 </span>
               </>
             )}
