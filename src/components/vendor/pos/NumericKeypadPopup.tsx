@@ -1,12 +1,11 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
   Calculator, 
   Trash2, 
-  CheckSquare,
-  X
+  CheckSquare
 } from 'lucide-react';
 
 interface NumericKeypadPopupProps {
