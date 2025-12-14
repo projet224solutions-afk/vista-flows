@@ -86,6 +86,7 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
     const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
     const [isOnline, setIsOnline] = useState(false);
+    const [onlineSince, setOnlineSince] = useState<Date | null>(null);
     const [activeTab, setActiveTab] = useState('dashboard');
     const [rideRequests, setRideRequests] = useState<RideRequest[]>([]);
     const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
@@ -101,6 +102,41 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
     const [driverLoading, setDriverLoading] = useState(true);
     const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
     const [rideHistory, setRideHistory] = useState<any[]>([]);
+
+    // Calcul temps en ligne en temps réel
+    useEffect(() => {
+        if (!isOnline || !onlineSince) {
+            setDriverStats(prev => ({ ...prev, onlineTime: '0h 0m' }));
+            return;
+        }
+
+        const updateOnlineTime = () => {
+            const now = new Date();
+            const diffMs = now.getTime() - onlineSince.getTime();
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            
+            let timeStr = '';
+            if (hours > 0) {
+                timeStr = `${hours}h ${minutes}m`;
+            } else if (minutes > 0) {
+                timeStr = `${minutes}m ${seconds}s`;
+            } else {
+                timeStr = `${seconds}s`;
+            }
+            
+            setDriverStats(prev => ({ ...prev, onlineTime: timeStr }));
+        };
+
+        // Mettre à jour immédiatement
+        updateOnlineTime();
+        
+        // Puis toutes les secondes
+        const interval = setInterval(updateOnlineTime, 1000);
+        
+        return () => clearInterval(interval);
+    }, [isOnline, onlineSince]);
 
     // États de navigation
     const [navigationActive, setNavigationActive] = useState(false);
@@ -465,6 +501,7 @@ const watchId = navigator.geolocation.watchPosition(
                 );
 
                 setIsOnline(true);
+                setOnlineSince(new Date()); // Démarrer le chronomètre
                 toast.success('🟢 Vous êtes maintenant en ligne');
                 
                 // Démarrer le suivi de position
@@ -528,6 +565,7 @@ const watchId = navigator.geolocation.watchPosition(
                 );
 
                 setIsOnline(false);
+                setOnlineSince(null); // Réinitialiser le chronomètre
                 setActiveLocation(null); // Réinitialiser la position GPS
                 toast.info('🔴 Vous êtes maintenant hors ligne');
                 
