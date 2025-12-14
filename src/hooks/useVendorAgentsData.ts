@@ -150,13 +150,20 @@ export const useVendorAgentsData = () => {
     }
 
     try {
-      // Note: agent_code and access_token are generated automatically by triggers
+      // Generate unique agent_code and access_token
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const agentCode = `VAG${timestamp}${randomPart}`;
+      const accessToken = crypto.randomUUID();
+
       const insertData: any = {
         vendor_id: realVendorId,
+        agent_code: agentCode,
+        access_token: accessToken,
         name: agentData.name,
         email: agentData.email,
         phone: agentData.phone,
-        permissions: agentData.permissions || ['create_users'],
+        permissions: agentData.permissions || { view_dashboard: true, access_communication: true },
         can_create_sub_agent: agentData.can_create_sub_agent || false,
         agent_type: agentData.agent_type || 'commercial',
         is_active: true,
