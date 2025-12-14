@@ -354,21 +354,22 @@ export default function InventoryManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">📦 Gestion Intelligente des Stocks</h2>
-          <p className="text-muted-foreground">Inventaire connecté et synchronisé en temps réel</p>
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+      {/* Header mobile optimisé */}
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
+        <div className="min-w-0">
+          <h2 className="text-lg md:text-2xl font-bold truncate">📦 Gestion des Stocks</h2>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisé en temps réel</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter stock
+              <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                <span className="hidden sm:inline">Ajouter</span> stock
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-[95vw] md:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Ajouter du stock</DialogTitle>
               </DialogHeader>
@@ -378,7 +379,7 @@ export default function InventoryManagement() {
                   <select
                     value={selectedProductId}
                     onChange={(e) => setSelectedProductId(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md bg-background"
+                    className="w-full px-3 py-2 border rounded-md bg-background text-sm"
                   >
                     <option value="">Sélectionner un produit</option>
                     {products.map((product) => {
@@ -410,8 +411,8 @@ export default function InventoryManagement() {
           </Dialog>
           <Dialog open={warehouseOpen} onOpenChange={setWarehouseOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Warehouse className="w-4 h-4 mr-2" />
+              <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm">
+                <Warehouse className="w-3.5 h-3.5 mr-1.5" />
                 Entrepôts
               </Button>
             </DialogTrigger>
@@ -602,110 +603,114 @@ export default function InventoryManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Statistiques améliorées */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Statistiques - Mobile optimisé en grille 2x2 puis 3 colonnes */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total produits</p>
-                <p className="text-2xl font-bold">{totalProducts}</p>
+              <Package className="w-4 h-4 md:w-5 md:h-5 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Produits</p>
+                <p className="text-lg md:text-2xl font-bold">{totalProducts}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Stock faible</p>
-                <p className="text-2xl font-bold text-orange-600">{lowStockItems.length}</p>
+              <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-orange-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Stock faible</p>
+                <p className="text-lg md:text-2xl font-bold text-orange-600">{lowStockItems.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Rupture</p>
-                <p className="text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
+              <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Rupture</p>
+                <p className="text-lg md:text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Valeur stock</p>
-                <p className="text-xl font-bold">{totalValue.toLocaleString()} GNF</p>
+              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur</p>
+                <p className="text-sm md:text-xl font-bold truncate">{totalValue.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
+        <Card className="col-span-2 md:col-span-1">
+          <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Profit potentiel</p>
-                <p className="text-xl font-bold">{potentialProfit.toLocaleString()} GNF</p>
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-purple-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Profit potentiel</p>
+                <p className="text-sm md:text-xl font-bold truncate">{potentialProfit.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs pour organiser le contenu */}
+      {/* Tabs - Mobile avec scroll horizontal */}
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="inventory">
-            <Package className="w-4 h-4 mr-2" />
-            Inventaire
+        <TabsList className="w-full overflow-x-auto flex md:grid md:grid-cols-4 scrollbar-hide">
+          <TabsTrigger value="inventory" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
+            <Package className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Inventaire</span>
+            <span className="sm:hidden">Stock</span>
           </TabsTrigger>
-          <TabsTrigger value="warehouse">
-            <Warehouse className="w-4 h-4 mr-2" />
+          <TabsTrigger value="warehouse" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
+            <Warehouse className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
             Entrepôts
           </TabsTrigger>
-          <TabsTrigger value="alerts">
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Alertes ({alerts.length})
+          <TabsTrigger value="alerts" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
+            <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+            Alertes <span className="ml-1">({alerts.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="history">
-            <History className="w-4 h-4 mr-2" />
-            Historique
+          <TabsTrigger value="history" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
+            <History className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Historique</span>
+            <span className="sm:hidden">Hist.</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-4">
-          {/* Filtres */}
+          {/* Filtres - Mobile optimisé */}
           <Card>
-            <CardContent className="p-4">
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1 max-w-sm">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex flex-col gap-2 md:flex-row md:gap-4 md:items-center">
+                <div className="relative flex-1">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher un produit..."
+                    placeholder="Rechercher..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-9 text-sm"
                   />
                 </div>
-                <select
-                  value={stockFilter}
-                  onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
-                  className="px-3 py-2 border rounded-md"
-                >
-                  <option value="all">Tous les produits</option>
-                  <option value="low">Stock faible</option>
-                  <option value="out">Rupture de stock</option>
-                </select>
-                <Filter className="w-4 h-4 text-muted-foreground" />
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={stockFilter}
+                    onChange={(e) => setStockFilter(e.target.value as "all" | "low" | "out")}
+                    className="px-2 py-1.5 border rounded-md text-sm flex-1 md:flex-none h-9"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="low">Stock faible</option>
+                    <option value="out">Rupture</option>
+                  </select>
+                  <Filter className="w-4 h-4 text-muted-foreground hidden md:block" />
+                </div>
               </div>
             </CardContent>
           </Card>
