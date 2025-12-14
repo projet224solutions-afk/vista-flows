@@ -22,7 +22,8 @@ import {
     Users,
     Zap,
     DollarSign,
-    Route
+    Route,
+    Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { mapService } from "@/services/mapService";
@@ -182,8 +183,8 @@ export default function TaxiMotoBooking({
      * Géocode une adresse avec debouncing
      */
     const geocodeAddress = useCallback(async (address: string, isPickup: boolean) => {
-        // Longueur minimale de 5 caractères pour éviter les requêtes inutiles
-        if (address.length < 5) {
+        // Longueur minimale de 3 caractères pour une recherche plus précise
+        if (address.length < 3) {
             // Masquer les suggestions si trop court
             if (isPickup) {
                 setShowPickupSuggestions(false);
@@ -384,14 +385,14 @@ export default function TaxiMotoBooking({
         }
     }, [pickupSearchQuery, geocodeAddress]);
 
-    // Debouncing pour le geocoding de la destination
+    // Debouncing pour le geocoding de la destination - recherche plus rapide
     useEffect(() => {
-        if (destinationSearchQuery.length >= 5) {
+        if (destinationSearchQuery.length >= 3) {
             const timer = setTimeout(() => {
                 geocodeAddress(destinationSearchQuery, false);
-            }, 800);
+            }, 500); // Réduit à 500ms pour une réponse plus rapide
             return () => clearTimeout(timer);
-        } else if (destinationSearchQuery.length > 0 && destinationSearchQuery.length < 5) {
+        } else if (destinationSearchQuery.length > 0 && destinationSearchQuery.length < 3) {
             setShowDestinationSuggestions(false);
         }
     }, [destinationSearchQuery, geocodeAddress]);
@@ -466,40 +467,92 @@ export default function TaxiMotoBooking({
                         </div>
                     </div>
 
-                    {/* Destination */}
+                    {/* Destination avec recherche améliorée */}
                     <div className="relative">
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        <label className="text-sm font-medium text-gray-700 mb-2 block flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-red-500" />
                             Destination
                         </label>
-                        <div className="relative">
-                            <Input
-                                placeholder="Où voulez-vous aller ? (min. 5 caractères)"
-                                value={destinationAddress}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setDestinationAddress(value);
-                                    setDestinationSearchQuery(value);
-                                }}
-                                className="pl-10"
-                            />
-                            <MapPin className="w-4 h-4 text-red-400 absolute left-3 top-3" />
-
-                            {/* Suggestions de destination améliorées */}
-                            {showDestinationSuggestions && destinationSuggestions.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
-                                    <div className="sticky top-0 bg-gray-50 px-3 py-2 border-b text-xs text-gray-500 font-medium">
-                                        {destinationSuggestions.length} résultat(s) trouvé(s)
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Input
+                                    placeholder="Tapez une adresse ou un lieu..."
+                                    value={destinationAddress}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setDestinationAddress(value);
+                                        setDestinationSearchQuery(value);
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && destinationAddress.length >= 3) {
+                                            e.preventDefault();
+                                            geocodeAddress(destinationAddress, false);
+                                        }
+                                    }}
+                                    className="pl-10 pr-4"
+                                />
+                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                                
+                                {/* Indicateur de recherche en cours */}
+                                {destinationSearchQuery.length >= 3 && destinationSearchQuery.length < 5 && (
+                                    <div className="absolute right-3 top-3">
+                                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                     </div>
-                                    {destinationSuggestions.map((suggestion, index) => (
-                                        <AddressSuggestionItem
-                                            key={index}
-                                            suggestion={suggestion}
-                                            onClick={() => selectAddressSuggestion(suggestion, false)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
+                                )}
+                            </div>
+                            
+                            {/* Bouton de recherche explicite */}
+                            <Button
+                                onClick={() => {
+                                    if (destinationAddress.length >= 3) {
+                                        geocodeAddress(destinationAddress, false);
+                                    }
+                                }}
+                                variant="default"
+                                size="icon"
+                                disabled={destinationAddress.length < 3}
+                                className="shrink-0 bg-red-500 hover:bg-red-600 text-white transition-all active:scale-95 disabled:opacity-50"
+                                title="Rechercher cette adresse"
+                            >
+                                <Search className="w-4 h-4" />
+                            </Button>
                         </div>
+                        
+                        {/* Message d'aide contextuel */}
+                        {destinationAddress.length > 0 && destinationAddress.length < 3 && (
+                            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                                <span>⚡</span> Tapez au moins 3 caractères pour rechercher
+                            </p>
+                        )}
+
+                        {/* Suggestions de destination améliorées */}
+                        {showDestinationSuggestions && destinationSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 bg-white border rounded-xl shadow-2xl z-20 max-h-72 overflow-y-auto mt-1">
+                                <div className="sticky top-0 bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2.5 border-b flex items-center justify-between">
+                                    <span className="text-xs text-gray-600 font-medium">
+                                        🎯 {destinationSuggestions.length} résultat(s) trouvé(s)
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        Sélectionnez une adresse
+                                    </span>
+                                </div>
+                                {destinationSuggestions.map((suggestion, index) => (
+                                    <AddressSuggestionItem
+                                        key={index}
+                                        suggestion={suggestion}
+                                        onClick={() => selectAddressSuggestion(suggestion, false)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Message quand aucun résultat */}
+                        {showDestinationSuggestions && destinationSuggestions.length === 0 && destinationSearchQuery.length >= 5 && (
+                            <div className="absolute top-full left-0 right-0 bg-white border rounded-xl shadow-xl z-20 mt-1 p-4 text-center">
+                                <p className="text-sm text-gray-500">Aucun résultat trouvé</p>
+                                <p className="text-xs text-gray-400 mt-1">Essayez avec une adresse plus précise</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Options de réservation */}
