@@ -32,6 +32,8 @@ import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
 import PaymentMethodStep from "./PaymentMethodStep";
 import { PaymentMethod } from "@/services/taxi/paymentsService";
+import AddressSuggestionItem from "./AddressSuggestionItem";
+import DestinationPreview from "./DestinationPreview";
 
 interface LocationCoordinates {
     latitude: number;
@@ -482,17 +484,18 @@ export default function TaxiMotoBooking({
                             />
                             <MapPin className="w-4 h-4 text-red-400 absolute left-3 top-3" />
 
-                            {/* Suggestions de destination */}
+                            {/* Suggestions de destination améliorées */}
                             {showDestinationSuggestions && destinationSuggestions.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 bg-white border rounded-md shadow-lg z-10 max-h-40 overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
+                                    <div className="sticky top-0 bg-gray-50 px-3 py-2 border-b text-xs text-gray-500 font-medium">
+                                        {destinationSuggestions.length} résultat(s) trouvé(s)
+                                    </div>
                                     {destinationSuggestions.map((suggestion, index) => (
-                                        <button
+                                        <AddressSuggestionItem
                                             key={index}
+                                            suggestion={suggestion}
                                             onClick={() => selectAddressSuggestion(suggestion, false)}
-                                            className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
-                                        >
-                                            {suggestion.address}
-                                        </button>
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -524,8 +527,24 @@ export default function TaxiMotoBooking({
                 </CardContent>
             </Card>
 
-            {/* Informations d'itinéraire */}
-            {routeInfo && (
+            {/* Aperçu détaillé de la destination */}
+            {destinationCoords && destinationAddress && (
+                <DestinationPreview
+                    pickupAddress={pickupAddress}
+                    pickupCoords={pickupCoords}
+                    destinationAddress={destinationAddress}
+                    destinationCoords={destinationCoords}
+                    routeInfo={routeInfo}
+                    onClear={() => {
+                        setDestinationAddress('');
+                        setDestinationCoords(null);
+                        setRouteInfo(null);
+                    }}
+                />
+            )}
+
+            {/* Informations d'itinéraire compactes */}
+            {routeInfo && !destinationCoords && (
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
