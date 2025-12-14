@@ -169,8 +169,13 @@ export function useProductActions({
       // Upload images
       const imageUrls = await uploadImages(images);
 
-      // Gérer catégorie
+      // Gérer catégorie - log pour debug
+      console.log('[ProductCreate] Category data received:', { 
+        category_id: formData.category_id, 
+        category_name: formData.category_name 
+      });
       const categoryId = await handleCategory(formData.category_name, formData.category_id);
+      console.log('[ProductCreate] Category ID resolved:', categoryId);
 
       // Générer public_id
       const public_id = await generatePublicId('products', false);

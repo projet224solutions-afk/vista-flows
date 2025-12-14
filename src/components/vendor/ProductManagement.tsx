@@ -159,9 +159,11 @@ export default function ProductManagement() {
 
     if (error) {
       captureError('product', 'Failed to fetch categories', error);
+      console.error('[Categories] Fetch error:', error);
       return;
     }
     
+    console.log('[Categories] Loaded:', data?.length, 'categories', data);
     setCategories(data || []);
   };
 
@@ -176,7 +178,12 @@ export default function ProductManagement() {
     setSaving(true);
 
     try {
-      console.log('[ProductSave] Starting save...', { isEditing: !!editingProduct, formData });
+      console.log('[ProductSave] Starting save...', { 
+        isEditing: !!editingProduct, 
+        formData,
+        categoryMode,
+        categoriesLoaded: categories.length
+      });
       
       if (editingProduct) {
         const result = await updateProduct(
