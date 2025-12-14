@@ -202,11 +202,31 @@ export function POSSystem() {
   const [companyName] = useState('Vista Commerce Pro');
   const [currentTime, setCurrentTime] = useState(new Date());
   
+  // Historique des 3 derniers produits sélectionnés
+  const [recentlySelected, setRecentlySelected] = useState<string[]>([]);
+  
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.barcode?.includes(searchTerm);
     const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
+  });
+
+  // Trier les produits: les 3 derniers sélectionnés en premier
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const aIndex = recentlySelected.indexOf(a.id);
+    const bIndex = recentlySelected.indexOf(b.id);
+    
+    // Si les deux sont dans les récents, trier par ordre de sélection (plus récent d'abord)
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    // Si seulement a est récent, le mettre en premier
+    if (aIndex !== -1) return -1;
+    // Si seulement b est récent, le mettre en premier
+    if (bIndex !== -1) return 1;
+    // Sinon garder l'ordre original
+    return 0;
   });
 
   // Calculs automatiques avec TVA dynamique
@@ -224,6 +244,12 @@ export function POSSystem() {
       toast.error('Produit en rupture de stock');
       return;
     }
+
+    // Mettre à jour les produits récemment sélectionnés (max 3)
+    setRecentlySelected(prev => {
+      const filtered = prev.filter(id => id !== product.id);
+      return [product.id, ...filtered].slice(0, 3);
+    });
 
     setCart(prev => {
       const existingItem = prev.find(item => item.id === product.id);
@@ -816,7 +842,7 @@ export function POSSystem() {
                       <div className="text-muted-foreground text-sm">Chargement...</div>
                     </div>
                   </div>
-                ) : filteredProducts.length === 0 ? (
+                ) : sortedProducts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
                     <ShoppingBag className="h-12 w-12 text-muted-foreground/50" />
                     <div className="text-center">
@@ -827,13 +853,19 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 p-1 md:p-2">
-                    {filteredProducts.map(product => (
-                      <Card 
-                        key={product.id} 
-                        className="group relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-xl border border-border/50 hover:border-primary/40 bg-card/95 active:scale-[0.98]"
-                        onClick={() => addToCart(product)}
-                      >
+                  <div className="grid grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
+                    {sortedProducts.map(product => {
+                      const isRecent = recentlySelected.includes(product.id);
+                      return (
+                        <Card 
+                          key={product.id} 
+                          className={`group relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-xl border bg-card/95 active:scale-[0.98] ${
+                            isRecent 
+                              ? 'border-primary/60 ring-2 ring-primary/20 shadow-lg' 
+                              : 'border-border/50 hover:border-primary/40'
+                          }`}
+                          onClick={() => addToCart(product)}
+                        >
                         <CardContent className="p-0">
                           {/* Image produit - Compact sur mobile */}
                           <div className="relative w-full aspect-square md:h-32 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
@@ -931,7 +963,8 @@ export function POSSystem() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </ScrollArea>
