@@ -21,7 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
     DriverHeader, 
     BottomNavigation, 
-    DriverMainDashboard 
+    DriverMainDashboard,
+    ActiveRideNavigationPanel
 } from "@/components/taxi-moto/driver";
 
 // Existing components
@@ -1306,11 +1307,60 @@ const watchId = navigator.geolocation.watchPosition(
 
             {activeTab === 'navigation' && (
                 <div className="min-h-screen bg-gray-950 pb-20">
-                    <DriverNavigation
-                        driverId={driverId || ''}
-                        location={location}
-                        onContactCustomer={contactCustomer}
-                    />
+                    {activeRide ? (
+                        <ActiveRideNavigationPanel
+                            activeRide={{
+                                id: activeRide.id,
+                                customerName: activeRide.customer.name,
+                                customerPhone: activeRide.customer.phone,
+                                pickup: activeRide.pickup,
+                                destination: activeRide.destination,
+                                status: activeRide.status,
+                                estimatedPrice: activeRide.estimatedEarnings / 0.85,
+                                estimatedEarnings: activeRide.estimatedEarnings
+                            }}
+                            currentLocation={location}
+                            onContactCustomer={contactCustomer}
+                            onUpdateStatus={async (status) => {
+                                try {
+                                    await supabase
+                                        .from('taxi_trips')
+                                        .update({ status, updated_at: new Date().toISOString() })
+                                        .eq('id', activeRide.id);
+                                    toast.success('Statut mis à jour');
+                                    // Recharger la course active
+                                    loadActiveRide();
+                                } catch (err) {
+                                    toast.error('Erreur de mise à jour');
+                                }
+                            }}
+                            onCancelRide={async () => {
+                                const confirmed = window.confirm('Annuler cette course ?');
+                                if (!confirmed) return;
+                                try {
+                                    await supabase
+                                        .from('taxi_trips')
+                                        .update({ 
+                                            status: 'cancelled', 
+                                            cancel_reason: 'Annulée par le conducteur',
+                                            cancelled_at: new Date().toISOString()
+                                        })
+                                        .eq('id', activeRide.id);
+                                    toast.success('Course annulée');
+                                    setActiveRide(null);
+                                    setActiveTab('dashboard');
+                                } catch (err) {
+                                    toast.error('Erreur lors de l\'annulation');
+                                }
+                            }}
+                        />
+                    ) : (
+                        <DriverNavigation
+                            driverId={driverId || ''}
+                            location={location}
+                            onContactCustomer={contactCustomer}
+                        />
+                    )}
                 </div>
             )}
 

@@ -3,7 +3,7 @@
  * Design sombre avec indicateurs actifs
  */
 
-import { Home, MapPin, History, Settings, Wallet } from "lucide-react";
+import { Home, MapPin, History, Settings, Wallet, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -21,7 +21,13 @@ export function BottomNavigation({
 }: BottomNavigationProps) {
   const navItems = [
     { id: 'dashboard', label: 'Accueil', icon: Home },
-    { id: 'navigation', label: 'Course', icon: MapPin, badge: hasActiveRide },
+    { 
+      id: 'navigation', 
+      label: hasActiveRide ? 'Navigation' : 'Course', 
+      icon: hasActiveRide ? Navigation : MapPin, 
+      badge: hasActiveRide,
+      highlight: hasActiveRide
+    },
     { id: 'earnings', label: 'Gains', icon: Wallet },
     { id: 'settings', label: 'Profil', icon: Settings },
   ];
@@ -35,9 +41,11 @@ export function BottomNavigation({
             onClick={() => onTabChange(item.id)}
             className={cn(
               "flex flex-col items-center justify-center gap-1 relative transition-all duration-200",
-              activeTab === item.id 
-                ? "text-emerald-400" 
-                : "text-gray-500 hover:text-gray-300"
+              item.highlight && activeTab !== item.id
+                ? "text-emerald-400"
+                : activeTab === item.id 
+                  ? "text-emerald-400" 
+                  : "text-gray-500 hover:text-gray-300"
             )}
           >
             {/* Active indicator */}
@@ -45,10 +53,16 @@ export function BottomNavigation({
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-emerald-400 rounded-full" />
             )}
             
+            {/* Highlight glow for active ride */}
+            {item.highlight && activeTab !== item.id && (
+              <div className="absolute inset-0 bg-emerald-500/10 rounded-lg" />
+            )}
+            
             <div className="relative">
               <item.icon className={cn(
                 "w-5 h-5 transition-transform",
-                activeTab === item.id && "scale-110"
+                activeTab === item.id && "scale-110",
+                item.highlight && "animate-pulse"
               )} />
               
               {/* Badge for active ride */}
@@ -59,7 +73,8 @@ export function BottomNavigation({
             
             <span className={cn(
               "text-[10px] font-medium",
-              activeTab === item.id && "font-semibold"
+              activeTab === item.id && "font-semibold",
+              item.highlight && activeTab !== item.id && "text-emerald-400"
             )}>
               {item.label}
             </span>
