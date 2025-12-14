@@ -40,14 +40,55 @@ export function useCurrentLocation() {
 
             setState(prev => ({ ...prev, loading: true, error: null }));
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const locationData: LocationData = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy,
-                        timestamp: Date.now()
-                    };
+            // Détecter si on est sur mobile ou desktop
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Stratégie adaptée: desktop = moins précis mais plus rapide, mobile = GPS précis
+            const tryGetPosition = (highAccuracy: boolean, timeout: number, maxAge: number): Promise<LocationData> => {
+                return new Promise((res, rej) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const locationData: LocationData = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                timestamp: Date.now()
+                            };
+                            res(locationData);
+                        },
+                        (error) => rej(error),
+                        {
+                            enableHighAccuracy: highAccuracy,
+                            timeout: timeout,
+                            maximumAge: maxAge
+                        }
+                    );
+                });
+            };
+
+            // Sur desktop: essayer d'abord avec basse précision (IP-based, plus rapide)
+            // Sur mobile: essayer avec haute précision (GPS)
+            const attemptLocation = async () => {
+                try {
+                    let locationData: LocationData;
+                    
+                    if (isMobile) {
+                        // Mobile: GPS haute précision
+                        try {
+                            locationData = await tryGetPosition(true, 30000, 60000);
+                        } catch {
+                            // Fallback basse précision sur mobile
+                            locationData = await tryGetPosition(false, 20000, 120000);
+                        }
+                    } else {
+                        // Desktop: basse précision d'abord (géolocalisation IP)
+                        try {
+                            locationData = await tryGetPosition(false, 15000, 300000);
+                        } catch {
+                            // Fallback: essayer haute précision avec long timeout
+                            locationData = await tryGetPosition(true, 30000, 60000);
+                        }
+                    }
 
                     setState(prev => ({
                         ...prev,
@@ -55,25 +96,39 @@ export function useCurrentLocation() {
                         loading: false,
                         error: null
                     }));
-
+                    
+                    console.log('📍 [GPS] Position obtenue:', {
+                        lat: locationData.latitude,
+                        lng: locationData.longitude,
+                        accuracy: locationData.accuracy,
+                        device: isMobile ? 'mobile' : 'desktop'
+                    });
+                    
                     resolve(locationData);
-                },
-                (error) => {
+                } catch (error: any) {
                     let errorMessage = 'Impossible d\'obtenir votre position GPS';
                     
-                    switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = 'Permission GPS refusée. Autorisez l\'accès dans les paramètres du navigateur.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = 'Position GPS indisponible. Activez votre GPS et vérifiez votre connexion.';
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = 'Délai GPS dépassé. Vérifiez que votre GPS est activé et réessayez.';
-                            break;
-                        default:
-                            errorMessage = `Erreur GPS: ${error.message}`;
+                    if (error.code) {
+                        switch (error.code) {
+                            case 1: // PERMISSION_DENIED
+                                errorMessage = 'Permission GPS refusée. Autorisez l\'accès dans les paramètres du navigateur.';
+                                break;
+                            case 2: // POSITION_UNAVAILABLE
+                                errorMessage = isMobile 
+                                    ? 'Position GPS indisponible. Activez votre GPS et vérifiez votre connexion.'
+                                    : 'Géolocalisation indisponible. Vérifiez les paramètres de localisation de votre navigateur.';
+                                break;
+                            case 3: // TIMEOUT
+                                errorMessage = isMobile
+                                    ? 'Délai GPS dépassé. Vérifiez que votre GPS est activé et réessayez.'
+                                    : 'Délai d\'attente dépassé. Sur ordinateur, la géolocalisation peut être limitée. Essayez de saisir votre adresse manuellement.';
+                                break;
+                            default:
+                                errorMessage = `Erreur GPS: ${error.message || 'Erreur inconnue'}`;
+                        }
                     }
+                    
+                    console.error('📍 [GPS] Erreur:', error, { device: isMobile ? 'mobile' : 'desktop' });
                     
                     setState(prev => ({
                         ...prev,
@@ -81,13 +136,10 @@ export function useCurrentLocation() {
                         error: errorMessage
                     }));
                     reject(new Error(errorMessage));
-                },
-                {
-                    enableHighAccuracy: false, // Désactivé pour obtenir une position plus rapidement
-                    timeout: 60000, // 60 secondes pour éviter les timeouts
-                    maximumAge: 30000 // Accepter position jusqu'à 30 secondes
                 }
-            );
+            };
+
+            attemptLocation();
         });
     }, []);
 
