@@ -1,7 +1,7 @@
 /**
  * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
  * Service opérationnel pour communications audio/vidéo avec Agora
- * Utilise agora-rtm-sdk v1 pour compatibilité Vite build
+ * Utilise agora-rtm v2 pour compatibilité Vite build
  */
 
 import AgoraRTC, { 
@@ -13,7 +13,7 @@ import AgoraRTC, {
   NetworkQuality,
   IAgoraRTCRemoteUser
 } from 'agora-rtc-sdk-ng';
-import AgoraRTM from 'agora-rtm-sdk';
+import AgoraRTM, { RTMClient } from 'agora-rtm';
 
 export interface AgoraConfig {
   appId: string;
@@ -43,8 +43,7 @@ export interface RemoteUser {
 
 class AgoraService {
   private client: IAgoraRTCClient | null = null;
-  private rtmClient: any = null;
-  private rtmChannel: any = null;
+  private rtmClient: RTMClient | null = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private remoteUsers: Map<string, RemoteUser> = new Map();
@@ -52,6 +51,7 @@ class AgoraService {
   private currentChannel = '';
   private currentUid = '';
   private appId = '';
+  private subscribedChannels: Set<string> = new Set();
   
   // Event callbacks
   private onUserJoined?: (user: RemoteUser) => void;
@@ -90,16 +90,16 @@ class AgoraService {
         throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
       }
 
-      // Créer instance RTM v1 (agora-rtm-sdk)
-      this.rtmClient = AgoraRTM.createInstance(this.appId);
+      // Créer instance RTM v2
+      this.rtmClient = new AgoraRTM.RTM(this.appId, userId);
       
-      // Configurer les événements RTM
+      // Configurer les événements RTM v2
       this.setupRTMEvents();
 
-      // Login au serveur RTM
-      await this.rtmClient.login({ uid: userId, token: token || undefined });
+      // Login au serveur RTM v2
+      await this.rtmClient.login();
 
-      console.log('✅ Agora RTM initialisé et connecté');
+      console.log('✅ Agora RTM v2 initialisé et connecté');
     } catch (error) {
       console.error('❌ Erreur initialisation RTM:', error);
       throw error;
@@ -177,23 +177,23 @@ class AgoraService {
   }
 
   /**
-   * Configurer les événements RTM v1
+   * Configurer les événements RTM v2
    */
   private setupRTMEvents(): void {
     if (!this.rtmClient) return;
 
-    // RTM v1 events - using 'on' method
-    this.rtmClient.on('MessageFromPeer', (message: any, peerId: string) => {
-      console.log('💬 Message reçu de:', peerId, message.text);
+    // RTM v2 events
+    this.rtmClient.addEventListener('message', (event: any) => {
+      console.log('💬 Message reçu:', event.channelName, event.message);
     });
 
-    this.rtmClient.on('ConnectionStateChanged', (newState: string, reason: string) => {
-      console.log('🔗 RTM État connexion:', newState, reason);
+    this.rtmClient.addEventListener('status', (event: any) => {
+      console.log('🔗 RTM État connexion:', event.state, event.reason);
     });
   }
 
   /**
-   * Rejoindre un canal RTM v1
+   * Rejoindre un canal RTM v2
    */
   async subscribeToChannel(channelName: string): Promise<void> {
     if (!this.rtmClient) {
@@ -202,24 +202,14 @@ class AgoraService {
     }
 
     try {
-      // RTM v1 - create and join channel
-      this.rtmChannel = this.rtmClient.createChannel(channelName);
-      
-      // Setup channel events
-      this.rtmChannel.on('ChannelMessage', (message: any, memberId: string) => {
-        console.log('💬 Message canal de', memberId, ':', message.text);
+      // RTM v2 - subscribe to channel
+      await this.rtmClient.subscribe(channelName, {
+        withMessage: true,
+        withPresence: true
       });
       
-      this.rtmChannel.on('MemberJoined', (memberId: string) => {
-        console.log('👥 Membre rejoint:', memberId);
-      });
-      
-      this.rtmChannel.on('MemberLeft', (memberId: string) => {
-        console.log('👥 Membre parti:', memberId);
-      });
-      
-      await this.rtmChannel.join();
-      console.log('✅ Rejoint le canal RTM:', channelName);
+      this.subscribedChannels.add(channelName);
+      console.log('✅ Abonné au canal RTM:', channelName);
     } catch (error) {
       console.error('❌ Erreur rejoindre canal RTM:', error);
       throw error;
@@ -227,17 +217,17 @@ class AgoraService {
   }
 
   /**
-   * Envoyer un message sur un canal RTM v1
+   * Envoyer un message sur un canal RTM v2
    */
   async sendMessage(channelName: string, message: string): Promise<void> {
-    if (!this.rtmChannel) {
-      console.warn('Canal RTM non rejoint');
+    if (!this.rtmClient) {
+      console.warn('RTM non initialisé');
       return;
     }
 
     try {
-      // RTM v1 - send channel message
-      await this.rtmChannel.sendMessage({ text: message });
+      // RTM v2 - publish message to channel
+      await this.rtmClient.publish(channelName, message);
       console.log('✅ Message envoyé sur:', channelName);
     } catch (error) {
       console.error('❌ Erreur envoi message RTM:', error);
@@ -457,13 +447,13 @@ class AgoraService {
     try {
       await this.leaveChannel();
       
-      // Quitter le canal RTM v1
-      if (this.rtmChannel) {
-        await this.rtmChannel.leave();
-        this.rtmChannel = null;
-      }
-      
+      // Quitter les canaux RTM v2
       if (this.rtmClient) {
+        for (const channel of this.subscribedChannels) {
+          await this.rtmClient.unsubscribe(channel);
+        }
+        this.subscribedChannels.clear();
+        
         await this.rtmClient.logout();
         this.rtmClient = null;
       }
