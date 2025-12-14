@@ -37,7 +37,9 @@ import {
   Euro,
   Eye,
   Package,
-  Store
+  Store,
+  Upload,
+  ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -519,6 +521,73 @@ export function POSSystem() {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Logo Upload Section */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Logo de l'entreprise</label>
+                      <div className="flex items-start gap-4">
+                        {/* Aperçu du logo */}
+                        <div className="w-20 h-20 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                          {settings?.logo_url ? (
+                            <img
+                              src={settings.logo_url}
+                              alt="Logo"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          ) : (
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        
+                        {/* Upload Button */}
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              if (file.size > 2 * 1024 * 1024) {
+                                toast.error('Le fichier est trop volumineux (max 2MB)');
+                                return;
+                              }
+                              
+                              try {
+                                const fileExt = file.name.split('.').pop();
+                                const fileName = `pos-logo-${user?.id}-${Date.now()}.${fileExt}`;
+                                const filePath = `logos/${fileName}`;
+                                
+                                const { error: uploadError } = await supabase.storage
+                                  .from('documents')
+                                  .upload(filePath, file, {
+                                    contentType: file.type,
+                                    upsert: true
+                                  });
+                                
+                                if (uploadError) throw uploadError;
+                                
+                                const { data: publicUrlData } = supabase.storage
+                                  .from('documents')
+                                  .getPublicUrl(filePath);
+                                
+                                await updateSettings({ logo_url: publicUrlData.publicUrl });
+                                toast.success('Logo mis à jour');
+                              } catch (error) {
+                                console.error('Erreur upload logo:', error);
+                                toast.error('Erreur lors du téléchargement du logo');
+                              }
+                            }}
+                            className="cursor-pointer text-sm"
+                          />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            PNG, JPG, SVG • Max: 2 MB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
                     <div>
                       <label className="text-sm font-medium mb-2 block">Nom de l'entreprise</label>
                       <Input
@@ -1255,6 +1324,7 @@ export function POSSystem() {
           change,
           currency: settings?.currency || 'GNF',
           companyName: settings?.company_name || 'Vista Commerce Pro',
+          logoUrl: settings?.logo_url,
           receiptFooter: settings?.receipt_footer
         }}
       />
