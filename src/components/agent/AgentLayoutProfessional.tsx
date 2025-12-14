@@ -341,54 +341,54 @@ export function AgentLayoutProfessional({
         "transition-all duration-300",
         sidebarCollapsed ? "lg:ml-20" : "lg:ml-72"
       )}>
-        {/* Top Header */}
+        {/* Top Header - Mobile Optimized */}
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-2xl border-b border-slate-200/60 shadow-sm">
-          <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 lg:px-6">
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-slate-700 hover:bg-slate-100"
+              className="lg:hidden text-slate-700 hover:bg-slate-100 h-9 w-9"
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5" />
             </Button>
 
-            {/* Page Title */}
-            <div className="hidden lg:block">
+            {/* Page Title - Mobile visible */}
+            <div className="flex-1 mx-2 lg:mx-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900">
+                <h2 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
                   {navItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                 </h2>
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-xs">
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] sm:text-xs hidden sm:inline-flex">
                   Pro
                 </Badge>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 hidden lg:block">
                 Agent {agent.agent_code} • Taux {agent.commission_rate}%
               </p>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               {/* Notification Bell */}
-              <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-lg shadow-rose-500/50" />
+              <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-8 w-8 sm:h-9 sm:w-9">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-lg shadow-rose-500/50" />
               </Button>
 
-              {/* Quick Stats Badge */}
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all cursor-pointer"
+              {/* Quick Stats Badge - Show on mobile too but compact */}
+              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all cursor-pointer"
                    onClick={() => onTabChange('wallet')}>
-                <Wallet className="w-4 h-4 text-white" />
-                <span className="text-sm font-bold text-white">
-                  {formatCurrency(walletBalance)} GNF
+                <Wallet className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                <span className="text-xs sm:text-sm font-bold text-white">
+                  {formatCurrency(walletBalance)}
                 </span>
               </div>
 
               {/* Profile Avatar */}
-              <Avatar className="h-9 w-9 ring-2 ring-blue-500/20 shadow-md hover:ring-blue-500/40 transition-all cursor-pointer">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 via-indigo-600 to-violet-600 text-white text-sm font-bold">
+              <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-blue-500/20 shadow-md hover:ring-blue-500/40 transition-all cursor-pointer">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 via-indigo-600 to-violet-600 text-white text-xs sm:text-sm font-bold">
                   {getInitials(agent.name)}
                 </AvatarFallback>
               </Avatar>
@@ -396,8 +396,8 @@ export function AgentLayoutProfessional({
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="p-4 lg:p-6">
+        {/* Page Content - Mobile padding */}
+        <div className="p-3 sm:p-4 lg:p-6 pb-20 sm:pb-6">
           {children}
         </div>
       </main>

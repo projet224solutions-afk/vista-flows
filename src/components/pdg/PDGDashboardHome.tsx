@@ -139,9 +139,9 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   ].filter(alert => alert.show);
 
   return (
-    <div className="space-y-6">
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div className="space-y-4 sm:space-y-6">
+      {/* KPIs Grid - 2x2 on mobile, then responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           const TrendIcon = kpi.trend === 'up' ? TrendingUp : TrendingDown;
@@ -151,32 +151,32 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               key={kpi.title}
               className="relative overflow-hidden hover:shadow-xl transition-all duration-300 group border border-border/40 bg-card/50 backdrop-blur-sm"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500" />
+              <div className="absolute top-0 right-0 w-20 sm:w-32 h-20 sm:h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 group-hover:scale-110 transition-transform duration-500" />
               
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 relative z-10 p-3 sm:p-6">
+                <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">
                   {kpi.title}
                 </CardTitle>
-                <div className={cn("p-2 rounded-lg", kpi.color)}>
-                  <Icon className="w-4 h-4" />
+                <div className={cn("p-1.5 sm:p-2 rounded-lg flex-shrink-0", kpi.color)}>
+                  <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </CardHeader>
               
-              <CardContent className="relative z-10">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-3xl font-bold">{kpi.value}</div>
+              <CardContent className="relative z-10 p-3 sm:p-6 pt-0 sm:pt-0">
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                  <div className="text-lg sm:text-3xl font-bold truncate">{kpi.value}</div>
                   <Badge 
                     variant="secondary" 
                     className={cn(
-                      "gap-1",
+                      "gap-0.5 sm:gap-1 text-[10px] sm:text-xs w-fit",
                       kpi.trend === 'up' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
                     )}
                   >
-                    <TrendIcon className="w-3 h-3" />
+                    <TrendIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     {kpi.change}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">{kpi.description}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2 truncate">{kpi.description}</p>
               </CardContent>
             </Card>
           );
@@ -259,27 +259,27 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Produits</p>
-                <p className="text-2xl font-bold">{stats.totalProducts || 0}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeProducts || 0} actifs</p>
+          <CardContent className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="space-y-1 sm:space-y-2 p-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg">
+                <p className="text-xs sm:text-sm text-muted-foreground">Produits</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalProducts || 0}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stats.activeProducts || 0} actifs</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Vendeurs</p>
-                <p className="text-2xl font-bold">{stats.totalVendors || 0}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeVendors || 0} actifs</p>
+              <div className="space-y-1 sm:space-y-2 p-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg">
+                <p className="text-xs sm:text-sm text-muted-foreground">Vendeurs</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalVendors || 0}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stats.activeVendors || 0} actifs</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Agents</p>
-                <p className="text-2xl font-bold text-primary">{stats.totalAgents || 0}</p>
-                <p className="text-xs text-muted-foreground">{stats.activeAgents || 0} actifs</p>
+              <div className="space-y-1 sm:space-y-2 p-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg">
+                <p className="text-xs sm:text-sm text-muted-foreground">Agents</p>
+                <p className="text-xl sm:text-2xl font-bold text-primary">{stats.totalAgents || 0}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stats.activeAgents || 0} actifs</p>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Livreurs</p>
-                <p className="text-2xl font-bold">{stats.totalDrivers || 0}</p>
-                <p className="text-xs text-muted-foreground">{stats.onlineDrivers || 0} en ligne</p>
+              <div className="space-y-1 sm:space-y-2 p-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg">
+                <p className="text-xs sm:text-sm text-muted-foreground">Livreurs</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalDrivers || 0}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{stats.onlineDrivers || 0} en ligne</p>
               </div>
             </div>
           </CardContent>
@@ -293,31 +293,35 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
           <CardDescription>Accès rapide aux fonctionnalités principales</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             {[
               { 
-                label: 'Valider Utilisateurs', 
+                label: 'Utilisateurs', 
+                labelFull: 'Valider Utilisateurs',
                 icon: Users, 
                 color: 'from-blue-500 to-blue-600',
                 action: 'users',
                 count: stats.totalUsers || 0
               },
               { 
-                label: 'Gérer Finances', 
+                label: 'Finances', 
+                labelFull: 'Gérer Finances',
                 icon: DollarSign, 
                 color: 'from-green-500 to-green-600',
                 action: 'finance',
                 count: stats.totalRevenue || '0 GNF'
               },
               { 
-                label: 'Vérifier Sécurité', 
+                label: 'Sécurité', 
+                labelFull: 'Vérifier Sécurité',
                 icon: AlertCircle, 
                 color: 'from-red-500 to-red-600',
                 action: 'security',
                 count: stats.criticalAlerts || 0
               },
               { 
-                label: 'Voir Rapports', 
+                label: 'Rapports', 
+                labelFull: 'Voir Rapports',
                 icon: Activity, 
                 color: 'from-purple-500 to-purple-600',
                 action: 'reports',
@@ -329,17 +333,20 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <button
                   key={action.label}
                   onClick={() => onNavigate?.(action.action)}
-                  className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border/40 hover:border-primary/40 bg-card hover:shadow-lg transition-all duration-200 group cursor-pointer"
+                  className="flex flex-col items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-border/40 hover:border-primary/40 bg-card hover:shadow-lg transition-all duration-200 group cursor-pointer"
                 >
                   <div className={cn(
-                    "w-12 h-12 rounded-xl bg-gradient-to-br shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform",
+                    "w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform",
                     action.color
                   )}>
-                    <ActionIcon className="w-6 h-6 text-white" />
+                    <ActionIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div className="flex flex-col items-center">
-                    <span className="text-sm font-medium text-center">{action.label}</span>
-                    <Badge variant="secondary" className="mt-1 text-xs">
+                    <span className="text-xs sm:text-sm font-medium text-center">
+                      <span className="sm:hidden">{action.label}</span>
+                      <span className="hidden sm:inline">{action.labelFull}</span>
+                    </span>
+                    <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">
                       {typeof action.count === 'number' ? action.count.toLocaleString() : action.count}
                     </Badge>
                   </div>

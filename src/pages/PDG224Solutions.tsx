@@ -311,57 +311,58 @@ export default function PDG224Solutions() {
       </div>
 
       <div className="relative z-10 h-screen overflow-y-auto scrollbar-thin">
-        {/* Header */}
+        {/* Header - Mobile Optimized */}
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
-          <div className="max-w-[1600px] mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
+          <div className="max-w-[1600px] mx-auto px-3 py-3 sm:px-6 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+              <div className="flex items-center gap-3 sm:gap-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 blur-xl opacity-50" />
-                  <div className="relative bg-gradient-to-br from-primary to-primary/80 p-3 rounded-2xl shadow-2xl">
-                    <Shield className="w-8 h-8 text-primary-foreground" />
+                  <div className="relative bg-gradient-to-br from-primary to-primary/80 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xl">
+                    <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-primary-foreground" />
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      Interface PDG 224SOLUTIONS
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
+                    <h1 className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
+                      PDG 224SOLUTIONS
                     </h1>
                     <UserIdDisplay layout="horizontal" showBadge={true} />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2 hidden sm:flex">
                     <Lock className="w-3 h-3 text-green-500" />
-                    Contrôle total et sécurisé de la plateforme
+                    Contrôle total et sécurisé
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Mobile: Horizontal scroll for buttons */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent sm:flex-wrap">
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/command-center')}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
-                  <Activity className="w-4 h-4" />
-                  Centre de Commande
+                  <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Centre de</span> Commande
                 </Button>
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/security')}
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
-                  <Shield className="w-4 h-4" />
-                  Défense & Riposte
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Défense
                 </Button>
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/competitive-analysis')}
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
                 >
-                  <Activity className="w-4 h-4" />
-                  Analyse Concurrentielle IA
+                  <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Analyse IA
                 </Button>
                 {!mfaVerified && (
                   <Button
@@ -369,27 +370,27 @@ export default function PDG224Solutions() {
                     size="sm"
                     onClick={handleVerifyMfa}
                     disabled={verifyingMfa}
-                    className="border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                    className="border-orange-500/30 text-orange-600 hover:bg-orange-500/10 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                   >
-                    {verifyingMfa ? 'Vérification…' : 'Vérifier MFA'}
+                    {verifyingMfa ? '...' : 'MFA'}
                   </Button>
                 )}
-                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 gap-1.5">
+                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 gap-1 text-xs flex-shrink-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  Système Actif
+                  <span className="hidden sm:inline">Système</span> Actif
                 </Badge>
                 {!envOk && (
-                  <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 hover:bg-yellow-500/20">
-                    Variables Env Manquantes
+                  <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 hover:bg-yellow-500/20 text-xs flex-shrink-0">
+                    Env
                   </Badge>
                 )}
                 {aiActive && (
-                  <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1.5">
-                    <Brain className="w-3.5 h-3.5" />
-                    IA Active
+                  <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1 text-xs flex-shrink-0">
+                    <Brain className="w-3 h-3" />
+                    IA
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative flex-shrink-0 h-8 w-8">
                   <Bell className="w-4 h-4" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                 </Button>
@@ -397,19 +398,19 @@ export default function PDG224Solutions() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowEmailDialog(true)}
-                  className="gap-2"
+                  className="gap-1 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
                 >
-                  <Mail className="w-4 h-4" />
-                  Modifier Email
+                  <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Modifier</span> Email
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={signOut}
-                  className="gap-2"
+                  className="gap-1 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Déconnexion
+                  <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Déconnexion</span>
                 </Button>
               </div>
             </div>

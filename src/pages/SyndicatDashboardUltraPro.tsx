@@ -154,32 +154,32 @@ export default function SyndicatDashboardUltraPro() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            {/* Header Ultra-Professionnel */}
+            {/* Header Ultra-Professionnel - Mobile Optimized */}
             <div className="bg-white shadow-xl border-b border-gray-100 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                <Building2 className="w-6 h-6 text-white" />
+                <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 sm:py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-3 sm:gap-6">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                        Bureau Syndicat 224Solutions
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
+                                    <h1 className="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                                        Bureau Syndicat
                                     </h1>
                                     <UserIdDisplay layout="horizontal" showBadge={true} />
                                 </div>
-                                <div className="flex items-center gap-3 flex-wrap">
-                                    <p className="text-gray-600 text-sm">Interface Ultra-Professionnelle</p>
-                                    <WalletBalanceDisplay userId={user?.id} compact={true} className="max-w-xs" />
+                                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                    <p className="text-gray-600 text-xs sm:text-sm hidden sm:block">Interface Ultra-Pro</p>
+                                    <WalletBalanceDisplay userId={user?.id} compact={true} className="max-w-[150px] sm:max-w-xs" />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <p className="font-semibold text-gray-800">{profile?.first_name} {profile?.last_name}</p>
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1 sm:pb-0">
+                            <div className="text-right hidden sm:block flex-shrink-0">
+                                <p className="font-semibold text-gray-800 text-sm">{profile?.first_name} {profile?.last_name}</p>
+                                <p className="text-xs text-gray-600 flex items-center gap-1 justify-end">
                                     <Crown className="w-3 h-3" />
                                     {profile?.role}
                                 </p>
@@ -188,146 +188,151 @@ export default function SyndicatDashboardUltraPro() {
                             <Button
                                 onClick={() => setShowDownloadDialog(true)}
                                 variant="outline"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl"
+                                size="sm"
+                                className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
-                                <Download className="w-4 h-4 mr-2" />
-                                Télécharger App
+                                <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Télécharger</span> App
                             </Button>
 
                             <Button
                                 onClick={handleSignOut}
                                 variant="outline"
-                                className="border-red-200 text-red-600 hover:bg-red-50 rounded-xl"
+                                size="sm"
+                                className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
-                                <LogOut className="w-4 h-4 mr-2" />
-                                Déconnexion
+                                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Déconnexion</span>
                             </Button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Contenu principal */}
-            <div className="max-w-7xl mx-auto p-6">
-                {/* Statistiques en temps réel */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {/* Contenu principal - Mobile Optimized */}
+            <div className="max-w-7xl mx-auto p-3 sm:p-6 pb-20 sm:pb-6">
+                {/* Statistiques en temps réel - 2x2 grid on mobile */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-blue-100 text-sm font-medium">Membres Bureau</p>
-                                    <p className="text-3xl font-bold">{syndicateStats.active_members}</p>
-                                    <p className="text-blue-100 text-xs">sur {syndicateStats.total_members} total</p>
+                                    <p className="text-blue-100 text-xs sm:text-sm font-medium">Membres</p>
+                                    <p className="text-xl sm:text-3xl font-bold">{syndicateStats.active_members}</p>
+                                    <p className="text-blue-100 text-[10px] sm:text-xs">/{syndicateStats.total_members}</p>
                                 </div>
-                                <Users className="w-12 h-12 text-blue-200" />
+                                <Users className="w-8 h-8 sm:w-12 sm:h-12 text-blue-200" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-green-100 text-sm font-medium">Taxi-Motards</p>
-                                    <p className="text-3xl font-bold">{syndicateStats.active_taxi_motards}</p>
-                                    <p className="text-green-100 text-xs">sur {syndicateStats.total_taxi_motards} total</p>
+                                    <p className="text-green-100 text-xs sm:text-sm font-medium">Motards</p>
+                                    <p className="text-xl sm:text-3xl font-bold">{syndicateStats.active_taxi_motards}</p>
+                                    <p className="text-green-100 text-[10px] sm:text-xs">/{syndicateStats.total_taxi_motards}</p>
                                 </div>
-                                <Bike className="w-12 h-12 text-green-200" />
+                                <Bike className="w-8 h-8 sm:w-12 sm:h-12 text-green-200" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-purple-100 text-sm font-medium">Solde Total</p>
-                                    <p className="text-2xl font-bold">
+                                    <p className="text-purple-100 text-xs sm:text-sm font-medium">Solde</p>
+                                    <p className="text-lg sm:text-2xl font-bold">
                                         {syndicateStats.total_balance.toLocaleString()}
                                     </p>
-                                    <p className="text-purple-100 text-xs">FCFA</p>
+                                    <p className="text-purple-100 text-[10px] sm:text-xs">FCFA</p>
                                 </div>
-                                <Wallet className="w-12 h-12 text-purple-200" />
+                                <Wallet className="w-8 h-8 sm:w-12 sm:h-12 text-purple-200" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-                        <CardContent className="p-6">
+                        <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-orange-100 text-sm font-medium">Revenus Mois</p>
-                                    <p className="text-2xl font-bold">
+                                    <p className="text-orange-100 text-xs sm:text-sm font-medium">Revenus</p>
+                                    <p className="text-lg sm:text-2xl font-bold">
                                         {syndicateStats.monthly_revenue.toLocaleString()}
                                     </p>
-                                    <p className="text-orange-100 text-xs">FCFA</p>
+                                    <p className="text-orange-100 text-[10px] sm:text-xs">FCFA/mois</p>
                                 </div>
-                                <TrendingUp className="w-12 h-12 text-orange-200" />
+                                <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-orange-200" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Navigation par onglets ultra-stylée */}
+                {/* Navigation par onglets - Mobile Scrollable */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-8 bg-white shadow-lg rounded-2xl p-2 border border-gray-100 mb-8">
-                        <TabsTrigger
-                            value="dashboard"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Home className="w-4 h-4 mr-2" />
-                            Dashboard
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="sos"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Siren className="w-4 h-4 mr-2" />
-                            🚨 SOS
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="members"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Users className="w-4 h-4 mr-2" />
-                            Membres
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="taxi-motards"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Bike className="w-4 h-4 mr-2" />
-                            Taxi-Motards
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="tickets"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Ticket className="w-4 h-4 mr-2" />
-                            Tickets
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="wallet"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Wallet className="w-4 h-4 mr-2" />
-                            Trésorerie
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="gestion"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <Settings className="w-4 h-4 mr-2" />
-                            Gestion
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="analytics"
-                            className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
-                        >
-                            <BarChart3 className="w-4 h-4 mr-2" />
-                            Analytics
-                        </TabsTrigger>
-                    </TabsList>
+                    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent -mx-3 px-3 sm:mx-0 sm:px-0">
+                        <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-8 bg-white shadow-lg rounded-xl sm:rounded-2xl p-1.5 sm:p-2 border border-gray-100 mb-4 sm:mb-8 min-w-max sm:min-w-0">
+                            <TabsTrigger
+                                value="dashboard"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Home className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Dashboard</span>
+                                <span className="sm:hidden">Accueil</span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="sos"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Siren className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                SOS
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="members"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Membres
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="taxi-motards"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Bike className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Motards
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="tickets"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Ticket className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Tickets
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="wallet"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Wallet
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="gestion"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Gestion
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="analytics"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                            >
+                                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                Stats
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
                     {/* Onglet SOS Alertes */}
                     <TabsContent value="sos" className="space-y-6">
