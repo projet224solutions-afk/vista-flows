@@ -6,3 +6,5 @@ export { MiniMap } from './MiniMap';
 export { RideRequestCard } from './RideRequestCard';
 export { BottomNavigation } from './BottomNavigation';
 export { DriverMainDashboard } from './DriverMainDashboard';
+export { ActiveRideNavigationPanel } from './ActiveRideNavigationPanel';
+export { QuickNavigationBar } from './QuickNavigationBar';
