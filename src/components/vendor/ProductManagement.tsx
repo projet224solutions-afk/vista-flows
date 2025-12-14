@@ -40,6 +40,7 @@ interface Product {
   low_stock_threshold: number;
   is_active: boolean;
   category_id?: string;
+  category?: { id: string; name: string } | null;
   images?: string[];
   tags?: string[];
   weight?: number;
@@ -137,7 +138,7 @@ export default function ProductManagement() {
     if (!vendorId) return;
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, category:categories(id, name)')
       .eq('vendor_id', vendorId)
       .order('created_at', { ascending: false });
 
@@ -621,6 +622,13 @@ export default function ProductManagement() {
             {/* Product Info */}
             <CardHeader className="p-2 md:p-4 pb-1 md:pb-2">
               <CardTitle className="text-xs md:text-base line-clamp-2 leading-tight">{product.name}</CardTitle>
+              {/* Category Badge */}
+              {product.category?.name && (
+                <Badge variant="secondary" className="mt-1 text-[10px] md:text-xs w-fit">
+                  <FolderOpen className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
+                  {product.category.name}
+                </Badge>
+              )}
             </CardHeader>
             
             <CardContent className="p-2 md:p-4 pt-0 space-y-1.5 md:space-y-3">

@@ -89,22 +89,39 @@ export function useProductActions({
    * Gérer la catégorie (créer si n'existe pas)
    */
   const handleCategory = useCallback(async (categoryName?: string, categoryId?: string): Promise<string | null> => {
-    if (categoryId) return categoryId;
-    if (!categoryName) return null;
+    console.log('[Category] handleCategory called:', { categoryName, categoryId });
+    
+    // Si un ID de catégorie est fourni, l'utiliser directement
+    if (categoryId && categoryId.trim() !== '') {
+      console.log('[Category] Using existing category_id:', categoryId);
+      return categoryId;
+    }
+    
+    // Si pas de nom de catégorie, retourner null
+    if (!categoryName || categoryName.trim() === '') {
+      console.log('[Category] No category name provided');
+      return null;
+    }
 
     try {
-      // Chercher catégorie existante
-      const { data: existingCategory } = await supabase
+      // Chercher catégorie existante par nom
+      const { data: existingCategory, error: searchError } = await supabase
         .from('categories')
         .select('id')
         .ilike('name', categoryName.trim())
         .maybeSingle();
 
+      if (searchError) {
+        console.error('[Category] Search error:', searchError);
+      }
+
       if (existingCategory) {
+        console.log('[Category] Found existing category:', existingCategory.id);
         return existingCategory.id;
       }
 
       // Créer nouvelle catégorie
+      console.log('[Category] Creating new category:', categoryName.trim());
       const { data: newCategory, error: categoryError } = await supabase
         .from('categories')
         .insert([{ 
@@ -119,6 +136,7 @@ export function useProductActions({
         return null;
       }
 
+      console.log('[Category] Created new category:', newCategory?.id);
       return newCategory?.id || null;
     } catch (error) {
       console.error('[Category] Exception:', error);
