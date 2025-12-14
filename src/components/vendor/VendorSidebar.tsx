@@ -70,7 +70,7 @@ export function VendorSidebar() {
     {
       label: "Ventes & Commerce",
       items: [
-        { title: "Point de vente (POS)", icon: Store, path: "pos" },
+        { title: "Point de vente (POS)", icon: Store, path: "pos", isPOS: true },
         { title: "Produits", icon: Package, path: "products" },
         { title: "Commandes", icon: ShoppingCart, path: "orders" },
         { title: "Inventaire", icon: Box, path: "inventory" },
@@ -130,9 +130,10 @@ export function VendorSidebar() {
             
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items.map((item) => {
+                {section.items.map((item: { title: string; icon: any; path: string; isPOS?: boolean }) => {
                   const badgeValue = getBadgeValue(item.path);
                   const active = isActive(item.path);
+                  const isPOS = item.isPOS;
                   
                   return (
                     <SidebarMenuItem key={item.path}>
@@ -151,20 +152,46 @@ export function VendorSidebar() {
                           }
                         }}
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors cursor-pointer select-none",
+                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-all duration-200 cursor-pointer select-none",
                           "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                           active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                          collapsed && "justify-center"
+                          collapsed && "justify-center",
+                          isPOS && !collapsed && "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg shadow-sm hover:shadow-md hover:from-primary/15 hover:border-primary/30",
+                          isPOS && active && "from-primary/20 border-primary/40 shadow-md"
                         )}
                       >
-                        <item.icon className="w-4 h-4 shrink-0" />
+                        {isPOS ? (
+                          <div className={cn(
+                            "w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm",
+                            collapsed && "w-6 h-6"
+                          )}>
+                            <item.icon className="w-4 h-4 text-primary-foreground" />
+                          </div>
+                        ) : (
+                          <item.icon className="w-4 h-4 shrink-0" />
+                        )}
                         {!collapsed && (
                           <>
-                            <span className="flex-1 truncate">{item.title}</span>
+                            <div className={cn("flex-1", isPOS && "flex flex-col")}>
+                              <span className={cn(
+                                "truncate",
+                                isPOS && "font-semibold text-primary"
+                              )}>
+                                {isPOS ? "Point de Vente" : item.title}
+                              </span>
+                              {isPOS && (
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  Caisse • Encaissement
+                                </span>
+                              )}
+                            </div>
                             {badgeValue && (
                               <Badge 
                                 variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                className="text-xs px-2 py-0 ml-auto pointer-events-none"
+                                className={cn(
+                                  "text-xs px-2 py-0 ml-auto pointer-events-none",
+                                  isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
+                                )}
                               >
                                 {badgeValue}
                               </Badge>
