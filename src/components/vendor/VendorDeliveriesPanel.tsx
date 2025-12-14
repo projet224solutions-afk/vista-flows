@@ -258,126 +258,127 @@ export function VendorDeliveriesPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header avec bouton de création */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Truck className="h-6 w-6 text-orange-600" />
-            Gestion des Livraisons
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+      {/* Header mobile optimisé */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg md:text-2xl font-bold flex items-center gap-2">
+            <Truck className="h-5 w-5 md:h-6 md:w-6 text-orange-600 flex-shrink-0" />
+            <span className="truncate">Gestion Livraisons</span>
           </h2>
-          <p className="text-muted-foreground">Suivez et gérez toutes vos expéditions</p>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">Suivez vos expéditions</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadVendorDeliveries}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Actualiser
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+          <Button variant="outline" size="sm" onClick={loadVendorDeliveries} className="flex-shrink-0 h-9 text-xs md:text-sm">
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
           <Button
             onClick={() => setShowShipmentManager(true)}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 flex-shrink-0 h-9 text-xs md:text-sm"
           >
-            <Package className="mr-2 h-4 w-4" />
-            Nouvelle Expédition
+            <Package className="mr-1.5 h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Nouvelle</span> Expédition
           </Button>
         </div>
       </div>
 
-      {/* Statistiques détaillées */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {/* Statistiques - Grille mobile 2x3 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Total</p>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.total}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 font-medium">Total</p>
+                <p className="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.total}</p>
               </div>
-              <Package className="h-8 w-8 text-blue-500/50" />
+              <Package className="h-6 w-6 md:h-8 md:w-8 text-blue-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-950/30 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">En attente</p>
-                <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-yellow-600 dark:text-yellow-400 font-medium">En attente</p>
+                <p className="text-xl md:text-2xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</p>
               </div>
-              <Timer className="h-8 w-8 text-yellow-500/50" />
+              <Timer className="h-6 w-6 md:h-8 md:w-8 text-yellow-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">En cours</p>
-                <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.inProgress}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400 font-medium">En cours</p>
+                <p className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.inProgress}</p>
               </div>
-              <Truck className="h-8 w-8 text-purple-500/50" />
+              <Truck className="h-6 w-6 md:h-8 md:w-8 text-purple-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/30 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-green-600 dark:text-green-400 font-medium">Livrées</p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 font-medium">Livrées</p>
+                <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500/50" />
+              <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Distance totale</p>
-                <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-orange-600 dark:text-orange-400 font-medium">Distance</p>
+                <p className="text-base md:text-lg font-bold text-orange-700 dark:text-orange-300 truncate">
                   {stats.totalDistance.toFixed(1)}
-                  <span className="text-xs ml-1">km</span>
+                  <span className="text-[10px] md:text-xs ml-0.5">km</span>
                 </p>
               </div>
-              <MapPin className="h-8 w-8 text-orange-500/50" />
+              <MapPin className="h-6 w-6 md:h-8 md:w-8 text-orange-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800">
-          <CardContent className="p-4">
+          <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">Taux réussite</p>
-                <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">{stats.successRate}%</p>
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-teal-600 dark:text-teal-400 font-medium">Taux réussite</p>
+                <p className="text-xl md:text-2xl font-bold text-teal-700 dark:text-teal-300">{stats.successRate}%</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-teal-500/50" />
+              <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-teal-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Onglets */}
+      {/* Onglets - Scroll horizontal sur mobile */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-12">
-          <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
-            <TrendingUp className="h-4 w-4" />
-            Vue d'ensemble
+        <TabsList className="w-full overflow-x-auto flex md:grid md:grid-cols-4 h-10 md:h-12 scrollbar-hide">
+          <TabsTrigger value="overview" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+            <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">Vue d'ensemble</span>
+            <span className="sm:hidden">Vue</span>
           </TabsTrigger>
-          <TabsTrigger value="deliveries" className="gap-2 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-700">
-            <List className="h-4 w-4" />
-            En cours ({pendingDeliveries.length})
+          <TabsTrigger value="deliveries" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-700">
+            <List className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">En cours</span> ({pendingDeliveries.length})
           </TabsTrigger>
-          <TabsTrigger value="delivered" className="gap-2 data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
-            <CheckCircle className="h-4 w-4" />
-            Livrées ({completedDeliveries.length})
+          <TabsTrigger value="delivered" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
+            <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">Livrées</span> ({completedDeliveries.length})
           </TabsTrigger>
-          <TabsTrigger value="pricing" className="gap-2 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
-            <Settings className="h-4 w-4" />
+          <TabsTrigger value="pricing" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
+            <Settings className="h-3.5 w-3.5 md:h-4 md:w-4" />
             Tarifs
           </TabsTrigger>
         </TabsList>
