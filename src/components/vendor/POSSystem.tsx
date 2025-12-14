@@ -471,7 +471,7 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
+    <div className="flex flex-col min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90">
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg">
         <div className="flex items-center justify-between p-3 md:p-6">
@@ -728,9 +728,9 @@ export function POSSystem() {
         </div>
       )}
 
-      <div className={`flex flex-1 min-h-0 gap-2 md:gap-4 p-2 md:p-4 ${isMobile ? 'flex-col' : ''}`}>
+      <div className={`flex flex-1 min-h-0 overflow-hidden gap-2 md:gap-4 p-2 md:p-4 ${isMobile ? 'flex-col' : ''}`}>
         {/* Section Produits - Design moderne */}
-        <div className={`flex-1 flex flex-col space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
+        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
           {/* Barre de recherche améliorée - Compact sur mobile */}
           <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
             <CardContent className="p-3 md:p-6">
@@ -806,9 +806,9 @@ export function POSSystem() {
           </Card>
 
           {/* Grille de produits professionnelle - Mobile optimisé */}
-          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm">
-            <CardContent className="p-2 md:p-6 h-full">
-              <ScrollArea className="h-[calc(100vh-280px)] md:h-full">
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0">
+            <CardContent className="p-2 md:p-6 h-full overflow-hidden">
+              <ScrollArea className="h-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center gap-3">
@@ -940,9 +940,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive */}
-        <div className={`w-full md:w-96 flex flex-col space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-96 lg:w-[420px] flex flex-col min-h-0 overflow-hidden ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier Ultra Professionnel */}
-          <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg">
+          <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg overflow-hidden flex flex-col min-h-0">
             {/* En-tête du panier avec statistiques */}
             <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-border/30">
               <CardTitle className="flex items-center justify-between text-lg">
@@ -976,8 +976,8 @@ export function POSSystem() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-2 md:p-4 flex-1">
-              <ScrollArea className="h-[200px] md:h-96">
+            <CardContent className="p-2 md:p-4 flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full max-h-[40vh] md:max-h-[50vh]">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-6">
                     <ShoppingBag className="h-10 w-10 md:h-16 md:w-16 text-muted-foreground/40 mb-2" />
@@ -1038,8 +1038,8 @@ export function POSSystem() {
 
             {/* Section totaux et paiement - Compact sur mobile */}
             {cart.length > 0 && (
-              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5">
-                <div className="p-3 md:p-6 space-y-3 md:space-y-4">
+              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5 flex-shrink-0 overflow-y-auto max-h-[50vh]">
+                <div className="p-3 md:p-4 space-y-3">
                   {/* Calculs détaillés */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-xs md:text-sm">
