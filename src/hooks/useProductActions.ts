@@ -23,6 +23,11 @@ interface ProductFormData {
   weight?: string;
   tags?: string;
   is_active: boolean;
+  // Champs carton
+  sell_by_carton?: boolean;
+  units_per_carton?: string;
+  price_carton?: string;
+  carton_sku?: string;
 }
 
 interface UseProductActionsProps {
@@ -204,7 +209,12 @@ export function useProductActions({
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         is_active: formData.is_active,
         vendor_id: vendorId,
-        images: imageUrls.length > 0 ? imageUrls : null
+        images: imageUrls.length > 0 ? imageUrls : null,
+        // Champs carton
+        sell_by_carton: formData.sell_by_carton || false,
+        units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
+        price_carton: formData.price_carton ? parseFloat(formData.price_carton) : 0,
+        carton_sku: formData.carton_sku || null
       };
 
       console.log('[ProductCreate] Data:', productData);
@@ -270,7 +280,12 @@ export function useProductActions({
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
         is_active: formData.is_active,
-        images: allImages.length > 0 ? allImages : null
+        images: allImages.length > 0 ? allImages : null,
+        // Champs carton
+        sell_by_carton: formData.sell_by_carton || false,
+        units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
+        price_carton: formData.price_carton ? parseFloat(formData.price_carton) : 0,
+        carton_sku: formData.carton_sku || null
       };
 
       console.log('[ProductUpdate] Data:', updateData);

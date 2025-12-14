@@ -45,6 +45,11 @@ interface Product {
   tags?: string[];
   weight?: number;
   created_at?: string;
+  // Champs carton
+  sell_by_carton?: boolean;
+  units_per_carton?: number;
+  price_carton?: number;
+  carton_sku?: string;
 }
 
 interface Category {
@@ -112,7 +117,12 @@ export default function ProductManagement() {
     category_name: '',
     weight: '',
     tags: '',
-    is_active: true
+    is_active: true,
+    // Champs carton
+    sell_by_carton: false,
+    units_per_carton: '',
+    price_carton: '',
+    carton_sku: ''
   });
 
   // Load initial data
@@ -225,7 +235,12 @@ export default function ProductManagement() {
       category_name: '',
       weight: product.weight?.toString() || '',
       tags: product.tags?.join(', ') || '',
-      is_active: product.is_active
+      is_active: product.is_active,
+      // Champs carton
+      sell_by_carton: product.sell_by_carton || false,
+      units_per_carton: product.units_per_carton?.toString() || '',
+      price_carton: product.price_carton?.toString() || '',
+      carton_sku: product.carton_sku || ''
     });
     setCategoryMode(product.category_id ? 'existing' : 'new');
     setShowDialog(true);
@@ -268,7 +283,12 @@ export default function ProductManagement() {
       category_name: '',
       weight: '',
       tags: '',
-      is_active: true
+      is_active: true,
+      // Champs carton
+      sell_by_carton: false,
+      units_per_carton: '',
+      price_carton: '',
+      carton_sku: ''
     });
     setEditingProduct(null);
     setSelectedImages([]);
@@ -955,6 +975,75 @@ export default function ProductManagement() {
                 <Label htmlFor="is_active" className="cursor-pointer">
                   Produit actif et visible
                 </Label>
+              </div>
+
+              {/* Section Vente par Carton */}
+              <div className="border border-border/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="sell_by_carton" className="text-base font-semibold cursor-pointer">
+                      📦 Vente par carton
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Permet de vendre ce produit en gros par carton
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    id="sell_by_carton"
+                    checked={formData.sell_by_carton}
+                    onChange={(e) => setFormData({ ...formData, sell_by_carton: e.target.checked })}
+                    className="h-5 w-5"
+                  />
+                </div>
+
+                {formData.sell_by_carton && (
+                  <div className="space-y-4 pt-3 border-t border-border/30">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="units_per_carton">Unités par carton *</Label>
+                        <Input
+                          id="units_per_carton"
+                          type="number"
+                          min="1"
+                          value={formData.units_per_carton}
+                          onChange={(e) => setFormData({ ...formData, units_per_carton: e.target.value })}
+                          placeholder="Ex: 12, 24, 50"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Nombre d'unités dans un carton
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="price_carton">Prix du carton (GNF) *</Label>
+                        <Input
+                          id="price_carton"
+                          type="number"
+                          value={formData.price_carton}
+                          onChange={(e) => setFormData({ ...formData, price_carton: e.target.value })}
+                          placeholder="Ex: 230000"
+                        />
+                        {formData.units_per_carton && formData.price && (
+                          <p className="text-xs text-green-600">
+                            Économie: {(
+                              (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) - 
+                              parseFloat(formData.price_carton || '0')
+                            ).toLocaleString()} GNF vs unités
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="carton_sku">Code SKU Carton (optionnel)</Label>
+                      <Input
+                        id="carton_sku"
+                        value={formData.carton_sku}
+                        onChange={(e) => setFormData({ ...formData, carton_sku: e.target.value })}
+                        placeholder="Ex: CART-001"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
 

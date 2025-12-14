@@ -6523,6 +6523,7 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          carton_sku: string | null
           category_id: string | null
           compare_price: number | null
           cost_price: number | null
@@ -6538,20 +6539,24 @@ export type Database = {
           low_stock_threshold: number | null
           name: string
           price: number
+          price_carton: number | null
           public_id: string | null
           rating: number | null
           reviews_count: number | null
+          sell_by_carton: boolean | null
           seo_description: string | null
           seo_title: string | null
           sku: string | null
           stock_quantity: number | null
           tags: string[] | null
+          units_per_carton: number | null
           updated_at: string | null
           vendor_id: string
           weight: number | null
         }
         Insert: {
           barcode?: string | null
+          carton_sku?: string | null
           category_id?: string | null
           compare_price?: number | null
           cost_price?: number | null
@@ -6567,20 +6572,24 @@ export type Database = {
           low_stock_threshold?: number | null
           name: string
           price: number
+          price_carton?: number | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
+          sell_by_carton?: boolean | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
+          units_per_carton?: number | null
           updated_at?: string | null
           vendor_id: string
           weight?: number | null
         }
         Update: {
           barcode?: string | null
+          carton_sku?: string | null
           category_id?: string | null
           compare_price?: number | null
           cost_price?: number | null
@@ -6596,14 +6605,17 @@ export type Database = {
           low_stock_threshold?: number | null
           name?: string
           price?: number
+          price_carton?: number | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
+          sell_by_carton?: boolean | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
+          units_per_carton?: number | null
           updated_at?: string | null
           vendor_id?: string
           weight?: number | null

@@ -58,11 +58,18 @@ interface Product {
   categoryId?: string | null;
   stock: number;
   barcode?: string;
+  // Champs carton
+  sell_by_carton?: boolean;
+  units_per_carton?: number;
+  price_carton?: number;
 }
 
 interface CartItem extends Product {
   quantity: number;
   total: number;
+  // Type de vente (unité ou carton)
+  saleType?: 'unit' | 'carton';
+  displayQuantity?: string; // Pour afficher "1 carton (24 unités)"
 }
 
 interface Customer {
@@ -147,7 +154,10 @@ export function POSSystem() {
           sku,
           images,
           category_id,
-          categories(id, name)
+          categories(id, name),
+          sell_by_carton,
+          units_per_carton,
+          price_carton
         `)
         .eq('vendor_id', vendorId)
         .eq('is_active', true)
@@ -163,7 +173,11 @@ export function POSSystem() {
         categoryId: p.categories?.id || null,
         stock: Number(p.stock_quantity || 0),
         barcode: p.barcode || p.sku || undefined,
-        images: p.images || []
+        images: p.images || [],
+        // Champs carton
+        sell_by_carton: p.sell_by_carton || false,
+        units_per_carton: Number(p.units_per_carton || 1),
+        price_carton: Number(p.price_carton || 0)
       }));
 
       setProducts(formattedProducts);
@@ -238,7 +252,7 @@ export function POSSystem() {
   const total = Math.max(0, totalBeforeDiscount - (totalBeforeDiscount * (discount || 0)) / 100);
   const change = receivedAmount - total;
 
-  // Fonction d'ajout au panier avec calcul automatique
+  // Fonction d'ajout au panier avec calcul automatique (unités)
   const addToCart = (product: Product, quantity: number = 1) => {
     if (product.stock <= 0) {
       toast.error('Produit en rupture de stock');
@@ -252,7 +266,7 @@ export function POSSystem() {
     });
 
     setCart(prev => {
-      const existingItem = prev.find(item => item.id === product.id);
+      const existingItem = prev.find(item => item.id === product.id && item.saleType !== 'carton');
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity;
         if (newQuantity > product.stock) {
@@ -260,15 +274,69 @@ export function POSSystem() {
           return prev;
         }
         return prev.map(item =>
-          item.id === product.id
+          item.id === product.id && item.saleType !== 'carton'
             ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
             : item
         );
       }
-      return [...prev, { ...product, quantity, total: product.price * quantity }];
+      return [...prev, { ...product, quantity, total: product.price * quantity, saleType: 'unit' as const }];
     });
     
     toast.success(`${product.name} ajouté au panier`);
+  };
+
+  // Fonction d'ajout au panier par carton
+  const addToCartByCarton = (product: Product, cartonCount: number = 1) => {
+    if (!product.sell_by_carton || !product.units_per_carton) {
+      toast.error('Ce produit ne peut pas être vendu par carton');
+      return;
+    }
+
+    const unitsNeeded = cartonCount * product.units_per_carton;
+    if (product.stock < unitsNeeded) {
+      toast.error(`Stock insuffisant pour ${cartonCount} carton(s). Stock disponible: ${product.stock} unités (${Math.floor(product.stock / product.units_per_carton)} cartons)`);
+      return;
+    }
+
+    // Mettre à jour les produits récemment sélectionnés (max 3)
+    setRecentlySelected(prev => {
+      const filtered = prev.filter(id => id !== product.id);
+      return [product.id, ...filtered].slice(0, 3);
+    });
+
+    const pricePerCarton = product.price_carton || (product.price * product.units_per_carton);
+
+    setCart(prev => {
+      const existingCartonItem = prev.find(item => item.id === product.id && item.saleType === 'carton');
+      if (existingCartonItem) {
+        const newCartonCount = (existingCartonItem.quantity / product.units_per_carton) + cartonCount;
+        const newUnitsQuantity = newCartonCount * product.units_per_carton;
+        if (newUnitsQuantity > product.stock) {
+          toast.error('Stock insuffisant');
+          return prev;
+        }
+        return prev.map(item =>
+          item.id === product.id && item.saleType === 'carton'
+            ? { 
+                ...item, 
+                quantity: newUnitsQuantity, 
+                total: newCartonCount * pricePerCarton,
+                displayQuantity: `${newCartonCount} carton(s) (${newUnitsQuantity} unités)`
+              }
+            : item
+        );
+      }
+      return [...prev, { 
+        ...product, 
+        quantity: unitsNeeded, 
+        total: cartonCount * pricePerCarton, 
+        saleType: 'carton' as const,
+        price: pricePerCarton, // Prix affiché = prix carton
+        displayQuantity: `${cartonCount} carton(s) (${unitsNeeded} unités)`
+      }];
+    });
+    
+    toast.success(`📦 ${cartonCount} carton(s) de ${product.name} ajouté(s)`);
   };
 
   // Mise à jour de quantité avec recalcul automatique
@@ -903,57 +971,94 @@ export function POSSystem() {
                               {product.name}
                             </h3>
                             
-                            {/* Prix */}
+                            {/* Prix unité */}
                             <div className="flex items-baseline gap-1">
                               <span className="text-sm md:text-lg font-bold text-primary">
                                 {product.price.toLocaleString()}
                               </span>
-                              <span className="text-[10px] text-muted-foreground">GNF</span>
+                              <span className="text-[10px] text-muted-foreground">GNF/unité</span>
                             </div>
+
+                            {/* Prix carton si disponible */}
+                            {product.sell_by_carton && product.price_carton && product.units_per_carton && (
+                              <div className="flex items-baseline gap-1 bg-green-50 dark:bg-green-950/30 px-1 py-0.5 rounded">
+                                <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                                  📦 {product.price_carton.toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-green-600/70 dark:text-green-400/70">
+                                  GNF/{product.units_per_carton}u
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Stock disponible (unités + cartons) */}
+                            {product.sell_by_carton && product.units_per_carton && (
+                              <div className="text-[9px] text-muted-foreground">
+                                {Math.floor(product.stock / product.units_per_carton)} cartons dispo
+                              </div>
+                            )}
                             
                             {/* Boutons d'action - Compact */}
-                            <div className="flex gap-1 pt-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const qty = cart.find(item => item.id === product.id)?.quantity || 0;
-                                  if (qty > 0) updateQuantity(product.id, qty - 1);
-                                }}
-                                disabled={!cart.find(item => item.id === product.id)}
-                                className="h-7 w-7 p-0"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              
-                              {/* Bouton pavé numérique pour quantité multiple */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedProductForQuantity(product);
-                                  setShowQuantityKeypad(true);
-                                }}
-                                className="h-7 w-7 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
-                                title="Saisir quantité"
-                              >
-                                <Calculator className="h-3 w-3 text-primary" />
-                              </Button>
-                              
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addToCart(product);
-                                }}
-                                className="flex-1 h-7 text-[10px] md:text-xs font-semibold"
-                              >
-                                <Plus className="h-3 w-3 mr-0.5" />
-                                Ajouter
-                              </Button>
+                            <div className="flex flex-col gap-1 pt-1">
+                              {/* Ligne 1: Quantité + Unité */}
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const qty = cart.find(item => item.id === product.id && item.saleType !== 'carton')?.quantity || 0;
+                                    if (qty > 0) updateQuantity(product.id, qty - 1);
+                                  }}
+                                  disabled={!cart.find(item => item.id === product.id && item.saleType !== 'carton')}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                
+                                {/* Bouton pavé numérique pour quantité multiple */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedProductForQuantity(product);
+                                    setShowQuantityKeypad(true);
+                                  }}
+                                  className="h-7 w-7 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                  title="Saisir quantité"
+                                >
+                                  <Calculator className="h-3 w-3 text-primary" />
+                                </Button>
+                                
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToCart(product);
+                                  }}
+                                  className="flex-1 h-7 text-[10px] md:text-xs font-semibold"
+                                >
+                                  <Plus className="h-3 w-3 mr-0.5" />
+                                  Unité
+                                </Button>
+                              </div>
+
+                              {/* Ligne 2: Bouton Carton si disponible */}
+                              {product.sell_by_carton && product.units_per_carton && product.stock >= product.units_per_carton && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToCartByCarton(product);
+                                  }}
+                                  className="w-full h-7 text-[10px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400"
+                                >
+                                  📦 +1 Carton ({product.units_per_carton}u)
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -1015,12 +1120,23 @@ export function POSSystem() {
                 ) : (
                   <div className="space-y-2">
                     {cart.map(item => (
-                      <Card key={item.id} className="bg-background/80 border border-border/50">
+                      <Card key={`${item.id}-${item.saleType || 'unit'}`} className="bg-background/80 border border-border/50">
                         <CardContent className="p-2 md:p-3">
                           <div className="flex justify-between items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-xs md:text-sm line-clamp-1">{item.name}</h4>
-                              <p className="text-[10px] md:text-xs text-muted-foreground">{item.price.toLocaleString()} × {item.quantity}</p>
+                              <h4 className="font-semibold text-xs md:text-sm line-clamp-1">
+                                {item.saleType === 'carton' && '📦 '}
+                                {item.name}
+                              </h4>
+                              <p className="text-[10px] md:text-xs text-muted-foreground">
+                                {item.saleType === 'carton' && item.displayQuantity
+                                  ? item.displayQuantity
+                                  : `${item.price.toLocaleString()} × ${item.quantity}`
+                                }
+                              </p>
+                              {item.saleType === 'carton' && (
+                                <span className="text-[9px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1 rounded">Carton</span>
+                              )}
                             </div>
                             <Button 
                               variant="ghost" 
@@ -1046,7 +1162,7 @@ export function POSSystem() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => addToCart(item)}
+                                onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
                                 className="h-6 w-6 p-0"
                               >
                                 <Plus className="h-3 w-3" />

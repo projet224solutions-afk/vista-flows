@@ -24,6 +24,8 @@ interface CartItem {
   price: number;
   quantity: number;
   total: number;
+  saleType?: 'unit' | 'carton';
+  displayQuantity?: string;
 }
 
 interface POSReceiptProps {
@@ -181,12 +183,21 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             <div className="space-y-2 mb-4">
               <p className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
               {orderData.items.map((item, index) => (
-                <div key={item.id} className="flex justify-between items-start py-1">
+                <div key={`${item.id}-${item.saleType || 'unit'}`} className="flex justify-between items-start py-1">
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground text-base">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.quantity} × {item.price.toLocaleString()} {orderData.currency}
+                    <p className="font-semibold text-foreground text-base">
+                      {item.saleType === 'carton' && '📦 '}
+                      {item.name}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.saleType === 'carton' && item.displayQuantity 
+                        ? item.displayQuantity
+                        : `${item.quantity} unité(s)`
+                      } × {item.price.toLocaleString()} {orderData.currency}
+                    </p>
+                    {item.saleType === 'carton' && (
+                      <p className="text-xs text-green-600 font-medium">Vente par carton</p>
+                    )}
                   </div>
                   <p className="font-bold text-foreground text-base">
                     {item.total.toLocaleString()} {orderData.currency}
