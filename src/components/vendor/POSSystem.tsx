@@ -43,6 +43,8 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
+import { POSReceipt } from './pos/POSReceipt';
 
 interface Product {
   id: string;
@@ -187,6 +189,9 @@ export function POSSystem() {
   const [discount, setDiscount] = useState<number>(0);
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [showKeypad, setShowKeypad] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastOrderNumber, setLastOrderNumber] = useState('');
   
   // États pour personnalisation
   const [companyName] = useState('Vista Commerce Pro');
@@ -415,15 +420,14 @@ export function POSSystem() {
         }
       }
 
-      toast.success('Paiement effectué avec succès!', {
-        description: `Commande ${order.order_number || '#' + order.id.substring(0, 8)} de ${total.toFixed(0)} ${settings?.currency || 'GNF'} validée`
-      });
-
-      clearCart();
+      // Sauvegarder le numéro de commande pour le reçu
+      setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+      
+      // Afficher le reçu
       setShowOrderSummary(false);
-      setReceivedAmount(0);
-      setDiscount(0);
-      setNumericInput('');
+      setShowReceipt(true);
+      
+      toast.success('Paiement effectué avec succès!');
       
       // Recharger la liste des produits pour refléter le stock
       await loadVendorProducts();
@@ -1003,116 +1007,48 @@ export function POSSystem() {
                     </div>
                   </div>
 
-                  {/* Saisie montant reçu pour espèces avec pavé numérique */}
+                  {/* Saisie montant reçu pour espèces avec bouton pavé numérique */}
                   {paymentMethod === 'cash' && (
                     <div className="space-y-3">
                       <div>
                         <label className="text-sm font-medium mb-2 block">Montant reçu</label>
-                        <Input
-                          type="text"
-                          value={numericInput || receivedAmount || ''}
-                          readOnly
-                          placeholder="0"
-                          className="mb-2 text-right text-xl font-mono font-bold"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            value={numericInput || receivedAmount || ''}
+                            readOnly
+                            placeholder="0"
+                            className="flex-1 text-right text-xl font-mono font-bold"
+                          />
+                          {/* Bouton pavé numérique */}
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowKeypad(true)}
+                            className="h-12 w-12 p-0 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 hover:border-primary hover:bg-primary/20 transition-all shadow-md"
+                          >
+                            <Calculator className="h-5 w-5 text-primary" />
+                          </Button>
+                        </div>
                         {receivedAmount > 0 && (
-                          <div className="text-sm text-muted-foreground">
-                            Rendu: <span className={change >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {change.toLocaleString()} GNF
-                            </span>
+                          <div className={`text-sm mt-2 px-3 py-2 rounded-lg ${
+                            change >= 0 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            Rendu: <span className="font-bold">{change.toLocaleString()} GNF</span>
                           </div>
                         )}
-                      </div>
-
-                      {/* Pavé numérique (Calculatrice) - Ultra Pro Design */}
-                      <div className="bg-gradient-to-br from-muted/30 via-muted/20 to-background rounded-xl p-4 border border-border/50 shadow-inner">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                              <Calculator className="h-4 w-4 text-primary" />
-                            </div>
-                            <span className="text-sm font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                              Pavé numérique
-                            </span>
-                          </div>
-                          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        </div>
-                        
-                        {/* Grille numérique style calculatrice pro */}
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                          {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((num) => (
-                            <Button
-                              key={num}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleNumericInput(num)}
-                              className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm hover:shadow-md"
-                            >
-                              {num}
-                            </Button>
-                          ))}
-                        </div>
-                        
-                        {/* Ligne spéciale: 0, 00, point */}
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleNumericInput('0')}
-                            className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
-                          >
-                            0
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleNumericInput('00')}
-                            className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
-                          >
-                            00
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleNumericInput('.')}
-                            className="h-12 text-xl font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
-                          >
-                            •
-                          </Button>
-                        </div>
-                        
-                        {/* Actions: Effacer / Valider */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleNumericInput('clear')}
-                            className="h-12 text-sm font-semibold border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-all duration-150"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Effacer
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleNumericInput('enter')}
-                            className="h-12 text-sm font-semibold bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-md hover:shadow-lg transition-all duration-150"
-                          >
-                            <CheckSquare className="h-4 w-4 mr-2" />
-                            Valider
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Bouton de validation */}
+                  {/* Bouton de validation - Sans condition de montant obligatoire */}
                   <Button 
                     onClick={validateOrder}
                     className="w-full h-12 text-lg font-bold shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
-                    disabled={paymentMethod === 'cash' && receivedAmount < total}
                   >
                     <CheckSquare className="h-5 w-5 mr-2" />
-                    Valider la commande - {total.toLocaleString()} GNF
+                    Valider - {total.toLocaleString()} GNF
                   </Button>
                 </div>
               </div>
@@ -1188,6 +1124,47 @@ export function POSSystem() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Popup pavé numérique */}
+      <NumericKeypadPopup
+        open={showKeypad}
+        onOpenChange={setShowKeypad}
+        numericInput={numericInput}
+        onNumericInput={handleNumericInput}
+        receivedAmount={receivedAmount}
+        total={total}
+        change={change}
+        currency={settings?.currency || 'GNF'}
+      />
+
+      {/* Reçu téléchargeable après paiement */}
+      <POSReceipt
+        open={showReceipt}
+        onClose={() => {
+          setShowReceipt(false);
+          // Reset après fermeture du reçu
+          clearCart();
+          setReceivedAmount(0);
+          setDiscount(0);
+          setNumericInput('');
+        }}
+        orderData={{
+          orderNumber: lastOrderNumber,
+          items: cart,
+          subtotal,
+          tax,
+          taxRate,
+          taxEnabled,
+          discount,
+          total,
+          paymentMethod,
+          receivedAmount,
+          change,
+          currency: settings?.currency || 'GNF',
+          companyName: settings?.company_name || 'Vista Commerce Pro',
+          receiptFooter: settings?.receipt_footer
+        }}
+      />
     </div>
   );
 }
