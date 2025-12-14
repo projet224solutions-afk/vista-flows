@@ -715,11 +715,11 @@ export function POSSystem() {
       {/* Mobile: Tabs pour basculer entre Produits et Panier */}
       {isMobile && (
         <div className="bg-card border-b border-border/50 px-2 py-2 sticky top-0 z-30">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex gap-2">
             <Button
               variant={mobileTab === 'products' ? 'default' : 'outline'}
               onClick={() => setMobileTab('products')}
-              className="h-10"
+              className="h-10 flex-1"
             >
               <Package className="h-4 w-4 mr-2" />
               Produits
@@ -727,25 +727,16 @@ export function POSSystem() {
             <Button
               variant={mobileTab === 'cart' ? 'default' : 'outline'}
               onClick={() => setMobileTab('cart')}
-              className={`h-12 relative px-5 transition-all duration-200 ${
+              className={`h-10 relative px-3 transition-all duration-200 ${
                 mobileTab === 'cart' 
-                  ? 'bg-gradient-to-r from-primary to-primary/80 shadow-lg scale-105' 
+                  ? 'bg-gradient-to-r from-primary to-primary/80 shadow-lg' 
                   : 'hover:border-primary/50 hover:bg-primary/5'
               }`}
             >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
-                mobileTab === 'cart' 
-                  ? 'bg-white/20' 
-                  : 'bg-gradient-to-br from-primary/20 to-primary/10'
-              }`}>
-                <ShoppingCart className={`h-4 w-4 ${mobileTab === 'cart' ? 'text-white' : 'text-primary'}`} />
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="font-semibold text-sm">Panier</span>
-                <span className="text-[10px] opacity-70">{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</span>
-              </div>
+              <ShoppingCart className={`h-4 w-4 mr-1 ${mobileTab === 'cart' ? 'text-white' : 'text-primary'}`} />
+              <span className="font-semibold text-sm">Panier</span>
               {cart.length > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-6 w-6 p-0 flex items-center justify-center text-[11px] font-bold bg-gradient-to-br from-orange-500 to-red-500 border-2 border-background shadow-md animate-pulse">
+                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] font-bold bg-gradient-to-br from-orange-500 to-red-500 border-2 border-background shadow-md">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </Badge>
               )}
@@ -801,6 +792,7 @@ export function POSSystem() {
               </div>
               
               {/* Filtres par catégorie - Scroll horizontal sur mobile */}
+              {/* Filtres par catégorie - Limité à 6 catégories principales */}
               <div className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-1 scrollbar-hide max-w-full">
                 {categoriesLoading ? (
                   <div className="text-xs text-muted-foreground">Chargement...</div>
@@ -810,21 +802,24 @@ export function POSSystem() {
                       variant={selectedCategory === 'all' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory('all')}
-                      className="shadow-sm transition-all duration-200 hover:shadow-md"
+                      className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs"
                     >
-                      Tous les produits
+                      Tous
                     </Button>
-                    {categories.map(category => (
-                      <Button
-                        key={category.id}
-                        variant={selectedCategory === category.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedCategory(category.id)}
-                        className="shadow-sm transition-all duration-200 hover:shadow-md"
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
+                    {categories
+                      .filter(cat => ['Alimentation', 'Animalerie', 'Audio', 'Automobile', 'Beauté & Santé'].includes(cat.name))
+                      .slice(0, 5)
+                      .map(category => (
+                        <Button
+                          key={category.id}
+                          variant={selectedCategory === category.id ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedCategory(category.id)}
+                          className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs"
+                        >
+                          {category.name}
+                        </Button>
+                      ))}
                   </>
                 )}
               </div>
