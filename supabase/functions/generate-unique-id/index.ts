@@ -53,7 +53,7 @@ const SCOPE_PREFIX_MAP: Record<string, string> = {
 };
 
 /**
- * Génère un ID séquentiel standardisé via la fonction SQL
+ * Génère un ID séquentiel standardisé avec vérification d'unicité
  */
 async function generateStandardId(
   supabase: any,
@@ -61,25 +61,48 @@ async function generateStandardId(
 ): Promise<string> {
   console.log(`🔄 Génération ID standardisé avec préfixe: ${prefix}`);
 
-  try {
-    const { data, error } = await supabase
-      .rpc('generate_sequential_id', { p_prefix: prefix });
+  const maxRetries = 5;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const { data, error } = await supabase
+        .rpc('generate_sequential_id', { p_prefix: prefix });
 
-    if (error) {
-      console.error('❌ Erreur génération ID:', error);
-      throw new Error(`Erreur génération ID: ${error.message}`);
+      if (error) {
+        console.error('❌ Erreur génération ID:', error);
+        throw new Error(`Erreur génération ID: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('Aucun ID généré');
+      }
+
+      // Vérifier que l'ID n'existe pas déjà dans products
+      if (prefix === 'PRD') {
+        const { data: existing } = await supabase
+          .from('products')
+          .select('id')
+          .eq('public_id', data)
+          .maybeSingle();
+
+        if (existing) {
+          console.warn(`⚠️ ID ${data} existe déjà, tentative ${attempt + 1}/${maxRetries}`);
+          continue;
+        }
+      }
+
+      console.log(`✅ ID unique généré: ${data}`);
+      return data;
+    } catch (error: any) {
+      console.error(`❌ Exception génération ID (tentative ${attempt + 1}):`, error);
+      if (attempt === maxRetries - 1) throw error;
     }
-
-    if (!data) {
-      throw new Error('Aucun ID généré');
-    }
-
-    console.log(`✅ ID généré: ${data}`);
-    return data;
-  } catch (error: any) {
-    console.error(`❌ Exception génération ID:`, error);
-    throw error;
   }
+  
+  // Fallback: générer un ID avec timestamp
+  const fallbackId = `${prefix}${Date.now().toString().slice(-8)}`;
+  console.log(`⚠️ Fallback ID généré: ${fallbackId}`);
+  return fallbackId;
 }
 
 serve(async (req) => {
