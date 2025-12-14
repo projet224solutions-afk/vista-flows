@@ -127,6 +127,15 @@ export function useProductActions({
   }, []);
 
   /**
+   * Générer un SKU unique automatiquement
+   */
+  const generateUniqueSKU = useCallback(async (): Promise<string> => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `SKU-${timestamp}-${random}`;
+  }, []);
+
+  /**
    * Créer un nouveau produit
    */
   const createProduct = useCallback(async (
@@ -152,6 +161,9 @@ export function useProductActions({
         return { success: false };
       }
 
+      // Générer SKU unique si non fourni
+      const sku = formData.sku?.trim() || await generateUniqueSKU();
+
       // Préparer données produit
       const productData = {
         public_id,
@@ -160,7 +172,7 @@ export function useProductActions({
         price: parseFloat(formData.price),
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
-        sku: formData.sku || null,
+        sku,
         barcode: formData.barcode || null,
         stock_quantity: parseInt(formData.stock_quantity),
         low_stock_threshold: parseInt(formData.low_stock_threshold),
@@ -330,13 +342,16 @@ export function useProductActions({
         return { success: false };
       }
 
+      // Générer un nouveau SKU unique pour la copie
+      const newSKU = await generateUniqueSKU();
+
       // Créer copie
       const duplicateData = {
         ...original,
         id: undefined, // Laisser DB générer nouvel ID
         public_id,
         name: `${original.name} (Copie)`,
-        sku: original.sku ? `${original.sku}-COPY` : null,
+        sku: newSKU,
         barcode: null, // Ne pas dupliquer barcode
         created_at: undefined,
         updated_at: undefined
