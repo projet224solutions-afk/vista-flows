@@ -35,6 +35,8 @@ import MarketingManagement from '@/components/vendor/MarketingManagement';
 import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
 import CommissionsManagement from '@/components/vendor/CommissionsManagement';
 import AgentManagement from '@/components/vendor/AgentManagement';
+import AffiliateManagement from '@/components/vendor/AffiliateManagement';
+import { VendorDebtManagement } from '@/components/vendor/debts/VendorDebtManagement';
 
 export default function VendorAgentInterface() {
   const { token } = useParams<{ token: string }>();
@@ -219,10 +221,13 @@ export default function VendorAgentInterface() {
         <ScrollArea className="h-[calc(100vh-200px)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow flex-wrap">
+          <TabsList className="bg-white shadow flex-wrap gap-1">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             {hasPermission('view_dashboard') && (
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            )}
+            {hasPermission('view_analytics') && (
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
             )}
             {hasPermission('access_pos') && (
               <TabsTrigger value="pos">POS</TabsTrigger>
@@ -239,8 +244,17 @@ export default function VendorAgentInterface() {
             {hasPermission('manage_warehouse') && (
               <TabsTrigger value="warehouse">Entrepôt</TabsTrigger>
             )}
+            {hasPermission('manage_suppliers') && (
+              <TabsTrigger value="suppliers">Fournisseurs</TabsTrigger>
+            )}
             {hasPermission('manage_clients') && (
               <TabsTrigger value="clients">Clients</TabsTrigger>
+            )}
+            {hasPermission('manage_prospects') && (
+              <TabsTrigger value="prospects">Prospects</TabsTrigger>
+            )}
+            {hasPermission('manage_marketing') && (
+              <TabsTrigger value="marketing">Marketing</TabsTrigger>
             )}
             {hasPermission('manage_delivery') && (
               <TabsTrigger value="delivery">Livraisons</TabsTrigger>
@@ -260,15 +274,24 @@ export default function VendorAgentInterface() {
             {hasPermission('manage_debts') && (
               <TabsTrigger value="debts">Dettes</TabsTrigger>
             )}
+            {hasPermission('access_affiliate') && (
+              <TabsTrigger value="affiliate">Affiliation</TabsTrigger>
+            )}
             {hasPermission('access_support') && (
               <TabsTrigger value="support">Support</TabsTrigger>
             )}
             {hasPermission('access_communication') && (
               <TabsTrigger value="communication">Messages</TabsTrigger>
             )}
+            {hasPermission('view_reports') && (
+              <TabsTrigger value="reports">Rapports</TabsTrigger>
+            )}
             <TabsTrigger value="commissions">Commissions</TabsTrigger>
             {hasPermission('manage_agents') && (
               <TabsTrigger value="sub_agents">Agents Secondaires</TabsTrigger>
+            )}
+            {hasPermission('access_settings') && (
+              <TabsTrigger value="settings">Paramètres</TabsTrigger>
             )}
           </TabsList>
 
@@ -663,11 +686,41 @@ export default function VendorAgentInterface() {
           {hasPermission('manage_debts') && (
             <TabsContent value="debts">
               <AgentModuleWrapper>
+                <VendorDebtManagement vendorId={agent.vendor_id} />
+              </AgentModuleWrapper>
+            </TabsContent>
+          )}
+
+          {/* Analytics Tab */}
+          {hasPermission('view_analytics') && (
+            <TabsContent value="analytics">
+              <AgentModuleWrapper>
+                <VendorAnalyticsDashboard />
+              </AgentModuleWrapper>
+            </TabsContent>
+          )}
+
+          {/* Affiliate Tab */}
+          {hasPermission('access_affiliate') && (
+            <TabsContent value="affiliate">
+              <AgentModuleWrapper>
+                <AffiliateManagement />
+              </AgentModuleWrapper>
+            </TabsContent>
+          )}
+
+          {/* Reports Tab */}
+          {hasPermission('view_reports') && (
+            <TabsContent value="reports">
+              <AgentModuleWrapper>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Gestion des Créances</CardTitle>
-                    <CardDescription>Module en cours de maintenance</CardDescription>
+                    <CardTitle>Rapports & Analyses</CardTitle>
+                    <CardDescription>Consultez les rapports détaillés de l'activité</CardDescription>
                   </CardHeader>
+                  <CardContent>
+                    <VendorAnalyticsDashboard />
+                  </CardContent>
                 </Card>
               </AgentModuleWrapper>
             </TabsContent>
@@ -685,6 +738,23 @@ export default function VendorAgentInterface() {
             <TabsContent value="sub_agents">
               <AgentModuleWrapper>
                 <AgentManagement />
+              </AgentModuleWrapper>
+            </TabsContent>
+          )}
+
+          {/* Settings Tab */}
+          {hasPermission('access_settings') && (
+            <TabsContent value="settings">
+              <AgentModuleWrapper>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Paramètres Agent</CardTitle>
+                    <CardDescription>Configurez vos préférences et paramètres</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">Paramètres limités disponibles pour les agents</p>
+                  </CardContent>
+                </Card>
               </AgentModuleWrapper>
             </TabsContent>
           )}
