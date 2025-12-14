@@ -95,6 +95,7 @@ export default function ProductManagement() {
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [categoryMode, setCategoryMode] = useState<'existing' | 'new'>('existing');
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -170,19 +171,33 @@ export default function ProductManagement() {
       return;
     }
 
+    if (saving) return;
+    setSaving(true);
+
     try {
+      console.log('[ProductSave] Starting save...', { isEditing: !!editingProduct, formData });
+      
       if (editingProduct) {
-        await updateProduct(
+        const result = await updateProduct(
           editingProduct.id,
           formData,
           selectedImages,
           editingProduct.images || []
         );
+        console.log('[ProductSave] Update result:', result);
       } else {
-        await createProduct(formData, selectedImages);
+        const result = await createProduct(formData, selectedImages);
+        console.log('[ProductSave] Create result:', result);
+        if (!result.success) {
+          console.error('[ProductSave] Creation failed');
+        }
       }
     } catch (error: any) {
+      console.error('[ProductSave] Exception:', error);
       captureError('product', 'Failed to save product', error);
+      toast.error(`Erreur: ${error.message || 'Échec de la sauvegarde'}`);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1026,9 +1041,18 @@ export default function ProductManagement() {
             >
               Annuler
             </Button>
-            <Button onClick={handleSave} className="flex-1">
-              <Save className="h-4 w-4 mr-2" />
-              {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
+            <Button onClick={handleSave} className="flex-1" disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {editingProduct ? 'Mise à jour...' : 'Création...'}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
