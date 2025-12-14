@@ -1298,10 +1298,10 @@ const watchId = navigator.geolocation.watchPosition(
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 pb-20">
-            {/* Header conducteur */}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 pb-20 px-2 md:px-0">
+            {/* Header conducteur - Mobile optimisé */}
             <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-                <div className="px-4 py-4">
+                <div className="px-2 md:px-4 py-3 md:py-4">
                                         {/* Bannière d'abonnement */}
                                         <DriverSubscriptionBanner />
                                         {/* Bannière d'erreur unifiée */}
@@ -1319,31 +1319,30 @@ const watchId = navigator.geolocation.watchPosition(
                                                 onAction={clear}
                                             />
                                         )}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="flex items-center gap-3 mb-1 flex-wrap">
-                                <h1 className="text-xl font-bold text-gray-900">
-                                    Conducteur {profile?.first_name || 'Taxi-Moto'}
+                    <div className="flex items-start md:items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h1 className="text-base md:text-xl font-bold text-gray-900 truncate">
+                                    Conducteur {profile?.first_name || ''}
                                 </h1>
-                                <UserIdDisplay layout="horizontal" showBadge={true} className="text-sm" />
-                                <DriverTutorial />
+                                <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs md:text-sm" />
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span className="text-sm text-gray-600">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                <span className="text-xs md:text-sm text-gray-600">
                                     {isOnline ? 'En ligne' : 'Hors ligne'}
                                 </span>
                                 
                                 {location && (
                                     <>
                                         <span className="text-gray-400">•</span>
-                                        <span className="text-xs text-gray-500">GPS actif</span>
+                                        <span className="text-[10px] md:text-xs text-gray-500">GPS actif</span>
                                     </>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                             <DriverSubscriptionButton />
                             
                             {/* Bouton SOS d'urgence */}
@@ -1362,8 +1361,8 @@ const watchId = navigator.geolocation.watchPosition(
                             <QuickTransferButton variant="ghost" size="icon" showText={false} />
                             {unreadCount > 0 && (
                                 <div className="relative">
-                                    <Bell className="w-5 h-5 text-gray-600" />
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                    <Bell className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-3.5 h-3.5 md:w-4 md:h-4 flex items-center justify-center">
                                         {unreadCount}
                                     </span>
                                 </div>
@@ -1372,10 +1371,15 @@ const watchId = navigator.geolocation.watchPosition(
                                 onClick={handleSignOut}
                                 variant="outline"
                                 size="sm"
+                                className="h-8 w-8 md:h-9 md:w-auto p-0 md:px-3"
                             >
                                 <LogOut className="w-4 h-4" />
                             </Button>
                         </div>
+                    </div>
+                    {/* Tutorial button visible on mobile */}
+                    <div className="mt-2 md:hidden">
+                        <DriverTutorial />
                     </div>
                 </div>
             </header>
@@ -1442,37 +1446,37 @@ const watchId = navigator.geolocation.watchPosition(
                 </div>
             )}
 
-            {/* Navigation par onglets */}
-            <div className="px-4 mt-4">
+            {/* Navigation par onglets - Mobile optimisé */}
+            <div className="px-2 md:px-4 mt-3 md:mt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm relative">
-                        <TabsTrigger value="dashboard">
-                            <TrendingUp className="w-4 h-4 mr-1" />
+                    <TabsList className="w-full overflow-x-auto flex md:grid md:grid-cols-5 bg-white/80 backdrop-blur-sm scrollbar-hide h-10 md:h-auto">
+                        <TabsTrigger value="dashboard" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
+                            <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
                             <span className="hidden sm:inline">Dashboard</span>
                         </TabsTrigger>
-                        <TabsTrigger value="navigation" className="relative">
-                            <Navigation className="w-4 h-4 mr-1" />
+                        <TabsTrigger value="navigation" className="relative flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
+                            <Navigation className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
                             <span className="hidden sm:inline">Course</span>
                             {activeRide && (
-                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse border-2 border-white"></span>
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full animate-pulse border-2 border-white"></span>
                             )}
                         </TabsTrigger>
                         
                         {/* Bouton de tracking entre Course et Navigation */}
-                        <div className="flex items-center justify-center border-x border-border/50">
+                        <div className="flex items-center justify-center border-x border-border/50 flex-shrink-0 px-1">
                             <UserTrackerButton />
                         </div>
                         
-                        <TabsTrigger value="gps-navigation">
-                            <MapPin className="w-4 h-4 mr-1" />
+                        <TabsTrigger value="gps-navigation" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
+                            <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
                             <span className="hidden sm:inline">Navigation</span>
                         </TabsTrigger>
-                        <TabsTrigger value="earnings">
-                            <DollarSign className="w-4 h-4 mr-1" />
+                        <TabsTrigger value="earnings" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
+                            <DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
                             <span className="hidden sm:inline">Gains</span>
                         </TabsTrigger>
-                        <TabsTrigger value="settings">
-                            <Settings className="w-4 h-4 mr-1" />
+                        <TabsTrigger value="settings" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
+                            <Settings className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
                             <span className="hidden sm:inline">Réglages</span>
                         </TabsTrigger>
                     </TabsList>
