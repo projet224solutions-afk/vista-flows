@@ -1,9 +1,9 @@
 /**
- * PRODUCT MANAGEMENT - VERSION REFACTORISÉE
- * Utilise useProductActions pour CRUD (1846 → ~350 lignes, réduction de 81%)
+ * PRODUCT MANAGEMENT - VERSION REFACTORISÉE & OPTIMISÉE
+ * Interface professionnelle avec gestion IA améliorée
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useProductActions } from "@/hooks/useProductActions";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
@@ -20,9 +21,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PublicIdBadge } from "@/components/PublicIdBadge";
 import { 
-  Package, Plus, Search, Filter, Edit, Trash2, Star, 
-  Eye, ShoppingCart, TrendingUp, Camera, Save, X, Copy,
-  Sparkles, Wand2, Loader2, ImagePlus
+  Package, Plus, Search, Filter, Edit, Trash2,
+  ShoppingCart, TrendingUp, Camera, Save, X, Copy,
+  Sparkles, Loader2, ImagePlus, Tags, FolderOpen
 } from "lucide-react";
 
 interface Product {
@@ -62,7 +63,6 @@ export default function ProductManagement() {
     updateProduct,
     deleteProduct,
     duplicateProduct,
-    bulkUpdateStock
   } = useProductActions({
     vendorId,
     onProductCreated: () => {
@@ -87,12 +87,14 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [lowStockFilter, setLowStockFilter] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [categoryMode, setCategoryMode] = useState<'existing' | 'new'>('existing');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -170,7 +172,6 @@ export default function ProductManagement() {
 
     try {
       if (editingProduct) {
-        // Update existing product
         await updateProduct(
           editingProduct.id,
           formData,
@@ -178,7 +179,6 @@ export default function ProductManagement() {
           editingProduct.images || []
         );
       } else {
-        // Create new product
         await createProduct(formData, selectedImages);
       }
     } catch (error: any) {
@@ -204,6 +204,7 @@ export default function ProductManagement() {
       tags: product.tags?.join(', ') || '',
       is_active: product.is_active
     });
+    setCategoryMode(product.category_id ? 'existing' : 'new');
     setShowDialog(true);
   };
 
@@ -248,6 +249,7 @@ export default function ProductManagement() {
     });
     setEditingProduct(null);
     setSelectedImages([]);
+    setCategoryMode('existing');
   };
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,7 +281,9 @@ export default function ProductManagement() {
 
     try {
       setGeneratingDescription(true);
-      const categoryName = formData.category_id 
+      toast.info('🤖 Génération IA en cours...');
+      
+      const categoryName = categoryMode === 'existing' && formData.category_id 
         ? categories.find(c => c.id === formData.category_id)?.name 
         : formData.category_name || undefined;
 
@@ -295,7 +299,9 @@ export default function ProductManagement() {
 
       if (data?.description) {
         setFormData(prev => ({ ...prev, description: data.description }));
-        toast.success('Description générée par IA');
+        toast.success('✅ Description générée par IA');
+      } else if (data?.error) {
+        throw new Error(data.error);
       }
     } catch (error: any) {
       console.error('Erreur génération description:', error);
@@ -313,7 +319,9 @@ export default function ProductManagement() {
 
     try {
       setGeneratingImage(true);
-      const categoryName = formData.category_id 
+      toast.info('🎨 Génération image IA en cours...');
+      
+      const categoryName = categoryMode === 'existing' && formData.category_id 
         ? categories.find(c => c.id === formData.category_id)?.name 
         : formData.category_name || undefined;
 
@@ -333,7 +341,9 @@ export default function ProductManagement() {
         const blob = await response.blob();
         const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
         setSelectedImages(prev => [...prev, file]);
-        toast.success('Image générée par IA');
+        toast.success('✅ Image générée par IA');
+      } else if (data?.error) {
+        throw new Error(data.error);
       }
     } catch (error: any) {
       console.error('Erreur génération image:', error);
@@ -344,28 +354,39 @@ export default function ProductManagement() {
   };
 
   // Filtering
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' && product.is_active) ||
-                         (statusFilter === 'inactive' && !product.is_active);
-    
-    const matchesLowStock = !lowStockFilter || 
-                           product.stock_quantity <= product.low_stock_threshold;
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || 
+                           (statusFilter === 'active' && product.is_active) ||
+                           (statusFilter === 'inactive' && !product.is_active);
+      
+      const matchesLowStock = !lowStockFilter || 
+                             product.stock_quantity <= product.low_stock_threshold;
 
-    return matchesSearch && matchesStatus && matchesLowStock;
-  });
+      const matchesCategory = categoryFilter === 'all' || 
+                             product.category_id === categoryFilter;
+
+      return matchesSearch && matchesStatus && matchesLowStock && matchesCategory;
+    });
+  }, [products, searchTerm, statusFilter, lowStockFilter, categoryFilter]);
 
   // Stats
-  const stats = {
+  const stats = useMemo(() => ({
     total: products.length,
     active: products.filter(p => p.is_active).length,
     lowStock: products.filter(p => p.stock_quantity <= p.low_stock_threshold).length,
     totalValue: products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0)
-  };
+  }), [products]);
+
+  // Get unique categories used in products
+  const usedCategories = useMemo(() => {
+    const categoryIds = new Set(products.map(p => p.category_id).filter(Boolean));
+    return categories.filter(c => categoryIds.has(c.id));
+  }, [products, categories]);
 
   if (vendorLoading || loading) {
     return (
@@ -377,7 +398,7 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header - optimisé mobile */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Package className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
@@ -396,7 +417,7 @@ export default function ProductManagement() {
         </Button>
       </div>
 
-      {/* Stats Cards - grille 2x2 sur mobile */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         <Card className="p-2 md:p-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
@@ -444,21 +465,22 @@ export default function ProductManagement() {
         <Card className="p-2 md:p-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
             <CardTitle className="text-xs md:text-sm font-medium">Catégories</CardTitle>
-            <Filter className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+            <FolderOpen className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
-            <div className="text-lg md:text-2xl font-bold">{categories.length}</div>
+            <div className="text-lg md:text-2xl font-bold">{usedCategories.length}</div>
             <p className="text-[10px] md:text-xs text-muted-foreground">
-              Catégories actives
+              Catégories utilisées
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters - optimisé mobile */}
+      {/* Filters */}
       <Card>
         <CardContent className="p-3 md:pt-6 md:p-6">
-          <div className="flex flex-col gap-2 md:gap-4">
+          <div className="flex flex-col gap-3">
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -468,36 +490,63 @@ export default function ProductManagement() {
                 className="pl-10 h-9 md:h-10 text-sm"
               />
             </div>
-            <div className="flex gap-2">
+            
+            {/* Filter Row */}
+            <div className="flex flex-wrap gap-2">
+              {/* Status Filter */}
               <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-                <SelectTrigger className="flex-1 h-9 md:h-10 text-xs md:text-sm">
-                  <SelectValue />
+                <SelectTrigger className="w-[130px] h-9 text-xs md:text-sm">
+                  <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les produits</SelectItem>
+                  <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value="active">Actifs</SelectItem>
                   <SelectItem value="inactive">Inactifs</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Category Filter */}
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[140px] h-9 text-xs md:text-sm">
+                  <FolderOpen className="h-3 w-3 mr-1" />
+                  <SelectValue placeholder="Catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  {usedCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Low Stock Filter */}
               <Button
                 variant={lowStockFilter ? "default" : "outline"}
                 onClick={() => setLowStockFilter(!lowStockFilter)}
-                className="h-9 md:h-10 text-xs md:text-sm px-2 md:px-4"
+                className="h-9 text-xs md:text-sm px-3"
+                size="sm"
               >
-                <Filter className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <Filter className="h-3 w-3 mr-1" />
                 Stock bas
+                {stats.lowStock > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                    {stats.lowStock}
+                  </Badge>
+                )}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Products Grid - 2 colonnes sur mobile */}
+      {/* Products Grid */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            {/* Image plus petite sur mobile */}
-            <div className="aspect-square md:aspect-video bg-muted relative">
+          <Card key={product.id} className="overflow-hidden group hover:shadow-md transition-shadow">
+            {/* Product Image */}
+            <div className="aspect-square bg-muted relative">
               {product.images && product.images[0] ? (
                 <img
                   src={product.images[0]}
@@ -526,20 +575,20 @@ export default function ProductManagement() {
               )}
             </div>
             
-            {/* Info produit compacte sur mobile */}
-            <CardHeader className="p-2 md:p-6 pb-1 md:pb-2">
-              <CardTitle className="text-xs md:text-lg line-clamp-2 leading-tight">{product.name}</CardTitle>
+            {/* Product Info */}
+            <CardHeader className="p-2 md:p-4 pb-1 md:pb-2">
+              <CardTitle className="text-xs md:text-base line-clamp-2 leading-tight">{product.name}</CardTitle>
             </CardHeader>
             
-            <CardContent className="p-2 md:p-6 pt-0 space-y-1 md:space-y-3">
-              {/* Prix */}
+            <CardContent className="p-2 md:p-4 pt-0 space-y-1.5 md:space-y-3">
+              {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <span className="text-sm md:text-2xl font-bold text-primary truncate">
+                <span className="text-sm md:text-xl font-bold text-primary truncate">
                   {new Intl.NumberFormat('fr-GN', {
                     maximumFractionDigits: 0
                   }).format(product.price)} GNF
                 </span>
-                {product.compare_price && (
+                {product.compare_price && product.compare_price > product.price && (
                   <span className="text-[10px] md:text-sm line-through text-muted-foreground">
                     {new Intl.NumberFormat('fr-GN', {
                       maximumFractionDigits: 0
@@ -548,21 +597,15 @@ export default function ProductManagement() {
                 )}
               </div>
               
-              {/* Stock - simplifié sur mobile */}
+              {/* Stock */}
               <div className="flex items-center justify-between text-[10px] md:text-sm">
                 <span className="text-muted-foreground">Stock:</span>
-                <span className="font-medium">{product.stock_quantity}</span>
+                <span className={`font-medium ${product.stock_quantity <= product.low_stock_threshold ? 'text-orange-500' : ''}`}>
+                  {product.stock_quantity} unités
+                </span>
               </div>
 
-              {/* SKU masqué sur mobile */}
-              {product.sku && (
-                <div className="hidden md:flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">SKU:</span>
-                  <span className="font-mono">{product.sku}</span>
-                </div>
-              )}
-
-              {/* Boutons d'action compacts sur mobile */}
+              {/* Action Buttons */}
               <div className="flex gap-1 md:gap-2 pt-1 md:pt-2">
                 <Button
                   size="sm"
@@ -600,6 +643,14 @@ export default function ProductManagement() {
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Aucun produit trouvé</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => { resetForm(); setShowDialog(true); }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Créer votre premier produit
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -608,192 +659,254 @@ export default function ProductManagement() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
               {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nom du produit *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: T-shirt en coton"
-              />
-            </div>
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="info">Informations</TabsTrigger>
+              <TabsTrigger value="pricing">Prix & Stock</TabsTrigger>
+              <TabsTrigger value="media">Images</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="description">Description</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateDescription}
-                  disabled={generatingDescription || !formData.name}
-                >
-                  {generatingDescription ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 mr-2" />
-                  )}
-                  Générer avec IA
-                </Button>
+            {/* Tab 1: Basic Info */}
+            <TabsContent value="info" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom du produit *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: T-shirt en coton premium"
+                />
               </div>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description détaillée du produit..."
-                rows={3}
-              />
-            </div>
 
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Prix de vente *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="50000"
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Description</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateDescription}
+                    disabled={generatingDescription || !formData.name}
+                  >
+                    {generatingDescription ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Générer avec IA
+                  </Button>
+                </div>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Description détaillée du produit..."
+                  rows={4}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="compare_price">Prix comparé</Label>
-                <Input
-                  id="compare_price"
-                  type="number"
-                  value={formData.compare_price}
-                  onChange={(e) => setFormData({ ...formData, compare_price: e.target.value })}
-                  placeholder="70000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cost_price">Prix de revient</Label>
-                <Input
-                  id="cost_price"
-                  type="number"
-                  value={formData.cost_price}
-                  onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                  placeholder="30000"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="stock">Quantité en stock *</Label>
-                <Input
-                  id="stock"
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                  placeholder="100"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="threshold">Seuil stock bas</Label>
-                <Input
-                  id="threshold"
-                  type="number"
-                  value={formData.low_stock_threshold}
-                  onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
-                  placeholder="10"
-                />
-              </div>
-            </div>
+              {/* Category Selection - Unified */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  Catégorie
+                </Label>
+                
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant={categoryMode === 'existing' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCategoryMode('existing');
+                      setFormData(prev => ({ ...prev, category_name: '' }));
+                    }}
+                  >
+                    Existante
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={categoryMode === 'new' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCategoryMode('new');
+                      setFormData(prev => ({ ...prev, category_id: '' }));
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Nouvelle
+                  </Button>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(v) => setFormData({ ...formData, category_id: v })}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {categoryMode === 'existing' ? (
+                  <Select
+                    value={formData.category_id}
+                    onValueChange={(v) => setFormData({ ...formData, category_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une catégorie..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={formData.category_name}
+                    onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                    placeholder="Nom de la nouvelle catégorie..."
+                  />
+                )}
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="category_name">Ou nouvelle catégorie</Label>
+                <Label htmlFor="tags" className="flex items-center gap-2">
+                  <Tags className="h-4 w-4" />
+                  Tags (séparés par virgules)
+                </Label>
                 <Input
-                  id="category_name"
-                  value={formData.category_name}
-                  onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                  placeholder="Ex: Vêtements"
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="été, promo, nouveauté"
                 />
               </div>
-            </div>
+            </TabsContent>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="sku">Code SKU</Label>
-                <Input
-                  id="sku"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  placeholder="SKU-001"
-                />
+            {/* Tab 2: Pricing & Stock */}
+            <TabsContent value="pricing" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Prix de vente * (GNF)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="50000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="compare_price">Prix barré (GNF)</Label>
+                  <Input
+                    id="compare_price"
+                    type="number"
+                    value={formData.compare_price}
+                    onChange={(e) => setFormData({ ...formData, compare_price: e.target.value })}
+                    placeholder="70000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cost_price">Prix de revient (GNF)</Label>
+                  <Input
+                    id="cost_price"
+                    type="number"
+                    value={formData.cost_price}
+                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                    placeholder="30000"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="barcode">Code-barres</Label>
-                <Input
-                  id="barcode"
-                  value={formData.barcode}
-                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                  placeholder="123456789"
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Quantité en stock *</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    placeholder="100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="threshold">Seuil stock bas</Label>
+                  <Input
+                    id="threshold"
+                    type="number"
+                    value={formData.low_stock_threshold}
+                    onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                    placeholder="10"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (séparés par virgules)</Label>
-              <Input
-                id="tags"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                placeholder="été, promo, nouveauté"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sku">Code SKU</Label>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="SKU-001"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="barcode">Code-barres</Label>
+                  <Input
+                    id="barcode"
+                    value={formData.barcode}
+                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                    placeholder="123456789"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Images du produit</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Sélectionner des images
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateImage}
-                  disabled={generatingImage || !formData.name}
-                  className="flex-1"
-                >
-                  {generatingImage ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <ImagePlus className="h-4 w-4 mr-2" />
-                  )}
-                  Générer image IA
-                </Button>
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="is_active" className="cursor-pointer">
+                  Produit actif et visible
+                </Label>
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: Media */}
+            <TabsContent value="media" className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <Label>Images du produit</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-20 flex-col gap-2"
+                  >
+                    <Camera className="h-6 w-6" />
+                    <span className="text-xs">Importer images</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage || !formData.name}
+                    className="h-20 flex-col gap-2"
+                  >
+                    {generatingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-6 w-6" />
+                    )}
+                    <span className="text-xs">
+                      {generatingImage ? 'Génération...' : 'Générer avec IA'}
+                    </span>
+                  </Button>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -803,55 +916,68 @@ export default function ProductManagement() {
                   className="hidden"
                 />
               </div>
-              {selectedImages.length > 0 && (
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {selectedImages.map((file, index) => (
-                    <div key={index} className="relative aspect-square">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover rounded"
-                      />
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => removeImage(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
+
+              {/* Image Previews */}
+              {(selectedImages.length > 0 || (editingProduct?.images?.length || 0) > 0) && (
+                <div className="space-y-2">
+                  <Label>Aperçu ({selectedImages.length} nouvelle(s))</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {/* Existing Images */}
+                    {editingProduct?.images?.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <img
+                          src={url}
+                          alt={`Existing ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <Badge className="absolute top-1 left-1 text-[8px]" variant="secondary">
+                          Existante
+                        </Badge>
+                      </div>
+                    ))}
+                    {/* New Images */}
+                    {selectedImages.map((file, index) => (
+                      <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-1 right-1 h-5 w-5 p-0"
+                          onClick={() => removeImage(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-1 left-1 text-[8px]" variant="default">
+                          Nouvelle
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
+            </TabsContent>
+          </Tabs>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              />
-              <Label htmlFor="is_active">Produit actif</Label>
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDialog(false);
-                  resetForm();
-                }}
-                className="flex-1"
-              >
-                Annuler
-              </Button>
-              <Button onClick={handleSave} className="flex-1">
-                <Save className="h-4 w-4 mr-2" />
-                {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
-              </Button>
-            </div>
+          {/* Footer Actions */}
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDialog(false);
+                resetForm();
+              }}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleSave} className="flex-1">
+              <Save className="h-4 w-4 mr-2" />
+              {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
