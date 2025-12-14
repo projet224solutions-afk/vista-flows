@@ -59,6 +59,7 @@ export const useVendorAgentsData = () => {
   const { user } = useAuth();
   const [agents, setAgents] = useState<VendorAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [realVendorId, setRealVendorId] = useState<string | null>(null);
   const [stats, setStats] = useState<VendorAgentStats>({
     totalAgents: 0,
     activeAgents: 0,
@@ -66,8 +67,31 @@ export const useVendorAgentsData = () => {
     totalCommissions: 0,
   });
 
+  // Récupérer le vrai vendor_id depuis la table vendors
+  useEffect(() => {
+    const fetchVendorId = async () => {
+      if (!user) return;
+      
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (vendor?.id) {
+        console.log('✅ Real vendor_id found:', vendor.id);
+        setRealVendorId(vendor.id);
+      } else {
+        console.warn('⚠️ No vendor found for user, using user.id as fallback');
+        setRealVendorId(user.id);
+      }
+    };
+    
+    fetchVendorId();
+  }, [user]);
+
   const loadAgents = useCallback(async () => {
-    if (!user) return;
+    if (!user || !realVendorId) return;
 
     try {
       setLoading(true);
@@ -75,7 +99,7 @@ export const useVendorAgentsData = () => {
       const { data, error } = await supabase
         .from('vendor_agents')
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', realVendorId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -110,7 +134,7 @@ export const useVendorAgentsData = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, realVendorId]);
 
   const createAgent = useCallback(async (agentData: {
     name: string;
@@ -120,7 +144,7 @@ export const useVendorAgentsData = () => {
     can_create_sub_agent?: boolean;
     agent_type?: 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
   }) => {
-    if (!user) {
+    if (!user || !realVendorId) {
       toast.error('Vous devez être connecté');
       return null;
     }
@@ -128,7 +152,7 @@ export const useVendorAgentsData = () => {
     try {
       // Note: agent_code and access_token are generated automatically by triggers
       const insertData: any = {
-        vendor_id: user.id,
+        vendor_id: realVendorId,
         name: agentData.name,
         email: agentData.email,
         phone: agentData.phone,
@@ -158,10 +182,10 @@ export const useVendorAgentsData = () => {
       toast.error('Erreur lors de la création de l\'agent');
       return null;
     }
-  }, [user, loadAgents]);
+  }, [user, realVendorId, loadAgents]);
 
   const updateAgent = useCallback(async (agentId: string, updates: Partial<VendorAgent>) => {
-    if (!user) {
+    if (!user || !realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -174,7 +198,7 @@ export const useVendorAgentsData = () => {
         .from('vendor_agents')
         .update(updatePayload)
         .eq('id', agentId)
-        .eq('vendor_id', user.id);
+        .eq('vendor_id', realVendorId);
 
       if (error) {
         console.error('Error updating vendor agent:', error);
@@ -188,10 +212,10 @@ export const useVendorAgentsData = () => {
       console.error('Error in updateAgent:', err);
       toast.error('Erreur lors de la modification de l\'agent');
     }
-  }, [user, loadAgents]);
+  }, [user, realVendorId, loadAgents]);
 
   const deleteAgent = useCallback(async (agentId: string) => {
-    if (!user) {
+    if (!user || !realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -202,7 +226,7 @@ export const useVendorAgentsData = () => {
         .from('vendor_agents')
         .delete()
         .eq('id', agentId)
-        .eq('vendor_id', user.id);
+        .eq('vendor_id', realVendorId);
 
       if (error) {
         console.error('Error deleting vendor agent:', error);
@@ -216,10 +240,10 @@ export const useVendorAgentsData = () => {
       console.error('Error in deleteAgent:', err);
       toast.error('Erreur lors de la suppression de l\'agent');
     }
-  }, [user, loadAgents]);
+  }, [user, realVendorId, loadAgents]);
 
   const toggleAgentStatus = useCallback(async (agentId: string, isActive: boolean) => {
-    if (!user) {
+    if (!user || !realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -229,7 +253,7 @@ export const useVendorAgentsData = () => {
         .from('vendor_agents')
         .update({ is_active: isActive })
         .eq('id', agentId)
-        .eq('vendor_id', user.id);
+        .eq('vendor_id', realVendorId);
 
       if (error) {
         console.error('Error toggling agent status:', error);
@@ -243,13 +267,13 @@ export const useVendorAgentsData = () => {
       console.error('Error in toggleAgentStatus:', err);
       toast.error('Erreur lors du changement de statut');
     }
-  }, [user, loadAgents]);
+  }, [user, realVendorId, loadAgents]);
 
   useEffect(() => {
-    if (user) {
+    if (user && realVendorId) {
       loadAgents();
     }
-  }, [user, loadAgents]);
+  }, [user, realVendorId, loadAgents]);
 
   return {
     agents,
