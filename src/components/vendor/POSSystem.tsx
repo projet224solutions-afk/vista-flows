@@ -305,10 +305,7 @@ export function POSSystem() {
   };
 
   const processPayment = async () => {
-    if (paymentMethod === 'cash' && receivedAmount < total) {
-      toast.error('Montant insuffisant');
-      return;
-    }
+    // Note: Le montant reçu n'est plus obligatoire pour valider
 
     if (!vendorId) {
       toast.error('Vendeur non identifié');
