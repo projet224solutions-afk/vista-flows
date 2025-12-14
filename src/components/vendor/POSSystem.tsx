@@ -620,12 +620,25 @@ export function POSSystem() {
             <Button
               variant={mobileTab === 'cart' ? 'default' : 'outline'}
               onClick={() => setMobileTab('cart')}
-              className="h-10 relative"
+              className={`h-12 relative px-5 transition-all duration-200 ${
+                mobileTab === 'cart' 
+                  ? 'bg-gradient-to-r from-primary to-primary/80 shadow-lg scale-105' 
+                  : 'hover:border-primary/50 hover:bg-primary/5'
+              }`}
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Panier
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 ${
+                mobileTab === 'cart' 
+                  ? 'bg-white/20' 
+                  : 'bg-gradient-to-br from-primary/20 to-primary/10'
+              }`}>
+                <ShoppingCart className={`h-4 w-4 ${mobileTab === 'cart' ? 'text-white' : 'text-primary'}`} />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="font-semibold text-sm">Panier</span>
+                <span className="text-[10px] opacity-70">{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</span>
+              </div>
               {cart.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                <Badge className="absolute -top-2 -right-2 h-6 w-6 p-0 flex items-center justify-center text-[11px] font-bold bg-gradient-to-br from-orange-500 to-red-500 border-2 border-background shadow-md animate-pulse">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </Badge>
               )}
@@ -1011,40 +1024,80 @@ export function POSSystem() {
                         )}
                       </div>
 
-                      {/* Pavé numérique (Calculatrice) */}
-                      <div className="bg-muted/20 rounded-lg p-3">
-                        <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                          <Calculator className="h-3 w-3" />
-                          Pavé numérique
+                      {/* Pavé numérique (Calculatrice) - Ultra Pro Design */}
+                      <div className="bg-gradient-to-br from-muted/30 via-muted/20 to-background rounded-xl p-4 border border-border/50 shadow-inner">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                              <Calculator className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="text-sm font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                              Pavé numérique
+                            </span>
+                          </div>
+                          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '.'].map((num) => (
+                        
+                        {/* Grille numérique style calculatrice pro */}
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((num) => (
                             <Button
                               key={num}
                               variant="outline"
                               size="sm"
                               onClick={() => handleNumericInput(num)}
-                              className="h-10 text-base font-bold hover:bg-primary/10"
+                              className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm hover:shadow-md"
                             >
                               {num}
                             </Button>
                           ))}
                         </div>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
+                        
+                        {/* Ligne spéciale: 0, 00, point */}
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNumericInput('0')}
+                            className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
+                          >
+                            0
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNumericInput('00')}
+                            className="h-12 text-lg font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
+                          >
+                            00
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNumericInput('.')}
+                            className="h-12 text-xl font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all duration-150 shadow-sm"
+                          >
+                            •
+                          </Button>
+                        </div>
+                        
+                        {/* Actions: Effacer / Valider */}
+                        <div className="grid grid-cols-2 gap-3">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleNumericInput('clear')}
-                            className="h-10 text-destructive hover:bg-destructive/10"
+                            className="h-12 text-sm font-semibold border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-all duration-150"
                           >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Effacer
                           </Button>
                           <Button
-                            variant="default"
                             size="sm"
                             onClick={() => handleNumericInput('enter')}
-                            className="h-10 bg-primary"
+                            className="h-12 text-sm font-semibold bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-md hover:shadow-lg transition-all duration-150"
                           >
+                            <CheckSquare className="h-4 w-4 mr-2" />
                             Valider
                           </Button>
                         </div>
