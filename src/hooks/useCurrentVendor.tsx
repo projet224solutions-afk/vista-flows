@@ -61,54 +61,30 @@ export const useCurrentVendor = () => {
       setLoading(true);
       setError(null);
 
+      // CAS 1: On est dans un contexte AGENT (prioritaire)
       if (hasAgent && agentVendorId) {
-        // CAS 1: On est dans un contexte AGENT
         console.log('🔄 Mode Agent - Chargement données vendeur:', agentVendorId);
         
-        // Récupérer les infos du vendeur depuis la table vendors
-        const { data: vendor, error: vendorError } = await supabase
-          .from('vendors')
-          .select('user_id')
-          .eq('id', agentVendorId)
-          .maybeSingle();
-
-        if (vendorError) {
-          console.error('❌ Erreur chargement vendor:', vendorError);
-          throw new Error('Impossible de charger les données du vendeur');
-        }
-
-        // Récupérer le profil du vendeur
-        const vendorUserId = vendor?.user_id;
-        let vendorProfile = null;
-        
-        if (vendorUserId) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', vendorUserId)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error('❌ Erreur chargement profil vendeur:', profileError);
-          } else {
-            vendorProfile = profileData;
-          }
-        }
-
+        // L'agent a son propre vendorId - on l'utilise directement
+        // Les RLS sur products permettent l'accès via vendor_agents
         setVendorData({
           vendorId: agentVendorId,
           isAgent: true,
           agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
-          user: { id: vendorUserId || agentVendorId },
-          profile: vendorProfile
+          user: { id: agentVendorId }, // Utiliser vendorId comme référence
+          profile: null
         });
         
         console.log('✅ Données vendeur chargées (mode agent):', {
           vendorId: agentVendorId,
-          hasProfile: !!vendorProfile
+          agentPermissions: agentContext.agent?.permissions
         });
-      } else if (authUserId && auth.profile) {
-        // CAS 2: On est dans un contexte VENDEUR DIRECT
+        setLoading(false);
+        return;
+      }
+      
+      // CAS 2: On est dans un contexte VENDEUR DIRECT
+      if (authUserId && auth.profile) {
         console.log('🔄 Mode Vendeur Direct - Utilisation user actuel:', authUserId);
         
         // Trouver le vendor_id du profil vendeur
@@ -128,8 +104,8 @@ export const useCurrentVendor = () => {
         });
         
         console.log('✅ Données vendeur chargées (mode direct):', { vendorId });
-      } else {
-        // CAS 3: Aucun contexte valide
+      } else if (!hasAgent) {
+        // CAS 3: Aucun contexte valide (ni agent ni vendeur)
         console.warn('⚠️ Aucun contexte vendeur valide');
         setError('Session non valide');
       }
