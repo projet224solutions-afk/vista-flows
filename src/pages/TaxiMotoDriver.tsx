@@ -6,63 +6,32 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Navigation,
-    MapPin,
-    Clock,
-    DollarSign,
-    Star,
-    Phone,
-    MessageCircle,
-    AlertTriangle,
-    CheckCircle,
-    Car,
-    TrendingUp,
-    Battery,
-    Wifi,
-    Settings,
-    LogOut,
-    Bell,
-    History,
-    Wallet
-} from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
-import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
-import { toast } from "sonner";
-import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
-import GeolocationService from "@/services/geolocation/GeolocationService";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
+import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
+import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
-import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
-import { ActiveRideCard } from "@/components/taxi-moto/ActiveRideCard";
-import { GPSNavigation } from "@/components/taxi-moto/GPSNavigation";
-import { InteractiveMapNavigation } from "@/components/taxi-moto/InteractiveMapNavigation";
+
+// UI Components - New Uber/Bolt Style
+import { 
+    DriverHeader, 
+    BottomNavigation, 
+    DriverMainDashboard 
+} from "@/components/taxi-moto/driver";
+
+// Existing components
 import { GoogleMapsNavigation } from "@/components/taxi-moto/GoogleMapsNavigation";
 import { GPSPermissionHelper } from "@/components/taxi-moto/GPSPermissionHelper";
-import { DriverStatsCard } from "@/components/taxi-moto/DriverStatsCard";
 import { DriverSettings } from "@/components/taxi-moto/DriverSettings";
 import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
-import { RideRequestNotification } from "@/components/taxi-moto/RideRequestNotification";
-import { DriverDashboard } from "@/components/taxi-moto/DriverDashboard";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
-import { UserIdDisplay } from "@/components/UserIdDisplay";
-import { DriverTutorial } from "@/components/taxi-moto/DriverTutorial";
-import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
-import { DriverDiagnostic } from "@/components/taxi-moto/DriverDiagnostic";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
-import { TaxiMotoSOSButton } from "@/components/taxi-moto/TaxiMotoSOSButton";
 
 
 // API_BASE supprimé - Utilisation directe de Supabase
@@ -1297,299 +1266,100 @@ const watchId = navigator.geolocation.watchPosition(
         toast.success('Déconnexion réussie');
     };
 
+    const navigate = useNavigate();
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 pb-20 px-2 md:px-0">
-            {/* Header conducteur - Mobile optimisé */}
-            <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-                <div className="px-2 md:px-4 py-3 md:py-4">
-                                        {/* Bannière d'abonnement */}
-                                        <DriverSubscriptionBanner />
-                                        {/* Bannière d'erreur unifiée */}
-                                        {error && (
-                                            <ErrorBanner
-                                                title={
-                                                    error.type === 'gps' ? 'GPS inactif' :
-                                                    error.type === 'permission' ? 'Permission requise' :
-                                                    error.type === 'payment' ? 'Problème de paiement' :
-                                                    error.type === 'env' ? 'Configuration manquante' :
-                                                    'Erreur'
-                                                }
-                                                message={error.message}
-                                                actionLabel="Masquer"
-                                                onAction={clear}
-                                            />
-                                        )}
-                    <div className="flex items-start md:items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h1 className="text-base md:text-xl font-bold text-gray-900 truncate">
-                                    Conducteur {profile?.first_name || ''}
-                                </h1>
-                                <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs md:text-sm" />
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span className="text-xs md:text-sm text-gray-600">
-                                    {isOnline ? 'En ligne' : 'Hors ligne'}
-                                </span>
-                                
-                                {location && (
-                                    <>
-                                        <span className="text-gray-400">•</span>
-                                        <span className="text-[10px] md:text-xs text-gray-500">GPS actif</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+        <div className="min-h-screen bg-gray-950">
+            {/* Header conducteur - Uber/Bolt Style */}
+            <DriverHeader
+                firstName={profile?.first_name || ''}
+                isOnline={isOnline}
+                hasLocation={!!location}
+                unreadCount={unreadCount}
+                driverId={driverId}
+                driverName={`${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Conducteur'}
+                driverPhone={profile?.phone || ''}
+                onSignOut={handleSignOut}
+            />
 
-                        <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-                            <DriverSubscriptionButton />
-                            
-                            {/* Bouton SOS d'urgence */}
-                            {isOnline && driverId && profile && (
-                                <TaxiMotoSOSButton
-                                    taxiId={driverId}
-                                    driverName={`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Conducteur'}
-                                    driverPhone={profile.phone || ''}
-                                    variant="compact"
-                                />
-                            )}
-                            
-                            <div className="hidden lg:block">
-                                <WalletBalanceWidget className="max-w-[260px]" showTransferButton={false} />
-                            </div>
-                            <QuickTransferButton variant="ghost" size="icon" showText={false} />
-                            {unreadCount > 0 && (
-                                <div className="relative">
-                                    <Bell className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-3.5 h-3.5 md:w-4 md:h-4 flex items-center justify-center">
-                                        {unreadCount}
-                                    </span>
-                                </div>
-                            )}
-                            <Button
-                                onClick={handleSignOut}
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 md:h-9 md:w-auto p-0 md:px-3"
-                            >
-                                <LogOut className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                    {/* Tutorial button visible on mobile */}
-                    <div className="mt-2 md:hidden">
-                        <DriverTutorial />
-                    </div>
-                </div>
-            </header>
-
-
-            {/* Demandes de course en attente - AFFICHAGE PRIORITAIRE */}
-            {rideRequests.length > 0 && (
-                <div className="fixed top-16 left-0 right-0 z-[100] bg-black/20 backdrop-blur-sm">
-                    <div className="max-w-2xl mx-auto p-4 space-y-3 max-h-[calc(100vh-8rem)] overflow-y-auto">
-                        {/* Indicateur de nombre de courses */}
-                        <div className="bg-yellow-500 text-black font-bold text-center py-2 px-4 rounded-lg shadow-xl animate-bounce">
-                          🚨 {rideRequests.length} course(s) disponible(s) ! 🚨
-                        </div>
-                        
-                        {rideRequests.map((request, index) => (
-                            <RideRequestNotification
-                                key={request.id}
-                                request={request}
-                                onAccept={() => acceptRideRequest(request)}
-                                onDecline={() => declineRideRequest(request.id)}
-                                index={index}
-                                isAccepting={acceptingRideId === request.id}
-                            />
-                        ))}
-                    </div>
-                </div>
+            {/* Contenu principal selon l'onglet */}
+            {activeTab === 'dashboard' && (
+                <DriverMainDashboard
+                    isOnline={isOnline}
+                    isLoading={driverLoading}
+                    hasSubscription={hasAccess}
+                    driverId={driverId}
+                    userId={user?.id}
+                    location={location}
+                    stats={driverStats}
+                    rideRequests={rideRequests}
+                    acceptingRideId={acceptingRideId}
+                    error={error}
+                    hasAccess={hasAccess}
+                    onToggleOnline={toggleOnlineStatus}
+                    onAcceptRide={acceptRideRequest}
+                    onDeclineRide={declineRideRequest}
+                    onClearError={clear}
+                    onExpandMap={() => setActiveTab('gps-navigation')}
+                />
             )}
 
-            {/* Message quand en ligne sans courses */}
-            {isOnline && rideRequests.length === 0 && !activeRide && (
-                <div className="px-4 mt-2 space-y-2">
-                    <Card className="bg-blue-50 border-blue-200 shadow-lg">
-                        <CardContent className="p-3">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3">
-                                    <Car className="w-5 h-5 text-blue-600 animate-pulse" />
-                                    <div>
-                                        <p className="text-sm font-bold text-blue-900">🟢 Vous êtes en ligne</p>
-                                        <p className="text-xs text-blue-700">En attente de courses...</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <DriverTutorial />
-                                    <Button
-                                        onClick={toggleOnlineStatus}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-red-300 text-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto"
-                                    >
-                                        🔴 Hors ligne
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    {/* Composant diagnostic */}
-                    <DriverDiagnostic 
-                        driverId={driverId}
-                        isOnline={isOnline}
-                        hasAccess={hasAccess}
-                        userId={user?.id}
+            {activeTab === 'navigation' && (
+                <div className="min-h-screen bg-gray-950 pb-20">
+                    <DriverNavigation
+                        driverId={driverId || ''}
+                        location={location}
+                        onContactCustomer={contactCustomer}
                     />
                 </div>
             )}
 
-            {/* Navigation par onglets - Mobile optimisé */}
-            <div className="px-2 md:px-4 mt-3 md:mt-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="w-full overflow-x-auto flex md:grid md:grid-cols-5 bg-white/80 backdrop-blur-sm scrollbar-hide h-10 md:h-auto">
-                        <TabsTrigger value="dashboard" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
-                            <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
-                            <span className="hidden sm:inline">Dashboard</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="navigation" className="relative flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
-                            <Navigation className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
-                            <span className="hidden sm:inline">Course</span>
-                            {activeRide && (
-                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full animate-pulse border-2 border-white"></span>
-                            )}
-                        </TabsTrigger>
-                        
-                        {/* Bouton de tracking entre Course et Navigation */}
-                        <div className="flex items-center justify-center border-x border-border/50 flex-shrink-0 px-1">
-                            <UserTrackerButton />
-                        </div>
-                        
-                        <TabsTrigger value="gps-navigation" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
-                            <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
-                            <span className="hidden sm:inline">Navigation</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="earnings" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
-                            <DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
-                            <span className="hidden sm:inline">Gains</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="settings" className="flex-shrink-0 px-2 md:px-4 text-xs md:text-sm">
-                            <Settings className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1" />
-                            <span className="hidden sm:inline">Réglages</span>
-                        </TabsTrigger>
-                    </TabsList>
-
-                    {/* Dashboard - Composant dédié avec connexion temps réel */}
-                    <TabsContent value="dashboard" className="mt-0">
-                        <DriverDashboard
-                            driverId={driverId || ''}
-                            isOnline={isOnline}
-                            location={location}
+            {activeTab === 'gps-navigation' && (
+                <div className="min-h-screen bg-gray-950 pb-20">
+                    {!location ? (
+                        <GPSPermissionHelper
+                            onLocationGranted={async () => {
+                                toast.loading('Récupération de la position...', { id: 'gps-load' });
+                                try {
+                                    await getCurrentLocation();
+                                    toast.dismiss('gps-load');
+                                    toast.success('Position obtenue !');
+                                } catch (err) {
+                                    console.error('[TaxiMotoDriver] GPS error:', err);
+                                    toast.dismiss('gps-load');
+                                    toast.error('Erreur GPS - Veuillez réessayer');
+                                }
+                            }}
+                            currentError={null}
+                        />
+                    ) : (
+                        <GoogleMapsNavigation
                             activeRide={activeRide}
-                            onNavigate={setActiveTab}
-                            onContactCustomer={contactCustomer}
-                            onToggleOnline={toggleOnlineStatus}
-                            hasSubscription={hasAccess}
-                            driverLoading={driverLoading}
-                        />
-                    </TabsContent>
-
-                    {/* Navigation - Composant dédié avec connexion temps réel */}
-                    <TabsContent value="navigation" className="mt-0">
-                        <DriverNavigation
-                            driverId={driverId || ''}
-                            location={location}
+                            currentLocation={location}
                             onContactCustomer={contactCustomer}
                         />
-                    </TabsContent>
-
-                    {/* Navigation GPS */}
-                    <TabsContent value="gps-navigation" className="mt-0">
-                        {!location ? (
-                            <GPSPermissionHelper
-                                onLocationGranted={async () => {
-                                    toast.loading('Récupération de la position...', { id: 'gps-load' });
-                                    try {
-                                        await getCurrentLocation();
-                                        toast.dismiss('gps-load');
-                                        toast.success('Position obtenue !');
-                                    } catch (err) {
-                                        console.error('[TaxiMotoDriver] GPS error:', err);
-                                        toast.dismiss('gps-load');
-                                        toast.error('Erreur GPS - Veuillez réessayer');
-                                    }
-                                }}
-                                currentError={null}
-                            />
-                        ) : (
-                            <GoogleMapsNavigation
-                                activeRide={activeRide}
-                                currentLocation={location}
-                                onContactCustomer={contactCustomer}
-                            />
-                        )}
-                    </TabsContent>
-
-                    {/* Gains avec toutes les fonctionnalités Wallet intégrées */}
-                    <TabsContent value="earnings" className="mt-0">
-                        <DriverEarnings driverId={driverId || ''} />
-                    </TabsContent>
-
-                    {/* Onglet Paramètres */}
-                    <TabsContent value="settings" className="mt-4">
-                        {driverId && <DriverSettings driverId={driverId} />}
-                    </TabsContent>
-                </Tabs>
-            </div>
-
-            {/* Barre de navigation inférieure */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-                <div className="grid grid-cols-4 h-16">
-                    <button
-                        onClick={() => setActiveTab('dashboard')}
-                        className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-500'
-                            }`}
-                    >
-                        <TrendingUp className="w-5 h-5" />
-                        <span className="text-xs font-medium">Accueil</span>
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/marketplace')}
-                        className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        <span className="text-xs font-medium">Marketplace</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('navigation')}
-                        className={`flex flex-col items-center justify-center gap-1 transition-colors relative ${activeTab === 'navigation' ? 'text-blue-600' : 'text-gray-500'
-                            }`}
-                    >
-                        <MapPin className="w-5 h-5" />
-                        <span className="text-xs font-medium">Tracking</span>
-                        {activeRide && (
-                            <span className="absolute top-1 right-2 w-2 h-2 bg-green-500 rounded-full animate-pulse border border-white"></span>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('settings')}
-                        className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-500'
-                            }`}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span className="text-xs font-medium">Profil</span>
-                    </button>
+                    )}
                 </div>
-            </div>
+            )}
+
+            {activeTab === 'earnings' && (
+                <div className="min-h-screen bg-gray-950 pb-20">
+                    <DriverEarnings driverId={driverId || ''} />
+                </div>
+            )}
+
+            {activeTab === 'settings' && (
+                <div className="min-h-screen bg-gray-950 pb-20 pt-4">
+                    {driverId && <DriverSettings driverId={driverId} />}
+                </div>
+            )}
+
+            {/* Navigation inférieure - Uber/Bolt Style */}
+            <BottomNavigation
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                hasActiveRide={!!activeRide}
+            />
 
             {/* Bannière d'installation PWA */}
             <InstallPromptBanner />
