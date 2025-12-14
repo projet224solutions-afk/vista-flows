@@ -68,7 +68,7 @@ export function DriverMainDashboard({
   onExpandMap
 }: DriverMainDashboardProps) {
   return (
-    <div className="min-h-screen bg-gray-950 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 pb-20">
       {/* Subscription Banner */}
       <DriverSubscriptionBanner />
       
