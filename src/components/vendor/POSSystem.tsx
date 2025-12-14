@@ -830,7 +830,7 @@ export function POSSystem() {
                                 className="flex-1 h-7 text-[10px] md:text-xs font-semibold"
                               >
                                 <Plus className="h-3 w-3 mr-0.5" />
-                                <span className="hidden sm:inline">Ajouter</span>
+                                Ajouter
                               </Button>
                             </div>
                           </div>
