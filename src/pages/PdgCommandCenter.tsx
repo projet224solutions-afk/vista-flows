@@ -115,136 +115,147 @@ export default function PdgCommandCenter() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background p-3 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header - Mobile Optimized */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/pdg')}
+              className="h-8 w-8 sm:h-10 sm:w-10"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Centre de Commande PDG</h1>
-              <p className="text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-3xl font-bold truncate">Centre de Commande</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Surveillance & Debug - 224SOLUTIONS
               </p>
             </div>
           </div>
+          
+          {/* Controls - Mobile Row */}
           <div className="flex items-center gap-2">
             <Button
               variant={realTimeEnabled ? "default" : "outline"}
               size="sm"
               onClick={() => setRealTimeEnabled(!realTimeEnabled)}
+              className="flex-1 sm:flex-none text-xs sm:text-sm h-9"
             >
-              <Activity className="h-4 w-4 mr-2" />
-              {realTimeEnabled ? 'Temps réel actif' : 'Temps réel désactivé'}
+              <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{realTimeEnabled ? 'Temps réel actif' : 'Temps réel désactivé'}</span>
+              <span className="sm:hidden">{realTimeEnabled ? 'Actif' : 'Inactif'}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={loadMonitoringData}
               disabled={loading}
+              className="h-9 w-9 p-0"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
 
-        {/* Stats globales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stats globales - 2x2 grid on mobile */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Santé Système</CardTitle>
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Santé Système</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.systemHealth.toFixed(1)}%</div>
+                <div className="text-lg sm:text-2xl font-bold">{stats.systemHealth.toFixed(1)}%</div>
                 {getHealthIcon(systemHealth.status)}
               </div>
-              <Badge variant={getStatusColor(systemHealth.status)} className="mt-2">
+              <Badge variant={getStatusColor(systemHealth.status)} className="mt-1 sm:mt-2 text-xs">
                 {systemHealth.status}
               </Badge>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Erreurs Critiques</CardTitle>
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Erreurs Critiques</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.criticalErrors}</div>
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <div className="text-lg sm:text-2xl font-bold">{stats.criticalErrors}</div>
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">
                 {stats.pendingErrors} en attente
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Corrections Auto</CardTitle>
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Corrections Auto</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.autoFixedErrors}</div>
-                <Zap className="h-5 w-5 text-green-500" />
+                <div className="text-lg sm:text-2xl font-bold">{stats.autoFixedErrors}</div>
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {autoFixes.length} correctifs actifs
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">
+                {autoFixes.length} actifs
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Transactions</CardTitle>
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Transactions</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.totalTransactions}</div>
-                <TrendingUp className="h-5 w-5 text-blue-500" />
+                <div className="text-lg sm:text-2xl font-bold">{stats.totalTransactions}</div>
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Temps moyen: {stats.avgResponseTime.toFixed(0)}ms
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">
+                ~{stats.avgResponseTime.toFixed(0)}ms
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs principales */}
+        {/* Tabs principales - Scrollable on mobile */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">
-              <Activity className="h-4 w-4 mr-2" />
-              Vue d'ensemble
-            </TabsTrigger>
-            <TabsTrigger value="alerts">
-              <Bell className="h-4 w-4 mr-2" />
-              Alertes
-            </TabsTrigger>
-            <TabsTrigger value="services">
-              <Database className="h-4 w-4 mr-2" />
-              Services
-            </TabsTrigger>
-            <TabsTrigger value="interfaces">
-              <Users className="h-4 w-4 mr-2" />
-              Interfaces
-            </TabsTrigger>
-            <TabsTrigger value="fixes">
-              <Zap className="h-4 w-4 mr-2" />
-              Auto-Fixes
-            </TabsTrigger>
-            <TabsTrigger value="copilot">
-              <Brain className="h-4 w-4 mr-2" />
-              IA Copilote
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+            <TabsList className="w-max sm:w-auto">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Vue d'ensemble</span>
+                <span className="sm:hidden">Aperçu</span>
+              </TabsTrigger>
+              <TabsTrigger value="alerts" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Alertes
+              </TabsTrigger>
+              <TabsTrigger value="services" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Database className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Services
+              </TabsTrigger>
+              <TabsTrigger value="interfaces" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Interfaces</span>
+                <span className="sm:hidden">UI</span>
+              </TabsTrigger>
+              <TabsTrigger value="fixes" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Auto-Fixes</span>
+                <span className="sm:hidden">Fixes</span>
+              </TabsTrigger>
+              <TabsTrigger value="copilot" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Brain className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                IA
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Vue d'ensemble */}
           <TabsContent value="overview" className="space-y-4">
