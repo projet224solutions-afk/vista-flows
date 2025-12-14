@@ -6276,6 +6276,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          logo_url: string | null
           receipt_footer: string | null
           tax_enabled: boolean
           tax_rate: number
@@ -6288,6 +6289,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          logo_url?: string | null
           receipt_footer?: string | null
           tax_enabled?: boolean
           tax_rate?: number
@@ -6300,6 +6302,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          logo_url?: string | null
           receipt_footer?: string | null
           tax_enabled?: boolean
           tax_rate?: number
