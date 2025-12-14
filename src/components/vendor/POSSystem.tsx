@@ -497,10 +497,10 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90">
       {/* En-tête professionnel - Compact sur mobile */}
-      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg">
-        <div className="flex items-center justify-between p-3 md:p-6">
+      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg flex-shrink-0">
+        <div className="flex items-center justify-between p-3 md:p-6 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 md:gap-4">
             <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
               {settings?.logo_url ? (
@@ -754,12 +754,12 @@ export function POSSystem() {
         </div>
       )}
 
-      <div className={`flex flex-1 min-h-0 overflow-hidden gap-2 md:gap-4 p-2 md:p-4 ${isMobile ? 'flex-col' : ''}`}>
+      <div className={`flex flex-1 min-h-0 overflow-hidden gap-2 md:gap-4 p-2 md:p-4 w-full max-w-full ${isMobile ? 'flex-col' : ''}`}>
         {/* Section Produits - Design moderne */}
-        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
+        <div className={`flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
           {/* Barre de recherche améliorée - Compact sur mobile */}
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
-            <CardContent className="p-3 md:p-6">
+          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm flex-shrink-0 overflow-hidden">
+            <CardContent className="p-3 md:p-6 overflow-hidden">
               <div className="flex flex-col gap-2 md:gap-4">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
@@ -801,7 +801,7 @@ export function POSSystem() {
               </div>
               
               {/* Filtres par catégorie - Scroll horizontal sur mobile */}
-              <div className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-1 scrollbar-hide max-w-full">
                 {categoriesLoading ? (
                   <div className="text-xs text-muted-foreground">Chargement...</div>
                 ) : (
@@ -832,9 +832,9 @@ export function POSSystem() {
           </Card>
 
           {/* Grille de produits professionnelle - Mobile optimisé */}
-          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0">
-            <CardContent className="p-2 md:p-6 h-full overflow-hidden">
-              <ScrollArea className="h-full">
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0 min-w-0">
+            <CardContent className="p-2 md:p-4 h-full overflow-hidden">
+              <ScrollArea className="h-full w-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center gap-3">
@@ -973,9 +973,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive */}
-        <div className={`w-full md:w-96 lg:w-[420px] flex flex-col min-h-0 overflow-hidden ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-96 lg:w-[400px] flex-shrink-0 flex flex-col min-h-0 min-w-0 overflow-hidden ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier Ultra Professionnel */}
-          <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg overflow-hidden flex flex-col min-h-0">
+          <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg overflow-hidden flex flex-col min-h-0 min-w-0">
             {/* En-tête du panier avec statistiques */}
             <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-border/30">
               <CardTitle className="flex items-center justify-between text-lg">
