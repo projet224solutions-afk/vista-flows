@@ -43,6 +43,7 @@ interface POSReceiptProps {
     change: number;
     currency: string;
     companyName: string;
+    logoUrl?: string;
     receiptFooter?: string;
   };
 }
@@ -155,8 +156,12 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           >
             {/* En-tête reçu */}
             <div className="text-center border-b border-dashed border-muted-foreground/30 pb-4 mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-3 flex items-center justify-center">
-                <Store className="h-7 w-7 text-primary-foreground" />
+              <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                {orderData.logoUrl ? (
+                  <img src={orderData.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <Store className="h-7 w-7 text-primary-foreground" />
+                )}
               </div>
               <h3 className="text-xl font-bold text-foreground">{orderData.companyName}</h3>
               <p className="text-sm text-muted-foreground mt-1">REÇU DE CAISSE</p>

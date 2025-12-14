@@ -14,6 +14,7 @@ export interface POSSettings {
   id?: string;
   vendor_id: string;
   company_name: string;
+  logo_url?: string;
   tax_enabled: boolean;
   tax_rate: number;
   currency: string;
