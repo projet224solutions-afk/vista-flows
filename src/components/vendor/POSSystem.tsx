@@ -1039,6 +1039,84 @@ export function POSSystem() {
                     </div>
                   )}
 
+                  {/* Formulaire carte bancaire */}
+                  {paymentMethod === 'card' && (
+                    <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border">
+                      <label className="text-sm font-semibold flex items-center gap-2 text-primary">
+                        <CreditCard className="h-4 w-4" />
+                        Informations de la carte
+                      </label>
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Nom sur la carte"
+                          className="h-10"
+                        />
+                        <Input
+                          type="text"
+                          placeholder="1234 5678 9012 3456"
+                          maxLength={19}
+                          className="h-10 font-mono text-lg tracking-wider"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            type="text"
+                            placeholder="MM/AA"
+                            maxLength={5}
+                            className="h-10 font-mono"
+                          />
+                          <Input
+                            type="text"
+                            placeholder="CVV"
+                            maxLength={4}
+                            className="h-10 font-mono"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Check className="h-3 w-3 text-green-500" />
+                        Paiement sécurisé par Visa/Mastercard
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Formulaire Mobile Money */}
+                  {paymentMethod === 'mobile' && (
+                    <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border">
+                      <label className="text-sm font-semibold flex items-center gap-2 text-primary">
+                        <Smartphone className="h-4 w-4" />
+                        Paiement Mobile Money
+                      </label>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-12 border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                          >
+                            <span className="text-orange-500 font-bold">Orange Money</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-12 border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                          >
+                            <span className="text-yellow-600 font-bold">MTN MoMo</span>
+                          </Button>
+                        </div>
+                        <Input
+                          type="tel"
+                          placeholder="6XX XXX XXX"
+                          maxLength={12}
+                          className="h-12 text-lg font-mono tracking-wider"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Entrez le numéro du client pour recevoir la demande de paiement
+                      </p>
+                    </div>
+                  )}
+
                   {/* Bouton de validation - Sans condition de montant obligatoire */}
                   <Button 
                     onClick={validateOrder}

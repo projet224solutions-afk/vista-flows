@@ -87,7 +87,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           <head>
             <title>Reçu - ${orderData.orderNumber}</title>
             <style>
-              body { font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; max-width: 300px; margin: 0 auto; }
+              body { font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; max-width: 320px; margin: 0 auto; }
               .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
               .item { display: flex; justify-content: space-between; margin: 5px 0; }
               .total { border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-weight: bold; }
@@ -150,7 +150,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
         <div className="p-4">
           <div 
             ref={receiptRef} 
-            className="bg-white border-2 border-dashed border-border rounded-lg p-4 font-mono text-sm"
+            className="bg-white border-2 border-dashed border-border rounded-lg p-5 font-mono text-base"
             style={{ fontFamily: "'Courier New', monospace" }}
           >
             {/* En-tête reçu */}
@@ -158,8 +158,8 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
               <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-3 flex items-center justify-center">
                 <Store className="h-7 w-7 text-primary-foreground" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">{orderData.companyName}</h3>
-              <p className="text-xs text-muted-foreground mt-1">REÇU DE CAISSE</p>
+              <h3 className="text-xl font-bold text-foreground">{orderData.companyName}</h3>
+              <p className="text-sm text-muted-foreground mt-1">REÇU DE CAISSE</p>
               <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>{new Date().toLocaleString('fr-FR')}</span>
@@ -167,23 +167,23 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             </div>
 
             {/* Numéro de commande */}
-            <div className="bg-muted/30 rounded-lg p-3 mb-4 text-center">
-              <p className="text-xs text-muted-foreground">N° Commande</p>
-              <p className="text-lg font-bold text-primary">#{orderData.orderNumber}</p>
+            <div className="bg-muted/30 rounded-lg p-4 mb-4 text-center">
+              <p className="text-sm text-muted-foreground">N° Commande</p>
+              <p className="text-xl font-bold text-primary">#{orderData.orderNumber}</p>
             </div>
 
             {/* Articles */}
             <div className="space-y-2 mb-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
+              <p className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
               {orderData.items.map((item, index) => (
                 <div key={item.id} className="flex justify-between items-start py-1">
                   <div className="flex-1">
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground text-base">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
                       {item.quantity} × {item.price.toLocaleString()} {orderData.currency}
                     </p>
                   </div>
-                  <p className="font-semibold text-foreground">
+                  <p className="font-bold text-foreground text-base">
                     {item.total.toLocaleString()} {orderData.currency}
                   </p>
                 </div>
@@ -193,25 +193,25 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             <Separator className="my-4" />
 
             {/* Totaux */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-3">
+              <div className="flex justify-between text-base">
                 <span className="text-muted-foreground">Sous-total</span>
-                <span>{orderData.subtotal.toLocaleString()} {orderData.currency}</span>
+                <span className="font-medium">{orderData.subtotal.toLocaleString()} {orderData.currency}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-base">
                 <span className="text-muted-foreground">
                   TVA ({orderData.taxEnabled ? `${(orderData.taxRate * 100).toFixed(1)}%` : 'désactivée'})
                 </span>
-                <span>{orderData.tax.toLocaleString()} {orderData.currency}</span>
+                <span className="font-medium">{orderData.tax.toLocaleString()} {orderData.currency}</span>
               </div>
               {orderData.discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-base text-green-600 font-medium">
                   <span>Remise ({orderData.discount}%)</span>
                   <span>-{((orderData.subtotal + orderData.tax) * orderData.discount / 100).toLocaleString()} {orderData.currency}</span>
                 </div>
               )}
               
-              <div className="flex justify-between text-xl font-bold pt-2 border-t-2 border-foreground">
+              <div className="flex justify-between text-2xl font-bold pt-3 border-t-2 border-foreground">
                 <span>TOTAL</span>
                 <span className="text-primary">{orderData.total.toLocaleString()} {orderData.currency}</span>
               </div>
@@ -247,10 +247,10 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
             {/* Pied de page */}
             <div className="text-center mt-6 pt-4 border-t border-dashed border-muted-foreground/30">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {orderData.receiptFooter || 'Merci pour votre achat!'}
               </p>
-              <p className="text-[10px] text-muted-foreground/60 mt-2">
+              <p className="text-xs text-muted-foreground/60 mt-2">
                 Powered by 224Solutions
               </p>
             </div>
