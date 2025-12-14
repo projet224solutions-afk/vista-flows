@@ -44,6 +44,7 @@ import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
+import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
 
 interface Product {
@@ -190,6 +191,8 @@ export function POSSystem() {
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
+  const [showQuantityKeypad, setShowQuantityKeypad] = useState(false);
+  const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<Product | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
   
@@ -820,6 +823,21 @@ export function POSSystem() {
                                 <Minus className="h-3 w-3" />
                               </Button>
                               
+                              {/* Bouton pavé numérique pour quantité multiple */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedProductForQuantity(product);
+                                  setShowQuantityKeypad(true);
+                                }}
+                                className="h-7 w-7 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                title="Saisir quantité"
+                              >
+                                <Calculator className="h-3 w-3 text-primary" />
+                              </Button>
+                              
                               <Button
                                 variant="default"
                                 size="sm"
@@ -1239,6 +1257,17 @@ export function POSSystem() {
           companyName: settings?.company_name || 'Vista Commerce Pro',
           receiptFooter: settings?.receipt_footer
         }}
+      />
+
+      {/* Popup pavé numérique pour quantité */}
+      <QuantityKeypadPopup
+        open={showQuantityKeypad}
+        onOpenChange={setShowQuantityKeypad}
+        selectedProduct={selectedProductForQuantity}
+        onConfirm={(product, quantity) => {
+          addToCart(product, quantity);
+        }}
+        currency={settings?.currency || 'GNF'}
       />
     </div>
   );
