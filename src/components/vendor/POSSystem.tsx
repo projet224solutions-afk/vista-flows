@@ -624,9 +624,9 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] md:h-[calc(100vh-5rem)] w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90 max-w-full pb-20 md:pb-0">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-transparent max-w-full -m-2 sm:-m-3 md:-m-6">
       {/* En-tête professionnel - Compact sur mobile */}
-      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg flex-shrink-0 w-full max-w-full">
+      <div className="border-b border-border/50 flex-shrink-0 w-full max-w-full">
         <div className="flex items-center justify-between p-2 sm:p-3 md:p-6 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 md:gap-4">
             <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
@@ -876,8 +876,7 @@ export function POSSystem() {
         {/* Section Produits - Design moderne */}
         <div className={`flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden space-y-1 sm:space-y-2 md:space-y-4 max-w-full ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
           {/* Barre de recherche améliorée - Compact sur mobile */}
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm flex-shrink-0 overflow-hidden w-full max-w-full">
-            <CardContent className="p-2 sm:p-3 md:p-6 overflow-hidden">
+          <div className="flex-shrink-0 overflow-hidden w-full max-w-full p-2 sm:p-3 md:p-4">
               <div className="flex flex-col gap-2 md:gap-4">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
@@ -960,8 +959,7 @@ export function POSSystem() {
                   </>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
           {/* Grille de produits professionnelle - Mobile optimisé - Sans fond blanc */}
           <div className="flex-1 overflow-auto min-h-0 min-w-0 max-w-full">
