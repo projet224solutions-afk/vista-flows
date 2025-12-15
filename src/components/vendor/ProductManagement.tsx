@@ -23,7 +23,7 @@ import { PublicIdBadge } from "@/components/PublicIdBadge";
 import { 
   Package, Plus, Search, Filter, Edit, Trash2,
   ShoppingCart, TrendingUp, Camera, Save, X, Copy,
-  Sparkles, Loader2, ImagePlus, Tags, FolderOpen
+  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode
 } from "lucide-react";
 
 interface Product {
@@ -675,6 +675,14 @@ export default function ProductManagement() {
                 )}
               </div>
               
+              {/* Barcode */}
+              {product.barcode && (
+                <div className="flex items-center gap-1 text-[10px] md:text-sm bg-muted/50 rounded px-1.5 py-0.5 md:px-2 md:py-1">
+                  <Barcode className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+                  <span className="font-mono text-[9px] md:text-xs truncate">{product.barcode}</span>
+                </div>
+              )}
+
               {/* Stock */}
               <div className="flex items-center justify-between text-[10px] md:text-sm">
                 <span className="text-muted-foreground">Stock:</span>
