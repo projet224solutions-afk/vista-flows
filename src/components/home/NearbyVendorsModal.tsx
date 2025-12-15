@@ -64,7 +64,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-3 border-b border-border/40">
           <DialogTitle className="flex items-center gap-2">
             <Store className="w-5 h-5 text-vendeur-primary" />
