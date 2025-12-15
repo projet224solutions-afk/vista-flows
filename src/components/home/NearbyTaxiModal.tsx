@@ -27,6 +27,8 @@ interface NearbyTaxiModalProps {
 }
 
 const MAX_DISTANCE_KM = 5;
+const FALLBACK_LOCATION = { lat: 9.509167, lng: -13.712222 }; // Conakry (fallback)
+const FALLBACK_RADIUS_KM = 50;
 
 export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const navigate = useNavigate();
@@ -35,50 +37,45 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [noDriversNearby, setNoDriversNearby] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [usingFallbackLocation, setUsingFallbackLocation] = useState(false);
 
-  // Fallback: recherche tous les chauffeurs en ligne sans géolocalisation
+  // Fallback (sans GPS): recherche large via RPC (bypass RLS) autour d'un point par défaut
   const searchAllOnlineDrivers = async () => {
     setLoading(true);
     setError(null);
     setNoDriversNearby(false);
 
     try {
-      const { data: driversData, error: dbError } = await supabase
-        .from('taxi_drivers')
-        .select('id, user_id, rating, vehicle_type, vehicle_plate, last_lat, last_lng')
-        .eq('is_online', true)
-        .in('status', ['available', 'online'])
-        .limit(10);
+      const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
+        p_lat: FALLBACK_LOCATION.lat,
+        p_lng: FALLBACK_LOCATION.lng,
+        p_radius_km: FALLBACK_RADIUS_KM,
+        p_limit: 10
+      });
 
-      if (dbError) throw dbError;
+      if (rpcError) throw rpcError;
 
-      if (!driversData || driversData.length === 0) {
+      if (!data || data.length === 0) {
         setNoDriversNearby(true);
         setDrivers([]);
         return;
       }
 
-      // Get driver profiles for names
-      const userIds = driversData.map(d => d.user_id);
+      const userIds = data.map((d: any) => d.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', userIds);
 
-      const driversWithNames = driversData.map(driver => ({
-        driver_id: driver.id,
-        user_id: driver.user_id,
-        distance_km: null, // Pas de distance sans géolocalisation
-        rating: driver.rating,
-        vehicle_type: driver.vehicle_type,
-        vehicle_plate: driver.vehicle_plate,
+      const driversWithNames = data.map((driver: any) => ({
+        ...driver,
         full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
       }));
 
       setDrivers(driversWithNames);
     } catch (err) {
-      console.error('Error finding drivers:', err);
-      setError('Erreur lors de la recherche de chauffeurs');
+      console.error('Error finding drivers (fallback):', err);
+      setError('Impossible de charger les chauffeurs.');
     } finally {
       setLoading(false);
     }
@@ -133,8 +130,12 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
 
   const getUserLocation = () => {
     setLoading(true);
+    setUsingFallbackLocation(false);
+
     if (!navigator.geolocation) {
-      console.log('Geolocation not supported, falling back to all drivers');
+      console.log('Geolocation not supported, falling back to RPC search');
+      setUserLocation(null);
+      setUsingFallbackLocation(true);
       searchAllOnlineDrivers();
       return;
     }
@@ -143,11 +144,13 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       (position) => {
         const { latitude, longitude } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
+        setUsingFallbackLocation(false);
         searchNearbyDrivers(latitude, longitude);
       },
       (err) => {
-        console.error('Geolocation error, falling back to all drivers:', err);
-        // Fallback: rechercher tous les chauffeurs en ligne
+        console.error('Geolocation error, falling back to RPC search:', err);
+        setUserLocation(null);
+        setUsingFallbackLocation(true);
         searchAllOnlineDrivers();
       },
       { enableHighAccuracy: true, timeout: 5000 }
@@ -241,7 +244,11 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                     {drivers.length} chauffeur{drivers.length > 1 ? 's' : ''} disponible{drivers.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {userLocation ? `Dans un rayon de ${MAX_DISTANCE_KM} km` : 'Chauffeurs en ligne'}
+                    {userLocation
+                      ? `Dans un rayon de ${MAX_DISTANCE_KM} km`
+                      : usingFallbackLocation
+                        ? `Localisation désactivée : affichage élargi (${FALLBACK_RADIUS_KM} km)`
+                        : 'Chauffeurs en ligne'}
                   </p>
                 </div>
               </div>
