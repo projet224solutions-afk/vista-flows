@@ -68,7 +68,7 @@ export const useVendorAnalytics = () => {
       // Récupérer les produits les plus vendus
       const { data: topProducts } = await supabase
         .from('payment_links' as any)
-        .select('product_name, id')
+        .select('produit, id')
         .eq('vendor_id', vendorId)
         .eq('status', 'completed')
         .limit(5);
@@ -86,7 +86,7 @@ export const useVendorAnalytics = () => {
         month: (monthData as any) || [],
         topProducts: topProducts?.map((p: any) => ({
           id: p.id,
-          name: p.product_name,
+          name: p.produit,
           sales: 0
         })) || []
       });
