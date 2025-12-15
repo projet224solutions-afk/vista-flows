@@ -25,7 +25,7 @@ import PlatformRevenueOverview from './PlatformRevenueOverview';
 const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
 const SubscriptionManagement = lazy(() => import('./SubscriptionManagement'));
 const PDGEscrowManagement = lazy(() => import('./PDGEscrowManagement'));
-const DriverSubscriptionManagement = lazy(() => import('../admin/DriverSubscriptionManagement'));
+const DriverSubscriptionManagement = lazy(() => import('./DriverSubscriptionManagement'));
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
