@@ -243,102 +243,53 @@ export class DriverSubscriptionService {
     }
   }
   // S'abonner ou renouveler (via Wallet)
+  // La fonction RPC subscribe_driver gère tout: débit wallet, transaction, abonnement, revenus
   static async subscribeWithWallet(
     userId: string,
     userType: 'taxi' | 'livreur',
     billingCycle: 'monthly' | 'yearly' = 'monthly'
   ): Promise<{ success: boolean; subscriptionId?: string; error?: string }> {
     try {
-      // Vérifier le solde du wallet
-      let { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', userId)
-        .single();
-      
-      if (walletError) {
-        // Tenter de créer/initialiser un wallet
-        const ensured = await this.ensureWallet(userId);
-        if (!ensured.exists) {
-          return { success: false, error: 'Wallet introuvable' };
-        }
-        // Utiliser balance 0 après création
-        walletData = { balance: ensured.balance };
-      }
-      
-      // Récupérer le prix
-      const config = await this.getConfig();
-      if (!config) {
-        return { success: false, error: 'Configuration non disponible' };
+      // S'assurer que le wallet existe
+      const ensured = await this.ensureWallet(userId);
+      if (!ensured.exists) {
+        return { success: false, error: 'Wallet introuvable' };
       }
 
-      // Calculer le prix selon le cycle de facturation
-      const price = billingCycle === 'yearly'
-        ? (config.yearly_price ?? config.price * 12)
-        : config.price;
-
-      if (walletData.balance < price) {
-        return { success: false, error: 'Solde insuffisant' };
-      }
-
-      // Créer une transaction d'abonnement
-      const transactionId = `SUB-${Date.now()}-${userId.substring(0, 8)}`;
-
-      // Débiter le wallet
-      const { error: debitError } = await supabase
-        .from('wallets')
-        .update({ 
-          balance: walletData.balance - price,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
-
-      if (debitError) {
-        return { success: false, error: 'Erreur débit wallet' };
-      }
-
-      // Enregistrer la transaction dans enhanced_transactions
-      const duration = billingCycle === 'yearly' ? '365 jours' : '30 jours';
-      await supabase.from('enhanced_transactions').insert({
-        sender_id: userId,
-        receiver_id: userId, // Système
-        amount: price,
-        currency: 'GNF',
-        method: 'wallet',
-        status: 'completed',
-        metadata: { 
-          type: 'subscription',
-          subscription_type: userType, 
-          transaction_id: transactionId,
-          billing_cycle: billingCycle,
-          description: `Abonnement ${userType === 'taxi' ? 'Taxi Moto' : 'Livreur'} - ${duration}`
-        }
-      });
-
-      // Créer l'abonnement via RPC
+      // Appeler la fonction RPC qui gère tout le processus atomiquement
+      // (vérification solde, débit, transaction, abonnement, revenus)
       const { data: subscriptionId, error: subError } = await supabase
         .rpc('subscribe_driver', {
           p_user_id: userId,
           p_type: userType,
           p_payment_method: 'wallet',
-          p_transaction_id: transactionId,
+          p_transaction_id: null, // La fonction génère automatiquement un ID
           p_billing_cycle: billingCycle
         });
 
       if (subError) {
         console.error('Erreur création abonnement:', subError);
-        // Tenter de recréditer le wallet en cas d'erreur
-        await supabase
-          .from('wallets')
-          .update({ balance: walletData.balance })
-          .eq('user_id', userId);
-        return { success: false, error: 'Erreur création abonnement' };
+        
+        // Extraire le message d'erreur pour l'affichage
+        const errorMessage = subError.message || 'Erreur création abonnement';
+        
+        if (errorMessage.includes('Solde insuffisant')) {
+          return { success: false, error: 'Solde insuffisant' };
+        }
+        if (errorMessage.includes('Wallet non trouvé')) {
+          return { success: false, error: 'Wallet introuvable' };
+        }
+        if (errorMessage.includes('Configuration')) {
+          return { success: false, error: 'Configuration non disponible' };
+        }
+        
+        return { success: false, error: errorMessage };
       }
 
       return { success: true, subscriptionId };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur abonnement wallet:', error);
-      return { success: false, error: 'Erreur système' };
+      return { success: false, error: error?.message || 'Erreur système' };
     }
   }
 
