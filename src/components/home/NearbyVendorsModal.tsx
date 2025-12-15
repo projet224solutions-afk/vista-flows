@@ -97,38 +97,37 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               </Button>
             </div>
           ) : (
-            vendors.map((vendor) => (
-              <button
-                key={vendor.id}
-                onClick={() => handleVendorClick(vendor.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 p-3 rounded-xl',
-                  'bg-card border border-border/40',
-                  'hover:border-vendeur-primary/30 hover:bg-vendeur-primary/5',
-                  'transition-all duration-200'
-                )}
-              >
-                <div className="w-12 h-12 rounded-xl bg-vendeur-primary/10 flex items-center justify-center overflow-hidden">
-                  {vendor.logo_url ? (
-                    <img src={vendor.logo_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Store className="w-6 h-6 text-vendeur-primary" />
+            <div className="grid grid-cols-2 gap-3">
+              {vendors.map((vendor) => (
+                <button
+                  key={vendor.id}
+                  onClick={() => handleVendorClick(vendor.id)}
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-2xl',
+                    'bg-card border border-border/40',
+                    'hover:border-vendeur-primary/30 hover:bg-vendeur-primary/5',
+                    'transition-all duration-200'
                   )}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <h4 className="font-medium text-sm text-foreground truncate">
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-vendeur-primary/10 flex items-center justify-center overflow-hidden">
+                    {vendor.logo_url ? (
+                      <img src={vendor.logo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Store className="w-7 h-7 text-vendeur-primary" />
+                    )}
+                  </div>
+                  <h4 className="font-medium text-sm text-foreground text-center line-clamp-2">
                     {vendor.business_name}
                   </h4>
                   {vendor.address && (
-                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground text-center line-clamp-1 flex items-center gap-1">
                       <MapPin className="w-3 h-3 flex-shrink-0" />
                       {vendor.address}
                     </p>
                   )}
-                </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground" />
-              </button>
-            ))
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
