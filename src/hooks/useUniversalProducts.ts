@@ -37,6 +37,7 @@ interface UseUniversalProductsOptions {
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
+  vendorId?: string;
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
 }
@@ -49,6 +50,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     minPrice,
     maxPrice,
     minRating,
+    vendorId,
     sortBy = 'newest',
     autoLoad = true
   } = options;
@@ -96,6 +98,10 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         .eq('is_active', true);
 
       // Filtres
+      if (vendorId) {
+        query = query.eq('vendor_id', vendorId);
+      }
+
       if (category && category !== 'all') {
         query = query.eq('category_id', category);
       }
@@ -214,7 +220,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     } finally {
       setLoading(false);
     }
-  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, sortBy]);
+  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, sortBy]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -231,7 +237,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     if (autoLoad) {
       loadProducts(true);
     }
-  }, [category, searchQuery, minPrice, maxPrice, minRating, sortBy, autoLoad]);
+  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, sortBy, autoLoad]);
 
   // Charger plus quand la page change
   useEffect(() => {
