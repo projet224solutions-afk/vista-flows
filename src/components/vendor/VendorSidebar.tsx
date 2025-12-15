@@ -33,7 +33,8 @@ export function VendorSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname.split('/').pop() || 'dashboard';
-  const collapsed = state === "collapsed";
+  // Sur mobile, toujours afficher le contenu complet quand ouvert
+  const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading } = useVendorBadges();
 
   const isActive = (path: string) => currentPath === path;
