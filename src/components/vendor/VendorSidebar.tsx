@@ -119,7 +119,7 @@ export function VendorSidebar() {
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-gradient-to-b from-slate-50 to-white">
+      <SidebarContent className="bg-gradient-to-b from-slate-50 to-white h-full overflow-y-auto">
         {menuSections.map((section) => (
           <SidebarGroup key={section.label}>
             {!collapsed && (

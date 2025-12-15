@@ -364,13 +364,14 @@ export default function VendeurDashboard() {
   );
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <SidebarProvider defaultOpen={false}>
+      <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-x-hidden">
+        {/* Sidebar - cachée par défaut sur mobile, overlay mode */}
         <VendorSidebar />
 
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
           {/* Header global optimisé mobile */}
-          <header className="h-14 md:h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-3 md:px-6">
+          <header className="h-14 md:h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-2 sm:px-3 md:px-6 w-full max-w-full overflow-x-hidden">
             <SidebarTrigger className="mr-2 md:mr-4" />
 
             <div className="flex items-center justify-between flex-1 min-w-0">
@@ -435,7 +436,7 @@ export default function VendeurDashboard() {
           )}
 
           {/* Contenu principal - padding réduit sur mobile */}
-          <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6">
+          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pb-20 md:pb-6 w-full max-w-full">
             <Routes>
               {/* Route par défaut */}
               <Route index element={<DashboardHome />} />
