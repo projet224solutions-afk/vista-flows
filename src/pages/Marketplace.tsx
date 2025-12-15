@@ -54,6 +54,26 @@ export default function Marketplace() {
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [vendorName, setVendorName] = useState<string | null>(null);
+  
+  const vendorId = searchParams.get('vendor') || undefined;
+
+  // Charger le nom du vendeur si filtré par vendeur
+  useEffect(() => {
+    if (vendorId) {
+      const loadVendorName = async () => {
+        const { data } = await supabase
+          .from('vendors')
+          .select('business_name')
+          .eq('id', vendorId)
+          .single();
+        if (data) setVendorName(data.business_name);
+      };
+      loadVendorName();
+    } else {
+      setVendorName(null);
+    }
+  }, [vendorId]);
 
   // Utiliser le hook universel pour les produits
   const { 
@@ -69,6 +89,7 @@ export default function Marketplace() {
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     minRating: filters.minRating,
+    vendorId,
     sortBy,
     autoLoad: true
   });
@@ -149,8 +170,27 @@ export default function Marketplace() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <ResponsiveContainer autoPadding>
           <div className="flex items-center justify-between">
-            <h1 className="heading-responsive font-bold text-foreground">Marketplace</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="heading-responsive font-bold text-foreground truncate">
+                {vendorName ? vendorName : 'Marketplace'}
+              </h1>
+              {vendorName && (
+                <p className="text-xs text-muted-foreground">
+                  {total} produit{total > 1 ? 's' : ''} disponible{total > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
             <div className="flex items-center gap-2">
+              {vendorId && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate('/marketplace')}
+                  className="text-xs"
+                >
+                  Voir tout
+                </Button>
+              )}
               {user && (
                 <Button 
                   variant="ghost" 
