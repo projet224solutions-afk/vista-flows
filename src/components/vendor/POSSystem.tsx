@@ -1316,6 +1316,59 @@ export function POSSystem() {
                   ))}
                 </div>
 
+                {/* Champs de saisie selon le mode de paiement */}
+                {paymentMethod === 'card' && (
+                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+                    <Label className="text-xs font-medium flex items-center gap-1">
+                      <CreditCard className="h-3 w-3" />
+                      Informations de la carte
+                    </Label>
+                    <Input
+                      type="text"
+                      placeholder="Numéro de carte"
+                      className="h-8 text-sm"
+                      maxLength={19}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="text"
+                        placeholder="MM/AA"
+                        className="h-8 text-sm"
+                        maxLength={5}
+                      />
+                      <Input
+                        type="text"
+                        placeholder="CVV"
+                        className="h-8 text-sm"
+                        maxLength={4}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === 'mobile' && (
+                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+                    <Label className="text-xs font-medium flex items-center gap-1">
+                      <Smartphone className="h-3 w-3" />
+                      Numéro de téléphone mobile
+                    </Label>
+                    <Input
+                      type="tel"
+                      placeholder="Ex: 620 00 00 00"
+                      className="h-8 text-sm"
+                      maxLength={12}
+                    />
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px]">
+                        Orange Money
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px]">
+                        MTN MoMo
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Bouton de validation */}
                 <Button 
                   onClick={validateOrder}
