@@ -90,8 +90,8 @@ export function NearbyServicesSection({
         </div>
       </div>
 
-      {/* Services Stack */}
-      <div className="space-y-3">
+      {/* Services Grid - Landscape Layout */}
+      <div className="grid grid-cols-3 gap-3">
         {services.map((service, index) => (
           <div
             key={service.id}
@@ -108,6 +108,7 @@ export function NearbyServicesSection({
               iconBg={service.iconBg}
               trending={service.trending}
               onClick={() => onServiceClick(service.id)}
+              compact
             />
           </div>
         ))}
