@@ -29,6 +29,7 @@ interface NearbyTaxiModalProps {
 const MAX_DISTANCE_KM = 5;
 const FALLBACK_LOCATION = { lat: 9.509167, lng: -13.712222 }; // Conakry (fallback)
 const FALLBACK_RADIUS_KM = 50;
+const SEARCH_RADII_KM = [MAX_DISTANCE_KM, 10, 20, FALLBACK_RADIUS_KM] as const;
 
 export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const navigate = useNavigate();
@@ -38,6 +39,19 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const [noDriversNearby, setNoDriversNearby] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [usingFallbackLocation, setUsingFallbackLocation] = useState(false);
+  const [usedRadiusKm, setUsedRadiusKm] = useState<number>(MAX_DISTANCE_KM);
+
+  const runRpcSearch = async (lat: number, lng: number, radiusKm: number) => {
+    const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
+      p_lat: lat,
+      p_lng: lng,
+      p_radius_km: radiusKm,
+      p_limit: 10,
+    });
+
+    if (rpcError) throw rpcError;
+    return (data || []) as any[];
+  };
 
   // Fallback (sans GPS): recherche large via RPC (bypass RLS) autour d'un point par défaut
   const searchAllOnlineDrivers = async () => {
@@ -46,14 +60,10 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
     setNoDriversNearby(false);
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
-        p_lat: FALLBACK_LOCATION.lat,
-        p_lng: FALLBACK_LOCATION.lng,
-        p_radius_km: FALLBACK_RADIUS_KM,
-        p_limit: 10
-      });
+      setUsingFallbackLocation(true);
+      setUsedRadiusKm(FALLBACK_RADIUS_KM);
 
-      if (rpcError) throw rpcError;
+      const data = await runRpcSearch(FALLBACK_LOCATION.lat, FALLBACK_LOCATION.lng, FALLBACK_RADIUS_KM);
 
       if (!data || data.length === 0) {
         setNoDriversNearby(true);
@@ -69,6 +79,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
 
       const driversWithNames = data.map((driver: any) => ({
         ...driver,
+        distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
         full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
       }));
 
@@ -85,43 +96,45 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
     setLoading(true);
     setError(null);
     setNoDriversNearby(false);
+    setUsingFallbackLocation(false);
 
     try {
-      // Call the RPC function to find nearby drivers
-      const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
-        p_lat: lat,
-        p_lng: lng,
-        p_radius_km: MAX_DISTANCE_KM,
-        p_limit: 10
-      });
+      let data: any[] = [];
+      let radiusUsed: number | null = null;
 
-      if (rpcError) {
-        console.error('RPC error, falling back to direct query:', rpcError);
-        await searchAllOnlineDrivers();
-        return;
+      for (const radiusKm of SEARCH_RADII_KM) {
+        radiusUsed = radiusKm;
+        const result = await runRpcSearch(lat, lng, radiusKm);
+        if (result.length > 0) {
+          data = result;
+          break;
+        }
       }
+
+      setUsedRadiusKm(radiusUsed ?? MAX_DISTANCE_KM);
 
       if (!data || data.length === 0) {
         setNoDriversNearby(true);
         setDrivers([]);
-      } else {
-        // Get driver profiles for names
-        const userIds = data.map((d: any) => d.user_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', userIds);
-
-        const driversWithNames = data.map((driver: any) => ({
-          ...driver,
-          full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
-        }));
-
-        setDrivers(driversWithNames);
+        return;
       }
+
+      const userIds = data.map((d: any) => d.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      const driversWithNames = data.map((driver: any) => ({
+        ...driver,
+        distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
+        full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
+      }));
+
+      setDrivers(driversWithNames);
     } catch (err) {
       console.error('Error finding nearby drivers:', err);
-      // Fallback to all online drivers
+      // Fallback to large RPC search in Conakry (bypass RLS)
       await searchAllOnlineDrivers();
     } finally {
       setLoading(false);
@@ -193,7 +206,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 <Car className="w-12 h-12 text-taxi-primary animate-pulse" />
                 <div className="absolute inset-0 rounded-full border-4 border-taxi-primary/30 border-t-taxi-primary animate-spin" style={{ animationDuration: '1s' }} />
               </div>
-              <p className="text-sm mt-4">Recherche de chauffeurs dans un rayon de {MAX_DISTANCE_KM} km...</p>
+              <p className="text-sm mt-4">Recherche de chauffeurs autour de vous...</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -215,7 +228,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 Aucun chauffeur proche
               </h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-                Il n'y a pas de chauffeur disponible dans un rayon de {MAX_DISTANCE_KM} km autour de votre position.
+                Il n'y a pas de chauffeur disponible dans un rayon de {usedRadiusKm} km autour de votre position.
               </p>
               <div className="flex flex-col gap-2 w-full max-w-xs">
                 <Button 
@@ -244,11 +257,9 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                     {drivers.length} chauffeur{drivers.length > 1 ? 's' : ''} disponible{drivers.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {userLocation
-                      ? `Dans un rayon de ${MAX_DISTANCE_KM} km`
-                      : usingFallbackLocation
-                        ? `Localisation désactivée : affichage élargi (${FALLBACK_RADIUS_KM} km)`
-                        : 'Chauffeurs en ligne'}
+                    {usingFallbackLocation
+                      ? `Localisation désactivée : affichage élargi (${usedRadiusKm} km)`
+                      : `Dans un rayon de ${usedRadiusKm} km`}
                   </p>
                 </div>
               </div>
@@ -276,7 +287,9 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                     </div>
                         <div className="text-right">
                           <span className="text-sm font-semibold text-taxi-primary">
-                            {driver.distance_km !== null ? `${driver.distance_km.toFixed(1)} km` : 'En ligne'}
+                            {driver.distance_km !== null && Number.isFinite(driver.distance_km)
+                              ? `${driver.distance_km.toFixed(1)} km`
+                              : 'En ligne'}
                           </span>
                         </div>
                   </div>
