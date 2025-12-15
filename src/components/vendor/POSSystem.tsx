@@ -922,9 +922,11 @@ export function POSSystem() {
                 />
               </div>
               
-              {/* Filtres par catégorie - Scroll horizontal sur mobile */}
-              {/* Filtres par catégorie - Limité à 6 catégories principales */}
-              <div className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-1 scrollbar-hide max-w-full">
+              {/* Filtres par catégorie - Scroll horizontal */}
+              <div 
+                className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-2 max-w-full"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              >
                 {categoriesLoading ? (
                   <div className="text-xs text-muted-foreground">Chargement...</div>
                 ) : (
@@ -933,24 +935,21 @@ export function POSSystem() {
                       variant={selectedCategory === 'all' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory('all')}
-                      className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs"
+                      className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs whitespace-nowrap"
                     >
                       Tous
                     </Button>
-                    {categories
-                      .filter(cat => ['Alimentation', 'Animalerie', 'Audio', 'Automobile', 'Beauté & Santé'].includes(cat.name))
-                      .slice(0, 5)
-                      .map(category => (
-                        <Button
-                          key={category.id}
-                          variant={selectedCategory === category.id ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setSelectedCategory(category.id)}
-                          className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs"
-                        >
-                          {category.name}
-                        </Button>
-                      ))}
+                    {categories.map(category => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategory === category.id ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory(category.id)}
+                        className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs whitespace-nowrap"
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
                   </>
                 )}
               </div>
