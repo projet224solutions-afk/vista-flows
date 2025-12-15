@@ -57,7 +57,7 @@ export default function Payment() {
     }
   }, [user]);
 
-  // État pour stocker les infos produit
+  // État pour stocker les infos produit (un seul produit)
   const [productPaymentInfo, setProductPaymentInfo] = useState<{
     productId: string;
     productName: string;
@@ -66,7 +66,15 @@ export default function Payment() {
     vendorUserId: string;
   } | null>(null);
 
-  // Charger les informations de paiement de produit
+  // État pour stocker les infos du panier (multi-produits)
+  const [cartPaymentInfo, setCartPaymentInfo] = useState<{
+    items: any[];
+    totalAmount: number;
+    vendorId: string;
+    vendorUserId: string;
+  } | null>(null);
+
+  // Charger les informations de paiement de produit ou panier
   const loadProductPaymentInfo = async () => {
     // Vérifier les query params
     const productId = searchParams.get('productId');
@@ -75,6 +83,71 @@ export default function Payment() {
     // Vérifier le state
     const stateData = location.state as any;
     
+    // CAS 1: Panier multi-produits depuis Cart.tsx
+    if (stateData?.fromCart && stateData?.cartItems && stateData.cartItems.length > 0) {
+      try {
+        const cartItems = stateData.cartItems;
+        const totalAmount = stateData.totalAmount;
+        
+        // Grouper par vendeur (pour simplifier, on prend le premier vendeur)
+        const firstItem = cartItems[0];
+        
+        // Charger les infos du vendeur
+        const { data: vendorInfo, error: vendorError } = await supabase
+          .from('vendors')
+          .select('id, user_id')
+          .eq('id', firstItem.vendor_id)
+          .single();
+          
+        if (vendorError || !vendorInfo) {
+          console.error('Erreur chargement vendeur:', vendorError);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de charger les informations du vendeur"
+          });
+          return;
+        }
+
+        // Stocker les infos du panier
+        setCartPaymentInfo({
+          items: cartItems,
+          totalAmount: totalAmount,
+          vendorId: vendorInfo.id,
+          vendorUserId: vendorInfo.user_id
+        });
+
+        // Récupérer l'ID custom du vendeur
+        const { data: vendorData } = await supabase
+          .from('user_ids')
+          .select('custom_id')
+          .eq('user_id', vendorInfo.user_id)
+          .single();
+
+        // Pré-remplir les champs
+        setPaymentAmount(totalAmount.toString());
+        if (vendorData?.custom_id) {
+          setRecipientId(vendorData.custom_id);
+        }
+        
+        const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
+        setPaymentDescription(`Achat panier: ${itemNames}`);
+        
+        // Ouvrir automatiquement le dialog de paiement
+        setPaymentOpen(true);
+        
+      } catch (error) {
+        console.error('Erreur chargement panier:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les informations du panier"
+        });
+      }
+      return;
+    }
+    
+    // CAS 2: Achat produit unique
     if (productId || stateData?.productId) {
       try {
         const id = productId || stateData?.productId;
@@ -311,7 +384,81 @@ export default function Payment() {
     setShowPaymentPreview(false);
 
     try {
-      // Si c'est un paiement de produit, créer une commande d'abord
+      // CAS 1: Paiement du panier (multi-produits)
+      if (cartPaymentInfo) {
+        console.log('[Payment] Creating cart order:', cartPaymentInfo);
+
+        // Préparer les items pour la commande
+        const orderItems = cartPaymentInfo.items.map((item: any) => ({
+          product_id: item.product_id || item.id,
+          quantity: item.quantity,
+          price: item.price
+        }));
+
+        // Créer la commande via la fonction PostgreSQL
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: user.id,
+          p_vendor_id: cartPaymentInfo.vendorId,
+          p_items: orderItems,
+          p_total_amount: paymentPreview.amount,
+          p_payment_method: 'wallet',
+          p_shipping_address: {
+            address: 'Adresse de livraison',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
+
+        if (orderError || !orderResult || orderResult.length === 0) {
+          console.error('[Payment] Cart order creation failed:', orderError);
+          throw new Error(orderError?.message || 'Impossible de créer la commande');
+        }
+
+        const orderId = orderResult[0].order_id;
+        const orderNumber = orderResult[0].order_number;
+        console.log('[Payment] Cart order created:', { orderId, orderNumber });
+
+        // Créer l'escrow pour le panier
+        const escrowResult = await UniversalEscrowService.createEscrow({
+          buyer_id: user.id,
+          seller_id: cartPaymentInfo.vendorUserId,
+          order_id: orderId,
+          amount: paymentPreview.amount,
+          currency: 'GNF',
+          transaction_type: 'product',
+          payment_provider: 'wallet',
+          metadata: {
+            items_count: cartPaymentInfo.items.length,
+            order_number: orderNumber,
+            description: paymentDescription || `Achat panier (${cartPaymentInfo.items.length} articles)`
+          }
+        });
+
+        if (!escrowResult.success) {
+          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
+        }
+
+        // Mettre à jour la commande avec l'escrow_transaction_id
+        await supabase
+          .from('orders')
+          .update({ 
+            metadata: { escrow_transaction_id: escrowResult.escrow_id },
+            payment_status: 'paid'
+          })
+          .eq('id', orderId);
+
+        toast({
+          title: "✅ Commande créée !",
+          description: `Commande ${orderNumber} - ${cartPaymentInfo.items.length} article(s) - Paiement sécurisé`
+        });
+
+        // Réinitialiser et naviguer vers les commandes
+        setCartPaymentInfo(null);
+        navigate('/orders');
+        return;
+      } 
+      
+      // CAS 2: Paiement d'un seul produit
       if (productPaymentInfo) {
         console.log('[Payment] Creating product order:', productPaymentInfo);
 
