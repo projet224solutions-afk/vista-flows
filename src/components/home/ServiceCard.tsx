@@ -19,6 +19,7 @@ interface HomeServiceCardProps {
   trending?: boolean;
   onClick?: () => void;
   className?: string;
+  compact?: boolean;
 }
 
 export function HomeServiceCard({
@@ -32,7 +33,57 @@ export function HomeServiceCard({
   trending = false,
   onClick,
   className,
+  compact = false,
 }: HomeServiceCardProps) {
+  if (compact) {
+    return (
+      <button
+        onClick={onClick}
+        className={cn(
+          'group relative w-full overflow-hidden',
+          'p-3 rounded-2xl text-center',
+          'bg-gradient-to-br from-card via-card to-card/80',
+          'border border-border/50',
+          'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
+          'transition-all duration-300 ease-out',
+          'active:scale-[0.98]',
+          className
+        )}
+      >
+        {/* Trending indicator */}
+        {trending && count > 0 && (
+          <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-bold rounded-full">
+            <Sparkles className="w-2 h-2" />
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-2">
+          {/* Icon Container */}
+          <div
+            className={cn(
+              'p-3 rounded-xl',
+              'transition-all duration-300',
+              iconBg,
+              'group-hover:scale-105'
+            )}
+          >
+            {icon}
+          </div>
+
+          {/* Content */}
+          <div className="space-y-1">
+            <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-1">
+              {title}
+            </h3>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium tabular-nums">
+              {count}
+            </span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
