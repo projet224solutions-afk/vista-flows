@@ -23,6 +23,7 @@ import {
   LatestProductsSection,
   NearbyVendorsModal,
   NearbyTaxiModal,
+  NearbyDeliveryModal,
 } from '@/components/home';
 
 interface ServiceStatsData {
@@ -42,6 +43,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showVendorsModal, setShowVendorsModal] = useState(false);
   const [showTaxiModal, setShowTaxiModal] = useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [serviceStats, setServiceStats] = useState<ServiceStatsData>({
     boutiques: 0,
     taxi: 0,
@@ -138,7 +140,7 @@ export default function Home() {
         setShowTaxiModal(true);
         break;
       case 'livraison':
-        navigate('/livreur');
+        setShowDeliveryModal(true);
         break;
     }
   };
@@ -200,6 +202,10 @@ export default function Home() {
       <NearbyTaxiModal 
         open={showTaxiModal} 
         onOpenChange={setShowTaxiModal} 
+      />
+      <NearbyDeliveryModal 
+        open={showDeliveryModal} 
+        onOpenChange={setShowDeliveryModal} 
       />
     </div>
   );
