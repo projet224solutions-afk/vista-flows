@@ -1,5 +1,6 @@
 export { NearbyVendorsModal } from './NearbyVendorsModal';
 export { NearbyTaxiModal } from './NearbyTaxiModal';
+export { NearbyDeliveryModal } from './NearbyDeliveryModal';
 
 /**
  * HOME COMPONENTS - Index Export
