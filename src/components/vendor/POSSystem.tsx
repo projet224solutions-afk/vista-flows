@@ -1136,9 +1136,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 max-w-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design ultra compact mobile */}
-          <Card className="flex-1 shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full">
+          <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full md:flex-1 md:max-h-full">
             {/* En-tête compact */}
             <div className="p-2 sm:p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -1162,7 +1162,7 @@ export function POSSystem() {
             </div>
 
             {/* Liste des produits du panier - Zone scrollable optimisée */}
-            <div className="flex-1 overflow-auto p-1.5 sm:p-2 min-h-0">
+            <div className="overflow-auto p-1.5 sm:p-2 max-h-[180px] md:flex-1 md:max-h-none md:min-h-0">
               <ScrollArea className="h-full">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-center">
