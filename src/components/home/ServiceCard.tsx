@@ -1,10 +1,11 @@
 /**
  * SERVICE CARD - Ultra Professional Design
  * 224Solutions - Premium Service Cards
- * Glass morphism with micro-animations
+ * Clean iOS-style with subtle animations
  */
 
 import { ReactNode } from 'react';
+import { TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HomeServiceCardProps {
@@ -13,6 +14,7 @@ interface HomeServiceCardProps {
   title: string;
   count: number;
   gradient?: string;
+  trending?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -23,6 +25,7 @@ export function HomeServiceCard({
   title,
   count,
   gradient = 'from-primary/10 to-primary/5',
+  trending = false,
   onClick,
   className,
 }: HomeServiceCardProps) {
@@ -30,44 +33,41 @@ export function HomeServiceCard({
     <button
       onClick={onClick}
       className={cn(
-        'group relative w-full p-4 md:p-5 rounded-2xl text-left',
-        'bg-card border border-border/50',
-        'hover:border-primary/30 hover:shadow-[0_8px_30px_hsl(211_100%_50%_/_0.1)]',
-        'transition-all duration-300',
-        'hover:scale-[1.02] active:scale-[0.98]',
+        'group relative w-full p-4 rounded-2xl text-left',
+        'bg-card border border-border/40',
+        'hover:border-primary/20 hover:shadow-lg',
+        'transition-all duration-300 ease-out',
+        'active:scale-[0.97]',
         className
       )}
     >
-      {/* Gradient overlay on hover */}
-      <div
-        className={cn(
-          'absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100',
-          'bg-gradient-to-br',
-          gradient,
-          'transition-opacity duration-300'
-        )}
-      />
+      {/* Trending badge */}
+      {trending && count > 0 && (
+        <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-vendeur-secondary text-white text-[10px] font-bold rounded-full shadow-md animate-bounce-in">
+          <TrendingUp className="w-3 h-3" />
+          Hot
+        </div>
+      )}
 
-      <div className="relative flex flex-col items-center text-center space-y-3">
-        {/* Icon */}
+      <div className="flex flex-col items-center text-center space-y-2.5">
+        {/* Icon Container */}
         <div
           className={cn(
-            'p-3 rounded-2xl',
-            'bg-gradient-to-br from-muted to-muted/50',
-            'group-hover:from-primary/20 group-hover:to-primary/10',
-            'transition-all duration-300',
-            'group-hover:scale-110 group-hover:shadow-lg'
+            'relative p-3.5 rounded-2xl transition-all duration-300',
+            'bg-gradient-to-br',
+            gradient,
+            'group-hover:scale-110 group-hover:shadow-md'
           )}
         >
           {icon}
         </div>
 
         {/* Text */}
-        <div className="space-y-1">
-          <h3 className="font-semibold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">
+        <div className="space-y-0.5">
+          <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1">
             {title}
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground tabular-nums">
             {count} {count === 1 ? 'disponible' : 'disponibles'}
           </p>
         </div>

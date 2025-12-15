@@ -45,66 +45,66 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
         className
       )}
     >
-      {/* Gradient fade effect */}
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+      {/* Subtle top gradient for seamless blend */}
+      <div className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
 
-      {/* Navigation Bar */}
-      <div className="relative px-4 pb-4">
-        <div
-          className={cn(
-            'mx-auto max-w-md',
-            'bg-card/90 backdrop-blur-xl',
-            'border border-border/50',
-            'rounded-2xl shadow-[0_-4px_30px_hsl(0_0%_0%_/_0.08)]',
-            'p-2'
-          )}
-        >
-          <div className="grid grid-cols-4 gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
+      {/* Navigation Bar - Clean iOS style */}
+      <div
+        className={cn(
+          'relative',
+          'bg-card/95 backdrop-blur-2xl',
+          'border-t border-border/30',
+          'shadow-[0_-2px_20px_hsl(0_0%_0%_/_0.05)]'
+        )}
+      >
+        <div className="grid grid-cols-4 max-w-lg mx-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigate(item.path)}
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                className={cn(
+                  'relative flex flex-col items-center justify-center gap-0.5 py-2 px-1',
+                  'transition-all duration-200',
+                  active
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground active:scale-95'
+                )}
+              >
+                {/* Icon */}
+                <div className="relative">
+                  <Icon 
+                    className={cn(
+                      'w-6 h-6 transition-transform duration-200',
+                      active && 'scale-105'
+                    )} 
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                  {/* Active dot indicator */}
+                  {active && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                  )}
+                </div>
+
+                {/* Label */}
+                <span
                   className={cn(
-                    'relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl',
-                    'transition-all duration-300',
-                    active
-                      ? 'text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
+                    'text-[11px] font-medium mt-0.5',
+                    active ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
-                  {/* Active indicator */}
-                  {active && (
-                    <div className="absolute inset-0 rounded-xl bg-primary/10 animate-scale-in" />
-                  )}
-
-                  {/* Icon container */}
-                  <div
-                    className={cn(
-                      'relative z-10 p-1.5 rounded-xl transition-all duration-300',
-                      active && 'bg-primary text-primary-foreground shadow-lg scale-110'
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-
-                  {/* Label */}
-                  <span
-                    className={cn(
-                      'relative z-10 text-[10px] font-medium transition-all duration-300',
-                      active && 'text-primary font-semibold'
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
+        
+        {/* Safe area spacer for iOS */}
+        <div className="h-safe-area-inset-bottom" />
       </div>
     </nav>
   );
