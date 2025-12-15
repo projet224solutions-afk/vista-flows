@@ -13,7 +13,7 @@ import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight
+  Menu, ChevronRight, Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -60,6 +60,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
+      { value: 'driver-subscriptions', label: 'Abonnements Drivers', icon: Car, badge: true },
       { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true },
       { value: 'orders', label: 'Commandes', icon: Package },
       { value: 'vendors', label: 'Vendeurs', icon: Store },
