@@ -1124,44 +1124,31 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive */}
-        <div className={`w-full md:w-96 lg:w-[400px] flex-shrink-0 flex flex-col min-h-0 min-w-0 overflow-hidden ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
-          {/* Panier Ultra Professionnel */}
-          <Card className="flex-1 shadow-2xl border-0 bg-gradient-to-br from-card via-card/95 to-background/90 backdrop-blur-lg overflow-hidden flex flex-col min-h-0 min-w-0">
-            {/* En-tête du panier avec statistiques */}
-            <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-border/30">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                  </div>
-                  <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent font-bold">
-                    Panier ({cart.length})
-                  </span>
+        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+          {/* Panier - Design compact */}
+          <Card className="flex-1 shadow-xl border-0 bg-card overflow-auto flex flex-col">
+            {/* En-tête compact */}
+            <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent border-b border-border/30 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  <span className="font-bold text-primary">Panier ({cart.length})</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground hover:text-destructive">
+                <Button variant="ghost" size="sm" onClick={clearCart} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
                 </Button>
-              </CardTitle>
-              
-              {/* Statistiques rapides */}
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="bg-gradient-to-br from-primary/5 to-primary/2 rounded-lg p-2 text-center">
-                  <div className="text-xs text-muted-foreground">Articles</div>
-                  <div className="font-bold text-sm">{cart.reduce((sum, item) => sum + item.quantity, 0)}</div>
-                </div>
-                <div className="bg-gradient-to-br from-accent/5 to-accent/2 rounded-lg p-2 text-center">
-                  <div className="text-xs text-muted-foreground">Sous-total</div>
-                  <div className="font-bold text-sm">{subtotal.toLocaleString()}</div>
-                </div>
-                <div className="bg-gradient-to-br from-secondary/5 to-secondary/2 rounded-lg p-2 text-center">
-                  <div className="text-xs text-muted-foreground">TVA</div>
-                  <div className="font-bold text-sm">{tax.toLocaleString()}</div>
-                </div>
               </div>
-            </CardHeader>
+              
+              {/* Stats en ligne */}
+              <div className="flex justify-between text-xs mt-2 text-muted-foreground">
+                <span>{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</span>
+                <span>Sous-total: {subtotal.toLocaleString()} GNF</span>
+              </div>
+            </div>
 
-            <CardContent className="p-2 md:p-4 flex-1 min-h-0 overflow-hidden">
-              <ScrollArea className="h-full max-h-[35vh] md:max-h-[40vh]">
+            {/* Liste des produits du panier - Zone scrollable */}
+            <div className="flex-1 overflow-auto p-2 min-h-0">
+              <ScrollArea className="h-full">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-4">
                     <ShoppingBag className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground/40 mb-2" />
@@ -1238,231 +1225,70 @@ export function POSSystem() {
                   </div>
                 )}
               </ScrollArea>
-            </CardContent>
+            </div>
 
-            {/* Section totaux et paiement - Compact sur mobile */}
+            {/* Section paiement compacte */}
             {cart.length > 0 && (
-              <div className="border-t border-border/30 bg-gradient-to-r from-primary/5 via-background/90 to-secondary/5 flex-shrink-0 overflow-y-auto max-h-[50vh]">
-                <div className="p-3 md:p-4 space-y-3">
-                  {/* Calculs détaillés */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs md:text-sm">
-                      <span className="text-muted-foreground">Sous-total</span>
-                      <span className="font-mono">{subtotal.toLocaleString()} GNF</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-xs md:text-sm">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        TVA
-                        <Badge variant={taxEnabled ? 'default' : 'secondary'} className="text-[10px] px-1 py-0">
-                          {taxEnabled ? 'ON' : 'OFF'}
-                        </Badge>
-                      </span>
-                      <span className="font-mono">{tax.toLocaleString()} GNF</span>
-                    </div>
-
-                    {/* Bouton Remise */}
-                    <div className="flex justify-between items-center text-xs md:text-sm">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        Remise
-                        <Badge variant={discount > 0 ? 'default' : 'secondary'} className="text-[10px] px-1 py-0">
-                          {discount}%
-                        </Badge>
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDiscount(Math.max(0, discount - 5))}
-                          disabled={discount <= 0}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Input
-                          type="number"
-                          value={discount}
-                          onChange={(e) => setDiscount(Math.min(100, Math.max(0, Number(e.target.value))))}
-                          className="w-14 h-6 text-xs text-center font-mono"
-                          min={0}
-                          max={100}
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDiscount(Math.min(100, discount + 5))}
-                          disabled={discount >= 100}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <Separator className="my-1" />
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm md:text-lg font-bold">TOTAL</span>
-                      <span className="text-lg md:text-2xl font-bold text-primary font-mono">{total.toLocaleString()} GNF</span>
-                    </div>
-                  </div>
-
-                  {/* Sélection du mode de paiement */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Mode de paiement</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button
-                        variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPaymentMethod('cash')}
-                        className="text-xs"
-                      >
-                        <Euro className="h-3 w-3 mr-1" />
-                        Espèces
+              <div className="border-t border-border/30 bg-muted/20 flex-shrink-0 p-3 space-y-2">
+                {/* Total et Remise sur une ligne */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Remise</span>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setDiscount(Math.max(0, discount - 5))} disabled={discount <= 0} className="h-5 w-5 p-0">
+                        <Minus className="h-2.5 w-2.5" />
                       </Button>
-                      <Button
-                        variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPaymentMethod('card')}
-                        className="text-xs"
-                      >
-                        <CreditCard className="h-3 w-3 mr-1" />
-                        Carte
-                      </Button>
-                      <Button
-                        variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setPaymentMethod('mobile')}
-                        className="text-xs"
-                      >
-                        <Smartphone className="h-3 w-3 mr-1" />
-                        Mobile
+                      <span className="font-mono text-xs w-8 text-center">{discount}%</span>
+                      <Button variant="outline" size="sm" onClick={() => setDiscount(Math.min(100, discount + 5))} disabled={discount >= 100} className="h-5 w-5 p-0">
+                        <Plus className="h-2.5 w-2.5" />
                       </Button>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground">TVA: {tax.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-primary">{total.toLocaleString()} GNF</div>
+                  </div>
+                </div>
 
-                  {/* Saisie montant reçu pour espèces avec bouton pavé numérique */}
-                  {paymentMethod === 'cash' && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Montant reçu</label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            value={numericInput || receivedAmount || ''}
-                            readOnly
-                            placeholder="0"
-                            className="flex-1 text-right text-xl font-mono font-bold"
-                          />
-                          {/* Bouton pavé numérique pour montant */}
-                          <Button
-                            variant="outline"
-                            onClick={openAmountKeypad}
-                            className="h-12 w-12 p-0 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 hover:border-primary hover:bg-primary/20 transition-all shadow-md"
-                          >
-                            <Calculator className="h-5 w-5 text-primary" />
-                          </Button>
-                        </div>
-                        {receivedAmount > 0 && (
-                          <div className={`text-sm mt-2 px-3 py-2 rounded-lg ${
-                            change >= 0 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>
-                            Rendu: <span className="font-bold">{change.toLocaleString()} GNF</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Formulaire carte bancaire */}
-                  {paymentMethod === 'card' && (
-                    <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border">
-                      <label className="text-sm font-semibold flex items-center gap-2 text-primary">
-                        <CreditCard className="h-4 w-4" />
-                        Informations de la carte
-                      </label>
-                      <div className="space-y-2">
-                        <Input
-                          type="text"
-                          placeholder="Nom sur la carte"
-                          className="h-10"
-                        />
-                        <Input
-                          type="text"
-                          placeholder="1234 5678 9012 3456"
-                          maxLength={19}
-                          className="h-10 font-mono text-lg tracking-wider"
-                        />
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            type="text"
-                            placeholder="MM/AA"
-                            maxLength={5}
-                            className="h-10 font-mono"
-                          />
-                          <Input
-                            type="text"
-                            placeholder="CVV"
-                            maxLength={4}
-                            className="h-10 font-mono"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Check className="h-3 w-3 text-green-500" />
-                        Paiement sécurisé par Visa/Mastercard
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Formulaire Mobile Money */}
-                  {paymentMethod === 'mobile' && (
-                    <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-border">
-                      <label className="text-sm font-semibold flex items-center gap-2 text-primary">
-                        <Smartphone className="h-4 w-4" />
-                        Paiement Mobile Money
-                      </label>
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-12 border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                          >
-                            <span className="text-orange-500 font-bold">Orange Money</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-12 border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-                          >
-                            <span className="text-yellow-600 font-bold">MTN MoMo</span>
-                          </Button>
-                        </div>
-                        <Input
-                          type="tel"
-                          placeholder="6XX XXX XXX"
-                          maxLength={12}
-                          className="h-12 text-lg font-mono tracking-wider"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Entrez le numéro du client pour recevoir la demande de paiement
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Bouton de validation - Sans condition de montant obligatoire */}
-                  <Button 
-                    onClick={validateOrder}
-                    className="w-full h-12 text-lg font-bold shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                {/* Mode de paiement compact */}
+                <div className="grid grid-cols-3 gap-1">
+                  <Button
+                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('cash')}
+                    className="h-8 text-[10px]"
                   >
-                    <CheckSquare className="h-5 w-5 mr-2" />
-                    Valider - {total.toLocaleString()} GNF
+                    <Euro className="h-3 w-3 mr-1" />
+                    Espèces
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('card')}
+                    className="h-8 text-[10px]"
+                  >
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    Carte
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPaymentMethod('mobile')}
+                    className="h-8 text-[10px]"
+                  >
+                    <Smartphone className="h-3 w-3 mr-1" />
+                    Mobile
                   </Button>
                 </div>
+
+                {/* Bouton de validation compact */}
+                <Button 
+                  onClick={validateOrder}
+                  className="w-full h-10 font-bold shadow-lg bg-gradient-to-r from-primary to-primary/80"
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Valider - {total.toLocaleString()} GNF
+                </Button>
               </div>
             )}
           </Card>
