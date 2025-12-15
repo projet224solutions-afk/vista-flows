@@ -40,7 +40,6 @@ const categories: NavCategory[] = [
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
       { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true },
-      { value: 'driver-subscriptions', label: 'Abonnements Drivers', icon: Car, badge: true },
     ]
   },
   {
