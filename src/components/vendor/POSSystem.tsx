@@ -40,7 +40,8 @@ import {
   Store,
   Upload,
   ImageIcon,
-  Percent
+  Percent,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -1134,256 +1135,194 @@ export function POSSystem() {
           </Card>
         </div>
 
-        {/* Section Panier - Interface professionnelle - Responsive */}
+        {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
         <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 max-w-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
-          {/* Panier - Design compact */}
-          <Card className="flex-1 shadow-xl border-0 bg-card overflow-auto flex flex-col max-w-full">
-            {/* En-tête professionnel */}
-            <div className="p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b-2 border-primary/20 flex-shrink-0">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-primary/20">
-                    <ShoppingCart className="h-4 w-4 text-primary" />
+          {/* Panier - Design ultra compact mobile */}
+          <Card className="flex-1 shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full">
+            {/* En-tête compact */}
+            <div className="p-2 sm:p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="p-1 sm:p-1.5 rounded-lg bg-primary/20">
+                    <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   </div>
-                  <span className="font-bold text-base text-foreground">Panier</span>
-                  <Badge variant="secondary" className="bg-primary text-primary-foreground font-bold px-2">
-                    {cart.length}
+                  <span className="font-bold text-sm sm:text-base text-foreground">Panier</span>
+                  <Badge variant="secondary" className="bg-primary text-primary-foreground font-bold px-1.5 sm:px-2 text-xs">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
                   </Badge>
                 </div>
-                <Button variant="ghost" size="sm" onClick={clearCart} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {/* Stats professionnelles */}
-              <div className="pt-2 border-t border-primary/10">
-                <p className="text-sm font-extrabold text-foreground">{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</p>
-                <p className="text-lg font-black text-primary mt-0.5">Sous-total: {subtotal.toLocaleString()} GNF</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm sm:text-base font-black text-primary">{subtotal.toLocaleString()}</span>
+                  <span className="text-[10px] text-muted-foreground">GNF</span>
+                  <Button variant="ghost" size="sm" onClick={clearCart} className="h-6 w-6 sm:h-7 sm:w-7 p-0 ml-1 text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Liste des produits du panier - Zone scrollable */}
-            <div className="flex-1 overflow-auto p-2 min-h-0">
+            {/* Liste des produits du panier - Zone scrollable optimisée */}
+            <div className="flex-1 overflow-auto p-1.5 sm:p-2 min-h-0">
               <ScrollArea className="h-full">
                 {cart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-4">
-                    <ShoppingBag className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground/40 mb-2" />
+                  <div className="flex flex-col items-center justify-center h-32 text-center">
+                    <ShoppingBag className="h-8 w-8 text-muted-foreground/40 mb-2" />
                     <p className="text-muted-foreground font-medium text-sm">Panier vide</p>
                     <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {cart.map(item => (
-                      <Card key={`${item.id}-${item.saleType || 'unit'}`} className="bg-background/80 border border-border/50">
-                        <CardContent className="p-1.5 md:p-2">
-                          <div className="flex justify-between items-center gap-1">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-[11px] md:text-xs line-clamp-1">
-                                {item.saleType === 'carton' && '📦 '}
-                                {item.name}
-                              </h4>
-                              <p className="text-[9px] md:text-[10px] text-muted-foreground">
-                                {item.price.toLocaleString()} GNF
-                                {item.saleType === 'carton' && (
-                                  <span className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1 rounded">Carton</span>
-                                )}
-                              </p>
-                            </div>
-                            
-                            {/* Contrôles quantité compacts */}
-                            <div className="flex items-center gap-0.5 bg-muted/30 rounded-md px-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="font-mono font-bold text-xs min-w-[1.5rem] text-center">{item.quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            
-                            {/* Total + Actions */}
-                            <div className="flex items-center gap-1">
-                              <div className="font-bold text-primary text-[10px] md:text-xs min-w-[50px] text-right">
-                                {item.total.toLocaleString()}
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openQuantityKeypadForCartItem(item)}
-                                className="h-5 w-5 p-0 border-primary/30"
-                                title="Saisir quantité"
-                              >
-                                <Calculator className="h-2.5 w-2.5 text-primary" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => removeFromCart(item.id)}
-                                className="text-muted-foreground hover:text-destructive h-5 w-5 p-0"
-                              >
-                                <Trash2 className="h-2.5 w-2.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div 
+                        key={`${item.id}-${item.saleType || 'unit'}`} 
+                        className="flex items-center gap-1.5 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
+                      >
+                        {/* Nom + Prix */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[11px] sm:text-xs truncate">
+                            {item.saleType === 'carton' && '📦 '}
+                            {item.name}
+                          </p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                            {item.price.toLocaleString()} GNF
+                          </p>
+                        </div>
+                        
+                        {/* Contrôles quantité ultra compacts */}
+                        <div className="flex items-center bg-muted/40 rounded-md">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="h-6 w-6 p-0 hover:bg-destructive/20"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="font-mono font-bold text-xs w-5 text-center">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
+                            className="h-6 w-6 p-0 hover:bg-primary/20"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
+                        {/* Total + Supprimer */}
+                        <div className="flex items-center gap-0.5">
+                          <span className="font-bold text-primary text-[10px] sm:text-xs min-w-[40px] text-right">
+                            {item.total.toLocaleString()}
+                          </span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-muted-foreground hover:text-destructive h-5 w-5 p-0"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
               </ScrollArea>
             </div>
 
-            {/* Section paiement compacte */}
+            {/* Section paiement ultra compacte mobile */}
             {cart.length > 0 && (
-              <div className="border-t-2 border-primary/20 bg-gradient-to-b from-muted/30 to-muted/10 flex-shrink-0 p-3 space-y-3">
-                {/* Section Remise avec modes séparés */}
-                <div className="space-y-2 p-2 rounded-lg bg-muted/20 border border-border/30">
-                  <div className="flex items-center justify-between">
+              <div className="border-t border-primary/20 bg-gradient-to-b from-muted/20 to-background flex-shrink-0 p-2 sm:p-3 space-y-2">
+                {/* Remise - Version compacte collapsible */}
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer list-none">
                     <div className="flex items-center gap-1.5">
                       <Percent className="h-3.5 w-3.5 text-primary" />
-                      <span className="text-xs font-bold text-foreground">Remise</span>
+                      <span className="text-xs font-bold">Remise</span>
+                      {discountValue > 0 && (
+                        <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">
+                          -{discountValue.toLocaleString()}
+                        </Badge>
+                      )}
                     </div>
-                    {(discountPercent > 0 || discountAmount > 0) && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                          setDiscountPercent(0);
-                          setDiscountAmount(0);
-                        }}
-                        className="h-5 px-1.5 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                  </summary>
+                  
+                  <div className="mt-2 space-y-2 p-2 bg-muted/20 rounded-lg">
+                    <div className="grid grid-cols-2 gap-1">
+                      <Button
+                        variant={discountMode === 'percent' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setDiscountMode('percent'); setDiscountAmount(0); }}
+                        className="h-7 text-[10px]"
                       >
-                        Annuler
+                        <Percent className="h-3 w-3 mr-1" />%
                       </Button>
-                    )}
-                  </div>
-                  
-                  {/* Toggle de mode */}
-                  <div className="grid grid-cols-2 gap-1">
-                    <Button
-                      variant={discountMode === 'percent' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => {
-                        setDiscountMode('percent');
-                        setDiscountAmount(0);
+                      <Button
+                        variant={discountMode === 'amount' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setDiscountMode('amount'); setDiscountPercent(0); }}
+                        className="h-7 text-[10px]"
+                      >
+                        <Euro className="h-3 w-3 mr-1" />GNF
+                      </Button>
+                    </div>
+                    
+                    <Input
+                      type="number"
+                      value={discountMode === 'percent' ? (discountPercent || '') : (discountAmount || '')}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        if (discountMode === 'percent') {
+                          setDiscountPercent(Math.min(100, Math.max(0, val)));
+                        } else {
+                          setDiscountAmount(Math.min(val, totalBeforeDiscount));
+                        }
                       }}
-                      className={`h-7 text-[10px] font-semibold ${discountMode === 'percent' ? 'bg-primary' : ''}`}
-                    >
-                      <Percent className="h-3 w-3 mr-1" />
-                      Pourcentage
-                    </Button>
-                    <Button
-                      variant={discountMode === 'amount' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => {
-                        setDiscountMode('amount');
-                        setDiscountPercent(0);
-                      }}
-                      className={`h-7 text-[10px] font-semibold ${discountMode === 'amount' ? 'bg-primary' : ''}`}
-                    >
-                      <Euro className="h-3 w-3 mr-1" />
-                      Montant
-                    </Button>
+                      className="h-8 text-sm font-bold text-center"
+                      placeholder={discountMode === 'percent' ? 'Ex: 10%' : 'Ex: 5000'}
+                    />
                   </div>
-                  
-                  {/* Champ de saisie selon le mode */}
-                  {discountMode === 'percent' ? (
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        value={discountPercent || ''}
-                        onChange={(e) => setDiscountPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="h-9 text-sm pr-8 font-bold text-center bg-background"
-                        placeholder="Ex: 10"
-                        min="0"
-                        max="100"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-primary">%</span>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        value={discountAmount || ''}
-                        onChange={(e) => {
-                          const value = Math.max(0, parseInt(e.target.value) || 0);
-                          setDiscountAmount(Math.min(value, totalBeforeDiscount));
-                        }}
-                        className="h-9 text-sm pr-12 font-bold text-center bg-background"
-                        placeholder="Ex: 1000"
-                        min="0"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">GNF</span>
-                    </div>
-                  )}
-                  
-                  {/* Affichage de la remise appliquée */}
-                  {discountValue > 0 && (
-                    <div className="flex items-center justify-center">
-                      <Badge className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground text-[11px] px-2 py-1 font-bold shadow-sm">
-                        Remise: -{discountValue.toLocaleString()} GNF
-                        {discountMode === 'percent' && ` (${discountPercent}%)`}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
+                </details>
                 
-                {/* Total */}
-                <div className="flex justify-between items-center pt-2 border-t border-border/30">
-                  <span className="text-xs text-muted-foreground">TVA: {tax.toLocaleString()} GNF</span>
+                {/* Total et TVA sur une ligne */}
+                <div className="flex items-center justify-between py-1.5 border-y border-border/30">
+                  <span className="text-[10px] text-muted-foreground">
+                    TVA: {tax.toLocaleString()} GNF
+                  </span>
                   <div className="text-right">
-                    <div className="text-xl font-black text-primary">{total.toLocaleString()} GNF</div>
+                    <span className="text-lg sm:text-xl font-black text-primary">{total.toLocaleString()}</span>
+                    <span className="text-xs text-muted-foreground ml-1">GNF</span>
                   </div>
                 </div>
 
-                {/* Mode de paiement compact */}
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('cash')}
-                    className="h-8 text-[10px]"
-                  >
-                    <Euro className="h-3 w-3 mr-1" />
-                    Espèces
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('card')}
-                    className="h-8 text-[10px]"
-                  >
-                    <CreditCard className="h-3 w-3 mr-1" />
-                    Carte
-                  </Button>
-                  <Button
-                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setPaymentMethod('mobile')}
-                    className="h-8 text-[10px]"
-                  >
-                    <Smartphone className="h-3 w-3 mr-1" />
-                    Mobile
-                  </Button>
+                {/* Mode de paiement en icônes */}
+                <div className="flex gap-1">
+                  {[
+                    { id: 'cash', icon: Euro, label: 'Cash' },
+                    { id: 'card', icon: CreditCard, label: 'Carte' },
+                    { id: 'mobile', icon: Smartphone, label: 'Mobile' },
+                  ].map((method) => (
+                    <Button
+                      key={method.id}
+                      variant={paymentMethod === method.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setPaymentMethod(method.id as any)}
+                      className={`flex-1 h-8 text-[10px] ${paymentMethod === method.id ? 'shadow-md' : ''}`}
+                    >
+                      <method.icon className="h-3.5 w-3.5 mr-1" />
+                      {method.label}
+                    </Button>
+                  ))}
                 </div>
 
-                {/* Bouton de validation compact */}
+                {/* Bouton de validation */}
                 <Button 
                   onClick={validateOrder}
-                  className="w-full h-10 font-bold shadow-lg bg-gradient-to-r from-primary to-primary/80"
+                  className="w-full h-11 sm:h-12 font-bold text-sm shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  Valider - {total.toLocaleString()} GNF
+                  <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Valider • {total.toLocaleString()} GNF
                 </Button>
               </div>
             )}
