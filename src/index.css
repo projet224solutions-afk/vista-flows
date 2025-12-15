@@ -89,12 +89,19 @@ All colors MUST be HSL.
     --client-accent: 142 71% 95%;
     --client-gradient: linear-gradient(135deg, hsl(142 71% 45%), hsl(0 0% 100%));
 
-    /* Global gradients and effects - 224SOLUTIONS Élégant */
+    /* Global gradients and effects - 224SOLUTIONS Ultra Premium */
     --gradient-elegant: linear-gradient(135deg, hsl(211 100% 97%), hsl(40 30% 98%));
     --gradient-neon: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 45%));
+    --gradient-hero: linear-gradient(180deg, hsl(211 100% 98%) 0%, hsl(0 0% 100%) 50%, hsl(211 100% 97%) 100%);
+    --gradient-hero-accent: linear-gradient(135deg, hsl(211 100% 50% / 0.1) 0%, hsl(168 100% 45% / 0.05) 100%);
+    --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.9) 0%, hsl(0 0% 100% / 0.7) 100%);
+    --gradient-bottom-nav: linear-gradient(180deg, hsl(0 0% 100% / 0) 0%, hsl(0 0% 100%) 20%);
     --shadow-elegant: 0 4px 20px hsl(40 20% 70% / 0.12);
     --shadow-glow: 0 0 30px hsl(211 100% 50% / 0.2);
     --shadow-card: 0 2px 8px hsl(40 30% 70% / 0.08);
+    --shadow-hero: 0 8px 40px hsl(211 100% 50% / 0.15);
+    --shadow-bottom-nav: 0 -4px 30px hsl(0 0% 0% / 0.08);
+    --shadow-service-card: 0 4px 24px hsl(211 100% 50% / 0.1);
 
     --radius: 0.75rem;
 
