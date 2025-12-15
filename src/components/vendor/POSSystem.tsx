@@ -184,7 +184,14 @@ export function POSSystem() {
         price_carton: Number(p.price_carton || 0)
       }));
 
-      setProducts(formattedProducts);
+      // Trier les produits: ceux en stock d'abord, rupture de stock en bas
+      const sortedProducts = formattedProducts.sort((a, b) => {
+        if (a.stock === 0 && b.stock > 0) return 1;
+        if (a.stock > 0 && b.stock === 0) return -1;
+        return a.name.localeCompare(b.name);
+      });
+
+      setProducts(sortedProducts);
     } catch (error) {
       console.error('Erreur chargement produits:', error);
       toast.error('Erreur lors du chargement des produits');
