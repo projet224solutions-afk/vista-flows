@@ -135,7 +135,17 @@ export default function Cart() {
                 <span className="text-primary">{formatPrice(getCartTotal())}</span>
               </div>
             </div>
-            <Button className="w-full" size="lg" onClick={() => navigate('/payment')}>
+            <Button 
+              className="w-full" 
+              size="lg" 
+              onClick={() => navigate('/payment', { 
+                state: { 
+                  cartItems: cartItems,
+                  totalAmount: getCartTotal(),
+                  fromCart: true 
+                } 
+              })}
+            >
               Procéder au paiement
             </Button>
           </CardContent>
