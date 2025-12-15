@@ -1127,22 +1127,27 @@ export function POSSystem() {
         <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design compact */}
           <Card className="flex-1 shadow-xl border-0 bg-card overflow-auto flex flex-col">
-            {/* En-tête compact */}
-            <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent border-b border-border/30 flex-shrink-0">
-              <div className="flex items-center justify-between">
+            {/* En-tête professionnel */}
+            <div className="p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b-2 border-primary/20 flex-shrink-0">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                  <span className="font-bold text-primary">Panier ({cart.length})</span>
+                  <div className="p-1.5 rounded-lg bg-primary/20">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="font-bold text-base text-foreground">Panier</span>
+                  <Badge variant="secondary" className="bg-primary text-primary-foreground font-bold px-2">
+                    {cart.length}
+                  </Badge>
                 </div>
                 <Button variant="ghost" size="sm" onClick={clearCart} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
               
-              {/* Stats en ligne */}
-              <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-                <span>{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</span>
-                <span>Sous-total: {subtotal.toLocaleString()} GNF</span>
+              {/* Stats professionnelles */}
+              <div className="pt-2 border-t border-primary/10">
+                <p className="text-sm font-extrabold text-foreground">{cart.reduce((sum, item) => sum + item.quantity, 0)} articles</p>
+                <p className="text-lg font-black text-primary mt-0.5">Sous-total: {subtotal.toLocaleString()} GNF</p>
               </div>
             </div>
 
@@ -1229,24 +1234,54 @@ export function POSSystem() {
 
             {/* Section paiement compacte */}
             {cart.length > 0 && (
-              <div className="border-t border-border/30 bg-muted/20 flex-shrink-0 p-3 space-y-2">
-                {/* Total et Remise sur une ligne */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Remise</span>
-                    <div className="flex items-center gap-1">
-                      <Button variant="outline" size="sm" onClick={() => setDiscount(Math.max(0, discount - 5))} disabled={discount <= 0} className="h-5 w-5 p-0">
-                        <Minus className="h-2.5 w-2.5" />
-                      </Button>
-                      <span className="font-mono text-xs w-8 text-center">{discount}%</span>
-                      <Button variant="outline" size="sm" onClick={() => setDiscount(Math.min(100, discount + 5))} disabled={discount >= 100} className="h-5 w-5 p-0">
-                        <Plus className="h-2.5 w-2.5" />
-                      </Button>
+              <div className="border-t-2 border-primary/20 bg-gradient-to-b from-muted/30 to-muted/10 flex-shrink-0 p-3 space-y-3">
+                {/* Section Remise avec champs de saisie */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Percent className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-semibold text-foreground">Remise</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={discount || ''}
+                        onChange={(e) => setDiscount(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                        className="h-8 text-xs pr-7 font-medium"
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-primary">%</span>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={discount > 0 ? Math.round(subtotal * discount / 100) : ''}
+                        onChange={(e) => {
+                          const priceDiscount = parseInt(e.target.value) || 0;
+                          const percentValue = subtotal > 0 ? Math.round((priceDiscount / subtotal) * 100) : 0;
+                          setDiscount(Math.min(100, Math.max(0, percentValue)));
+                        }}
+                        className="h-8 text-xs pr-10 font-medium"
+                        placeholder="0"
+                        min="0"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">GNF</span>
                     </div>
                   </div>
+                  {discount > 0 && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 font-semibold">
+                      -{discount}% = -{Math.round(subtotal * discount / 100).toLocaleString()} GNF
+                    </Badge>
+                  )}
+                </div>
+                
+                {/* Total */}
+                <div className="flex justify-between items-center pt-2 border-t border-border/30">
+                  <span className="text-xs text-muted-foreground">TVA: {tax.toLocaleString()} GNF</span>
                   <div className="text-right">
-                    <div className="text-xs text-muted-foreground">TVA: {tax.toLocaleString()}</div>
-                    <div className="text-lg font-bold text-primary">{total.toLocaleString()} GNF</div>
+                    <div className="text-xl font-black text-primary">{total.toLocaleString()} GNF</div>
                   </div>
                 </div>
 
