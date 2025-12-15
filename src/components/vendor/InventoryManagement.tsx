@@ -116,27 +116,47 @@ export default function InventoryManagement() {
     }
   };
 
-  const filteredInventory = inventory.filter(item => {
+  // Combiner les produits avec leur stock (même sans entrée inventory)
+  const allProductsWithStock = products.map(product => {
+    const inventoryItem = inventory.find(item => item.product_id === product.id);
+    return {
+      id: inventoryItem?.id || `product-${product.id}`,
+      product_id: product.id,
+      quantity: inventoryItem?.quantity || 0,
+      reserved_quantity: inventoryItem?.reserved_quantity || 0,
+      minimum_stock: inventoryItem?.minimum_stock || 10,
+      warehouse_location: inventoryItem?.warehouse_location,
+      lot_number: inventoryItem?.lot_number,
+      expiry_date: inventoryItem?.expiry_date,
+      product: {
+        name: product.name,
+        price: 0,
+        sku: product.sku
+      },
+      hasInventoryRecord: !!inventoryItem
+    };
+  });
+
+  const filteredInventory = allProductsWithStock.filter(item => {
     const matchesSearch = !searchTerm || 
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.lot_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilter = stockFilter === 'all' || 
-      (stockFilter === 'low' && item.quantity <= item.minimum_stock) ||
+      (stockFilter === 'low' && item.quantity <= item.minimum_stock && item.quantity > 0) ||
       (stockFilter === 'out' && item.quantity === 0);
 
     return matchesSearch && matchesFilter;
   });
 
-  const lowStockItems = inventory.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
-  const outOfStockItems = inventory.filter(item => item.quantity === 0);
-  const totalProducts = inventory.length; // Nombre réel de produits dans l'inventaire
-  const totalValue = stats?.total_value || inventory.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
+  // Statistiques basées sur tous les produits (avec ou sans stock)
+  const lowStockItems = allProductsWithStock.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
+  const outOfStockItems = allProductsWithStock.filter(item => item.quantity === 0);
+  const totalProducts = products.length; // Total des produits du vendeur
+  const totalValue = stats?.total_value || allProductsWithStock.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
   const totalCost = stats?.total_cost || 0;
   const potentialProfit = stats?.potential_profit || 0;
-
-  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
   console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 

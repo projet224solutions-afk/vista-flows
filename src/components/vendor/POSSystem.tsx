@@ -214,6 +214,8 @@ export function POSSystem() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [keypadMode, setKeypadMode] = useState<'quantity' | 'amount'>('quantity');
+  const [selectedCartItemForQuantity, setSelectedCartItemForQuantity] = useState<CartItem | null>(null);
   
   // États pour personnalisation
   const [companyName] = useState('Vista Commerce Pro');
@@ -376,25 +378,60 @@ export function POSSystem() {
     toast.info('Panier vidé');
   };
 
-  // Fonctions du pavé numérique
+  // Fonctions du pavé numérique - maintenant pour quantité
   const handleNumericInput = (input: string) => {
     if (input === 'clear') {
       setNumericInput('');
-      setReceivedAmount(0);
-      toast.info('Montant effacé');
+      if (keypadMode === 'amount') {
+        setReceivedAmount(0);
+      }
       return;
     }
     
     if (input === 'enter') {
       if (numericInput) {
-        setReceivedAmount(parseFloat(numericInput));
-        toast.success(`Montant saisi: ${numericInput} GNF`);
+        if (keypadMode === 'amount') {
+          setReceivedAmount(parseFloat(numericInput));
+          toast.success(`Montant saisi: ${numericInput} GNF`);
+        } else if (keypadMode === 'quantity' && selectedCartItemForQuantity) {
+          const qty = parseInt(numericInput, 10);
+          if (qty > 0) {
+            const product = products.find(p => p.id === selectedCartItemForQuantity.id);
+            if (product && qty <= product.stock) {
+              updateQuantity(selectedCartItemForQuantity.id, qty);
+              toast.success(`Quantité mise à jour: ${qty}`);
+            } else {
+              toast.error('Stock insuffisant');
+            }
+          }
+          setSelectedCartItemForQuantity(null);
+        }
         setNumericInput('');
+        setShowKeypad(false);
       }
       return;
     }
     
+    // Empêcher les décimales pour les quantités
+    if (keypadMode === 'quantity' && input === '.') return;
+    
     setNumericInput(prev => prev + input);
+  };
+
+  // Ouvrir le pavé numérique pour modifier la quantité d'un article du panier
+  const openQuantityKeypadForCartItem = (item: CartItem) => {
+    setSelectedCartItemForQuantity(item);
+    setKeypadMode('quantity');
+    setNumericInput(item.quantity.toString());
+    setShowKeypad(true);
+  };
+
+  // Ouvrir le pavé numérique pour le montant reçu
+  const openAmountKeypad = () => {
+    setKeypadMode('amount');
+    setSelectedCartItemForQuantity(null);
+    setNumericInput('');
+    setShowKeypad(true);
   };
 
   // Validation de la commande
@@ -1163,23 +1200,35 @@ export function POSSystem() {
                           </div>
                           
                           <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center bg-muted/30 rounded-md">
+                            <div className="flex items-center gap-1">
+                              <div className="flex items-center bg-muted/30 rounded-md">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="mx-2 font-mono font-bold text-sm min-w-[2rem] text-center">{item.quantity}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {/* Bouton pavé numérique pour quantité */}
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="h-6 w-6 p-0"
+                                onClick={() => openQuantityKeypadForCartItem(item)}
+                                className="h-7 w-7 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                title="Saisir quantité"
                               >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="mx-1 font-mono font-bold text-xs min-w-[1.5rem] text-center">{item.quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Plus className="h-3 w-3" />
+                                <Calculator className="h-3 w-3 text-primary" />
                               </Button>
                             </div>
                             <div className="font-bold text-primary text-xs md:text-sm">
@@ -1270,10 +1319,10 @@ export function POSSystem() {
                             placeholder="0"
                             className="flex-1 text-right text-xl font-mono font-bold"
                           />
-                          {/* Bouton pavé numérique */}
+                          {/* Bouton pavé numérique pour montant */}
                           <Button
                             variant="outline"
-                            onClick={() => setShowKeypad(true)}
+                            onClick={openAmountKeypad}
                             className="h-12 w-12 p-0 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 hover:border-primary hover:bg-primary/20 transition-all shadow-md"
                           >
                             <Calculator className="h-5 w-5 text-primary" />
@@ -1453,7 +1502,7 @@ export function POSSystem() {
         </DialogContent>
       </Dialog>
 
-      {/* Popup pavé numérique */}
+      {/* Popup pavé numérique - Mode quantité ou montant */}
       <NumericKeypadPopup
         open={showKeypad}
         onOpenChange={setShowKeypad}
@@ -1463,6 +1512,9 @@ export function POSSystem() {
         total={total}
         change={change}
         currency={settings?.currency || 'GNF'}
+        mode={keypadMode}
+        productName={selectedCartItemForQuantity?.name}
+        maxQuantity={selectedCartItemForQuantity ? products.find(p => p.id === selectedCartItemForQuantity.id)?.stock : undefined}
       />
 
       {/* Reçu téléchargeable après paiement */}
