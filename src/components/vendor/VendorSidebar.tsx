@@ -1,7 +1,7 @@
 /**
  * SIDEBAR VENDEUR PROFESSIONNELLE - 224SOLUTIONS
  * Navigation complète avec tous les modules vendeur
- * @version 2.0.0 - Production Build Fix
+ * @version 3.0.0 - Ultra Professional Design
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -9,7 +9,8 @@ import {
   Package, ShoppingCart, Users, BarChart3, CreditCard, 
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
-  Store, DollarSign, Boxes, AlertTriangle, Link, Building2
+  Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
+  LayoutDashboard, ChevronRight
 } from "lucide-react";
 
 import {
@@ -25,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useVendorBadges } from "@/hooks/useVendorBadges";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function VendorSidebar() {
   const { state, setOpen, isMobile } = useSidebar();
@@ -65,16 +67,18 @@ export function VendorSidebar() {
 
   const menuSections = [
     {
-      label: "Vue d'ensemble",
+      label: "Principal",
+      icon: LayoutDashboard,
       items: [
         { title: "Dashboard", icon: BarChart3, path: "dashboard" },
         { title: "Analytiques", icon: TrendingUp, path: "analytics" },
+        { title: "Point de vente", icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
-      label: "Ventes & Commerce",
+      label: "Commerce",
+      icon: Package,
       items: [
-        { title: "Point de vente (POS)", icon: Store, path: "pos", isPOS: true },
         { title: "Produits", icon: Package, path: "products" },
         { title: "Commandes", icon: ShoppingCart, path: "orders" },
         { title: "Inventaire", icon: Box, path: "inventory" },
@@ -83,21 +87,23 @@ export function VendorSidebar() {
       ]
     },
     {
-      label: "Clients & Marketing",
+      label: "CRM",
+      icon: Users,
       items: [
-        { title: "Agents", icon: Users, path: "agents" },
         { title: "Clients", icon: Users, path: "clients" },
+        { title: "Agents", icon: Users, path: "agents" },
         { title: "Prospects", icon: Target, path: "prospects" },
         { title: "Marketing", icon: Megaphone, path: "marketing" },
       ]
     },
     {
-      label: "Finances",
+      label: "Finance",
+      icon: Wallet,
       items: [
         { title: "Wallet", icon: Wallet, path: "wallet" },
         { title: "Devis & Factures", icon: FileText, path: "quotes-invoices" },
         { title: "Paiements", icon: CreditCard, path: "payments" },
-        { title: "Liens de paiement", icon: DollarSign, path: "payment-links" },
+        { title: "Liens paiement", icon: DollarSign, path: "payment-links" },
         { title: "Dépenses", icon: Receipt, path: "expenses" },
         { title: "Dettes", icon: AlertTriangle, path: "debts" },
         { title: "Contrats", icon: FileText, path: "contracts" },
@@ -105,16 +111,18 @@ export function VendorSidebar() {
       ]
     },
     {
-      label: "Support & Outils",
+      label: "Services",
+      icon: Truck,
       items: [
         { title: "Livraisons", icon: Truck, path: "delivery" },
-        { title: "Support Tickets", icon: HeadphonesIcon, path: "support" },
-        { title: "Communication", icon: MessageSquare, path: "communication" },
+        { title: "Support", icon: HeadphonesIcon, path: "support" },
+        { title: "Messages", icon: MessageSquare, path: "communication" },
         { title: "Rapports", icon: FileText, path: "reports" },
       ]
     },
     {
-      label: "Configuration",
+      label: "Système",
+      icon: Settings,
       items: [
         { title: "Paramètres", icon: Settings, path: "settings" },
       ]
@@ -122,95 +130,121 @@ export function VendorSidebar() {
   ];
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-gradient-to-b from-slate-50 to-white h-full overflow-y-auto">
-        {menuSections.map((section) => (
-          <SidebarGroup key={section.label}>
-            {!collapsed && (
-              <SidebarGroupLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-4 py-2">
-                {section.label}
-              </SidebarGroupLabel>
-            )}
-            
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item: { title: string; icon: any; path: string; isPOS?: boolean }) => {
-                  const badgeValue = getBadgeValue(item.path);
-                  const active = isActive(item.path);
-                  const isPOS = item.isPOS;
-                  
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleNavigation(item.path);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
+    <Sidebar className={cn(
+      collapsed ? "w-16" : "w-64",
+      "border-r border-border/40 shadow-lg"
+    )} collapsible="icon">
+      <ScrollArea className="h-full">
+        <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2">
+          {menuSections.map((section, sectionIndex) => (
+            <SidebarGroup key={section.label} className="py-1">
+              {!collapsed && (
+                <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-1.5 mb-1">
+                  <section.icon className="w-3 h-3" />
+                  {section.label}
+                </SidebarGroupLabel>
+              )}
+              
+              {collapsed && sectionIndex > 0 && (
+                <div className="h-px bg-border/50 mx-2 my-2" />
+              )}
+              
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-0.5 px-2">
+                  {section.items.map((item: { title: string; icon: any; path: string; isPOS?: boolean }) => {
+                    const badgeValue = getBadgeValue(item.path);
+                    const active = isActive(item.path);
+                    const isPOS = item.isPOS;
+                    
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             handleNavigation(item.path);
-                          }
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-all duration-200 cursor-pointer select-none",
-                          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                          active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                          collapsed && "justify-center",
-                          isPOS && !collapsed && "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-lg shadow-sm hover:shadow-md hover:from-primary/15 hover:border-primary/30",
-                          isPOS && active && "from-primary/20 border-primary/40 shadow-md"
-                        )}
-                      >
-                        {isPOS ? (
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleNavigation(item.path);
+                            }
+                          }}
+                          className={cn(
+                            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 cursor-pointer select-none",
+                            "hover:bg-primary/10 hover:text-primary",
+                            active && "bg-primary/15 text-primary font-medium shadow-sm",
+                            isPOS && "bg-gradient-to-r from-primary/5 to-transparent border border-primary/20",
+                            isPOS && active && "from-primary/20 border-primary/40 shadow-md",
+                            collapsed && "justify-center px-2"
+                          )}
+                        >
+                          {/* Icône */}
                           <div className={cn(
-                            "w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm",
-                            collapsed && "w-6 h-6"
+                            "flex items-center justify-center rounded-md transition-all",
+                            isPOS ? "w-8 h-8 bg-gradient-to-br from-primary to-primary/80 shadow-md" : "w-7 h-7",
+                            active && !isPOS && "bg-primary/10",
+                            collapsed && isPOS && "w-7 h-7"
                           )}>
-                            <item.icon className="w-4 h-4 text-primary-foreground" />
+                            <item.icon className={cn(
+                              "w-4 h-4 transition-colors",
+                              isPOS ? "text-primary-foreground" : "",
+                              active && !isPOS && "text-primary",
+                              !active && !isPOS && "text-muted-foreground group-hover:text-primary"
+                            )} />
                           </div>
-                        ) : (
-                          <item.icon className="w-4 h-4 shrink-0" />
-                        )}
-                        {!collapsed && (
-                          <>
-                            <div className={cn("flex-1", isPOS && "flex flex-col")}>
+                          
+                          {/* Texte et Badge */}
+                          {!collapsed && (
+                            <>
                               <span className={cn(
-                                "truncate",
-                                isPOS && "font-semibold text-primary"
+                                "flex-1 truncate",
+                                isPOS && "font-semibold"
                               )}>
-                                {isPOS ? "Point de Vente" : item.title}
+                                {item.title}
                               </span>
-                              {isPOS && (
-                                <span className="text-[10px] text-muted-foreground font-medium">
-                                  Caisse • Encaissement
-                                </span>
+                              
+                              {badgeValue && (
+                                <Badge 
+                                  variant={badgeValue === "HOT" ? "destructive" : "secondary"}
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0 h-5 min-w-[20px] flex items-center justify-center",
+                                    isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
+                                  )}
+                                >
+                                  {badgeValue}
+                                </Badge>
                               )}
-                            </div>
-                            {badgeValue && (
-                              <Badge 
-                                variant={badgeValue === "HOT" ? "destructive" : "secondary"}
-                                className={cn(
-                                  "text-xs px-2 py-0 ml-auto pointer-events-none",
-                                  isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
-                                )}
-                              >
-                                {badgeValue}
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+                              
+                              {active && (
+                                <ChevronRight className="w-4 h-4 text-primary/60" />
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Badge en mode collapsed */}
+                          {collapsed && badgeValue && (
+                            <span className={cn(
+                              "absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] flex items-center justify-center font-bold",
+                              badgeValue === "HOT" 
+                                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse" 
+                                : "bg-primary text-primary-foreground"
+                            )}>
+                              {badgeValue === "HOT" ? "!" : badgeValue.length > 2 ? "+" : badgeValue}
+                            </span>
+                          )}
+                        </div>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </ScrollArea>
     </Sidebar>
   );
 }
