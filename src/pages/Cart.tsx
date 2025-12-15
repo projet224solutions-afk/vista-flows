@@ -16,8 +16,8 @@ export default function Cart() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <header className="bg-card border-b border-border sticky top-0 z-40">
+      <div className="flex flex-col min-h-screen bg-background">
+        <header className="bg-card border-b border-border sticky top-0 z-40 flex-shrink-0">
           <div className="px-4 py-4 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace')}>
               <ArrowLeft className="w-5 h-5" />
@@ -26,10 +26,10 @@ export default function Cart() {
           </div>
         </header>
 
-        <div className="max-w-4xl mx-auto p-4 flex flex-col items-center justify-center min-h-[60vh]">
-          <ShoppingCart className="w-24 h-24 text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Votre panier est vide</h2>
-          <p className="text-muted-foreground mb-6">Ajoutez des produits pour commencer vos achats</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 pb-24 md:pb-4">
+          <ShoppingCart className="w-20 h-20 md:w-24 md:h-24 text-muted-foreground mb-4" />
+          <h2 className="text-xl md:text-2xl font-bold mb-2">Votre panier est vide</h2>
+          <p className="text-muted-foreground mb-6 text-center">Ajoutez des produits pour commencer vos achats</p>
           <Button onClick={() => navigate('/marketplace')}>
             Découvrir les produits
           </Button>
@@ -39,8 +39,8 @@ export default function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="bg-card border-b border-border sticky top-0 z-40">
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="bg-card border-b border-border sticky top-0 z-40 flex-shrink-0">
         <div className="px-4 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace')}>
             <ArrowLeft className="w-5 h-5" />
@@ -50,7 +50,7 @@ export default function Cart() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto max-w-4xl mx-auto w-full p-4 pb-24 md:pb-6 space-y-4">
         {/* Liste des produits */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
