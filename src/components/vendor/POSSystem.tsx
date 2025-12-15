@@ -48,6 +48,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
+import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
+import { Scan } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -211,6 +213,7 @@ export function POSSystem() {
   const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<Product | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   
   // États pour personnalisation
   const [companyName] = useState('Vista Commerce Pro');
@@ -830,6 +833,17 @@ export function POSSystem() {
                       className="pl-9 h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
                     />
                   </div>
+                  
+                  {/* Bouton Scanner */}
+                  <Button
+                    variant="default"
+                    size="icon"
+                    onClick={() => setShowBarcodeScanner(true)}
+                    className="h-10 w-10 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md"
+                    title="Scanner un produit"
+                  >
+                    <Scan className="h-5 w-5" />
+                  </Button>
                   
                   {/* Vue mode - Desktop only */}
                   <div className="hidden md:flex gap-1">
@@ -1490,6 +1504,15 @@ export function POSSystem() {
           addToCart(product, quantity);
         }}
         currency={settings?.currency || 'GNF'}
+      />
+
+      {/* Modal Scanner Code-barres + Vérification Photo */}
+      <BarcodeScannerModal
+        open={showBarcodeScanner}
+        onOpenChange={setShowBarcodeScanner}
+        products={products}
+        onAddToCart={addToCart}
+        onAddToCartByCarton={addToCartByCarton}
       />
     </div>
   );
