@@ -46,6 +46,7 @@ import {
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
+import { useAgent } from '@/contexts/AgentContext';
 import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
@@ -86,13 +87,21 @@ interface Customer {
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
   const { user, session } = useAuth();
+  const { vendorId: agentVendorId } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
-  // Récupérer le vendor_id de l'utilisateur connecté
-  const [vendorId, setVendorId] = useState<string | null>(null);
+  // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
+  const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
   
   useEffect(() => {
+    // Si on a déjà un vendorId depuis le contexte agent, on l'utilise
+    if (agentVendorId) {
+      setVendorId(agentVendorId);
+      return;
+    }
+    
+    // Sinon, on cherche le vendor_id via l'utilisateur connecté
     if (user?.id) {
       supabase
         .from('vendors')
@@ -108,7 +117,7 @@ export function POSSystem() {
           }
         });
     }
-  }, [user?.id]);
+  }, [user?.id, agentVendorId]);
   
   // Charger les produits du vendor depuis la base de données
   const [products, setProducts] = useState<Product[]>([]);
