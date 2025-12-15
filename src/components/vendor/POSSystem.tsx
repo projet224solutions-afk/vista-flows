@@ -1161,78 +1161,75 @@ export function POSSystem() {
             </CardHeader>
 
             <CardContent className="p-2 md:p-4 flex-1 min-h-0 overflow-hidden">
-              <ScrollArea className="h-full max-h-[40vh] md:max-h-[50vh]">
+              <ScrollArea className="h-full max-h-[35vh] md:max-h-[40vh]">
                 {cart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-6">
-                    <ShoppingBag className="h-10 w-10 md:h-16 md:w-16 text-muted-foreground/40 mb-2" />
+                  <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                    <ShoppingBag className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground/40 mb-2" />
                     <p className="text-muted-foreground font-medium text-sm">Panier vide</p>
                     <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {cart.map(item => (
                       <Card key={`${item.id}-${item.saleType || 'unit'}`} className="bg-background/80 border border-border/50">
-                        <CardContent className="p-2 md:p-3">
-                          <div className="flex justify-between items-start gap-2">
+                        <CardContent className="p-1.5 md:p-2">
+                          <div className="flex justify-between items-center gap-1">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-xs md:text-sm line-clamp-1">
+                              <h4 className="font-semibold text-[11px] md:text-xs line-clamp-1">
                                 {item.saleType === 'carton' && '📦 '}
                                 {item.name}
                               </h4>
-                              <p className="text-[10px] md:text-xs text-muted-foreground">
-                                {item.saleType === 'carton' && item.displayQuantity
-                                  ? item.displayQuantity
-                                  : `${item.price.toLocaleString()} × ${item.quantity}`
-                                }
+                              <p className="text-[9px] md:text-[10px] text-muted-foreground">
+                                {item.price.toLocaleString()} GNF
+                                {item.saleType === 'carton' && (
+                                  <span className="ml-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1 rounded">Carton</span>
+                                )}
                               </p>
-                              {item.saleType === 'carton' && (
-                                <span className="text-[9px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1 rounded">Carton</span>
-                              )}
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-muted-foreground hover:text-destructive h-6 w-6 p-0"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          
-                          <div className="flex items-center justify-between mt-2">
+                            
+                            {/* Contrôles quantité compacts */}
+                            <div className="flex items-center gap-0.5 bg-muted/30 rounded-md px-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="font-mono font-bold text-xs min-w-[1.5rem] text-center">{item.quantity}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            {/* Total + Actions */}
                             <div className="flex items-center gap-1">
-                              <div className="flex items-center bg-muted/30 rounded-md">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="mx-2 font-mono font-bold text-sm min-w-[2rem] text-center">{item.quantity}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
+                              <div className="font-bold text-primary text-[10px] md:text-xs min-w-[50px] text-right">
+                                {item.total.toLocaleString()}
                               </div>
-                              {/* Bouton pavé numérique pour quantité */}
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openQuantityKeypadForCartItem(item)}
-                                className="h-7 w-7 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                className="h-5 w-5 p-0 border-primary/30"
                                 title="Saisir quantité"
                               >
-                                <Calculator className="h-3 w-3 text-primary" />
+                                <Calculator className="h-2.5 w-2.5 text-primary" />
                               </Button>
-                            </div>
-                            <div className="font-bold text-primary text-xs md:text-sm">
-                              {item.total.toLocaleString()} GNF
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => removeFromCart(item.id)}
+                                className="text-muted-foreground hover:text-destructive h-5 w-5 p-0"
+                              >
+                                <Trash2 className="h-2.5 w-2.5" />
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
@@ -1262,6 +1259,44 @@ export function POSSystem() {
                         </Badge>
                       </span>
                       <span className="font-mono">{tax.toLocaleString()} GNF</span>
+                    </div>
+
+                    {/* Bouton Remise */}
+                    <div className="flex justify-between items-center text-xs md:text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        Remise
+                        <Badge variant={discount > 0 ? 'default' : 'secondary'} className="text-[10px] px-1 py-0">
+                          {discount}%
+                        </Badge>
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDiscount(Math.max(0, discount - 5))}
+                          disabled={discount <= 0}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input
+                          type="number"
+                          value={discount}
+                          onChange={(e) => setDiscount(Math.min(100, Math.max(0, Number(e.target.value))))}
+                          className="w-14 h-6 text-xs text-center font-mono"
+                          min={0}
+                          max={100}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDiscount(Math.min(100, discount + 5))}
+                          disabled={discount >= 100}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                     
                     <Separator className="my-1" />
