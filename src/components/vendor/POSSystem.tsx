@@ -502,7 +502,7 @@ export function POSSystem() {
           total_amount: total,
           subtotal: subtotal,
           tax_amount: tax,
-          discount_amount: (totalBeforeDiscount * (discount || 0)) / 100,
+          discount_amount: discountValue,
           payment_status: 'paid',
           status: 'confirmed',
           payment_method: paymentMethod,
