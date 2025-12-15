@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 interface NearbyDriver {
   driver_id: string;
   user_id: string;
-  distance_km: number;
+  distance_km: number | null;
   rating?: number;
   vehicle_type?: string;
   vehicle_plate?: string;
@@ -36,6 +36,54 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const [noDriversNearby, setNoDriversNearby] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Fallback: recherche tous les chauffeurs en ligne sans géolocalisation
+  const searchAllOnlineDrivers = async () => {
+    setLoading(true);
+    setError(null);
+    setNoDriversNearby(false);
+
+    try {
+      const { data: driversData, error: dbError } = await supabase
+        .from('taxi_drivers')
+        .select('id, user_id, rating, vehicle_type, vehicle_plate, last_lat, last_lng')
+        .eq('is_online', true)
+        .in('status', ['available', 'online'])
+        .limit(10);
+
+      if (dbError) throw dbError;
+
+      if (!driversData || driversData.length === 0) {
+        setNoDriversNearby(true);
+        setDrivers([]);
+        return;
+      }
+
+      // Get driver profiles for names
+      const userIds = driversData.map(d => d.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      const driversWithNames = driversData.map(driver => ({
+        driver_id: driver.id,
+        user_id: driver.user_id,
+        distance_km: null, // Pas de distance sans géolocalisation
+        rating: driver.rating,
+        vehicle_type: driver.vehicle_type,
+        vehicle_plate: driver.vehicle_plate,
+        full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
+      }));
+
+      setDrivers(driversWithNames);
+    } catch (err) {
+      console.error('Error finding drivers:', err);
+      setError('Erreur lors de la recherche de chauffeurs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const searchNearbyDrivers = async (lat: number, lng: number) => {
     setLoading(true);
     setError(null);
@@ -50,7 +98,11 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
         p_limit: 10
       });
 
-      if (rpcError) throw rpcError;
+      if (rpcError) {
+        console.error('RPC error, falling back to direct query:', rpcError);
+        await searchAllOnlineDrivers();
+        return;
+      }
 
       if (!data || data.length === 0) {
         setNoDriversNearby(true);
@@ -72,7 +124,8 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       }
     } catch (err) {
       console.error('Error finding nearby drivers:', err);
-      setError('Erreur lors de la recherche de chauffeurs');
+      // Fallback to all online drivers
+      await searchAllOnlineDrivers();
     } finally {
       setLoading(false);
     }
@@ -81,8 +134,8 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const getUserLocation = () => {
     setLoading(true);
     if (!navigator.geolocation) {
-      setError('Géolocalisation non supportée');
-      setLoading(false);
+      console.log('Geolocation not supported, falling back to all drivers');
+      searchAllOnlineDrivers();
       return;
     }
 
@@ -93,11 +146,11 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
         searchNearbyDrivers(latitude, longitude);
       },
       (err) => {
-        console.error('Geolocation error:', err);
-        setError('Impossible d\'obtenir votre position. Activez la géolocalisation.');
-        setLoading(false);
+        console.error('Geolocation error, falling back to all drivers:', err);
+        // Fallback: rechercher tous les chauffeurs en ligne
+        searchAllOnlineDrivers();
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 
@@ -188,7 +241,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                     {drivers.length} chauffeur{drivers.length > 1 ? 's' : ''} disponible{drivers.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Dans un rayon de {MAX_DISTANCE_KM} km
+                    {userLocation ? `Dans un rayon de ${MAX_DISTANCE_KM} km` : 'Chauffeurs en ligne'}
                   </p>
                 </div>
               </div>
@@ -214,11 +267,11 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                         {driver.vehicle_type || 'Moto'} • {driver.vehicle_plate || '---'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-semibold text-taxi-primary">
-                        {driver.distance_km?.toFixed(1)} km
-                      </span>
-                    </div>
+                        <div className="text-right">
+                          <span className="text-sm font-semibold text-taxi-primary">
+                            {driver.distance_km !== null ? `${driver.distance_km.toFixed(1)} km` : 'En ligne'}
+                          </span>
+                        </div>
                   </div>
                 ))}
               </div>
