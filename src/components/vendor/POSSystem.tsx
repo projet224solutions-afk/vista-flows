@@ -967,22 +967,22 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
                     {sortedProducts.map(product => {
                       const isRecent = recentlySelected.includes(product.id);
                       return (
                         <Card 
                           key={product.id} 
-                          className={`group relative cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-xl border bg-card/95 active:scale-[0.98] ${
+                          className={`group relative cursor-pointer transition-all duration-200 hover:shadow-xl border bg-card active:scale-[0.98] ${
                             isRecent 
                               ? 'border-primary/60 ring-2 ring-primary/20 shadow-lg' 
                               : 'border-border/50 hover:border-primary/40'
                           }`}
                           onClick={() => addToCart(product)}
                         >
-                        <CardContent className="p-0">
-                          {/* Image produit - Compact sur mobile */}
-                          <div className="relative w-full aspect-square md:h-32 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden">
+                        <CardContent className="p-0 flex flex-col">
+                          {/* Image produit - Hauteur fixe pour éviter les débordements */}
+                          <div className="relative w-full h-20 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
                             {/* Badge stock */}
                             <div className="absolute top-1 right-1 z-10">
                               <Badge 
@@ -1010,7 +1010,7 @@ export function POSSystem() {
                               />
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <Package className="h-10 w-10 text-muted-foreground/40" />
+                                <Package className="h-8 w-8 text-muted-foreground/40" />
                               </div>
                             )}
                           </div>
