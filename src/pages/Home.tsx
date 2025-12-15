@@ -21,6 +21,8 @@ import {
   BottomNavigation,
   NearbyServicesSection,
   LatestProductsSection,
+  NearbyVendorsModal,
+  NearbyTaxiModal,
 } from '@/components/home';
 
 interface ServiceStatsData {
@@ -38,6 +40,8 @@ export default function Home() {
   useRoleRedirect();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [showVendorsModal, setShowVendorsModal] = useState(false);
+  const [showTaxiModal, setShowTaxiModal] = useState(false);
   const [serviceStats, setServiceStats] = useState<ServiceStatsData>({
     boutiques: 0,
     taxi: 0,
@@ -128,10 +132,10 @@ export default function Home() {
   const handleServiceClick = (serviceId: string) => {
     switch (serviceId) {
       case 'boutiques':
-        navigate('/marketplace');
+        setShowVendorsModal(true);
         break;
       case 'taxi':
-        navigate('/taxi-moto');
+        setShowTaxiModal(true);
         break;
       case 'livraison':
         navigate('/livreur');
@@ -187,6 +191,16 @@ export default function Home() {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
+
+      {/* Modals */}
+      <NearbyVendorsModal 
+        open={showVendorsModal} 
+        onOpenChange={setShowVendorsModal} 
+      />
+      <NearbyTaxiModal 
+        open={showTaxiModal} 
+        onOpenChange={setShowTaxiModal} 
+      />
     </div>
   );
 }

@@ -1,3 +1,6 @@
+export { NearbyVendorsModal } from './NearbyVendorsModal';
+export { NearbyTaxiModal } from './NearbyTaxiModal';
+
 /**
  * HOME COMPONENTS - Index Export
  * 224Solutions - Ultra Professional Home Page Components
