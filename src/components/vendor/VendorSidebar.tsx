@@ -27,7 +27,7 @@ import { useVendorBadges } from "@/hooks/useVendorBadges";
 import { cn } from "@/lib/utils";
 
 export function VendorSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname.split('/').pop() || 'dashboard';
@@ -57,6 +57,10 @@ export function VendorSidebar() {
 
   const handleNavigation = (path: string) => {
     navigate(`/vendeur/${path}`);
+    // Fermer la sidebar automatiquement sur mobile après navigation
+    if (isMobile) {
+      setOpen(false);
+    }
   };
 
   const menuSections = [
