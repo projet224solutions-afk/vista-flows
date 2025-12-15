@@ -206,7 +206,9 @@ export function POSSystem() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
-  const [discount, setDiscount] = useState<number>(0);
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountMode, setDiscountMode] = useState<'percent' | 'amount'>('percent');
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
@@ -255,7 +257,12 @@ export function POSSystem() {
   const taxEnabled = settings?.tax_enabled ?? true;
   const tax = taxEnabled ? subtotal * taxRate : 0;
   const totalBeforeDiscount = subtotal + tax;
-  const total = Math.max(0, totalBeforeDiscount - (totalBeforeDiscount * (discount || 0)) / 100);
+  
+  // Calcul de la remise selon le mode sélectionné
+  const discountValue = discountMode === 'percent' 
+    ? (totalBeforeDiscount * discountPercent) / 100 
+    : discountAmount;
+  const total = Math.max(0, totalBeforeDiscount - discountValue);
   const change = receivedAmount - total;
 
   // Fonction d'ajout au panier avec calcul automatique (unités)
@@ -376,6 +383,9 @@ export function POSSystem() {
     setCart([]);
     setSelectedCustomer(null);
     setReceivedAmount(0);
+    setDiscountPercent(0);
+    setDiscountAmount(0);
+    setDiscountMode('percent');
     toast.info('Panier vidé');
   };
 
@@ -1236,45 +1246,95 @@ export function POSSystem() {
             {/* Section paiement compacte */}
             {cart.length > 0 && (
               <div className="border-t-2 border-primary/20 bg-gradient-to-b from-muted/30 to-muted/10 flex-shrink-0 p-3 space-y-3">
-                {/* Section Remise avec champs de saisie */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Percent className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-xs font-semibold text-foreground">Remise</span>
+                {/* Section Remise avec modes séparés */}
+                <div className="space-y-2 p-2 rounded-lg bg-muted/20 border border-border/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Percent className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-bold text-foreground">Remise</span>
+                    </div>
+                    {(discountPercent > 0 || discountAmount > 0) && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          setDiscountPercent(0);
+                          setDiscountAmount(0);
+                        }}
+                        className="h-5 px-1.5 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        Annuler
+                      </Button>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  
+                  {/* Toggle de mode */}
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button
+                      variant={discountMode === 'percent' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setDiscountMode('percent');
+                        setDiscountAmount(0);
+                      }}
+                      className={`h-7 text-[10px] font-semibold ${discountMode === 'percent' ? 'bg-primary' : ''}`}
+                    >
+                      <Percent className="h-3 w-3 mr-1" />
+                      Pourcentage
+                    </Button>
+                    <Button
+                      variant={discountMode === 'amount' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setDiscountMode('amount');
+                        setDiscountPercent(0);
+                      }}
+                      className={`h-7 text-[10px] font-semibold ${discountMode === 'amount' ? 'bg-primary' : ''}`}
+                    >
+                      <Euro className="h-3 w-3 mr-1" />
+                      Montant
+                    </Button>
+                  </div>
+                  
+                  {/* Champ de saisie selon le mode */}
+                  {discountMode === 'percent' ? (
                     <div className="relative">
                       <Input
                         type="number"
-                        value={discount || ''}
-                        onChange={(e) => setDiscount(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                        className="h-8 text-xs pr-7 font-medium"
-                        placeholder="0"
+                        value={discountPercent || ''}
+                        onChange={(e) => setDiscountPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                        className="h-9 text-sm pr-8 font-bold text-center bg-background"
+                        placeholder="Ex: 10"
                         min="0"
                         max="100"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-primary">%</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-primary">%</span>
                     </div>
+                  ) : (
                     <div className="relative">
                       <Input
                         type="number"
-                        value={discount > 0 ? Math.round(subtotal * discount / 100) : ''}
+                        value={discountAmount || ''}
                         onChange={(e) => {
-                          const priceDiscount = parseInt(e.target.value) || 0;
-                          const percentValue = subtotal > 0 ? Math.round((priceDiscount / subtotal) * 100) : 0;
-                          setDiscount(Math.min(100, Math.max(0, percentValue)));
+                          const value = Math.max(0, parseInt(e.target.value) || 0);
+                          setDiscountAmount(Math.min(value, totalBeforeDiscount));
                         }}
-                        className="h-8 text-xs pr-10 font-medium"
-                        placeholder="0"
+                        className="h-9 text-sm pr-12 font-bold text-center bg-background"
+                        placeholder="Ex: 1000"
                         min="0"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">GNF</span>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">GNF</span>
                     </div>
-                  </div>
-                  {discount > 0 && (
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 font-semibold">
-                      -{discount}% = -{Math.round(subtotal * discount / 100).toLocaleString()} GNF
-                    </Badge>
+                  )}
+                  
+                  {/* Affichage de la remise appliquée */}
+                  {discountValue > 0 && (
+                    <div className="flex items-center justify-center">
+                      <Badge className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground text-[11px] px-2 py-1 font-bold shadow-sm">
+                        Remise: -{discountValue.toLocaleString()} GNF
+                        {discountMode === 'percent' && ` (${discountPercent}%)`}
+                      </Badge>
+                    </div>
                   )}
                 </div>
                 
@@ -1422,7 +1482,8 @@ export function POSSystem() {
           // Reset après fermeture du reçu
           clearCart();
           setReceivedAmount(0);
-          setDiscount(0);
+          setDiscountPercent(0);
+          setDiscountAmount(0);
           setNumericInput('');
         }}
         orderData={{
@@ -1432,7 +1493,7 @@ export function POSSystem() {
           tax,
           taxRate,
           taxEnabled,
-          discount,
+          discount: discountValue,
           total,
           paymentMethod,
           receivedAmount,
