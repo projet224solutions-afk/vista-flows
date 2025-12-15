@@ -963,10 +963,8 @@ export function POSSystem() {
             </CardContent>
           </Card>
 
-          {/* Grille de produits professionnelle - Mobile optimisé */}
-          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0 min-w-0 max-w-full">
-            <CardContent className="p-1 sm:p-2 md:p-4 h-full overflow-hidden">
-              <ScrollArea className="h-full w-full max-w-full">
+          {/* Grille de produits professionnelle - Mobile optimisé - Sans fond blanc */}
+          <div className="flex-1 overflow-auto min-h-0 min-w-0 max-w-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center gap-3">
@@ -1136,9 +1134,7 @@ export function POSSystem() {
                     })}
                   </div>
                 )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
