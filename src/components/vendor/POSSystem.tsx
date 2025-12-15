@@ -617,7 +617,7 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90 max-w-full">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90 max-w-full">
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg flex-shrink-0 w-full max-w-full">
         <div className="flex items-center justify-between p-2 sm:p-3 md:p-6 max-w-full overflow-hidden">
