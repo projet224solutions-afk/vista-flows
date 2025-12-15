@@ -46,6 +46,7 @@ const CopilotAuditTrail = lazy(() => import('@/components/pdg/CopilotAuditTrail'
 const PDGKYCManagement = lazy(() => import('@/components/pdg/PDGKYCManagement'));
 const BankingDashboard = lazy(() => import('@/components/pdg/BankingDashboard'));
 const PDGStolenVehiclesSupervision = lazy(() => import('@/components/pdg/PDGStolenVehiclesSupervision'));
+const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -611,9 +612,9 @@ export default function PDG224Solutions() {
                 </ErrorBoundary>
               )}
 
-              {activeTab === 'transfer-fees' && (
+              {activeTab === 'driver-subscriptions' && (
                 <ErrorBoundary>
-                  <TransferFeeSettings />
+                  <DriverSubscriptionManagement />
                 </ErrorBoundary>
               )}
             </Suspense>
