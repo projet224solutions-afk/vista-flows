@@ -33,43 +33,51 @@ export function NearbyServicesSection({
       icon: <Store className="w-6 h-6 text-vendeur-primary" />,
       title: t('home.shops'),
       count: stats.boutiques,
-      gradient: 'from-vendeur-primary/10 to-vendeur-secondary/5',
+      gradient: 'from-vendeur-primary/15 to-vendeur-secondary/5',
+      trending: stats.boutiques > 5,
     },
     {
       id: 'taxi',
       icon: <Car className="w-6 h-6 text-taxi-primary" />,
       title: t('home.taxiMotos'),
       count: stats.taxi,
-      gradient: 'from-taxi-primary/10 to-taxi-secondary/5',
+      gradient: 'from-taxi-primary/15 to-taxi-secondary/5',
+      trending: stats.taxi > 2,
     },
     {
       id: 'livraison',
       icon: <Truck className="w-6 h-6 text-livreur-primary" />,
       title: t('home.delivery'),
       count: stats.livraison,
-      gradient: 'from-livreur-primary/10 to-livreur-secondary/5',
+      gradient: 'from-livreur-primary/15 to-livreur-secondary/5',
+      trending: stats.livraison > 1,
     },
   ];
 
   return (
-    <section className={cn('px-4 py-6 md:px-6', className)}>
+    <section className={cn('px-4 py-5 md:px-6', className)}>
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg md:text-xl font-bold text-foreground">
-          {t('home.nearbyServices')}
-        </h2>
-        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-          À proximité
+        <div>
+          <h2 className="text-lg md:text-xl font-bold text-foreground">
+            {t('home.nearbyServices')}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Services disponibles autour de vous
+          </p>
+        </div>
+        <span className="text-[10px] text-primary bg-primary/10 px-2.5 py-1 rounded-full font-medium">
+          📍 À proximité
         </span>
       </div>
 
       {/* Services Grid */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {services.map((service, index) => (
           <div
             key={service.id}
             className="animate-fade-in"
-            style={{ animationDelay: `${index * 100}ms` }}
+            style={{ animationDelay: `${index * 80}ms` }}
           >
             <HomeServiceCard
               id={service.id}
@@ -77,6 +85,7 @@ export function NearbyServicesSection({
               title={service.title}
               count={service.count}
               gradient={service.gradient}
+              trending={service.trending}
               onClick={() => onServiceClick(service.id)}
             />
           </div>
