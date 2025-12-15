@@ -39,7 +39,8 @@ import {
   Package,
   Store,
   Upload,
-  ImageIcon
+  ImageIcon,
+  Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
