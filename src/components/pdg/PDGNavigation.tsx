@@ -40,6 +40,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
       { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true },
+      { value: 'driver-subscriptions', label: 'Abonnements Drivers', icon: Car, badge: true },
     ]
   },
   {
@@ -60,7 +61,6 @@ const categories: NavCategory[] = [
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
-      { value: 'driver-subscriptions', label: 'Abonnements Drivers', icon: Car, badge: true },
       { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true },
       { value: 'orders', label: 'Commandes', icon: Package },
       { value: 'vendors', label: 'Vendeurs', icon: Store },
