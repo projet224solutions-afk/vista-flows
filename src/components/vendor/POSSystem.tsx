@@ -616,10 +616,10 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90">
+    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] w-full overflow-hidden bg-gradient-to-br from-background via-background/95 to-background/90 max-w-full">
       {/* En-tête professionnel - Compact sur mobile */}
-      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg flex-shrink-0">
-        <div className="flex items-center justify-between p-3 md:p-6 max-w-full overflow-hidden">
+      <div className="bg-gradient-to-r from-primary/5 via-card to-primary/5 border-b border-border/50 shadow-lg flex-shrink-0 w-full max-w-full">
+        <div className="flex items-center justify-between p-2 sm:p-3 md:p-6 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 md:gap-4">
             <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
               {settings?.logo_url ? (
@@ -864,12 +864,12 @@ export function POSSystem() {
         </div>
       )}
 
-      <div className={`flex flex-1 min-h-0 overflow-hidden gap-2 md:gap-4 p-2 md:p-4 w-full max-w-full ${isMobile ? 'flex-col' : ''}`}>
+      <div className={`flex flex-1 min-h-0 overflow-hidden gap-1 sm:gap-2 md:gap-4 p-1 sm:p-2 md:p-4 w-full max-w-full ${isMobile ? 'flex-col' : ''}`}>
         {/* Section Produits - Design moderne */}
-        <div className={`flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden space-y-2 md:space-y-4 ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
+        <div className={`flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden space-y-1 sm:space-y-2 md:space-y-4 max-w-full ${isMobile && mobileTab !== 'products' ? 'hidden' : ''}`}>
           {/* Barre de recherche améliorée - Compact sur mobile */}
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm flex-shrink-0 overflow-hidden">
-            <CardContent className="p-3 md:p-6 overflow-hidden">
+          <Card className="shadow-lg border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm flex-shrink-0 overflow-hidden w-full max-w-full">
+            <CardContent className="p-2 sm:p-3 md:p-6 overflow-hidden">
               <div className="flex flex-col gap-2 md:gap-4">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
@@ -957,9 +957,9 @@ export function POSSystem() {
           </Card>
 
           {/* Grille de produits professionnelle - Mobile optimisé */}
-          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0 min-w-0">
-            <CardContent className="p-2 md:p-4 h-full overflow-hidden">
-              <ScrollArea className="h-full w-full">
+          <Card className="flex-1 shadow-lg border-0 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm overflow-hidden min-h-0 min-w-0 max-w-full">
+            <CardContent className="p-1 sm:p-2 md:p-4 h-full overflow-hidden">
+              <ScrollArea className="h-full w-full max-w-full">
                 {productsLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center gap-3">
@@ -1135,9 +1135,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive */}
-        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-h-0 min-w-0 max-w-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design compact */}
-          <Card className="flex-1 shadow-xl border-0 bg-card overflow-auto flex flex-col">
+          <Card className="flex-1 shadow-xl border-0 bg-card overflow-auto flex flex-col max-w-full">
             {/* En-tête professionnel */}
             <div className="p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b-2 border-primary/20 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
