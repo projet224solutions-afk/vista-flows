@@ -3,8 +3,9 @@
  * Design élégant, moderne avec glassmorphism
  */
 
-import { Bell, LogOut, Wifi, WifiOff, MapPin, Shield } from "lucide-react";
+import { Bell, LogOut, Wifi, WifiOff, MapPin, Shield, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { DriverSubscriptionButton } from "@/components/driver/DriverSubscriptionButton";
 import { TaxiMotoSOSButton } from "@/components/taxi-moto/TaxiMotoSOSButton";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
@@ -32,6 +33,12 @@ export function DriverHeader({
   driverPhone,
   onSignOut
 }: DriverHeaderProps) {
+  const navigate = useNavigate();
+
+  const handleBackToDashboard = () => {
+    navigate('/');
+  };
+
   return (
     <header className="relative bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 text-white sticky top-0 z-40">
       {/* Subtle gradient overlay */}
@@ -39,8 +46,19 @@ export function DriverHeader({
       
       <div className="relative px-4 py-3 safe-area-inset-top">
         <div className="flex items-center justify-between">
-          {/* Left: Driver Info */}
-          <div className="flex items-center gap-3">
+          {/* Left: Back Button + Driver Info */}
+          <div className="flex items-center gap-2">
+            {/* Back to Dashboard Button */}
+            <Button
+              onClick={handleBackToDashboard}
+              variant="ghost"
+              size="icon"
+              className="text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl shrink-0"
+              title="Retour au tableau de bord"
+            >
+              <Home className="w-5 h-5" />
+            </Button>
+            
             {/* Avatar with status ring */}
             <div className="relative">
               <div className={cn(
