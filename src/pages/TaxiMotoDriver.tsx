@@ -224,18 +224,29 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
         console.log('🔔 [TaxiMotoDriver] Subscription aux courses activée pour driver:', driverId);
 
         const channel = supabase
-            .channel('driver-ride-requests')
+            .channel('driver-ride-requests-v2')
             .on(
                 'postgres_changes',
                 {
                     event: 'INSERT',
                     schema: 'public',
-                    table: 'taxi_trips',
-                    filter: `status=eq.requested`
+                    table: 'taxi_trips'
                 },
                 async (payload) => {
-                    console.log('📲 [TaxiMotoDriver] Nouvelle course détectée:', payload);
+                    console.log('📲 [TaxiMotoDriver] Nouvelle entrée taxi_trips détectée:', payload);
                     const ride = payload.new as any;
+                    
+                    // Filtrer côté client pour status = 'requested'
+                    if (ride.status !== 'requested') {
+                        console.log('⚠️ Course ignorée, status:', ride.status);
+                        return;
+                    }
+                    
+                    // Ignorer si déjà assignée à un driver
+                    if (ride.driver_id) {
+                        console.log('⚠️ Course déjà assignée à un driver:', ride.driver_id);
+                        return;
+                    }
                     
                     // Vérifier si le conducteur a déjà refusé cette course
                     const declinedDrivers = ride.declined_drivers || [];
@@ -247,7 +258,7 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
                     // Toujours afficher une notification, même si hors distance
                     console.log('🔊 Affichage notification + son pour course:', ride.id);
                     toast.success('🚗 Nouvelle course disponible!', {
-                        description: `De ${ride.pickup_address || 'Adresse inconnue'}`,
+                        description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${ride.price_total?.toLocaleString() || 0} GNF`,
                         duration: 10000
                     });
                     
@@ -260,27 +271,19 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
                         console.log('Erreur lecture son:', e);
                     }
                     
-                    // Vérifier si le chauffeur est à proximité pour afficher dans la liste
-                    if (location) {
+                    // Toujours ajouter la course à la liste (le chauffeur peut décider)
+                    console.log('✅ Ajout course à la liste des demandes');
+                    await addRideRequestFromDB(ride);
+                    
+                    // Calculer la distance si possible
+                    if (location && ride.pickup_lat && ride.pickup_lng) {
                         const distance = calculateDistance(
                             location.latitude,
                             location.longitude,
                             ride.pickup_lat,
                             ride.pickup_lng
                         );
-                        
-                        console.log(`📍 Distance calculée: ${distance.toFixed(2)}km`);
-                        
-                        // Si à moins de 10km, afficher la demande dans la liste
-                        if (distance <= 10) {
-                            console.log('✅ Ajout course à la liste (< 10km)');
-                            await addRideRequestFromDB(ride);
-                        } else {
-                            console.log('⚠️ Course trop loin (> 10km), notification uniquement');
-                        }
-                    } else {
-                        console.log('⚠️ Pas de localisation disponible, ajout de la course quand même');
-                        await addRideRequestFromDB(ride);
+                        console.log(`📍 Distance au point de ramassage: ${distance.toFixed(2)}km`);
                     }
                 }
             )
@@ -805,7 +808,7 @@ const watchId = navigator.geolocation.watchPosition(
      * Charge les courses en attente depuis la DB
      */
     const loadPendingRides = async () => {
-        if (!driverId || !location || !hasAccess) return;
+        if (!driverId || !hasAccess) return;
 
         try {
             // Charger toutes les courses "requested" à proximité (5km)
@@ -825,16 +828,17 @@ const watchId = navigator.geolocation.watchPosition(
                 return !declinedDrivers.includes(driverId);
             });
 
-            // Filtrer par distance et ajouter à la liste
+            // Filtrer par distance et ajouter à la liste (rayon élargi à 15km)
             const nearbyRides = availableRides.filter(ride => {
-                if (!ride.pickup_lat || !ride.pickup_lng) return false;
+                if (!ride.pickup_lat || !ride.pickup_lng) return true; // Si pas de coords, inclure quand même
+                if (!location) return true; // Si pas de location driver, inclure toutes les courses
                 const distance = calculateDistance(
                     location.latitude,
                     location.longitude,
                     ride.pickup_lat,
                     ride.pickup_lng
                 );
-                return distance <= 5; // 5km radius
+                return distance <= 15; // 15km radius (élargi)
             });
 
             // Charger les détails pour chaque course
