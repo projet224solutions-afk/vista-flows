@@ -473,7 +473,39 @@ const watchId = navigator.geolocation.watchPosition(
                         // Fallback: basse précision avec timeout plus long
                         position = await getPosition(false, 30000);
                     } catch (secondError: any) {
-                        throw secondError;
+                        // Dernier recours: IP geolocation pour les ordinateurs de bureau
+                        console.log('⚠️ GPS hardware échoué, essai géolocalisation IP...');
+                        toast.loading('📍 Localisation par IP...', { id: 'gps-loading' });
+                        
+                        try {
+                            const ipResponse = await fetch('https://ipapi.co/json/');
+                            const ipData = await ipResponse.json();
+                            
+                            if (ipData.latitude && ipData.longitude) {
+                                console.log('✅ Position obtenue via IP:', ipData);
+                                position = {
+                                    coords: {
+                                        latitude: ipData.latitude,
+                                        longitude: ipData.longitude,
+                                        accuracy: 5000, // Précision estimée IP ~5km
+                                        altitude: null,
+                                        altitudeAccuracy: null,
+                                        heading: null,
+                                        speed: null
+                                    },
+                                    timestamp: Date.now()
+                                } as GeolocationPosition;
+                                
+                                toast.info('📍 Localisation approximative (IP)', {
+                                    description: 'Pour une meilleure précision, utilisez un appareil mobile avec GPS'
+                                });
+                            } else {
+                                throw secondError;
+                            }
+                        } catch (ipError) {
+                            console.error('❌ IP geolocation échouée:', ipError);
+                            throw secondError;
+                        }
                     }
                 }
                 
