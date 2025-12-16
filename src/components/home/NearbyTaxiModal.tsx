@@ -46,14 +46,13 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       p_lat: lat,
       p_lng: lng,
       p_radius_km: radiusKm,
-      p_limit: 3, // Limité à 3 chauffeurs les plus proches
+      p_limit: 10,
     });
 
     if (rpcError) throw rpcError;
     
-    // Trier par distance croissante et limiter à 3
+    // RPC already filters for online drivers, just sort by distance and limit to 3
     const sortedData = (data || [])
-      .filter((d: any) => d.is_online === true) // Seulement les chauffeurs EN LIGNE
       .sort((a: any, b: any) => {
         const distA = a.distance_km ?? Infinity;
         const distB = b.distance_km ?? Infinity;
