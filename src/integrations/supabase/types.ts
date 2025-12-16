@@ -13080,6 +13080,7 @@ export type Database = {
       generate_agent_access_token: { Args: never; Returns: string }
       generate_agent_id: { Args: { p_type_agent: string }; Returns: string }
       generate_api_key: { Args: never; Returns: string }
+      generate_badge_code: { Args: never; Returns: string }
       generate_card_number: { Args: never; Returns: string }
       generate_custom_id: { Args: never; Returns: string }
       generate_custom_id_original: { Args: never; Returns: string }
@@ -13088,6 +13089,7 @@ export type Database = {
         Returns: string
       }
       generate_invitation_token: { Args: never; Returns: string }
+      generate_invite_token: { Args: never; Returns: string }
       generate_ledger_hash: {
         Args: {
           p_actor_id: string
@@ -13114,13 +13116,16 @@ export type Database = {
           score: number
         }[]
       }
+      generate_secure_token: { Args: never; Returns: string }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_agent_code: { Args: never; Returns: string }
+      generate_unique_agent_token: { Args: never; Returns: string }
       generate_unique_custom_id: { Args: never; Returns: string }
+      generate_unique_invitation_token: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
       generate_vendor_agent_access_token: { Args: never; Returns: string }
