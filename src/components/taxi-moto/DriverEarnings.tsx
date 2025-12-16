@@ -290,7 +290,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             <div>
               <p className="text-sm opacity-90">Solde disponible</p>
               <p className="text-4xl font-bold mt-1">
-                {balance.toLocaleString()} {currency}
+                {(balance || 0).toLocaleString()} {currency || 'GNF'}
               </p>
             </div>
             
@@ -367,7 +367,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         onChange={(e) => setWithdrawAmount(e.target.value)}
                       />
                       <p className="text-sm text-muted-foreground">
-                        Solde disponible: {balance.toLocaleString()} {currency}
+                        Solde disponible: {(balance || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                     </div>
                     <Button 
@@ -442,7 +442,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                     </div>
                     <div className="text-right">
                       <p className={`font-bold ${tx.transaction_type === 'credit' ? 'text-green-600' : 'text-orange-600'}`}>
-                        {tx.transaction_type === 'credit' ? '+' : '-'}{tx.amount.toLocaleString()} {currency}
+                        {tx.transaction_type === 'credit' ? '+' : '-'}{(tx.amount || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                       <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
                         {tx.status}
@@ -463,8 +463,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             <div className="text-center">
               <Calendar className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
               <p className="text-xs text-muted-foreground">Aujourd'hui</p>
-              <p className="text-lg font-bold">{stats.todayEarnings.toLocaleString()} {currency}</p>
-              <p className="text-xs text-muted-foreground">{stats.todayRides} courses</p>
+              <p className="text-lg font-bold">{(stats.todayEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+              <p className="text-xs text-muted-foreground">{stats.todayRides || 0} courses</p>
             </div>
           </CardContent>
         </Card>
@@ -474,8 +474,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             <div className="text-center">
               <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
               <p className="text-xs text-muted-foreground">7 jours</p>
-              <p className="text-lg font-bold">{stats.weekEarnings.toLocaleString()} {currency}</p>
-              <p className="text-xs text-muted-foreground">{stats.weekRides} courses</p>
+              <p className="text-lg font-bold">{(stats.weekEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+              <p className="text-xs text-muted-foreground">{stats.weekRides || 0} courses</p>
             </div>
           </CardContent>
         </Card>
@@ -485,8 +485,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             <div className="text-center">
               <Calendar className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
               <p className="text-xs text-muted-foreground">30 jours</p>
-              <p className="text-lg font-bold">{stats.monthEarnings.toLocaleString()} {currency}</p>
-              <p className="text-xs text-muted-foreground">{stats.monthRides} courses</p>
+              <p className="text-lg font-bold">{(stats.monthEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+              <p className="text-xs text-muted-foreground">{stats.monthRides || 0} courses</p>
             </div>
           </CardContent>
         </Card>
@@ -496,8 +496,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             <div className="text-center">
               <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
               <p className="text-xs text-muted-foreground">Année {new Date().getFullYear()}</p>
-              <p className="text-lg font-bold">{stats.yearEarnings.toLocaleString()} {currency}</p>
-              <p className="text-xs text-muted-foreground">{stats.yearRides} courses</p>
+              <p className="text-lg font-bold">{(stats.yearEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+              <p className="text-xs text-muted-foreground">{stats.yearRides || 0} courses</p>
             </div>
           </CardContent>
         </Card>
@@ -533,7 +533,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-green-600">
-                        {ride.fare.toLocaleString()} {currency}
+                        {(ride.fare || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {ride.status === 'completed' ? 'Terminée' : 'Payée'}
@@ -543,11 +543,11 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {ride.duration_minutes} min
+                      {ride.duration_minutes || 0} min
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      {ride.distance_km.toFixed(1)} km
+                      {(ride.distance_km || 0).toFixed(1)} km
                     </span>
                     <span className="ml-auto">
                       {format(new Date(ride.completed_at || ride.requested_at), 'dd MMM HH:mm', { locale: fr })}
