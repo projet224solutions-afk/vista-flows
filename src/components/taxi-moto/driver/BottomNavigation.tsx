@@ -20,7 +20,7 @@ export function BottomNavigation({
   onMarketplace
 }: BottomNavigationProps) {
   const navItems = [
-    { id: 'dashboard', label: 'Accueil', icon: Home },
+    { id: 'dashboard', label: 'Tableau', icon: Home },
     { 
       id: 'navigation', 
       label: hasActiveRide ? 'Navigation' : 'Course', 
@@ -29,8 +29,8 @@ export function BottomNavigation({
       highlight: hasActiveRide
     },
     { id: 'earnings', label: 'Gains', icon: Wallet },
-    { id: 'history', label: 'Courses', icon: History },
-    { id: 'settings', label: 'Paramètres', icon: Settings },
+    { id: 'history', label: 'Historique', icon: History },
+    { id: 'settings', label: 'Réglages', icon: Settings },
   ];
 
   return (
