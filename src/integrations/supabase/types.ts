@@ -13077,6 +13077,7 @@ export type Database = {
           wallet_id: string
         }[]
       }
+      gen_random_bytes: { Args: { p_size: number }; Returns: string }
       generate_agent_access_token: { Args: never; Returns: string }
       generate_agent_id: { Args: { p_type_agent: string }; Returns: string }
       generate_api_key: { Args: never; Returns: string }
