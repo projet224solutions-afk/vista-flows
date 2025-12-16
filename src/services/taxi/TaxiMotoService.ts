@@ -518,12 +518,23 @@ export class TaxiMotoService {
     // le conducteur pourrait rester “en ligne” côté DB.
     const updated = await supabaseCall(
       async () => {
-        const { data, error } = await supabase
+        // D'abord essayer avec id direct
+        let { data, error } = await supabase
           .from('taxi_drivers')
           .update(updateData)
-          // Robustesse: certains appels passent user_id au lieu de taxi_drivers.id.
-          .or(`id.eq.${driverId},user_id.eq.${driverId}`)
+          .eq('id', driverId)
           .select('id');
+
+        // Si pas trouvé, essayer avec user_id
+        if ((!data || data.length === 0) && !error) {
+          const result = await supabase
+            .from('taxi_drivers')
+            .update(updateData)
+            .eq('user_id', driverId)
+            .select('id');
+          data = result.data;
+          error = result.error;
+        }
 
         return { data, error };
       },
