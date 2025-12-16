@@ -1,9 +1,9 @@
 /**
- * STATISTIQUES DU JOUR - UBER/BOLT STYLE
- * Affichage horizontal des statistiques clés avec navigation
+ * STATISTIQUES CONDUCTEUR - ULTRA PROFESSIONNEL
+ * Cards élégantes avec animations et gradients
  */
 
-import { DollarSign, Car, Star, Clock, TrendingUp } from "lucide-react";
+import { Wallet, Car, Star, Clock, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DriverStatsRowProps {
@@ -14,9 +14,9 @@ interface DriverStatsRowProps {
   onStatClick?: (statId: string) => void;
 }
 
-export function DriverStatsRow({ 
-  todayEarnings, 
-  todayRides, 
+export function DriverStatsRow({
+  todayEarnings,
+  todayRides,
   rating,
   onlineTime,
   onStatClick
@@ -24,89 +24,95 @@ export function DriverStatsRow({
   const stats = [
     {
       id: 'earnings',
-      icon: DollarSign,
       label: "Gains",
-      value: `${todayEarnings.toLocaleString()}`,
-      unit: "GNF",
-      color: "text-emerald-400",
-      bgColor: "bg-emerald-500/20",
-      borderColor: "border-emerald-500/30",
-      clickable: true
+      value: `${(todayEarnings || 0).toLocaleString()}`,
+      suffix: "GNF",
+      icon: Wallet,
+      color: "emerald",
+      gradient: "from-emerald-500/20 to-emerald-600/10",
+      iconBg: "bg-emerald-500/20",
+      iconColor: "text-emerald-400"
     },
     {
-      id: 'history',
-      icon: Car,
+      id: 'rides',
       label: "Courses",
-      value: todayRides.toString(),
-      unit: "aujourd'hui",
-      color: "text-blue-400",
-      bgColor: "bg-blue-500/20",
-      borderColor: "border-blue-500/30",
-      clickable: true
+      value: (todayRides || 0).toString(),
+      suffix: "aujourd'hui",
+      icon: Car,
+      color: "blue",
+      gradient: "from-blue-500/20 to-blue-600/10",
+      iconBg: "bg-blue-500/20",
+      iconColor: "text-blue-400"
     },
     {
       id: 'rating',
-      icon: Star,
       label: "Note",
-      value: rating > 0 ? rating.toFixed(1) : "—",
-      unit: "/5.0",
-      color: "text-amber-400",
-      bgColor: "bg-amber-500/20",
-      borderColor: "border-amber-500/30",
-      clickable: true
+      value: (rating || 5.0).toFixed(1),
+      suffix: "/5.0",
+      icon: Star,
+      color: "amber",
+      gradient: "from-amber-500/20 to-amber-600/10",
+      iconBg: "bg-amber-500/20",
+      iconColor: "text-amber-400"
     },
     {
-      id: 'online',
+      id: 'time',
+      label: "Temps",
+      value: onlineTime || '0m',
+      suffix: "en ligne",
       icon: Clock,
-      label: "En ligne",
-      value: onlineTime || "0",
-      unit: "heures",
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/20",
-      borderColor: "border-purple-500/30",
-      clickable: false
+      color: "purple",
+      gradient: "from-purple-500/20 to-purple-600/10",
+      iconBg: "bg-purple-500/20",
+      iconColor: "text-purple-400"
     }
   ];
 
   return (
-    <div className="px-3 py-4 bg-gradient-to-b from-gray-900 to-gray-950 border-b border-gray-800/50">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <TrendingUp className="w-4 h-4 text-emerald-400" />
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Statistiques du jour</span>
-      </div>
-      
+    <div className="px-3 py-4">
       <div className="grid grid-cols-4 gap-2">
-        {stats.map((stat, index) => (
-          <button 
-            key={stat.label}
-            onClick={() => stat.clickable && onStatClick?.(stat.id)}
-            disabled={!stat.clickable}
+        {stats.map((stat) => (
+          <button
+            key={stat.id}
+            onClick={() => onStatClick?.(stat.id)}
             className={cn(
-              "relative flex flex-col items-center p-2.5 rounded-xl border backdrop-blur-sm",
-              "bg-gray-800/40 transition-all duration-300",
-              stat.borderColor,
-              stat.clickable 
-                ? "hover:scale-[1.05] hover:bg-gray-800/60 active:scale-95 cursor-pointer" 
-                : "cursor-default",
-              stat.clickable && "hover:shadow-lg hover:shadow-black/20"
+              "relative overflow-hidden",
+              "bg-gradient-to-br from-gray-800/80 to-gray-900/80",
+              "backdrop-blur-sm",
+              "rounded-2xl p-3",
+              "border border-gray-700/50",
+              "transition-all duration-300",
+              "hover:border-gray-600/50 hover:scale-[1.02]",
+              "active:scale-[0.98]",
+              "group"
             )}
-            style={{ animationDelay: `${index * 100}ms` }}
           >
+            {/* Gradient overlay on hover */}
             <div className={cn(
-              "w-9 h-9 rounded-xl flex items-center justify-center mb-2",
-              stat.bgColor
-            )}>
-              <stat.icon className={cn("w-4.5 h-4.5", stat.color)} />
+              "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+              `bg-gradient-to-br ${stat.gradient}`
+            )} />
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center text-center gap-1.5">
+              {/* Icon */}
+              <div className={cn(
+                "w-8 h-8 rounded-xl flex items-center justify-center",
+                stat.iconBg
+              )}>
+                <stat.icon className={cn("w-4 h-4", stat.iconColor)} />
+              </div>
+              
+              {/* Value */}
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-sm leading-tight">
+                  {stat.value}
+                </span>
+                <span className="text-gray-500 text-[9px] font-medium uppercase tracking-wide">
+                  {stat.suffix}
+                </span>
+              </div>
             </div>
-            <span className={cn("font-bold text-sm", stat.color)}>
-              {stat.value}
-            </span>
-            <span className="text-gray-500 text-[9px] mt-0.5 text-center leading-tight">
-              {stat.label}
-            </span>
-            {stat.clickable && (
-              <div className="absolute inset-0 rounded-xl border-2 border-transparent hover:border-white/10 transition-colors" />
-            )}
           </button>
         ))}
       </div>
