@@ -194,3 +194,6 @@ verify_jwt = true
 
 [functions.upload-bureau-stamp]
 verify_jwt = false
+
+[functions.google-places-autocomplete]
+verify_jwt = false
