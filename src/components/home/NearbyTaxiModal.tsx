@@ -46,11 +46,22 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       p_lat: lat,
       p_lng: lng,
       p_radius_km: radiusKm,
-      p_limit: 10,
+      p_limit: 3, // Limité à 3 chauffeurs les plus proches
     });
 
     if (rpcError) throw rpcError;
-    return (data || []) as any[];
+    
+    // Trier par distance croissante et limiter à 3
+    const sortedData = (data || [])
+      .filter((d: any) => d.is_online === true) // Seulement les chauffeurs EN LIGNE
+      .sort((a: any, b: any) => {
+        const distA = a.distance_km ?? Infinity;
+        const distB = b.distance_km ?? Infinity;
+        return distA - distB;
+      })
+      .slice(0, 3);
+    
+    return sortedData as any[];
   };
 
   // Fallback (sans GPS): recherche large via RPC (bypass RLS) autour d'un point par défaut
@@ -264,34 +275,46 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 </div>
               </div>
 
-              {/* Drivers list */}
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {drivers.slice(0, 5).map((driver, index) => (
+              {/* Drivers list - Top 3 closest */}
+              <div className="space-y-2">
+                {drivers.map((driver, index) => (
                   <div
                     key={driver.driver_id}
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl',
-                      'bg-card border border-border/40'
+                      'bg-card border border-border/40',
+                      index === 0 && 'ring-2 ring-taxi-primary/50 bg-taxi-primary/5'
                     )}
                   >
-                    <div className="w-10 h-10 rounded-full bg-taxi-primary/10 flex items-center justify-center">
-                      <Car className="w-5 h-5 text-taxi-primary" />
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center",
+                      index === 0 ? "bg-taxi-primary text-white" : "bg-taxi-primary/10"
+                    )}>
+                      {index === 0 ? (
+                        <span className="text-sm font-bold">1</span>
+                      ) : (
+                        <Car className="w-5 h-5 text-taxi-primary" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
                         {driver.full_name}
+                        {index === 0 && <span className="ml-2 text-xs text-taxi-primary font-semibold">Le plus proche</span>}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {driver.vehicle_type || 'Moto'} • {driver.vehicle_plate || '---'}
                       </p>
                     </div>
-                        <div className="text-right">
-                          <span className="text-sm font-semibold text-taxi-primary">
-                            {driver.distance_km !== null && Number.isFinite(driver.distance_km)
-                              ? `${driver.distance_km.toFixed(1)} km`
-                              : 'En ligne'}
-                          </span>
-                        </div>
+                    <div className="text-right">
+                      <span className={cn(
+                        "text-sm font-semibold",
+                        index === 0 ? "text-taxi-primary" : "text-muted-foreground"
+                      )}>
+                        {driver.distance_km !== null && Number.isFinite(driver.distance_km)
+                          ? `${driver.distance_km.toFixed(1)} km`
+                          : 'En ligne'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
