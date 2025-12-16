@@ -499,32 +499,45 @@ export class TaxiMotoService {
     const updateData: any = {
       is_online: isOnline,
       status: isOnline ? (isAvailable ? 'available' : 'busy') : 'offline',
-      last_seen: new Date().toISOString()
+      last_seen: new Date().toISOString(),
     };
 
-    if (currentLat && currentLng) {
+    // Quand le chauffeur passe hors ligne, on efface la dernière position.
+    // Objectif: éviter toute apparition “fantôme” dans les recherches proximité.
+    if (!isOnline) {
+      updateData.last_lat = null;
+      updateData.last_lng = null;
+      updateData.last_heading = null;
+      updateData.last_speed = null;
+    } else if (typeof currentLat === 'number' && typeof currentLng === 'number') {
       updateData.last_lat = currentLat;
       updateData.last_lng = currentLng;
     }
 
-    await supabaseCall(
+    // IMPORTANT: ne pas avaler les erreurs. Si l'update échoue (RLS, session, mauvais id),
+    // le conducteur pourrait rester “en ligne” côté DB.
+    const updated = await supabaseCall(
       async () => {
         const { data, error } = await supabase
           .from('taxi_drivers')
           .update(updateData)
-          .eq('id', driverId);
+          // Robustesse: certains appels passent user_id au lieu de taxi_drivers.id.
+          .or(`id.eq.${driverId},user_id.eq.${driverId}`)
+          .select('id');
+
         return { data, error };
       },
-      { 
+      {
         context: 'Mise à jour du statut chauffeur',
-        silent: true, // Ne pas afficher d'erreur pour les mises à jour de statut
+        silent: true,
         timeout: 10000,
-        maxRetries: 1
+        maxRetries: 1,
       }
-    ).catch((error) => {
-      // Log silencieux pour ne pas perturber l'utilisateur
-      console.warn('[TaxiMotoService] Failed to update driver status:', error);
-    });
+    );
+
+    if (!updated || (Array.isArray(updated) && updated.length === 0)) {
+      throw new Error('Mise à jour statut échouée: conducteur introuvable');
+    }
   }
 
   /**

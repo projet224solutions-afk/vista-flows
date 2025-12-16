@@ -90,15 +90,33 @@ export function useDriverOnlineStatus({
         loadPendingRides();
         
       } catch (error: any) {
+        // Si l'update DB du statut échoue, on ne doit pas afficher une erreur “GPS”.
+        const msg = error?.message || '';
+
+        if (
+          msg.includes('Mise à jour statut échouée') ||
+          msg.toLowerCase().includes('statut') ||
+          msg.toLowerCase().includes('introuvable')
+        ) {
+          capture('network', 'Erreur DB lors de la mise en ligne', error);
+          toast.dismiss('gps-loading');
+          toast.error('Impossible de passer en ligne', {
+            description: 'Erreur serveur lors de la mise à jour du statut. Veuillez réessayer.',
+            duration: 6000,
+          });
+          return;
+        }
+
         capture('gps', 'Erreur GPS lors de la mise en ligne', error);
         toast.dismiss('gps-loading');
-        
+
         console.error('📍 [GPS] Erreur:', error);
-        
+
         const errorMessage = error?.message || 'Erreur GPS inconnue';
         toast.error(`⚠️ ${errorMessage}`, {
-          description: '• Vérifiez que le GPS est activé\n• Autorisez l\'accès à la localisation\n• Réessayez dans un endroit dégagé',
-          duration: 6000
+          description:
+            "• Vérifiez que le GPS est activé\n• Autorisez l'accès à la localisation\n• Réessayez dans un endroit dégagé",
+          duration: 6000,
         });
         return;
       }
