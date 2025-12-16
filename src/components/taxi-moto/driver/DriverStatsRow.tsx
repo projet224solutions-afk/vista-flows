@@ -1,6 +1,6 @@
 /**
  * STATISTIQUES DU JOUR - UBER/BOLT STYLE
- * Affichage horizontal des statistiques clés
+ * Affichage horizontal des statistiques clés avec navigation
  */
 
 import { DollarSign, Car, Star, Clock, TrendingUp } from "lucide-react";
@@ -11,50 +11,60 @@ interface DriverStatsRowProps {
   todayRides: number;
   rating: number;
   onlineTime: string;
+  onStatClick?: (statId: string) => void;
 }
 
 export function DriverStatsRow({ 
   todayEarnings, 
   todayRides, 
   rating,
-  onlineTime 
+  onlineTime,
+  onStatClick
 }: DriverStatsRowProps) {
   const stats = [
     {
+      id: 'earnings',
       icon: DollarSign,
       label: "Gains",
       value: `${todayEarnings.toLocaleString()}`,
       unit: "GNF",
       color: "text-emerald-400",
       bgColor: "bg-emerald-500/20",
-      borderColor: "border-emerald-500/30"
+      borderColor: "border-emerald-500/30",
+      clickable: true
     },
     {
+      id: 'history',
       icon: Car,
       label: "Courses",
       value: todayRides.toString(),
       unit: "aujourd'hui",
       color: "text-blue-400",
       bgColor: "bg-blue-500/20",
-      borderColor: "border-blue-500/30"
+      borderColor: "border-blue-500/30",
+      clickable: true
     },
     {
+      id: 'rating',
       icon: Star,
       label: "Note",
       value: rating > 0 ? rating.toFixed(1) : "—",
       unit: "/5.0",
       color: "text-amber-400",
       bgColor: "bg-amber-500/20",
-      borderColor: "border-amber-500/30"
+      borderColor: "border-amber-500/30",
+      clickable: true
     },
     {
+      id: 'online',
       icon: Clock,
       label: "En ligne",
       value: onlineTime || "0",
       unit: "heures",
       color: "text-purple-400",
       bgColor: "bg-purple-500/20",
-      borderColor: "border-purple-500/30"
+      borderColor: "border-purple-500/30",
+      clickable: false
     }
   ];
 
@@ -67,13 +77,18 @@ export function DriverStatsRow({
       
       <div className="grid grid-cols-4 gap-2">
         {stats.map((stat, index) => (
-          <div 
+          <button 
             key={stat.label}
+            onClick={() => stat.clickable && onStatClick?.(stat.id)}
+            disabled={!stat.clickable}
             className={cn(
               "relative flex flex-col items-center p-2.5 rounded-xl border backdrop-blur-sm",
               "bg-gray-800/40 transition-all duration-300",
               stat.borderColor,
-              "hover:scale-[1.02] hover:bg-gray-800/60"
+              stat.clickable 
+                ? "hover:scale-[1.05] hover:bg-gray-800/60 active:scale-95 cursor-pointer" 
+                : "cursor-default",
+              stat.clickable && "hover:shadow-lg hover:shadow-black/20"
             )}
             style={{ animationDelay: `${index * 100}ms` }}
           >
@@ -89,7 +104,10 @@ export function DriverStatsRow({
             <span className="text-gray-500 text-[9px] mt-0.5 text-center leading-tight">
               {stat.label}
             </span>
-          </div>
+            {stat.clickable && (
+              <div className="absolute inset-0 rounded-xl border-2 border-transparent hover:border-white/10 transition-colors" />
+            )}
+          </button>
         ))}
       </div>
     </div>

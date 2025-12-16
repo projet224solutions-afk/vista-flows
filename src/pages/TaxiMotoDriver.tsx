@@ -16,6 +16,7 @@ import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
+import { Car, Star } from "lucide-react";
 
 // UI Components - New Uber/Bolt Style
 import { 
@@ -1340,6 +1341,11 @@ const watchId = navigator.geolocation.watchPosition(
                     onDeclineRide={declineRideRequest}
                     onClearError={clear}
                     onExpandMap={() => setActiveTab('gps-navigation')}
+                    onStatClick={(statId) => {
+                        if (statId === 'earnings') setActiveTab('earnings');
+                        else if (statId === 'history') setActiveTab('history');
+                        else if (statId === 'rating') setActiveTab('rating');
+                    }}
                 />
             )}
 
@@ -1433,6 +1439,94 @@ const watchId = navigator.geolocation.watchPosition(
             {activeTab === 'earnings' && (
                 <div className="min-h-screen bg-gray-950 pb-20">
                     <DriverEarnings driverId={driverId || ''} />
+                </div>
+            )}
+
+            {activeTab === 'history' && (
+                <div className="min-h-screen bg-gray-950 pb-20 pt-4 px-4">
+                    <div className="space-y-4">
+                        <h2 className="text-white font-bold text-lg">Historique des courses</h2>
+                        {rideHistory.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Car className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                                <p className="text-gray-500">Aucune course complétée</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {rideHistory.map((ride: any) => (
+                                    <div key={ride.id} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`text-xs px-2 py-1 rounded-full ${
+                                                ride.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                ride.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                                                'bg-blue-500/20 text-blue-400'
+                                            }`}>
+                                                {ride.status === 'completed' ? 'Terminée' : 
+                                                 ride.status === 'cancelled' ? 'Annulée' : ride.status}
+                                            </span>
+                                            <span className="text-gray-400 text-xs">
+                                                {new Date(ride.created_at).toLocaleDateString('fr-FR')}
+                                            </span>
+                                        </div>
+                                        <p className="text-white text-sm mb-1 truncate">{ride.pickup_address || 'Adresse départ'}</p>
+                                        <p className="text-gray-400 text-xs truncate">→ {ride.destination_address || 'Destination'}</p>
+                                        {ride.price && (
+                                            <p className="text-emerald-400 font-bold mt-2">{ride.price.toLocaleString()} GNF</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'rating' && (
+                <div className="min-h-screen bg-gray-950 pb-20 pt-4 px-4">
+                    <div className="space-y-6">
+                        <h2 className="text-white font-bold text-lg">Votre note</h2>
+                        
+                        <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-6 border border-amber-500/30 text-center">
+                            <div className="text-5xl font-bold text-amber-400 mb-2">
+                                {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : '—'}
+                            </div>
+                            <div className="flex justify-center gap-1 mb-3">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star 
+                                        key={star}
+                                        className={`w-6 h-6 ${
+                                            star <= Math.round(driverStats.rating) 
+                                                ? 'text-amber-400 fill-amber-400' 
+                                                : 'text-gray-600'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            <p className="text-gray-400 text-sm">Basé sur {driverStats.totalRides || 0} courses</p>
+                        </div>
+
+                        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                            <h3 className="text-white font-medium mb-3">Comment améliorer votre note</h3>
+                            <ul className="space-y-2 text-gray-400 text-sm">
+                                <li className="flex items-start gap-2">
+                                    <span className="text-emerald-400">✓</span>
+                                    Soyez ponctuel aux rendez-vous
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-emerald-400">✓</span>
+                                    Conduisez prudemment et respectez le code
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-emerald-400">✓</span>
+                                    Soyez courtois avec les clients
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-emerald-400">✓</span>
+                                    Maintenez votre véhicule propre
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             )}
 
