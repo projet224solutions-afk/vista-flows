@@ -47,6 +47,7 @@ interface DriverMainDashboardProps {
   onDeclineRide: (requestId: string) => void;
   onClearError: () => void;
   onExpandMap: () => void;
+  onStatClick?: (statId: string) => void;
 }
 
 export function DriverMainDashboard({
@@ -65,7 +66,8 @@ export function DriverMainDashboard({
   onAcceptRide,
   onDeclineRide,
   onClearError,
-  onExpandMap
+  onExpandMap,
+  onStatClick
 }: DriverMainDashboardProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 pb-20">
@@ -94,6 +96,7 @@ export function DriverMainDashboard({
         todayRides={stats.todayRides}
         rating={stats.rating}
         onlineTime={stats.onlineTime}
+        onStatClick={onStatClick}
       />
 
       {/* Main Content */}

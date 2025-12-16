@@ -3,7 +3,7 @@
  * Design sombre avec indicateurs actifs
  */
 
-import { Home, MapPin, History, Settings, Wallet, Navigation } from "lucide-react";
+import { Home, MapPin, History, Settings, Wallet, Navigation, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -29,12 +29,13 @@ export function BottomNavigation({
       highlight: hasActiveRide
     },
     { id: 'earnings', label: 'Gains', icon: Wallet },
-    { id: 'settings', label: 'Profil', icon: Settings },
+    { id: 'history', label: 'Courses', icon: History },
+    { id: 'settings', label: 'Paramètres', icon: Settings },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 z-50 safe-area-inset-bottom">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => (
           <button
             key={item.id}
