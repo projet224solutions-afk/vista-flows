@@ -16,7 +16,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, query, placeId, latitude, longitude, sessionToken } = await req.json();
+    const body = await req.json();
+    const { action, query, placeId, latitude, longitude, sessionToken, origin, destination } = body;
     const GOOGLE_API_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY');
 
     if (!GOOGLE_API_KEY) {
@@ -205,7 +206,6 @@ serve(async (req) => {
 
     // Action 4: Calculate distance and duration using Directions API
     if (action === 'directions') {
-      const { origin, destination } = await req.json();
       
       if (!origin?.latitude || !origin?.longitude || !destination?.latitude || !destination?.longitude) {
         return new Response(
