@@ -13043,40 +13043,22 @@ export type Database = {
       }
       extract_number: { Args: { p_id: string }; Returns: number }
       extract_prefix: { Args: { p_id: string }; Returns: string }
-      find_nearby_taxi_drivers:
-        | {
-            Args: { p_lat: number; p_lng: number; p_radius_km?: number }
-            Returns: {
-              avatar_url: string
-              distance_km: number
-              full_name: string
-              id: string
-              last_lat: number
-              last_lng: number
-              phone: string
-              rating: number
-              total_trips: number
-              user_id: string
-              vehicle_plate: string
-              vehicle_type: string
-            }[]
-          }
-        | {
-            Args: {
-              p_lat: number
-              p_limit?: number
-              p_lng: number
-              p_radius_km?: number
-            }
-            Returns: {
-              distance_km: number
-              driver_id: string
-              rating: number
-              user_id: string
-              vehicle_plate: string
-              vehicle_type: string
-            }[]
-          }
+      find_nearby_taxi_drivers: {
+        Args: {
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_radius_km?: number
+        }
+        Returns: {
+          distance_km: number
+          driver_id: string
+          rating: number
+          user_id: string
+          vehicle_plate: string
+          vehicle_type: string
+        }[]
+      }
       find_user_by_code: {
         Args: { p_code: string }
         Returns: {
