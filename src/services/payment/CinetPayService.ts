@@ -111,7 +111,7 @@ export class CinetPayService {
     try {
       // Préparer les données de paiement pour CinetPay
       const phoneDigits = (request.customerPhone || '').replace(/\D/g, '');
-      // CinetPay attend souvent un format international sans espaces: 224XXXXXXXXX
+      // CinetPay attend un format international: 224XXXXXXXXX
       const normalizedPhone =
         phoneDigits.length === 9
           ? `224${phoneDigits}`
@@ -119,29 +119,50 @@ export class CinetPayService {
             ? phoneDigits
             : phoneDigits;
 
+      // IMPORTANT: Le montant DOIT être un multiple de 5 pour GNF
+      const roundedAmount = Math.ceil(request.amount / 5) * 5;
+
+      // Sanitize description: pas de caractères spéciaux (#,/,$,_,&)
+      const safeDescription = (request.description || 'Paiement 224Solutions')
+        .replace(/[#/$_&]/g, ' ')
+        .substring(0, 200);
+
+      // URLs obligatoires - fallback vers l'origine si non définies
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://224solutions.com';
+      const notifyUrl = request.notifyUrl || CINETPAY_CONFIG.notifyUrl || `${baseUrl}/api/cinetpay/notify`;
+      const returnUrl = request.returnUrl || CINETPAY_CONFIG.returnUrl || `${baseUrl}/payment/success`;
+      const cancelUrl = request.cancelUrl || CINETPAY_CONFIG.cancelUrl || `${baseUrl}/payment/cancel`;
+
       const paymentData = {
         apikey: CINETPAY_CONFIG.apiKey,
         site_id: CINETPAY_CONFIG.siteId,
         transaction_id: request.transactionId,
-        amount: request.amount,
+        amount: roundedAmount,
         currency: request.currency,
-        description: request.description,
-        customer_name: request.customerName,
-        customer_surname: request.customerName.split(' ')[1] || request.customerName,
-        customer_email: request.customerEmail,
+        description: safeDescription,
+        customer_name: request.customerName || 'Client',
+        customer_surname: (request.customerName || 'Client').split(' ')[1] || 'Client',
+        customer_email: request.customerEmail || 'client@224solutions.com',
         customer_phone_number: normalizedPhone,
-        customer_address: 'Guinée',
+        customer_address: 'Guinee',
         customer_city: 'Conakry',
         customer_country: 'GN',
         customer_state: 'GN',
         customer_zip_code: '00000',
-        notify_url: request.notifyUrl || CINETPAY_CONFIG.notifyUrl,
-        return_url: request.returnUrl || CINETPAY_CONFIG.returnUrl,
-        cancel_url: request.cancelUrl || CINETPAY_CONFIG.cancelUrl,
-        channels: 'ALL', // Orange Money, MTN Money, Moov Money
+        notify_url: notifyUrl,
+        return_url: returnUrl,
+        channels: 'ALL',
         metadata: JSON.stringify(request.metadata || {}),
         lang: 'fr',
       };
+
+      console.log('📤 CinetPay payload:', {
+        amount: roundedAmount,
+        currency: request.currency,
+        notify_url: notifyUrl,
+        return_url: returnUrl,
+        phone: normalizedPhone,
+      });
 
       console.log('📤 Envoi requête à CinetPay API...');
       console.log('URL:', CINETPAY_CONFIG.apiUrl);
