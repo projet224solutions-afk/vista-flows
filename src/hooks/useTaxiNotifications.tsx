@@ -95,15 +95,22 @@ export const useTaxiNotifications = () => {
   };
 };
 
-// Helper pour jouer un son de notification
+// Singleton audio pour éviter "play() interrupted"
+let notificationAudio: HTMLAudioElement | null = null;
+
 const playNotificationSound = () => {
   try {
-    const audio = new Audio('/notification.mp3');
-    audio.volume = 0.5;
-    audio.play().catch(() => {
-      // Ignore si l'autoplay est bloqué
+    if (!notificationAudio) {
+      notificationAudio = new Audio('/notification.mp3');
+      notificationAudio.volume = 0.5;
+    }
+    // Reset avant de rejouer
+    notificationAudio.pause();
+    notificationAudio.currentTime = 0;
+    notificationAudio.play().catch(() => {
+      // Autoplay bloqué - silencieux
     });
-  } catch (error) {
-    console.log('Could not play notification sound:', error);
+  } catch {
+    // Erreur audio non critique
   }
 };

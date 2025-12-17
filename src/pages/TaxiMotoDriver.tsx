@@ -5,7 +5,7 @@
  * 224Solutions - Taxi-Moto System
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
@@ -104,6 +104,7 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
     const [driverLoading, setDriverLoading] = useState(true);
     const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
     const [rideHistory, setRideHistory] = useState<any[]>([]);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Calcul temps en ligne en temps réel
     useEffect(() => {
@@ -266,13 +267,20 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
                         duration: 10000
                     });
                     
-                    // Audio notification
+                    // Audio notification - Utilise une ref pour éviter "play() interrupted"
                     try {
-                        const audio = new Audio('/notification.mp3');
-                        audio.volume = 0.8;
-                        audio.play().catch(() => console.log('Autoplay bloqué'));
+                        if (!audioRef.current) {
+                            audioRef.current = new Audio('/notification.mp3');
+                            audioRef.current.volume = 0.8;
+                        }
+                        // Arrêter et reset avant de rejouer
+                        audioRef.current.pause();
+                        audioRef.current.currentTime = 0;
+                        audioRef.current.play().catch(() => {
+                            // Autoplay bloqué par le navigateur - silencieux
+                        });
                     } catch (e) {
-                        console.log('Erreur lecture son:', e);
+                        // Erreur audio non critique - silencieux
                     }
                     
                     // Toujours ajouter la course à la liste (le chauffeur peut décider)
