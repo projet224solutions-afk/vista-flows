@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
+import { CinetPayService } from '@/services/payment/CinetPayService';
 import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
@@ -520,51 +521,45 @@ export function POSSystem() {
       if (paymentMethod === 'mobile_money') {
         toast.loading('Initialisation du paiement Mobile Money...');
         
-        const { data: cinetpayData, error: cinetpayError } = await supabase.functions.invoke(
-          'cinetpay-initialize-payment',
-          {
-            body: {
-              amount: total,
-              currency: 'GNF',
-              description: `Vente POS - ${cart.length} article(s)`,
-              customer_name: 'Client POS',
-              customer_email: user?.email ?? undefined,
-              customer_phone: mobileMoneyPhone,
-              payment_type: 'mobile_money',
-              mobile_operator: mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO',
-              metadata: {
-                vendor_id: vendorId,
-                cart_items: cart.length,
-                source: 'pos'
-              }
-            }
+        // Utiliser le service CinetPayService directement
+        const cinetpayResult = await CinetPayService.initiatePayment({
+          amount: total,
+          currency: 'GNF',
+          transactionId: `POS_${Date.now()}_${vendorId?.substring(0, 8)}`,
+          description: `Vente POS - ${cart.length} article(s)`,
+          customerName: 'Client POS',
+          customerEmail: user?.email || 'client@224solutions.com',
+          customerPhone: mobileMoneyPhone,
+          returnUrl: `${window.location.origin}/vendeur/pos`,
+          cancelUrl: `${window.location.origin}/vendeur/pos`,
+          notifyUrl: import.meta.env.VITE_CINETPAY_NOTIFY_URL,
+          metadata: {
+            vendor_id: vendorId,
+            cart_items: cart.length,
+            source: 'pos',
+            operator: mobileMoneyProvider
           }
-        );
+        });
 
         toast.dismiss();
 
-        if (cinetpayError || !cinetpayData?.success) {
-          console.error('CinetPay error:', cinetpayError || cinetpayData);
-          const details = cinetpayData?.details;
-          const extra = details?.api_response_id || details?.code
-            ? ` (code: ${details?.code ?? 'n/a'} | id: ${details?.api_response_id ?? 'n/a'})`
-            : '';
-
+        if (!cinetpayResult.success || !cinetpayResult.paymentUrl) {
+          console.error('CinetPay error:', cinetpayResult.error);
+          
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description:
-              (cinetpayData?.error || cinetpayError?.message || 'Veuillez réessayer') + extra,
+            description: cinetpayResult.error || 'Veuillez réessayer',
           });
           return;
         }
 
         // Ouvrir la page de paiement CinetPay
-        if (cinetpayData.payment_url) {
+        if (cinetpayResult.paymentUrl) {
           toast.info('Redirection vers CinetPay...', {
             description: 'Complétez le paiement sur la page CinetPay puis revenez ici.'
           });
           
           // Ouvrir dans une nouvelle fenêtre
-          window.open(cinetpayData.payment_url, '_blank', 'width=500,height=700');
+          window.open(cinetpayResult.paymentUrl, '_blank', 'width=500,height=700');
           
           // Créer la commande en attente
           const customerId = await getOrCreateCustomerId();
@@ -583,7 +578,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: paymentMethod,
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayData.transaction_id}`,
+              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayResult.transactionId}`,
               source: 'pos'
             })
             .select('id, order_number')
