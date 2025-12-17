@@ -15,6 +15,9 @@ interface PaymentRequest {
   return_url?: string;
   notify_url?: string;
   metadata?: Record<string, unknown>;
+  // Pour le paiement mobile direct (USSD push)
+  payment_type?: 'checkout' | 'mobile_money';
+  mobile_operator?: 'OM' | 'MOMO' | 'MOOV' | 'WAVE'; // OM = Orange Money, MOMO = MTN
 }
 
 Deno.serve(async (req) => {
@@ -44,7 +47,18 @@ Deno.serve(async (req) => {
     }
 
     const body: PaymentRequest = await req.json();
-    const { amount, currency = 'GNF', description, customer_name, customer_email, customer_phone, return_url, metadata } = body;
+    const { 
+      amount, 
+      currency = 'GNF', 
+      description, 
+      customer_name, 
+      customer_email, 
+      customer_phone, 
+      return_url, 
+      metadata,
+      payment_type = 'checkout',
+      mobile_operator
+    } = body;
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -69,38 +83,88 @@ Deno.serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://224solutions.app';
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
-    console.log('Initializing CinetPay payment:', { transactionId, amount, currency });
+    console.log('Initializing CinetPay payment:', { transactionId, amount, currency, payment_type, mobile_operator, customer_phone });
 
-    // Appel API CinetPay
-    const cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        apikey: apiKey,
-        site_id: siteId,
-        transaction_id: transactionId,
-        amount: Math.round(amount),
-        currency: currency,
-        description: description || 'Paiement 224Solutions',
-        customer_name: customer_name || user.user_metadata?.full_name || 'Client',
-        customer_email: customer_email || user.email,
-        customer_phone_number: customer_phone || user.user_metadata?.phone || '',
-        customer_address: 'Guinée',
-        customer_city: 'Conakry',
-        customer_country: 'GN',
-        customer_state: 'Conakry',
-        customer_zip_code: '000',
-        return_url: return_url || `${origin}/payment-success`,
-        notify_url: notifyUrl,
-        channels: 'ALL',
-        metadata: JSON.stringify({
-          user_id: user.id,
-          ...metadata
+    let cinetpayResponse: Response;
+
+    // Paiement Mobile Money direct (USSD Push)
+    if (payment_type === 'mobile_money' && customer_phone && mobile_operator) {
+      // Formater le numéro de téléphone (ajouter le code pays si nécessaire)
+      let formattedPhone = customer_phone.replace(/\s/g, '').replace(/^0/, '');
+      if (!formattedPhone.startsWith('224')) {
+        formattedPhone = '224' + formattedPhone;
+      }
+
+      console.log('Mobile Money direct payment:', { formattedPhone, mobile_operator });
+
+      // API CinetPay Pay-In pour Mobile Money
+      cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apikey: apiKey,
+          site_id: siteId,
+          transaction_id: transactionId,
+          amount: Math.round(amount),
+          currency: currency,
+          description: description || 'Paiement 224Solutions',
+          customer_name: customer_name || user.user_metadata?.full_name || 'Client',
+          customer_email: customer_email || user.email || 'client@224solutions.com',
+          customer_phone_number: formattedPhone,
+          customer_address: 'Guinée',
+          customer_city: 'Conakry',
+          customer_country: 'GN',
+          customer_state: 'Conakry',
+          customer_zip_code: '000',
+          return_url: return_url || `${origin}/payment-success`,
+          notify_url: notifyUrl,
+          channels: mobile_operator, // OM, MOMO, MOOV, WAVE
+          metadata: JSON.stringify({
+            user_id: user.id,
+            payment_type: 'mobile_money',
+            operator: mobile_operator,
+            phone: formattedPhone,
+            ...metadata
+          }),
+          // Alternative channel pour forcer Mobile Money
+          alternative_currency: currency,
+          lock_phone_number: true, // Verrouiller le numéro de téléphone
         }),
-      }),
-    });
+      });
+    } else {
+      // Paiement standard via checkout web
+      cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apikey: apiKey,
+          site_id: siteId,
+          transaction_id: transactionId,
+          amount: Math.round(amount),
+          currency: currency,
+          description: description || 'Paiement 224Solutions',
+          customer_name: customer_name || user.user_metadata?.full_name || 'Client',
+          customer_email: customer_email || user.email,
+          customer_phone_number: customer_phone || user.user_metadata?.phone || '',
+          customer_address: 'Guinée',
+          customer_city: 'Conakry',
+          customer_country: 'GN',
+          customer_state: 'Conakry',
+          customer_zip_code: '000',
+          return_url: return_url || `${origin}/payment-success`,
+          notify_url: notifyUrl,
+          channels: 'ALL',
+          metadata: JSON.stringify({
+            user_id: user.id,
+            ...metadata
+          }),
+        }),
+      });
+    }
 
     const cinetpayData = await cinetpayResponse.json();
     console.log('CinetPay response:', cinetpayData);
