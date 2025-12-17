@@ -493,6 +493,26 @@ export function POSSystem() {
         toast.error('Veuillez entrer un numéro de téléphone valide (9 chiffres)');
         return;
       }
+
+      // Validation provider (évite erreurs CinetPay côté opérateur)
+      const starts = mobileMoneyPhone;
+      if (mobileMoneyProvider === 'orange') {
+        const ok = starts.startsWith('610') || starts.startsWith('611') || starts.startsWith('62');
+        if (!ok) {
+          toast.error('Numéro non compatible Orange Money', {
+            description: 'Orange Money (GN) commence généralement par 610, 611 ou 62.',
+          });
+          return;
+        }
+      }
+      if (mobileMoneyProvider === 'mtn') {
+        if (!starts.startsWith('66')) {
+          toast.error('Numéro non compatible MTN MoMo', {
+            description: 'MTN MoMo (GN) commence généralement par 66.',
+          });
+          return;
+        }
+      }
     }
 
     try {
@@ -507,6 +527,8 @@ export function POSSystem() {
               amount: total,
               currency: 'GNF',
               description: `Vente POS - ${cart.length} article(s)`,
+              customer_name: 'Client POS',
+              customer_email: user?.email ?? undefined,
               customer_phone: mobileMoneyPhone,
               payment_type: 'mobile_money',
               mobile_operator: mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO',
