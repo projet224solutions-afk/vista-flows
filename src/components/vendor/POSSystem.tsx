@@ -523,8 +523,14 @@ export function POSSystem() {
 
         if (cinetpayError || !cinetpayData?.success) {
           console.error('CinetPay error:', cinetpayError || cinetpayData);
+          const details = cinetpayData?.details;
+          const extra = details?.api_response_id || details?.code
+            ? ` (code: ${details?.code ?? 'n/a'} | id: ${details?.api_response_id ?? 'n/a'})`
+            : '';
+
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: cinetpayData?.error || cinetpayError?.message || 'Veuillez réessayer'
+            description:
+              (cinetpayData?.error || cinetpayError?.message || 'Veuillez réessayer') + extra,
           });
           return;
         }
