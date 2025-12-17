@@ -95,7 +95,28 @@ Deno.serve(async (req) => {
         formattedPhone = '224' + formattedPhone;
       }
 
-      console.log('Mobile Money direct payment:', { formattedPhone, mobile_operator });
+      // Mapper l'opérateur en payment_method CinetPay (Guinée)
+      const paymentMethod = (() => {
+        if (currency === 'GNF') {
+          if (mobile_operator === 'OM') return 'OMGN';
+          if (mobile_operator === 'MOMO') return 'MTNGN';
+        }
+        return null;
+      })();
+
+      if (!paymentMethod) {
+        console.error('Unsupported mobile operator for currency:', { currency, mobile_operator });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Opérateur Mobile Money non supporté pour cette devise',
+            details: { currency, mobile_operator },
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Mobile Money direct payment:', { formattedPhone, mobile_operator, paymentMethod });
 
       // API CinetPay Pay-In pour Mobile Money
       cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
@@ -121,12 +142,14 @@ Deno.serve(async (req) => {
           return_url: return_url || `${origin}/payment-success`,
           notify_url: notifyUrl,
           channels: 'MOBILE_MONEY',
+          payment_method: paymentMethod,
           metadata: JSON.stringify({
             user_id: user.id,
             payment_type: 'mobile_money',
             operator: mobile_operator,
+            payment_method: paymentMethod,
             phone: formattedPhone,
-            ...metadata
+            ...metadata,
           }),
         }),
       });
@@ -169,11 +192,12 @@ Deno.serve(async (req) => {
     if (cinetpayData.code !== '201') {
       console.error('CinetPay error:', cinetpayData);
       return new Response(
-        JSON.stringify({ 
-          error: cinetpayData.message || 'Erreur lors de l\'initialisation du paiement',
-          details: cinetpayData
+        JSON.stringify({
+          success: false,
+          error: cinetpayData.message || "Erreur lors de l'initialisation du paiement",
+          details: cinetpayData,
         }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
