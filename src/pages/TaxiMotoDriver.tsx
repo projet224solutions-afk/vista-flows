@@ -258,8 +258,11 @@ const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching 
                     
                     // Toujours afficher une notification, même si hors distance
                     console.log('🔊 Affichage notification + son pour course:', ride.id);
+                    const priceDisplay = typeof ride.price_total === 'number' && !isNaN(ride.price_total) 
+                        ? ride.price_total.toLocaleString('fr-GN') 
+                        : '0';
                     toast.success('🚗 Nouvelle course disponible!', {
-                        description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${ride.price_total?.toLocaleString() || 0} GNF`,
+                        description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${priceDisplay} GNF`,
                         duration: 10000
                     });
                     
