@@ -70,10 +70,11 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = (Deno.env.get('CINETPAY_API_KEY') ?? '').trim();
-    const siteId = (Deno.env.get('CINETPAY_SITE_ID') ?? '').trim();
+    const siteIdRaw = (Deno.env.get('CINETPAY_SITE_ID') ?? '').trim();
+    const siteId = Number(siteIdRaw);
 
-    if (!apiKey || !siteId) {
-      console.error('CinetPay configuration manquante');
+    if (!apiKey || !siteIdRaw || !Number.isFinite(siteId)) {
+      console.error('CinetPay configuration manquante ou invalide', { hasKey: Boolean(apiKey), siteIdRaw });
       return jsonResponse({ success: false, error: 'Configuration de paiement manquante' }, 500);
     }
 
@@ -123,13 +124,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Téléphone: on l'envoie en +224XXXXXXXXX (utile pour le push / préremplissage)
+    // Téléphone: on l'envoie en 224XXXXXXXXX (digits only) (utile pour le push / préremplissage)
     let customerPhoneNumber: string | null = null;
     if (customer_phone) {
       const cleaned = customer_phone.replace(/\s/g, '').replace(/^\+/, '');
       const local = cleaned.replace(/^0/, '').replace(/^224/, '');
       if (/^\d{9}$/.test(local)) {
-        customerPhoneNumber = `+224${local}`;
+        // Certains endpoints CinetPay rejettent le "+" → digits only
+        customerPhoneNumber = `224${local}`;
       } else if (payment_type === 'mobile_money') {
         return jsonResponse({
           success: false,
@@ -156,6 +158,8 @@ Deno.serve(async (req) => {
       notify_url: notifyUrl,
       channels,
       lang: 'fr',
+      ...(customer_name ? { customer_name } : {}),
+      ...(customer_email ? { customer_email } : {}),
       ...(paymentMethod ? { payment_method: paymentMethod } : {}),
       ...(customerPhoneNumber ? { customer_phone_number: customerPhoneNumber } : {}),
       lock_phone_number: false,
@@ -176,7 +180,24 @@ Deno.serve(async (req) => {
       channels,
       payment_type,
       mobile_operator,
+      payment_method: paymentMethod,
+      customer_phone_number: customerPhoneNumber ? `${String(customerPhoneNumber).slice(0, 3)}***${String(customerPhoneNumber).slice(-3)}` : null,
       has_customer_phone: Boolean(customer_phone),
+      return_url: safeReturnUrl,
+      notify_url: notifyUrl,
+    });
+
+    // Log payload sans apikey (debug 624)
+    console.log('CinetPay payload (safe):', {
+      site_id: siteId,
+      transaction_id: transactionId,
+      amount: amountRounded,
+      currency,
+      channels,
+      payment_method: paymentMethod,
+      has_customer_name: Boolean(customer_name),
+      has_customer_email: Boolean(customer_email),
+      has_customer_phone_number: Boolean(customerPhoneNumber),
       return_url: safeReturnUrl,
       notify_url: notifyUrl,
     });
