@@ -118,8 +118,8 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
   const getPaymentLabel = () => {
     switch (orderData.paymentMethod) {
       case 'cash': return 'Espèces';
-      case 'card': return 'Moneroo';
-      case 'mobile': return 'CinetPay';
+      case 'card': return 'Carte bancaire';
+      case 'mobile': return 'Paiement mobile';
     }
   };
 
