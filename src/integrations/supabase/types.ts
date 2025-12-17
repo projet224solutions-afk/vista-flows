@@ -1587,6 +1587,54 @@ export type Database = {
           },
         ]
       }
+      cinetpay_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          operator_id: string | null
+          payment_method: string | null
+          payment_token: string | null
+          status: string | null
+          transaction_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          operator_id?: string | null
+          payment_method?: string | null
+          payment_token?: string | null
+          status?: string | null
+          transaction_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          operator_id?: string | null
+          payment_method?: string | null
+          payment_token?: string | null
+          status?: string | null
+          transaction_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -12923,10 +12971,20 @@ export type Database = {
         }
         Returns: string
       }
-      credit_wallet: {
-        Args: { credit_amount: number; receiver_user_id: string }
-        Returns: undefined
-      }
+      credit_wallet:
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_transaction_type?: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: { credit_amount: number; receiver_user_id: string }
+            Returns: undefined
+          }
       deactivate_panic_mode: { Args: { p_pdg_id: string }; Returns: Json }
       declare_vehicle_recovered:
         | {
