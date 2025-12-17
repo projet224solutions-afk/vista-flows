@@ -12651,7 +12651,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
-      auto_cleanup_old_errors: { Args: never; Returns: undefined }
       auto_escalate_disputes: {
         Args: never
         Returns: {
@@ -12734,7 +12733,17 @@ export type Database = {
         Args: { p_product_id: string; p_user_id: string }
         Returns: number
       }
-      calculate_system_health: { Args: never; Returns: Json }
+      calculate_system_health: {
+        Args: never
+        Returns: {
+          critical_count: number
+          minor_count: number
+          moderate_count: number
+          recent_fixes: number
+          score: number
+          status: string
+        }[]
+      }
       calculate_taxi_fare: {
         Args: {
           p_distance_km: number
@@ -12785,6 +12794,7 @@ export type Database = {
       }
       clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
+      cleanup_old_errors: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_system_errors: { Args: never; Returns: Json }
