@@ -48,7 +48,7 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
-import { CinetPayService } from '@/services/payment/CinetPayService';
+// Edge Function utilisée pour CinetPay (cinetpay-initialize-payment)
 import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
@@ -517,50 +517,49 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, appeler CinetPay pour initier le paiement
+      // Pour Mobile Money, appeler l'Edge Function CinetPay
       if (paymentMethod === 'mobile_money') {
         toast.loading('Initialisation du paiement Mobile Money...');
         
-        // Utiliser le service CinetPayService directement
-        const cinetpayResult = await CinetPayService.initiatePayment({
-          amount: total,
-          currency: 'GNF',
-          transactionId: `POS_${Date.now()}_${vendorId?.substring(0, 8)}`,
-          description: `Vente POS - ${cart.length} article(s)`,
-          customerName: 'Client POS',
-          customerEmail: user?.email || 'client@224solutions.com',
-          customerPhone: mobileMoneyPhone,
-          returnUrl: `${window.location.origin}/vendeur/pos`,
-          cancelUrl: `${window.location.origin}/vendeur/pos`,
-          notifyUrl: import.meta.env.VITE_CINETPAY_NOTIFY_URL,
-          metadata: {
-            userId: user?.id,
-            vendor_id: vendorId,
-            cart_items: cart.length,
-            source: 'pos',
-            operator: mobileMoneyProvider,
+        // Appeler l'Edge Function cinetpay-initialize-payment
+        const { data: cinetpayResult, error: cinetpayError } = await supabase.functions.invoke('cinetpay-initialize-payment', {
+          body: {
+            amount: total,
+            currency: 'GNF',
+            description: `Vente POS - ${cart.length} article(s)`,
+            customer_name: selectedCustomer?.name || 'Client POS',
+            customer_email: user?.email || 'client@224solutions.com',
+            customer_phone: mobileMoneyPhone,
+            return_url: `${window.location.origin}/vendeur/pos`,
+            payment_type: 'mobile_money',
+            mobile_operator: mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO',
+            metadata: {
+              vendor_id: vendorId,
+              cart_items: cart.length,
+              source: 'pos',
+            }
           }
         });
 
         toast.dismiss();
 
-        if (!cinetpayResult.success || !cinetpayResult.paymentUrl) {
-          console.error('CinetPay error:', cinetpayResult.error);
+        if (cinetpayError || !cinetpayResult?.success) {
+          console.error('CinetPay error:', cinetpayError || cinetpayResult);
           
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: cinetpayResult.error || 'Veuillez réessayer',
+            description: cinetpayResult?.error || cinetpayError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
         // Ouvrir la page de paiement CinetPay
-        if (cinetpayResult.paymentUrl) {
+        if (cinetpayResult.payment_url) {
           toast.info('Redirection vers CinetPay...', {
             description: 'Complétez le paiement sur la page CinetPay puis revenez ici.'
           });
           
           // Ouvrir dans une nouvelle fenêtre
-          window.open(cinetpayResult.paymentUrl, '_blank', 'width=500,height=700');
+          window.open(cinetpayResult.payment_url, '_blank', 'width=500,height=700');
           
           // Créer la commande en attente
           const customerId = await getOrCreateCustomerId();
@@ -575,11 +574,11 @@ export function POSSystem() {
               subtotal: subtotal,
               tax_amount: tax,
               discount_amount: discountValue,
-              payment_status: 'pending', // En attente de confirmation CinetPay
+              payment_status: 'pending',
               status: 'pending',
               payment_method: paymentMethod,
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayResult.transactionId}`,
+              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayResult.transaction_id}`,
               source: 'pos'
             })
             .select('id, order_number')
@@ -611,11 +610,98 @@ export function POSSystem() {
         }
       }
 
-      // Pour les autres méthodes de paiement (cash, card), procéder normalement
+      // Pour le paiement par carte, utiliser Moneroo
+      if (paymentMethod === 'card') {
+        toast.loading('Initialisation du paiement par carte...');
+        
+        const { data: monerooResult, error: monerooError } = await supabase.functions.invoke('moneroo-initialize-payment', {
+          body: {
+            amount: total,
+            currency: 'GNF',
+            description: `Vente POS - ${cart.length} article(s)`,
+            customer: {
+              email: user?.email || 'client@224solutions.com',
+              first_name: selectedCustomer?.name?.split(' ')[0] || 'Client',
+              last_name: selectedCustomer?.name?.split(' ')[1] || 'POS'
+            },
+            return_url: `${window.location.origin}/vendeur/pos`,
+            methods: ['card'],
+            metadata: {
+              vendor_id: vendorId,
+              cart_items: cart.length,
+              source: 'pos',
+            }
+          }
+        });
+
+        toast.dismiss();
+
+        if (monerooError || !monerooResult?.success) {
+          console.error('Moneroo error:', monerooError || monerooResult);
+          
+          toast.error('Erreur lors de l\'initialisation du paiement carte', {
+            description: monerooResult?.error || monerooError?.message || 'Veuillez réessayer',
+          });
+          return;
+        }
+
+        if (monerooResult.checkout_url) {
+          toast.info('Redirection vers le paiement par carte...', {
+            description: 'Complétez le paiement puis revenez ici.'
+          });
+          
+          window.open(monerooResult.checkout_url, '_blank', 'width=500,height=700');
+          
+          const customerId = await getOrCreateCustomerId();
+          if (!customerId) return;
+
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              vendor_id: vendorId,
+              customer_id: customerId,
+              total_amount: total,
+              subtotal: subtotal,
+              tax_amount: tax,
+              discount_amount: discountValue,
+              payment_status: 'pending',
+              status: 'pending',
+              payment_method: 'card',
+              shipping_address: { address: 'Point de vente' },
+              notes: `Paiement Carte - Transaction: ${monerooResult.payment_id}`,
+              source: 'pos'
+            })
+            .select('id, order_number')
+            .single();
+
+          if (orderError) throw orderError;
+
+          const orderItems = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: item.price,
+            total_price: item.total
+          }));
+
+          await supabase.from('order_items').insert(orderItems);
+
+          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+          setShowOrderSummary(false);
+          
+          toast.success('Commande créée - En attente de paiement', {
+            description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
+          });
+          
+          setCart([]);
+          return;
+        }
+      }
+
+      // Pour les paiements en espèces, procéder normalement
       const customerId = await getOrCreateCustomerId();
       if (!customerId) return;
 
-      // 2. Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -629,7 +715,7 @@ export function POSSystem() {
           status: 'confirmed',
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
-          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : `Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone}`}`,
+          notes: `Paiement POS - Espèces`,
           source: 'pos'
         })
         .select('id, order_number')
