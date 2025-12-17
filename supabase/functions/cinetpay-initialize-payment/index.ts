@@ -13,11 +13,16 @@ interface PaymentRequest {
   customer_email?: string;
   customer_phone?: string;
   return_url?: string;
-  notify_url?: string;
   metadata?: Record<string, unknown>;
-  // Pour le paiement mobile direct (USSD push)
   payment_type?: 'checkout' | 'mobile_money';
-  mobile_operator?: 'OM' | 'MOMO' | 'MOOV' | 'WAVE'; // OM = Orange Money, MOMO = MTN
+  mobile_operator?: 'OM' | 'MOMO' | 'MOOV' | 'WAVE';
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 Deno.serve(async (req) => {
@@ -36,35 +41,32 @@ Deno.serve(async (req) => {
       }
     );
 
-    // Vérifier l'authentification
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
+
     if (userError || !user) {
       console.error('Auth error:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Non authentifié' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: 'Non authentifié' }, 401);
     }
 
     const body: PaymentRequest = await req.json();
-    const { 
-      amount, 
-      currency = 'GNF', 
-      description, 
-      customer_name, 
-      customer_email, 
-      customer_phone, 
-      return_url, 
+    const {
+      amount,
+      currency = 'GNF',
+      description,
+      customer_name,
+      customer_email,
+      customer_phone,
+      return_url,
       metadata,
       payment_type = 'checkout',
-      mobile_operator
+      mobile_operator,
     } = body;
 
     if (!amount || amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Montant invalide' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: 'Montant invalide' }, 200);
     }
 
     const apiKey = Deno.env.get('CINETPAY_API_KEY');
@@ -72,184 +74,115 @@ Deno.serve(async (req) => {
 
     if (!apiKey || !siteId) {
       console.error('CinetPay configuration manquante');
-      return new Response(
-        JSON.stringify({ error: 'Configuration de paiement manquante' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: false, error: 'Configuration de paiement manquante' }, 500);
     }
 
-    // Générer un ID de transaction unique
-    const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
     const origin = req.headers.get('origin') || 'https://224solutions.app';
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
-    console.log('Initializing CinetPay payment:', { transactionId, amount, currency, payment_type, mobile_operator, customer_phone });
+    // CinetPay /v2/payment ne permet pas de forcer l'opérateur via "payment_method" à l'initialisation.
+    // On force uniquement l'univers Mobile Money via channels.
+    const channels = payment_type === 'mobile_money' ? 'MOBILE_MONEY' : 'ALL';
+
+    const amountRounded = Math.round(amount);
+    // Règle CinetPay: montant multiple de 5 (sauf USD)
+    if (currency !== 'USD' && amountRounded % 5 !== 0) {
+      return jsonResponse({
+        success: false,
+        error: 'Montant invalide: doit être un multiple de 5',
+        details: { amount: amountRounded, currency },
+      });
+    }
+
+    // Payload minimal (évite les erreurs 624 liées aux champs CB incomplets)
+    const cinetpayPayload: Record<string, unknown> = {
+      apikey: apiKey,
+      site_id: siteId,
+      transaction_id: transactionId,
+      amount: amountRounded,
+      currency,
+      description: (description || 'Paiement 224Solutions').toString(),
+      return_url: return_url || `${origin}/payment-success`,
+      notify_url: notifyUrl,
+      channels,
+      metadata: JSON.stringify({
+        user_id: user.id,
+        payment_type,
+        mobile_operator,
+        customer_phone,
+        ...metadata,
+      }),
+    };
+
+    console.log('Initializing CinetPay payment:', {
+      transactionId,
+      amount: amountRounded,
+      currency,
+      channels,
+      payment_type,
+      mobile_operator,
+      has_customer_phone: Boolean(customer_phone),
+    });
 
     let cinetpayResponse: Response;
-
-    // Paiement Mobile Money direct (USSD Push)
-    if (payment_type === 'mobile_money' && customer_phone && mobile_operator) {
-      // Nettoyer / normaliser le numéro
-      // - accepte "624039029", "0624039029", "224624039029"
-      let cleanedPhone = customer_phone.replace(/\s/g, '').replace(/^\+/, '').replace(/^0/, '');
-      if (cleanedPhone.startsWith('224') && cleanedPhone.length === 12) {
-        cleanedPhone = cleanedPhone.slice(3);
-      }
-
-      const localPhone = cleanedPhone;
-
-      if (!/^\d{9}$/.test(localPhone)) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Numéro de téléphone invalide (format attendu: 9 chiffres)',
-            details: { customer_phone },
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const paymentMethod = (() => {
-        if (currency === 'GNF') {
-          if (mobile_operator === 'OM') return 'OMGN';
-          if (mobile_operator === 'MOMO') return 'MTNGN';
-        }
-        return null;
-      })();
-
-      if (!paymentMethod) {
-        console.error('Unsupported mobile operator for currency:', { currency, mobile_operator });
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Opérateur Mobile Money non supporté pour cette devise',
-            details: { currency, mobile_operator },
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log('Mobile Money direct payment:', { localPhone, mobile_operator, paymentMethod });
-
-      // API CinetPay Pay-In pour Mobile Money
+    try {
       cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apikey: apiKey,
-          site_id: siteId,
-          transaction_id: transactionId,
-          amount: Math.round(amount),
-          currency: currency,
-          description: description || 'Paiement 224Solutions',
-          customer_name: customer_name || user.user_metadata?.full_name || 'Client',
-          customer_email: customer_email || user.email || 'client@224solutions.com',
-          customer_phone_number: localPhone,
-          customer_address: 'Guinée',
-          customer_city: 'Conakry',
-          customer_country: 'GN',
-          customer_state: 'Conakry',
-          customer_zip_code: '000',
-          return_url: return_url || `${origin}/payment-success`,
-          notify_url: notifyUrl,
-          channels: 'MOBILE_MONEY',
-          payment_method: paymentMethod,
-          metadata: JSON.stringify({
-            user_id: user.id,
-            payment_type: 'mobile_money',
-            operator: mobile_operator,
-            payment_method: paymentMethod,
-            phone: localPhone,
-            ...metadata,
-          }),
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cinetpayPayload),
       });
-    } else {
-      // Paiement standard via checkout web
-      cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apikey: apiKey,
-          site_id: siteId,
-          transaction_id: transactionId,
-          amount: Math.round(amount),
-          currency: currency,
-          description: description || 'Paiement 224Solutions',
-          customer_name: customer_name || user.user_metadata?.full_name || 'Client',
-          customer_email: customer_email || user.email,
-          customer_phone_number: customer_phone || user.user_metadata?.phone || '',
-          customer_address: 'Guinée',
-          customer_city: 'Conakry',
-          customer_country: 'GN',
-          customer_state: 'Conakry',
-          customer_zip_code: '000',
-          return_url: return_url || `${origin}/payment-success`,
-          notify_url: notifyUrl,
-          channels: 'ALL',
-          metadata: JSON.stringify({
-            user_id: user.id,
-            ...metadata
-          }),
-        }),
+    } catch (fetchError) {
+      console.error('CinetPay fetch error:', fetchError);
+      return jsonResponse({
+        success: false,
+        error: 'Erreur réseau lors de l\'appel à CinetPay',
+        details: fetchError instanceof Error ? fetchError.message : String(fetchError),
       });
     }
 
     const cinetpayData = await cinetpayResponse.json();
     console.log('CinetPay response:', cinetpayData);
 
-    if (cinetpayData.code !== '201') {
+    if (cinetpayData?.code !== '201') {
       console.error('CinetPay error:', cinetpayData);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: cinetpayData.message || "Erreur lors de l'initialisation du paiement",
-          details: cinetpayData,
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({
+        success: false,
+        error: `${cinetpayData?.message || 'Erreur CinetPay'}${cinetpayData?.description ? `: ${cinetpayData.description}` : ''}`,
+        details: cinetpayData,
+      });
     }
 
-    // Sauvegarder la transaction en base
-    const { error: dbError } = await supabaseClient
-      .from('cinetpay_payments')
-      .insert({
-        user_id: user.id,
-        transaction_id: transactionId,
-        payment_token: cinetpayData.data?.payment_token,
-        amount: amount,
-        currency: currency,
-        status: 'pending',
-        description: description,
-        metadata: metadata,
-      });
+    const { error: dbError } = await supabaseClient.from('cinetpay_payments').insert({
+      user_id: user.id,
+      transaction_id: transactionId,
+      payment_token: cinetpayData.data?.payment_token,
+      amount: amountRounded,
+      currency,
+      status: 'pending',
+      description,
+      metadata: metadata,
+    });
 
     if (dbError) {
       console.error('Database error:', dbError);
-      // On continue même si l'enregistrement échoue
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        transaction_id: transactionId,
-        payment_url: cinetpayData.data?.payment_url,
-        payment_token: cinetpayData.data?.payment_token,
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return jsonResponse({
+      success: true,
+      transaction_id: transactionId,
+      payment_url: cinetpayData.data?.payment_url,
+      payment_token: cinetpayData.data?.payment_token,
+    });
   } catch (error) {
     console.error('Error in cinetpay-initialize-payment:', error);
-    return new Response(
-      JSON.stringify({ 
+    return jsonResponse(
+      {
+        success: false,
         error: 'Erreur serveur',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
     );
   }
 });
