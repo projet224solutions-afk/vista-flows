@@ -15,6 +15,7 @@ import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
+import { GeolocationService } from "@/services/taxi/GeolocationService";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Star } from "lucide-react";
 
