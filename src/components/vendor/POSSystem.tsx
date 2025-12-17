@@ -496,30 +496,100 @@ export function POSSystem() {
     }
 
     try {
-      // 1. Vérifier/créer un enregistrement customer pour l'utilisateur
-      let customerId: string;
-      
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Pour Mobile Money, appeler CinetPay pour initier le paiement
+      if (paymentMethod === 'mobile_money') {
+        toast.loading('Initialisation du paiement Mobile Money...');
+        
+        const { data: cinetpayData, error: cinetpayError } = await supabase.functions.invoke(
+          'cinetpay-initialize-payment',
+          {
+            body: {
+              amount: total,
+              currency: 'GNF',
+              description: `Vente POS - ${cart.length} article(s)`,
+              customer_phone: mobileMoneyPhone,
+              payment_type: 'mobile_money',
+              mobile_operator: mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO',
+              metadata: {
+                vendor_id: vendorId,
+                cart_items: cart.length,
+                source: 'pos'
+              }
+            }
+          }
+        );
 
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-      } else {
-        // Créer un nouveau customer pour les ventes POS
-        const { data: newCustomer, error: customerError } = await supabase
-          .from('customers')
-          .insert({
-            user_id: user.id
-          })
-          .select('id')
-          .single();
+        toast.dismiss();
 
-        if (customerError) throw customerError;
-        customerId = newCustomer.id;
+        if (cinetpayError || !cinetpayData?.success) {
+          console.error('CinetPay error:', cinetpayError || cinetpayData);
+          toast.error('Erreur lors de l\'initialisation du paiement', {
+            description: cinetpayData?.error || cinetpayError?.message || 'Veuillez réessayer'
+          });
+          return;
+        }
+
+        // Ouvrir la page de paiement CinetPay
+        if (cinetpayData.payment_url) {
+          toast.info('Redirection vers CinetPay...', {
+            description: 'Complétez le paiement sur la page CinetPay puis revenez ici.'
+          });
+          
+          // Ouvrir dans une nouvelle fenêtre
+          window.open(cinetpayData.payment_url, '_blank', 'width=500,height=700');
+          
+          // Créer la commande en attente
+          const customerId = await getOrCreateCustomerId();
+          if (!customerId) return;
+
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              vendor_id: vendorId,
+              customer_id: customerId,
+              total_amount: total,
+              subtotal: subtotal,
+              tax_amount: tax,
+              discount_amount: discountValue,
+              payment_status: 'pending', // En attente de confirmation CinetPay
+              status: 'pending',
+              payment_method: paymentMethod,
+              shipping_address: { address: 'Point de vente' },
+              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayData.transaction_id}`,
+              source: 'pos'
+            })
+            .select('id, order_number')
+            .single();
+
+          if (orderError) throw orderError;
+
+          // Créer les items de commande
+          const orderItems = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: item.price,
+            total_price: item.total
+          }));
+
+          await supabase.from('order_items').insert(orderItems);
+
+          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+          setShowOrderSummary(false);
+          
+          toast.success('Commande créée - En attente de paiement', {
+            description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
+          });
+          
+          // Réinitialiser le panier
+          setCart([]);
+          return;
+        }
       }
+
+      // Pour les autres méthodes de paiement (cash, card), procéder normalement
+      const customerId = await getOrCreateCustomerId();
+      if (!customerId) return;
 
       // 2. Créer la commande
       const { data: order, error: orderError } = await supabase
@@ -536,7 +606,7 @@ export function POSSystem() {
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : `Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone}`}`,
-          source: 'pos'  // Identifier cette commande comme une vente POS
+          source: 'pos'
         })
         .select('id, order_number')
         .single();
@@ -560,7 +630,6 @@ export function POSSystem() {
 
       // 4. Mettre à jour le stock pour chaque produit
       for (const item of cart) {
-        // Vérifier d'abord dans inventory
         const { data: inventoryItem } = await supabase
           .from('inventory')
           .select('id, quantity')
@@ -568,7 +637,6 @@ export function POSSystem() {
           .maybeSingle();
 
         if (inventoryItem) {
-          // Mettre à jour inventory
           const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
           await supabase
             .from('inventory')
@@ -576,7 +644,6 @@ export function POSSystem() {
             .eq('id', inventoryItem.id);
         }
 
-        // Mettre à jour aussi products.stock_quantity
         const { data: product } = await supabase
           .from('products')
           .select('stock_quantity')
@@ -595,22 +662,47 @@ export function POSSystem() {
         }
       }
 
-      // Sauvegarder le numéro de commande pour le reçu
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
       
-      // Afficher le reçu
       setShowOrderSummary(false);
       setShowReceipt(true);
       
       toast.success('Paiement effectué avec succès!');
       
-      // Recharger la liste des produits pour refléter le stock
       await loadVendorProducts();
     } catch (error: any) {
       console.error('Erreur paiement:', error);
       toast.error('Erreur lors du paiement', {
         description: error.message || 'Une erreur est survenue'
       });
+    }
+  };
+
+  // Helper function pour obtenir ou créer un customer
+  const getOrCreateCustomerId = async (): Promise<string | null> => {
+    try {
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingCustomer) {
+        return existingCustomer.id;
+      }
+
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({ user_id: user.id })
+        .select('id')
+        .single();
+
+      if (customerError) throw customerError;
+      return newCustomer.id;
+    } catch (error: any) {
+      console.error('Erreur création customer:', error);
+      toast.error('Erreur lors de la création du client');
+      return null;
     }
   };
 
