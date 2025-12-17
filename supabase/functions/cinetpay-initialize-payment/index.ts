@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           customer_zip_code: '000',
           return_url: return_url || `${origin}/payment-success`,
           notify_url: notifyUrl,
-          channels: mobile_operator, // OM, MOMO, MOOV, WAVE
+          channels: 'MOBILE_MONEY',
           metadata: JSON.stringify({
             user_id: user.id,
             payment_type: 'mobile_money',
@@ -128,9 +128,6 @@ Deno.serve(async (req) => {
             phone: formattedPhone,
             ...metadata
           }),
-          // Alternative channel pour forcer Mobile Money
-          alternative_currency: currency,
-          lock_phone_number: true, // Verrouiller le numéro de téléphone
         }),
       });
     } else {
