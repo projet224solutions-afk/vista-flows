@@ -12651,6 +12651,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      auto_cleanup_old_errors: { Args: never; Returns: undefined }
       auto_escalate_disputes: {
         Args: never
         Returns: {
