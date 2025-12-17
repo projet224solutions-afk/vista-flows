@@ -96,6 +96,18 @@ Deno.serve(async (req) => {
     }
 
     // Payload minimal (évite les erreurs 624 liées aux champs CB incomplets)
+    // + normalisation du téléphone (si fourni)
+    let customerPhoneNumber: string | null = null;
+    if (customer_phone) {
+      const cleaned = customer_phone.replace(/\s/g, '').replace(/^\+/, '');
+      const local = cleaned.replace(/^0/, '').replace(/^224/, '');
+      if (/^\d{9}$/.test(local)) {
+        customerPhoneNumber = `+224${local}`;
+      } else {
+        console.warn('Invalid customer_phone provided (ignored):', { customer_phone });
+      }
+    }
+
     const cinetpayPayload: Record<string, unknown> = {
       apikey: apiKey,
       site_id: siteId,
@@ -106,6 +118,9 @@ Deno.serve(async (req) => {
       return_url: return_url || `${origin}/payment-success`,
       notify_url: notifyUrl,
       channels,
+      // Recommandation CinetPay pour éviter 624 liés à lock_phone_number
+      lock_phone_number: false,
+      ...(customerPhoneNumber ? { customer_phone_number: customerPhoneNumber } : {}),
       metadata: JSON.stringify({
         user_id: user.id,
         payment_type,
