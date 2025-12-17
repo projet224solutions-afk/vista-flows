@@ -63,16 +63,30 @@ export default function BadgeGeneratorDialog({
       toast.info('Génération du badge en cours...');
       
       const canvas = await html2canvas(badgeRef.current, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Convertir les SVG en canvas pour html2canvas
+          const svgs = clonedDoc.querySelectorAll('svg');
+          svgs.forEach((svg) => {
+            svg.setAttribute('width', svg.getBoundingClientRect().width.toString());
+            svg.setAttribute('height', svg.getBoundingClientRect().height.toString());
+          });
+        }
       });
 
       // Télécharger en PNG
       const link = document.createElement('a');
       link.download = `badge-${vehicleData.member_id}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png', 1.0);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
       toast.success('Badge téléchargé avec succès');
     } catch (error) {
@@ -88,12 +102,23 @@ export default function BadgeGeneratorDialog({
       toast.info('Génération du PDF en cours...');
       
       const canvas = await html2canvas(badgeRef.current, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const svgs = clonedDoc.querySelectorAll('svg');
+          svgs.forEach((svg) => {
+            svg.setAttribute('width', svg.getBoundingClientRect().width.toString());
+            svg.setAttribute('height', svg.getBoundingClientRect().height.toString());
+          });
+        }
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -101,7 +126,7 @@ export default function BadgeGeneratorDialog({
       });
 
       // Dimensions du badge en mm (A4 landscape: 297 x 210)
-      const imgWidth = 200;
+      const imgWidth = 220;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const x = (297 - imgWidth) / 2;
       const y = (210 - imgHeight) / 2;
