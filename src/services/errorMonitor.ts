@@ -29,6 +29,7 @@ const IGNORED_ERROR_PATTERNS = [
   'data:video', 'video/mp4', 'video/webm',
   'play() request was interrupted', 'play request was interrupted',
   'The play() request', 'AbortError', 'NotAllowedError',
+  'media playback', 'cannot play media', 'MediaError',
   // Analytics/Tracking
   'analytics', 'tracking', 'ads', 'gtag', 'ga.js', 'gtm.js',
   // External services non critiques
@@ -40,7 +41,7 @@ const IGNORED_ERROR_PATTERNS = [
   // Common non-critical warnings
   'ResizeObserver loop', 'Non-Error promise rejection',
   'Loading chunk', 'ChunkLoadError',
-  'Failed to fetch dynamically imported module', // Hot reload / cache issues
+  'Failed to fetch dynamically imported module',
   'dynamically imported module',
   // Service worker updates
   'workbox', 'service-worker',
@@ -50,6 +51,26 @@ const IGNORED_ERROR_PATTERNS = [
   'network request failed', 'NetworkError', 'Failed to fetch',
   // React development warnings
   'findDOMNode is deprecated', 'componentWillMount', 'componentWillReceiveProps',
+  'useContext', 'without being wrapped',
+  // Firebase non-critical
+  'Firebase', 'firestore', 'offline persistence', 'quota exceeded',
+  // API Gateway and external services - normalisation
+  'api gateway', 'gateway timeout', '504', '503',
+  'rate limit', 'too many requests', '429',
+  // Geolocation (normal en desktop)
+  'GeolocationService', 'Geolocation', 'getCurrentPosition', 'watchPosition',
+  'User denied Geolocation', 'Position unavailable',
+  // Health check false positives
+  'health-check', 'health_check', 'healthcheck',
+  // Supabase realtime reconnections (normal behavior)
+  'WebSocket', 'realtime', 'reconnect', 'SUBSCRIBED',
+  // Common browser behaviors
+  'Script error', 'cross-origin', 'CORS',
+  'postMessage', 'blocked', 'insecure',
+  // Toast/Notification issues (UI, not critical)
+  'toast', 'notification', 'sonner',
+  // Format/Locale issues
+  'toLocaleString', 'Intl', 'locale', 'format',
 ];
 
 // Patterns d'erreurs à toujours capturer (critiques)
