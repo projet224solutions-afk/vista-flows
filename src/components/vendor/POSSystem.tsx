@@ -221,7 +221,9 @@ export function POSSystem() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile_money'>('cash');
+  const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
+  const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [discountPercent, setDiscountPercent] = useState<number>(0);
@@ -485,6 +487,14 @@ export function POSSystem() {
       return;
     }
 
+    // Validation Mobile Money
+    if (paymentMethod === 'mobile_money') {
+      if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
+        toast.error('Veuillez entrer un numéro de téléphone valide (9 chiffres)');
+        return;
+      }
+    }
+
     try {
       // 1. Vérifier/créer un enregistrement customer pour l'utilisateur
       let customerId: string;
@@ -525,7 +535,7 @@ export function POSSystem() {
           status: 'confirmed',
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
-          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'}`,
+          notes: `Paiement POS - ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : `Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone}`}`,
           source: 'pos'  // Identifier cette commande comme une vente POS
         })
         .select('id, order_number')
@@ -1309,9 +1319,9 @@ export function POSSystem() {
                 {/* Mode de paiement en icônes */}
                 <div className="flex gap-1">
                   {[
-                    { id: 'cash', icon: Euro, label: 'Cash' },
+                    { id: 'cash', icon: Euro, label: 'Espèces' },
                     { id: 'card', icon: CreditCard, label: 'Carte' },
-                    { id: 'mobile', icon: Smartphone, label: 'Mobile' },
+                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile' },
                   ].map((method) => (
                     <Button
                       key={method.id}
@@ -1356,26 +1366,52 @@ export function POSSystem() {
                   </div>
                 )}
 
-                {paymentMethod === 'mobile' && (
-                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
-                    <Label className="text-xs font-medium flex items-center gap-1">
-                      <Smartphone className="h-3 w-3" />
-                      Numéro de téléphone mobile
+                {paymentMethod === 'mobile_money' && (
+                  <div className="space-y-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <Label className="text-xs font-semibold flex items-center gap-1 text-orange-700 dark:text-orange-400">
+                      <Smartphone className="h-3.5 w-3.5" />
+                      Paiement Mobile Money
                     </Label>
-                    <Input
-                      type="tel"
-                      placeholder="Ex: 620 00 00 00"
-                      className="h-8 text-sm"
-                      maxLength={12}
-                    />
+                    
+                    {/* Sélection du provider */}
                     <div className="flex gap-1">
-                      <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px]">
-                        Orange Money
+                      <Button 
+                        variant={mobileMoneyProvider === 'orange' ? 'default' : 'outline'} 
+                        size="sm" 
+                        onClick={() => setMobileMoneyProvider('orange')}
+                        className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'border-orange-300'}`}
+                      >
+                        🟠 Orange Money
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1 h-7 text-[10px]">
-                        MTN MoMo
+                      <Button 
+                        variant={mobileMoneyProvider === 'mtn' ? 'default' : 'outline'} 
+                        size="sm" 
+                        onClick={() => setMobileMoneyProvider('mtn')}
+                        className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'mtn' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 'border-yellow-400'}`}
+                      >
+                        🟡 MTN MoMo
                       </Button>
                     </div>
+                    
+                    {/* Numéro de téléphone */}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Numéro de téléphone du client</Label>
+                      <Input
+                        type="tel"
+                        value={mobileMoneyPhone}
+                        onChange={(e) => setMobileMoneyPhone(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                        placeholder="Ex: 620123456"
+                        className="h-9 text-sm font-mono tracking-wider"
+                        maxLength={9}
+                      />
+                      {mobileMoneyPhone && mobileMoneyPhone.length < 9 && (
+                        <p className="text-[10px] text-destructive">Entrez 9 chiffres</p>
+                      )}
+                    </div>
+                    
+                    <p className="text-[9px] text-muted-foreground">
+                      💡 Le client recevra une demande de paiement sur son téléphone
+                    </p>
                   </div>
                 )}
 
