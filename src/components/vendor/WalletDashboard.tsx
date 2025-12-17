@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Smartphone, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
+  const [showCinetPayDialog, setShowCinetPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -356,15 +358,42 @@ export default function WalletDashboard() {
           </TabsList>
 
           <TabsContent value="deposit" className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <Label>Montant à déposer</Label>
-                <div className="flex items-center gap-2 mt-2">
-                  <Input type="number" placeholder="0" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
-                  <Button onClick={handleDeposit} disabled={busy || !depositAmount} className="min-w-[140px]">
-                    <ArrowDownCircle className="w-4 h-4 mr-2" />
-                    Déposer
-                  </Button>
+            <div className="space-y-4">
+              {/* CinetPay - Orange Money, MTN, Moov, Cartes */}
+              <div className="p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Smartphone className="w-5 h-5 text-orange-500" />
+                  <h4 className="font-semibold">Recharger via Mobile Money</h4>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Orange Money, MTN Money, Moov Money ou Carte bancaire via CinetPay
+                </p>
+                <Button 
+                  onClick={() => setShowCinetPayDialog(true)} 
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Recharger via CinetPay
+                </Button>
+              </div>
+
+              {/* Montants rapides */}
+              <div className="space-y-2">
+                <Label>Montants rapides</Label>
+                <div className="flex flex-wrap gap-2">
+                  {[5000, 10000, 25000, 50000, 100000].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDepositAmount(amount.toString());
+                        setShowCinetPayDialog(true);
+                      }}
+                    >
+                      {amount.toLocaleString('fr-FR')} GNF
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -484,6 +513,21 @@ export default function WalletDashboard() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* CinetPay Payment Dialog */}
+        <CinetPayPaymentDialog
+          open={showCinetPayDialog}
+          onOpenChange={setShowCinetPayDialog}
+          defaultAmount={depositAmount ? parseInt(depositAmount) : 10000}
+          description="Rechargez votre wallet vendeur via CinetPay"
+          onSuccess={(transactionId, paymentUrl) => {
+            console.log('Paiement CinetPay initié:', transactionId);
+            toast.success('Paiement initié. Complétez dans la fenêtre CinetPay.');
+            setDepositAmount("");
+            // Rafraîchir le solde après quelques secondes
+            setTimeout(() => loadWalletData(), 5000);
+          }}
+        />
       </CardContent>
     </Card>
   );
