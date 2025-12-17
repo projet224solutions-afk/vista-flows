@@ -1,5 +1,14 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[functions.cinetpay-initialize-payment]
+verify_jwt = true
+
+[functions.cinetpay-webhook]
+verify_jwt = false
+
+[functions.cinetpay-verify-payment]
+verify_jwt = true
+
 [functions.calculate-delivery-distances]
 verify_jwt = false
 
