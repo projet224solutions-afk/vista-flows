@@ -89,13 +89,25 @@ Deno.serve(async (req) => {
 
     // Paiement Mobile Money direct (USSD Push)
     if (payment_type === 'mobile_money' && customer_phone && mobile_operator) {
-      // Formater le numéro de téléphone (ajouter le code pays si nécessaire)
-      let formattedPhone = customer_phone.replace(/\s/g, '').replace(/^0/, '');
-      if (!formattedPhone.startsWith('224')) {
-        formattedPhone = '224' + formattedPhone;
+      // Nettoyer / normaliser le numéro
+      // - accepte "624039029", "0624039029", "224624039029"
+      let cleanedPhone = customer_phone.replace(/\s/g, '').replace(/^\+/, '').replace(/^0/, '');
+      if (cleanedPhone.startsWith('224') && cleanedPhone.length === 12) {
+        cleanedPhone = cleanedPhone.slice(3);
       }
 
-      // Mapper l'opérateur en payment_method CinetPay (Guinée)
+      const localPhone = cleanedPhone;
+
+      if (!/^\d{9}$/.test(localPhone)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Numéro de téléphone invalide (format attendu: 9 chiffres)',
+            details: { customer_phone },
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const paymentMethod = (() => {
         if (currency === 'GNF') {
           if (mobile_operator === 'OM') return 'OMGN';
@@ -116,7 +128,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log('Mobile Money direct payment:', { formattedPhone, mobile_operator, paymentMethod });
+      console.log('Mobile Money direct payment:', { localPhone, mobile_operator, paymentMethod });
 
       // API CinetPay Pay-In pour Mobile Money
       cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
@@ -133,7 +145,7 @@ Deno.serve(async (req) => {
           description: description || 'Paiement 224Solutions',
           customer_name: customer_name || user.user_metadata?.full_name || 'Client',
           customer_email: customer_email || user.email || 'client@224solutions.com',
-          customer_phone_number: formattedPhone,
+          customer_phone_number: localPhone,
           customer_address: 'Guinée',
           customer_city: 'Conakry',
           customer_country: 'GN',
@@ -148,7 +160,7 @@ Deno.serve(async (req) => {
             payment_type: 'mobile_money',
             operator: mobile_operator,
             payment_method: paymentMethod,
-            phone: formattedPhone,
+            phone: localPhone,
             ...metadata,
           }),
         }),
