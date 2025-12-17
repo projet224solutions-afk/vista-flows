@@ -81,8 +81,7 @@ Deno.serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://224solutions.app';
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
-    // CinetPay /v2/payment ne permet pas de forcer l'opérateur via "payment_method" à l'initialisation.
-    // On force uniquement l'univers Mobile Money via channels.
+    // Forcer l'univers (checkout CinetPay). Pour Mobile Money on laisse l'opérateur être choisi côté CinetPay.
     const channels = payment_type === 'mobile_money' ? 'MOBILE_MONEY' : 'ALL';
 
     const amountRounded = Math.round(amount);
@@ -95,32 +94,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Payload minimal (évite les erreurs 624 liées aux champs CB incomplets)
-    // + normalisation du téléphone (si fourni)
-    let customerPhoneNumber: string | null = null;
-    if (customer_phone) {
-      const cleaned = customer_phone.replace(/\s/g, '').replace(/^\+/, '');
-      const local = cleaned.replace(/^0/, '').replace(/^224/, '');
-      if (/^\d{9}$/.test(local)) {
-        customerPhoneNumber = `+224${local}`;
-      } else {
-        console.warn('Invalid customer_phone provided (ignored):', { customer_phone });
-      }
-    }
-
+    // Payload strictement minimal pour éviter le 624 (CinetPay considère certains customer_* comme "CB" et exige alors plus de champs)
     const cinetpayPayload: Record<string, unknown> = {
       apikey: apiKey,
       site_id: siteId,
       transaction_id: transactionId,
       amount: amountRounded,
       currency,
-      description: (description || 'Paiement 224Solutions').toString(),
+      description: (description || 'Paiement 224Solutions').toString().replace(/[#$&_\/]/g, ' '),
       return_url: return_url || `${origin}/payment-success`,
       notify_url: notifyUrl,
       channels,
-      // Recommandation CinetPay pour éviter 624 liés à lock_phone_number
-      lock_phone_number: false,
-      ...(customerPhoneNumber ? { customer_phone_number: customerPhoneNumber } : {}),
+      lang: 'fr',
       metadata: JSON.stringify({
         user_id: user.id,
         payment_type,
