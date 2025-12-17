@@ -69,16 +69,23 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: 'Montant invalide' }, 200);
     }
 
-    const apiKey = Deno.env.get('CINETPAY_API_KEY');
-    const siteId = Deno.env.get('CINETPAY_SITE_ID');
+    const apiKey = (Deno.env.get('CINETPAY_API_KEY') ?? '').trim();
+    const siteId = (Deno.env.get('CINETPAY_SITE_ID') ?? '').trim();
 
     if (!apiKey || !siteId) {
       console.error('CinetPay configuration manquante');
       return jsonResponse({ success: false, error: 'Configuration de paiement manquante' }, 500);
     }
 
-    const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-    const origin = req.headers.get('origin') || 'https://224solutions.app';
+    // URL de retour: ne jamais dépendre du domaine "preview" (souvent non autorisé côté CinetPay)
+    const appBaseUrl = (Deno.env.get('APP_BASE_URL') ?? 'https://224solutions.app').trim() || 'https://224solutions.app';
+    const safeReturnUrl =
+      return_url && return_url.startsWith(appBaseUrl)
+        ? return_url
+        : `${appBaseUrl}/payment-success`;
+
+    // transaction_id: uniquement alphanumérique (évite rejets silencieux / 624)
+    const transactionId = `TXN${Date.now()}${Math.random().toString(36).slice(2, 10)}`.toUpperCase();
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
     // Forcer l'univers (checkout CinetPay)
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
       amount: amountRounded,
       currency,
       description: (description || 'Paiement 224Solutions').toString().replace(/[#$&_\/]/g, ' '),
-      return_url: return_url || `${origin}/payment-success`,
+      return_url: safeReturnUrl,
       notify_url: notifyUrl,
       channels,
       lang: 'fr',
@@ -170,6 +177,8 @@ Deno.serve(async (req) => {
       payment_type,
       mobile_operator,
       has_customer_phone: Boolean(customer_phone),
+      return_url: safeReturnUrl,
+      notify_url: notifyUrl,
     });
 
     let cinetpayResponse: Response;
