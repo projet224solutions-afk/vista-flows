@@ -19,6 +19,7 @@ import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialo
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
+import { CinetPayOrangeMoneyButton } from "@/components/payment/CinetPayOrangeMoneyButton";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -663,6 +664,29 @@ export default function Payment() {
                   <Smartphone className="h-4 w-4" />
                   CinetPay
                 </Button>
+                <CinetPayOrangeMoneyButton
+                  amount={50000}
+                  currency="GNF"
+                  description="Recharge portefeuille 224Solutions"
+                  onSuccess={(transactionId) => {
+                    console.log('✅ Paiement CinetPay réussi:', transactionId);
+                    toast({
+                      title: "Paiement réussi",
+                      description: "Votre portefeuille sera crédité sous peu.",
+                    });
+                    setTimeout(() => {
+                      loadWalletData();
+                    }, 3000);
+                  }}
+                  onError={(error) => {
+                    console.error('❌ Erreur paiement CinetPay:', error);
+                    toast({
+                      title: "Erreur de paiement",
+                      description: error,
+                      variant: "destructive",
+                    });
+                  }}
+                />
                 <VirtualCardButton />
                 <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
                   <DialogTrigger asChild>
