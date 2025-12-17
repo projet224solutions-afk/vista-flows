@@ -610,9 +610,9 @@ export function POSSystem() {
         }
       }
 
-      // Pour le paiement par carte, utiliser Moneroo
+      // Pour le paiement par carte/Moneroo, utiliser les méthodes mobile money disponibles en Guinée
       if (paymentMethod === 'card') {
-        toast.loading('Initialisation du paiement par carte...');
+        toast.loading('Initialisation du paiement Moneroo...');
         
         const { data: monerooResult, error: monerooError } = await supabase.functions.invoke('moneroo-initialize-payment', {
           body: {
@@ -625,7 +625,8 @@ export function POSSystem() {
               last_name: selectedCustomer?.name?.split(' ')[1] || 'POS'
             },
             return_url: `${window.location.origin}/vendeur/pos`,
-            methods: ['card'],
+            // Moneroo Guinée supporte uniquement: orange_gn, mtn_gn (pas de carte)
+            methods: ['orange_gn', 'mtn_gn'],
             metadata: {
               vendor_id: vendorId,
               cart_items: cart.length,
@@ -639,15 +640,15 @@ export function POSSystem() {
         if (monerooError || !monerooResult?.success) {
           console.error('Moneroo error:', monerooError || monerooResult);
           
-          toast.error('Erreur lors de l\'initialisation du paiement carte', {
+          toast.error('Erreur lors de l\'initialisation du paiement Moneroo', {
             description: monerooResult?.error || monerooError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
         if (monerooResult.checkout_url) {
-          toast.info('Redirection vers le paiement par carte...', {
-            description: 'Complétez le paiement puis revenez ici.'
+          toast.info('Redirection vers Moneroo...', {
+            description: 'Choisissez Orange Money ou MTN puis complétez le paiement.'
           });
           
           window.open(monerooResult.checkout_url, '_blank', 'width=500,height=700');
@@ -1522,8 +1523,8 @@ export function POSSystem() {
                 <div className="flex gap-1">
                   {[
                     { id: 'cash', icon: Euro, label: 'Espèces' },
-                    { id: 'card', icon: CreditCard, label: 'Carte' },
-                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile' },
+                    { id: 'card', icon: CreditCard, label: 'Moneroo' },
+                    { id: 'mobile_money', icon: Smartphone, label: 'CinetPay' },
                   ].map((method) => (
                     <Button
                       key={method.id}
@@ -1540,31 +1541,14 @@ export function POSSystem() {
 
                 {/* Champs de saisie selon le mode de paiement */}
                 {paymentMethod === 'card' && (
-                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
-                    <Label className="text-xs font-medium flex items-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      Informations de la carte
+                  <div className="space-y-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <Label className="text-xs font-semibold flex items-center gap-1 text-blue-700 dark:text-blue-400">
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Paiement via Moneroo
                     </Label>
-                    <Input
-                      type="text"
-                      placeholder="Numéro de carte"
-                      className="h-8 text-sm"
-                      maxLength={19}
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="text"
-                        placeholder="MM/AA"
-                        className="h-8 text-sm"
-                        maxLength={5}
-                      />
-                      <Input
-                        type="text"
-                        placeholder="CVV"
-                        className="h-8 text-sm"
-                        maxLength={4}
-                      />
-                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Vous serez redirigé vers Moneroo pour choisir Orange Money ou MTN Mobile Money.
+                    </p>
                   </div>
                 )}
 
@@ -1675,7 +1659,7 @@ export function POSSystem() {
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
                   paymentMethod === 'cash' ? 'Espèces' :
-                  paymentMethod === 'card' ? 'Carte bancaire' : 'Paiement mobile'
+                  paymentMethod === 'card' ? 'Moneroo (Mobile Money)' : 'CinetPay (Mobile Money)'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
