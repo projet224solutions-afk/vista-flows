@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User } from "lucide-react";
+import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User, Smartphone } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import VirtualCardButton from "@/components/VirtualCardButton";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
+import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
@@ -48,6 +49,7 @@ export default function Payment() {
     receiver_id?: string;
   } | null>(null);
   const [showMonerooDialog, setShowMonerooDialog] = useState(false);
+  const [showCinetPayDialog, setShowCinetPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -651,7 +653,15 @@ export default function Payment() {
                   onClick={() => setShowMonerooDialog(true)}
                 >
                   <Wallet className="h-4 w-4" />
-                  Recharger
+                  Moneroo
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => setShowCinetPayDialog(true)}
+                >
+                  <Smartphone className="h-4 w-4" />
+                  CinetPay
                 </Button>
                 <VirtualCardButton />
                 <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
@@ -902,11 +912,31 @@ export default function Payment() {
           description="Rechargez votre wallet via Orange Money, MTN ou Moov"
           metadata={{ wallet_recharge: true }}
           onSuccess={(paymentId) => {
-            console.log('Paiement initié:', paymentId);
+            console.log('Paiement Moneroo initié:', paymentId);
             toast({
               title: 'Paiement en cours',
               description: 'Complétez le paiement sur la page qui s\'est ouverte',
             });
+          }}
+        />
+
+        {/* Dialog de recharge CinetPay */}
+        <CinetPayPaymentDialog
+          open={showCinetPayDialog}
+          onOpenChange={setShowCinetPayDialog}
+          defaultAmount={10000}
+          description="Rechargez votre wallet via CinetPay (Mobile Money & Cartes)"
+          onSuccess={(transactionId, paymentUrl) => {
+            console.log('Paiement CinetPay initié:', transactionId);
+            toast({
+              title: 'Paiement CinetPay en cours',
+              description: 'Complétez le paiement dans la fenêtre ouverte',
+            });
+            // Recharger les données après un délai
+            setTimeout(() => {
+              loadWalletData();
+              loadRecentTransactions();
+            }, 5000);
           }}
         />
       </div>
