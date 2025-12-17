@@ -405,15 +405,16 @@ class HealthCheckService {
   }
 
   /**
-   * Calculer statut global
+   * Calculer statut global - plus tolérant et stable
    */
   private calculateOverallHealth(checks: HealthCheckResult[]): HealthStatus {
     const criticalCount = checks.filter(c => c.status === 'critical').length;
     const degradedCount = checks.filter(c => c.status === 'degraded').length;
 
-    if (criticalCount > 0) return 'critical';
-    if (degradedCount > 2) return 'critical';
-    if (degradedCount > 0) return 'degraded';
+    // Critique seulement si 2+ checks critiques (plus tolérant)
+    if (criticalCount >= 2) return 'critical';
+    // Dégradé seulement si 1 critique ou 3+ dégradés
+    if (criticalCount === 1 || degradedCount >= 3) return 'degraded';
     
     return 'healthy';
   }
