@@ -1523,8 +1523,8 @@ export function POSSystem() {
                 <div className="flex gap-1">
                   {[
                     { id: 'cash', icon: Euro, label: 'Espèces' },
-                    { id: 'card', icon: CreditCard, label: 'Moneroo' },
-                    { id: 'mobile_money', icon: Smartphone, label: 'CinetPay' },
+                    { id: 'card', icon: CreditCard, label: 'Carte' },
+                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile' },
                   ].map((method) => (
                     <Button
                       key={method.id}
@@ -1544,10 +1544,10 @@ export function POSSystem() {
                   <div className="space-y-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <Label className="text-xs font-semibold flex items-center gap-1 text-blue-700 dark:text-blue-400">
                       <CreditCard className="h-3.5 w-3.5" />
-                      Paiement via Moneroo
+                      Paiement par carte
                     </Label>
                     <p className="text-[10px] text-muted-foreground">
-                      Vous serez redirigé vers Moneroo pour choisir Orange Money ou MTN Mobile Money.
+                      Vous serez redirigé vers la page de paiement sécurisé.
                     </p>
                   </div>
                 )}
@@ -1659,7 +1659,7 @@ export function POSSystem() {
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
                   paymentMethod === 'cash' ? 'Espèces' :
-                  paymentMethod === 'card' ? 'Moneroo (Mobile Money)' : 'CinetPay (Mobile Money)'
+                  paymentMethod === 'card' ? 'Carte bancaire' : 'Paiement mobile'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
