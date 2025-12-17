@@ -71,9 +71,8 @@ Deno.serve(async (req) => {
 
     const apiKey = (Deno.env.get('CINETPAY_API_KEY') ?? '').trim();
     const siteIdRaw = (Deno.env.get('CINETPAY_SITE_ID') ?? '').trim();
-    const siteId = Number(siteIdRaw);
 
-    if (!apiKey || !siteIdRaw || !Number.isFinite(siteId)) {
+    if (!apiKey || !siteIdRaw) {
       console.error('CinetPay configuration manquante ou invalide', { hasKey: Boolean(apiKey), siteIdRaw });
       return jsonResponse({ success: false, error: 'Configuration de paiement manquante' }, 500);
     }
@@ -85,8 +84,10 @@ Deno.serve(async (req) => {
         ? return_url
         : `${appBaseUrl}/payment-success`;
 
-    // transaction_id: uniquement alphanumérique (évite rejets silencieux / 624)
-    const transactionId = `TXN${Date.now()}${Math.random().toString(36).slice(2, 10)}`.toUpperCase();
+    // transaction_id: format court, alphanumérique, stable (évite rejets silencieux)
+    const ts = Date.now().toString(36).toUpperCase();
+    const rnd = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const transactionId = `TXN${ts}${rnd}`;
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
     // Forcer l'univers (checkout CinetPay)
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
     // Payload strictement minimal (évite 624 "CB"), + payment_method pour forcer Orange/MTN quand nécessaire
     const basePayload: Record<string, unknown> = {
       apikey: apiKey,
-      site_id: siteId,
+      site_id: siteIdRaw,
       transaction_id: transactionId,
       amount: amountRounded,
       currency,
@@ -280,6 +281,37 @@ Deno.serve(async (req) => {
 
     if (cinetpayData?.code !== '201') {
       console.error('CinetPay error:', cinetpayData);
+
+      // Diagnostic 624: vérifier si la paire (apikey, site_id) est acceptée par l'endpoint check
+      if (cinetpayData?.code === '624') {
+        try {
+          const checkResp = await fetch('https://api-checkout.cinetpay.com/v2/payment/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apikey: apiKey,
+              site_id: siteIdRaw,
+              transaction_id: transactionId,
+            }),
+          });
+
+          const checkText = await checkResp.text();
+          let checkBody: unknown = checkText;
+          try {
+            checkBody = JSON.parse(checkText);
+          } catch {
+            // ignore
+          }
+
+          console.warn('CinetPay diagnostic /payment/check:', {
+            http: checkResp.status,
+            body: checkBody,
+          });
+        } catch (e) {
+          console.warn('CinetPay diagnostic /payment/check failed:', e);
+        }
+      }
+
       return jsonResponse({
         success: false,
         error: `${cinetpayData?.message || 'Erreur CinetPay'}${cinetpayData?.description ? `: ${cinetpayData.description}` : ''}`,
