@@ -534,10 +534,11 @@ export function POSSystem() {
           cancelUrl: `${window.location.origin}/vendeur/pos`,
           notifyUrl: import.meta.env.VITE_CINETPAY_NOTIFY_URL,
           metadata: {
+            userId: user?.id,
             vendor_id: vendorId,
             cart_items: cart.length,
             source: 'pos',
-            operator: mobileMoneyProvider
+            operator: mobileMoneyProvider,
           }
         });
 

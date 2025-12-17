@@ -9,14 +9,14 @@ import { toast } from 'sonner';
 
 // Configuration CinetPay depuis les variables d'environnement
 const CINETPAY_CONFIG = {
-  apiKey: import.meta.env.VITE_CINETPAY_API_KEY || '',
-  siteId: import.meta.env.VITE_CINETPAY_SITE_ID || '',
-  mode: import.meta.env.VITE_CINETPAY_MODE || 'sandbox',
+  apiKey: (import.meta.env.VITE_CINETPAY_API_KEY || '').trim(),
+  siteId: (import.meta.env.VITE_CINETPAY_SITE_ID || '').trim(),
+  mode: (import.meta.env.VITE_CINETPAY_MODE || 'sandbox').trim(),
   apiUrl: 'https://api-checkout.cinetpay.com/v2/payment',
   checkUrl: 'https://api-checkout.cinetpay.com/v2/payment/check',
-  notifyUrl: import.meta.env.VITE_CINETPAY_NOTIFY_URL || '',
-  returnUrl: import.meta.env.VITE_CINETPAY_RETURN_URL || '',
-  cancelUrl: import.meta.env.VITE_CINETPAY_CANCEL_URL || '',
+  notifyUrl: (import.meta.env.VITE_CINETPAY_NOTIFY_URL || '').trim(),
+  returnUrl: (import.meta.env.VITE_CINETPAY_RETURN_URL || '').trim(),
+  cancelUrl: (import.meta.env.VITE_CINETPAY_CANCEL_URL || '').trim(),
 };
 
 // Interface pour la requête de paiement
@@ -110,6 +110,15 @@ export class CinetPayService {
 
     try {
       // Préparer les données de paiement pour CinetPay
+      const phoneDigits = (request.customerPhone || '').replace(/\D/g, '');
+      // CinetPay attend souvent un format international sans espaces: 224XXXXXXXXX
+      const normalizedPhone =
+        phoneDigits.length === 9
+          ? `224${phoneDigits}`
+          : phoneDigits.startsWith('224')
+            ? phoneDigits
+            : phoneDigits;
+
       const paymentData = {
         apikey: CINETPAY_CONFIG.apiKey,
         site_id: CINETPAY_CONFIG.siteId,
@@ -120,7 +129,7 @@ export class CinetPayService {
         customer_name: request.customerName,
         customer_surname: request.customerName.split(' ')[1] || request.customerName,
         customer_email: request.customerEmail,
-        customer_phone_number: request.customerPhone,
+        customer_phone_number: normalizedPhone,
         customer_address: 'Guinée',
         customer_city: 'Conakry',
         customer_country: 'GN',
@@ -195,10 +204,13 @@ export class CinetPayService {
         console.log('🔗 URL de paiement:', data.data.payment_url);
 
         // Enregistrer la transaction dans Supabase
+        const metaAny = (request.metadata || {}) as any;
         await this.recordTransaction({
+          userId: metaAny.userId || metaAny.user_id || null,
           transactionId: request.transactionId,
           amount: request.amount,
           currency: request.currency,
+          description: request.description,
           status: 'pending',
           paymentUrl: data.data.payment_url,
           paymentToken: data.data.payment_token,
@@ -242,9 +254,11 @@ export class CinetPayService {
    * @private
    */
   private static async recordTransaction(data: {
+    userId: string | null;
     transactionId: string;
     amount: number;
     currency: string;
+    description: string;
     status: string;
     paymentUrl: string;
     paymentToken: string;
@@ -253,30 +267,40 @@ export class CinetPayService {
     customerName: string;
     metadata?: Record<string, any>;
   }): Promise<void> {
+    // On ne bloque jamais le paiement si le log échoue
+    if (!data.userId) {
+      console.warn('⚠️ Transaction non enregistrée: userId manquant');
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('cinetpay_transactions').insert({
-        transaction_id: data.transactionId,
-        amount: data.amount,
-        currency: data.currency,
-        status: data.status,
+      const safeMetadata = {
+        ...(data.metadata || {}),
         payment_url: data.paymentUrl,
-        payment_token: data.paymentToken,
         customer_email: data.customerEmail,
         customer_phone: data.customerPhone,
         customer_name: data.customerName,
-        metadata: data.metadata || {},
-        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from('cinetpay_payments').insert({
+        user_id: data.userId,
+        transaction_id: data.transactionId,
+        amount: data.amount,
+        currency: data.currency,
+        description: data.description,
+        status: data.status,
+        payment_method: 'cinetpay',
+        payment_token: data.paymentToken,
+        metadata: safeMetadata,
       });
 
       if (error) {
-        console.error('❌ Erreur enregistrement transaction:', error);
-        // Ne pas bloquer le paiement si l'enregistrement échoue
+        console.error('❌ Erreur enregistrement cinetpay_payments:', error);
       } else {
-        console.log('✅ Transaction enregistrée dans Supabase');
+        console.log('✅ Transaction enregistrée dans cinetpay_payments');
       }
     } catch (error) {
       console.error('❌ Erreur enregistrement transaction:', error);
-      // Ne pas bloquer le paiement si l'enregistrement échoue
     }
   }
 
