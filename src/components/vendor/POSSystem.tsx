@@ -1541,14 +1541,31 @@ export function POSSystem() {
 
                 {/* Champs de saisie selon le mode de paiement */}
                 {paymentMethod === 'card' && (
-                  <div className="space-y-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <Label className="text-xs font-semibold flex items-center gap-1 text-blue-700 dark:text-blue-400">
-                      <CreditCard className="h-3.5 w-3.5" />
-                      Paiement par carte
+                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+                    <Label className="text-xs font-medium flex items-center gap-1">
+                      <CreditCard className="h-3 w-3" />
+                      Informations de la carte
                     </Label>
-                    <p className="text-[10px] text-muted-foreground">
-                      Vous serez redirigé vers la page de paiement sécurisé.
-                    </p>
+                    <Input
+                      type="text"
+                      placeholder="Numéro de carte"
+                      className="h-8 text-sm"
+                      maxLength={19}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="text"
+                        placeholder="MM/AA"
+                        className="h-8 text-sm"
+                        maxLength={5}
+                      />
+                      <Input
+                        type="text"
+                        placeholder="CVV"
+                        className="h-8 text-sm"
+                        maxLength={4}
+                      />
+                    </div>
                   </div>
                 )}
 
