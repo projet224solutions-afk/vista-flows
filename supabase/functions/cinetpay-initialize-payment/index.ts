@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://224solutions.app';
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/cinetpay-webhook`;
 
-    // Forcer l'univers (checkout CinetPay). Pour Mobile Money on laisse l'opérateur être choisi côté CinetPay.
+    // Forcer l'univers (checkout CinetPay)
     const channels = payment_type === 'mobile_money' ? 'MOBILE_MONEY' : 'ALL';
 
     const amountRounded = Math.round(amount);
@@ -94,7 +94,50 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Payload strictement minimal pour éviter le 624 (CinetPay considère certains customer_* comme "CB" et exige alors plus de champs)
+    // Mobile Money (Guinée): forcer l'opérateur via payment_method quand fourni
+    let paymentMethod: string | null = null;
+    if (payment_type === 'mobile_money') {
+      if (!mobile_operator) {
+        return jsonResponse({
+          success: false,
+          error: 'Opérateur Mobile Money requis (Orange/MTN)',
+        });
+      }
+      if (currency === 'GNF') {
+        if (mobile_operator === 'OM') paymentMethod = 'OMGN';
+        if (mobile_operator === 'MOMO') paymentMethod = 'MTNGN';
+      }
+      if (!paymentMethod) {
+        return jsonResponse({
+          success: false,
+          error: 'Opérateur Mobile Money non supporté pour cette devise',
+          details: { currency, mobile_operator },
+        });
+      }
+    }
+
+    // Téléphone: on l'envoie en +224XXXXXXXXX (utile pour le push / préremplissage)
+    let customerPhoneNumber: string | null = null;
+    if (customer_phone) {
+      const cleaned = customer_phone.replace(/\s/g, '').replace(/^\+/, '');
+      const local = cleaned.replace(/^0/, '').replace(/^224/, '');
+      if (/^\d{9}$/.test(local)) {
+        customerPhoneNumber = `+224${local}`;
+      } else if (payment_type === 'mobile_money') {
+        return jsonResponse({
+          success: false,
+          error: 'Numéro invalide (attendu: 9 chiffres, ex: 624039029)',
+          details: { customer_phone },
+        });
+      }
+    } else if (payment_type === 'mobile_money') {
+      return jsonResponse({
+        success: false,
+        error: 'Numéro Mobile Money requis',
+      });
+    }
+
+    // Payload strictement minimal (évite 624 "CB"), + payment_method pour forcer Orange/MTN
     const cinetpayPayload: Record<string, unknown> = {
       apikey: apiKey,
       site_id: siteId,
@@ -106,10 +149,14 @@ Deno.serve(async (req) => {
       notify_url: notifyUrl,
       channels,
       lang: 'fr',
+      ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+      ...(customerPhoneNumber ? { customer_phone_number: customerPhoneNumber } : {}),
+      lock_phone_number: false,
       metadata: JSON.stringify({
         user_id: user.id,
         payment_type,
         mobile_operator,
+        payment_method: paymentMethod,
         customer_phone,
         ...metadata,
       }),
