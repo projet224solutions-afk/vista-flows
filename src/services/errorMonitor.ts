@@ -24,9 +24,11 @@ export interface AutoFix {
 
 // Liste blanche des patterns d'erreurs à ignorer (non critiques)
 const IGNORED_ERROR_PATTERNS = [
-  // Audio/Media resources
+  // Audio/Media resources - Ces erreurs sont normales lors de l'interaction utilisateur
   'data:audio', 'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg',
   'data:video', 'video/mp4', 'video/webm',
+  'play() request was interrupted', 'play request was interrupted',
+  'The play() request', 'AbortError', 'NotAllowedError',
   // Analytics/Tracking
   'analytics', 'tracking', 'ads', 'gtag', 'ga.js', 'gtm.js',
   // External services non critiques
@@ -38,10 +40,16 @@ const IGNORED_ERROR_PATTERNS = [
   // Common non-critical warnings
   'ResizeObserver loop', 'Non-Error promise rejection',
   'Loading chunk', 'ChunkLoadError',
+  'Failed to fetch dynamically imported module', // Hot reload / cache issues
+  'dynamically imported module',
   // Service worker updates
   'workbox', 'service-worker',
   // Development artifacts
   'hot-update', 'hmr', 'webpack',
+  // Network/connectivity issues (temporary)
+  'network request failed', 'NetworkError', 'Failed to fetch',
+  // React development warnings
+  'findDOMNode is deprecated', 'componentWillMount', 'componentWillReceiveProps',
 ];
 
 // Patterns d'erreurs à toujours capturer (critiques)
