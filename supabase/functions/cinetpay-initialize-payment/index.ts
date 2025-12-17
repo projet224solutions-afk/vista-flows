@@ -124,14 +124,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Téléphone: on l'envoie en 224XXXXXXXXX (digits only) (utile pour le push / préremplissage)
-    let customerPhoneNumber: string | null = null;
+    // Téléphone: on conserve le format local (9 chiffres) puis on dérive les formats requis par CinetPay
+    let customerPhoneLocal: string | null = null;
     if (customer_phone) {
       const cleaned = customer_phone.replace(/\s/g, '').replace(/^\+/, '');
       const local = cleaned.replace(/^0/, '').replace(/^224/, '');
       if (/^\d{9}$/.test(local)) {
-        // Certains endpoints CinetPay rejettent le "+" → digits only
-        customerPhoneNumber = `224${local}`;
+        customerPhoneLocal = local;
       } else if (payment_type === 'mobile_money') {
         return jsonResponse({
           success: false,
@@ -146,8 +145,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Payload strictement minimal (évite 624 "CB"), + payment_method pour forcer Orange/MTN
-    const cinetpayPayload: Record<string, unknown> = {
+    const customerPhoneDigitsWithCountry = customerPhoneLocal ? `224${customerPhoneLocal}` : null;
+    const customerPhonePlusE164 = customerPhoneLocal ? `+224${customerPhoneLocal}` : null;
+
+    // Payload strictement minimal (évite 624 "CB"), + payment_method pour forcer Orange/MTN quand nécessaire
+    const basePayload: Record<string, unknown> = {
       apikey: apiKey,
       site_id: siteId,
       transaction_id: transactionId,
@@ -160,9 +162,6 @@ Deno.serve(async (req) => {
       lang: 'fr',
       ...(customer_name ? { customer_name } : {}),
       ...(customer_email ? { customer_email } : {}),
-      ...(paymentMethod ? { payment_method: paymentMethod } : {}),
-      ...(customerPhoneNumber ? { customer_phone_number: customerPhoneNumber } : {}),
-      lock_phone_number: false,
       metadata: JSON.stringify({
         user_id: user.id,
         payment_type,
@@ -173,53 +172,111 @@ Deno.serve(async (req) => {
       }),
     };
 
+    const callCinetPay = async (payload: Record<string, unknown>, attemptLabel: string) => {
+      console.log('CinetPay payload (safe):', {
+        attempt: attemptLabel,
+        site_id: payload.site_id,
+        transaction_id: payload.transaction_id,
+        amount: payload.amount,
+        currency: payload.currency,
+        channels: payload.channels,
+        payment_method: (payload as any).payment_method ?? null,
+        has_customer_name: Boolean((payload as any).customer_name),
+        has_customer_email: Boolean((payload as any).customer_email),
+        has_customer_phone_number: Boolean((payload as any).customer_phone_number),
+        lock_phone_number: (payload as any).lock_phone_number ?? null,
+        return_url: payload.return_url,
+        notify_url: payload.notify_url,
+      });
+
+      let resp: Response;
+      try {
+        resp = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (fetchError) {
+        console.error('CinetPay fetch error:', fetchError);
+        return {
+          ok: false as const,
+          data: null as any,
+          networkError: fetchError instanceof Error ? fetchError.message : String(fetchError),
+        };
+      }
+
+      let data: any = null;
+      try {
+        data = await resp.json();
+      } catch (e) {
+        const text = await resp.text().catch(() => '');
+        console.error('CinetPay invalid JSON response:', { status: resp.status, text });
+        return { ok: false as const, data: { code: 'HTTP_' + resp.status, message: 'INVALID_RESPONSE', description: text } };
+      }
+
+      console.log('CinetPay response:', { attempt: attemptLabel, http: resp.status, ...data });
+      return { ok: true as const, data };
+    };
+
+    // Tentative 1: Mobile Money (format +224 + lock_phone_number=true) / sinon checkout standard
+    const attempt1Payload: Record<string, unknown> = {
+      ...basePayload,
+      ...(payment_type === 'mobile_money' && paymentMethod ? { payment_method: paymentMethod } : {}),
+      ...(payment_type === 'mobile_money' && customerPhonePlusE164 ? { customer_phone_number: customerPhonePlusE164, lock_phone_number: true } : {}),
+    };
+
     console.log('Initializing CinetPay payment:', {
       transactionId,
       amount: amountRounded,
       currency,
-      channels,
+      channels: attempt1Payload.channels,
       payment_type,
       mobile_operator,
-      payment_method: paymentMethod,
-      customer_phone_number: customerPhoneNumber ? `${String(customerPhoneNumber).slice(0, 3)}***${String(customerPhoneNumber).slice(-3)}` : null,
-      has_customer_phone: Boolean(customer_phone),
+      payment_method: (attempt1Payload as any).payment_method ?? null,
+      customer_phone_number: customerPhonePlusE164 ? `+224***${customerPhoneLocal?.slice(-3)}` : null,
+      lock_phone_number: (attempt1Payload as any).lock_phone_number ?? null,
       return_url: safeReturnUrl,
       notify_url: notifyUrl,
     });
 
-    // Log payload sans apikey (debug 624)
-    console.log('CinetPay payload (safe):', {
-      site_id: siteId,
-      transaction_id: transactionId,
-      amount: amountRounded,
-      currency,
-      channels,
-      payment_method: paymentMethod,
-      has_customer_name: Boolean(customer_name),
-      has_customer_email: Boolean(customer_email),
-      has_customer_phone_number: Boolean(customerPhoneNumber),
-      return_url: safeReturnUrl,
-      notify_url: notifyUrl,
-    });
+    let cinetpayData: any = null;
 
-    let cinetpayResponse: Response;
-    try {
-      cinetpayResponse = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cinetpayPayload),
-      });
-    } catch (fetchError) {
-      console.error('CinetPay fetch error:', fetchError);
+    const r1 = await callCinetPay(attempt1Payload, 'attempt_1');
+    if (!r1.ok) {
       return jsonResponse({
         success: false,
         error: 'Erreur réseau lors de l\'appel à CinetPay',
-        details: fetchError instanceof Error ? fetchError.message : String(fetchError),
+        details: r1.networkError,
       });
     }
+    cinetpayData = r1.data;
 
-    const cinetpayData = await cinetpayResponse.json();
-    console.log('CinetPay response:', cinetpayData);
+    // Tentative 2: si 624 en mobile money, réessayer avec digits-only + lock_phone_number=false
+    if (payment_type === 'mobile_money' && cinetpayData?.code === '624') {
+      const attempt2Payload: Record<string, unknown> = {
+        ...basePayload,
+        ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+        ...(customerPhoneDigitsWithCountry ? { customer_phone_number: customerPhoneDigitsWithCountry } : {}),
+        lock_phone_number: false,
+      };
+
+      console.warn('CinetPay returned 624, retrying with digits-only phone format...');
+      const r2 = await callCinetPay(attempt2Payload, 'attempt_2_digits_only');
+      if (r2.ok) cinetpayData = r2.data;
+    }
+
+    // Tentative 3: si toujours 624, fallback checkout (ALL) sans forçage opérateur
+    if (payment_type === 'mobile_money' && cinetpayData?.code === '624') {
+      const attempt3Payload: Record<string, unknown> = {
+        ...basePayload,
+        channels: 'ALL',
+        lock_phone_number: false,
+      };
+
+      console.warn('CinetPay still returned 624, falling back to generic checkout (ALL) without operator forcing...');
+      const r3 = await callCinetPay(attempt3Payload, 'attempt_3_fallback_all');
+      if (r3.ok) cinetpayData = r3.data;
+    }
 
     if (cinetpayData?.code !== '201') {
       console.error('CinetPay error:', cinetpayData);
